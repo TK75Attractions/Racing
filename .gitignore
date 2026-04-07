@@ -3,6 +3,8 @@
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
 .utmp/
+/[Aa]ssets/ALP_Assets/
+/[Aa]ssets/TerrainDemoScene_URP/
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/

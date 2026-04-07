@@ -3,7 +3,10 @@ using UnityEngine.InputSystem;
 
 public class InputManager : MonoBehaviour
 {
-	[SerializeField] private bool enableLog = true;
+    [SerializeField] private bool isDebugMode = true;
+
+    public float pedalInput = 0f;
+    public float handleRotationInput = 0f;
 
     //キーが押されている時に true になる。
     public bool UpPressed = false;
@@ -24,68 +27,35 @@ public class InputManager : MonoBehaviour
     public bool RightGetUp = false;
 
 
-	public void UpdateInput()
-	{
-		DetectKeyboardInput();
-		DetectMouseInput();
-	}
+    public void UpdateInput()
+    {
+        DetectKeyboardInput();
+    }
 
-	private void DetectKeyboardInput()
-	{
+    private void DetectKeyboardInput()
+    {
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null)
         {
             return;
         }
 
-        UpPressed = keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed;
-        DownPressed = keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed;
-        LeftPressed = keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed;
-        RightPressed = keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed;
-
-        UpGetDown = keyboard.wKey.wasPressedThisFrame || keyboard.upArrowKey.wasPressedThisFrame;
-        DownGetDown = keyboard.sKey.wasPressedThisFrame || keyboard.downArrowKey.wasPressedThisFrame;
-        LeftGetDown = keyboard.aKey.wasPressedThisFrame || keyboard.leftArrowKey.wasPressedThisFrame;
-        RightGetDown = keyboard.dKey.wasPressedThisFrame || keyboard.rightArrowKey.wasPressedThisFrame;
-
-        UpGetUp = keyboard.wKey.wasReleasedThisFrame || keyboard.upArrowKey.wasReleasedThisFrame;
-        DownGetUp = keyboard.sKey.wasReleasedThisFrame || keyboard.downArrowKey.wasReleasedThisFrame;
-        LeftGetUp = keyboard.aKey.wasReleasedThisFrame || keyboard.leftArrowKey.wasReleasedThisFrame;
-        RightGetUp = keyboard.dKey.wasReleasedThisFrame || keyboard.rightArrowKey.wasReleasedThisFrame;
-
-		if (keyboard.spaceKey.wasPressedThisFrame)
-		{
-			Log("Space pressed");
-		}
-
-		if (keyboard.spaceKey.wasReleasedThisFrame)
-		{
-			Log("Space released");
-		}
-	}
-
-	private void DetectMouseInput()
-	{
-        Mouse mouse = Mouse.current;
-        if (mouse == null)
+        if (isDebugMode)
         {
-            return;
+            UpPressed = keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed;
+            DownPressed = keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed;
+            LeftPressed = keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed;
+            RightPressed = keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed;
+
+            UpGetDown = keyboard.wKey.wasPressedThisFrame || keyboard.upArrowKey.wasPressedThisFrame;
+            DownGetDown = keyboard.sKey.wasPressedThisFrame || keyboard.downArrowKey.wasPressedThisFrame;
+            LeftGetDown = keyboard.aKey.wasPressedThisFrame || keyboard.leftArrowKey.wasPressedThisFrame;
+            RightGetDown = keyboard.dKey.wasPressedThisFrame || keyboard.rightArrowKey.wasPressedThisFrame;
+
+            UpGetUp = keyboard.wKey.wasReleasedThisFrame || keyboard.upArrowKey.wasReleasedThisFrame;
+            DownGetUp = keyboard.sKey.wasReleasedThisFrame || keyboard.downArrowKey.wasReleasedThisFrame;
+            LeftGetUp = keyboard.aKey.wasReleasedThisFrame || keyboard.leftArrowKey.wasReleasedThisFrame;
+            RightGetUp = keyboard.dKey.wasReleasedThisFrame || keyboard.rightArrowKey.wasReleasedThisFrame;
         }
-
-		if (mouse.leftButton.wasPressedThisFrame)
-		{
-			Log($"Left Click: {mouse.position.ReadValue()}");
-		}
-
-		if (mouse.rightButton.wasPressedThisFrame)
-		{
-			Log($"Right Click: {mouse.position.ReadValue()}");
-		}
-	}
-
-	private void Log(string message)
-	{
-		if (!enableLog) return;
-		Debug.Log($"[InputDemo] {message}");
-	}
+    }
 }
