@@ -1,12 +1,17 @@
 using Microsoft.Unity.VisualStudio.Editor;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Gmanager : MonoBehaviour
 {
-    public Gmanager Control = null;
+    public static Gmanager Control = null;
     public InputManager IManager = null;
     public CarControl car = null;
     public GameObject carPrefab;
+
+    public RaceCourse course;
+
+    public Transform test;
 
     public float time = 0;
 
@@ -46,6 +51,13 @@ public class Gmanager : MonoBehaviour
         }
 
         if (car != null) car.UpdateCar(dt);
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            if (course != null)
+            {
+                Debug.Log(course.IsPointInsideCourse(new Vector2(test.position.x, test.position.z)));
+            }
+        }
     }
 
     private void GameStart()
