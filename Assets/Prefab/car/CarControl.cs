@@ -8,8 +8,8 @@ public class CarControl : MonoBehaviour
     private Transform trans;
     private Transform tireParent;
     [SerializeField] private GameObject simulateTargetPrefab;
-    private Transform simulateTarget;
-    private Rigidbody rbSimulate;
+    [SerializeField] private Transform simulateTarget;
+    [SerializeField] private Rigidbody rbSimulate;
 
     private GroundCheck groundCheck;
     [SerializeField] private int tireType = 0;
@@ -47,7 +47,7 @@ public class CarControl : MonoBehaviour
 
     public void UpdateCar(float dt)
     {
-        Vector2 input = new Vector2(Mathf.Cos(Gmanager.Control.IManager.handle), Mathf.Sin(Gmanager.Control.IManager.handle)) * Gmanager.Control.IManager.peddale;
+        Vector2 input = new Vector2(Mathf.Sin(Gmanager.Control.IManager.handle), Mathf.Cos(Gmanager.Control.IManager.handle)) * Gmanager.Control.IManager.peddale;
         UpdateSimulateTarget(input, dt);
         UpdateTires(Gmanager.Control.IManager.handle);
     }
@@ -56,7 +56,8 @@ public class CarControl : MonoBehaviour
     {
         if (groundCheck.isGround == false) return;
         Vector3 inputVector = new Vector3(input.x, 0, input.y);
-        rbSimulate.AddForce(inputVector * dt);
+        rbSimulate.AddForce(inputVector * dt * 100, ForceMode.Acceleration);
+        trans.position = simulateTarget.position;
     }
 
     private void UpdateTires(float handle)
