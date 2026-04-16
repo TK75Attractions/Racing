@@ -47,8 +47,9 @@ public class CarControl : MonoBehaviour
 
     public void UpdateCar(float dt)
     {
-        Vector2 input = new Vector2();
-
+        Vector2 input = new Vector2(Mathf.Cos(Gmanager.Control.IManager.handle), Mathf.Sin(Gmanager.Control.IManager.handle)) * Gmanager.Control.IManager.peddale;
+        UpdateSimulateTarget(input, dt);
+        UpdateTires(Gmanager.Control.IManager.handle);
     }
 
     private void UpdateSimulateTarget(Vector2 input, float dt)
