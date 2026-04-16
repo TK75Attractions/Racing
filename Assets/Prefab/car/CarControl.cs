@@ -15,15 +15,7 @@ public class CarControl : MonoBehaviour
     [SerializeField] private int tireType = 0;
 
     [SerializeField] private List<GameObject> tirePrefabs = new List<GameObject>();
-    private TireData[] tireDatas = new TireData[4];
-
-    [Serializable]
-    private struct TireData
-    {
-        public GameObject tireObject;
-        public Vector3 position;
-        public Vector3 scale;
-    }
+    private Transform[] tireDatas = new Transform[4];
 
     public void Init(Vector3 position)
     {
@@ -36,21 +28,39 @@ public class CarControl : MonoBehaviour
         simulateTarget = Instantiate(simulateTargetPrefab).transform;
         simulateTarget.position = position;
 
+        tireDatas[0] = Instantiate(tirePrefabs[tireType], tireParent).transform;
+        tireDatas[0].localPosition = new Vector3(0.8f, 0.3f, 1.25f);
+        tireDatas[0].localScale = new Vector3(1, 1, 1);
 
+        tireDatas[1] = Instantiate(tirePrefabs[tireType], tireParent).transform;
+        tireDatas[1].localPosition = new Vector3(-0.8f, 0.3f, 1.25f);
+        tireDatas[1].localScale = new Vector3(-1, 1, 1);
 
+        tireDatas[2] = Instantiate(tirePrefabs[tireType], tireParent).transform;
+        tireDatas[2].localPosition = new Vector3(0.8f, 0.3f, -1.4f);
+        tireDatas[2].localScale = new Vector3(1, 1, 1);
+
+        tireDatas[3] = Instantiate(tirePrefabs[tireType], tireParent).transform;
+        tireDatas[3].localPosition = new Vector3(-0.8f, 0.3f, -1.4f);
+        tireDatas[3].localScale = new Vector3(-1, 1, 1);
     }
 
-    public void UpdateCar()
+    public void UpdateCar(float dt)
     {
+        Vector2 input = new Vector2();
 
     }
 
-    private void UpdateSimulateTarget(Vector2Int input, float dt)
+    private void UpdateSimulateTarget(Vector2 input, float dt)
     {
         if (groundCheck.isGround == false) return;
         Vector3 inputVector = new Vector3(input.x, 0, input.y);
         rbSimulate.AddForce(inputVector * dt);
     }
 
-
+    private void UpdateTires(float handle)
+    {
+        tireDatas[0].localRotation = Quaternion.Euler(0, handle, 0);
+        tireDatas[1].localRotation = Quaternion.Euler(0, handle, 0);
+    }
 }
