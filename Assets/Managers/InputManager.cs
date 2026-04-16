@@ -7,19 +7,14 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.XR;
 
 public class InputManager : MonoBehaviour
 {
     public bool isDebugMode = false;
-    public bool buttonPressed;
-    public bool upPressed;
-    public bool downPressed;
-    public bool leftPressed;
-    public bool rightPressed;
-    public bool upPressedThisFrame;
-    public bool downPressedThisFrame;
-    public bool leftPressedThisFrame;
-    public bool rightPressedThisFrame;
+
+    public float handle;
+    public float peddale;
 
     public void Init()
     {
@@ -29,20 +24,19 @@ public class InputManager : MonoBehaviour
         }
     }
 
-    public void UpdateInput()
+    public void UpdateInput(float dt)
     {
         if (isDebugMode)
         {
-            buttonPressed = Keyboard.current.spaceKey.isPressed;
-            upPressed = Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed;
-            downPressed = Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed;
-            leftPressed = Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed;
-            rightPressed = Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed;
+            int p = 0;
+            if (Keyboard.current.wKey.isPressed) p++;
+            if (Keyboard.current.sKey.isPressed) p--;
+            peddale += p * 0.3f * dt;
+            if (peddale < 0) peddale = 0;
 
-            upPressedThisFrame = Keyboard.current.wKey.wasPressedThisFrame || Keyboard.current.upArrowKey.wasPressedThisFrame;
-            downPressedThisFrame = Keyboard.current.sKey.wasPressedThisFrame || Keyboard.current.downArrowKey.wasPressedThisFrame;
-            leftPressedThisFrame = Keyboard.current.aKey.wasPressedThisFrame || Keyboard.current.leftArrowKey.wasPressedThisFrame;
-            rightPressedThisFrame = Keyboard.current.dKey.wasPressedThisFrame || Keyboard.current.rightArrowKey.wasPressedThisFrame;
+            handle = 0;
+            if (Keyboard.current.dKey.isPressed) handle = 30;
+            if (Keyboard.current.aKey.isPressed) handle = -30;
         }
     }
 }
