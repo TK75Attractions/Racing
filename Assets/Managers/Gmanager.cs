@@ -1,11 +1,13 @@
 using Microsoft.Unity.VisualStudio.Editor;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Cinemachine;
 
 public class Gmanager : MonoBehaviour
 {
     public static Gmanager Control = null;
     public InputManager IManager = null;
+    public CinemachineCamera VCamera;
     public CarControl car = null;
     public GameObject carPrefab;
 
@@ -36,6 +38,8 @@ public class Gmanager : MonoBehaviour
 
         IManager = GetComponent<InputManager>();
         IManager.Init();
+
+        VCamera = transform.parent.Find("VCamera").GetComponent<CinemachineCamera>();
     }
 
 
@@ -64,6 +68,7 @@ public class Gmanager : MonoBehaviour
     {
         car = Instantiate(carPrefab).GetComponent<CarControl>();
         car.Init(Vector3.zero);
+        VCamera.Follow = car.transform;
         state = State.Game;
         Debug.Log("Game Start");
     }
