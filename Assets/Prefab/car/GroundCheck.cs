@@ -18,7 +18,7 @@ public class GroundCheck : MonoBehaviour
         }
         else
         {
-            isGround = false;
+            isGround = true; //テスト用
         }
     }
 }
