@@ -1933,7 +1933,10 @@ MonoBehaviour:
   - position: {x: 100, y: 0}
     curve: 40
     width: 10
-  - position: {x: 0, y: 20}
+  - position: {x: -40, y: 70}
+    curve: 0
+    width: 10
+  - position: {x: -20, y: 10}
     curve: 0
     width: 10
   waypointColor: {r: 0, g: 1, b: 1, a: 1}
