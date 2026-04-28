@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1830044294073143383}
   - component: {fileID: 4217583568693609536}
+  - component: {fileID: 6898322346834685038}
   m_Layer: 0
   m_Name: car
   m_TagString: Untagged
@@ -48,6 +49,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CarControl
   simulateTargetPrefab: {fileID: 7421750364715425308, guid: 1d8d39482f58e164383050fe7c66b3ec, type: 3}
+  simulateTarget: {fileID: 1830044294073143383}
+  rbSimulate: {fileID: 6898322346834685038}
   tireType: 0
   tirePrefabs:
   - {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
@@ -56,6 +59,33 @@ MonoBehaviour:
   - {fileID: 2613787178322683345, guid: 2b254f606f4e45e43b35471ef86bdd2f, type: 3}
   - {fileID: 6740996328167982889, guid: 5d54196886ae0674c91275ad7de4d5db, type: 3}
   - {fileID: 446939475910041775, guid: 0d9064a3e9128f64b8d182d8b70ce3d9, type: 3}
+--- !u!54 &6898322346834685038
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1988557966112957628}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &2544251713487819542
 GameObject:
   m_ObjectHideFlags: 0
