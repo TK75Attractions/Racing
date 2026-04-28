@@ -36,7 +36,7 @@ public class Gmanager : MonoBehaviour
             return;
         }
 
-        IManager = GetComponent<InputManager>();
+        IManager = [SerializeField] private InputManager IManager ;
         IManager.Init();
 
         VCamera = transform.parent.Find("VCamera").GetComponent<CinemachineCamera>();
