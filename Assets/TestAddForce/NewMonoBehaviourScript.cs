@@ -40,7 +40,7 @@ public class DebugMover : MonoBehaviour
         
         if (h != 0)
         {
-            float rotationAngle = Mathf.Sign(h) * Mathf.Abs(h) + 90f);
+            float rotationAngle = Mathf.Sign(h) * (Mathf.Abs(h) + 90f);
             Quaternion rotation = Quaternion.AngleAxis(rotationAngle, transform.up);
             Vector3 forceDirection = rotation * transform.forward;
             Vector3 force = forceDirection * Mathf.Abs(h) * v * v *torqueMultiplier;
