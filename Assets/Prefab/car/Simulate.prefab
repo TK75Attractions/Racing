@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7008500864147608581}
   - component: {fileID: 5632088352199545463}
   - component: {fileID: 4828154996306404916}
+  - component: {fileID: 7950690676724506795}
   m_Layer: 6
   m_Name: Simulate
   m_TagString: Untagged
@@ -140,3 +141,16 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &7950690676724506795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7421750364715425308}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ce84c93c3def9149aeb22cba131d86a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DebugMover
+  forceMultiplier: 10
