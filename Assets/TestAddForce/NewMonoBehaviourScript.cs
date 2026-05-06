@@ -40,8 +40,14 @@ public class DebugMover : MonoBehaviour
         
         if (h != 0)
         {
-            Vector3 torque = Vector3.up * h * torqueMultiplier;
-            rb.AddTorque(torque * Time.deltaTime, ForceMode.Acceleration);
+            float rotationAngle = Mathf.Sign(h) * Mathf.Abs(h) + 90f);
+            Quaternion rotation = Quaternion.AngleAxis(rotationAngle, transform.up);
+            Vector3 forceDirection = rotation * transform.forward;
+            Vector3 force = forceDirection * Mathf.Abs(h) * v * v *torqueMultiplier;
+            Vector3 frontPoint = transform.TransformPoint(new Vector3(0, 0,2f));
+            rb.AddForceAtPosition(force * Time.deltaTime, frontPoint, ForceMode.Acceleration);
+            //Vector3 torque = Vector3.up * h * torqueMultiplier;
+            //rb.AddTorque(torque * Time.deltaTime, ForceMode.Acceleration);
         }
         
     }
