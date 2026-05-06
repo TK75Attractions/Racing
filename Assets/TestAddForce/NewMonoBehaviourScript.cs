@@ -3,6 +3,8 @@ using UnityEngine.InputSystem;
 public class DebugMover : MonoBehaviour
 {
     [SerializeField] private float forceMultiplier = 10f;
+    [SerializeField] private float h;
+    [SerializeField] private float p;
     private Rigidbody rb;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -19,7 +21,9 @@ public class DebugMover : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        float h = Gmanager.Control.IManager.handle;
+        h = Gmanager.Control.IManager.handle;
+        p = Gmanager.Control.IManager.peddale;
+        
         if(rb ==null) return;
         Vector3 moveDir = Vector3.zero;
 
