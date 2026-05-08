@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 using System.Collections.Generic;
 public class DebugMover : MonoBehaviour
 {
-    [SerializeField] private float forceMultiplier = 1000f;
+    [SerializeField] private float forceMultiplier = 300f;
     [SerializeField] private float torqueMultiplier = 15f;
 
     [SerializeField] private List<TireForce> tires = new List<TireForce>();
