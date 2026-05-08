@@ -3,7 +3,7 @@ using UnityEngine;
 public class TireForce : MonoBehaviour
 {
     [SerializeField] private float Grip;
-    [SerializeField] private float k = 1f;
+    [SerializeField] private float k = 10f;
     [SerializeField] private float friction= 1f;
     [SerializeField] private float sideVel;
     [Header("tire Setting")]
@@ -42,7 +42,7 @@ public class TireForce : MonoBehaviour
         float sideForceAmount =  -(sideVel * friction +Grip* k);
         Vector3 finalSideForce = sideForceAmount * sideDir;
         carRb.AddForceAtPosition(finalSideForce * Time.deltaTime, transform.position, ForceMode.Acceleration);
-        
+
 
 
 
