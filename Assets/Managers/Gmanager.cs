@@ -6,7 +6,7 @@ using Unity.Cinemachine;
 public class Gmanager : MonoBehaviour
 {
     public static Gmanager Control = null;
-    public InputManager IManager = null;
+    [SerializeField] public InputManager IManager = null;
     public CinemachineCamera VCamera;
     public CarControl car = null;
     public GameObject carPrefab;
@@ -37,7 +37,6 @@ public class Gmanager : MonoBehaviour
         }
 
         IManager = GetComponent<InputManager>();
-        IManager.Init();
 
         VCamera = transform.parent.Find("VCamera").GetComponent<CinemachineCamera>();
     }
