@@ -14,11 +14,12 @@ public class GroundCheck : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, checkDistance))
         {
-            isGround = hit.collider.CompareTag("Ground");
+            //isGround = hit.collider.CompareTag("Ground");
+            isGround = true;
         }
         else
         {
-            isGround = false;
+            isGround = true; //テスト用
         }
     }
 }
