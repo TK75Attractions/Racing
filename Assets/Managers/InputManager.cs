@@ -11,11 +11,16 @@ using UnityEngine.XR;
 
 public class InputManager : MonoBehaviour
 {
+    // Serialized fields: Unityでインスペクターから設定可能な変数。
+    // [SerializeField]がついていないがpublicなのでインスペクタに表示されるらしい
+
+    // isDebugMode: デバッグモードのフラグ。trueの場合、キーボード入力を使用してhandleとpeddaleの値を更新する。
     public bool isDebugMode = false;
 
     public float handle;
     public float peddale;
 
+    // initializer 用途？
     public void Init()
     {
         if (isDebugMode)
@@ -24,8 +29,12 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    // Updateは毎フレーム呼び出される(dt: delta time、前のフレームからの経過時間)
+    // 現在: キーボード入力を処理して、peddaleとhandleの値を更新する
+    // ToDo: ESP32からのInput処理(ハンドルのIMU、ペダルのADC値)を追加する
     public void UpdateInput(float dt)
     {
+        // テスト用入力処理 temporary input handling for testing
         if (isDebugMode)
         {
             int p = 0;
