@@ -38,7 +38,9 @@ public class TireForce : MonoBehaviour
         Vector3 tireWorldVelocity = carRb.GetPointVelocity(transform.position);
         sideVel = Vector3.Dot(tireWorldVelocity, sideDir);
 
-        Grip = (Grip + sideVel * Time.deltaTime) * 0.9f;
+        float dt = Time.fixedDeltaTime;
+        Grip = (Grip + sideVel * dt) * 0.98f;
+        Grip = Mathf.Clamp(Grip, -1f, 1f);
         float sideForceAmount =  -(sideVel * friction +Grip* k);
         Vector3 finalSideForce = sideForceAmount * sideDir;
         carRb.AddForceAtPosition(finalSideForce * Time.deltaTime, transform.position, ForceMode.Acceleration);
