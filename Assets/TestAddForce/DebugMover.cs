@@ -18,6 +18,7 @@ public class DebugMover : MonoBehaviour
         rb = GetComponent<Rigidbody>();
 
         TireForce[] foundTires = GetComponentsInChildren<TireForce>();
+        tires.Clear();
         tires.AddRange(foundTires);
         foreach (var tire in tires)
         {
@@ -30,9 +31,9 @@ public class DebugMover : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
-        if(rb ==null) return;
+        if(rb ==null ) return;
         h = Gmanager.Control.IManager.handle;
         p = Gmanager.Control.IManager.peddale;
         
