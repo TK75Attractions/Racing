@@ -37,7 +37,6 @@ public class InputManager : MonoBehaviour
         // テスト用入力処理 temporary input handling for testing
         if (isDebugMode)
         {
-            int p = 0;
             if (Keyboard.current.wKey.isPressed)
             {
                 peddale = 1.0f;
