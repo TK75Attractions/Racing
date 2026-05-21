@@ -67,6 +67,7 @@ public class Gmanager : MonoBehaviour
 
         // 各種マネージャ参照の取得と初期化
         IManager = GetComponent<InputManager>();
+        IManager.Init();
 
         VCamera = transform.parent.Find("VCamera").GetComponent<CinemachineCamera>();
     }
