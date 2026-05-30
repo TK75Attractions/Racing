@@ -22,6 +22,16 @@ public class InputManager : MonoBehaviour
     SerialPort serialPort;
     Thread serialReadThread;
     ConcurrentQueue<string> serialQueue = new ConcurrentQueue<string>();
+    readonly int serialBaudRate = 115200;
+    readonly int serialReadTimeoutMs = 200;
+    readonly string[] serialPortNameHints = new string[]
+    {
+        "usbserial",
+        "usbmodem",
+        "ttyACM",
+        "ttyUSB",
+        "COM"
+    };
 
     // initializer 用途？
     public void Init()
@@ -34,11 +44,18 @@ public class InputManager : MonoBehaviour
         // ESP32からのシリアル通信の初期化
         try
         {
-            serialPort = new SerialPort("/dev/tty.usbserial-10", 115200); // ポート名とレートは都度変更
+            string portName = FindAvailableSerialPort();
+            if (string.IsNullOrEmpty(portName))
+            {
+                Debug.LogError("No matching serial port was found.");
+                return;
+            }
+
+            serialPort = new SerialPort(portName, serialBaudRate);
             serialPort.NewLine = "\n";
-            serialPort.ReadTimeout = 200; // Updateループにブロッキングさせないため短めに設定
+            serialPort.ReadTimeout = serialReadTimeoutMs; // Updateループにブロッキングさせないため短めに設定
             serialPort.Open();
-            Debug.Log("Serial port opened successfully.");
+            Debug.Log($"Serial port opened successfully: {portName}");
 
             // 背景スレッドで継続的にReadLineしてキューに積む
             serialReadThread = new Thread(SerialReadLoop) { IsBackground = true };
@@ -47,6 +64,113 @@ public class InputManager : MonoBehaviour
         catch (Exception e)
         {
             Debug.LogError($"Failed to open serial port: {e.Message}");
+        }
+    }
+
+    string FindAvailableSerialPort()
+    {
+        string[] portNames = SerialPort.GetPortNames();
+        if (portNames == null || portNames.Length == 0)
+        {
+            return null;
+        }
+
+        Array.Sort(portNames, (left, right) =>
+        {
+            int leftScore = GetPortPriority(left);
+            int rightScore = GetPortPriority(right);
+            int compare = leftScore.CompareTo(rightScore);
+            if (compare != 0)
+            {
+                return compare;
+            }
+
+            return string.Compare(left, right, StringComparison.OrdinalIgnoreCase);
+        });
+
+        foreach (string portName in portNames)
+        {
+            if (TryProbeSerialPort(portName))
+            {
+                return portName;
+            }
+        }
+
+        return null;
+    }
+
+    int GetPortPriority(string portName)
+    {
+        if (string.IsNullOrEmpty(portName))
+        {
+            return int.MaxValue;
+        }
+
+        for (int index = 0; index < serialPortNameHints.Length; index++)
+        {
+            if (portName.IndexOf(serialPortNameHints[index], StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return index;
+            }
+        }
+
+        return serialPortNameHints.Length;
+    }
+
+    bool TryProbeSerialPort(string portName)
+    {
+        Debug.Log($"Probing serial port: {portName}");
+        SerialPort probePort = null;
+        try
+        {
+            probePort = new SerialPort(portName, serialBaudRate);
+            probePort.NewLine = "\n";
+            probePort.ReadTimeout = serialReadTimeoutMs;
+            probePort.Open();
+
+            if (!probePort.IsOpen)
+            {
+                Debug.LogWarning($"Failed to open serial port for probing: {portName}");
+                return false;
+            }
+
+            string line = probePort.ReadLine().Trim();
+            // if (IsExpectedSerialLine(line))
+            if (true)
+            {
+                Debug.Log($"Detected serial port candidate: {portName}");
+                return true;
+            }
+
+            Debug.LogWarning($"Serial port {portName} did not return expected data during probing. Received: '{line}'");
+            return false;
+        }
+        catch (TimeoutException)
+        {
+            Debug.LogWarning($"Timeout occurred while probing serial port: {portName}");
+            return false;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Unexpected error occurred while probing serial port: {portName} - {e.Message}");
+            return false;
+        }
+        finally
+        {
+            if (probePort != null)
+            {
+                try
+                {
+                    if (probePort.IsOpen)
+                    {
+                        probePort.Close();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Error occurred while closing serial port: {portName} - {e.Message}");
+                }
+            }
         }
     }
 
@@ -87,13 +211,10 @@ public class InputManager : MonoBehaviour
                         string[] parts = line.Split(',');
                         if (parts.Length >= 2)
                         {
-                            /*
                             if (float.TryParse(parts[0], out float peddalValue))
                             {
                                 peddale = peddalValue;
                             }
-                            */
-                            peddale = Keyboard.current.wKey.isPressed ? 1.0f : 0.0f; // デバッグ用の暫定処理
 
                             if (float.TryParse(parts[1], out float handleValue))
                             {
@@ -108,6 +229,22 @@ public class InputManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    bool IsExpectedSerialLine(string line)
+    {
+        if (string.IsNullOrEmpty(line))
+        {
+            return false;
+        }
+
+        string[] parts = line.Split(',');
+        if (parts.Length < 2)
+        {
+            return false;
+        }
+
+        return float.TryParse(parts[0], out _) || float.TryParse(parts[1], out _);
     }
 
     void SerialReadLoop()
