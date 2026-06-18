@@ -21,6 +21,26 @@ public class RaceCourse : MonoBehaviour
     [SerializeField] private int curveSegments = 20;
     [SerializeField] private bool drawCenterLine = false;
 
+    private readonly List<Vector3> cachedCenterPath = new List<Vector3>();
+    private readonly List<float> cachedWidthPath = new List<float>();
+    private readonly List<Vector3> cachedInnerPath = new List<Vector3>();
+    private readonly List<Vector3> cachedOuterPath = new List<Vector3>();
+    private readonly List<Vector2> cachedCoursePolygon = new List<Vector2>();
+    private bool cacheDirty = true;
+    private Vector3 cachedPosition;
+    private Quaternion cachedRotation;
+    private Vector3 cachedScale;
+
+    private void Awake()
+    {
+        RebuildCache();
+    }
+
+    private void OnValidate()
+    {
+        cacheDirty = true;
+    }
+
     private void OnDrawGizmos()
     {
         if (waypoints == null || waypoints.Length == 0)
@@ -46,21 +66,19 @@ public class RaceCourse : MonoBehaviour
             return;
         }
 
-        BuildCenterPath(out List<Vector3> centerPath, out List<float> widthPath);
-        if (centerPath.Count < 2)
+        EnsureCache();
+        if (cachedCenterPath.Count < 2)
         {
             return;
         }
 
-        BuildOffsetPaths(centerPath, widthPath, out List<Vector3> innerPath, out List<Vector3> outerPath);
-
         Gizmos.color = pathColor;
-        DrawPolyline(innerPath);
-        DrawPolyline(outerPath);
+        DrawPolyline(cachedInnerPath);
+        DrawPolyline(cachedOuterPath);
 
         if (drawCenterLine)
         {
-            DrawPolyline(centerPath);
+            DrawPolyline(cachedCenterPath);
         }
     }
 
@@ -71,20 +89,13 @@ public class RaceCourse : MonoBehaviour
             return false;
         }
 
-        BuildCenterPath(out List<Vector3> centerPath, out List<float> widthPath);
-        if (centerPath.Count < 3)
+        EnsureCache();
+        if (cachedCoursePolygon.Count < 3)
         {
             return false;
         }
 
-        BuildOffsetPaths(centerPath, widthPath, out List<Vector3> innerPath, out List<Vector3> outerPath);
-        if (innerPath.Count < 2 || outerPath.Count < 2)
-        {
-            return false;
-        }
-
-        List<Vector2> polygon = BuildCoursePolygon(innerPath, outerPath);
-        return IsPointInPolygon(p, polygon);
+        return IsPointInPolygon(p, cachedCoursePolygon);
     }
 
     public Vector2 GetNearestPointOnCenterLine(Vector2 p)
@@ -94,19 +105,19 @@ public class RaceCourse : MonoBehaviour
             return p;
         }
 
-        BuildCenterPath(out List<Vector3> centerPath, out _);
-        if (centerPath.Count < 2)
+        EnsureCache();
+        if (cachedCenterPath.Count < 2)
         {
             return p;
         }
 
-        Vector2 nearestPoint = ToXZ(centerPath[0]);
+        Vector2 nearestPoint = ToXZ(cachedCenterPath[0]);
         float nearestDistanceSqr = float.PositiveInfinity;
 
-        for (int i = 1; i < centerPath.Count; i++)
+        for (int i = 1; i < cachedCenterPath.Count; i++)
         {
-            Vector2 a = ToXZ(centerPath[i - 1]);
-            Vector2 b = ToXZ(centerPath[i]);
+            Vector2 a = ToXZ(cachedCenterPath[i - 1]);
+            Vector2 b = ToXZ(cachedCenterPath[i]);
             Vector2 candidate = ClosestPointOnSegment2D(p, a, b);
             float distanceSqr = (candidate - p).sqrMagnitude;
 
@@ -120,10 +131,66 @@ public class RaceCourse : MonoBehaviour
         return nearestPoint;
     }
 
+    public Vector3 GetNearestPointOnCenterLineWorld(Vector3 worldPosition)
+    {
+        Vector2 nearest = GetNearestPointOnCenterLine(ToXZ(worldPosition));
+        return new Vector3(nearest.x, worldPosition.y, nearest.y);
+    }
+
+    public void RebuildCache()
+    {
+        cachedCenterPath.Clear();
+        cachedWidthPath.Clear();
+        cachedInnerPath.Clear();
+        cachedOuterPath.Clear();
+        cachedCoursePolygon.Clear();
+
+        if (waypoints == null || waypoints.Length < 2)
+        {
+            cacheDirty = false;
+            return;
+        }
+
+        BuildCenterPath(cachedCenterPath, cachedWidthPath);
+        if (cachedCenterPath.Count >= 2)
+        {
+            BuildOffsetPaths(cachedCenterPath, cachedWidthPath, cachedInnerPath, cachedOuterPath);
+        }
+
+        if (cachedInnerPath.Count >= 2 && cachedOuterPath.Count >= 2)
+        {
+            BuildCoursePolygon(cachedInnerPath, cachedOuterPath, cachedCoursePolygon);
+        }
+
+        cacheDirty = false;
+        cachedPosition = transform.position;
+        cachedRotation = transform.rotation;
+        cachedScale = transform.lossyScale;
+    }
+
+    private void EnsureCache()
+    {
+        if (cacheDirty ||
+            cachedCenterPath.Count == 0 ||
+            cachedPosition != transform.position ||
+            cachedRotation != transform.rotation ||
+            cachedScale != transform.lossyScale)
+        {
+            RebuildCache();
+        }
+    }
+
     private void BuildCenterPath(out List<Vector3> centerPath, out List<float> widthPath)
     {
         centerPath = new List<Vector3>();
         widthPath = new List<float>();
+        BuildCenterPath(centerPath, widthPath);
+    }
+
+    private void BuildCenterPath(List<Vector3> centerPath, List<float> widthPath)
+    {
+        centerPath.Clear();
+        widthPath.Clear();
 
         int segmentCount = Mathf.Max(1, curveSegments);
 
@@ -153,6 +220,13 @@ public class RaceCourse : MonoBehaviour
     private static List<Vector2> BuildCoursePolygon(List<Vector3> innerPath, List<Vector3> outerPath)
     {
         List<Vector2> polygon = new List<Vector2>(innerPath.Count + outerPath.Count);
+        BuildCoursePolygon(innerPath, outerPath, polygon);
+        return polygon;
+    }
+
+    private static void BuildCoursePolygon(List<Vector3> innerPath, List<Vector3> outerPath, List<Vector2> polygon)
+    {
+        polygon.Clear();
 
         for (int i = 0; i < outerPath.Count; i++)
         {
@@ -163,8 +237,6 @@ public class RaceCourse : MonoBehaviour
         {
             polygon.Add(ToXZ(innerPath[i]));
         }
-
-        return polygon;
     }
 
     private static bool IsPointInPolygon(Vector2 p, List<Vector2> polygon)
@@ -231,6 +303,17 @@ public class RaceCourse : MonoBehaviour
     {
         innerPath = new List<Vector3>(centerPath.Count);
         outerPath = new List<Vector3>(centerPath.Count);
+        BuildOffsetPaths(centerPath, widthPath, innerPath, outerPath);
+    }
+
+    private void BuildOffsetPaths(
+        List<Vector3> centerPath,
+        List<float> widthPath,
+        List<Vector3> innerPath,
+        List<Vector3> outerPath)
+    {
+        innerPath.Clear();
+        outerPath.Clear();
 
         Vector3 fallbackLateral = Vector3.right;
 

@@ -2,68 +2,83 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-
 public class CarControl : MonoBehaviour
 {
-
     private Transform trans;
-    private Transform tireParent;
-    [SerializeField] private GameObject simulateTargetPrefab;
-    [SerializeField] private Transform simulateTarget;
-    [SerializeField] private Rigidbody rbSimulate;
+    private Rigidbody rb;
 
     private GroundCheck groundCheck;
-    [SerializeField] private int tireType = 0;
+    private GroundCheck[] tireGroundChecks = Array.Empty<GroundCheck>();
 
+    [SerializeField] private int tireType = 0;
     [SerializeField] private List<GameObject> tirePrefabs = new List<GameObject>();
-    private Transform[] tireDatas = new Transform[4];
 
     public void Init(Vector3 position)
     {
         trans = transform;
-        tireParent = trans.Find("Tires");
-        rbSimulate = GetComponent<Rigidbody>();
-        groundCheck = trans.Find("GroundCheck").GetComponent<GroundCheck>();
+        rb = GetComponent<Rigidbody>();
 
-        foreach (Transform t in tireParent) Destroy(t.gameObject);
-        simulateTarget = Instantiate(simulateTargetPrefab).transform;
-        simulateTarget.position = position;
+        Transform groundCheckTransform = trans.Find("GroundCheck");
+        if (groundCheckTransform != null)
+        {
+            groundCheck = groundCheckTransform.GetComponent<GroundCheck>();
+        }
 
-        tireDatas[0] = Instantiate(tirePrefabs[tireType], tireParent).transform;
-        tireDatas[0].localPosition = new Vector3(0.8f, 0.3f, 1.25f);
-        tireDatas[0].localScale = new Vector3(1, 1, 1);
+        TireForce[] tires = GetComponentsInChildren<TireForce>();
+        tireGroundChecks = new GroundCheck[tires.Length];
 
-        tireDatas[1] = Instantiate(tirePrefabs[tireType], tireParent).transform;
-        tireDatas[1].localPosition = new Vector3(-0.8f, 0.3f, 1.25f);
-        tireDatas[1].localScale = new Vector3(-1, 1, 1);
-
-        tireDatas[2] = Instantiate(tirePrefabs[tireType], tireParent).transform;
-        tireDatas[2].localPosition = new Vector3(0.8f, 0.3f, -1.4f);
-        tireDatas[2].localScale = new Vector3(1, 1, 1);
-
-        tireDatas[3] = Instantiate(tirePrefabs[tireType], tireParent).transform;
-        tireDatas[3].localPosition = new Vector3(-0.8f, 0.3f, -1.4f);
-        tireDatas[3].localScale = new Vector3(-1, 1, 1);
+        for (int index = 0; index < tires.Length; index++)
+        {
+            tireGroundChecks[index] = GetOrAddGroundCheck(tires[index].transform);
+        }
     }
 
     public void UpdateCar(float dt)
     {
         Vector2 input = new Vector2(Mathf.Sin(Gmanager.Control.IManager.handle), Mathf.Cos(Gmanager.Control.IManager.handle)) * Gmanager.Control.IManager.peddale;
         UpdateSimulateTarget(input, dt);
-        UpdateTires(Gmanager.Control.IManager.handle);
     }
 
     private void UpdateSimulateTarget(Vector2 input, float dt)
     {
-        if (groundCheck.isGround == false) return;
+        if (!HasGroundedTire())
+        {
+            return;
+        }
+
         Vector3 inputVector = new Vector3(input.x, 0, input.y);
-        rbSimulate.AddForce(inputVector * dt * 100, ForceMode.Acceleration);
-        trans.position = simulateTarget.position;
+        rb.AddForce(inputVector * dt * 100, ForceMode.Acceleration);
     }
 
-    private void UpdateTires(float handle)
+    private GroundCheck GetOrAddGroundCheck(Transform tire)
     {
-        tireDatas[0].localRotation = Quaternion.Euler(0, handle, 0);
-        tireDatas[1].localRotation = Quaternion.Euler(0, handle, 0);
+        GroundCheck tireGroundCheck = tire.GetComponent<GroundCheck>();
+        if (tireGroundCheck == null)
+        {
+            tireGroundCheck = tire.gameObject.AddComponent<GroundCheck>();
+        }
+
+        return tireGroundCheck;
+    }
+
+    private bool HasGroundedTire()
+    {
+        bool hasTireGroundCheck = false;
+
+        foreach (GroundCheck tireGroundCheck in tireGroundChecks)
+        {
+            if (tireGroundCheck == null)
+            {
+                continue;
+            }
+
+            hasTireGroundCheck = true;
+            if (tireGroundCheck.CheckNow())
+            {
+                return true;
+            }
+        }
+
+        return !hasTireGroundCheck && groundCheck != null && groundCheck.CheckNow();
     }
 }

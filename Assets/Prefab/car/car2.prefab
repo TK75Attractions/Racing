@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5710468043833255925}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: TirePos_FL
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -32,6 +32,57 @@ Transform:
   - {fileID: 2430399818512598664}
   m_Father: {fileID: 8643782117401984001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1483898475488841254
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 211946582826051899}
+  - component: {fileID: 7379056548526505601}
+  m_Layer: 8
+  m_Name: GroundCheck
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &211946582826051899
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1483898475488841254}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -7.167694, y: -1.189, z: 7.159424}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8643782117401984001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7379056548526505601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1483898475488841254}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 972c0b68d1deadc4d8f821030d1e1d61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundCheck
+  checkDistance: 1
+  rayOriginOffset: {x: 0, y: 0, z: 0}
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  minGroundNormalY: 0.2
+  isGround: 0
 --- !u!1 &1816094398672730127
 GameObject:
   m_ObjectHideFlags: 0
@@ -41,7 +92,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 858551118987149244}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: TirePos_BR
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -75,7 +126,7 @@ GameObject:
   - component: {fileID: 7905092288006577064}
   - component: {fileID: 6268100910431798603}
   - component: {fileID: 3222704929213065211}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: SoundObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -216,7 +267,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 413096195687869502}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: TirePos_FR
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -239,6 +290,37 @@ Transform:
   - {fileID: 5627281160048306994}
   m_Father: {fileID: 8643782117401984001}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+--- !u!1 &6735123055257237952
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6138325804263086001}
+  m_Layer: 8
+  m_Name: Tires
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6138325804263086001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6735123055257237952}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8643782117401984001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7225674861140737519
 GameObject:
   m_ObjectHideFlags: 0
@@ -248,7 +330,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8671954962625101108}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: TirePos_BL
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -287,6 +369,8 @@ GameObject:
   - component: {fileID: 5150326160786460359}
   - component: {fileID: 703174277945583282}
   - component: {fileID: 811489908772547292}
+  - component: {fileID: 5474046674919140654}
+  - component: {fileID: 6124809731544772365}
   m_Layer: 8
   m_Name: car2
   m_TagString: Player
@@ -307,6 +391,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 6138325804263086001}
+  - {fileID: 211946582826051899}
   - {fileID: 413096195687869502}
   - {fileID: 5710468043833255925}
   - {fileID: 858551118987149244}
@@ -387,7 +473,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -467,6 +553,44 @@ MonoBehaviour:
   minFreq: 50
   maxFreq: 2000
   masterVolume: 0.2
+--- !u!114 &5474046674919140654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9218658769128752567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7df069c895e3d164b9a3d7eba84a756b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CarControl
+  tireType: 0
+  tirePrefabs:
+  - {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+  - {fileID: 4602108313797873873, guid: 26f37ccdbdf58cf4f838ab1bf83edec9, type: 3}
+  - {fileID: 6674343380698506526, guid: 7d6723c9b137bbc4dbd4ed0fea5385d0, type: 3}
+  - {fileID: 2613787178322683345, guid: 2b254f606f4e45e43b35471ef86bdd2f, type: 3}
+  - {fileID: 6740996328167982889, guid: 5d54196886ae0674c91275ad7de4d5db, type: 3}
+  - {fileID: 446939475910041775, guid: 0d9064a3e9128f64b8d182d8b70ce3d9, type: 3}
+--- !u!114 &6124809731544772365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9218658769128752567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c5e45a9d8a346b289aa9b5ef8b7d2f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CarStabilityController
+  centerOfMass: {x: 0, y: 0, z: 0}
+  assistStartAngle: 35
+  fullAssistAngle: 90
+  uprightStrength: 8
+  angularDamping: 2
+  maxUprightTorque: 20
 --- !u!1001 &1531075579662938594
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -475,9 +599,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 413096195687869502}
     m_Modifications:
+    - target: {fileID: 1429779462753687353, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
       propertyPath: m_Name
       value: Sport_Wheel_1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 6568332132726921936, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
       propertyPath: m_LocalPosition.x
@@ -537,9 +669,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8671954962625101108}
     m_Modifications:
+    - target: {fileID: 1429779462753687353, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
       propertyPath: m_Name
       value: Sport_Wheel_1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 6568332132726921936, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
       propertyPath: m_LocalPosition.x
@@ -607,9 +747,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 858551118987149244}
     m_Modifications:
+    - target: {fileID: 1429779462753687353, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
       propertyPath: m_Name
       value: Sport_Wheel_1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 6568332132726921936, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
       propertyPath: m_LocalPosition.x
@@ -721,9 +869,29 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3190609840697644665, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5203276649815011613, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5356491896567995282, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 5621057211259534690, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}
       propertyPath: m_Name
       value: SportCar_1 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 5621057211259534690, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 8605410210992407882, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -743,9 +911,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5710468043833255925}
     m_Modifications:
+    - target: {fileID: 1429779462753687353, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
       propertyPath: m_Name
       value: Sport_Wheel_1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 6568332132726921936, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
       propertyPath: m_LocalPosition.x
