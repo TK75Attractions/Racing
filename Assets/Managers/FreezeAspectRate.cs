@@ -30,6 +30,11 @@ public class FreezeAspectRate : MonoBehaviour
     [SerializeField] private Sprite Sright;
     [SerializeField] private Sprite Sleft;
     [SerializeField] private Transform up, down, right, left;
+    private Rect currentRect = new Rect(0, 0, 1, 1);
+    private int lastScreenWidth = -1;
+    private int lastScreenHeight = -1;
+    private Vector2Int lastAspect;
+    private Color32 lastColorbase;
 
     public void Awake()
     {
@@ -60,23 +65,26 @@ public class FreezeAspectRate : MonoBehaviour
 
 #endif
         Debug.Log("Set BackCamera");
+        ConfigureBackCamera();
+        SetLetterboxSpritesEnabled(false);
+    }
+
+    private void ConfigureBackCamera()
+    {
+        if (backCamera == null) return;
+
         backCamera.transform.position = new Vector3(0, 0, -5);
+        backCamera.rect = new Rect(0, 0, 1, 1);
         backCamera.depth = -99;
         backCamera.orthographic = true;
-        backCamera.fieldOfView = 0;
+        backCamera.clearFlags = CameraClearFlags.SolidColor;
+        backCamera.backgroundColor = colorbase;
+        backCamera.cullingMask = 0;
         backCamera.farClipPlane = 10;
         backCamera.nearClipPlane = 1;
         backCamera.depthTextureMode = DepthTextureMode.None;
         backCamera.renderingPath = RenderingPath.VertexLit;
         backCamera.useOcclusionCulling = false;
-        up.GetComponent<SpriteRenderer>().sprite = Sup;
-        down.GetComponent<SpriteRenderer>().sprite = Sdown;
-        right.GetComponent<SpriteRenderer>().sprite = Sright;
-        left.GetComponent<SpriteRenderer>().sprite = Sleft;
-        up.GetComponent<SpriteRenderer>().color = colorbase;
-        down.GetComponent<SpriteRenderer>().color = colorbase;
-        right.GetComponent<SpriteRenderer>().color = colorbase;
-        left.GetComponent<SpriteRenderer>().color = colorbase;
     }
 
     private void UpdateScreenRate()
@@ -84,7 +92,6 @@ public class FreezeAspectRate : MonoBehaviour
         if (aspect.x <= 0 || aspect.y <= 0) return;
         if (Screen.width <= 0 || Screen.height <= 0) return;
         if (main == null || UICamera == null || frontCamera == null || backImageCamera == null) return;
-        if (up == null || down == null || right == null || left == null) return;
 
         aspectRate = (float)aspect.x / aspect.y;
         float baseAspect = (float)aspect.y / aspect.x;
@@ -97,49 +104,44 @@ public class FreezeAspectRate : MonoBehaviour
         {
             float change = nowAspect / baseAspect;
             Rect set = new Rect((1 - change) * 0.5f, 0, change, 1);
-            main.rect = set;
-            UICamera.rect = set;
-            frontCamera.rect = set;
-            backImageCamera.rect = set;
-
-            float h = main.orthographicSize * 2;
-            float w = h * aspectRate;
-            float x = (h + w) / 2f;
-            right.localScale = new Vector3(h, h, 0);
-            right.position = new Vector3(x, 0, 0);
-            left.localScale = new Vector3(h, h, 0);
-            left.position = new Vector3(-x, 0, 0);
-            up.localScale = new Vector3(w, w, 0);
-            up.position = new Vector3(0, x, 0);
-            down.localScale = new Vector3(w, w, 0);
-            down.position = new Vector3(0, -x, 0);
+            ApplyCameraRect(set);
         }
         else
         {
             float change = baseAspect / nowAspect;
-
             Rect set = new Rect(0, (1 - change) * 0.5f, 1, change);
-            main.rect = set;
-            UICamera.rect = set;
-            frontCamera.rect = set;
-            backImageCamera.rect = set;
-
-            float h = change * main.orthographicSize * 2f;
-            float w = h * aspectRate;
-            float x = (h + w) / 2f;
-            
-            right.localScale = new Vector3(h, h, 0);
-            right.position = new Vector3(x, 0, 0);
-            left.localScale = new Vector3(h, h, 0);
-            left.position = new Vector3(-x, 0, 0);
-            up.localScale = new Vector3(w, w, 0);
-            up.position = new Vector3(0, x, 0);
-            down.localScale = new Vector3(w, w, 0);
-            down.position = new Vector3(0, -x, 0);
+            ApplyCameraRect(set);
         }
     }
 
-    private bool IsChangeAspect() => main.aspect == aspectRate;
+    private void ApplyCameraRect(Rect set)
+    {
+        currentRect = set;
+        main.rect = set;
+        UICamera.rect = set;
+        frontCamera.rect = set;
+        backImageCamera.rect = set;
+
+        if (backCamera != null)
+        {
+            ConfigureBackCamera();
+        }
+
+        SetLetterboxSpritesEnabled(false);
+        lastScreenWidth = Screen.width;
+        lastScreenHeight = Screen.height;
+        lastAspect = aspect;
+        lastColorbase = colorbase;
+    }
+
+    private bool IsChangeAspect()
+    {
+        return Screen.width == lastScreenWidth
+            && Screen.height == lastScreenHeight
+            && lastAspect == aspect
+            && lastColorbase.Equals(colorbase)
+            && Mathf.Approximately(currentRect.width / currentRect.height, aspectRate);
+    }
 
     private void ChangeSize()
     {
@@ -154,10 +156,10 @@ public class FreezeAspectRate : MonoBehaviour
             oldSize = cameraSize;
         }
         
-        main.orthographicSize = f;
-        UICamera.orthographicSize = f;
-        frontCamera.orthographicSize = f;
-        backCamera.orthographicSize = f;
+        SetOrthographicSize(main, f);
+        SetOrthographicSize(UICamera, f);
+        SetOrthographicSize(frontCamera, f);
+        SetOrthographicSize(backCamera, f);
     }
 
     public void SetCameraSize(float f)
@@ -176,11 +178,36 @@ public class FreezeAspectRate : MonoBehaviour
         {
             cameraSize = f;
             oldSize = f;
-            main.orthographicSize = f;
-            UICamera.orthographicSize = f;
-            frontCamera.orthographicSize = f;
-            backCamera.orthographicSize = f;
+            SetOrthographicSize(main, f);
+            SetOrthographicSize(UICamera, f);
+            SetOrthographicSize(frontCamera, f);
+            SetOrthographicSize(backCamera, f);
         }
+    }
+
+    private void SetOrthographicSize(Camera target, float size)
+    {
+        if (target != null && target.orthographic)
+        {
+            target.orthographicSize = size;
+        }
+    }
+
+    private void SetLetterboxSpritesEnabled(bool enabled)
+    {
+        SetSpriteEnabled(up, enabled);
+        SetSpriteEnabled(down, enabled);
+        SetSpriteEnabled(right, enabled);
+        SetSpriteEnabled(left, enabled);
+    }
+
+    private void SetSpriteEnabled(Transform target, bool enabled)
+    {
+        if (target == null) return;
+        SpriteRenderer spriteRenderer = target.GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null) return;
+
+        spriteRenderer.enabled = enabled;
     }
 
     public Camera GetUICamera() => UICamera;

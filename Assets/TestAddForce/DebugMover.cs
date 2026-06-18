@@ -26,23 +26,23 @@ public class DebugMover : MonoBehaviour
         }
         if (rb == null)
         {
-            Debug.LogError($"{gameObject.name} に Rigidbody が付いていません！AddForceできません。");
+            Debug.LogError($"{gameObject.name} に Rigidbody が付いていません! AddForceできません。");
         }
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        if(rb ==null ) return;
+        if (rb == null) return;
         h = Gmanager.Control.IManager.handle;
         p = Gmanager.Control.IManager.peddale;
-        
+
         foreach (var tire in tires)
         {
             tire.ApplyPhysics(h, p, forceMultiplier, torqueMultiplier);
         }
 
-        
-        
+
+
     }
 }
