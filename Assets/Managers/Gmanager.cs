@@ -12,8 +12,8 @@ public class Gmanager : MonoBehaviour
     //   1) フィールドをクラス上部に宣言する（例: public XxxManager xxxManager;）
     //   2) Awake() 内で GetComponent<...>() か Find で取得し、必要なら初期化メソッドを呼ぶ
     //      // 例: xxxManager = GetComponent<XxxManager>(); xxxManager.Init();
-    // - ゲーム開始／終了に関わる初期化は GameStart() / (将来的に) GameEnd() にまとめる
-    //   -> 車やエフェクト、UI の生成・初期化は GameStart() に書く
+    // - ゲーム開始／終了に関わる初期化は StartGame() / (将来的に) GameEnd() にまとめる
+    //   -> 車やエフェクト、UI の生成・初期化は StartGame() に書く
     // - 毎フレームの処理は Update() に追加するが、状態ごとの処理は state による分岐で管理する
     //   -> 例: if (state == State.Game) { /* ゲーム中の処理 */ }
     // - デバッグ用処理は #if UNITY_EDITOR や isDebugMode フラグで囲む
@@ -26,6 +26,8 @@ public class Gmanager : MonoBehaviour
     public CinemachineCamera VCamera;
     public CarControl car = null;
     public GameObject carPrefab;
+    [SerializeField] private CheckpointSensor startCheckpoint;
+    [SerializeField] private int startCheckpointIndex = 0;
 
     // コースデータ
     // レースコース情報（コース判定や経路情報を保持）
@@ -52,6 +54,8 @@ public class Gmanager : MonoBehaviour
 
     public State state = State.Title;
 
+    // UI関連のスプライト配列
+    public Sprite[] NumberSprites;
 
     // Unity: Awake
     // オブジェクト生成時の初期化処理を行う（シングルトン設定、各種マネージャ取得・初期化）
@@ -84,7 +88,7 @@ public class Gmanager : MonoBehaviour
         if (IManager != null)
         {
             IManager.UpdateInput(dt);
-            if (IManager.peddale > 1 && state == State.Title) GameStart();
+            if (IManager.peddale >= 1 && state == State.Title) StartGame();
         }
 
         // 車が存在する場合は車の更新処理を実行
@@ -101,12 +105,55 @@ public class Gmanager : MonoBehaviour
 
     // ゲーム開始処理。
     // ゲーム開始処理: 車を生成して初期化し、カメラ追従を設定、ゲーム状態を Game に遷移させる
-    private void GameStart()
+    public void StartGame()
     {
-        car = Instantiate(carPrefab).GetComponent<CarControl>();
-        car.Init(Vector3.zero);
+        if (state != State.Title)
+        {
+            return;
+        }
+
+        Transform spawnPoint = GetStartPoint();
+        Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
+        Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
+
+        car = Instantiate(carPrefab, spawnPosition, spawnRotation).GetComponent<CarControl>();
+        car.Init(spawnPosition);
+        car.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
         VCamera.Follow = car.transform;
         state = State.Game;
         Debug.Log("Game Start");
+    }
+
+    private Transform GetStartPoint()
+    {
+        if (startCheckpoint != null)
+        {
+            return startCheckpoint.transform;
+        }
+
+        CheckpointSensor[] checkpoints = FindObjectsOfType<CheckpointSensor>();
+        CheckpointSensor selected = null;
+
+        foreach (CheckpointSensor checkpoint in checkpoints)
+        {
+            if (checkpoint.CheckpointIndex != startCheckpointIndex)
+            {
+                continue;
+            }
+
+            if (selected == null || checkpoint.transform.GetSiblingIndex() < selected.transform.GetSiblingIndex())
+            {
+                selected = checkpoint;
+            }
+        }
+
+        if (selected == null)
+        {
+            Debug.LogWarning($"Start checkpoint index {startCheckpointIndex} was not found. Spawning at world origin.");
+            return null;
+        }
+
+        startCheckpoint = selected;
+        return selected.transform;
     }
 }

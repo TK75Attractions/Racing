@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 4217583568693609536}
   - component: {fileID: 6898322346834685038}
   - component: {fileID: 6668340771526565744}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: car
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -99,7 +99,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ce84c93c3def9149aeb22cba131d86a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DebugMover
-  forceMultiplier: 10
+  Grip: 0
+  sideVel: 0
+  isFrontTire: 0
+  isDriveWheel: 0
 --- !u!1 &2544251713487819542
 GameObject:
   m_ObjectHideFlags: 0
@@ -110,7 +113,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6050796153068297176}
   - component: {fileID: 3595432747819789934}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GroundCheck
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -146,6 +149,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GroundCheck
   checkDistance: 1
   rayOriginOffset: {x: 0, y: 0, z: 0}
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  minGroundNormalY: 0.2
   isGround: 0
 --- !u!1 &3617369437993484993
 GameObject:
@@ -156,7 +163,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6751989739710502328}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Tires
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -229,6 +236,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: f6ebaa94097f3da47a01d47be07f26f3, type: 3}
       propertyPath: m_Name
       value: SportCar_1
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f6ebaa94097f3da47a01d47be07f26f3, type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

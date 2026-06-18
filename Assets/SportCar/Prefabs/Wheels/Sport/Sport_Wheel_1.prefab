@@ -102,6 +102,7 @@ GameObject:
   - component: {fileID: 804776705488825423}
   - component: {fileID: 3951605874619813579}
   - component: {fileID: 8330463576516444767}
+  - component: {fileID: 7448039276159094880}
   - component: {fileID: 2088598013063114142}
   m_Layer: 0
   m_Name: Sport_Wheel_1
@@ -197,8 +198,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TireForce
   Grip: 0
   sideVel: 0
+  isGrounded: 0
   isFrontTire: 1
   isDriveWheel: 0
+--- !u!114 &7448039276159094880
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2369827267963454536}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 972c0b68d1deadc4d8f821030d1e1d61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundCheck
+  checkDistance: 1
+  rayOriginOffset: {x: 0, y: 0, z: 0}
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  minGroundNormalY: 0.2
+  isGround: 0
 --- !u!135 &2088598013063114142
 SphereCollider:
   m_ObjectHideFlags: 0
