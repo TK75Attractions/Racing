@@ -1,51 +1,41 @@
+using System;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
-public class UIPosition : MonoBehaviour
+[Serializable]
+public class UIPosition
 {
-    private CanvasGroup CG;
-    private RectTransform posRect;
-    private Image posImage;
+    [SerializeField] private GameObject root;
+    [SerializeField] private TMP_Text positionText;
+    [SerializeField] private int currentPosition = 1;
 
-    private int currentPosition = 0;
-    private float timer;
-    private const float animationDuration = 0.5f;
+    public int CurrentPosition => currentPosition;
 
-    public void Init()
+    public void Initialize()
     {
-        CG = GetComponent<CanvasGroup>();
-        posRect = transform.Find("Number").GetComponent<RectTransform>();
-        posImage = posRect.GetComponent<Image>();
-    }
-
-    public void UpdatePosition(int position, float deltaTime)
-    {
-        if (position != currentPosition)
+        if (positionText == null && root != null)
         {
-            currentPosition = position;
-            SetPosition(position);
-            timer = 0f;
+            positionText = root.GetComponentInChildren<TMP_Text>(true);
         }
 
-        if (currentPosition > 0)
-        {
-            timer += deltaTime;
-            float scale = 1f + Mathf.Sin(timer * 5f) * 0.1f;
-            posRect.localScale = new Vector3(scale, scale, 1f);
-        }
+        SetPosition(currentPosition);
     }
 
     public void SetPosition(int position)
     {
-        if (position < 1 || position > Gmanager.Control.NumberSprites.Length)
+        currentPosition = position;
+
+        if (positionText != null)
         {
-            CG.alpha = 0f;
-            return;
+            positionText.text = currentPosition.ToString();
         }
+    }
 
-        if (timer > animationDuration) CG.alpha = 1f;
-        else CG.alpha = timer / animationDuration;
-
-        posImage.sprite = Gmanager.Control.NumberSprites[position - 1];
+    public void SetActive(bool isActive)
+    {
+        if (root != null)
+        {
+            root.SetActive(isActive);
+        }
     }
 }
