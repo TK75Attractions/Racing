@@ -2,15 +2,34 @@ using UnityEngine;
 
 public class OnPlayUIManager : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [SerializeField] private UIPosition position = new UIPosition();
+    [SerializeField] private UILap lap = new UILap();
+    [SerializeField] private UITime time = new UITime();
+
+    public UIPosition Position => position;
+    public UILap Lap => lap;
+    public UITime TimeView => time;
+
+    private void Awake()
     {
-        
+        position.Initialize();
+        lap.Initialize();
+        time.Initialize();
     }
 
-    // Update is called once per frame
-    void Update()
+    public void SetPosition(int value)
     {
-        
+        position.SetPosition(value);
+    }
+
+    public void SetLap(int value)
+    {
+        lap.SetLap(value);
+    }
+
+    public void SetTime(float totalSeconds, float lapSeconds)
+    {
+        time.SetTotalTime(totalSeconds);
+        time.SetLapTime(lapSeconds);
     }
 }
