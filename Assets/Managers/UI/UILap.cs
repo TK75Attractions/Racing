@@ -1,53 +1,41 @@
+using System;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
-public class UILap : MonoBehaviour
+[Serializable]
+public class UILap
 {
-    private CanvasGroup CG;
-    private RectTransform lapRect;
-    private Image lapImage;
+    [SerializeField] private GameObject root;
+    [SerializeField] private TMP_Text lapText;
+    [SerializeField] private int currentLap = 1;
 
-    private int currentLap = 0;
-    private float timer;
-    private const float animationDuration = 0.5f;
+    public int CurrentLap => currentLap;
 
-    public void Init()
+    public void Initialize()
     {
-        CG = GetComponent<CanvasGroup>();
-        lapRect = transform.Find("Number").GetComponent<RectTransform>();
-        lapImage = lapRect.GetComponent<Image>();
-    }
-
-    public void UpdateLap(int lap, float deltaTime)
-    {
-        if (lap != currentLap)
+        if (lapText == null && root != null)
         {
-            currentLap = lap;
-            SetLap(lap);
-            timer = 0f;
+            lapText = root.GetComponentInChildren<TMP_Text>(true);
         }
 
-        if (currentLap > 0)
+        SetLap(currentLap);
+    }
+
+    public void SetLap(int lap)
+    {
+        currentLap = lap;
+
+        if (lapText != null)
         {
-            timer += deltaTime;
-            float scale = 1f + Mathf.Sin(timer * 5f) * 0.1f;
-            lapRect.localScale = new Vector3(scale, scale, 1f);
+            lapText.text = currentLap.ToString();
         }
     }
 
-    private void SetLap(int lap)
+    public void SetActive(bool isActive)
     {
-        if (lap < 1 || lap > 99)
+        if (root != null)
         {
-            CG.alpha = 0f;
-            return;
+            root.SetActive(isActive);
         }
-
-        if (timer > animationDuration) CG.alpha = 1f;
-        else CG.alpha = timer / animationDuration;
-
-        // Assuming you have sprites for laps 1 to 99 in numberSprites array
-        lapImage.sprite = Gmanager.Control.NumberSprites[lap - 1];
     }
-
 }
