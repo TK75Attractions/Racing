@@ -47,6 +47,7 @@ public class GoalSensor : MonoBehaviour
         }
 
         GameObject target = rb.gameObject;
-        return target.CompareTag(TargetTag) && target.layer == targetLayer;
+        //触れたオブジェクトを直接見るreturn target.CompareTag(TargetTag) && target.layer == targetLayer;
+        return other.CompareTag(TargetTag) && other.gameObject.layer == targetLayer;
     }
 }
