@@ -28,6 +28,20 @@ public class Gmanager : MonoBehaviour
     public GameObject carPrefab;
     [SerializeField] private CheckpointSensor startCheckpoint;
     [SerializeField] private int startCheckpointIndex = 0;
+    [SerializeField] private LapManager lapManager;
+    [SerializeField] private OnPlayUIManager onPlayUIManager;
+    [SerializeField] private ResultUIManager resultUIManager;
+    [SerializeField] private float resultReturnPedalThreshold = 1f;
+    [SerializeField] private float resultReturnHoldSeconds = 1f;
+    [SerializeField] private int playerPosition = 1;
+    [SerializeField] private float speedUnitMultiplier = 3.6f;
+
+    private float resultReturnHoldTimer = 0f;
+    private bool waitForPedalReleaseBeforeTitleStart = false;
+    private RaceResultRecord latestResult;
+    private Rigidbody playerRigidbody;
+
+    public RaceResultRecord LatestResult => latestResult;
 
     // コースデータ
     // レースコース情報（コース判定や経路情報を保持）
@@ -74,6 +88,14 @@ public class Gmanager : MonoBehaviour
         IManager.Init();
 
         VCamera = transform.parent.Find("VCamera").GetComponent<CinemachineCamera>();
+        ResolveLapManager();
+        onPlayUIManager = new();
+        onPlayUIManager.Init(transform.parent.Find("MainCanvas").Find("OnPlay").transform);
+
+        resultUIManager = new();
+        resultUIManager.Init(transform.parent.Find("MainCanvas").Find("Result").transform);
+
+        SetOnPlayUIActive(false);
     }
 
 
@@ -82,17 +104,28 @@ public class Gmanager : MonoBehaviour
     public void Update()
     {
         float dt = Time.deltaTime;
-        time += dt;
 
         // 入力を更新。タイトル画面でペダルが閾値を超えたらゲーム開始（暫定判定）
         if (IManager != null)
         {
             IManager.UpdateInput(dt);
-            if (IManager.peddale >= 1 && state == State.Title) StartGame();
+            if (state == State.Title)
+            {
+                UpdateTitleStartInput();
+            }
+            else if (state == State.Result)
+            {
+                UpdateResultReturnInput(dt);
+            }
         }
 
         // 車が存在する場合は車の更新処理を実行
-        if (car != null) car.UpdateCar(dt);
+        if (car != null && state == State.Game)
+        {
+            time += dt;
+            car.UpdateCar(dt);
+            UpdateOnPlayUI();
+        }
         // デバッグ: スペースキー押下で test がコース内にあるかチェックしてログ出力（エディタ実行向け）
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
@@ -119,8 +152,15 @@ public class Gmanager : MonoBehaviour
         car = Instantiate(carPrefab, spawnPosition, spawnRotation).GetComponent<CarControl>();
         car.Init(spawnPosition);
         car.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
+        playerRigidbody = car.GetComponent<Rigidbody>();
+        RegisterPlayerCar(spawnPoint);
         VCamera.Follow = car.transform;
+        time = 0f;
+        resultReturnHoldTimer = 0f;
+        waitForPedalReleaseBeforeTitleStart = false;
         state = State.Game;
+        SetOnPlayUIActive(true);
+        UpdateOnPlayUI();
         Debug.Log("Game Start");
     }
 
@@ -155,5 +195,161 @@ public class Gmanager : MonoBehaviour
 
         startCheckpoint = selected;
         return selected.transform;
+    }
+
+    public void ShowResult()
+    {
+        ShowResult(null);
+    }
+
+    public void ShowResult(RaceResultRecord resultRecord)
+    {
+        if (state != State.Game)
+        {
+            return;
+        }
+
+        latestResult = resultRecord;
+        state = State.Result;
+        resultReturnHoldTimer = 0f;
+        SetOnPlayUIActive(false);
+        if (resultUIManager != null)
+        {
+            resultUIManager.ShowResults(resultRecord);
+        }
+        else
+        {
+            Debug.LogWarning("ResultUIManager was not found.");
+        }
+
+        Debug.Log("Game End");
+    }
+
+    public void ShowResults()
+    {
+        ShowResult();
+    }
+
+    public void ResetGame()
+    {
+        if (state != State.Result)
+        {
+            return;
+        }
+
+        if (car != null)
+        {
+            Destroy(car.gameObject);
+            car = null;
+        }
+
+        playerRigidbody = null;
+        time = 0f;
+        resultReturnHoldTimer = 0f;
+        SetOnPlayUIActive(false);
+        if (resultUIManager != null)
+        {
+            resultUIManager.HideResults();
+        }
+
+        waitForPedalReleaseBeforeTitleStart = true;
+        state = State.Title;
+        Debug.Log("Game Reset");
+    }
+
+    private void ResolveLapManager()
+    {
+        if (lapManager != null)
+        {
+            return;
+        }
+
+        lapManager = FindFirstObjectByType<LapManager>(FindObjectsInactive.Include);
+    }
+
+    private void RegisterPlayerCar(Transform startTransform)
+    {
+        ResolveLapManager();
+        if (lapManager == null || playerRigidbody == null)
+        {
+            return;
+        }
+
+        lapManager.RegisterCar(playerRigidbody, startTransform);
+    }
+
+    private void UpdateOnPlayUI()
+    {
+        if (onPlayUIManager == null || playerRigidbody == null)
+        {
+            return;
+        }
+
+        LapManager.CarTimeData lapData = lapManager != null ? lapManager.GetCarData(playerRigidbody) : null;
+        int lapValue = GetCurrentLapValue(lapData);
+        float lapSeconds = lapData != null ? lapData.currentLapTime : time;
+        float totalSeconds = lapData != null ? lapData.totalRaceTime + lapData.currentLapTime : time;
+        float speedValue = playerRigidbody.linearVelocity.magnitude * speedUnitMultiplier;
+
+        onPlayUIManager.UpdateUI(playerPosition, lapValue, totalSeconds, lapSeconds, speedValue);
+    }
+
+    private int GetCurrentLapValue(LapManager.CarTimeData lapData)
+    {
+        if (lapData == null)
+        {
+            return 1;
+        }
+
+        int lapValue = lapData.lapCount + 1;
+        if (lapManager != null && lapManager.GoalLap > 0)
+        {
+            lapValue = Mathf.Min(lapValue, lapManager.GoalLap);
+        }
+
+        return Mathf.Max(1, lapValue);
+    }
+
+    private void SetOnPlayUIActive(bool isActive)
+    {
+        if (onPlayUIManager == null)
+        {
+            return;
+        }
+
+        onPlayUIManager.SetActive(isActive);
+    }
+
+    private void UpdateResultReturnInput(float dt)
+    {
+        if (IManager.peddale < resultReturnPedalThreshold)
+        {
+            resultReturnHoldTimer = 0f;
+            return;
+        }
+
+        resultReturnHoldTimer += dt;
+        if (resultReturnHoldTimer >= Mathf.Max(0.01f, resultReturnHoldSeconds))
+        {
+            ResetGame();
+        }
+    }
+
+    private void UpdateTitleStartInput()
+    {
+        if (waitForPedalReleaseBeforeTitleStart)
+        {
+            if (IManager.peddale < resultReturnPedalThreshold)
+            {
+                waitForPedalReleaseBeforeTitleStart = false;
+            }
+
+            return;
+        }
+
+        if (IManager.peddale >= 1)
+        {
+            StartGame();
+        }
     }
 }

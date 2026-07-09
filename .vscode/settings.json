@@ -67,5 +67,29 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": false
+    },
+    "editor.suggestOnTriggerCharacters": true,
+    "editor.parameterHints.enabled": true,
+    "editor.suggest.localityBonus": true,
+    "editor.suggestSelection": "recentlyUsedByPrefix",
+    "editor.acceptSuggestionOnEnter": "smart",
+    "editor.acceptSuggestionOnCommitCharacter": false,
+    "editor.tabCompletion": "off",
+    "editor.wordBasedSuggestions": "matchingDocuments",
+    "github.copilot.editor.enableAutoCompletions": false,
+    "github.copilot.enable": {
+        "*": false,
+        "csharp": false
+    },
+    "[csharp]": {
+        "editor.inlineSuggest.enabled": false,
+        "editor.snippetSuggestions": "none",
+        "editor.wordBasedSuggestions": "matchingDocuments",
+        "editor.suggest.showWords": true
+    },
     "dotnet.defaultSolution": "Racing.sln"
 }
