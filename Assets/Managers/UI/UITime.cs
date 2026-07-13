@@ -14,8 +14,13 @@ public class UITime
     public float TotalTime => totalTime;
     public float LapTime => lapTime;
 
-    public void Initialize()
+    public void Init(Transform parent)
     {
+        if (parent != null)
+        {
+            root = parent.gameObject;
+        }
+
         TMP_Text[] texts = root != null ? root.GetComponentsInChildren<TMP_Text>(true) : null;
 
         if (totalTimeText == null && texts != null && texts.Length > 0)

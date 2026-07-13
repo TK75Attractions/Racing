@@ -10,6 +10,7 @@ public class LapManager : MonoBehaviour
         public int lapCount;
         public float currentLapTime = 0f;
         public float bestLapTime = float.MaxValue;
+        public float totalRaceTime = 0f;
         public int nextCheckpointIndex = 0;
         public int lastCheckpointIndex = -1;
         public float offCourseTimer = 0f;
@@ -21,6 +22,8 @@ public class LapManager : MonoBehaviour
         [System.NonSerialized] public Transform respawnPoint;
         [System.NonSerialized] public Vector3 lastValidPosition;
         [System.NonSerialized] public Quaternion lastValidRotation = Quaternion.identity;
+        [System.NonSerialized] public int respawnNextCheckpointIndex = 0;
+        [System.NonSerialized] public int respawnLastCheckpointIndex = -1;
     }
 
     [Header("Course")]
@@ -28,6 +31,7 @@ public class LapManager : MonoBehaviour
     [SerializeField] private CheckpointSensor[] checkpoints = new CheckpointSensor[0];
     [SerializeField] private bool autoFindCheckpoints = true;
     [SerializeField] private bool allowLapWithoutCheckpoints = true;
+    [SerializeField] private int goalLap = 3;
 
     [Header("Off Course")]
     [SerializeField] private bool respawnWhenOffCourse = true;
@@ -37,6 +41,8 @@ public class LapManager : MonoBehaviour
     [SerializeField] private bool resetVelocityOnRespawn = true;
 
     private readonly Dictionary<Rigidbody, CarTimeData> carDataMap = new Dictionary<Rigidbody, CarTimeData>();
+
+    public int GoalLap => goalLap;
 
     private void Awake()
     {
@@ -103,6 +109,23 @@ public class LapManager : MonoBehaviour
         OnCarPassGoal(rb, null);
     }
 
+    public void RegisterCar(Rigidbody rb, Transform startTransform = null)
+    {
+        if (rb == null)
+        {
+            return;
+        }
+
+        CarTimeData data = GetOrCreateCarData(rb);
+        data.hasCrossedGoal = true;
+        data.lapCount = 0;
+        data.currentLapTime = 0f;
+        data.totalRaceTime = 0f;
+        data.bestLapTime = float.MaxValue;
+        ResetCheckpointProgress(data);
+        SetRespawnPoint(data, startTransform);
+    }
+
     public void OnCarPassGoal(Rigidbody rb, Transform goalTransform)
     {
         if (rb == null)
@@ -116,6 +139,7 @@ public class LapManager : MonoBehaviour
         {
             data.hasCrossedGoal = true;
             data.currentLapTime = 0f;
+            data.totalRaceTime = 0f;
             ResetCheckpointProgress(data);
             SetRespawnPoint(data, goalTransform);
             Debug.Log($"{data.carName} joined race");
@@ -134,7 +158,15 @@ public class LapManager : MonoBehaviour
             data.bestLapTime = data.currentLapTime;
         }
 
+        float completedLapTime = data.currentLapTime;
+        data.totalRaceTime += completedLapTime;
+
         Debug.Log($"{data.carName} : Lap {data.lapCount} | Time: {data.currentLapTime:F2}s | Best: {data.bestLapTime:F2}s");
+
+        if (goalLap > 0 && data.lapCount >= goalLap)
+        {
+            Gmanager.Control?.ShowResult(CreateResultRecord(data, completedLapTime));
+        }
 
         data.currentLapTime = 0f;
         ResetCheckpointProgress(data);
@@ -258,6 +290,27 @@ public class LapManager : MonoBehaviour
         data.lastValidPosition = respawnTransform.position;
         data.lastValidRotation = respawnTransform.rotation;
         data.hasValidRacePosition = true;
+        data.respawnNextCheckpointIndex = data.nextCheckpointIndex;
+        data.respawnLastCheckpointIndex = data.lastCheckpointIndex;
+    }
+
+    private void RestoreCheckpointProgressFromRespawnPoint(CarTimeData data)
+    {
+        data.nextCheckpointIndex = data.respawnNextCheckpointIndex;
+        data.lastCheckpointIndex = data.respawnLastCheckpointIndex;
+    }
+
+    private RaceResultRecord CreateResultRecord(CarTimeData data, float finalLapTime)
+    {
+        return new RaceResultRecord
+        {
+            carName = data.carName,
+            completedLaps = data.lapCount,
+            goalLap = goalLap,
+            totalRaceTime = data.totalRaceTime,
+            finalLapTime = finalLapTime,
+            bestLapTime = data.bestLapTime
+        };
     }
 
     private void RespawnCar(CarTimeData data)
@@ -306,6 +359,7 @@ public class LapManager : MonoBehaviour
         data.hasValidRacePosition = true;
         data.lastValidPosition = targetPosition;
         data.lastValidRotation = targetRotation;
+        RestoreCheckpointProgressFromRespawnPoint(data);
 
         Debug.Log($"{data.carName} respawned");
     }

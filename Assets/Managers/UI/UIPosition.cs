@@ -9,26 +9,41 @@ public class UIPosition
     [SerializeField] private TMP_Text positionText;
     [SerializeField] private int currentPosition = 1;
 
-    public int CurrentPosition => currentPosition;
-
-    public void Initialize()
+    public void Init(Transform parent)
     {
-        if (positionText == null && root != null)
+        if (parent != null)
         {
-            positionText = root.GetComponentInChildren<TMP_Text>(true);
+            root = parent.gameObject;
         }
 
-        SetPosition(currentPosition);
+        Transform rootTransform = root != null ? root.transform : parent;
+        if (positionText == null && rootTransform != null)
+        {
+            Transform textTransform = rootTransform.Find("Txt");
+            positionText = textTransform != null
+                ? textTransform.GetComponentInChildren<TMP_Text>(true)
+                : rootTransform.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        UpdateText();
     }
 
     public void SetPosition(int position)
     {
-        currentPosition = position;
+        position = Mathf.Max(1, position);
 
-        if (positionText != null)
+        if (position != currentPosition)
         {
-            positionText.text = currentPosition.ToString();
+            PositionTextAnimation(currentPosition, position);
+            currentPosition = position;
         }
+
+        UpdateText();
+    }
+
+    private void PositionTextAnimation(int oldPosition, int newPosition)
+    {
+        // Implement animation logic here if needed
     }
 
     public void SetActive(bool isActive)
@@ -36,6 +51,14 @@ public class UIPosition
         if (root != null)
         {
             root.SetActive(isActive);
+        }
+    }
+
+    private void UpdateText()
+    {
+        if (positionText != null)
+        {
+            positionText.text = currentPosition.ToString();
         }
     }
 }

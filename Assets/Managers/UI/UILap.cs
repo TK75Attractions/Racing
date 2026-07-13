@@ -9,26 +9,35 @@ public class UILap
     [SerializeField] private TMP_Text lapText;
     [SerializeField] private int currentLap = 1;
 
-    public int CurrentLap => currentLap;
-
-    public void Initialize()
+    public void Init(Transform parent)
     {
-        if (lapText == null && root != null)
+        if (parent != null)
         {
-            lapText = root.GetComponentInChildren<TMP_Text>(true);
+            root = parent.gameObject;
         }
 
-        SetLap(currentLap);
+        root = parent.gameObject;
+        lapText = parent.Find("Txt").GetComponent<TMP_Text>();
+
+        UpdateText();
     }
 
     public void SetLap(int lap)
     {
-        currentLap = lap;
+        lap = Mathf.Max(1, lap);
 
-        if (lapText != null)
+        if (lap != currentLap)
         {
-            lapText.text = currentLap.ToString();
+            LapTextAnimation(currentLap, lap);
+            currentLap = lap;
         }
+
+        UpdateText();
+    }
+
+    private void LapTextAnimation(int oldLap, int newLap)
+    {
+
     }
 
     public void SetActive(bool isActive)
@@ -36,6 +45,14 @@ public class UILap
         if (root != null)
         {
             root.SetActive(isActive);
+        }
+    }
+
+    private void UpdateText()
+    {
+        if (lapText != null)
+        {
+            lapText.text = currentLap.ToString();
         }
     }
 }
