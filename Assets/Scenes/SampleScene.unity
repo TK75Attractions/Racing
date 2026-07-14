@@ -445,8 +445,9 @@ MonoBehaviour:
       root: {fileID: 0}
       speedVelocity: 0
       speedValue: 0
-  resultReturnPedalThreshold: 1
+  resultReturnPedalThreshold: 0.8
   resultReturnHoldSeconds: 1
+  resultReturnInputDelaySeconds: 3
   playerPosition: 1
   speedUnitMultiplier: 3.6
   course: {fileID: 1759542321}
