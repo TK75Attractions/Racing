@@ -186,13 +186,14 @@ public class InputManager : MonoBehaviour
             {
                 peddale = 1.0f;
             }
+            else if (Keyboard.current.sKey.isPressed)
+            {
+                peddale = -1.0f;
+            }
             else
             {
                 peddale = 0.0f;
             }
-            //if (Keyboard.current.sKey.isPressed) p--;
-            //peddale += p * 0.3f * dt;
-            //if (peddale < 0) peddale = 0;
 
             handle = 0;
             if (Keyboard.current.dKey.isPressed) handle = 30f;
