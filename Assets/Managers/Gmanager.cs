@@ -31,12 +31,14 @@ public class Gmanager : MonoBehaviour
     [SerializeField] private LapManager lapManager;
     [SerializeField] private OnPlayUIManager onPlayUIManager;
     [SerializeField] private ResultUIManager resultUIManager;
-    [SerializeField] private float resultReturnPedalThreshold = 1f;
+    [SerializeField] private float resultReturnPedalThreshold = 0.8f;
     [SerializeField] private float resultReturnHoldSeconds = 1f;
+    [SerializeField] private float resultReturnInputDelaySeconds = 3f;
     [SerializeField] private int playerPosition = 1;
     [SerializeField] private float speedUnitMultiplier = 3.6f;
 
     private float resultReturnHoldTimer = 0f;
+    private float resultReturnInputDelayTimer = 0f;
     private bool waitForPedalReleaseBeforeTitleStart = false;
     private RaceResultRecord latestResult;
     private Rigidbody playerRigidbody;
@@ -157,6 +159,7 @@ public class Gmanager : MonoBehaviour
         VCamera.Follow = car.transform;
         time = 0f;
         resultReturnHoldTimer = 0f;
+        resultReturnInputDelayTimer = 0f;
         waitForPedalReleaseBeforeTitleStart = false;
         state = State.Game;
         SetOnPlayUIActive(true);
@@ -212,6 +215,7 @@ public class Gmanager : MonoBehaviour
         latestResult = resultRecord;
         state = State.Result;
         resultReturnHoldTimer = 0f;
+        resultReturnInputDelayTimer = 0f;
         SetOnPlayUIActive(false);
         if (resultUIManager != null)
         {
@@ -246,6 +250,7 @@ public class Gmanager : MonoBehaviour
         playerRigidbody = null;
         time = 0f;
         resultReturnHoldTimer = 0f;
+        resultReturnInputDelayTimer = 0f;
         SetOnPlayUIActive(false);
         if (resultUIManager != null)
         {
@@ -322,7 +327,14 @@ public class Gmanager : MonoBehaviour
 
     private void UpdateResultReturnInput(float dt)
     {
-        if (IManager.peddale < resultReturnPedalThreshold)
+        if (resultReturnInputDelayTimer < resultReturnInputDelaySeconds)
+        {
+            resultReturnInputDelayTimer += dt;
+            resultReturnHoldTimer = 0f;
+            return;
+        }
+
+        if (IManager.peddale <= resultReturnPedalThreshold)
         {
             resultReturnHoldTimer = 0f;
             return;
