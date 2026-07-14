@@ -165,9 +165,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.34651163
+    y: 0.110568374
     width: 1
-    height: 0.30697674
+    height: 0.77886325
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -632,7 +632,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 59.999756, y: -60}
+  m_AnchoredPosition: {x: 49, y: -43}
   m_SizeDelta: {x: 200, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &276153992
@@ -657,15 +657,15 @@ MonoBehaviour:
       m_Calls: []
   m_text: 1
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: bbf93742afe97a4419622f4a2762fac9, type: 2}
-  m_sharedMaterial: {fileID: 551201626981382498, guid: bbf93742afe97a4419622f4a2762fac9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8d8b417d536cb418b8e7906161752e2a, type: 2}
+  m_sharedMaterial: {fileID: 3228842480563867833, guid: 8d8b417d536cb418b8e7906161752e2a, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4279435256
+  m_fontColor: {r: 0.9740267, g: 1, b: 0.07075471, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -682,8 +682,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 48
-  m_fontSizeBase: 48
+  m_fontSize: 90
+  m_fontSizeBase: 90
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -769,7 +769,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 740.0009, y: 379.99997}
+  m_AnchoredPosition: {x: 810, y: 368}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &345660412
@@ -792,10 +792,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 01:23.456
+  m_text: 01:23.45
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8d8b417d536cb418b8e7906161752e2a, type: 2}
+  m_sharedMaterial: {fileID: 3228842480563867833, guid: 8d8b417d536cb418b8e7906161752e2a, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -819,8 +819,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 45
+  m_fontSizeBase: 45
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -918,9 +918,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.34651163
+    y: 0.110568374
     width: 1
-    height: 0.30697674
+    height: 0.77886325
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -1984,9 +1984,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.34651163
+    y: 0.110568374
     width: 1
-    height: 0.30697674
+    height: 0.77886325
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -2677,9 +2677,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.34651163
+    y: 0.110568374
     width: 1
-    height: 0.30697674
+    height: 0.77886325
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -4009,7 +4009,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 100, y: -50}
+  m_AnchoredPosition: {x: 89, y: -66}
   m_SizeDelta: {x: 200, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2083546616
@@ -4034,8 +4034,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 1
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: bbf93742afe97a4419622f4a2762fac9, type: 2}
-  m_sharedMaterial: {fileID: 551201626981382498, guid: bbf93742afe97a4419622f4a2762fac9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8d8b417d536cb418b8e7906161752e2a, type: 2}
+  m_sharedMaterial: {fileID: 3228842480563867833, guid: 8d8b417d536cb418b8e7906161752e2a, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
