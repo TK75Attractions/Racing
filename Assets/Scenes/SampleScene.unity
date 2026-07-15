@@ -278,9 +278,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.36555076
+    y: 0.27683246
     width: 1
-    height: 0.2688985
+    height: 0.44633508
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -483,6 +483,7 @@ GameObject:
   - component: {fileID: 165928642}
   - component: {fileID: 165928644}
   - component: {fileID: 165928643}
+  - component: {fileID: 215000001}
   m_Layer: 0
   m_Name: GManager
   m_TagString: Untagged
@@ -567,6 +568,21 @@ MonoBehaviour:
   time: 0
   state: 0
   NumberSprites: []
+--- !u!114 &215000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 165928641}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d1c9a90cb8f4fcaa5383f744cdf8d13, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RaceDirectionCameraController
+  cameraDistance: 5
+  cameraHeight: 2
+  rotationSmoothTime: 0.15
 --- !u!1 &232038100
 GameObject:
   m_ObjectHideFlags: 0
@@ -1096,9 +1112,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.36555076
+    y: 0.27683246
     width: 1
-    height: 0.2688985
+    height: 0.44633508
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -1637,12 +1653,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineFollow
   TrackerSettings:
-    BindingMode: 3
-    PositionDamping: {x: 1, y: 1, z: 1}
+    BindingMode: 4
+    PositionDamping: {x: 0, y: 0, z: 0}
     AngularDampingMode: 0
-    RotationDamping: {x: 1, y: 1, z: 1}
-    QuaternionDamping: 1
-  FollowOffset: {x: 0, y: 2, z: -3}
+    RotationDamping: {x: 0, y: 0, z: 0}
+    QuaternionDamping: 0
+  FollowOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -3435,9 +3451,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.36555076
+    y: 0.27683246
     width: 1
-    height: 0.2688985
+    height: 0.44633508
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -4971,9 +4987,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.36555076
+    y: 0.27683246
     width: 1
-    height: 0.2688985
+    height: 0.44633508
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -5908,13 +5924,7 @@ MonoBehaviour:
   - position: {x: -240, y: 0}
     curve: 0
     width: 40
-  - position: {x: 180, y: 0}
-    curve: 0
-    width: 40
-  - position: {x: 170, y: 80}
-    curve: 0
-    width: 40
-  - position: {x: 170, y: 80}
+  - position: {x: 170, y: 0}
     curve: 0
     width: 40
   - position: {x: 170, y: 270}

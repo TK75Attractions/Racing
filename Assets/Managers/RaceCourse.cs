@@ -137,6 +137,52 @@ public class RaceCourse : MonoBehaviour
         return new Vector3(nearest.x, worldPosition.y, nearest.y);
     }
 
+    /// <summary>
+    /// 指定位置に最も近いセンターライン区間の、レース進行方向を取得します。
+    /// waypoint の配列順をレース進行方向として扱います。
+    /// </summary>
+    public bool TryGetNearestCenterLineDirection(Vector3 worldPosition, out Vector3 direction)
+    {
+        direction = Vector3.zero;
+
+        if (waypoints == null || waypoints.Length < 2)
+        {
+            return false;
+        }
+
+        EnsureCache();
+        if (cachedCenterPath.Count < 2)
+        {
+            return false;
+        }
+
+        Vector2 point = ToXZ(worldPosition);
+        float nearestDistanceSqr = float.PositiveInfinity;
+
+        for (int index = 1; index < cachedCenterPath.Count; index++)
+        {
+            Vector2 start = ToXZ(cachedCenterPath[index - 1]);
+            Vector2 end = ToXZ(cachedCenterPath[index]);
+            Vector2 segment = end - start;
+            if (segment.sqrMagnitude <= Mathf.Epsilon)
+            {
+                continue;
+            }
+
+            Vector2 nearestPoint = ClosestPointOnSegment2D(point, start, end);
+            float distanceSqr = (nearestPoint - point).sqrMagnitude;
+            if (distanceSqr >= nearestDistanceSqr)
+            {
+                continue;
+            }
+
+            nearestDistanceSqr = distanceSqr;
+            direction = new Vector3(segment.x, 0f, segment.y).normalized;
+        }
+
+        return direction.sqrMagnitude > Mathf.Epsilon;
+    }
+
     public void RebuildCache()
     {
         cachedCenterPath.Clear();

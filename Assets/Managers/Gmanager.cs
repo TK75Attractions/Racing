@@ -36,6 +36,7 @@ public class Gmanager : MonoBehaviour
     [SerializeField] private int playerPosition = 1;
     [SerializeField] private float speedUnitMultiplier = 3.6f;
 
+    private RaceDirectionCameraController raceDirectionCamera;
     private float resultReturnHoldTimer = 0f;
     private bool waitForPedalReleaseBeforeTitleStart = false;
     private RaceResultRecord latestResult;
@@ -88,6 +89,12 @@ public class Gmanager : MonoBehaviour
         IManager.Init();
 
         VCamera = transform.parent.Find("VCamera").GetComponent<CinemachineCamera>();
+        raceDirectionCamera = GetComponent<RaceDirectionCameraController>();
+        if (raceDirectionCamera == null)
+        {
+            raceDirectionCamera = gameObject.AddComponent<RaceDirectionCameraController>();
+        }
+        raceDirectionCamera.SetCamera(VCamera);
         ResolveLapManager();
         onPlayUIManager = new();
         onPlayUIManager.Init(transform.parent.Find("MainCanvas").Find("OnPlay").transform);
@@ -154,7 +161,9 @@ public class Gmanager : MonoBehaviour
         car.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
         playerRigidbody = car.GetComponent<Rigidbody>();
         RegisterPlayerCar(spawnPoint);
-        VCamera.Follow = car.transform;
+        raceDirectionCamera.SetCar(car.transform);
+        VCamera.Follow = raceDirectionCamera.CameraTarget;
+        VCamera.LookAt = raceDirectionCamera.LookTarget;
         time = 0f;
         resultReturnHoldTimer = 0f;
         waitForPedalReleaseBeforeTitleStart = false;
@@ -241,6 +250,17 @@ public class Gmanager : MonoBehaviour
         {
             Destroy(car.gameObject);
             car = null;
+        }
+
+        if (raceDirectionCamera != null)
+        {
+            raceDirectionCamera.ClearCar();
+        }
+
+        if (VCamera != null)
+        {
+            VCamera.Follow = null;
+            VCamera.LookAt = null;
         }
 
         playerRigidbody = null;
