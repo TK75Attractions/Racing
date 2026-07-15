@@ -415,9 +415,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.361167
+    y: 0.44114688
     width: 1
-    height: 0.277666
+    height: 0.11770624
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -1252,9 +1252,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.361167
+    y: 0.44114688
     width: 1
-    height: 0.277666
+    height: 0.11770624
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -3585,9 +3585,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.361167
+    y: 0.44114688
     width: 1
-    height: 0.277666
+    height: 0.11770624
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -5463,9 +5463,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.361167
+    y: 0.44114688
     width: 1
-    height: 0.277666
+    height: 0.11770624
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -6394,12 +6394,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RaceCourse
   waypoints:
-  - position: {x: 0, y: 270}
+  - position: {x: 7.56, y: 282.4}
     curve: 0
-    width: 50
+    width: 62
   - position: {x: -241.8, y: 296.7}
     curve: 0
-    width: 54.9
+    width: 58.6
   - position: {x: -239, y: 10.84}
     curve: 0
     width: 59.7
@@ -6409,7 +6409,7 @@ MonoBehaviour:
   - position: {x: 170, y: 90}
     curve: 0
     width: 60
-  - position: {x: -20, y: 90}
+  - position: {x: -16.1, y: 85.2}
     curve: 0
     width: 60
   waypointColor: {r: 0, g: 1, b: 1, a: 1}
