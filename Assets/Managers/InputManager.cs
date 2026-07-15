@@ -214,7 +214,7 @@ public class InputManager : MonoBehaviour
                         {
                             if (float.TryParse(parts[0], out float peddalValue))
                             {
-                                peddale = peddalValue;
+                                peddale = peddalValue / 2;
                             }
 
                             if (float.TryParse(parts[1], out float handleValue))
