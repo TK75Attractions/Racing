@@ -91,10 +91,10 @@ public class Gmanager : MonoBehaviour
 
         VCamera = transform.parent.Find("VCamera").GetComponent<CinemachineCamera>();
         ResolveLapManager();
-        onPlayUIManager = new();
+        if (onPlayUIManager == null) onPlayUIManager = new();
         onPlayUIManager.Init(transform.parent.Find("MainCanvas").Find("OnPlay").transform);
 
-        resultUIManager = new();
+        if (resultUIManager == null) resultUIManager = new();
         resultUIManager.Init(transform.parent.Find("MainCanvas").Find("Result").transform);
 
         SetOnPlayUIActive(false);

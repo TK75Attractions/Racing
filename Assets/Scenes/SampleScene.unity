@@ -574,8 +574,10 @@ MonoBehaviour:
       currentLap: 1
     time:
       root: {fileID: 0}
-      totalTimeText: {fileID: 0}
+      totalTimeText: {fileID: 345660412}
+      totalTimeTextMillis: {fileID: 1158423607}
       lapTimeText: {fileID: 0}
+      lapTimeTextMillis: {fileID: 0}
       totalTime: 0
       lapTime: 0
     speed:
@@ -2856,7 +2858,7 @@ GameObject:
   - component: {fileID: 1158423608}
   - component: {fileID: 1158423607}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Txt2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
