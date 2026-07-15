@@ -82,7 +82,6 @@ public class UITime
     {
         int totalMilliseconds = Mathf.FloorToInt(Mathf.Max(0f, seconds) * 1000f);
         int milliseconds = totalMilliseconds % 100;
-        Debug.Log($"{milliseconds:00}");
         return $".{milliseconds:00}";
     }
 }
