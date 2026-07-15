@@ -64,6 +64,7 @@ public class OnPlayUIManager
 
     private void SetTime(float totalSeconds, float lapSeconds)
     {
+        Debug.Log("SetTime");
         time.SetTotalTime(totalSeconds);
         time.SetLapTime(lapSeconds);
     }
