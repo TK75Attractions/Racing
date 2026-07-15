@@ -222,7 +222,6 @@ public class InputManager : MonoBehaviour
                             {
                                 handle = handleValue / 15;
                             }
-                            Debug.Log($"Oh. {peddale}, {handle}");
                         }
                     }
                     catch (Exception e)
@@ -259,7 +258,7 @@ public class InputManager : MonoBehaviour
                 try
                 {
                     string line = serialPort.ReadLine();
-                    Debug.Log(line);
+                    // Debug.Log(line);
                     if (!string.IsNullOrEmpty(line)) serialQueue.Enqueue(line.Trim());
                 }
                 catch (System.TimeoutException)

@@ -73,8 +73,7 @@ public class RaceCourse : MonoBehaviour
         }
 
         Gizmos.color = pathColor;
-        DrawPolyline(cachedInnerPath);
-        DrawPolyline(cachedOuterPath);
+        DrawCourseBand(cachedInnerPath, cachedOuterPath);
 
         if (drawCenterLine)
         {
@@ -90,12 +89,35 @@ public class RaceCourse : MonoBehaviour
         }
 
         EnsureCache();
-        if (cachedCoursePolygon.Count < 3)
+        if (cachedCenterPath.Count < 2 || cachedWidthPath.Count != cachedCenterPath.Count)
         {
             return false;
         }
 
-        return IsPointInPolygon(p, cachedCoursePolygon);
+        for (int i = 1; i < cachedCenterPath.Count; i++)
+        {
+            Vector2 a = ToXZ(cachedCenterPath[i - 1]);
+            Vector2 b = ToXZ(cachedCenterPath[i]);
+            Vector2 nearestPoint = ClosestPointOnSegment2D(p, a, b);
+            float distanceSqr = (nearestPoint - p).sqrMagnitude;
+
+            float segmentLengthSqr = (b - a).sqrMagnitude;
+            if (segmentLengthSqr <= Mathf.Epsilon)
+            {
+                continue;
+            }
+
+            float t = Vector2.Dot(nearestPoint - a, b - a) / segmentLengthSqr;
+            float width = Mathf.Lerp(cachedWidthPath[i - 1], cachedWidthPath[i], Mathf.Clamp01(t));
+            float halfWidth = Mathf.Max(0f, width) * 0.5f;
+
+            if (distanceSqr <= (halfWidth * halfWidth) + Mathf.Epsilon)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public Vector2 GetNearestPointOnCenterLine(Vector2 p)
@@ -413,6 +435,23 @@ public class RaceCourse : MonoBehaviour
         for (int i = 1; i < points.Count; i++)
         {
             Gizmos.DrawLine(points[i - 1], points[i]);
+        }
+    }
+
+    private static void DrawCourseBand(List<Vector3> innerPath, List<Vector3> outerPath)
+    {
+        int pointCount = Mathf.Min(innerPath.Count, outerPath.Count);
+        if (pointCount < 2)
+        {
+            return;
+        }
+
+        DrawPolyline(innerPath);
+        DrawPolyline(outerPath);
+
+        for (int i = 0; i < pointCount; i++)
+        {
+            Gizmos.DrawLine(innerPath[i], outerPath[i]);
         }
     }
 
