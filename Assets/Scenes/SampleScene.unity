@@ -415,9 +415,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.1554878
+    y: 0.361167
     width: 1
-    height: 0.6890244
+    height: 0.277666
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -1252,9 +1252,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.1554878
+    y: 0.361167
     width: 1
-    height: 0.6890244
+    height: 0.277666
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -3585,9 +3585,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.1554878
+    y: 0.361167
     width: 1
-    height: 0.6890244
+    height: 0.277666
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -5463,9 +5463,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.1554878
+    y: 0.361167
     width: 1
-    height: 0.6890244
+    height: 0.277666
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -6397,15 +6397,15 @@ MonoBehaviour:
   - position: {x: 0, y: 270}
     curve: 0
     width: 50
-  - position: {x: -240, y: 270}
+  - position: {x: -241.8, y: 296.7}
     curve: 0
-    width: 40
-  - position: {x: -240, y: 0}
+    width: 54.9
+  - position: {x: -239, y: 10.84}
     curve: 0
-    width: 40
-  - position: {x: 170, y: 0}
+    width: 59.7
+  - position: {x: 172, y: 16.95}
     curve: 0
-    width: 40
+    width: 60.2
   - position: {x: 170, y: 90}
     curve: 0
     width: 60
