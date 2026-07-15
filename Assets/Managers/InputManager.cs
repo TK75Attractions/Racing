@@ -215,13 +215,14 @@ public class InputManager : MonoBehaviour
                         {
                             if (float.TryParse(parts[0], out float peddalValue))
                             {
-                                peddale = peddalValue / 2;
+                                peddale = peddalValue;
                             }
 
                             if (float.TryParse(parts[1], out float handleValue))
                             {
                                 handle = handleValue / 3;
                             }
+                            Debug.Log($"Oh. {peddale}, {handle}");
                         }
                     }
                     catch (Exception e)
