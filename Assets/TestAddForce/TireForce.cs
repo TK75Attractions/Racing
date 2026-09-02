@@ -3,73 +3,135 @@ using UnityEngine;
 [RequireComponent(typeof(GroundCheck))]
 public class TireForce : MonoBehaviour
 {
-    [SerializeField] private float Grip;
-    private float k = 10f;
-    private float friction = 100f;
-    [SerializeField] private float sideVel;
-    [SerializeField] private bool isGrounded;
+    [Header("Wheel Role")]
+    [Tooltip("前輪の場合に有効。前輪は操舵輪かつ駆動輪として扱われます。")]
+    [SerializeField] private bool isFrontTire;
 
-    [Header("tire Setting")]
-    public bool isFrontTire;
-    public bool isDriveWheel;
+    [Header("Runtime Monitor")]
+    [SerializeField] private bool isGrounded;
+    [SerializeField] private float lateralVelocity;
+    [SerializeField] private float appliedDriveForce;
+    [SerializeField] private float appliedLateralForce;
 
     private Rigidbody carRb;
     private GroundCheck groundCheck;
+    private Quaternion initialLocalRotation;
+
+    public bool IsFrontWheel => isFrontTire;
 
     private void Awake()
     {
         groundCheck = GetComponent<GroundCheck>();
-        if (groundCheck == null)
-        {
-            groundCheck = gameObject.AddComponent<GroundCheck>();
-        }
+        initialLocalRotation = transform.localRotation;
     }
 
     public void Init(Rigidbody rb)
     {
         carRb = rb;
+
         if (groundCheck == null)
         {
             groundCheck = GetComponent<GroundCheck>();
         }
     }
 
-    public void ApplyPhysics(float h, float p, float forceMultiplier, float torqueMultiplier)
+    public void ApplyForces(
+        Vector3 vehicleForward,
+        Vector3 vehicleUp,
+        float steeringAngle,
+        float pedalInput,
+        float driveForcePerFrontWheel,
+        float corneringStiffness,
+        float maxLateralForce)
     {
-        if (carRb == null)
+        if (carRb == null || groundCheck == null)
         {
             return;
         }
 
-        if (isFrontTire)
-        {
-            transform.localRotation = Quaternion.Euler(0, h, 0);
-        }
+        UpdateVisualSteering(steeringAngle);
 
-        isGrounded = groundCheck != null && groundCheck.CheckNow();
+        isGrounded = groundCheck.CheckNow();
         if (!isGrounded)
         {
-            sideVel = 0f;
-            Grip *= 0.98f;
+            ResetMonitorValues();
             return;
         }
 
-        if (isDriveWheel && p != 0)
+        Vector3 groundNormal = groundCheck.GroundHit.normal;
+        Vector3 tireForward = GetTireForward(vehicleForward, vehicleUp, groundNormal, steeringAngle);
+        Vector3 tireRight = Vector3.Cross(groundNormal, tireForward).normalized;
+        Vector3 tirePosition = transform.position;
+        Vector3 pointVelocity = carRb.GetPointVelocity(tirePosition);
+
+        ApplyLateralForce(tirePosition, tireRight, pointVelocity, corneringStiffness, maxLateralForce);
+        ApplyFrontDriveForce(tirePosition, tireForward, pedalInput, driveForcePerFrontWheel);
+    }
+
+    private Vector3 GetTireForward(
+        Vector3 vehicleForward,
+        Vector3 vehicleUp,
+        Vector3 groundNormal,
+        float steeringAngle)
+    {
+        Vector3 forward = vehicleForward;
+        if (isFrontTire)
         {
-            Vector3 accelForce = transform.forward * p * forceMultiplier;
-            carRb.AddForceAtPosition(accelForce * Time.deltaTime, transform.position, ForceMode.Acceleration);
+            forward = Quaternion.AngleAxis(steeringAngle, vehicleUp) * forward;
         }
 
-        Vector3 sideDir = transform.right;
-        Vector3 tireWorldVelocity = carRb.GetPointVelocity(transform.position);
-        sideVel = Vector3.Dot(tireWorldVelocity, sideDir);
+        forward = Vector3.ProjectOnPlane(forward, groundNormal);
+        return forward.sqrMagnitude > 0.0001f ? forward.normalized : vehicleForward;
+    }
 
-        float dt = Time.fixedDeltaTime;
-        Grip = (Grip + sideVel * dt) * 0.98f;
-        Grip = Mathf.Clamp(Grip, -1f, 1f);
+    private void ApplyLateralForce(
+        Vector3 tirePosition,
+        Vector3 tireRight,
+        Vector3 pointVelocity,
+        float corneringStiffness,
+        float maxLateralForce)
+    {
+        lateralVelocity = Vector3.Dot(pointVelocity, tireRight);
+        appliedLateralForce = Mathf.Clamp(
+            -lateralVelocity * corneringStiffness,
+            -maxLateralForce,
+            maxLateralForce);
 
-        float sideForceAmount = -(sideVel * friction + Grip * k);
-        Vector3 finalSideForce = sideForceAmount * sideDir;
-        carRb.AddForceAtPosition(finalSideForce * Time.deltaTime, transform.position, ForceMode.Acceleration);
+        carRb.AddForceAtPosition(
+            tireRight * appliedLateralForce,
+            tirePosition,
+            ForceMode.Force);
+    }
+
+    private void ApplyFrontDriveForce(
+        Vector3 tirePosition,
+        Vector3 tireForward,
+        float pedalInput,
+        float driveForcePerFrontWheel)
+    {
+        if (!isFrontTire)
+        {
+            appliedDriveForce = 0f;
+            return;
+        }
+
+        appliedDriveForce = pedalInput * driveForcePerFrontWheel;
+        carRb.AddForceAtPosition(
+            tireForward * appliedDriveForce,
+            tirePosition,
+            ForceMode.Force);
+    }
+
+    private void UpdateVisualSteering(float steeringAngle)
+    {
+        float visualAngle = isFrontTire ? steeringAngle : 0f;
+        transform.localRotation = initialLocalRotation * Quaternion.Euler(0f, visualAngle, 0f);
+    }
+
+    private void ResetMonitorValues()
+    {
+        lateralVelocity = 0f;
+        appliedDriveForce = 0f;
+        appliedLateralForce = 0f;
     }
 }

@@ -362,14 +362,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8643782117401984001}
-  - component: {fileID: 8826694138081430856}
-  - component: {fileID: 5866382444031873944}
-  - component: {fileID: 5969105043176961526}
   - component: {fileID: 2334085153491683027}
   - component: {fileID: 5150326160786460359}
   - component: {fileID: 703174277945583282}
   - component: {fileID: 811489908772547292}
-  - component: {fileID: 5474046674919140654}
   - component: {fileID: 6124809731544772365}
   m_Layer: 8
   m_Name: car2
@@ -401,84 +397,6 @@ Transform:
   - {fileID: 7905092288006577064}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &8826694138081430856
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9218658769128752567}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &5866382444031873944
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9218658769128752567}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &5969105043176961526
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9218658769128752567}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &2334085153491683027
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -518,11 +436,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8e9652b857d7ff498ef88da92870ca9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DebugMover
-  forceMultiplier: 700
-  torqueMultiplier: 15
+  driveForcePerFrontWheel: 15
+  velocityResistance: 0.6
+  steeringInputMultiplier: 1
+  maxSteeringAngle: 30
+  steeringFadeStartSpeed: 10
+  steeringFadeFullSpeed: 30
+  highSpeedSteeringMultiplier: 0.35
+  frontCorneringStiffness: 10
+  rearCorneringStiffness: 12
+  maxLateralForcePerTire: 15
   tires: []
-  h: 0
-  p: 0
+  speedMetersPerSecond: 0
+  rawPedalInput: 0
+  appliedPedalInput: 0
+  rawSteeringInput: 0
+  appliedSteeringAngle: 0
+  resistanceForce: 0
 --- !u!114 &703174277945583282
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -553,26 +483,6 @@ MonoBehaviour:
   minFreq: 50
   maxFreq: 2000
   masterVolume: 0.2
---- !u!114 &5474046674919140654
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9218658769128752567}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7df069c895e3d164b9a3d7eba84a756b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CarControl
-  tireType: 0
-  tirePrefabs:
-  - {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
-  - {fileID: 4602108313797873873, guid: 26f37ccdbdf58cf4f838ab1bf83edec9, type: 3}
-  - {fileID: 6674343380698506526, guid: 7d6723c9b137bbc4dbd4ed0fea5385d0, type: 3}
-  - {fileID: 2613787178322683345, guid: 2b254f606f4e45e43b35471ef86bdd2f, type: 3}
-  - {fileID: 6740996328167982889, guid: 5d54196886ae0674c91275ad7de4d5db, type: 3}
-  - {fileID: 446939475910041775, guid: 0d9064a3e9128f64b8d182d8b70ce3d9, type: 3}
 --- !u!114 &6124809731544772365
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -651,6 +561,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7448039276159094880, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -721,13 +635,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8330463576516444767, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
-      propertyPath: isFrontTire
+    - target: {fileID: 7448039276159094880, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8330463576516444767, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
-      propertyPath: isDriveWheel
-      value: 1
+      propertyPath: isFrontTire
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -799,13 +713,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8330463576516444767, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
-      propertyPath: isFrontTire
+    - target: {fileID: 7448039276159094880, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8330463576516444767, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
-      propertyPath: isDriveWheel
-      value: 1
+      propertyPath: isFrontTire
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -961,6 +875,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6568332132726921936, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7448039276159094880, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

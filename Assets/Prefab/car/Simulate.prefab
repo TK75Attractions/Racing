@@ -152,8 +152,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7ce84c93c3def9149aeb22cba131d86a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DebugMover
-  Grip: 0
-  sideVel: 0
+  m_EditorClassIdentifier: Assembly-CSharp::TireForce
   isFrontTire: 0
-  isDriveWheel: 0
+  isGrounded: 0
+  lateralVelocity: 0
+  appliedDriveForce: 0
+  appliedLateralForce: 0

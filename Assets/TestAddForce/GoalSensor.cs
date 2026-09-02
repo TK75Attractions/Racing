@@ -33,9 +33,11 @@ public class GoalSensor : MonoBehaviour
             return;
         }
 
-        lapCount++;
-        Debug.Log($"Lap {lapCount} passed");
-        lapManager.OnCarPassGoal(rb, transform);
+        if (lapManager.OnCarPassGoal(rb, transform))
+        {
+            lapCount++;
+            Debug.Log($"Lap {lapCount} passed");
+        }
     }
 
     private bool TryGetTargetRigidbody(Collider other, out Rigidbody rb)
@@ -47,7 +49,6 @@ public class GoalSensor : MonoBehaviour
         }
 
         GameObject target = rb.gameObject;
-        //触れたオブジェクトを直接見るreturn target.CompareTag(TargetTag) && target.layer == targetLayer;
-        return other.CompareTag(TargetTag) && other.gameObject.layer == targetLayer;
+        return target.CompareTag(TargetTag) && target.layer == targetLayer;
     }
 }

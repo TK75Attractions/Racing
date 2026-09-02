@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1830044294073143383}
-  - component: {fileID: 4217583568693609536}
   - component: {fileID: 6898322346834685038}
   - component: {fileID: 6668340771526565744}
   m_Layer: 8
@@ -37,29 +36,6 @@ Transform:
   - {fileID: 6050796153068297176}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4217583568693609536
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1988557966112957628}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7df069c895e3d164b9a3d7eba84a756b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CarControl
-  simulateTargetPrefab: {fileID: 7421750364715425308, guid: 1d8d39482f58e164383050fe7c66b3ec, type: 3}
-  simulateTarget: {fileID: 1830044294073143383}
-  rbSimulate: {fileID: 6898322346834685038}
-  tireType: 0
-  tirePrefabs:
-  - {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
-  - {fileID: 4602108313797873873, guid: 26f37ccdbdf58cf4f838ab1bf83edec9, type: 3}
-  - {fileID: 6674343380698506526, guid: 7d6723c9b137bbc4dbd4ed0fea5385d0, type: 3}
-  - {fileID: 2613787178322683345, guid: 2b254f606f4e45e43b35471ef86bdd2f, type: 3}
-  - {fileID: 6740996328167982889, guid: 5d54196886ae0674c91275ad7de4d5db, type: 3}
-  - {fileID: 446939475910041775, guid: 0d9064a3e9128f64b8d182d8b70ce3d9, type: 3}
 --- !u!54 &6898322346834685038
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -98,11 +74,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7ce84c93c3def9149aeb22cba131d86a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DebugMover
-  Grip: 0
-  sideVel: 0
+  m_EditorClassIdentifier: Assembly-CSharp::TireForce
   isFrontTire: 0
-  isDriveWheel: 0
+  isGrounded: 0
+  lateralVelocity: 0
+  appliedDriveForce: 0
+  appliedLateralForce: 0
 --- !u!1 &2544251713487819542
 GameObject:
   m_ObjectHideFlags: 0

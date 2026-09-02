@@ -24,7 +24,7 @@ public class Gmanager : MonoBehaviour
     public static Gmanager Control = null;
     [SerializeField] public InputManager IManager = null;
     public CinemachineCamera VCamera;
-    public CarControl car = null;
+    public GameObject car = null;
     public GameObject carPrefab;
     [SerializeField] private CheckpointSensor startCheckpoint;
     [SerializeField] private int startCheckpointIndex = 0;
@@ -128,11 +128,11 @@ public class Gmanager : MonoBehaviour
             }
         }
 
-        // 車が存在する場合は車の更新処理を実行
+        // 車が存在する場合はレース時間とUIを更新する。
+        // 車両の物理更新は DebugMover / TireForce の FixedUpdate が担当する。
         if (car != null && state == State.Game)
         {
             time += dt;
-            car.UpdateCar(dt);
             UpdateOnPlayUI();
         }
         // デバッグ: スペースキー押下で test がコース内にあるかチェックしてログ出力（エディタ実行向け）
@@ -158,9 +158,7 @@ public class Gmanager : MonoBehaviour
         Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
         Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
 
-        car = Instantiate(carPrefab, spawnPosition, spawnRotation).GetComponent<CarControl>();
-        car.Init(spawnPosition);
-        car.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
+        car = Instantiate(carPrefab, spawnPosition, spawnRotation);
         playerRigidbody = car.GetComponent<Rigidbody>();
         RegisterPlayerCar(spawnPoint);
         raceDirectionCamera.SetCar(car.transform);
@@ -252,7 +250,7 @@ public class Gmanager : MonoBehaviour
 
         if (car != null)
         {
-            Destroy(car.gameObject);
+            Destroy(car);
             car = null;
         }
 

@@ -13,6 +13,7 @@ public class LapManager : MonoBehaviour
         public float totalRaceTime = 0f;
         public int nextCheckpointIndex = 0;
         public int lastCheckpointIndex = -1;
+        public bool allCheckpointsPassed = false;
         public float offCourseTimer = 0f;
         public bool isOffCourse = false;
 
@@ -24,6 +25,7 @@ public class LapManager : MonoBehaviour
         [System.NonSerialized] public Quaternion lastValidRotation = Quaternion.identity;
         [System.NonSerialized] public int respawnNextCheckpointIndex = 0;
         [System.NonSerialized] public int respawnLastCheckpointIndex = -1;
+        [System.NonSerialized] public bool respawnAllCheckpointsPassed = false;
     }
 
     [Header("Course")]
@@ -86,6 +88,11 @@ public class LapManager : MonoBehaviour
         int checkpointIndex = checkpoint.CheckpointIndex;
         int checkpointCount = GetCheckpointCount();
 
+        if (data.allCheckpointsPassed)
+        {
+            return;
+        }
+
         if (checkpointIndex == data.lastCheckpointIndex)
         {
             return;
@@ -98,15 +105,23 @@ public class LapManager : MonoBehaviour
         }
 
         data.lastCheckpointIndex = checkpointIndex;
-        data.nextCheckpointIndex = Mathf.Min(checkpointIndex + 1, checkpointCount);
+        data.allCheckpointsPassed = checkpointIndex == checkpointCount - 1;
+        data.nextCheckpointIndex = data.allCheckpointsPassed ? 0 : checkpointIndex + 1;
         SetRespawnPoint(data, checkpoint.RespawnPoint);
 
-        Debug.Log($"{data.carName} checkpoint {checkpointIndex} passed");
+        if (data.allCheckpointsPassed)
+        {
+            Debug.Log($"{data.carName} all checkpoints passed. Waiting for goal");
+        }
+        else
+        {
+            Debug.Log($"{data.carName} checkpoint {checkpointIndex} passed. Next: {data.nextCheckpointIndex}");
+        }
     }
 
-    public void OnCarPassGoal(Rigidbody rb)
+    public bool OnCarPassGoal(Rigidbody rb)
     {
-        OnCarPassGoal(rb, null);
+        return OnCarPassGoal(rb, null);
     }
 
     public void RegisterCar(Rigidbody rb, Transform startTransform = null)
@@ -126,11 +141,11 @@ public class LapManager : MonoBehaviour
         SetRespawnPoint(data, startTransform);
     }
 
-    public void OnCarPassGoal(Rigidbody rb, Transform goalTransform)
+    public bool OnCarPassGoal(Rigidbody rb, Transform goalTransform)
     {
         if (rb == null)
         {
-            return;
+            return false;
         }
 
         CarTimeData data = GetOrCreateCarData(rb);
@@ -143,13 +158,13 @@ public class LapManager : MonoBehaviour
             ResetCheckpointProgress(data);
             SetRespawnPoint(data, goalTransform);
             Debug.Log($"{data.carName} joined race");
-            return;
+            return false;
         }
 
         if (!CanCompleteLap(data))
         {
             Debug.Log($"{data.carName} goal ignored. Checkpoint {data.nextCheckpointIndex}/{GetCheckpointCount()}");
-            return;
+            return false;
         }
 
         data.lapCount++;
@@ -171,6 +186,7 @@ public class LapManager : MonoBehaviour
         data.currentLapTime = 0f;
         ResetCheckpointProgress(data);
         SetRespawnPoint(data, goalTransform);
+        return true;
     }
 
     public CarTimeData GetCarData(Rigidbody rb)
@@ -265,7 +281,7 @@ public class LapManager : MonoBehaviour
             return allowLapWithoutCheckpoints;
         }
 
-        return data.nextCheckpointIndex >= checkpointCount;
+        return data.allCheckpointsPassed;
     }
 
     private int GetCheckpointCount()
@@ -277,6 +293,7 @@ public class LapManager : MonoBehaviour
     {
         data.nextCheckpointIndex = 0;
         data.lastCheckpointIndex = -1;
+        data.allCheckpointsPassed = false;
     }
 
     private void SetRespawnPoint(CarTimeData data, Transform respawnTransform)
@@ -292,12 +309,14 @@ public class LapManager : MonoBehaviour
         data.hasValidRacePosition = true;
         data.respawnNextCheckpointIndex = data.nextCheckpointIndex;
         data.respawnLastCheckpointIndex = data.lastCheckpointIndex;
+        data.respawnAllCheckpointsPassed = data.allCheckpointsPassed;
     }
 
     private void RestoreCheckpointProgressFromRespawnPoint(CarTimeData data)
     {
         data.nextCheckpointIndex = data.respawnNextCheckpointIndex;
         data.lastCheckpointIndex = data.respawnLastCheckpointIndex;
+        data.allCheckpointsPassed = data.respawnAllCheckpointsPassed;
     }
 
     private RaceResultRecord CreateResultRecord(CarTimeData data, float finalLapTime)
