@@ -585,6 +585,14 @@ MonoBehaviour:
       root: {fileID: 0}
       speedVelocity: 0
       speedValue: 0
+  screenTransitionController: {fileID: 456823244}
+  titleText: RACING
+  titlePromptText: PRESS THE PEDAL TO START
+  titleReleasePromptText: RELEASE THE PEDAL
+  titleStartPedalThreshold: 0.8
+  titlePedalReleaseSeconds: 0.25
+  titleStartHoldSeconds: 0.25
+  cameraBlendSeconds: 0.65
   resultReturnPedalThreshold: 0.8
   resultReturnHoldSeconds: 1
   resultReturnInputDelaySeconds: 3
@@ -1533,6 +1541,7 @@ GameObject:
   - component: {fileID: 456823243}
   - component: {fileID: 456823242}
   - component: {fileID: 456823241}
+  - component: {fileID: 456823244}
   m_Layer: 5
   m_Name: MainCanvas
   m_TagString: Untagged
@@ -1625,6 +1634,20 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &456823244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 456823239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a4da6fd468b10647b828c4d0dec0980, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenTransitionController
+  fadeOutSeconds: 0.25
+  fadeInSeconds: 0.35
 --- !u!1 &490636800
 GameObject:
   m_ObjectHideFlags: 0

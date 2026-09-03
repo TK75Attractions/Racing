@@ -40,6 +40,11 @@ public class GoalSensor : MonoBehaviour
         }
     }
 
+    public void ResetCounter()
+    {
+        lapCount = 0;
+    }
+
     private bool TryGetTargetRigidbody(Collider other, out Rigidbody rb)
     {
         rb = other.attachedRigidbody;

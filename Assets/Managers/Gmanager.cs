@@ -1,4 +1,4 @@
-using Microsoft.Unity.VisualStudio.Editor;
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
@@ -31,6 +31,14 @@ public class Gmanager : MonoBehaviour
     [SerializeField] private LapManager lapManager;
     [SerializeField] private OnPlayUIManager onPlayUIManager;
     [SerializeField] private ResultUIManager resultUIManager;
+    [SerializeField] private ScreenTransitionController screenTransitionController;
+    [SerializeField] private string titleText = "RACING";
+    [SerializeField] private string titlePromptText = "PRESS THE PEDAL TO START";
+    [SerializeField] private string titleReleasePromptText = "RELEASE THE PEDAL";
+    [SerializeField] private float titleStartPedalThreshold = 0.8f;
+    [SerializeField] private float titlePedalReleaseSeconds = 0.25f;
+    [SerializeField] private float titleStartHoldSeconds = 0.25f;
+    [SerializeField] private float cameraBlendSeconds = 0.65f;
     [SerializeField] private float resultReturnPedalThreshold = 0.8f;
     [SerializeField] private float resultReturnHoldSeconds = 1f;
     [SerializeField] private float resultReturnInputDelaySeconds = 3f;
@@ -40,9 +48,15 @@ public class Gmanager : MonoBehaviour
     private RaceDirectionCameraController raceDirectionCamera;
     private float resultReturnHoldTimer = 0f;
     private float resultReturnInputDelayTimer = 0f;
-    private bool waitForPedalReleaseBeforeTitleStart = false;
+    private float titlePedalReleaseTimer;
+    private float titleStartHoldTimer;
+    private bool titleStartArmed;
     private RaceResultRecord latestResult;
     private Rigidbody playerRigidbody;
+    private CinemachineCamera titleCamera;
+    private Vector3 titleCameraPosition;
+    private Quaternion titleCameraRotation;
+    private bool hasTitleCameraPose;
 
     public RaceResultRecord LatestResult => latestResult;
 
@@ -91,6 +105,8 @@ public class Gmanager : MonoBehaviour
         IManager.Init();
 
         VCamera = transform.parent.Find("VCamera").GetComponent<CinemachineCamera>();
+        CaptureTitleCameraPose();
+        InitializeCameraTransition();
         raceDirectionCamera = GetComponent<RaceDirectionCameraController>();
         if (raceDirectionCamera == null)
         {
@@ -98,13 +114,33 @@ public class Gmanager : MonoBehaviour
         }
         raceDirectionCamera.SetCamera(VCamera);
         ResolveLapManager();
+        lapManager?.ResetRace();
+        Transform mainCanvas = transform.parent.Find("MainCanvas");
+        if (screenTransitionController == null)
+        {
+            screenTransitionController = mainCanvas.GetComponent<ScreenTransitionController>();
+        }
+
+        if (screenTransitionController == null)
+        {
+            screenTransitionController = mainCanvas.gameObject.AddComponent<ScreenTransitionController>();
+        }
+
+        screenTransitionController.Initialize(
+            mainCanvas.Find("Title"),
+            mainCanvas.Find("OnPlay"),
+            mainCanvas.Find("Result"),
+            titleText,
+            titlePromptText);
         if (onPlayUIManager == null) onPlayUIManager = new();
-        onPlayUIManager.Init(transform.parent.Find("MainCanvas").Find("OnPlay").transform);
+        onPlayUIManager.Init(mainCanvas.Find("OnPlay"));
 
         if (resultUIManager == null) resultUIManager = new();
-        resultUIManager.Init(transform.parent.Find("MainCanvas").Find("Result").transform);
+        resultUIManager.Init(mainCanvas.Find("Result"));
 
-        SetOnPlayUIActive(false);
+        screenTransitionController.ApplyStateImmediate(State.Title);
+        SwitchCameraForState(State.Title);
+        ResetTitleStartInputGate();
     }
 
 
@@ -118,11 +154,12 @@ public class Gmanager : MonoBehaviour
         if (IManager != null)
         {
             IManager.UpdateInput(dt);
-            if (state == State.Title)
+            bool canHandleStateInput = !IsScreenTransitioning();
+            if (canHandleStateInput && state == State.Title)
             {
-                UpdateTitleStartInput();
+                UpdateTitleStartInput(dt);
             }
-            else if (state == State.Result)
+            else if (canHandleStateInput && state == State.Result)
             {
                 UpdateResultReturnInput(dt);
             }
@@ -149,29 +186,43 @@ public class Gmanager : MonoBehaviour
     // ゲーム開始処理: 車を生成して初期化し、カメラ追従を設定、ゲーム状態を Game に遷移させる
     public void StartGame()
     {
-        if (state != State.Title)
+        if (state != State.Title || IsScreenTransitioning())
         {
             return;
         }
 
+        titlePedalReleaseTimer = 0f;
+        titleStartHoldTimer = 0f;
+        TransitionTo(State.Game, StartGameWhenScreenCovered, CompleteGameStart);
+    }
+
+    private void StartGameWhenScreenCovered()
+    {
         Transform spawnPoint = GetStartPoint();
         Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
         Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
 
+        lapManager?.ResetRace();
         car = Instantiate(carPrefab, spawnPosition, spawnRotation);
         playerRigidbody = car.GetComponent<Rigidbody>();
         RegisterPlayerCar(spawnPoint);
+        lapManager?.PauseRace();
         raceDirectionCamera.SetCar(car.transform);
         VCamera.Follow = raceDirectionCamera.CameraTarget;
         VCamera.LookAt = raceDirectionCamera.LookTarget;
+        SnapRaceCameraToTarget();
+        SwitchCameraForState(State.Game);
         time = 0f;
         resultReturnHoldTimer = 0f;
         resultReturnInputDelayTimer = 0f;
-        waitForPedalReleaseBeforeTitleStart = false;
-        state = State.Game;
-        SetOnPlayUIActive(true);
         UpdateOnPlayUI();
         Debug.Log("Game Start");
+    }
+
+    private void CompleteGameStart()
+    {
+        state = State.Game;
+        lapManager?.ResumeRace();
     }
 
     private Transform GetStartPoint()
@@ -214,16 +265,33 @@ public class Gmanager : MonoBehaviour
 
     public void ShowResult(RaceResultRecord resultRecord)
     {
-        if (state != State.Game)
+        if (state != State.Game || IsScreenTransitioning())
         {
             return;
+        }
+
+        if (resultRecord == null)
+        {
+            resultRecord = new RaceResultRecord
+            {
+                carName = car != null ? car.name : string.Empty,
+                totalRaceTime = time,
+                finalLapTime = time,
+                bestLapTime = time
+            };
         }
 
         latestResult = resultRecord;
         state = State.Result;
         resultReturnHoldTimer = 0f;
         resultReturnInputDelayTimer = 0f;
-        SetOnPlayUIActive(false);
+        lapManager?.PauseRace();
+        FreezePlayerForResult();
+        TransitionTo(State.Result, () => ShowResultWhenScreenCovered(resultRecord));
+    }
+
+    private void ShowResultWhenScreenCovered(RaceResultRecord resultRecord)
+    {
         if (resultUIManager != null)
         {
             resultUIManager.ShowResults(resultRecord);
@@ -243,10 +311,19 @@ public class Gmanager : MonoBehaviour
 
     public void ResetGame()
     {
-        if (state != State.Result)
+        if (state != State.Result || IsScreenTransitioning())
         {
             return;
         }
+
+        state = State.Title;
+        TransitionTo(State.Title, ResetGameWhenScreenCovered);
+    }
+
+    private void ResetGameWhenScreenCovered()
+    {
+        Rigidbody carRigidbodyToRemove = playerRigidbody;
+        lapManager?.UnregisterCar(carRigidbodyToRemove);
 
         if (car != null)
         {
@@ -259,24 +336,20 @@ public class Gmanager : MonoBehaviour
             raceDirectionCamera.ClearCar();
         }
 
-        if (VCamera != null)
-        {
-            VCamera.Follow = null;
-            VCamera.LookAt = null;
-        }
+        RestoreTitleCameraPose();
 
         playerRigidbody = null;
+        lapManager?.ResetRace();
+        latestResult = null;
         time = 0f;
         resultReturnHoldTimer = 0f;
         resultReturnInputDelayTimer = 0f;
-        SetOnPlayUIActive(false);
         if (resultUIManager != null)
         {
             resultUIManager.HideResults();
         }
 
-        waitForPedalReleaseBeforeTitleStart = true;
-        state = State.Title;
+        ResetTitleStartInputGate();
         Debug.Log("Game Reset");
     }
 
@@ -333,14 +406,144 @@ public class Gmanager : MonoBehaviour
         return Mathf.Max(1, lapValue);
     }
 
-    private void SetOnPlayUIActive(bool isActive)
+    private bool IsScreenTransitioning()
     {
-        if (onPlayUIManager == null)
+        return screenTransitionController != null && screenTransitionController.IsTransitioning;
+    }
+
+    private void TransitionTo(
+        State targetState,
+        Action onScreenCovered,
+        Action onCompleted = null)
+    {
+        if (screenTransitionController == null)
+        {
+            onScreenCovered?.Invoke();
+            onCompleted?.Invoke();
+            return;
+        }
+
+        if (!screenTransitionController.TryTransitionTo(targetState, onScreenCovered, onCompleted))
+        {
+            Debug.LogWarning($"Screen transition to {targetState} was ignored because another transition is active.");
+        }
+    }
+
+    private void CaptureTitleCameraPose()
+    {
+        if (VCamera == null)
         {
             return;
         }
 
-        onPlayUIManager.SetActive(isActive);
+        titleCameraPosition = VCamera.transform.position;
+        titleCameraRotation = VCamera.transform.rotation;
+        hasTitleCameraPose = true;
+    }
+
+    private void InitializeCameraTransition()
+    {
+        if (VCamera == null || !hasTitleCameraPose)
+        {
+            return;
+        }
+
+        titleCamera = Instantiate(VCamera, VCamera.transform.parent);
+        titleCamera.name = "TitleCamera";
+        titleCamera.Follow = null;
+        titleCamera.LookAt = null;
+        titleCamera.ForceCameraPosition(titleCameraPosition, titleCameraRotation);
+
+        CinemachineBrain brain = FindFirstObjectByType<CinemachineBrain>();
+        if (brain != null)
+        {
+            brain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.EaseInOut,
+                Mathf.Max(0f, cameraBlendSeconds));
+        }
+    }
+
+    private void SwitchCameraForState(State targetState)
+    {
+        if (VCamera == null || titleCamera == null)
+        {
+            return;
+        }
+
+        bool useTitleCamera = targetState == State.Title;
+        titleCamera.Priority = useTitleCamera ? 20 : 10;
+        VCamera.Priority = useTitleCamera ? 10 : 20;
+    }
+
+    private void SnapRaceCameraToTarget()
+    {
+        if (VCamera == null || raceDirectionCamera == null ||
+            raceDirectionCamera.CameraTarget == null || raceDirectionCamera.LookTarget == null)
+        {
+            return;
+        }
+
+        Vector3 cameraPosition = raceDirectionCamera.CameraTarget.position;
+        Vector3 lookDirection = raceDirectionCamera.LookTarget.position - cameraPosition;
+        Quaternion cameraRotation = lookDirection.sqrMagnitude > Mathf.Epsilon
+            ? Quaternion.LookRotation(lookDirection.normalized, Vector3.up)
+            : raceDirectionCamera.CameraTarget.rotation;
+
+        VCamera.ForceCameraPosition(cameraPosition, cameraRotation);
+    }
+
+    private void RestoreTitleCameraPose()
+    {
+        if (VCamera == null)
+        {
+            return;
+        }
+
+        VCamera.Follow = null;
+        VCamera.LookAt = null;
+
+        if (titleCamera != null && hasTitleCameraPose)
+        {
+            titleCamera.ForceCameraPosition(titleCameraPosition, titleCameraRotation);
+            SwitchCameraForState(State.Title);
+        }
+        else if (hasTitleCameraPose)
+        {
+            VCamera.ForceCameraPosition(titleCameraPosition, titleCameraRotation);
+        }
+    }
+
+    private void FreezePlayerForResult()
+    {
+        if (car == null)
+        {
+            return;
+        }
+
+        SetBehaviourEnabled<DebugMover>(false);
+        SetBehaviourEnabled<CarStabilityController>(false);
+        SetBehaviourEnabled<CarResetter>(false);
+        SetBehaviourEnabled<CarSoundController>(false);
+
+        foreach (AudioSource audioSource in car.GetComponentsInChildren<AudioSource>(true))
+        {
+            audioSource.Stop();
+        }
+
+        if (playerRigidbody != null)
+        {
+            playerRigidbody.linearVelocity = Vector3.zero;
+            playerRigidbody.angularVelocity = Vector3.zero;
+            playerRigidbody.isKinematic = true;
+        }
+    }
+
+    private void SetBehaviourEnabled<T>(bool isEnabled) where T : Behaviour
+    {
+        foreach (T behaviour in car.GetComponentsInChildren<T>(true))
+        {
+            behaviour.enabled = isEnabled;
+        }
     }
 
     private void UpdateResultReturnInput(float dt)
@@ -365,20 +568,46 @@ public class Gmanager : MonoBehaviour
         }
     }
 
-    private void UpdateTitleStartInput()
+    private void ResetTitleStartInputGate()
     {
-        if (waitForPedalReleaseBeforeTitleStart)
+        titlePedalReleaseTimer = 0f;
+        titleStartHoldTimer = 0f;
+        titleStartArmed = false;
+        screenTransitionController?.SetTitlePrompt(titleReleasePromptText);
+    }
+
+    private void UpdateTitleStartInput(float dt)
+    {
+        if (!titleStartArmed)
         {
-            if (IManager.peddale < resultReturnPedalThreshold)
+            if (IManager.peddale < titleStartPedalThreshold)
             {
-                waitForPedalReleaseBeforeTitleStart = false;
+                titlePedalReleaseTimer += dt;
+                if (titlePedalReleaseTimer >= Mathf.Max(0f, titlePedalReleaseSeconds))
+                {
+                    titleStartArmed = true;
+                    titleStartHoldTimer = 0f;
+                    screenTransitionController?.SetTitlePrompt(titlePromptText);
+                }
+            }
+            else
+            {
+                titlePedalReleaseTimer = 0f;
             }
 
             return;
         }
 
-        if (IManager.peddale >= 1)
+        if (IManager.peddale < titleStartPedalThreshold)
         {
+            titleStartHoldTimer = 0f;
+            return;
+        }
+
+        titleStartHoldTimer += dt;
+        if (titleStartHoldTimer >= Mathf.Max(0.01f, titleStartHoldSeconds))
+        {
+            titleStartHoldTimer = 0f;
             StartGame();
         }
     }

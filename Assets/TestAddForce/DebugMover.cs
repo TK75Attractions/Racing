@@ -59,7 +59,9 @@ public class DebugMover : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (Gmanager.Control == null || Gmanager.Control.IManager == null)
+        if (Gmanager.Control == null ||
+            Gmanager.Control.IManager == null ||
+            Gmanager.Control.state != Gmanager.State.Game)
         {
             return;
         }

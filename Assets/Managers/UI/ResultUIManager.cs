@@ -34,13 +34,15 @@ public class ResultUIManager
     public void ShowResults(RaceResultRecord resultRecord)
     {
         currentResult = resultRecord;
-        root.SetActive(true);
-        timeTxt.text = FormatTime(currentResult.totalRaceTime);
+        if (currentResult != null && timeTxt != null)
+        {
+            timeTxt.text = FormatTime(currentResult.totalRaceTime);
+        }
     }
 
     public void HideResults()
     {
-        root.SetActive(false);
+        currentResult = null;
     }
 
     private static string FormatTime(float seconds)

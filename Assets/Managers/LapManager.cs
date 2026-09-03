@@ -43,6 +43,7 @@ public class LapManager : MonoBehaviour
     [SerializeField] private bool resetVelocityOnRespawn = true;
 
     private readonly Dictionary<Rigidbody, CarTimeData> carDataMap = new Dictionary<Rigidbody, CarTimeData>();
+    private bool raceActive;
 
     public int GoalLap => goalLap;
 
@@ -63,6 +64,11 @@ public class LapManager : MonoBehaviour
 
     private void Update()
     {
+        if (!raceActive)
+        {
+            return;
+        }
+
         float dt = Time.deltaTime;
 
         foreach (CarTimeData data in carDataMap.Values)
@@ -79,7 +85,7 @@ public class LapManager : MonoBehaviour
 
     public void OnCarPassCheckpoint(Rigidbody rb, CheckpointSensor checkpoint)
     {
-        if (rb == null || checkpoint == null)
+        if (!raceActive || rb == null || checkpoint == null)
         {
             return;
         }
@@ -139,11 +145,12 @@ public class LapManager : MonoBehaviour
         data.bestLapTime = float.MaxValue;
         ResetCheckpointProgress(data);
         SetRespawnPoint(data, startTransform);
+        raceActive = true;
     }
 
     public bool OnCarPassGoal(Rigidbody rb, Transform goalTransform)
     {
-        if (rb == null)
+        if (!raceActive || rb == null)
         {
             return false;
         }
@@ -198,6 +205,37 @@ public class LapManager : MonoBehaviour
 
         carDataMap.TryGetValue(rb, out CarTimeData data);
         return data;
+    }
+
+    public void PauseRace()
+    {
+        raceActive = false;
+    }
+
+    public void ResumeRace()
+    {
+        raceActive = carDataMap.Count > 0;
+    }
+
+    public void UnregisterCar(Rigidbody rb)
+    {
+        if (rb != null)
+        {
+            carDataMap.Remove(rb);
+        }
+    }
+
+    public void ResetRace()
+    {
+        raceActive = false;
+        carDataMap.Clear();
+
+        foreach (GoalSensor goalSensor in FindObjectsByType<GoalSensor>(
+                     FindObjectsInactive.Include,
+                     FindObjectsSortMode.None))
+        {
+            goalSensor.ResetCounter();
+        }
     }
 
     public void RefreshCheckpoints()
