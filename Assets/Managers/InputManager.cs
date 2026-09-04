@@ -220,7 +220,7 @@ public class InputManager : MonoBehaviour
 
                             if (float.TryParse(parts[1], out float handleValue))
                             {
-                                handle = handleValue / 15;
+                                handle = handleValue / 3;
                             }
                         }
                     }
