@@ -49,7 +49,10 @@ public class OnPlayUIManager
 
     public void SetActive(bool isActive)
     {
-        trans.gameObject.SetActive(isActive);
+        if (trans != null)
+        {
+            trans.gameObject.SetActive(isActive);
+        }
     }
 
     private void SetPosition(int value)

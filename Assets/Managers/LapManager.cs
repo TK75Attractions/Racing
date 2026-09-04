@@ -46,6 +46,11 @@ public class LapManager : MonoBehaviour
 
     public int GoalLap => goalLap;
 
+    public void SetGoalLap(int value)
+    {
+        goalLap = Mathf.Max(1, value);
+    }
+
     private void Awake()
     {
         if (raceCourse == null)
