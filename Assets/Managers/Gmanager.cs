@@ -1,251 +1,370 @@
 using System;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Unity.Cinemachine;
 
-// Game Manager
-// シーン全体のゲーム進行（入力管理、車の生成、カメラ制御、状態遷移など）を行うシングルトン
+/// <summary>2人分の入力、車両、表示、レース進行を統括します。</summary>
 public class Gmanager : MonoBehaviour
 {
-    // --- 機能追加の方法 ---
-    // - 新しいマネージャを追加する場合:
-    //   1) フィールドをクラス上部に宣言する（例: public XxxManager xxxManager;）
-    //   2) Awake() 内で GetComponent<...>() か Find で取得し、必要なら初期化メソッドを呼ぶ
-    //      // 例: xxxManager = GetComponent<XxxManager>(); xxxManager.Init();
-    // - ゲーム開始／終了に関わる初期化は StartGame() / (将来的に) GameEnd() にまとめる
-    //   -> 車やエフェクト、UI の生成・初期化は StartGame() に書く
-    // - 毎フレームの処理は Update() に追加するが、状態ごとの処理は state による分岐で管理する
-    //   -> 例: if (state == State.Game) { /* ゲーム中の処理 */ }
-    // - デバッグ用処理は #if UNITY_EDITOR や isDebugMode フラグで囲む
-    // - 新しいイベントやコールバックは専用メソッドにまとめ、Awake() で購読、OnDestroy() で解約する
-    // ---------------------------------------------
+    private const int PlayerCount = 2;
 
-    // シングルトンインスタンス: シーン内で1つだけ存在する
+    private sealed class PlayerRuntime
+    {
+        public int playerIndex;
+        public GameObject car;
+        public Rigidbody rigidbody;
+        public RaceDirectionCameraController cameraController;
+        public PlayerDisplayRig displayRig;
+        public CinemachineCamera titleCamera;
+        public Vector3 titleCameraPosition;
+        public Quaternion titleCameraRotation;
+        public RaceResultRecord result;
+        public bool isReady;
+        public float readyHoldTimer;
+    }
+
     public static Gmanager Control = null;
     [SerializeField] public InputManager IManager = null;
     public CinemachineCamera VCamera;
     public GameObject car = null;
     public GameObject carPrefab;
+
+    [Header("Race Setup")]
     [SerializeField] private CheckpointSensor startCheckpoint;
     [SerializeField] private int startCheckpointIndex = 0;
+    [SerializeField, Min(0f)] private float startGridSpacing = 4f;
+    [SerializeField, Min(0f)] private float raceCountdownSeconds = 3f;
+    [SerializeField, Min(0f)] private float goMessageSeconds = 0.75f;
     [SerializeField] private LapManager lapManager;
+    [SerializeField, Min(0f)] private float secondPlaceTimeoutSeconds = 40f;
+
+    [Header("UI")]
     [SerializeField] private OnPlayUIManager onPlayUIManager;
     [SerializeField] private ResultUIManager resultUIManager;
     [SerializeField] private ScreenTransitionController screenTransitionController;
     [SerializeField] private string titleText = "RACING";
-    [SerializeField] private string titlePromptText = "PRESS THE PEDAL TO START";
-    [SerializeField] private string titleReleasePromptText = "RELEASE THE PEDAL";
+    [SerializeField] private string titlePromptText = "BOTH PLAYERS: PRESS THE PEDAL";
+    [SerializeField] private string titleReleasePromptText = "BOTH PLAYERS: RELEASE THE PEDAL";
     [SerializeField] private float titleStartPedalThreshold = 0.8f;
     [SerializeField] private float titlePedalReleaseSeconds = 0.25f;
     [SerializeField] private float titleStartHoldSeconds = 0.25f;
-    [SerializeField] private float cameraBlendSeconds = 0.65f;
     [SerializeField] private float resultReturnPedalThreshold = 0.8f;
     [SerializeField] private float resultReturnHoldSeconds = 1f;
     [SerializeField] private float resultReturnInputDelaySeconds = 3f;
+
+    [Header("Camera")]
+    [SerializeField] private float cameraBlendSeconds = 0.65f;
+    [Header("HUD")]
     [SerializeField] private int playerPosition = 1;
     [SerializeField] private float speedUnitMultiplier = 3.6f;
 
-    private RaceDirectionCameraController raceDirectionCamera;
-    private float resultReturnHoldTimer = 0f;
-    private float resultReturnInputDelayTimer = 0f;
+    private readonly PlayerRuntime[] players = new PlayerRuntime[PlayerCount];
+    private readonly OnPlayUIManager[] onPlayUIManagers = new OnPlayUIManager[PlayerCount];
+    private readonly ResultUIManager[] resultUIManagers = new ResultUIManager[PlayerCount];
+    private readonly ScreenTransitionController[] screenTransitions = new ScreenTransitionController[PlayerCount];
+    private PlayerDisplayRig[] displayRigs = new PlayerDisplayRig[0];
+    private float resultReturnHoldTimer;
+    private float resultReturnInputDelayTimer;
     private float titlePedalReleaseTimer;
-    private float titleStartHoldTimer;
     private bool titleStartArmed;
+    private float countdownTimeRemaining;
+    private float goMessageTimeRemaining;
+    private TwoPlayerRaceSession raceSession;
     private RaceResultRecord latestResult;
-    private Rigidbody playerRigidbody;
-    private CinemachineCamera titleCamera;
-    private Vector3 titleCameraPosition;
-    private Quaternion titleCameraRotation;
-    private bool hasTitleCameraPose;
+    private RaceSessionResult latestSessionResult;
 
     public RaceResultRecord LatestResult => latestResult;
+    public RaceSessionResult LatestSessionResult => latestSessionResult;
+    public float SecondPlaceTimeRemaining => raceSession?.SecondPlaceTimeRemaining ?? 0f;
+    public bool WaitingForSecondPlace => raceSession != null && raceSession.WaitingForSecondPlace;
+    public float CountdownTimeRemaining => countdownTimeRemaining;
+    public bool IsDrivingEnabled => state == State.Game;
 
-    // コースデータ
-    // レースコース情報（コース判定や経路情報を保持）
     public RaceCourse course;
-
-    // デバッグ用
-    // デバッグ用途の位置参照（エディタ上で指定）
     public Transform test;
+    public float time = 0f;
 
-    // 時間を格納
-    // 経過時間（秒）
-    public float time = 0;
-
-    // ゲームの状態を表す列挙型
-    // Title: タイトル画面
-    // Game:  ゲームプレイ中
-    // Result: 結果画面
-    public enum State
-    {
-        Title,
-        Game,
-        Result
-    }
-
+    public enum State { Title, Countdown, Game, Result }
     public State state = State.Title;
-
-    // UI関連のスプライト配列
     public Sprite[] NumberSprites;
 
-    // Unity: Awake
-    // オブジェクト生成時の初期化処理を行う（シングルトン設定、各種マネージャ取得・初期化）
     public void Awake()
     {
-        // シングルトンの初期化
         if (Control == null) Control = this;
         else
         {
-            Destroy(this.gameObject);
+            Destroy(gameObject);
             return;
         }
 
-        // 各種マネージャ参照の取得と初期化
         IManager = GetComponent<InputManager>();
-        IManager.Init();
-
-        VCamera = transform.parent.Find("VCamera").GetComponent<CinemachineCamera>();
-        CaptureTitleCameraPose();
-        InitializeCameraTransition();
-        raceDirectionCamera = GetComponent<RaceDirectionCameraController>();
-        if (raceDirectionCamera == null)
-        {
-            raceDirectionCamera = gameObject.AddComponent<RaceDirectionCameraController>();
-        }
-        raceDirectionCamera.SetCamera(VCamera);
+        IManager?.Init();
         ResolveLapManager();
-        lapManager?.ResetRace();
-        Transform mainCanvas = transform.parent.Find("MainCanvas");
-        if (screenTransitionController == null)
+        if (lapManager != null)
         {
-            screenTransitionController = mainCanvas.GetComponent<ScreenTransitionController>();
+            lapManager.ResetRace();
+            lapManager.CarFinished += HandleCarFinished;
         }
 
-        if (screenTransitionController == null)
-        {
-            screenTransitionController = mainCanvas.gameObject.AddComponent<ScreenTransitionController>();
-        }
-
-        screenTransitionController.Initialize(
-            mainCanvas.Find("Title"),
-            mainCanvas.Find("OnPlay"),
-            mainCanvas.Find("Result"),
-            titleText,
-            titlePromptText);
-        if (onPlayUIManager == null) onPlayUIManager = new();
-        onPlayUIManager.Init(mainCanvas.Find("OnPlay"));
-
-        if (resultUIManager == null) resultUIManager = new();
-        resultUIManager.Init(mainCanvas.Find("Result"));
-
-        screenTransitionController.ApplyStateImmediate(State.Title);
+        displayRigs = TwoPlayerDisplayFactory.Create(transform.parent, cameraBlendSeconds);
+        InitializePlayerDisplays();
+        ApplyStateImmediate(State.Title);
         SwitchCameraForState(State.Title);
         ResetTitleStartInputGate();
     }
 
-
-    // Unity: Update
-    // 毎フレームの更新処理（入力更新、車の更新、デバッグ処理など）
     public void Update()
     {
         float dt = Time.deltaTime;
-
-        // 入力を更新。タイトル画面でペダルが閾値を超えたらゲーム開始（暫定判定）
         if (IManager != null)
         {
             IManager.UpdateInput(dt);
             bool canHandleStateInput = !IsScreenTransitioning();
-            if (canHandleStateInput && state == State.Title)
-            {
-                UpdateTitleStartInput(dt);
-            }
-            else if (canHandleStateInput && state == State.Result)
-            {
-                UpdateResultReturnInput(dt);
-            }
+            if (canHandleStateInput && state == State.Title) UpdateTitleStartInput(dt);
+            else if (canHandleStateInput && state == State.Result) UpdateResultReturnInput(dt);
         }
 
-        // 車が存在する場合はレース時間とUIを更新する。
-        // 車両の物理更新は DebugMover / TireForce の FixedUpdate が担当する。
-        if (car != null && state == State.Game)
+        if (state == State.Countdown && HasSpawnedCars())
+        {
+            UpdateOnPlayUI();
+            UpdateRaceCountdown(dt);
+        }
+        else if (state == State.Game && HasSpawnedCars())
         {
             time += dt;
             UpdateOnPlayUI();
+            UpdateSecondPlaceTimeout(dt);
+            UpdateGoMessage(dt);
         }
-        // デバッグ: スペースキー押下で test がコース内にあるかチェックしてログ出力（エディタ実行向け）
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+
+#if UNITY_EDITOR
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame && course != null && test != null)
         {
-            if (course != null)
-            {
-                Debug.Log(course.IsPointInsideCourse(new Vector2(test.position.x, test.position.z)));
-            }
+            Debug.Log(course.IsPointInsideCourse(new Vector2(test.position.x, test.position.z)));
         }
+#endif
     }
 
-    // ゲーム開始処理。
-    // ゲーム開始処理: 車を生成して初期化し、カメラ追従を設定、ゲーム状態を Game に遷移させる
     public void StartGame()
     {
-        if (state != State.Title || IsScreenTransitioning())
+        if (state != State.Title || IsScreenTransitioning()) return;
+        titlePedalReleaseTimer = 0f;
+        TransitionTo(State.Countdown, StartGameWhenScreenCovered, CompleteGameStart);
+    }
+
+    public void ShowResult() => ShowResult(null);
+
+    /// <summary>既存コード向けの互換入口です。通常の完走は CarFinished から処理します。</summary>
+    public void ShowResult(RaceResultRecord resultRecord)
+    {
+        if (state != State.Game || IsScreenTransitioning()) return;
+
+        RaceResultRecord first = resultRecord ?? CreateFallbackResult(0, true, 1);
+        first.playerNumber = first.playerNumber > 0 ? first.playerNumber : 1;
+        first.finishPosition = 1;
+        first.didFinish = true;
+        raceSession = new TwoPlayerRaceSession(0f);
+        raceSession.Start();
+        raceSession.RegisterFinish(0, first);
+        raceSession.Tick(0f);
+        raceSession.RegisterDnf(1, CreateFallbackResult(1, false, 2));
+        CompleteRace(raceSession.Result);
+    }
+
+    public void ShowResults() => ShowResult();
+
+    public void ResetGame()
+    {
+        if (state != State.Result || IsScreenTransitioning()) return;
+        state = State.Title;
+        TransitionTo(State.Title, ResetGameWhenScreenCovered);
+    }
+
+    private void InitializePlayerDisplays()
+    {
+        if (displayRigs.Length != PlayerCount)
         {
+            Debug.LogError("Two player display initialization failed.");
             return;
         }
 
-        titlePedalReleaseTimer = 0f;
-        titleStartHoldTimer = 0f;
-        TransitionTo(State.Game, StartGameWhenScreenCovered, CompleteGameStart);
+        for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
+        {
+            PlayerDisplayRig rig = displayRigs[playerIndex];
+            PlayerRuntime player = new PlayerRuntime
+            {
+                playerIndex = playerIndex,
+                displayRig = rig,
+                titleCameraPosition = rig.RaceCamera.transform.position,
+                titleCameraRotation = rig.RaceCamera.transform.rotation
+            };
+            player.cameraController = CreateCameraController(playerIndex);
+            player.cameraController.SetCamera(rig.RaceCamera);
+            player.titleCamera = CreateTitleCamera(player);
+            players[playerIndex] = player;
+
+            ScreenTransitionController transition = rig.Transition;
+            if (transition == null) transition = rig.CanvasRoot.AddComponent<ScreenTransitionController>();
+            transition.Initialize(
+                rig.CanvasRoot.transform.Find("Title"),
+                rig.CanvasRoot.transform.Find("OnPlay"),
+                rig.CanvasRoot.transform.Find("Result"),
+                titleText,
+                titlePromptText);
+            screenTransitions[playerIndex] = transition;
+
+            OnPlayUIManager playUi = playerIndex == 0 && onPlayUIManager != null
+                ? onPlayUIManager : new OnPlayUIManager();
+            playUi.Init(rig.CanvasRoot.transform.Find("OnPlay"));
+            onPlayUIManagers[playerIndex] = playUi;
+
+            ResultUIManager resultsUi = playerIndex == 0 && resultUIManager != null
+                ? resultUIManager : new ResultUIManager();
+            resultsUi.Init(rig.CanvasRoot.transform.Find("Result"));
+            resultUIManagers[playerIndex] = resultsUi;
+        }
+
+        VCamera = displayRigs[0].RaceCamera;
+        screenTransitionController = screenTransitions[0];
+        onPlayUIManager = onPlayUIManagers[0];
+        resultUIManager = resultUIManagers[0];
+    }
+
+    private RaceDirectionCameraController CreateCameraController(int playerIndex)
+    {
+        if (playerIndex == 0)
+        {
+            RaceDirectionCameraController existing = GetComponent<RaceDirectionCameraController>();
+            return existing != null ? existing : gameObject.AddComponent<RaceDirectionCameraController>();
+        }
+
+        GameObject controllerObject = new GameObject($"Player{playerIndex + 1}CameraController");
+        controllerObject.transform.SetParent(transform, false);
+        return controllerObject.AddComponent<RaceDirectionCameraController>();
+    }
+
+    private CinemachineCamera CreateTitleCamera(PlayerRuntime player)
+    {
+        CinemachineCamera titleCamera = Instantiate(
+            player.displayRig.RaceCamera,
+            player.displayRig.RaceCamera.transform.parent);
+        titleCamera.name = $"TitleCamera_P{player.playerIndex + 1}";
+        titleCamera.Follow = null;
+        titleCamera.LookAt = null;
+        titleCamera.OutputChannel = (OutputChannels)(1 << player.playerIndex);
+        titleCamera.ForceCameraPosition(player.titleCameraPosition, player.titleCameraRotation);
+        return titleCamera;
     }
 
     private void StartGameWhenScreenCovered()
     {
         Transform spawnPoint = GetStartPoint();
-        Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
+        Vector3 basePosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
         Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
+        Vector3 gridRight = spawnPoint != null ? spawnPoint.right : Vector3.right;
 
         lapManager?.ResetRace();
-        car = Instantiate(carPrefab, spawnPosition, spawnRotation);
-        playerRigidbody = car.GetComponent<Rigidbody>();
-        RegisterPlayerCar(spawnPoint);
+        raceSession = new TwoPlayerRaceSession(secondPlaceTimeoutSeconds);
+        raceSession.Start();
+        countdownTimeRemaining = Mathf.Max(0f, raceCountdownSeconds);
+        goMessageTimeRemaining = 0f;
+        latestResult = null;
+        latestSessionResult = raceSession.Result;
+
+        for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
+        {
+            PlayerRuntime player = players[playerIndex];
+            float side = playerIndex == 0 ? -0.5f : 0.5f;
+            Vector3 spawnPosition = basePosition + gridRight * startGridSpacing * side;
+            player.car = Instantiate(carPrefab, spawnPosition, spawnRotation);
+            player.car.name = $"Player{playerIndex + 1}_Car";
+            player.rigidbody = player.car.GetComponent<Rigidbody>();
+            player.result = null;
+            AssignPlayerInput(player.car, playerIndex);
+            lapManager?.RegisterCar(player.rigidbody, spawnPoint);
+
+            player.cameraController.SetCar(player.car.transform);
+            player.displayRig.RaceCamera.Follow = player.cameraController.CameraTarget;
+            player.displayRig.RaceCamera.LookAt = player.cameraController.LookTarget;
+            SnapRaceCameraToTarget(player);
+        }
+
         lapManager?.PauseRace();
-        raceDirectionCamera.SetCar(car.transform);
-        VCamera.Follow = raceDirectionCamera.CameraTarget;
-        VCamera.LookAt = raceDirectionCamera.LookTarget;
-        SnapRaceCameraToTarget();
-        SwitchCameraForState(State.Game);
+        car = players[0].car;
+        SwitchCameraForState(State.Countdown);
         time = 0f;
         resultReturnHoldTimer = 0f;
         resultReturnInputDelayTimer = 0f;
         UpdateOnPlayUI();
-        Debug.Log("Game Start");
+        Debug.Log("Two-player game start");
     }
 
     private void CompleteGameStart()
     {
+        state = State.Countdown;
+        UpdateCountdownDisplay();
+        if (countdownTimeRemaining <= 0f)
+        {
+            StartRaceAfterCountdown();
+        }
+    }
+
+    private void UpdateRaceCountdown(float dt)
+    {
+        countdownTimeRemaining = Mathf.Max(0f, countdownTimeRemaining - Mathf.Max(0f, dt));
+        if (countdownTimeRemaining <= 0f)
+        {
+            StartRaceAfterCountdown();
+            return;
+        }
+
+        UpdateCountdownDisplay();
+    }
+
+    private void UpdateCountdownDisplay()
+    {
+        int displayedSeconds = Mathf.Max(1, Mathf.CeilToInt(countdownTimeRemaining));
+        SetRaceStatus(displayedSeconds.ToString());
+    }
+
+    private void StartRaceAfterCountdown()
+    {
+        if (state != State.Countdown)
+        {
+            return;
+        }
+
+        countdownTimeRemaining = 0f;
+        goMessageTimeRemaining = Mathf.Max(0f, goMessageSeconds);
         state = State.Game;
         lapManager?.ResumeRace();
+        SetRaceStatus("GO!");
+    }
+
+    private void UpdateGoMessage(float dt)
+    {
+        if (goMessageTimeRemaining <= 0f || WaitingForSecondPlace)
+        {
+            return;
+        }
+
+        goMessageTimeRemaining = Mathf.Max(0f, goMessageTimeRemaining - Mathf.Max(0f, dt));
+        if (goMessageTimeRemaining <= 0f)
+        {
+            SetRaceStatus(string.Empty);
+        }
     }
 
     private Transform GetStartPoint()
     {
-        if (startCheckpoint != null)
-        {
-            return startCheckpoint.transform;
-        }
-
+        if (startCheckpoint != null) return startCheckpoint.transform;
         CheckpointSensor[] checkpoints = FindObjectsOfType<CheckpointSensor>();
         CheckpointSensor selected = null;
-
         foreach (CheckpointSensor checkpoint in checkpoints)
         {
-            if (checkpoint.CheckpointIndex != startCheckpointIndex)
-            {
-                continue;
-            }
-
+            if (checkpoint.CheckpointIndex != startCheckpointIndex) continue;
             if (selected == null || checkpoint.transform.GetSiblingIndex() < selected.transform.GetSiblingIndex())
-            {
                 selected = checkpoint;
-            }
         }
 
         if (selected == null)
@@ -258,292 +377,246 @@ public class Gmanager : MonoBehaviour
         return selected.transform;
     }
 
-    public void ShowResult()
+    private void HandleCarFinished(Rigidbody finishedRigidbody, RaceResultRecord result)
     {
-        ShowResult(null);
+        if (state != State.Game || finishedRigidbody == null || result == null) return;
+        PlayerRuntime player = FindPlayer(finishedRigidbody);
+        if (player == null || player.result != null) return;
+
+        RaceFinishRegistration registration = raceSession.RegisterFinish(player.playerIndex, result);
+        if (registration == RaceFinishRegistration.Ignored) return;
+
+        player.result = result;
+        latestSessionResult = raceSession.Result;
+        FreezePlayer(player, disableCollisions: true);
+
+        if (registration == RaceFinishRegistration.FirstPlace)
+        {
+            latestResult = result;
+            UpdateSecondPlaceDisplay();
+            Debug.Log($"P{player.playerIndex + 1} finished first. Waiting {SecondPlaceTimeRemaining:F0} seconds for second place.");
+            if (SecondPlaceTimeRemaining <= 0f && raceSession.Tick(0f)) CompleteRaceAfterTimeout();
+            return;
+        }
+
+        CompleteRace(latestSessionResult);
     }
 
-    public void ShowResult(RaceResultRecord resultRecord)
+    private void UpdateSecondPlaceTimeout(float dt)
     {
-        if (state != State.Game || IsScreenTransitioning())
+        if (raceSession == null || !raceSession.WaitingForSecondPlace) return;
+        if (raceSession.Tick(dt)) CompleteRaceAfterTimeout();
+        else UpdateSecondPlaceDisplay();
+    }
+
+    private void UpdateSecondPlaceDisplay()
+    {
+        if (raceSession == null || !raceSession.WaitingForSecondPlace)
         {
             return;
         }
 
-        if (resultRecord == null)
-        {
-            resultRecord = new RaceResultRecord
-            {
-                carName = car != null ? car.name : string.Empty,
-                totalRaceTime = time,
-                finalLapTime = time,
-                bestLapTime = time
-            };
-        }
+        int unfinishedPlayerIndex = raceSession.UnfinishedPlayerIndex;
+        string playerLabel = unfinishedPlayerIndex >= 0
+            ? $"P{unfinishedPlayerIndex + 1}"
+            : "SECOND PLACE";
+        SetRaceStatus($"{playerLabel}  {raceSession.SecondPlaceTimeRemaining:0.0}s TO FINISH");
+    }
 
-        latestResult = resultRecord;
+    private void CompleteRaceAfterTimeout()
+    {
+        int unfinishedIndex = raceSession?.UnfinishedPlayerIndex ?? -1;
+        PlayerRuntime unfinished = unfinishedIndex >= 0 ? players[unfinishedIndex] : null;
+        if (unfinished != null)
+        {
+            RaceResultRecord dnfResult = CreateFallbackResult(unfinished.playerIndex, false, 2);
+            unfinished.result = dnfResult;
+            raceSession.RegisterDnf(unfinished.playerIndex, dnfResult);
+            latestSessionResult = raceSession.Result;
+            FreezePlayer(unfinished, disableCollisions: false);
+        }
+        CompleteRace(latestSessionResult);
+    }
+
+    private void CompleteRace(RaceSessionResult sessionResult)
+    {
+        if (state != State.Game || IsScreenTransitioning()) return;
+        latestSessionResult = sessionResult;
+        latestResult = sessionResult?.GetResultAtPosition(1);
         state = State.Result;
+        SetRaceStatus(string.Empty);
         resultReturnHoldTimer = 0f;
         resultReturnInputDelayTimer = 0f;
         lapManager?.PauseRace();
-        FreezePlayerForResult();
-        TransitionTo(State.Result, () => ShowResultWhenScreenCovered(resultRecord));
+        foreach (PlayerRuntime player in players) FreezePlayer(player, disableCollisions: false);
+        TransitionTo(State.Result, ShowResultWhenScreenCovered);
     }
 
-    private void ShowResultWhenScreenCovered(RaceResultRecord resultRecord)
+    private void ShowResultWhenScreenCovered()
     {
-        if (resultUIManager != null)
-        {
-            resultUIManager.ShowResults(resultRecord);
-        }
-        else
-        {
-            Debug.LogWarning("ResultUIManager was not found.");
-        }
-
-        Debug.Log("Game End");
-    }
-
-    public void ShowResults()
-    {
-        ShowResult();
-    }
-
-    public void ResetGame()
-    {
-        if (state != State.Result || IsScreenTransitioning())
-        {
-            return;
-        }
-
-        state = State.Title;
-        TransitionTo(State.Title, ResetGameWhenScreenCovered);
+        foreach (ResultUIManager manager in resultUIManagers) manager?.ShowResults(latestSessionResult);
+        Debug.Log("Two-player game end");
     }
 
     private void ResetGameWhenScreenCovered()
     {
-        Rigidbody carRigidbodyToRemove = playerRigidbody;
-        lapManager?.UnregisterCar(carRigidbodyToRemove);
-
-        if (car != null)
+        foreach (PlayerRuntime player in players)
         {
-            Destroy(car);
-            car = null;
+            if (player == null) continue;
+            lapManager?.UnregisterCar(player.rigidbody);
+            if (player.car != null) Destroy(player.car);
+            player.cameraController?.ClearCar();
+            player.displayRig.RaceCamera.Follow = null;
+            player.displayRig.RaceCamera.LookAt = null;
+            player.displayRig.RaceCamera.ForceCameraPosition(player.titleCameraPosition, player.titleCameraRotation);
+            player.titleCamera.ForceCameraPosition(player.titleCameraPosition, player.titleCameraRotation);
+            player.car = null;
+            player.rigidbody = null;
+            player.result = null;
         }
 
-        if (raceDirectionCamera != null)
-        {
-            raceDirectionCamera.ClearCar();
-        }
-
-        RestoreTitleCameraPose();
-
-        playerRigidbody = null;
+        car = null;
         lapManager?.ResetRace();
         latestResult = null;
+        latestSessionResult = null;
+        raceSession = null;
+        countdownTimeRemaining = 0f;
+        goMessageTimeRemaining = 0f;
         time = 0f;
         resultReturnHoldTimer = 0f;
         resultReturnInputDelayTimer = 0f;
-        if (resultUIManager != null)
-        {
-            resultUIManager.HideResults();
-        }
-
+        foreach (ResultUIManager manager in resultUIManagers) manager?.HideResults();
+        SwitchCameraForState(State.Title);
         ResetTitleStartInputGate();
-        Debug.Log("Game Reset");
+        Debug.Log("Two-player game reset");
     }
 
     private void ResolveLapManager()
     {
-        if (lapManager != null)
-        {
-            return;
-        }
-
-        lapManager = FindFirstObjectByType<LapManager>(FindObjectsInactive.Include);
+        if (lapManager == null) lapManager = FindFirstObjectByType<LapManager>(FindObjectsInactive.Include);
     }
 
-    private void RegisterPlayerCar(Transform startTransform)
+    private void AssignPlayerInput(GameObject playerCar, int playerIndex)
     {
-        ResolveLapManager();
-        if (lapManager == null || playerRigidbody == null)
-        {
-            return;
-        }
-
-        lapManager.RegisterCar(playerRigidbody, startTransform);
+        if (playerCar == null || IManager == null) return;
+        IDriveInputSource inputSource = IManager.GetPlayerInputSource(playerIndex);
+        playerCar.GetComponent<DebugMover>()?.SetInputSource(inputSource);
+        playerCar.GetComponent<CarResetter>()?.SetInputSource(inputSource);
     }
 
     private void UpdateOnPlayUI()
     {
-        if (onPlayUIManager == null || playerRigidbody == null)
+        for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
         {
-            return;
+            PlayerRuntime player = players[playerIndex];
+            OnPlayUIManager ui = onPlayUIManagers[playerIndex];
+            if (player?.rigidbody == null || ui == null) continue;
+            LapManager.CarTimeData lapData = lapManager?.GetCarData(player.rigidbody);
+            int lapValue = GetCurrentLapValue(lapData);
+            float lapSeconds = lapData != null ? lapData.currentLapTime : time;
+            float totalSeconds = lapData != null ? lapData.totalRaceTime + lapData.currentLapTime : time;
+            float speedValue = player.rigidbody.linearVelocity.magnitude * speedUnitMultiplier;
+            ui.UpdateUI(GetRacePosition(playerIndex), lapValue, totalSeconds, lapSeconds, speedValue);
         }
-
-        LapManager.CarTimeData lapData = lapManager != null ? lapManager.GetCarData(playerRigidbody) : null;
-        int lapValue = GetCurrentLapValue(lapData);
-        float lapSeconds = lapData != null ? lapData.currentLapTime : time;
-        float totalSeconds = lapData != null ? lapData.totalRaceTime + lapData.currentLapTime : time;
-        float speedValue = playerRigidbody.linearVelocity.magnitude * speedUnitMultiplier;
-
-        onPlayUIManager.UpdateUI(playerPosition, lapValue, totalSeconds, lapSeconds, speedValue);
     }
 
     private int GetCurrentLapValue(LapManager.CarTimeData lapData)
     {
-        if (lapData == null)
-        {
-            return 1;
-        }
-
+        if (lapData == null) return 1;
         int lapValue = lapData.lapCount + 1;
-        if (lapManager != null && lapManager.GoalLap > 0)
-        {
-            lapValue = Mathf.Min(lapValue, lapManager.GoalLap);
-        }
-
+        if (lapManager != null && lapManager.GoalLap > 0) lapValue = Mathf.Min(lapValue, lapManager.GoalLap);
         return Mathf.Max(1, lapValue);
     }
 
-    private bool IsScreenTransitioning()
+    private int GetRacePosition(int playerIndex)
     {
-        return screenTransitionController != null && screenTransitionController.IsTransitioning;
+        PlayerRuntime current = players[playerIndex];
+        PlayerRuntime other = players[1 - playerIndex];
+        if (current?.result != null) return current.result.finishPosition;
+        if (other?.result != null) return 2;
+        LapManager.CarTimeData currentData = lapManager?.GetCarData(current?.rigidbody);
+        LapManager.CarTimeData otherData = lapManager?.GetCarData(other?.rigidbody);
+        if (currentData == null || otherData == null) return playerIndex == 0 ? playerPosition : 2;
+        if (currentData.lapCount != otherData.lapCount) return currentData.lapCount > otherData.lapCount ? 1 : 2;
+        if (currentData.lastCheckpointIndex != otherData.lastCheckpointIndex)
+            return currentData.lastCheckpointIndex > otherData.lastCheckpointIndex ? 1 : 2;
+        return playerIndex + 1;
     }
 
-    private void TransitionTo(
-        State targetState,
-        Action onScreenCovered,
-        Action onCompleted = null)
+    private void TransitionTo(State targetState, Action onScreenCovered, Action onCompleted = null)
     {
-        if (screenTransitionController == null)
+        ScreenTransitionController primary = screenTransitions[0];
+        for (int index = 1; index < screenTransitions.Length; index++)
+            screenTransitions[index]?.TryTransitionTo(targetState, null);
+        if (primary == null)
         {
             onScreenCovered?.Invoke();
             onCompleted?.Invoke();
             return;
         }
-
-        if (!screenTransitionController.TryTransitionTo(targetState, onScreenCovered, onCompleted))
-        {
+        if (!primary.TryTransitionTo(targetState, onScreenCovered, onCompleted))
             Debug.LogWarning($"Screen transition to {targetState} was ignored because another transition is active.");
-        }
     }
 
-    private void CaptureTitleCameraPose()
+    private void ApplyStateImmediate(State targetState)
     {
-        if (VCamera == null)
-        {
-            return;
-        }
-
-        titleCameraPosition = VCamera.transform.position;
-        titleCameraRotation = VCamera.transform.rotation;
-        hasTitleCameraPose = true;
+        foreach (ScreenTransitionController transition in screenTransitions) transition?.ApplyStateImmediate(targetState);
     }
 
-    private void InitializeCameraTransition()
+    private bool IsScreenTransitioning()
     {
-        if (VCamera == null || !hasTitleCameraPose)
-        {
-            return;
-        }
-
-        titleCamera = Instantiate(VCamera, VCamera.transform.parent);
-        titleCamera.name = "TitleCamera";
-        titleCamera.Follow = null;
-        titleCamera.LookAt = null;
-        titleCamera.ForceCameraPosition(titleCameraPosition, titleCameraRotation);
-
-        CinemachineBrain brain = FindFirstObjectByType<CinemachineBrain>();
-        if (brain != null)
-        {
-            brain.DefaultBlend = new CinemachineBlendDefinition(
-                CinemachineBlendDefinition.Styles.EaseInOut,
-                Mathf.Max(0f, cameraBlendSeconds));
-        }
+        foreach (ScreenTransitionController transition in screenTransitions)
+            if (transition != null && transition.IsTransitioning) return true;
+        return false;
     }
 
     private void SwitchCameraForState(State targetState)
     {
-        if (VCamera == null || titleCamera == null)
-        {
-            return;
-        }
-
         bool useTitleCamera = targetState == State.Title;
-        titleCamera.Priority = useTitleCamera ? 20 : 10;
-        VCamera.Priority = useTitleCamera ? 10 : 20;
+        foreach (PlayerRuntime player in players)
+        {
+            if (player?.displayRig?.RaceCamera == null || player.titleCamera == null) continue;
+            player.titleCamera.Priority = useTitleCamera ? 20 : 10;
+            player.displayRig.RaceCamera.Priority = useTitleCamera ? 10 : 20;
+        }
     }
 
-    private void SnapRaceCameraToTarget()
+    private static void SnapRaceCameraToTarget(PlayerRuntime player)
     {
-        if (VCamera == null || raceDirectionCamera == null ||
-            raceDirectionCamera.CameraTarget == null || raceDirectionCamera.LookTarget == null)
-        {
-            return;
-        }
-
-        Vector3 cameraPosition = raceDirectionCamera.CameraTarget.position;
-        Vector3 lookDirection = raceDirectionCamera.LookTarget.position - cameraPosition;
+        if (player?.displayRig?.RaceCamera == null || player.cameraController?.CameraTarget == null ||
+            player.cameraController.LookTarget == null) return;
+        Vector3 cameraPosition = player.cameraController.CameraTarget.position;
+        Vector3 lookDirection = player.cameraController.LookTarget.position - cameraPosition;
         Quaternion cameraRotation = lookDirection.sqrMagnitude > Mathf.Epsilon
             ? Quaternion.LookRotation(lookDirection.normalized, Vector3.up)
-            : raceDirectionCamera.CameraTarget.rotation;
-
-        VCamera.ForceCameraPosition(cameraPosition, cameraRotation);
+            : player.cameraController.CameraTarget.rotation;
+        player.displayRig.RaceCamera.ForceCameraPosition(cameraPosition, cameraRotation);
     }
 
-    private void RestoreTitleCameraPose()
+    private static void FreezePlayer(PlayerRuntime player, bool disableCollisions)
     {
-        if (VCamera == null)
+        if (player?.car == null) return;
+        SetBehaviourEnabled<DebugMover>(player.car, false);
+        SetBehaviourEnabled<CarStabilityController>(player.car, false);
+        SetBehaviourEnabled<CarResetter>(player.car, false);
+        SetBehaviourEnabled<CarSoundController>(player.car, false);
+        foreach (AudioSource audioSource in player.car.GetComponentsInChildren<AudioSource>(true)) audioSource.Stop();
+        if (disableCollisions)
+            foreach (Collider collider in player.car.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
+        if (player.rigidbody != null)
         {
-            return;
-        }
-
-        VCamera.Follow = null;
-        VCamera.LookAt = null;
-
-        if (titleCamera != null && hasTitleCameraPose)
-        {
-            titleCamera.ForceCameraPosition(titleCameraPosition, titleCameraRotation);
-            SwitchCameraForState(State.Title);
-        }
-        else if (hasTitleCameraPose)
-        {
-            VCamera.ForceCameraPosition(titleCameraPosition, titleCameraRotation);
-        }
-    }
-
-    private void FreezePlayerForResult()
-    {
-        if (car == null)
-        {
-            return;
-        }
-
-        SetBehaviourEnabled<DebugMover>(false);
-        SetBehaviourEnabled<CarStabilityController>(false);
-        SetBehaviourEnabled<CarResetter>(false);
-        SetBehaviourEnabled<CarSoundController>(false);
-
-        foreach (AudioSource audioSource in car.GetComponentsInChildren<AudioSource>(true))
-        {
-            audioSource.Stop();
-        }
-
-        if (playerRigidbody != null)
-        {
-            playerRigidbody.linearVelocity = Vector3.zero;
-            playerRigidbody.angularVelocity = Vector3.zero;
-            playerRigidbody.isKinematic = true;
+            if (!player.rigidbody.isKinematic)
+            {
+                player.rigidbody.linearVelocity = Vector3.zero;
+                player.rigidbody.angularVelocity = Vector3.zero;
+            }
+            player.rigidbody.isKinematic = true;
         }
     }
 
-    private void SetBehaviourEnabled<T>(bool isEnabled) where T : Behaviour
+    private static void SetBehaviourEnabled<T>(GameObject target, bool isEnabled) where T : Behaviour
     {
-        foreach (T behaviour in car.GetComponentsInChildren<T>(true))
-        {
-            behaviour.enabled = isEnabled;
-        }
+        foreach (T behaviour in target.GetComponentsInChildren<T>(true)) behaviour.enabled = isEnabled;
     }
 
     private void UpdateResultReturnInput(float dt)
@@ -554,61 +627,123 @@ public class Gmanager : MonoBehaviour
             resultReturnHoldTimer = 0f;
             return;
         }
-
-        if (IManager.peddale <= resultReturnPedalThreshold)
+        bool returnRequested = false;
+        for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
+            if (IManager.GetInputState(playerIndex).pedal > resultReturnPedalThreshold) returnRequested = true;
+        if (!returnRequested)
         {
             resultReturnHoldTimer = 0f;
             return;
         }
-
         resultReturnHoldTimer += dt;
-        if (resultReturnHoldTimer >= Mathf.Max(0.01f, resultReturnHoldSeconds))
-        {
-            ResetGame();
-        }
+        if (resultReturnHoldTimer >= Mathf.Max(0.01f, resultReturnHoldSeconds)) ResetGame();
     }
 
     private void ResetTitleStartInputGate()
     {
         titlePedalReleaseTimer = 0f;
-        titleStartHoldTimer = 0f;
         titleStartArmed = false;
-        screenTransitionController?.SetTitlePrompt(titleReleasePromptText);
+        foreach (PlayerRuntime player in players)
+        {
+            if (player == null) continue;
+            player.isReady = false;
+            player.readyHoldTimer = 0f;
+        }
+        SetTitlePrompt(titleReleasePromptText);
     }
 
     private void UpdateTitleStartInput(float dt)
     {
         if (!titleStartArmed)
         {
-            if (IManager.peddale < titleStartPedalThreshold)
+            bool allReleased = true;
+            for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
+                if (IManager.GetInputState(playerIndex).pedal >= titleStartPedalThreshold) allReleased = false;
+            titlePedalReleaseTimer = allReleased ? titlePedalReleaseTimer + dt : 0f;
+            if (titlePedalReleaseTimer >= Mathf.Max(0f, titlePedalReleaseSeconds))
             {
-                titlePedalReleaseTimer += dt;
-                if (titlePedalReleaseTimer >= Mathf.Max(0f, titlePedalReleaseSeconds))
-                {
-                    titleStartArmed = true;
-                    titleStartHoldTimer = 0f;
-                    screenTransitionController?.SetTitlePrompt(titlePromptText);
-                }
+                titleStartArmed = true;
+                SetTitlePrompt(titlePromptText);
             }
-            else
-            {
-                titlePedalReleaseTimer = 0f;
-            }
-
             return;
         }
 
-        if (IManager.peddale < titleStartPedalThreshold)
+        bool allReady = true;
+        for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
         {
-            titleStartHoldTimer = 0f;
+            PlayerRuntime player = players[playerIndex];
+            if (!player.isReady)
+            {
+                DriveInputState input = IManager.GetInputState(playerIndex);
+                bool readyInput = input.readyPressed || input.pedal >= titleStartPedalThreshold;
+                player.readyHoldTimer = readyInput ? player.readyHoldTimer + dt : 0f;
+                player.isReady = player.readyHoldTimer >= Mathf.Max(0.01f, titleStartHoldSeconds);
+            }
+            allReady &= player.isReady;
+        }
+        if (!allReady)
+        {
+            SetTitlePrompt(GetReadyPrompt());
             return;
         }
+        StartGame();
+    }
 
-        titleStartHoldTimer += dt;
-        if (titleStartHoldTimer >= Mathf.Max(0.01f, titleStartHoldSeconds))
+    private string GetReadyPrompt()
+    {
+        string p1 = players[0].isReady ? "P1 READY" : "P1 PRESS PEDAL";
+        string p2 = players[1].isReady ? "P2 READY" : "P2 PRESS PEDAL";
+        return $"{p1}     {p2}";
+    }
+
+    private void SetTitlePrompt(string prompt)
+    {
+        foreach (ScreenTransitionController transition in screenTransitions) transition?.SetTitlePrompt(prompt);
+    }
+
+    private void SetRaceStatus(string status)
+    {
+        foreach (ScreenTransitionController transition in screenTransitions) transition?.SetRaceStatus(status);
+    }
+
+    private RaceResultRecord CreateFallbackResult(int playerIndex, bool didFinish, int finishPosition)
+    {
+        PlayerRuntime player = players[playerIndex];
+        LapManager.CarTimeData data = lapManager?.GetCarData(player?.rigidbody);
+        float currentLapTime = data != null ? data.currentLapTime : time;
+        float totalRaceTime = data != null ? data.totalRaceTime + data.currentLapTime : time;
+        float bestLapTime = data != null && data.bestLapTime < float.MaxValue ? data.bestLapTime : 0f;
+        return new RaceResultRecord
         {
-            titleStartHoldTimer = 0f;
-            StartGame();
-        }
+            playerNumber = playerIndex + 1,
+            finishPosition = finishPosition,
+            didFinish = didFinish,
+            carName = player?.car != null ? player.car.name : $"Player{playerIndex + 1}_Car",
+            completedLaps = data != null ? data.lapCount : 0,
+            goalLap = lapManager != null ? lapManager.GoalLap : 0,
+            totalRaceTime = totalRaceTime,
+            finalLapTime = currentLapTime,
+            bestLapTime = bestLapTime
+        };
+    }
+
+    private PlayerRuntime FindPlayer(Rigidbody target)
+    {
+        foreach (PlayerRuntime player in players)
+            if (player != null && player.rigidbody == target) return player;
+        return null;
+    }
+
+    private bool HasSpawnedCars()
+    {
+        foreach (PlayerRuntime player in players) if (player?.car != null) return true;
+        return false;
+    }
+
+    private void OnDestroy()
+    {
+        if (lapManager != null) lapManager.CarFinished -= HandleCarFinished;
+        foreach (PlayerDisplayRig rig in displayRigs) rig?.Dispose();
+        if (Control == this) Control = null;
     }
 }

@@ -1,293 +1,231 @@
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO.Ports;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.InputSystem;
-using UnityEngine.XR;
 
 public class InputManager : MonoBehaviour
 {
-    // Serialized fields: Unityでインスペクターから設定可能な変数。
-    // [SerializeField]がついていないがpublicなのでインスペクタに表示されるらしい
+    public const int SupportedPlayerCount = 2;
 
-    // isDebugMode: デバッグモードのフラグ。trueの場合、キーボード入力を使用してhandleとpeddaleの値を更新する。
+    [Header("Input Mode")]
+    [Tooltip("Enable two keyboard layouts instead of opening the ESP32 serial controllers.")]
     public bool isDebugMode = false;
 
-    public float handle;
-    public float peddale;
-    SerialPort serialPort;
-    Thread serialReadThread;
-    ConcurrentQueue<string> serialQueue = new ConcurrentQueue<string>();
-    readonly int serialBaudRate = 115200;
-    readonly int serialReadTimeoutMs = 200;
-    readonly string[] serialPortNameHints = new string[]
+    [Header("ESP32 Controllers")]
+    [SerializeField] private SerialControllerConfiguration[] serialControllers =
     {
-        "usbserial",
-        "usbmodem",
-        "ttyACM",
-        "ttyUSB",
-        "COM"
+        new SerialControllerConfiguration(0, "P1"),
+        new SerialControllerConfiguration(1, "P2")
     };
 
-    // initializer 用途？
+    [Header("Player 1 Legacy Monitor")]
+    [Tooltip("Player 1 steering value. Kept for the existing title/result input flow.")]
+    public float handle;
+    [Tooltip("Player 1 pedal value. Kept for the existing title/result input flow.")]
+    public float peddale;
+
+    private readonly IDriveInputSource[] inputSources =
+        new IDriveInputSource[SupportedPlayerCount];
+    private bool initialized;
+
     public void Init()
     {
+        DisposeInputSources();
+        EnsureControllerConfigurations();
+
         if (isDebugMode)
         {
-            Debug.Log("InputManager is in debug mode. Using keyboard input.");
+            for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
+            {
+                inputSources[playerIndex] = new KeyboardDriveInputSource(playerIndex);
+            }
+
+            initialized = true;
+            Debug.Log(
+                "InputManager is in debug mode. " +
+                "Player 1 uses WASD/Space/Enter and Player 2 uses arrow keys/Right Ctrl/Right Shift.");
             return;
         }
-        // ESP32からのシリアル通信の初期化
+
+        string[] resolvedPorts = ResolveSerialPorts();
+        for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
+        {
+            SerialControllerConfiguration configuration = serialControllers[playerIndex];
+            inputSources[playerIndex] = new SerialDriveInputSource(
+                configuration,
+                resolvedPorts[playerIndex]);
+        }
+
+        initialized = true;
+    }
+
+    public void UpdateInput(float deltaTime)
+    {
+        if (!initialized)
+        {
+            return;
+        }
+
+        foreach (IDriveInputSource source in inputSources)
+        {
+            source?.UpdateInput(deltaTime);
+        }
+
+        DriveInputState playerOneState = GetInputState(0);
+        handle = playerOneState.steering;
+        peddale = playerOneState.pedal;
+    }
+
+    public IDriveInputSource GetPlayerInputSource(int playerIndex)
+    {
+        return IsValidPlayerIndex(playerIndex) ? inputSources[playerIndex] : null;
+    }
+
+    public DriveInputState GetInputState(int playerIndex)
+    {
+        IDriveInputSource source = GetPlayerInputSource(playerIndex);
+        return source != null ? source.CurrentState : DriveInputState.Neutral;
+    }
+
+    public bool IsPlayerConnected(int playerIndex)
+    {
+        IDriveInputSource source = GetPlayerInputSource(playerIndex);
+        return source != null && source.IsConnected;
+    }
+
+    private string[] ResolveSerialPorts()
+    {
+        string[] resolvedPorts = new string[SupportedPlayerCount];
+        HashSet<string> claimedPorts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
+        {
+            string configuredPort = serialControllers[playerIndex].PortName?.Trim();
+            if (string.IsNullOrEmpty(configuredPort))
+            {
+                continue;
+            }
+
+            if (!claimedPorts.Add(configuredPort))
+            {
+                Debug.LogError(
+                    $"Serial port {configuredPort} is assigned to more than one player. " +
+                    $"Player {playerIndex + 1} will remain disconnected.");
+                continue;
+            }
+
+            resolvedPorts[playerIndex] = configuredPort;
+        }
+
+        string[] availablePorts;
         try
         {
-            string portName = FindAvailableSerialPort();
-            if (string.IsNullOrEmpty(portName))
+            availablePorts = SerialPort.GetPortNames();
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"Failed to enumerate serial ports: {exception.Message}");
+            return resolvedPorts;
+        }
+
+        Array.Sort(availablePorts, StringComparer.OrdinalIgnoreCase);
+
+        for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
+        {
+            if (!string.IsNullOrEmpty(resolvedPorts[playerIndex]))
             {
-                Debug.LogError("No matching serial port was found.");
-                return;
+                continue;
             }
 
-            serialPort = new SerialPort(portName, serialBaudRate);
-            serialPort.NewLine = "\n";
-            serialPort.ReadTimeout = serialReadTimeoutMs; // Updateループにブロッキングさせないため短めに設定
-            serialPort.Open();
-            Debug.Log($"Serial port opened successfully: {portName}");
-
-            // 背景スレッドで継続的にReadLineしてキューに積む
-            serialReadThread = new Thread(SerialReadLoop) { IsBackground = true };
-            serialReadThread.Start();
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Failed to open serial port: {e.Message}");
-        }
-    }
-
-    string FindAvailableSerialPort()
-    {
-        string[] portNames = SerialPort.GetPortNames();
-        if (portNames == null || portNames.Length == 0)
-        {
-            return null;
-        }
-
-        Array.Sort(portNames, (left, right) =>
-        {
-            int leftScore = GetPortPriority(left);
-            int rightScore = GetPortPriority(right);
-            int compare = leftScore.CompareTo(rightScore);
-            if (compare != 0)
+            List<string> candidates = new List<string>();
+            foreach (string availablePort in availablePorts)
             {
-                return compare;
-            }
-
-            return string.Compare(left, right, StringComparison.OrdinalIgnoreCase);
-        });
-
-        foreach (string portName in portNames)
-        {
-            if (TryProbeSerialPort(portName))
-            {
-                return portName;
-            }
-        }
-
-        return null;
-    }
-
-    int GetPortPriority(string portName)
-    {
-        if (string.IsNullOrEmpty(portName))
-        {
-            return int.MaxValue;
-        }
-
-        for (int index = 0; index < serialPortNameHints.Length; index++)
-        {
-            if (portName.IndexOf(serialPortNameHints[index], StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                return index;
-            }
-        }
-
-        return serialPortNameHints.Length;
-    }
-
-    bool TryProbeSerialPort(string portName)
-    {
-        Debug.Log($"Probing serial port: {portName}");
-        SerialPort probePort = null;
-        try
-        {
-            probePort = new SerialPort(portName, serialBaudRate);
-            probePort.NewLine = "\n";
-            probePort.ReadTimeout = serialReadTimeoutMs;
-            probePort.Open();
-
-            if (!probePort.IsOpen)
-            {
-                Debug.LogWarning($"Failed to open serial port for probing: {portName}");
-                return false;
-            }
-
-            string line = probePort.ReadLine().Trim();
-            // if (IsExpectedSerialLine(line))
-            if (true)
-            {
-                Debug.Log($"Detected serial port candidate: {portName}");
-                return true;
-            }
-
-            Debug.LogWarning($"Serial port {portName} did not return expected data during probing. Received: '{line}'");
-            return false;
-        }
-        catch (TimeoutException)
-        {
-            Debug.LogWarning($"Timeout occurred while probing serial port: {portName}");
-            return false;
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Unexpected error occurred while probing serial port: {portName} - {e.Message}");
-            return false;
-        }
-        finally
-        {
-            if (probePort != null)
-            {
-                try
+                if (!claimedPorts.Contains(availablePort))
                 {
-                    if (probePort.IsOpen)
-                    {
-                        probePort.Close();
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Error occurred while closing serial port: {portName} - {e.Message}");
+                    candidates.Add(availablePort);
                 }
             }
+
+            SerialControllerConfiguration configuration = serialControllers[playerIndex];
+            string discoveredPort = SerialControllerDiscovery.FindPortForDevice(
+                configuration,
+                candidates.ToArray());
+
+            if (string.IsNullOrEmpty(discoveredPort))
+            {
+                Debug.LogError(
+                    $"Could not find ESP32 controller {configuration.DeviceId} for " +
+                    $"Player {playerIndex + 1}. Configure its COM port explicitly or make " +
+                    "the firmware answer IDENTIFY with DEVICE,<id>.");
+                continue;
+            }
+
+            resolvedPorts[playerIndex] = discoveredPort;
+            claimedPorts.Add(discoveredPort);
         }
+
+        return resolvedPorts;
     }
 
-    // Updateは毎フレーム呼び出される(dt: delta time、前のフレームからの経過時間)
-    // 現在: キーボード入力を処理して、peddaleとhandleの値を更新する
-    // ToDo: ESP32からのInput処理(ハンドルのIMU、ペダルのADC値)を追加する
-    public void UpdateInput(float dt)
+    private void EnsureControllerConfigurations()
     {
-        // テスト用入力処理 temporary input handling for testing
-        if (isDebugMode)
+        if (serialControllers == null || serialControllers.Length != SupportedPlayerCount)
         {
-            if (Keyboard.current.wKey.isPressed)
-            {
-                peddale = 1.0f;
-            }
-            else if (Keyboard.current.sKey.isPressed)
-            {
-                peddale = -1.0f;
-            }
-            else
-            {
-                peddale = 0.0f;
-            }
+            SerialControllerConfiguration[] previous = serialControllers;
+            serialControllers = new SerialControllerConfiguration[SupportedPlayerCount];
 
-            handle = 0;
-            if (Keyboard.current.dKey.isPressed) handle = 10f;
-            if (Keyboard.current.aKey.isPressed) handle = -10f;
-        }
-        else
-        {
-            // ESP32からのシリアル通信の処理
-            if (serialPort != null && serialPort.IsOpen)
+            for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
             {
-                // キューに溜まった行を全て処理
-                while (serialQueue.TryDequeue(out string line))
+                SerialControllerConfiguration matchingConfiguration = null;
+                if (previous != null)
                 {
-                    try
+                    foreach (SerialControllerConfiguration configuration in previous)
                     {
-                        string[] parts1 = line.Split("||");
-                        string[] parts = parts1[0].Split(',');
-                        if (parts.Length >= 2)
+                        if (configuration != null && configuration.PlayerIndex == playerIndex)
                         {
-                            if (float.TryParse(parts[0], out float peddalValue))
-                            {
-                                peddale = peddalValue;
-                            }
-
-                            if (float.TryParse(parts[1], out float handleValue))
-                            {
-                                handle = handleValue / 15;
-                            }
+                            matchingConfiguration = configuration;
+                            break;
                         }
                     }
-                    catch (Exception e)
-                    {
-                        Debug.LogError($"Failed to parse serial line '{line}': {e.Message}");
-                    }
                 }
+
+                serialControllers[playerIndex] = matchingConfiguration;
             }
+        }
+
+        for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
+        {
+            serialControllers[playerIndex] ??=
+                new SerialControllerConfiguration(playerIndex, $"P{playerIndex + 1}");
+            serialControllers[playerIndex].AssignPlayerIndex(playerIndex);
         }
     }
 
-    bool IsExpectedSerialLine(string line)
+    private static bool IsValidPlayerIndex(int playerIndex)
     {
-        if (string.IsNullOrEmpty(line))
-        {
-            return false;
-        }
-
-        string[] parts = line.Split(',');
-        if (parts.Length < 2)
-        {
-            return false;
-        }
-
-        return float.TryParse(parts[0], out _) || float.TryParse(parts[1], out _);
+        return playerIndex >= 0 && playerIndex < SupportedPlayerCount;
     }
 
-    void SerialReadLoop()
+    private void DisposeInputSources()
     {
-        try
+        for (int index = 0; index < inputSources.Length; index++)
         {
-            while (serialPort != null && serialPort.IsOpen)
-            {
-                try
-                {
-                    string line = serialPort.ReadLine();
-                    // Debug.Log(line);
-                    if (!string.IsNullOrEmpty(line)) serialQueue.Enqueue(line.Trim());
-                }
-                catch (System.TimeoutException)
-                {
-                    // タイムアウトは無視してループを継続（非ブロッキング）
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Serial read loop error: {e.Message}");
-                    break;
-                }
-            }
+            inputSources[index]?.Dispose();
+            inputSources[index] = null;
         }
-        catch (Exception e)
-        {
-            Debug.LogError($"SerialReadLoop fatal error: {e.Message}");
-        }
+
+        initialized = false;
+        handle = 0f;
+        peddale = 0f;
     }
 
-    void OnDestroy()
+    private void OnApplicationQuit()
     {
-        try
-        {
-            if (serialPort != null)
-            {
-                try { serialPort.Close(); } catch { }
-                serialPort = null;
-            }
-        }
-        catch { }
+        DisposeInputSources();
+    }
+
+    private void OnDestroy()
+    {
+        DisposeInputSources();
     }
 }

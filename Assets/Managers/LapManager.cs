@@ -1,5 +1,6 @@
-using UnityEngine;
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class LapManager : MonoBehaviour
 {
@@ -19,6 +20,7 @@ public class LapManager : MonoBehaviour
 
         [System.NonSerialized] public Rigidbody rb;
         [System.NonSerialized] public bool hasCrossedGoal = false;
+        [System.NonSerialized] public bool isFinished = false;
         [System.NonSerialized] public bool hasValidRacePosition = false;
         [System.NonSerialized] public Transform respawnPoint;
         [System.NonSerialized] public Vector3 lastValidPosition;
@@ -38,7 +40,12 @@ public class LapManager : MonoBehaviour
     [Header("Off Course")]
     [SerializeField] private bool respawnWhenOffCourse = true;
     [SerializeField] private float offCourseRespawnDelay = 2f;
+    [Tooltip("地面を検出できない場合に使う従来のリスポーン高さ。")]
     [SerializeField] private float respawnHeightOffset = 0.5f;
+    [Tooltip("リスポーン時に車体と地面の間へ残す隙間。")]
+    [SerializeField, Min(0f)] private float respawnGroundClearance = 0.05f;
+    [Tooltip("リスポーン地点の地面を探すため、一時的に車体を持ち上げる高さ。")]
+    [SerializeField, Min(0.1f)] private float respawnGroundProbeHeight = 10f;
     [SerializeField] private Transform defaultRespawnPoint;
     [SerializeField] private bool resetVelocityOnRespawn = true;
 
@@ -46,6 +53,7 @@ public class LapManager : MonoBehaviour
     private bool raceActive;
 
     public int GoalLap => goalLap;
+    public event Action<Rigidbody, RaceResultRecord> CarFinished;
 
     private void Awake()
     {
@@ -73,7 +81,7 @@ public class LapManager : MonoBehaviour
 
         foreach (CarTimeData data in carDataMap.Values)
         {
-            if (data.rb == null)
+            if (data.rb == null || data.isFinished)
             {
                 continue;
             }
@@ -91,6 +99,11 @@ public class LapManager : MonoBehaviour
         }
 
         CarTimeData data = GetOrCreateCarData(rb);
+        if (data.isFinished)
+        {
+            return;
+        }
+
         int checkpointIndex = checkpoint.CheckpointIndex;
         int checkpointCount = GetCheckpointCount();
 
@@ -143,6 +156,7 @@ public class LapManager : MonoBehaviour
         data.currentLapTime = 0f;
         data.totalRaceTime = 0f;
         data.bestLapTime = float.MaxValue;
+        data.isFinished = false;
         ResetCheckpointProgress(data);
         SetRespawnPoint(data, startTransform);
         raceActive = true;
@@ -156,6 +170,10 @@ public class LapManager : MonoBehaviour
         }
 
         CarTimeData data = GetOrCreateCarData(rb);
+        if (data.isFinished)
+        {
+            return false;
+        }
 
         if (!data.hasCrossedGoal)
         {
@@ -187,7 +205,8 @@ public class LapManager : MonoBehaviour
 
         if (goalLap > 0 && data.lapCount >= goalLap)
         {
-            Gmanager.Control?.ShowResult(CreateResultRecord(data, completedLapTime));
+            data.isFinished = true;
+            CarFinished?.Invoke(rb, CreateResultRecord(data, completedLapTime));
         }
 
         data.currentLapTime = 0f;
@@ -214,7 +233,7 @@ public class LapManager : MonoBehaviour
 
     public void ResumeRace()
     {
-        raceActive = carDataMap.Count > 0;
+        raceActive = HasActiveCar();
     }
 
     public void UnregisterCar(Rigidbody rb)
@@ -357,7 +376,7 @@ public class LapManager : MonoBehaviour
         data.allCheckpointsPassed = data.respawnAllCheckpointsPassed;
     }
 
-    private RaceResultRecord CreateResultRecord(CarTimeData data, float finalLapTime)
+    public RaceResultRecord CreateResultRecord(CarTimeData data, float finalLapTime)
     {
         return new RaceResultRecord
         {
@@ -368,6 +387,19 @@ public class LapManager : MonoBehaviour
             finalLapTime = finalLapTime,
             bestLapTime = data.bestLapTime
         };
+    }
+
+    private bool HasActiveCar()
+    {
+        foreach (CarTimeData data in carDataMap.Values)
+        {
+            if (data.rb != null && !data.isFinished)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void RespawnCar(CarTimeData data)
@@ -401,7 +433,7 @@ public class LapManager : MonoBehaviour
             targetRotation = data.rb.rotation;
         }
 
-        targetPosition.y += respawnHeightOffset;
+        targetPosition = FindPositionJustAboveGround(data.rb, targetPosition, targetRotation);
         data.rb.position = targetPosition;
         data.rb.rotation = targetRotation;
 
@@ -411,6 +443,8 @@ public class LapManager : MonoBehaviour
             data.rb.angularVelocity = Vector3.zero;
         }
 
+        data.rb.GetComponent<DebugMover>()?.SuppressInputAfterRespawn();
+
         data.isOffCourse = false;
         data.offCourseTimer = 0f;
         data.hasValidRacePosition = true;
@@ -419,5 +453,93 @@ public class LapManager : MonoBehaviour
         RestoreCheckpointProgressFromRespawnPoint(data);
 
         Debug.Log($"{data.carName} respawned");
+    }
+
+    private Vector3 FindPositionJustAboveGround(
+        Rigidbody rb,
+        Vector3 respawnPoint,
+        Quaternion respawnRotation)
+    {
+        Vector3 fallbackPosition = respawnPoint + Vector3.up * respawnHeightOffset;
+        Collider[] carColliders = rb.GetComponentsInChildren<Collider>();
+        if (carColliders.Length == 0)
+        {
+            return fallbackPosition;
+        }
+
+        float probeHeight = Mathf.Max(0.1f, respawnGroundProbeHeight);
+        float groundClearance = Mathf.Max(0f, respawnGroundClearance);
+        Vector3 probePosition = respawnPoint + Vector3.up * probeHeight;
+        rb.position = probePosition;
+        rb.rotation = respawnRotation;
+        Physics.SyncTransforms();
+
+        bool foundGround = false;
+        float requiredVerticalAdjustment = float.NegativeInfinity;
+
+        foreach (Collider carCollider in carColliders)
+        {
+            if (carCollider == null || !carCollider.enabled || carCollider.isTrigger ||
+                carCollider.attachedRigidbody != rb)
+            {
+                continue;
+            }
+
+            Bounds bounds = carCollider.bounds;
+            Vector3 rayOrigin = new Vector3(
+                bounds.center.x,
+                bounds.max.y + groundClearance,
+                bounds.center.z);
+            float rayDistance = probeHeight * 2f + bounds.size.y + Mathf.Abs(respawnHeightOffset);
+
+            if (!TryFindGroundBelow(rayOrigin, rayDistance, out RaycastHit groundHit))
+            {
+                continue;
+            }
+
+            float adjustment = groundHit.point.y + groundClearance - bounds.min.y;
+            requiredVerticalAdjustment = Mathf.Max(requiredVerticalAdjustment, adjustment);
+            foundGround = true;
+        }
+
+        if (!foundGround)
+        {
+            return fallbackPosition;
+        }
+
+        probePosition.y += requiredVerticalAdjustment;
+        return probePosition;
+    }
+
+    private static bool TryFindGroundBelow(
+        Vector3 origin,
+        float distance,
+        out RaycastHit groundHit)
+    {
+        RaycastHit[] hits = Physics.RaycastAll(
+            origin,
+            Vector3.down,
+            distance,
+            ~0,
+            QueryTriggerInteraction.Ignore);
+
+        groundHit = default;
+        float nearestDistance = float.MaxValue;
+        bool foundGround = false;
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (hit.collider == null || hit.collider.attachedRigidbody != null ||
+                hit.normal.y < 0.2f || hit.distance >= nearestDistance)
+            {
+                continue;
+            }
+
+            groundHit = hit;
+            nearestDistance = hit.distance;
+            foundGround = true;
+        }
+
+        return foundGround;
     }
 }

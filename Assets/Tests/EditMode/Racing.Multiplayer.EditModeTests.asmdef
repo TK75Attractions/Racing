@@ -1,0 +1,23 @@
+{
+    "name": "Racing.Multiplayer.EditModeTests",
+    "rootNamespace": "",
+    "references": [
+        "GUID:8137fc38167e423b9117f5b9127bc0d4"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": true,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

@@ -17,8 +17,10 @@ public sealed class ScreenTransitionController : MonoBehaviour
     private CanvasGroup fadeCanvasGroup;
     private RectTransform fadeOverlay;
     private TMP_Text titlePrompt;
+    private TMP_Text raceStatus;
 
     public bool IsTransitioning { get; private set; }
+    public string RaceStatusText => raceStatus != null ? raceStatus.text : string.Empty;
 
     public void Initialize(
         Transform title,
@@ -34,6 +36,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         resultPanel = panel != null ? panel.gameObject : result != null ? result.gameObject : null;
 
         InitializeTitleUI(title, titleText, promptText);
+        InitializeRaceStatusUI(onPlay);
         InitializeFadeOverlay();
     }
 
@@ -69,6 +72,18 @@ public sealed class ScreenTransitionController : MonoBehaviour
         {
             titlePrompt.text = promptText;
         }
+    }
+
+    public void SetRaceStatus(string statusText)
+    {
+        if (raceStatus == null)
+        {
+            return;
+        }
+
+        string value = statusText ?? string.Empty;
+        raceStatus.text = value;
+        raceStatus.gameObject.SetActive(!string.IsNullOrWhiteSpace(value));
     }
 
     private IEnumerator TransitionRoutine(
@@ -126,7 +141,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
         if (onPlayRoot != null)
         {
-            onPlayRoot.SetActive(state == Gmanager.State.Game);
+            onPlayRoot.SetActive(state == Gmanager.State.Countdown || state == Gmanager.State.Game);
         }
 
         if (resultPanel != null)
@@ -210,6 +225,25 @@ public sealed class ScreenTransitionController : MonoBehaviour
         fadeCanvasGroup = overlayObject.GetComponent<CanvasGroup>();
         fadeCanvasGroup.alpha = 0f;
         SetFadeInputBlocking(false);
+    }
+
+    private void InitializeRaceStatusUI(Transform onPlay)
+    {
+        if (onPlay == null)
+        {
+            return;
+        }
+
+        raceStatus = CreateLabel(
+            onPlay,
+            "RaceStatus",
+            string.Empty,
+            new Vector2(0.12f, 0.58f),
+            new Vector2(0.88f, 0.82f),
+            120f,
+            new Color(0.2f, 0.9f, 1f, 1f));
+        raceStatus.fontStyle = FontStyles.Bold;
+        raceStatus.gameObject.SetActive(false);
     }
 
     private void SetFadeInputBlocking(bool blocksInput)

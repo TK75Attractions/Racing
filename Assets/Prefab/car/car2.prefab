@@ -443,6 +443,7 @@ MonoBehaviour:
   steeringFadeStartSpeed: 10
   steeringFadeFullSpeed: 30
   highSpeedSteeringMultiplier: 0.35
+  respawnInputSuppressionSeconds: 0.3
   frontCorneringStiffness: 10
   rearCorneringStiffness: 12
   maxLateralForcePerTire: 15

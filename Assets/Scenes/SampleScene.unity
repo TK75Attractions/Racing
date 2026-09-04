@@ -302,9 +302,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.09412649
+    y: 0.36262375
     width: 1
-    height: 0.811747
+    height: 0.27475247
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -543,6 +543,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InputManager
   isDebugMode: 1
+  serialControllers:
+  - playerIndex: 0
+    deviceId: P1
+    portName: 
+    baudRate: 115200
+    steeringDivisor: 15
+    readTimeoutMilliseconds: 200
+    discoveryTimeoutMilliseconds: 1500
+    inputTimeoutSeconds: 2
+  - playerIndex: 1
+    deviceId: P2
+    portName: 
+    baudRate: 115200
+    steeringDivisor: 15
+    readTimeoutMilliseconds: 200
+    discoveryTimeoutMilliseconds: 1500
+    inputTimeoutSeconds: 2
   handle: 0
   peddale: 0
 --- !u!114 &165928644
@@ -563,7 +580,11 @@ MonoBehaviour:
   carPrefab: {fileID: 9218658769128752567, guid: 9e0b5db58e31c5440820923abec066c3, type: 3}
   startCheckpoint: {fileID: 647429396}
   startCheckpointIndex: 0
+  startGridSpacing: 4
+  raceCountdownSeconds: 3
+  goMessageSeconds: 0.75
   lapManager: {fileID: 0}
+  secondPlaceTimeoutSeconds: 40
   onPlayUIManager:
     position:
       root: {fileID: 0}
@@ -587,15 +608,15 @@ MonoBehaviour:
       speedValue: 0
   screenTransitionController: {fileID: 456823244}
   titleText: RACING
-  titlePromptText: PRESS THE PEDAL TO START
-  titleReleasePromptText: RELEASE THE PEDAL
+  titlePromptText: 'BOTH PLAYERS: PRESS THE PEDAL'
+  titleReleasePromptText: 'BOTH PLAYERS: RELEASE THE PEDAL'
   titleStartPedalThreshold: 0.8
   titlePedalReleaseSeconds: 0.25
   titleStartHoldSeconds: 0.25
-  cameraBlendSeconds: 0.65
   resultReturnPedalThreshold: 0.8
   resultReturnHoldSeconds: 1
   resultReturnInputDelaySeconds: 3
+  cameraBlendSeconds: 0.65
   playerPosition: 1
   speedUnitMultiplier: 3.6
   course: {fileID: 1759542321}
@@ -1081,9 +1102,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.09412649
+    y: 0.36262375
     width: 1
-    height: 0.811747
+    height: 0.27475247
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -2234,9 +2255,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.09412649
+    y: 0.36262375
     width: 1
-    height: 0.811747
+    height: 0.27475247
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -2282,6 +2303,7 @@ MonoBehaviour:
   UICamera: {fileID: 73384527}
   frontCamera: {fileID: 353240716}
   backImageCamera: {fileID: 1328476111}
+  displayIndex: 0
   Sup: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   Sdown: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   Sright: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
@@ -3269,9 +3291,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.09412649
+    y: 0.36262375
     width: 1
-    height: 0.811747
+    height: 0.27475247
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -4054,6 +4076,8 @@ MonoBehaviour:
   respawnWhenOffCourse: 1
   offCourseRespawnDelay: 2
   respawnHeightOffset: 0.5
+  respawnGroundClearance: 0.05
+  respawnGroundProbeHeight: 10
   defaultRespawnPoint: {fileID: 0}
   resetVelocityOnRespawn: 1
 --- !u!65 &1911937259

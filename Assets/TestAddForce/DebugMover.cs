@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(Rigidbody))]
 public class DebugMover : MonoBehaviour
@@ -28,6 +29,11 @@ public class DebugMover : MonoBehaviour
     [Tooltip("高速時に残す操舵角の割合。")]
     [SerializeField, Range(0f, 1f)] private float highSpeedSteeringMultiplier = 0.35f;
 
+    [Header("Respawn")]
+    [Tooltip("リスポーン直後にアクセル、ハンドルなどの運転入力を無効化する時間（秒）。")]
+    [FormerlySerializedAs("respawnSteeringSuppressionSeconds")]
+    [SerializeField, Min(0f)] private float respawnInputSuppressionSeconds = 0.3f;
+
     [Header("Tire Lateral Force")]
     [Tooltip("前輪の横滑り速度を横力に変換する係数。")]
     [SerializeField, Min(0f)] private float frontCorneringStiffness = 10f;
@@ -50,6 +56,11 @@ public class DebugMover : MonoBehaviour
     [SerializeField] private float resistanceForce;
 
     private Rigidbody rb;
+    private IDriveInputSource inputSource;
+    private float inputSuppressedUntil;
+
+    public IDriveInputSource InputSource => inputSource;
+    public bool IsInputSuppressed => Time.time < inputSuppressedUntil;
 
     private void Awake()
     {
@@ -59,16 +70,41 @@ public class DebugMover : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (Gmanager.Control == null ||
-            Gmanager.Control.IManager == null ||
-            Gmanager.Control.state != Gmanager.State.Game)
+        if (inputSource == null ||
+            Gmanager.Control == null ||
+            !Gmanager.Control.IsDrivingEnabled)
         {
             return;
         }
 
-        ReadInput();
+        if (IsInputSuppressed)
+        {
+            ClearUserInput();
+        }
+        else
+        {
+            ReadInput();
+        }
+
         ApplyTireForces();
         ApplyVelocityResistance();
+    }
+
+    public void SetInputSource(IDriveInputSource source)
+    {
+        inputSource = source;
+    }
+
+    public void SuppressInputAfterRespawn()
+    {
+        float duration = Mathf.Max(0f, respawnInputSuppressionSeconds);
+        inputSuppressedUntil = Mathf.Max(inputSuppressedUntil, Time.time + duration);
+        ClearUserInput();
+
+        foreach (TireForce tire in tires)
+        {
+            tire.CenterVisualSteering();
+        }
     }
 
     private void RefreshTires()
@@ -84,9 +120,10 @@ public class DebugMover : MonoBehaviour
 
     private void ReadInput()
     {
-        rawPedalInput = Gmanager.Control.IManager.peddale;
+        DriveInputState input = inputSource.CurrentState;
+        rawPedalInput = input.pedal;
         appliedPedalInput = Mathf.Clamp(rawPedalInput, -1f, 1f);
-        rawSteeringInput = Gmanager.Control.IManager.handle;
+        rawSteeringInput = input.steering;
 
         Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
         speedMetersPerSecond = planarVelocity.magnitude;
@@ -99,6 +136,14 @@ public class DebugMover : MonoBehaviour
             rawSteeringInput * steeringInputMultiplier * speedSteeringMultiplier,
             -maxSteeringAngle,
             maxSteeringAngle);
+    }
+
+    private void ClearUserInput()
+    {
+        rawPedalInput = 0f;
+        appliedPedalInput = 0f;
+        rawSteeringInput = 0f;
+        appliedSteeringAngle = 0f;
     }
 
     private void ApplyTireForces()
