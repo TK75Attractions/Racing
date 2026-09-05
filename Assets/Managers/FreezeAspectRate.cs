@@ -25,6 +25,7 @@ public class FreezeAspectRate : MonoBehaviour
     [SerializeField] private Camera UICamera;
     [SerializeField] private Camera frontCamera;
     [SerializeField] private Camera backImageCamera;
+    [SerializeField] private int displayIndex;
     [SerializeField] private Sprite Sup;
     [SerializeField] private Sprite Sdown;
     [SerializeField] private Sprite Sright;
@@ -38,13 +39,22 @@ public class FreezeAspectRate : MonoBehaviour
 
     public void Awake()
     {
-        aspectRate = (float)aspect.x / aspect.y;
-        main = GetComponent<Camera>();
-        backCamera = transform.parent.parent.Find("BackCamera").GetComponent<Camera>();
-        UICamera = transform.parent.Find("UICamera").GetComponent<Camera>();
-        frontCamera = transform.parent.Find("FrontCamera").GetComponent<Camera>();
-        backImageCamera = transform.parent.Find("BackImageCamera").GetComponent<Camera>();
+        ResolveLocalCameras();
 
+        CreateBackCamera();
+        UpdateScreenRate();
+    }
+
+    public void ConfigureForDisplay(int targetDisplay, Camera displayBackCamera)
+    {
+        displayIndex = Mathf.Max(0, targetDisplay);
+        backCamera = displayBackCamera;
+        ResolveLocalCameras();
+        SetCameraTargetDisplay(main);
+        SetCameraTargetDisplay(UICamera);
+        SetCameraTargetDisplay(frontCamera);
+        SetCameraTargetDisplay(backImageCamera);
+        SetCameraTargetDisplay(backCamera);
         CreateBackCamera();
         UpdateScreenRate();
     }
@@ -90,12 +100,13 @@ public class FreezeAspectRate : MonoBehaviour
     private void UpdateScreenRate()
     {
         if (aspect.x <= 0 || aspect.y <= 0) return;
-        if (Screen.width <= 0 || Screen.height <= 0) return;
+        GetDisplaySize(out int displayWidth, out int displayHeight);
+        if (displayWidth <= 0 || displayHeight <= 0) return;
         if (main == null || UICamera == null || frontCamera == null || backImageCamera == null) return;
 
         aspectRate = (float)aspect.x / aspect.y;
         float baseAspect = (float)aspect.y / aspect.x;
-        float nowAspect = (float)Screen.height / Screen.width;
+        float nowAspect = (float)displayHeight / displayWidth;
 
         if (float.IsNaN(baseAspect) || float.IsInfinity(baseAspect)) return;
         if (float.IsNaN(nowAspect) || float.IsInfinity(nowAspect)) return;
@@ -128,16 +139,16 @@ public class FreezeAspectRate : MonoBehaviour
         }
 
         SetLetterboxSpritesEnabled(false);
-        lastScreenWidth = Screen.width;
-        lastScreenHeight = Screen.height;
+        GetDisplaySize(out lastScreenWidth, out lastScreenHeight);
         lastAspect = aspect;
         lastColorbase = colorbase;
     }
 
     private bool IsChangeAspect()
     {
-        return Screen.width == lastScreenWidth
-            && Screen.height == lastScreenHeight
+        GetDisplaySize(out int displayWidth, out int displayHeight);
+        return displayWidth == lastScreenWidth
+            && displayHeight == lastScreenHeight
             && lastAspect == aspect
             && lastColorbase.Equals(colorbase)
             && Mathf.Approximately(currentRect.width / currentRect.height, aspectRate);
@@ -211,4 +222,61 @@ public class FreezeAspectRate : MonoBehaviour
     }
 
     public Camera GetUICamera() => UICamera;
+
+    private void ResolveLocalCameras()
+    {
+        aspectRate = aspect.y != 0 ? (float)aspect.x / aspect.y : 1f;
+        main = GetComponent<Camera>();
+
+        Transform cameraRoot = transform.parent;
+        if (cameraRoot != null)
+        {
+            UICamera = GetCamera(cameraRoot.Find("UICamera"));
+            frontCamera = GetCamera(cameraRoot.Find("FrontCamera"));
+            backImageCamera = GetCamera(cameraRoot.Find("BackImageCamera"));
+        }
+
+        if (backCamera == null && cameraRoot != null && cameraRoot.parent != null)
+        {
+            string backCameraName = displayIndex == 0 ? "BackCamera" : $"BackCamera_P{displayIndex + 1}";
+            backCamera = GetCamera(cameraRoot.parent.Find(backCameraName));
+        }
+    }
+
+    private void GetDisplaySize(out int width, out int height)
+    {
+        if (Application.isPlaying && displayIndex >= 0 && displayIndex < Display.displays.Length)
+        {
+            Display display = Display.displays[displayIndex];
+            width = display.renderingWidth;
+            height = display.renderingHeight;
+            if (width > 0 && height > 0)
+            {
+                return;
+            }
+
+            width = display.systemWidth;
+            height = display.systemHeight;
+            if (width > 0 && height > 0)
+            {
+                return;
+            }
+        }
+
+        width = Screen.width;
+        height = Screen.height;
+    }
+
+    private void SetCameraTargetDisplay(Camera target)
+    {
+        if (target != null)
+        {
+            target.targetDisplay = displayIndex;
+        }
+    }
+
+    private static Camera GetCamera(Transform target)
+    {
+        return target != null ? target.GetComponent<Camera>() : null;
+    }
 }

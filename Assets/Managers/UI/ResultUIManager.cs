@@ -1,24 +1,15 @@
 using TMPro;
 using UnityEngine;
 
-[System.Serializable]
-public class RaceResultRecord
-{
-    public string carName;
-    public int completedLaps;
-    public int goalLap;
-    public float totalRaceTime;
-    public float finalLapTime;
-    public float bestLapTime;
-}
-
 public class ResultUIManager
 {
     private GameObject root;
     private RaceResultRecord currentResult;
+    private RaceSessionResult currentSessionResult;
     private TMP_Text timeTxt = null;
 
     public RaceResultRecord CurrentResult => currentResult;
+    public RaceSessionResult CurrentSessionResult => currentSessionResult;
 
     public void Init(Transform parent)
     {
@@ -28,19 +19,38 @@ public class ResultUIManager
 
     public void ShowResults()
     {
-        ShowResults(null);
+        ShowResults((RaceResultRecord)null);
     }
 
     public void ShowResults(RaceResultRecord resultRecord)
     {
         currentResult = resultRecord;
-        root.SetActive(true);
-        timeTxt.text = FormatTime(currentResult.totalRaceTime);
+        currentSessionResult = null;
+        if (currentResult != null && timeTxt != null)
+        {
+            timeTxt.text = FormatTime(currentResult.totalRaceTime);
+        }
+    }
+
+    public void ShowResults(RaceSessionResult sessionResult)
+    {
+        currentSessionResult = sessionResult;
+        currentResult = GetFirstPlaceResult(sessionResult);
+
+        if (timeTxt == null)
+        {
+            return;
+        }
+
+        RaceResultRecord first = GetResultAtPosition(sessionResult, 1);
+        RaceResultRecord second = GetResultAtPosition(sessionResult, 2);
+        timeTxt.text = $"{FormatResultLine(first, 1)}\n{FormatResultLine(second, 2)}";
     }
 
     public void HideResults()
     {
-        root.SetActive(false);
+        currentResult = null;
+        currentSessionResult = null;
     }
 
     private static string FormatTime(float seconds)
@@ -51,5 +61,41 @@ public class ResultUIManager
         int milliseconds = totalMilliseconds % 1000;
 
         return $"{minutes:00}:{secondsPart:00}.{milliseconds:000}";
+    }
+
+    private static RaceResultRecord GetFirstPlaceResult(RaceSessionResult sessionResult)
+    {
+        return GetResultAtPosition(sessionResult, 1);
+    }
+
+    private static RaceResultRecord GetResultAtPosition(RaceSessionResult sessionResult, int position)
+    {
+        if (sessionResult?.playerResults == null)
+        {
+            return null;
+        }
+
+        foreach (RaceResultRecord result in sessionResult.playerResults)
+        {
+            if (result != null && result.finishPosition == position)
+            {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
+    private static string FormatResultLine(RaceResultRecord result, int position)
+    {
+        string ordinal = position == 1 ? "1ST" : "2ND";
+        if (result == null)
+        {
+            return $"{ordinal}  ---";
+        }
+
+        string playerLabel = result.playerNumber > 0 ? $"P{result.playerNumber}" : result.carName;
+        string value = result.didFinish ? FormatTime(result.totalRaceTime) : "DNF";
+        return $"{ordinal}  {playerLabel}  {value}";
     }
 }

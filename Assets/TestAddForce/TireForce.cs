@@ -35,6 +35,11 @@ public class TireForce : MonoBehaviour
         }
     }
 
+    public void CenterVisualSteering()
+    {
+        UpdateVisualSteering(0f);
+    }
+
     public void ApplyForces(
         Vector3 vehicleForward,
         Vector3 vehicleUp,
