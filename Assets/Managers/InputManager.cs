@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO.Ports;
 using System.Net.Sockets;
 using System.Text;
@@ -15,16 +17,16 @@ public class InputManager : MonoBehaviour
     // [SerializeField]がついていないがpublicなのでインスペクタに表示されるらしい
 
     // isDebugMode: デバッグモードのフラグ。trueの場合、キーボード入力を使用してhandleとpeddaleの値を更新する。
+    [Header("Input Mode")]
     public bool isDebugMode = false;
 
     public float handle;
     public float peddale;
-    SerialPort serialPort;
-    Thread serialReadThread;
-    ConcurrentQueue<string> serialQueue = new ConcurrentQueue<string>();
-    readonly int serialBaudRate = 115200;
-    readonly int serialReadTimeoutMs = 200;
-    readonly string[] serialPortNameHints = new string[]
+
+    [Header("Serial Settings")]
+    [SerializeField, Min(1)] private int serialBaudRate = 115200;
+    [SerializeField, Min(1)] private int serialReadTimeoutMs = 200;
+    [SerializeField] private string[] serialPortNameHints = new string[]
     {
         "usbserial",
         "usbmodem",
@@ -32,6 +34,41 @@ public class InputManager : MonoBehaviour
         "ttyUSB",
         "COM"
     };
+
+    [Header("Serial Debug Monitor")]
+    [Tooltip("シリアル入力の状態と受信履歴を画面に表示できるようにします。キーボード入力モードとは独立しています。")]
+    [SerializeField] private bool serialDebugMode = false;
+    [Tooltip("デバッグモニターを起動時から表示します。実行中は指定キーで切り替えられます。")]
+    [SerializeField] private bool serialDebugDisplayVisible = true;
+    [SerializeField] private Key serialDebugToggleKey = Key.F8;
+    [SerializeField, Range(1, 50)] private int serialDebugLogCapacity = 12;
+    [Tooltip("画面表示に加えて、受信したシリアル行をUnity Consoleにも出力します。")]
+    [SerializeField] private bool mirrorSerialInputToConsole = false;
+
+    SerialPort serialPort;
+    Thread serialReadThread;
+    readonly ConcurrentQueue<string> serialQueue = new ConcurrentQueue<string>();
+    readonly Queue<string> serialDebugLog = new Queue<string>();
+
+    string connectedSerialPortName = "-";
+    string lastSerialLine = "-";
+    string lastParseResult = "Waiting for input";
+    float lastSerialLineTime = -1f;
+    long serialLinesReceived;
+    int serialLinesProcessed;
+    int serialParseErrorCount;
+    Vector2 serialDebugScrollPosition;
+    GUIStyle serialDebugHeaderStyle;
+    GUIStyle serialDebugLabelStyle;
+    GUIStyle serialDebugLogStyle;
+
+    public bool SerialDebugMode
+    {
+        get => serialDebugMode;
+        set => serialDebugMode = value;
+    }
+
+    public bool IsSerialDebugDisplayVisible => serialDebugMode && serialDebugDisplayVisible;
 
     // initializer 用途？
     public void Init()
@@ -55,6 +92,7 @@ public class InputManager : MonoBehaviour
             serialPort.NewLine = "\n";
             serialPort.ReadTimeout = serialReadTimeoutMs; // Updateループにブロッキングさせないため短めに設定
             serialPort.Open();
+            connectedSerialPortName = portName;
             Debug.Log($"Serial port opened successfully: {portName}");
 
             // 背景スレッドで継続的にReadLineしてキューに積む
@@ -179,14 +217,24 @@ public class InputManager : MonoBehaviour
     // ToDo: ESP32からのInput処理(ハンドルのIMU、ペダルのADC値)を追加する
     public void UpdateInput(float dt)
     {
+        UpdateSerialDebugDisplayToggle();
+
         // テスト用入力処理 temporary input handling for testing
         if (isDebugMode)
         {
-            if (Keyboard.current.wKey.isPressed)
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null)
+            {
+                peddale = 0f;
+                handle = 0f;
+                return;
+            }
+
+            if (keyboard.wKey.isPressed)
             {
                 peddale = 1.0f;
             }
-            else if (Keyboard.current.sKey.isPressed)
+            else if (keyboard.sKey.isPressed)
             {
                 peddale = -1.0f;
             }
@@ -196,8 +244,8 @@ public class InputManager : MonoBehaviour
             }
 
             handle = 0;
-            if (Keyboard.current.dKey.isPressed) handle = 10f;
-            if (Keyboard.current.aKey.isPressed) handle = -10f;
+            if (keyboard.dKey.isPressed) handle = 10f;
+            if (keyboard.aKey.isPressed) handle = -10f;
         }
         else
         {
@@ -207,30 +255,215 @@ public class InputManager : MonoBehaviour
                 // キューに溜まった行を全て処理
                 while (serialQueue.TryDequeue(out string line))
                 {
-                    try
-                    {
-                        string[] parts1 = line.Split("||");
-                        string[] parts = parts1[0].Split(',');
-                        if (parts.Length >= 2)
-                        {
-                            if (float.TryParse(parts[0], out float peddalValue))
-                            {
-                                peddale = peddalValue;
-                            }
-
-                            if (float.TryParse(parts[1], out float handleValue))
-                            {
-                                handle = handleValue / 3;
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError($"Failed to parse serial line '{line}': {e.Message}");
-                    }
+                    ProcessSerialLine(line);
                 }
             }
         }
+    }
+
+    void UpdateSerialDebugDisplayToggle()
+    {
+        if (!serialDebugMode || serialDebugToggleKey == Key.None)
+        {
+            return;
+        }
+
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null && keyboard[serialDebugToggleKey].wasPressedThisFrame)
+        {
+            ToggleSerialDebugDisplay();
+        }
+    }
+
+    void ProcessSerialLine(string line)
+    {
+        serialLinesProcessed++;
+        lastSerialLine = line;
+        lastSerialLineTime = Time.realtimeSinceStartup;
+
+        bool pedalParsed = false;
+        bool handleParsed = false;
+
+        try
+        {
+            int metadataSeparatorIndex = line.IndexOf("||", StringComparison.Ordinal);
+            string inputValues = metadataSeparatorIndex >= 0 ? line.Substring(0, metadataSeparatorIndex) : line;
+            string[] parts = inputValues.Split(',');
+
+            if (parts.Length >= 2)
+            {
+                pedalParsed = TryParseSerialFloat(parts[0], out float pedalValue);
+                if (pedalParsed)
+                {
+                    peddale = pedalValue;
+                }
+
+                handleParsed = TryParseSerialFloat(parts[1], out float handleValue);
+                if (handleParsed)
+                {
+                    handle = handleValue / 3f;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            serialParseErrorCount++;
+            lastParseResult = $"Error: {e.Message}";
+            AddSerialDebugLog("ERROR", line);
+            Debug.LogError($"Failed to parse serial line '{line}': {e.Message}");
+            return;
+        }
+
+        if (pedalParsed && handleParsed)
+        {
+            lastParseResult = "OK";
+            AddSerialDebugLog("OK", line);
+        }
+        else
+        {
+            serialParseErrorCount++;
+            lastParseResult = pedalParsed || handleParsed ? "Partial" : "Invalid";
+            AddSerialDebugLog(lastParseResult.ToUpperInvariant(), line);
+        }
+    }
+
+    static bool TryParseSerialFloat(string value, out float result)
+    {
+        return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result)
+            || float.TryParse(value, out result);
+    }
+
+    void AddSerialDebugLog(string status, string line)
+    {
+        if (!serialDebugMode)
+        {
+            return;
+        }
+
+        string displayLine = line.Length <= 512 ? line : line.Substring(0, 512) + "...";
+        serialDebugLog.Enqueue($"[{Time.realtimeSinceStartup,9:F3}] {status,-7} {displayLine}");
+
+        int capacity = Mathf.Max(1, serialDebugLogCapacity);
+        while (serialDebugLog.Count > capacity)
+        {
+            serialDebugLog.Dequeue();
+        }
+
+        if (mirrorSerialInputToConsole)
+        {
+            Debug.Log($"[InputManager Serial] {status}: {line}", this);
+        }
+    }
+
+    public void ToggleSerialDebugDisplay()
+    {
+        serialDebugDisplayVisible = !serialDebugDisplayVisible;
+    }
+
+    public void SetSerialDebugDisplayVisible(bool visible)
+    {
+        serialDebugDisplayVisible = visible;
+    }
+
+    void OnGUI()
+    {
+        if (!IsSerialDebugDisplayVisible)
+        {
+            return;
+        }
+
+        EnsureSerialDebugStyles();
+
+        float width = Mathf.Min(620f, Mathf.Max(100f, Screen.width - 20f));
+        float desiredHeight = 225f + serialDebugLogCapacity * 20f;
+        float height = Mathf.Min(desiredHeight, Mathf.Max(100f, Screen.height - 20f));
+        Rect panelRect = new Rect(10f, 10f, width, height);
+
+        Color previousColor = GUI.color;
+        GUI.color = new Color(0.12f, 0.12f, 0.12f, 0.94f);
+        GUI.Box(panelRect, GUIContent.none);
+        GUI.color = previousColor;
+
+        GUILayout.BeginArea(new Rect(panelRect.x + 12f, panelRect.y + 10f, panelRect.width - 24f, panelRect.height - 20f));
+        GUILayout.Label($"InputManager / Serial Monitor  [{serialDebugToggleKey}: hide]", serialDebugHeaderStyle);
+        GUILayout.Label($"Input source: {(isDebugMode ? "Keyboard (serial disabled)" : "Serial")}", serialDebugLabelStyle);
+        GUILayout.Label($"Connection: {GetSerialConnectionState()}    Port: {connectedSerialPortName}", serialDebugLabelStyle);
+        GUILayout.Label($"Baud: {serialBaudRate}    Read timeout: {serialReadTimeoutMs} ms    Queue: {serialQueue.Count}", serialDebugLabelStyle);
+        GUILayout.Label($"Raw lines: {Interlocked.Read(ref serialLinesReceived)}    Processed: {serialLinesProcessed}    Parse errors: {serialParseErrorCount}", serialDebugLabelStyle);
+        GUILayout.Label($"Pedal: {peddale:F4}    Handle: {handle:F4}    Parse: {lastParseResult}", serialDebugLabelStyle);
+        GUILayout.Label($"Last input: {GetLastInputAgeText()}    Raw: {lastSerialLine}", serialDebugLabelStyle);
+        GUILayout.Space(6f);
+        GUILayout.Label("Serial input log", serialDebugHeaderStyle);
+
+        serialDebugScrollPosition = GUILayout.BeginScrollView(serialDebugScrollPosition);
+        if (serialDebugLog.Count == 0)
+        {
+            GUILayout.Label("No serial input has been captured yet.", serialDebugLogStyle);
+        }
+        else
+        {
+            foreach (string entry in serialDebugLog)
+            {
+                GUILayout.Label(entry, serialDebugLogStyle);
+            }
+        }
+        GUILayout.EndScrollView();
+        GUILayout.EndArea();
+    }
+
+    string GetSerialConnectionState()
+    {
+        if (isDebugMode)
+        {
+            return "Disabled by keyboard debug mode";
+        }
+
+        try
+        {
+            return serialPort != null && serialPort.IsOpen ? "Connected" : "Disconnected";
+        }
+        catch
+        {
+            return "Disconnected";
+        }
+    }
+
+    string GetLastInputAgeText()
+    {
+        if (lastSerialLineTime < 0f)
+        {
+            return "-";
+        }
+
+        return $"{Mathf.Max(0f, Time.realtimeSinceStartup - lastSerialLineTime):F2} s ago";
+    }
+
+    void EnsureSerialDebugStyles()
+    {
+        if (serialDebugHeaderStyle != null)
+        {
+            return;
+        }
+
+        serialDebugHeaderStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 15,
+            fontStyle = FontStyle.Bold,
+            normal = { textColor = Color.white }
+        };
+        serialDebugLabelStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 13,
+            wordWrap = true,
+            normal = { textColor = Color.white }
+        };
+        serialDebugLogStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 12,
+            wordWrap = true,
+            richText = false,
+            normal = { textColor = new Color(0.75f, 0.95f, 1f) }
+        };
     }
 
     bool IsExpectedSerialLine(string line)
@@ -259,7 +492,11 @@ public class InputManager : MonoBehaviour
                 {
                     string line = serialPort.ReadLine();
                     // Debug.Log(line);
-                    if (!string.IsNullOrEmpty(line)) serialQueue.Enqueue(line.Trim());
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        serialQueue.Enqueue(line.Trim());
+                        Interlocked.Increment(ref serialLinesReceived);
+                    }
                 }
                 catch (System.TimeoutException)
                 {
