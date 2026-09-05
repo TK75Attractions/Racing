@@ -575,6 +575,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gmanager
   IManager: {fileID: 0}
+  VManager: {fileID: 1824307078}
   VCamera: {fileID: 0}
   car: {fileID: 0}
   carPrefab: {fileID: 9218658769128752567, guid: 9e0b5db58e31c5440820923abec066c3, type: 3}
@@ -3829,6 +3830,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1824307076}
   - component: {fileID: 1824307077}
+  - component: {fileID: 1824307078}
   m_Layer: 0
   m_Name: VManager
   m_TagString: Untagged
@@ -3868,6 +3870,28 @@ MonoBehaviour:
   blendDistance: 0
   weight: 1
   sharedProfile: {fileID: 11400000, guid: 1342a0682ba4f404a946a4f3f29fad8e, type: 2}
+--- !u!114 &1824307078
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1824307075}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 645564410b0204b498a5ccdbada50448, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  driftBoostEffectsEnabled: 1
+  boostFadeInSeconds: 0.08
+  boostFadeOutSeconds: 0.25
+  boostBloom: 0.5
+  boostMotionBlur: 0.4
+  boostLensDistortion: -0.12
+  boostChromaticAberration: 0.15
+  boostVignette: 0.12
+  boostPostExposure: 0.15
+  boostContrast: 10
 --- !u!1 &1871365356
 GameObject:
   m_ObjectHideFlags: 0

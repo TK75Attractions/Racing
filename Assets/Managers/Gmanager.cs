@@ -13,6 +13,7 @@ public class Gmanager : MonoBehaviour
         public int playerIndex;
         public GameObject car;
         public Rigidbody rigidbody;
+        public DebugMover mover;
         public RaceDirectionCameraController cameraController;
         public PlayerDisplayRig displayRig;
         public CinemachineCamera titleCamera;
@@ -25,6 +26,7 @@ public class Gmanager : MonoBehaviour
 
     public static Gmanager Control = null;
     [SerializeField] public InputManager IManager = null;
+    [SerializeField] public VManager VManager = null;
     public CinemachineCamera VCamera;
     public GameObject car = null;
     public GameObject carPrefab;
@@ -108,6 +110,7 @@ public class Gmanager : MonoBehaviour
 
         displayRigs = TwoPlayerDisplayFactory.Create(transform.parent, cameraBlendSeconds);
         InitializePlayerDisplays();
+        InitializeVolumes();
         ApplyStateImmediate(State.Title);
         SwitchCameraForState(State.Title);
         ResetTitleStartInputGate();
@@ -143,6 +146,51 @@ public class Gmanager : MonoBehaviour
             Debug.Log(course.IsPointInsideCourse(new Vector2(test.position.x, test.position.z)));
         }
 #endif
+    }
+
+    private void InitializeVolumes()
+    {
+        if (VManager == null)
+        {
+            Transform volumeObject = transform.parent != null ? transform.parent.Find("VManager") : null;
+            if (volumeObject != null)
+            {
+                VManager = volumeObject.GetComponent<VManager>();
+                if (VManager == null) VManager = volumeObject.gameObject.AddComponent<VManager>();
+            }
+        }
+        if (VManager == null)
+        {
+            Debug.LogWarning("Gmanager: VManager is not assigned; drift boost visuals are disabled.", this);
+            return;
+        }
+
+        VManager.Init();
+        Camera[] cameras = new Camera[displayRigs.Length];
+        for (int index = 0; index < displayRigs.Length; index++) cameras[index] = displayRigs[index].MainCamera;
+        VManager.ConfigurePlayerCameras(cameras);
+    }
+
+    private void LateUpdate()
+    {
+        if (VManager == null) return;
+        if (!IsDrivingEnabled)
+        {
+            VManager.ResetDriftBoosts();
+            return;
+        }
+
+        for (int index = 0; index < players.Length; index++)
+        {
+            DebugMover mover = players[index]?.mover;
+            VManager.SetDriftBoost(index, mover != null ? mover.DriftBoostVisualIntensity : 0f);
+        }
+        VManager.TickDriftBoost(Time.deltaTime);
+    }
+
+    private void OnDisable()
+    {
+        if (Control == this) VManager?.ResetDriftBoosts();
     }
 
     public void StartGame()
@@ -279,6 +327,7 @@ public class Gmanager : MonoBehaviour
             player.car = Instantiate(carPrefab, spawnPosition, spawnRotation);
             player.car.name = $"Player{playerIndex + 1}_Car";
             player.rigidbody = player.car.GetComponent<Rigidbody>();
+            player.mover = player.car.GetComponent<DebugMover>();
             player.result = null;
             AssignPlayerInput(player.car, playerIndex);
             lapManager?.RegisterCar(player.rigidbody, spawnPoint);
@@ -472,6 +521,7 @@ public class Gmanager : MonoBehaviour
             player.titleCamera.ForceCameraPosition(player.titleCameraPosition, player.titleCameraRotation);
             player.car = null;
             player.rigidbody = null;
+            player.mover = null;
             player.result = null;
         }
 
@@ -742,6 +792,7 @@ public class Gmanager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (Control == this) VManager?.ResetDriftBoosts();
         if (lapManager != null) lapManager.CarFinished -= HandleCarFinished;
         foreach (PlayerDisplayRig rig in displayRigs) rig?.Dispose();
         if (Control == this) Control = null;
