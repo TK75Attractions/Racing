@@ -8,7 +8,7 @@ public sealed class SerialControllerConfiguration
     [SerializeField] private string deviceId = "P1";
     [SerializeField] private string portName = string.Empty;
     [SerializeField, Min(1)] private int baudRate = 115200;
-    [SerializeField, Min(0.0001f)] private float steeringDivisor = 15f;
+    [SerializeField, Min(0.0001f)] private float steeringDivisor = 3f;
     [SerializeField, Min(50)] private int readTimeoutMilliseconds = 200;
     [SerializeField, Min(100)] private int discoveryTimeoutMilliseconds = 1500;
     [SerializeField, Min(0.1f)] private float inputTimeoutSeconds = 2f;

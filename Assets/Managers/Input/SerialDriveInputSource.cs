@@ -19,6 +19,19 @@ public sealed class SerialDriveInputSource : IDriveInputSource
     private bool resetHeld;
     private bool readyHeld;
     private float lastInputTime;
+    private long linesReceived;
+
+    // Invoked while draining the queue on the Unity main thread.
+    public event Action<SerialDriveInputSource, string, string> LineProcessed;
+    public string PortName => portName;
+    public bool IsPortOpen => portIsOpen;
+    public int PendingLineCount => receivedLines.Count;
+    public long LinesReceived => Interlocked.Read(ref linesReceived);
+    public int LinesProcessed { get; private set; }
+    public int ParseErrorCount { get; private set; }
+    public string LastSerialLine { get; private set; } = "-";
+    public string LastParseResult { get; private set; } = "Waiting for input";
+    public float LastSerialLineTime { get; private set; } = -1f;
 
     public int PlayerIndex => configuration.PlayerIndex;
     public string DeviceId => configuration.DeviceId;
@@ -48,18 +61,30 @@ public sealed class SerialDriveInputSource : IDriveInputSource
 
         while (receivedLines.TryDequeue(out string line))
         {
+            LinesProcessed++;
+            LastSerialLine = line;
+            LastSerialLineTime = Time.realtimeSinceStartup;
             if (SerialInputProtocol.TryReadDeviceId(line, out _))
             {
+                RecordParseResult("IDENTITY", line);
                 continue;
             }
 
-            if (!SerialInputProtocol.TryParseInput(
+            if (!SerialInputProtocol.TryParsePartialInput(
                     line,
                     configuration.SteeringDivisor,
-                    out SerialInputFrame frame))
+                    out SerialInputFrame frame,
+                    out bool pedalParsed,
+                    out bool steeringParsed))
             {
+                ParseErrorCount++;
+                RecordParseResult("INVALID", line);
                 continue;
             }
+
+            bool complete = pedalParsed && steeringParsed;
+            if (!complete) ParseErrorCount++;
+            RecordParseResult(complete ? "OK" : "PARTIAL", line);
 
             hasReceivedInput = true;
             lastInputTime = Time.realtimeSinceStartup;
@@ -68,8 +93,8 @@ public sealed class SerialDriveInputSource : IDriveInputSource
             resetHeld = frame.ResetHeld;
             readyHeld = frame.ReadyHeld;
 
-            latestState.pedal = frame.Pedal;
-            latestState.steering = frame.Steering;
+            if (pedalParsed) latestState.pedal = frame.Pedal;
+            if (steeringParsed) latestState.steering = frame.Steering;
         }
 
         if (!IsConnected)
@@ -116,6 +141,12 @@ public sealed class SerialDriveInputSource : IDriveInputSource
         CurrentState = DriveInputState.Neutral;
     }
 
+    private void RecordParseResult(string status, string line)
+    {
+        LastParseResult = status;
+        LineProcessed?.Invoke(this, status, line);
+    }
+
     private void Open()
     {
         if (string.IsNullOrWhiteSpace(portName))
@@ -160,6 +191,7 @@ public sealed class SerialDriveInputSource : IDriveInputSource
                 if (!string.IsNullOrWhiteSpace(line))
                 {
                     receivedLines.Enqueue(line.Trim());
+                    Interlocked.Increment(ref linesReceived);
                 }
             }
             catch (TimeoutException)
@@ -193,6 +225,40 @@ public sealed class SerialDriveInputSource : IDriveInputSource
 
 public static class SerialControllerDiscovery
 {
+    public static bool IsLegacyController(SerialControllerConfiguration configuration, string portName)
+    {
+        try
+        {
+            using SerialPort probePort = new SerialPort(portName, configuration.BaudRate)
+            {
+                NewLine = "\n",
+                ReadTimeout = Math.Min(250, configuration.DiscoveryTimeoutMilliseconds)
+            };
+            probePort.Open();
+            bool receivedInput = false;
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            while (stopwatch.ElapsedMilliseconds < configuration.DiscoveryTimeoutMilliseconds)
+            {
+                try
+                {
+                    probePort.WriteLine("IDENTIFY");
+                    string line = probePort.ReadLine();
+                    // Never treat an identified device (including a different player) as legacy.
+                    if (SerialInputProtocol.TryReadDeviceId(line, out _)) return false;
+                    receivedInput |= SerialInputProtocol.TryParsePartialInput(line,
+                        configuration.SteeringDivisor, out _, out _, out _);
+                }
+                catch (TimeoutException) { }
+            }
+            return receivedInput;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"Could not probe legacy serial port {portName}: {exception.Message}");
+            return false;
+        }
+    }
+
     public static string FindPortForDevice(
         SerialControllerConfiguration configuration,
         string[] candidatePorts)

@@ -42,7 +42,18 @@ public static class SerialInputProtocol
 
     public static bool TryParseInput(string line, float steeringDivisor, out SerialInputFrame frame)
     {
+        bool parsed = TryParsePartialInput(line, steeringDivisor, out frame,
+            out bool pedalParsed, out bool steeringParsed);
+        return parsed && pedalParsed && steeringParsed;
+    }
+
+    // Legacy controllers can send one valid axis while the other is unavailable.
+    public static bool TryParsePartialInput(string line, float steeringDivisor,
+        out SerialInputFrame frame, out bool pedalParsed, out bool steeringParsed)
+    {
         frame = default;
+        pedalParsed = false;
+        steeringParsed = false;
         if (string.IsNullOrWhiteSpace(line))
         {
             return false;
@@ -50,12 +61,14 @@ public static class SerialInputProtocol
 
         string payload = line.Split(new[] { "||" }, StringSplitOptions.None)[0].Trim();
         string[] parts = payload.Split(',');
-        if (parts.Length < 2 ||
-            !TryParseFloat(parts[0], out float pedal) ||
-            !TryParseFloat(parts[1], out float steering))
+        if (parts.Length < 2)
         {
             return false;
         }
+
+        pedalParsed = TryParseFloat(parts[0], out float pedal);
+        steeringParsed = TryParseFloat(parts[1], out float steering);
+        if (!pedalParsed && !steeringParsed) return false;
 
         float divisor = Math.Abs(steeringDivisor) < 0.0001f ? 1f : steeringDivisor;
         bool resetHeld = parts.Length > 2 && TryParseButton(parts[2]);
@@ -70,7 +83,9 @@ public static class SerialInputProtocol
 
     private static bool TryParseFloat(string value, out float result)
     {
-        return float.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out result);
+        return (float.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out result)
+                || float.TryParse(value.Trim(), out result))
+            && !float.IsNaN(result) && !float.IsInfinity(result);
     }
 
     private static bool TryParseButton(string value)
