@@ -302,9 +302,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.36262375
+    y: 0.052139014
     width: 1
-    height: 0.27475247
+    height: 0.895722
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -560,8 +560,20 @@ MonoBehaviour:
     readTimeoutMilliseconds: 200
     discoveryTimeoutMilliseconds: 1500
     inputTimeoutSeconds: 2
+  allowLegacyPlayerOneDiscovery: 1
+  serialPortNameHints:
+  - usbserial
+  - usbmodem
+  - ttyUSB
+  - ttyACM
+  - COM
   handle: 0
   peddale: 0
+  serialDebugMode: 0
+  serialDebugDisplayVisible: 1
+  serialDebugToggleKey: 101
+  serialDebugLogCapacity: 12
+  mirrorSerialInputToConsole: 0
 --- !u!114 &165928644
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1103,9 +1115,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.36262375
+    y: 0.052139014
     width: 1
-    height: 0.27475247
+    height: 0.895722
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -2256,9 +2268,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.36262375
+    y: 0.052139014
     width: 1
-    height: 0.27475247
+    height: 0.895722
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -3292,9 +3304,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.36262375
+    y: 0.052139014
     width: 1
-    height: 0.27475247
+    height: 0.895722
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -3880,8 +3892,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 645564410b0204b498a5ccdbada50448, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   driftBoostEffectsEnabled: 1
   boostFadeInSeconds: 0.08
   boostFadeOutSeconds: 0.25
@@ -3971,6 +3983,68 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1900000100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1900000101}
+  - component: {fileID: 1900000102}
+  m_Layer: 0
+  m_Name: RaceEnvironment
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1900000101
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900000100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1900000102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900000100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efbba3f7903b486984008e28da08b001, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weather: 0
+  timeOfDay: 0
+  directionalLights:
+  - {fileID: 410087040}
+  - {fileID: 989017261}
+  rainCameras: []
+  skyShader: {fileID: 4800000, guid: efbba3f7903b486984008e28da08b002, type: 3}
+  rainShader: {fileID: 4800000, guid: efbba3f7903b486984008e28da08b003, type: 3}
+  dayLightIntensity: 2
+  nightLightIntensity: 0.18
+  nightAmbientBrightness: 0.16
+  enableFog: 1
+  sunnyFogDensity: 0.0005
+  cloudyFogDensity: 0.002
+  rainyFogDensity: 0.005
+  rainRate: 1000
+  rainAreaSize: 40
+  rainFallSpeed: 25
 --- !u!1 &1911937252
 GameObject:
   m_ObjectHideFlags: 0
@@ -4947,6 +5021,7 @@ CanvasRenderer:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 1900000101}
   - {fileID: 410087041}
   - {fileID: 989017262}
   - {fileID: 494832701}
