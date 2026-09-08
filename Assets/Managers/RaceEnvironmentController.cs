@@ -52,6 +52,9 @@ public sealed class RaceEnvironmentController : MonoBehaviour
         public Quaternion rotation;
     }
 
+    /// <summary>有効なシチュエーション設定。車両のライトなど、参照側から取得します。</summary>
+    public static RaceEnvironmentController Active { get; private set; }
+
     public Weather CurrentWeather => weather;
     public TimeOfDay CurrentTimeOfDay => timeOfDay;
 
@@ -65,6 +68,7 @@ public sealed class RaceEnvironmentController : MonoBehaviour
     private void OnEnable()
     {
         dirty = true;
+        Active = this;
         RenderPipelineManager.beginCameraRendering += BeforeCameraRendering;
     }
 
@@ -225,6 +229,7 @@ public sealed class RaceEnvironmentController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (Active == this) Active = null;
         RenderPipelineManager.beginCameraRendering -= BeforeCameraRendering;
         if (captured)
         {

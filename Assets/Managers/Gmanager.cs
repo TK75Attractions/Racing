@@ -330,6 +330,8 @@ public class Gmanager : MonoBehaviour
             player.mover = player.car.GetComponent<DebugMover>();
             if (player.car.GetComponent<CarCollisionSparks>() == null)
                 player.car.AddComponent<CarCollisionSparks>();
+            if (player.car.GetComponent<CarLightController>() == null)
+                player.car.AddComponent<CarLightController>();
             player.result = null;
             AssignPlayerInput(player.car, playerIndex);
             lapManager?.RegisterCar(player.rigidbody, spawnPoint);

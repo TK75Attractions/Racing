@@ -367,6 +367,7 @@ GameObject:
   - component: {fileID: 703174277945583282}
   - component: {fileID: 811489908772547292}
   - component: {fileID: 6124809731544772365}
+  - component: {fileID: 2095029467354775146}
   m_Layer: 8
   m_Name: car2
   m_TagString: Player
@@ -443,6 +444,14 @@ MonoBehaviour:
   steeringFadeStartSpeed: 10
   steeringFadeFullSpeed: 30
   highSpeedSteeringMultiplier: 0.35
+  driftStartHandle: 8
+  driftFullChargeHandle: 30
+  maxDriftCharge: 3
+  driftChargePerSecond: 1
+  driftResistanceMultiplier: 1.25
+  driftRearGripMultiplier: 0.65
+  driftBoostDuration: 1
+  driftBoostAccelerationPerCharge: 10
   respawnInputSuppressionSeconds: 0.3
   frontCorneringStiffness: 10
   rearCorneringStiffness: 12
@@ -454,6 +463,10 @@ MonoBehaviour:
   rawSteeringInput: 0
   appliedSteeringAngle: 0
   resistanceForce: 0
+  isDrifting: 0
+  driftCharge: 0
+  driftBoostTimeRemaining: 0
+  activeDriftBoostAcceleration: 0
 --- !u!114 &703174277945583282
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -484,6 +497,8 @@ MonoBehaviour:
   minFreq: 50
   maxFreq: 2000
   masterVolume: 0.2
+  currentSpeed: 0
+  currentFreq: 0
 --- !u!114 &6124809731544772365
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -502,6 +517,54 @@ MonoBehaviour:
   uprightStrength: 8
   angularDamping: 2
   maxUprightTorque: 20
+--- !u!114 &2095029467354775146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9218658769128752567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7d41a9b5e2f4c8d90b3a6e1f7d24c01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CarLightController
+  mode: 0
+  autoCondition: 1
+  fadeSeconds: 0.15
+  lensSource: 0
+  headlightMaterialNames:
+  - frontlight
+  - headlight
+  taillightMaterialNames:
+  - rearlight
+  - back_light
+  - taillight
+  emissionScale: 1.2
+  headlightColor: {r: 1, g: 0.96, b: 0.86, a: 1}
+  headlightIntensity: 3000
+  headlightRange: 45
+  headlightSpotAngle: 65
+  headlightDownAngle: 6
+  headlightGlow: 2.4
+  headlightShadows: 0
+  taillightColor: {r: 1, g: 0.07, b: 0.04, a: 1}
+  taillightGlow: 0.9
+  brakeGlow: 3.4
+  brakePedalThreshold: 0.063
+  taillightIllumination: 0
+  taillightLightIntensity: 3
+  taillightLightRange: 8
+  headlightAnchors: []
+  taillightAnchors: []
+  lampSideRatio: 0.66
+  headlightHeightRatio: 0.45
+  taillightHeightRatio: 0.5
+  lampSize: 0.34
+  lampSurfaceOffset: 0.03
+  lampsOn: 0
+  braking: 0
+  lampBlend: 0
 --- !u!1001 &1531075579662938594
 PrefabInstance:
   m_ObjectHideFlags: 0
