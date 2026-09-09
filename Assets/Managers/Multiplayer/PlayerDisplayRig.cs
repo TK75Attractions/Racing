@@ -14,6 +14,8 @@ public sealed class PlayerDisplayRig
     public GameObject BackCameraRoot { get; }
     public CinemachineCamera RaceCamera { get; }
     public Camera MainCamera { get; }
+    public Transform VisualEffectPivot { get; }
+    public RaceSpeedVisualController RaceVisuals { get; }
     public Camera UiCamera { get; }
     public Camera FrontCamera { get; }
     public Camera BackImageCamera { get; }
@@ -39,6 +41,11 @@ public sealed class PlayerDisplayRig
         OwnsRuntimeObjects = ownsRuntimeObjects;
 
         MainCamera = FindCamera(cameraRoot, "MainCamera");
+        VisualEffectPivot = EnsureVisualEffectPivot(cameraRoot, MainCamera);
+        RaceVisuals = cameraRoot != null
+            ? cameraRoot.GetComponent<RaceSpeedVisualController>() ??
+                cameraRoot.AddComponent<RaceSpeedVisualController>()
+            : null;
         UiCamera = FindCamera(cameraRoot, "UICamera");
         FrontCamera = FindCamera(cameraRoot, "FrontCamera");
         BackImageCamera = FindCamera(cameraRoot, "BackImageCamera");
@@ -151,7 +158,47 @@ public sealed class PlayerDisplayRig
         }
 
         Transform child = root.transform.Find(childName);
-        return child != null ? child.GetComponent<Camera>() : null;
+        if (child != null)
+        {
+            Camera directCamera = child.GetComponent<Camera>();
+            if (directCamera != null) return directCamera;
+        }
+
+        Transform[] children = root.GetComponentsInChildren<Transform>(true);
+        foreach (Transform candidate in children)
+        {
+            if (candidate.name != childName) continue;
+            Camera camera = candidate.GetComponent<Camera>();
+            if (camera != null) return camera;
+        }
+
+        return null;
+    }
+
+    private static Transform EnsureVisualEffectPivot(GameObject root, Camera mainCamera)
+    {
+        if (root == null || mainCamera == null) return null;
+
+        Transform pivot = root.transform.Find("VisualEffectPivot");
+        if (pivot == null)
+        {
+            GameObject pivotObject = new GameObject("VisualEffectPivot");
+            pivot = pivotObject.transform;
+            pivot.SetParent(root.transform, false);
+        }
+
+        if (mainCamera.transform.parent != pivot)
+        {
+            Vector3 localPosition = mainCamera.transform.localPosition;
+            Quaternion localRotation = mainCamera.transform.localRotation;
+            Vector3 localScale = mainCamera.transform.localScale;
+            mainCamera.transform.SetParent(pivot, false);
+            mainCamera.transform.localPosition = localPosition;
+            mainCamera.transform.localRotation = localRotation;
+            mainCamera.transform.localScale = localScale;
+        }
+
+        return pivot;
     }
 
     private static void DestroyObject(GameObject target)

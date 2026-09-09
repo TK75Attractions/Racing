@@ -1281,6 +1281,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 378227375}
+  - component: {fileID: 378227376}
   m_Layer: 0
   m_Name: CManager
   m_TagString: Untagged
@@ -1307,6 +1308,100 @@ Transform:
   - {fileID: 1328476108}
   m_Father: {fileID: 132301915}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &378227376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 378227374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a0b8d8a5f5d4b1c9b15f9d79d0b7d31, type: 3}
+  m_Name: ~
+  m_EditorClassIdentifier: ~
+  targetRigidbody: {fileID: 0}
+  targetMover: {fileID: 0}
+  targetCamera: {fileID: 0}
+  raceCamera: {fileID: 0}
+  visualEffectPivot: {fileID: 0}
+  volumeManager: {fileID: 0}
+  speedLines: {fileID: 0}
+  playerIndex: 0
+  maxSpeedMps: 55.56
+  speedCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.4
+      value: 0.15
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.7
+      value: 0.5
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  speedResponse: 4
+  useCameraFovAsNormal: 0
+  normalFov: 60
+  highSpeedFov: 70
+  boostFovAdd: 4
+  boostFovKick: 4
+  maximumFov: 82
+  fovResponse: 7
+  highSpeedPullback: 0.25
+  boostPullback: 0.12
+  highSpeedShakePosition: 0.015
+  boostShakePosition: 0.012
+  highSpeedShakeRotation: 0.12
+  minShakeFrequency: 4
+  maxShakeFrequency: 11
+  speedLinesStart: 0.45
+  speedLinesMaxEmission: 120
+  speedLinesBoostEmission: 80
+  speedLinesMinSpeed: 25
+  speedLinesMaxSpeed: 55
+  speedLinesLifetime: 0.4
+  speedLinesSize: 0.03
+  speedLinesShapeWidth: 15
+  speedLinesShapeHeight: 8
+  speedLinesShapeDepth: 1
+  speedLinesVelocityScale: 0.2
+  speedLinesLengthScale: 4
+  speedLinesAlpha: 0.24
+  boostFadeInSpeed: 8
+  boostFadeOutSpeed: 5
+  boostKickDecay: 3.5
 --- !u!1 &393092343
 GameObject:
   m_ObjectHideFlags: 0
@@ -1385,7 +1480,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 60
+    FieldOfView: 60.01804
     OrthographicSize: 2
     NearClipPlane: 0.3
     FarClipPlane: 1000
@@ -1544,8 +1639,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name: ~
+  m_EditorClassIdentifier: ~
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
   m_CustomShadowLayers: 0
@@ -2273,7 +2368,7 @@ Camera:
     height: 0.8888889
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 60.01804
   orthographic: 0
   orthographic size: 2
   m_Depth: 0
@@ -3730,6 +3825,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1759542322}
   - component: {fileID: 1759542321}
+  - component: {fileID: 1759542323}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -3788,6 +3884,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1759542323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759542320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b7bb7c5f91d42d7af9a4de6e4b8be42, type: 3}
+  m_Name: ~
+  m_EditorClassIdentifier: ~
+  course: {fileID: 1759542321}
+  dashSpacing: 14
+  dashLength: 5
+  dashWidth: 0.18
+  markerSpacing: 28
+  roadsideOffset: 33
+  markerHeight: 2.2
+  surfaceOffset: 0.08
+  roadMarkingColor: {r: 1, g: 0.72, b: 0.18, a: 0.95}
+  roadsideColor: {r: 0.08, g: 0.85, b: 1, a: 0.95}
 --- !u!1 &1800447664
 GameObject:
   m_ObjectHideFlags: 0
@@ -3904,6 +4022,24 @@ MonoBehaviour:
   boostVignette: 0.12
   boostPostExposure: 0.15
   boostContrast: 10
+  raceSpeedEffectsEnabled: 1
+  speedMotionBlurLow: 0.08
+  speedMotionBlurHigh: 0.3
+  speedBloomLow: 0.2
+  speedBloomHigh: 0.35
+  speedBloomThreshold: 1
+  speedBloomScatter: 0.65
+  speedVignetteLow: 0.08
+  speedVignetteHigh: 0.14
+  speedVignetteSmoothness: 0.3
+  speedChromaticLow: 0
+  speedChromaticHigh: 0.025
+  speedDistortionLow: 0
+  speedDistortionHigh: -0.02
+  speedContrastLow: 5
+  speedContrastHigh: 12
+  speedSaturationLow: 0
+  speedSaturationHigh: 8
 --- !u!1 &1871365356
 GameObject:
   m_ObjectHideFlags: 0

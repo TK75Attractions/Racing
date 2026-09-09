@@ -7,6 +7,8 @@ public class VManager : MonoBehaviour
 {
     public const string PlayerOneVolumeLayer = "BoostVolumeP1";
     public const string PlayerTwoVolumeLayer = "BoostVolumeP2";
+    public const string PlayerOneVisualLayer = "RaceVisualP1";
+    public const string PlayerTwoVisualLayer = "RaceVisualP2";
 
     [Header("Drift Boost Post Processing")]
     [SerializeField] private bool driftBoostEffectsEnabled = true;
@@ -23,10 +25,32 @@ public class VManager : MonoBehaviour
     [SerializeField, Range(-2f, 2f)] private float boostPostExposure = 0.15f;
     [SerializeField, Range(-100f, 100f)] private float boostContrast = 10f;
 
+    [Header("Race Speed Post Processing")]
+    [SerializeField] private bool raceSpeedEffectsEnabled = true;
+    [SerializeField, Range(0f, 1f)] private float speedMotionBlurLow = 0.08f;
+    [SerializeField, Range(0f, 1f)] private float speedMotionBlurHigh = 0.30f;
+    [SerializeField, Range(0f, 10f)] private float speedBloomLow = 0.20f;
+    [SerializeField, Range(0f, 10f)] private float speedBloomHigh = 0.35f;
+    [SerializeField, Range(0f, 10f)] private float speedBloomThreshold = 1f;
+    [SerializeField, Range(0f, 1f)] private float speedBloomScatter = 0.65f;
+    [SerializeField, Range(0f, 1f)] private float speedVignetteLow = 0.08f;
+    [SerializeField, Range(0f, 1f)] private float speedVignetteHigh = 0.14f;
+    [SerializeField, Range(0f, 1f)] private float speedVignetteSmoothness = 0.30f;
+    [SerializeField, Range(0f, 1f)] private float speedChromaticLow = 0f;
+    [SerializeField, Range(0f, 1f)] private float speedChromaticHigh = 0.025f;
+    [SerializeField, Range(-1f, 1f)] private float speedDistortionLow = 0f;
+    [SerializeField, Range(-1f, 1f)] private float speedDistortionHigh = -0.02f;
+    [SerializeField, Range(-100f, 100f)] private float speedContrastLow = 5f;
+    [SerializeField, Range(-100f, 100f)] private float speedContrastHigh = 12f;
+    [SerializeField, Range(-100f, 100f)] private float speedSaturationLow = 0f;
+    [SerializeField, Range(-100f, 100f)] private float speedSaturationHigh = 8f;
+
     private sealed class PlayerEffect
     {
         public Volume volume;
         public VolumeProfile profile;
+        public Volume speedVolume;
+        public VolumeProfile speedProfile;
         public UniversalAdditionalCameraData cameraData;
         public LayerMask originalLayerMask;
         public bool originalPostProcessing;
@@ -37,6 +61,14 @@ public class VManager : MonoBehaviour
         public ChromaticAberration chromaticAberration;
         public Vignette vignette;
         public ColorAdjustments colorAdjustments;
+        public Bloom speedBloom;
+        public MotionBlur speedMotionBlur;
+        public LensDistortion speedLensDistortion;
+        public ChromaticAberration speedChromaticAberration;
+        public Vignette speedVignette;
+        public ColorAdjustments speedColorAdjustments;
+        public float speed01;
+        public bool speedActive;
     }
 
     private readonly PlayerEffect[] playerEffects = new PlayerEffect[2];
@@ -86,17 +118,21 @@ public class VManager : MonoBehaviour
         if (!EnsureInitialized() || cameras == null) return;
         int layerOne = LayerMask.NameToLayer(PlayerOneVolumeLayer);
         int layerTwo = LayerMask.NameToLayer(PlayerTwoVolumeLayer);
-        if (layerOne < 0 || layerTwo < 0)
+        int visualLayerOne = LayerMask.NameToLayer(PlayerOneVisualLayer);
+        int visualLayerTwo = LayerMask.NameToLayer(PlayerTwoVisualLayer);
+        if (layerOne < 0 || layerTwo < 0 || visualLayerOne < 0 || visualLayerTwo < 0)
         {
-            Debug.LogError("VManager: BoostVolumeP1 / BoostVolumeP2 layers are required.", this);
+            Debug.LogError("VManager: BoostVolumeP1 / BoostVolumeP2 / RaceVisualP1 / RaceVisualP2 layers are required.", this);
             return;
         }
 
-        int effectMask = (1 << layerOne) | (1 << layerTwo);
+        int effectMask = (1 << layerOne) | (1 << layerTwo)
+            | (1 << visualLayerOne) | (1 << visualLayerTwo);
         for (int index = 0; index < playerEffects.Length && index < cameras.Length; index++)
         {
             if (cameras[index] == null) continue;
             int layer = index == 0 ? layerOne : layerTwo;
+            int visualLayer = index == 0 ? visualLayerOne : visualLayerTwo;
             var cameraData = cameras[index].GetUniversalAdditionalCameraData();
             var effect = new PlayerEffect
             {
@@ -124,8 +160,31 @@ public class VManager : MonoBehaviour
             effect.vignette = effect.profile.Add<Vignette>();
             effect.colorAdjustments = effect.profile.Add<ColorAdjustments>();
             cameraData.volumeLayerMask = (cameraData.volumeLayerMask.value & ~effectMask) | (1 << layer);
+
+            effect.speedProfile = ScriptableObject.CreateInstance<VolumeProfile>();
+            effect.speedProfile.name = $"RaceVisualProfile_P{index + 1}";
+            effect.speedProfile.hideFlags = HideFlags.DontSave;
+            GameObject speedObject = new GameObject($"RaceVisualVolume_P{index + 1}");
+            speedObject.hideFlags = HideFlags.DontSave;
+            speedObject.layer = visualLayer;
+            speedObject.transform.SetParent(transform, false);
+            effect.speedVolume = speedObject.AddComponent<Volume>();
+            effect.speedVolume.isGlobal = true;
+            effect.speedVolume.priority = volume.priority + 50f;
+            effect.speedVolume.weight = 0f;
+            effect.speedVolume.sharedProfile = effect.speedProfile;
+            effect.speedBloom = effect.speedProfile.Add<Bloom>();
+            effect.speedMotionBlur = effect.speedProfile.Add<MotionBlur>();
+            effect.speedMotionBlur.mode.Override(MotionBlurMode.CameraOnly);
+            effect.speedLensDistortion = effect.speedProfile.Add<LensDistortion>();
+            effect.speedChromaticAberration = effect.speedProfile.Add<ChromaticAberration>();
+            effect.speedVignette = effect.speedProfile.Add<Vignette>();
+            effect.speedColorAdjustments = effect.speedProfile.Add<ColorAdjustments>();
+
+            cameraData.volumeLayerMask = cameraData.volumeLayerMask.value | (1 << visualLayer);
             cameraData.renderPostProcessing = true;
             playerEffects[index] = effect;
+            ApplySpeedSettings(effect);
             ApplyBoostSettings(effect);
         }
     }
@@ -141,10 +200,30 @@ public class VManager : MonoBehaviour
         playerIndex >= 0 && playerIndex < playerEffects.Length && playerEffects[playerIndex] != null
             ? playerEffects[playerIndex].volume.weight : 0f;
 
+    public void SetRaceSpeedVisual(int playerIndex, float visualSpeed01)
+    {
+        if (playerIndex < 0 || playerIndex >= playerEffects.Length) return;
+        PlayerEffect effect = playerEffects[playerIndex];
+        if (effect == null) return;
+        effect.speed01 = Mathf.Clamp01(visualSpeed01);
+        effect.speedActive = raceSpeedEffectsEnabled;
+        effect.speedVolume.weight = effect.speedActive ? 1f : 0f;
+    }
+
+    public void ClearRaceSpeedVisual(int playerIndex)
+    {
+        if (playerIndex < 0 || playerIndex >= playerEffects.Length) return;
+        PlayerEffect effect = playerEffects[playerIndex];
+        if (effect == null) return;
+        effect.speed01 = 0f;
+        effect.speedActive = false;
+        effect.speedVolume.weight = 0f;
+    }
+
     /// <summary>Gmanagerが車両状態を収集した後、描画前に一度更新します。</summary>
     public void TickDriftBoost(float deltaTime)
     {
-        if (!isActiveAndEnabled || !driftBoostEffectsEnabled)
+        if (!isActiveAndEnabled)
         {
             ResetDriftBoosts();
             return;
@@ -153,6 +232,15 @@ public class VManager : MonoBehaviour
         foreach (PlayerEffect effect in playerEffects)
         {
             if (effect == null) continue;
+            ApplySpeedSettings(effect);
+
+            if (!driftBoostEffectsEnabled)
+            {
+                effect.targetWeight = 0f;
+                effect.volume.weight = 0f;
+                continue;
+            }
+
             float fadeSeconds = effect.targetWeight > effect.volume.weight ? boostFadeInSeconds : boostFadeOutSeconds;
             effect.volume.weight = fadeSeconds <= 0f ? effect.targetWeight : Mathf.MoveTowards(
                 effect.volume.weight, effect.targetWeight, Mathf.Max(0f, deltaTime) / fadeSeconds);
@@ -167,20 +255,69 @@ public class VManager : MonoBehaviour
             if (effect == null) continue;
             effect.targetWeight = 0f;
             effect.volume.weight = 0f;
+            effect.speed01 = 0f;
+            effect.speedActive = false;
+            if (effect.speedVolume != null) effect.speedVolume.weight = 0f;
         }
     }
 
     private void ApplyBoostSettings(PlayerEffect effect)
     {
-        // 通常設定は変更せず、専用Volumeのweightで演出のみをブレンドします。
-        effect.bloom.intensity.Override(BaseValue(bloom, bloom.intensity) + boostBloom);
-        effect.motionBlur.intensity.Override(BaseValue(motionBlur, motionBlur.intensity) + boostMotionBlur);
-        effect.lensDistortion.intensity.Override(BaseValue(lensDistortion, lensDistortion.intensity) + boostLensDistortion);
-        effect.chromaticAberration.intensity.Override(BaseValue(chromaticAberration, chromaticAberration.intensity) + boostChromaticAberration);
-        effect.vignette.intensity.Override(BaseValue(vignette, vignette.intensity) + boostVignette);
+        // 速度Volumeの現在値を基準にして、Boost Volume側へ合成値を書き込みます。
+        effect.bloom.intensity.Override(EffectiveBloom(effect) + boostBloom);
+        effect.motionBlur.intensity.Override(EffectiveMotionBlur(effect) + boostMotionBlur);
+        effect.lensDistortion.intensity.Override(EffectiveLensDistortion(effect) + boostLensDistortion);
+        effect.chromaticAberration.intensity.Override(EffectiveChromatic(effect) + boostChromaticAberration);
+        effect.vignette.intensity.Override(EffectiveVignette(effect) + boostVignette);
         effect.colorAdjustments.postExposure.Override(BaseValue(colorAdjustments, colorAdjustments.postExposure) + boostPostExposure);
-        effect.colorAdjustments.contrast.Override(BaseValue(colorAdjustments, colorAdjustments.contrast) + boostContrast);
+        effect.colorAdjustments.contrast.Override(EffectiveContrast(effect) + boostContrast);
     }
+
+    private void ApplySpeedSettings(PlayerEffect effect)
+    {
+        if (effect.speedProfile == null || !effect.speedActive)
+        {
+            if (effect.speedVolume != null) effect.speedVolume.weight = 0f;
+            return;
+        }
+
+        float t = effect.speed01;
+        effect.speedVolume.weight = 1f;
+        effect.speedBloom.threshold.Override(speedBloomThreshold);
+        effect.speedBloom.scatter.Override(speedBloomScatter);
+        effect.speedBloom.intensity.Override(Mathf.Lerp(speedBloomLow, speedBloomHigh, t));
+        effect.speedMotionBlur.intensity.Override(Mathf.Lerp(speedMotionBlurLow, speedMotionBlurHigh, t));
+        effect.speedLensDistortion.intensity.Override(Mathf.Lerp(speedDistortionLow, speedDistortionHigh, t));
+        effect.speedChromaticAberration.intensity.Override(Mathf.Lerp(speedChromaticLow, speedChromaticHigh, t));
+        effect.speedVignette.intensity.Override(Mathf.Lerp(speedVignetteLow, speedVignetteHigh, t));
+        effect.speedVignette.smoothness.Override(speedVignetteSmoothness);
+        effect.speedColorAdjustments.contrast.Override(Mathf.Lerp(speedContrastLow, speedContrastHigh, t));
+        effect.speedColorAdjustments.saturation.Override(Mathf.Lerp(speedSaturationLow, speedSaturationHigh, t));
+    }
+
+    private float EffectiveBloom(PlayerEffect effect) => effect.speedActive
+        ? Mathf.Lerp(speedBloomLow, speedBloomHigh, effect.speed01)
+        : BaseValue(bloom, bloom.intensity);
+
+    private float EffectiveMotionBlur(PlayerEffect effect) => effect.speedActive
+        ? Mathf.Lerp(speedMotionBlurLow, speedMotionBlurHigh, effect.speed01)
+        : BaseValue(motionBlur, motionBlur.intensity);
+
+    private float EffectiveLensDistortion(PlayerEffect effect) => effect.speedActive
+        ? Mathf.Lerp(speedDistortionLow, speedDistortionHigh, effect.speed01)
+        : BaseValue(lensDistortion, lensDistortion.intensity);
+
+    private float EffectiveChromatic(PlayerEffect effect) => effect.speedActive
+        ? Mathf.Lerp(speedChromaticLow, speedChromaticHigh, effect.speed01)
+        : BaseValue(chromaticAberration, chromaticAberration.intensity);
+
+    private float EffectiveVignette(PlayerEffect effect) => effect.speedActive
+        ? Mathf.Lerp(speedVignetteLow, speedVignetteHigh, effect.speed01)
+        : BaseValue(vignette, vignette.intensity);
+
+    private float EffectiveContrast(PlayerEffect effect) => effect.speedActive
+        ? Mathf.Lerp(speedContrastLow, speedContrastHigh, effect.speed01)
+        : BaseValue(colorAdjustments, colorAdjustments.contrast);
 
     private static float BaseValue(VolumeComponent component, VolumeParameter<float> parameter) =>
         component.active && parameter.overrideState ? parameter.value : 0f;
@@ -212,7 +349,14 @@ public class VManager : MonoBehaviour
                 effect.volume.sharedProfile = null;
                 CoreUtils.Destroy(effect.volume.gameObject);
             }
+            if (effect.speedVolume != null)
+            {
+                effect.speedVolume.weight = 0f;
+                effect.speedVolume.sharedProfile = null;
+                CoreUtils.Destroy(effect.speedVolume.gameObject);
+            }
             DestroyProfile(effect.profile);
+            DestroyProfile(effect.speedProfile);
             playerEffects[index] = null;
         }
     }
