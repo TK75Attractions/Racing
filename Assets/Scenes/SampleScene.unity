@@ -629,6 +629,7 @@ MonoBehaviour:
   resultReturnPedalThreshold: 0.8
   resultReturnHoldSeconds: 1
   resultReturnInputDelaySeconds: 3
+  goalCelebrationSeconds: 5.5
   cameraBlendSeconds: 0.65
   playerPosition: 1
   speedUnitMultiplier: 3.6

@@ -8,6 +8,7 @@ public class UIPosition
     [SerializeField] private GameObject root;
     [SerializeField] private TMP_Text positionText;
     [SerializeField] private int currentPosition = 1;
+    private UIValuePulse valuePulse;
 
     public void Init(Transform parent)
     {
@@ -23,6 +24,15 @@ public class UIPosition
             positionText = textTransform != null
                 ? textTransform.GetComponentInChildren<TMP_Text>(true)
                 : rootTransform.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        if (positionText != null)
+        {
+            valuePulse = positionText.GetComponent<UIValuePulse>();
+            if (valuePulse == null)
+            {
+                valuePulse = positionText.gameObject.AddComponent<UIValuePulse>();
+            }
         }
 
         UpdateText();
@@ -43,7 +53,16 @@ public class UIPosition
 
     private void PositionTextAnimation(int oldPosition, int newPosition)
     {
-        // Implement animation logic here if needed
+        if (valuePulse == null)
+        {
+            return;
+        }
+
+        // 順位アップはシアン、順位ダウンは赤で一瞬だけ知らせる。
+        Color accent = newPosition < oldPosition
+            ? new Color(0.15f, 1f, 0.85f, 1f)
+            : new Color(1f, 0.32f, 0.22f, 1f);
+        valuePulse.Play(accent, newPosition < oldPosition ? -8f : 8f);
     }
 
     public void SetActive(bool isActive)

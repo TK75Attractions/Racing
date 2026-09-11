@@ -5,6 +5,7 @@ using Unity.Cinemachine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// CLIから実行する、SampleSceneの2人対戦スモークテストです。
@@ -103,7 +104,12 @@ public static class MultiplayerPlayModeValidation
                     stageStartTime = EditorApplication.timeSinceStartup;
                     break;
 
-                case 3 when EditorApplication.timeSinceStartup - stageStartTime > 1.5d:
+                case 3 when EditorApplication.timeSinceStartup - stageStartTime > 0.25d:
+                    ValidateGoalCelebration();
+                    stage = 4;
+                    break;
+
+                case 4 when manager.state == Gmanager.State.Result:
                     ValidateSharedResult();
                     Debug.Log("MULTIPLAYER_PLAYMODE_VALIDATION_PASS");
                     Finish(0);
@@ -134,6 +140,9 @@ public static class MultiplayerPlayModeValidation
         TMP_Text p2Title = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Title/StartPrompt");
         Require(p1Title != null && p2Title != null && p1Title.text == p2Title.text,
             "Title prompts differ between displays.");
+        Require(FindComponent<Image>("GameManagers/MainCanvas/Title/Player1Pedal/GaugeTrack/Fill") != null &&
+                FindComponent<Image>("GameManagers/MainCanvas/Title/Player2Pedal/GaugeTrack/Fill") != null,
+            "Title pedal gauges were not created.");
     }
 
     private static void ValidateSpawnAndCountdown()
@@ -192,20 +201,39 @@ public static class MultiplayerPlayModeValidation
 
     private static void ValidateSharedResult()
     {
-        TMP_Text p1Result = FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/Panel/Time/Txt");
-        TMP_Text p2Result = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Result/Panel/Time/Txt");
+        TMP_Text p1Winner = FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/Winner");
+        TMP_Text p2Winner = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Result/ResultPresentation/ResultCard/Winner");
+        TMP_Text p1First = FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/ResultRow1/Player");
+        TMP_Text p1Second = FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/ResultRow2/Player");
         Require(manager.state == Gmanager.State.Result, "Result state was not reached.");
-        Require(p1Result != null && p2Result != null && p1Result.text == p2Result.text,
-            "Result text differs between displays.");
-        Require(p1Result.text.Contains("P1") && p1Result.text.Contains("P2"),
+        Require(p1Winner != null && p2Winner != null && p1Winner.text == p2Winner.text,
+            "Winner text differs between displays.");
+        Require(p1First != null && p1Second != null && p1First.text.Contains("1") && p1Second.text.Contains("2"),
             "Result does not contain both players.");
+    }
+
+    private static void ValidateGoalCelebration()
+    {
+        TMP_Text p1Goal = FindComponent<TMP_Text>("GameManagers/MainCanvas/Goal/Hero/GoalText");
+        TMP_Text p2Goal = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Goal/Hero/GoalText");
+        GameObject p1Confetti = GameObject.Find("GameManagers/MainCanvas/Goal/Confetti");
+        GameObject p2Confetti = GameObject.Find("GameManagers/MainCanvas_P2/Goal/Confetti");
+        Require(manager.state == Gmanager.State.Goal, "Goal celebration state was not reached.");
+        Require(p1Goal != null && p2Goal != null && p1Goal.text == "GOAL!" && p2Goal.text == "GOAL!",
+            "Goal message differs between displays.");
+        Require(p1Confetti != null && p2Confetti != null &&
+                p1Confetti.transform.childCount > 0 && p2Confetti.transform.childCount > 0,
+            "Goal confetti was not created for both displays.");
     }
 
     private static string GetRaceStatus(int playerIndex)
     {
         string canvasName = playerIndex == 0 ? "MainCanvas" : "MainCanvas_P2";
-        TMP_Text status = FindComponent<TMP_Text>($"GameManagers/{canvasName}/OnPlay/RaceStatus");
-        return status != null ? status.text : string.Empty;
+        TMP_Text countdown = FindComponent<TMP_Text>($"GameManagers/{canvasName}/OnPlay/CountdownStatus/RaceStatus");
+        TMP_Text warning = FindComponent<TMP_Text>($"GameManagers/{canvasName}/OnPlay/FinishWarningStatus/FinishWarningText");
+        return warning != null && warning.gameObject.activeInHierarchy
+            ? warning.text
+            : countdown != null ? countdown.text : string.Empty;
     }
 
     private static T FindComponent<T>(string path) where T : Component
