@@ -102,6 +102,7 @@ public class Gmanager : MonoBehaviour
         IManager = GetComponent<InputManager>();
         IManager?.Init();
         ResolveLapManager();
+        EnsureSpeedScenery();
         if (lapManager != null)
         {
             lapManager.ResetRace();
@@ -171,8 +172,19 @@ public class Gmanager : MonoBehaviour
         VManager.ConfigurePlayerCameras(cameras);
     }
 
+    private void EnsureSpeedScenery()
+    {
+        if (course == null) return;
+        if (course.GetComponent<RaceSpeedSceneryController>() == null)
+            course.gameObject.AddComponent<RaceSpeedSceneryController>();
+    }
+
     private void LateUpdate()
     {
+        bool gameplayVisualsActive = IsDrivingEnabled;
+        foreach (PlayerRuntime player in players)
+            player?.displayRig?.RaceVisuals?.SetGameplayActive(gameplayVisualsActive);
+
         if (VManager == null) return;
         if (!IsDrivingEnabled)
         {
@@ -328,6 +340,18 @@ public class Gmanager : MonoBehaviour
             player.car.name = $"Player{playerIndex + 1}_Car";
             player.rigidbody = player.car.GetComponent<Rigidbody>();
             player.mover = player.car.GetComponent<DebugMover>();
+            player.displayRig.RaceVisuals?.Configure(
+                playerIndex,
+                player.rigidbody,
+                player.mover,
+                player.displayRig.MainCamera,
+                player.displayRig.RaceCamera,
+                player.displayRig.VisualEffectPivot,
+                VManager);
+            if (player.car.GetComponent<CarCollisionSparks>() == null)
+                player.car.AddComponent<CarCollisionSparks>();
+            if (player.car.GetComponent<CarLightController>() == null)
+                player.car.AddComponent<CarLightController>();
             player.result = null;
             AssignPlayerInput(player.car, playerIndex);
             lapManager?.RegisterCar(player.rigidbody, spawnPoint);
