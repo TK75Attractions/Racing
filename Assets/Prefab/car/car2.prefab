@@ -424,7 +424,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &5150326160786460359
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -449,13 +449,17 @@ MonoBehaviour:
   maxDriftCharge: 3
   driftChargePerSecond: 1
   driftResistanceMultiplier: 1.25
-  driftRearGripMultiplier: 0.65
+  driftRearGripMultiplier: 0.9
   driftBoostDuration: 1
   driftBoostAccelerationPerCharge: 10
   respawnInputSuppressionSeconds: 0.3
   frontCorneringStiffness: 10
   rearCorneringStiffness: 12
   maxLateralForcePerTire: 15
+  enableLateralTireForces: 1
+  enableFrontDriveForce: 1
+  enableDriftDynamics: 1
+  enableDriftRearGripReduction: 1
   tires: []
   speedMetersPerSecond: 0
   rawPedalInput: 0
@@ -517,6 +521,7 @@ MonoBehaviour:
   uprightStrength: 8
   angularDamping: 2
   maxUprightTorque: 20
+  enableUprightAssist: 1
 --- !u!114 &2095029467354775146
 MonoBehaviour:
   m_ObjectHideFlags: 0

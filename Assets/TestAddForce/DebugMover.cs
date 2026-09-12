@@ -43,7 +43,21 @@ public class DebugMover : MonoBehaviour
     [Tooltip("ドリフト中の速度抵抗倍率。1より大きくすると減速します。")]
     [SerializeField, Min(1f)] private float driftResistanceMultiplier = 1.25f;
     [Tooltip("ドリフト中に残す後輪の横グリップの割合。")]
-    [SerializeField, Range(0f, 1f)] private float driftRearGripMultiplier = 0.65f;
+    [SerializeField, Range(0f, 1f)] private float driftRearGripMultiplier = 0.9f;
+
+    [Header("Runtime Force Toggles")]
+    [Tooltip("タイヤの横滑りを抑える横力を適用するか。プレイ中の原因切り分け用。")]
+    [SerializeField] private bool enableLateralTireForces = true;
+
+    [Tooltip("前輪の駆動力を適用するか。プレイ中の原因切り分け用。")]
+    [SerializeField] private bool enableFrontDriveForce = true;
+
+    [Tooltip("ドリフト状態、後輪グリップ低下、ドリフト抵抗、ドリフトブーストを有効にするか。")]
+    [SerializeField] private bool enableDriftDynamics = true;
+
+    [Tooltip("ドリフト中に後輪の横グリップを低下させるか。")]
+    [SerializeField] private bool enableDriftRearGripReduction = true;
+
     [Header("Drift Boost")]
     [Tooltip("ドリフト解放後に加速を続ける時間（秒）。0で加速を無効化します。")]
     [SerializeField, Min(0f)] private float driftBoostDuration = 1f;
@@ -125,10 +139,17 @@ public class DebugMover : MonoBehaviour
         else
         {
             ReadInput();
-            float boostAcceleration = UpdateDrift(Time.fixedDeltaTime);
+            float boostAcceleration = enableDriftDynamics
+                ? UpdateDrift(Time.fixedDeltaTime)
+                : 0f;
             if (boostAcceleration > 0f)
             {
                 StartDriftBoost(boostAcceleration);
+            }
+
+            if (!enableDriftDynamics)
+            {
+                ResetDrift();
             }
 
             float boostSpeedDelta = ConsumeDriftBoost(Time.fixedDeltaTime);
@@ -278,6 +299,7 @@ public class DebugMover : MonoBehaviour
                 ? frontCorneringStiffness
                 : rearCorneringStiffness;
             float gripMultiplier = isDrifting && !tire.IsFrontWheel
+                && enableDriftDynamics && enableDriftRearGripReduction
                 ? Mathf.Clamp01(driftRearGripMultiplier)
                 : 1f;
 
@@ -288,7 +310,9 @@ public class DebugMover : MonoBehaviour
                 appliedPedalInput,
                 driveForcePerFrontWheel,
                 corneringStiffness * gripMultiplier,
-                maxLateralForcePerTire * gripMultiplier);
+                maxLateralForcePerTire * gripMultiplier,
+                enableLateralTireForces,
+                enableFrontDriveForce);
         }
     }
 
@@ -296,7 +320,7 @@ public class DebugMover : MonoBehaviour
     {
         Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
         Vector3 resistance = -planarVelocity * velocityResistance;
-        if (isDrifting)
+        if (enableDriftDynamics && isDrifting)
         {
             resistance *= Mathf.Max(1f, driftResistanceMultiplier);
         }

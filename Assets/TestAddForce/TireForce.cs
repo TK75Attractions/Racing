@@ -47,7 +47,9 @@ public class TireForce : MonoBehaviour
         float pedalInput,
         float driveForcePerFrontWheel,
         float corneringStiffness,
-        float maxLateralForce)
+        float maxLateralForce,
+        bool enableLateralForce,
+        bool enableDriveForce)
     {
         if (carRb == null || groundCheck == null)
         {
@@ -69,8 +71,23 @@ public class TireForce : MonoBehaviour
         Vector3 tirePosition = transform.position;
         Vector3 pointVelocity = carRb.GetPointVelocity(tirePosition);
 
-        ApplyLateralForce(tirePosition, tireRight, pointVelocity, corneringStiffness, maxLateralForce);
-        ApplyFrontDriveForce(tirePosition, tireForward, pedalInput, driveForcePerFrontWheel);
+        if (enableLateralForce)
+        {
+            ApplyLateralForce(tirePosition, tireRight, pointVelocity, corneringStiffness, maxLateralForce);
+        }
+        else
+        {
+            appliedLateralForce = 0f;
+        }
+
+        if (enableDriveForce)
+        {
+            ApplyFrontDriveForce(tirePosition, tireForward, pedalInput, driveForcePerFrontWheel);
+        }
+        else
+        {
+            appliedDriveForce = 0f;
+        }
     }
 
     private Vector3 GetTireForward(

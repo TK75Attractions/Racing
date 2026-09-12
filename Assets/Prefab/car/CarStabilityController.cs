@@ -9,6 +9,9 @@ public class CarStabilityController : MonoBehaviour
     [SerializeField] private float uprightStrength = 8f;
     [SerializeField] private float angularDamping = 2f;
     [SerializeField] private float maxUprightTorque = 20f;
+    [Header("Runtime Toggle")]
+    [Tooltip("車体を起こす復元トルクを適用するか。プレイ中の原因切り分け用。")]
+    [SerializeField] private bool enableUprightAssist = true;
 
     private Rigidbody rb;
     private GroundCheck[] tireGroundChecks;
@@ -22,6 +25,11 @@ public class CarStabilityController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!enableUprightAssist)
+        {
+            return;
+        }
+
         if (!HasGroundedWheel())
         {
             return;
