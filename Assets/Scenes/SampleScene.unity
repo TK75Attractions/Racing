@@ -631,6 +631,7 @@ MonoBehaviour:
   resultReturnInputDelaySeconds: 3
   cameraBlendSeconds: 0.65
   playerPosition: 1
+  racePositionTieDistance: 0.25
   speedUnitMultiplier: 3.6
   course: {fileID: 1759542321}
   test: {fileID: 1911937256}
@@ -1480,7 +1481,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 62.47905
+    FieldOfView: 60.0578
     OrthographicSize: 2
     NearClipPlane: 0.3
     FarClipPlane: 1000
@@ -2445,7 +2446,7 @@ Camera:
     height: 0.8888889
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 62.47905
+  field of view: 60.0578
   orthographic: 0
   orthographic size: 2
   m_Depth: 0

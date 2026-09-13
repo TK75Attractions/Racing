@@ -53,6 +53,9 @@ public class LapManager : MonoBehaviour
 
     private readonly Dictionary<Rigidbody, CarTimeData> carDataMap = new Dictionary<Rigidbody, CarTimeData>();
     private bool raceActive;
+    private bool hasProgressReference;
+    private bool reverseProgressDirection;
+    private float progressStartDistance;
 
     public int GoalLap => goalLap;
     public event Action<Rigidbody, RaceResultRecord> CarFinished;
@@ -70,6 +73,7 @@ public class LapManager : MonoBehaviour
         }
 
         RefreshCheckpoints();
+        InitializeProgressReference();
     }
 
     private void Update()
@@ -162,6 +166,10 @@ public class LapManager : MonoBehaviour
         data.isFinished = false;
         ResetCheckpointProgress(data);
         SetRespawnPoint(data, startTransform);
+        if (!hasProgressReference && startTransform != null)
+        {
+            InitializeProgressReference(startTransform);
+        }
         raceActive = true;
     }
 
@@ -247,8 +255,7 @@ public class LapManager : MonoBehaviour
             return data.raceProgressDistance;
         }
 
-        data.raceProgressDistance = data.lapCount * lapLength +
-                                    raceCourse.GetProgressDistance(data.rb.position);
+        data.raceProgressDistance = data.lapCount * lapLength + GetLapProgressDistance(data.rb.position, lapLength);
         return data.raceProgressDistance;
     }
 
@@ -369,8 +376,62 @@ public class LapManager : MonoBehaviour
             return;
         }
 
-        data.raceProgressDistance = data.lapCount * lapLength +
-                                    raceCourse.GetProgressDistance(data.rb.position);
+        data.raceProgressDistance = data.lapCount * lapLength + GetLapProgressDistance(data.rb.position, lapLength);
+    }
+
+    private void InitializeProgressReference()
+    {
+        Transform startTransform = checkpoints != null && checkpoints.Length > 0 && checkpoints[0] != null
+            ? checkpoints[0].transform
+            : null;
+        InitializeProgressReference(startTransform);
+    }
+
+    private void InitializeProgressReference(Transform startTransform)
+    {
+        hasProgressReference = false;
+        reverseProgressDirection = false;
+        progressStartDistance = 0f;
+
+        if (raceCourse == null || startTransform == null)
+        {
+            return;
+        }
+
+        float lapLength = raceCourse.TotalLength;
+        if (lapLength <= Mathf.Epsilon)
+        {
+            return;
+        }
+
+        if (raceCourse.TryGetNearestCenterLineDirection(startTransform.position, out Vector3 courseDirection))
+        {
+            Vector3 startForward = Vector3.ProjectOnPlane(startTransform.forward, Vector3.up).normalized;
+            reverseProgressDirection = startForward.sqrMagnitude > Mathf.Epsilon &&
+                                       Vector3.Dot(startForward, courseDirection) < 0f;
+        }
+
+        float rawStartDistance = raceCourse.GetProgressDistance(startTransform.position);
+        progressStartDistance = ToDirectedProgress(rawStartDistance, lapLength);
+        hasProgressReference = true;
+    }
+
+    private float GetLapProgressDistance(Vector3 worldPosition, float lapLength)
+    {
+        float directedDistance = ToDirectedProgress(raceCourse.GetProgressDistance(worldPosition), lapLength);
+        if (!hasProgressReference)
+        {
+            return directedDistance;
+        }
+
+        return Mathf.Repeat(directedDistance - progressStartDistance, lapLength);
+    }
+
+    private float ToDirectedProgress(float rawDistance, float lapLength)
+    {
+        return reverseProgressDirection
+            ? Mathf.Repeat(lapLength - rawDistance, lapLength)
+            : Mathf.Repeat(rawDistance, lapLength);
     }
 
     private bool CanCompleteLap(CarTimeData data)
