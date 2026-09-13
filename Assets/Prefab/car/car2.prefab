@@ -449,17 +449,17 @@ MonoBehaviour:
   maxDriftCharge: 3
   driftChargePerSecond: 1
   driftResistanceMultiplier: 1.25
-  driftRearGripMultiplier: 0.9
+  driftRearGripMultiplier: 2
+  enableLateralTireForces: 1
+  enableFrontDriveForce: 1
+  enableDriftDynamics: 1
+  enableDriftRearGripReduction: 1
   driftBoostDuration: 1
   driftBoostAccelerationPerCharge: 10
   respawnInputSuppressionSeconds: 0.3
   frontCorneringStiffness: 10
   rearCorneringStiffness: 12
   maxLateralForcePerTire: 15
-  enableLateralTireForces: 1
-  enableFrontDriveForce: 1
-  enableDriftDynamics: 1
-  enableDriftRearGripReduction: 1
   tires: []
   speedMetersPerSecond: 0
   rawPedalInput: 0

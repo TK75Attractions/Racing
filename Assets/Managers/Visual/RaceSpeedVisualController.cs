@@ -2,7 +2,7 @@ using Unity.Cinemachine;
 using UnityEngine;
 
 /// <summary>
-/// 車両の水平速度とドリフトブーストを、カメラと画面演出へ変換します。
+/// 車両の水平速度とブースト状態を、カメラと画面演出へ変換します。
 /// 車両の物理挙動は変更しません。
 /// </summary>
 [DisallowMultipleComponent]
@@ -201,7 +201,7 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
     private void UpdateBoost(float deltaTime)
     {
         float targetBoost = targetMover != null
-            ? targetMover.DriftBoostVisualIntensity
+            ? targetMover.BoostVisualIntensity
             : externalBoostIntensity;
         targetBoost = Mathf.Max(targetBoost, externalBoostIntensity);
 

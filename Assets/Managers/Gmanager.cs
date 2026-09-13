@@ -20,6 +20,7 @@ public class Gmanager : MonoBehaviour
         public Vector3 titleCameraPosition;
         public Quaternion titleCameraRotation;
         public RaceResultRecord result;
+        public int displayedRacePosition;
         public bool isReady;
         public float readyHoldTimer;
     }
@@ -58,6 +59,7 @@ public class Gmanager : MonoBehaviour
     [SerializeField] private float cameraBlendSeconds = 0.65f;
     [Header("HUD")]
     [SerializeField] private int playerPosition = 1;
+    [SerializeField, Min(0f)] private float racePositionTieDistance = 0.25f;
     [SerializeField] private float speedUnitMultiplier = 3.6f;
 
     private readonly PlayerRuntime[] players = new PlayerRuntime[PlayerCount];
@@ -195,7 +197,7 @@ public class Gmanager : MonoBehaviour
         for (int index = 0; index < players.Length; index++)
         {
             DebugMover mover = players[index]?.mover;
-            VManager.SetDriftBoost(index, mover != null ? mover.DriftBoostVisualIntensity : 0f);
+            VManager.SetDriftBoost(index, mover != null ? mover.BoostVisualIntensity : 0f);
         }
         VManager.TickDriftBoost(Time.deltaTime);
     }
@@ -353,6 +355,7 @@ public class Gmanager : MonoBehaviour
             if (player.car.GetComponent<CarLightController>() == null)
                 player.car.AddComponent<CarLightController>();
             player.result = null;
+            player.displayedRacePosition = playerIndex + 1;
             AssignPlayerInput(player.car, playerIndex);
             lapManager?.RegisterCar(player.rigidbody, spawnPoint);
 
@@ -611,10 +614,26 @@ public class Gmanager : MonoBehaviour
         LapManager.CarTimeData currentData = lapManager?.GetCarData(current?.rigidbody);
         LapManager.CarTimeData otherData = lapManager?.GetCarData(other?.rigidbody);
         if (currentData == null || otherData == null) return playerIndex == 0 ? playerPosition : 2;
-        if (currentData.lapCount != otherData.lapCount) return currentData.lapCount > otherData.lapCount ? 1 : 2;
-        if (currentData.lastCheckpointIndex != otherData.lastCheckpointIndex)
-            return currentData.lastCheckpointIndex > otherData.lastCheckpointIndex ? 1 : 2;
-        return playerIndex + 1;
+
+        float currentProgress = lapManager.GetRaceProgressDistance(current.rigidbody);
+        float otherProgress = lapManager.GetRaceProgressDistance(other.rigidbody);
+        float progressDelta = currentProgress - otherProgress;
+        int position;
+
+        if (Mathf.Abs(progressDelta) <= Mathf.Max(0f, racePositionTieDistance))
+        {
+            // 車体がほぼ並んでいる間は直前の順位を維持し、HUDのちらつきを抑えます。
+            position = current.displayedRacePosition > 0
+                ? current.displayedRacePosition
+                : playerIndex + 1;
+        }
+        else
+        {
+            position = progressDelta > 0f ? 1 : 2;
+        }
+
+        current.displayedRacePosition = position;
+        return position;
     }
 
     private void TransitionTo(State targetState, Action onScreenCovered, Action onCompleted = null)
