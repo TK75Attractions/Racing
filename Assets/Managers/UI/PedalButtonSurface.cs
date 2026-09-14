@@ -22,13 +22,15 @@ public sealed class PedalButtonSurface : MaskableGraphic
         Rect bounds = rectTransform.rect;
         float glow = Mathf.Max(pedal, flash);
         Color gold = new Color(1f, 0.8f, 0.12f, 1f);
-        Color border = glow > 0.01f ? gold : new Color(0.4f, 0.51f, 0.61f, selected ? 0.95f : 0.7f);
+        Color selectionLight = new Color(0.55f, 0.82f, 1f, 1f);
+        Color border = glow > 0.01f ? gold : selected ? selectionLight : new Color(0.4f, 0.51f, 0.61f, 0.7f);
+        float edgeGlow = Mathf.Max(glow, selected ? 0.24f : 0f);
         // 同心の半透明リングで、UI用Bloomがなくても縁を柔らかく発光させる。
         for (int layer = 5; layer >= 1; layer--)
         {
             float width = layer * 2.4f;
-            Color halo = gold;
-            halo.a = glow * (6 - layer) * 0.025f;
+            Color halo = glow > 0.01f ? gold : selectionLight;
+            halo.a = edgeGlow * (6 - layer) * 0.025f;
             Ring(vh, Shape(bounds, -width), Shape(bounds, -width + 2.5f), halo);
         }
         Color body = Color.Lerp(new Color(0.065f, 0.105f, 0.15f, 0.98f), new Color(0.56f, 0.39f, 0.025f, 0.98f), pedal >= 0.8f ? 0.8f : pedal * 0.25f);
