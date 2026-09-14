@@ -138,11 +138,13 @@ public static class MultiplayerPlayModeValidation
 
         TMP_Text p1Title = FindComponent<TMP_Text>("GameManagers/MainCanvas/Title/StartPrompt");
         TMP_Text p2Title = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Title/StartPrompt");
-        Require(p1Title != null && p2Title != null && p1Title.text == p2Title.text,
-            "Title prompts differ between displays.");
+        Require(p1Title != null && p2Title != null && p1Title.text.Contains("P1") && p2Title.text.Contains("P2"),
+            "Title prompts are not personalized for each display.");
         Require(FindComponent<Image>("GameManagers/MainCanvas/Title/Player1Pedal/GaugeTrack/Fill") != null &&
-                FindComponent<Image>("GameManagers/MainCanvas/Title/Player2Pedal/GaugeTrack/Fill") != null,
-            "Title pedal gauges were not created.");
+                FindComponent<Image>("GameManagers/MainCanvas_P2/Title/Player2Pedal/GaugeTrack/Fill") != null &&
+                FindComponent<Image>("GameManagers/MainCanvas/Title/Player2Pedal/GaugeTrack/Fill") == null &&
+                FindComponent<Image>("GameManagers/MainCanvas_P2/Title/Player1Pedal/GaugeTrack/Fill") == null,
+            "Each display must contain only its own pedal gauge.");
     }
 
     private static void ValidateSpawnAndCountdown()
