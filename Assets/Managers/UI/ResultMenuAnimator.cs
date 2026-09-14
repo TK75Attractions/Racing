@@ -28,4 +28,9 @@ public sealed class ResultMenuAnimator : MonoBehaviour
             feedback[index].SetState(index == selected, amount, Accent);
         }
     }
+
+    public void PlayConfirm(int index)
+    {
+        if (feedback != null && index >= 0 && index < feedback.Length) feedback[index].PlayConfirm();
+    }
 }

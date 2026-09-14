@@ -285,6 +285,9 @@ public sealed class ScreenTransitionController : MonoBehaviour
         SetFadeInputBlocking(true);
         RefreshResultContent();
 
+        // 決定時の全体フラッシュを見せてから退出を開始する。
+        yield return new WaitForSecondsRealtime(0.25f);
+
         float elapsed = 0f;
         while (elapsed < resultExitSeconds)
         {
@@ -432,7 +435,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         Color playerAccent = displayPlayerIndex == 0
             ? new Color(0.05f, 0.78f, 1f, 1f)
             : new Color(1f, 0.28f, 0.36f, 1f);
-        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(0.31f, 0.18f), new Vector2(0.69f, 0.38f),
+        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(0.36f, 0.23f), new Vector2(0.64f, 0.355f),
             playerAccent);
 
         TMP_Text footer = CreateLabel(
@@ -547,15 +550,12 @@ public sealed class ScreenTransitionController : MonoBehaviour
         outline.effectColor = new Color(accent.r, accent.g, accent.b, 0.65f);
         outline.effectDistance = new Vector2(2f, -2f);
 
-        GameObject accentBar = CreatePanel(panel.transform, "Accent",
-            new Vector2(0f, 0f), new Vector2(0.012f, 1f), accent);
-        accentBar.GetComponent<Image>().raycastTarget = false;
 
         TMP_Text player = CreateLabel(panel.transform, "Player", $"P{playerIndex + 1}",
-            new Vector2(0.07f, 0.48f), new Vector2(0.25f, 0.88f), 49f, accent);
+            new Vector2(0.12f, 0.25f), new Vector2(0.29f, 0.80f), 38f, accent);
         player.fontStyle = FontStyles.Bold | FontStyles.Italic;
         TMP_Text instruction = CreateLabel(panel.transform, "Instruction", "PRESS PEDAL",
-            new Vector2(0.27f, 0.57f), new Vector2(0.72f, 0.85f), 24f,
+            new Vector2(0.32f, 0.30f), new Vector2(0.86f, 0.77f), 22f,
             new Color(0.82f, 0.86f, 0.92f, 1f));
         instruction.alignment = TextAlignmentOptions.Left;
         instruction.characterSpacing = 4f;
@@ -581,6 +581,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
             : new Color(1f, 0.28f, 0.36f, 1f);
         Color readyColor = new Color(0.2f, 1f, 0.58f, 1f);
         titleButtonFeedback[playerIndex].SetState(armed, amount, ready ? readyColor : accent);
+        titleButtonFeedback[playerIndex].SetConfirmed(ready);
         if (titlePrompt != null)
         {
             titlePrompt.text = !armed

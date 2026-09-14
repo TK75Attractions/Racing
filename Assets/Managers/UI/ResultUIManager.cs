@@ -59,6 +59,7 @@ public class ResultUIManager
     }
 
     public void SetMenuState(int selectedIndex, float pedalAmount) => menuAnimator?.SetState(selectedIndex, pedalAmount);
+    public void PlayConfirm(int selectedIndex) => menuAnimator?.PlayConfirm(selectedIndex);
 
     public void HideResults()
     {
@@ -133,7 +134,7 @@ public class ResultUIManager
     private void BuildMenu(Transform parent)
     {
         GameObject menu = GetOrCreate(parent, "ResultMenu");
-        Anchor(menu.GetComponent<RectTransform>(), new Vector2(0.11f, 0.075f), new Vector2(0.89f, 0.34f));
+        Anchor(menu.GetComponent<RectTransform>(), new Vector2(0.20f, 0.11f), new Vector2(0.80f, 0.27f));
         RectTransform[] cards = new RectTransform[2];
         string[] labels = { "リトライ", "タイトルにもどる" };
         string[] captions = { "RETRY", "RETURN TO TITLE" };
@@ -144,10 +145,10 @@ public class ResultUIManager
             GameObject option = CreatePanel(menu.transform, $"Option{index + 1}", new Vector2(left, 0.08f), new Vector2(right, 0.92f), new Color(0.015f, 0.045f, 0.075f, 0.96f));
             cards[index] = option.GetComponent<RectTransform>();
             AddOutline(option, new Color(0.4f, 0.48f, 0.56f, 0.7f), new Vector2(2f, -2f));
-            TMP_Text caption = CreateLabel(option.transform, "Caption", captions[index], new Vector2(0.08f, 0.68f), new Vector2(0.92f, 0.9f), 16f,
-                new Color(0.25f, 0.8f, 1f, 1f), FontStyles.Bold, TextAlignmentOptions.Center, FontRole.English);
-            caption.characterSpacing = 5f;
-            CreateLabel(option.transform, "Label", labels[index], new Vector2(0.08f, 0.29f), new Vector2(0.92f, 0.7f), 31f,
+            TMP_Text caption = CreateLabel(option.transform, "Caption", captions[index], new Vector2(0.12f, 0.20f), new Vector2(0.88f, 0.43f), 14f,
+                new Color(0.78f, 0.84f, 0.9f, 1f), FontStyles.Italic, TextAlignmentOptions.Center, FontRole.English);
+            caption.characterSpacing = 2f;
+            CreateLabel(option.transform, "Label", labels[index], new Vector2(0.12f, 0.43f), new Vector2(0.88f, 0.85f), 26f,
                 Color.white, FontStyles.Bold, TextAlignmentOptions.Center, FontRole.Japanese);
         }
         menuAnimator = menu.GetComponent<ResultMenuAnimator>();

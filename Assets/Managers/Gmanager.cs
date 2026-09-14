@@ -869,6 +869,7 @@ public class Gmanager : MonoBehaviour
             player.resultConfirmTimer = input.pedal > resultReturnPedalThreshold ? player.resultConfirmTimer + dt : 0f;
             if (player.resultConfirmTimer < Mathf.Max(0.01f, resultReturnHoldSeconds)) continue;
             player.resultConfirmTimer = 0f;
+            resultUIManagers[index]?.PlayConfirm(player.resultSelection);
             if (player.resultSelection == 0)
             {
                 RetryGame();
