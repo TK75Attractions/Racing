@@ -387,7 +387,7 @@ public class Gmanager : MonoBehaviour
 
             ResultUIManager resultsUi = playerIndex == 0 && resultUIManager != null
                 ? resultUIManager : new ResultUIManager();
-            resultsUi.Init(rig.CanvasRoot.transform.Find("Result"));
+            resultsUi.Init(rig.CanvasRoot.transform.Find("Result"), playerIndex + 1);
             resultUIManagers[playerIndex] = resultsUi;
         }
 

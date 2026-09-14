@@ -18,12 +18,17 @@ public class ResultUIManager
     private TMP_Text winnerLabel;
     private TMP_FontAsset inheritedFont;
     private ResultMenuAnimator menuAnimator;
+    private int localPlayerNumber = 1;
+    private readonly Image[] rowBackgrounds = new Image[RowCount];
+    private readonly Image[] localAccents = new Image[RowCount];
+    private readonly TMP_Text[] localBadges = new TMP_Text[RowCount];
 
     public RaceResultRecord CurrentResult => currentResult;
     public RaceSessionResult CurrentSessionResult => currentSessionResult;
 
-    public void Init(Transform parent)
+    public void Init(Transform parent, int playerNumber = 1)
     {
+        localPlayerNumber = playerNumber;
         if (parent == null) { Debug.LogWarning("ResultUIManager requires a Result root."); return; }
         Transform legacyPanel = parent.Find("Panel");
         TMP_Text template = legacyPanel != null ? legacyPanel.GetComponentInChildren<TMP_Text>(true) : parent.GetComponentInChildren<TMP_Text>(true);
@@ -74,67 +79,79 @@ public class ResultUIManager
         Anchor(presentation.GetComponent<RectTransform>(), Vector2.zero, Vector2.one);
         presentation.GetComponent<Image>().color = Color.black;
         InstantiateScreenBackground(presentation.transform, "UI/ResultScreenBackground", "ResultBackground");
-        CreatePanel(presentation.transform, "ResultBackgroundTint", Vector2.zero, Vector2.one, new Color(0.002f, 0.01f, 0.022f, 0.42f));
-        CreatePanel(presentation.transform, "TopGlow", new Vector2(0f, 0.91f), Vector2.one, new Color(0.02f, 0.35f, 0.62f, 0.22f));
+        CreatePanel(presentation.transform, "ResultBackgroundTint", Vector2.zero, Vector2.one, new Color(0.002f, 0.008f, 0.016f, 0.65f));
 
         GameObject card = GetOrCreate(presentation.transform, "ResultCard", typeof(Image), typeof(CanvasGroup));
-        Anchor(card.GetComponent<RectTransform>(), new Vector2(0.105f, 0.055f), new Vector2(0.895f, 0.955f));
-        card.GetComponent<Image>().color = new Color(0.008f, 0.021f, 0.038f, 0.77f);
-        AddOutline(card, new Color(0.15f, 0.55f, 0.78f, 0.45f), new Vector2(2f, -2f));
+        Anchor(card.GetComponent<RectTransform>(), new Vector2(0.13f, 0.07f), new Vector2(0.87f, 0.95f));
+        card.GetComponent<Image>().color = new Color(0.008f, 0.018f, 0.03f, 0.36f);
+        CreatePanel(card.transform, "HeaderAccent", new Vector2(0.055f, 0.955f), new Vector2(0.095f, 0.958f), new Color(0.2f, 0.8f, 1f, 0.85f));
+        TMP_Text classification = CreateLabel(card.transform, "Classification", "FINAL CLASSIFICATION", new Vector2(0.11f, 0.935f), new Vector2(0.46f, 0.975f), 14f,
+            new Color(0.52f, 0.65f, 0.75f, 1f), FontStyles.Normal, TextAlignmentOptions.Left, FontRole.English);
+        classification.characterSpacing = 3f;
 
-        CreateLabel(card.transform, "Title", "RESULTS", new Vector2(0.1f, 0.845f), new Vector2(0.9f, 0.985f), 92f,
+        CreateLabel(card.transform, "Title", "RESULTS", new Vector2(0.1f, 0.815f), new Vector2(0.9f, 0.945f), 86f,
             Color.white, FontStyles.Bold | FontStyles.Italic, TextAlignmentOptions.Center, FontRole.English);
-        CreateLabel(card.transform, "Subtitle", "リザルト", new Vector2(0.1f, 0.79f), new Vector2(0.9f, 0.86f), 28f,
-            new Color(0.82f, 0.9f, 0.97f, 1f), FontStyles.Bold, TextAlignmentOptions.Center, FontRole.Japanese);
-        winnerLabel = CreateLabel(card.transform, "Winner", string.Empty, new Vector2(0.65f, 0.92f), new Vector2(0.96f, 0.968f), 18f,
+        TMP_Text subtitle = CreateLabel(card.transform, "Subtitle", "リザルト", new Vector2(0.1f, 0.77f), new Vector2(0.9f, 0.815f), 22f,
+            new Color(0.72f, 0.79f, 0.85f, 1f), FontStyles.Normal, TextAlignmentOptions.Center, FontRole.Japanese);
+        subtitle.characterSpacing = 8f;
+        winnerLabel = CreateLabel(card.transform, "Winner", string.Empty, new Vector2(0.57f, 0.71f), new Vector2(0.945f, 0.752f), 16f,
             new Color(1f, 0.78f, 0.12f, 1f), FontStyles.Bold, TextAlignmentOptions.Right, FontRole.English);
 
         BuildTableHeader(card.transform);
-        const float height = 0.068f;
-        const float firstTop = 0.712f;
+        const float height = 0.082f;
+        const float firstTop = 0.65f;
         for (int index = 0; index < RowCount; index++)
         {
             float top = firstTop - height * index;
             BuildResultRow(card.transform, index, new Vector2(0.055f, top - height + 0.004f), new Vector2(0.945f, top));
         }
         BuildMenu(card.transform);
-        CreateLabel(card.transform, "MenuHint", "ハンドルを回して選択   /   ペダルを踏み続けて決定", new Vector2(0.18f, 0.012f), new Vector2(0.82f, 0.058f), 19f,
-            new Color(0.66f, 0.76f, 0.85f, 1f), FontStyles.Normal, TextAlignmentOptions.Center, FontRole.Japanese);
+        CreateLabel(card.transform, "MenuHint", "ハンドルで選択   /   ペダルで決定", new Vector2(0.18f, 0.012f), new Vector2(0.82f, 0.055f), 17f,
+            new Color(0.52f, 0.62f, 0.7f, 1f), FontStyles.Normal, TextAlignmentOptions.Center, FontRole.Japanese);
     }
 
     private void BuildTableHeader(Transform parent)
     {
-        GameObject header = CreatePanel(parent, "TableHeader", new Vector2(0.055f, 0.72f), new Vector2(0.945f, 0.775f), new Color(0.015f, 0.08f, 0.13f, 0.92f));
+        GameObject header = CreatePanel(parent, "TableHeader", new Vector2(0.055f, 0.66f), new Vector2(0.945f, 0.706f), new Color(0.015f, 0.025f, 0.04f, 0.3f));
+        CreatePanel(header.transform, "Divider", Vector2.zero, new Vector2(1f, 0.025f), new Color(0.35f, 0.48f, 0.58f, 0.45f));
         CreateLabel(header.transform, "Rank", "順位", new Vector2(0.01f, 0f), new Vector2(0.15f, 1f), 20f, HeaderColor, FontStyles.Bold, TextAlignmentOptions.Center, FontRole.Japanese);
         CreateLabel(header.transform, "Driver", "ドライバー", new Vector2(0.16f, 0f), new Vector2(0.49f, 1f), 20f, HeaderColor, FontStyles.Bold, TextAlignmentOptions.Left, FontRole.Japanese);
         CreateLabel(header.transform, "Time", "タイム", new Vector2(0.49f, 0f), new Vector2(0.73f, 1f), 20f, HeaderColor, FontStyles.Bold, TextAlignmentOptions.Center, FontRole.Japanese);
         CreateLabel(header.transform, "Gap", "トップとの差", new Vector2(0.73f, 0f), new Vector2(0.98f, 1f), 20f, HeaderColor, FontStyles.Bold, TextAlignmentOptions.Center, FontRole.Japanese);
     }
 
-    private static Color HeaderColor => new Color(0.58f, 0.85f, 1f, 1f);
+    private static Color HeaderColor => new Color(0.58f, 0.66f, 0.73f, 1f);
 
     private void BuildResultRow(Transform parent, int index, Vector2 anchorMin, Vector2 anchorMax)
     {
-        Color rowColor = index == 0 ? new Color(0.13f, 0.09f, 0.015f, 0.9f)
-            : index == 1 ? new Color(0.015f, 0.11f, 0.17f, 0.88f) : new Color(0.018f, 0.035f, 0.055f, 0.82f);
+        Color rowColor = index == 0 ? new Color(0.12f, 0.09f, 0.025f, 0.58f)
+            : index == 1 ? new Color(0.02f, 0.09f, 0.13f, 0.52f) : new Color(0.018f, 0.027f, 0.038f, index % 2 == 0 ? 0.42f : 0.26f);
         GameObject row = CreatePanel(parent, $"ResultRow{index + 1}", anchorMin, anchorMax, rowColor);
-        if (index == 0) AddOutline(row, new Color(1f, 0.7f, 0.08f, 0.8f), new Vector2(2f, -2f));
-        else if (index == 1) AddOutline(row, new Color(0.05f, 0.78f, 1f, 0.55f), new Vector2(1f, -1f));
+        rowBackgrounds[index] = row.GetComponent<Image>();
+        localAccents[index] = CreatePanel(row.transform, "LocalAccent", Vector2.zero, new Vector2(0.006f, 1f), new Color(0.15f, 0.82f, 1f, 1f)).GetComponent<Image>();
+        localAccents[index].gameObject.SetActive(false);
+        CreatePanel(row.transform, "Divider", Vector2.zero, new Vector2(1f, 0.014f), new Color(0.35f, 0.45f, 0.53f, 0.22f));
+        if (index < 2) CreatePanel(row.transform, "PlayerAccent", Vector2.zero, new Vector2(0.003f, 1f),
+            index == 0 ? new Color(1f, 0.78f, 0.16f, 1f) : new Color(0.14f, 0.75f, 1f, 0.8f));
+        Color textColor = index < 2 ? new Color(0.94f, 0.96f, 0.98f, 1f) : new Color(0.62f, 0.69f, 0.75f, 1f);
 
         rankLabels[index] = CreateLabel(row.transform, "Rank", (index + 1).ToString(), new Vector2(0.01f, 0.05f), new Vector2(0.15f, 0.95f), 34f,
-            index == 0 ? new Color(1f, 0.8f, 0.18f, 1f) : Color.white, FontStyles.Bold | FontStyles.Italic, TextAlignmentOptions.Center, FontRole.English);
+            index == 0 ? new Color(1f, 0.8f, 0.18f, 1f) : textColor, FontStyles.Bold | FontStyles.Italic, TextAlignmentOptions.Center, FontRole.English);
         playerLabels[index] = CreateLabel(row.transform, "Player", "---", new Vector2(0.17f, 0.05f), new Vector2(0.49f, 0.95f), 27f,
             Color.white, FontStyles.Bold, TextAlignmentOptions.Left, FontRole.Japanese);
+        localBadges[index] = CreateLabel(row.transform, "LocalBadge", "YOU", new Vector2(0.40f, 0.1f), new Vector2(0.48f, 0.9f), 13f,
+            new Color(0.4f, 0.9f, 1f, 1f), FontStyles.Bold, TextAlignmentOptions.Right, FontRole.English);
+        localBadges[index].gameObject.SetActive(false);
         timeLabels[index] = CreateLabel(row.transform, "Time", "--:--.---", new Vector2(0.49f, 0.05f), new Vector2(0.73f, 0.95f), 28f,
-            Color.white, FontStyles.Bold | FontStyles.Italic, TextAlignmentOptions.Center, FontRole.English);
+            textColor, FontStyles.Bold | FontStyles.Italic, TextAlignmentOptions.Center, FontRole.English);
         gapLabels[index] = CreateLabel(row.transform, "Gap", "—", new Vector2(0.73f, 0.05f), new Vector2(0.98f, 0.95f), 24f,
-            new Color(0.78f, 0.86f, 0.93f, 1f), FontStyles.Bold | FontStyles.Italic, TextAlignmentOptions.Center, FontRole.English);
+            new Color(0.52f, 0.62f, 0.71f, 1f), FontStyles.Normal, TextAlignmentOptions.Center, FontRole.English);
     }
 
     private void BuildMenu(Transform parent)
     {
         GameObject menu = GetOrCreate(parent, "ResultMenu");
-        Anchor(menu.GetComponent<RectTransform>(), new Vector2(0.20f, 0.11f), new Vector2(0.80f, 0.27f));
+        Anchor(menu.GetComponent<RectTransform>(), new Vector2(0.20f, 0.07f), new Vector2(0.80f, 0.21f));
         RectTransform[] cards = new RectTransform[2];
         string[] labels = { "リトライ", "タイトルにもどる" };
         string[] captions = { "RETRY", "RETURN TO TITLE" };
@@ -162,6 +179,16 @@ public class ResultUIManager
         playerLabels[index].text = result == null ? "NO FINISH" : result.playerNumber > 0 ? $"PLAYER {result.playerNumber}" : result.carName;
         timeLabels[index].text = result == null ? "---" : result.didFinish ? FormatTime(result.totalRaceTime) : "DNF";
         gapLabels[index].text = index == 0 || result == null || !result.didFinish ? "—" : $"+{Mathf.Max(0f, result.totalRaceTime - winnerTime):0.000}";
+        bool isLocalPlayer = result != null && result.playerNumber == localPlayerNumber;
+        localAccents[index].gameObject.SetActive(isLocalPlayer);
+        localBadges[index].gameObject.SetActive(isLocalPlayer);
+        playerLabels[index].rectTransform.anchorMax = new Vector2(isLocalPlayer ? 0.39f : 0.49f, 0.95f);
+        playerLabels[index].color = Color.white;
+        rankLabels[index].fontSizeMax = isLocalPlayer ? 42f : 34f;
+        rankLabels[index].color = isLocalPlayer ? new Color(0.4f, 0.9f, 1f, 1f)
+            : index == 0 ? new Color(1f, 0.8f, 0.18f, 1f) : Color.white;
+        rowBackgrounds[index].color = isLocalPlayer ? new Color(0.015f, 0.22f, 0.34f, 0.9f)
+            : index == 0 ? new Color(0.12f, 0.09f, 0.025f, 0.58f) : new Color(0.02f, 0.09f, 0.13f, 0.52f);
     }
 
     private void ApplyDummyRows(float baseTime, float winnerTime)
