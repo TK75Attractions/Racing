@@ -14,19 +14,21 @@ public sealed class ScreenTransitionController : MonoBehaviour
     [SerializeField, Min(0f)] private float resultExitSeconds = 0.32f;
 
     private GameObject titleRoot;
+    private int displayPlayerIndex;
     private GameObject onPlayRoot;
     private GameObject resultRoot;
     private CanvasGroup resultCanvasGroup;
     private RectTransform resultContent;
     private Vector2 resultContentBasePosition;
+    private readonly RectTransform[] resultRows = new RectTransform[5];
+    private readonly CanvasGroup[] resultRowGroups = new CanvasGroup[5];
+    private readonly Vector2[] resultRowBasePositions = new Vector2[5];
+    private TMP_Text resultWinnerLabel;
     private GoalCelebrationUI goalCelebration;
     private CanvasGroup fadeCanvasGroup;
     private RectTransform fadeOverlay;
     private TMP_Text titlePrompt;
-    private readonly Image[] titlePedalFills = new Image[2];
-    private readonly RectTransform[] titlePedalFillRects = new RectTransform[2];
-    private readonly TMP_Text[] titlePedalValues = new TMP_Text[2];
-    private readonly TMP_Text[] titlePedalStates = new TMP_Text[2];
+    private readonly PedalButtonFeedback[] titleButtonFeedback = new PedalButtonFeedback[2];
     private GameObject countdownStatusRoot;
     private GameObject finishWarningRoot;
     private TMP_Text raceStatus;
@@ -45,8 +47,10 @@ public sealed class ScreenTransitionController : MonoBehaviour
         Transform onPlay,
         Transform result,
         string titleText,
-        string promptText)
+        string promptText,
+        int playerIndex)
     {
+        displayPlayerIndex = Mathf.Clamp(playerIndex, 0, 1);
         titleRoot = title != null ? title.gameObject : null;
         onPlayRoot = onPlay != null ? onPlay.gameObject : null;
 
@@ -154,8 +158,9 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     public void UpdateTitlePedals(float playerOne, float playerTwo, bool playerOneReady, bool playerTwoReady, bool armed)
     {
-        UpdateTitlePedal(0, playerOne, playerOneReady, armed);
-        UpdateTitlePedal(1, playerTwo, playerTwoReady, armed);
+        float value = displayPlayerIndex == 0 ? playerOne : playerTwo;
+        bool ready = displayPlayerIndex == 0 ? playerOneReady : playerTwoReady;
+        UpdateTitlePedal(displayPlayerIndex, value, ready, armed);
     }
 
     public void ShowCountdown(int seconds)
@@ -240,6 +245,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         {
             resultCanvasGroup.alpha = 0f;
         }
+        PrepareResultRowsForEntrance();
 
         float elapsed = 0f;
         while (elapsed < resultEnterSeconds)
@@ -256,10 +262,12 @@ public sealed class ScreenTransitionController : MonoBehaviour
                 resultContent.anchoredPosition = resultContentBasePosition + Vector2.right * Mathf.Lerp(170f, 0f, eased);
                 resultContent.localScale = Vector3.one * Mathf.Lerp(0.94f, 1f, eased);
             }
+            AnimateResultRowsIn(t);
             yield return null;
         }
 
         RestoreResultContent();
+        RestoreResultRows(celebrateWinner: true);
         if (resultCanvasGroup != null)
         {
             resultCanvasGroup.alpha = 1f;
@@ -292,6 +300,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
                 resultContent.anchoredPosition = resultContentBasePosition + Vector2.left * Mathf.Lerp(0f, 150f, eased);
                 resultContent.localScale = Vector3.one * Mathf.Lerp(1f, 0.96f, eased);
             }
+            AnimateResultRowsOut(t);
             yield return null;
         }
 
@@ -302,6 +311,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         yield return FadeTo(0f, fadeInSeconds);
 
         RestoreResultContent();
+        RestoreResultRows(celebrateWinner: false);
         SetFadeInputBlocking(false);
         IsTransitioning = false;
         onCompleted?.Invoke();
@@ -374,8 +384,12 @@ public sealed class ScreenTransitionController : MonoBehaviour
             background = title.gameObject.AddComponent<Image>();
         }
 
-        background.color = new Color(0.008f, 0.016f, 0.03f, 0.76f);
+        background.color = Color.black;
         background.raycastTarget = false;
+
+        InstantiateScreenBackground(title, "UI/TitleScreenBackground", "TitleBackground");
+        CreatePanel(title, "TitleBackgroundTint", Vector2.zero, Vector2.one,
+            new Color(0.005f, 0.015f, 0.03f, 0.47f));
 
         GameObject topLine = CreatePanel(title, "TopLine", new Vector2(0.025f, 0.92f), new Vector2(0.19f, 0.924f),
             new Color(0.15f, 0.85f, 1f, 0.9f));
@@ -415,13 +429,14 @@ public sealed class ScreenTransitionController : MonoBehaviour
             new Color(0.82f, 0.87f, 0.92f, 1f));
         titlePrompt.characterSpacing = 6f;
 
-        BuildTitlePedalPanel(title, 0, new Vector2(0.17f, 0.19f), new Vector2(0.49f, 0.38f),
-            new Color(0.05f, 0.78f, 1f, 1f));
-        BuildTitlePedalPanel(title, 1, new Vector2(0.51f, 0.19f), new Vector2(0.83f, 0.38f),
-            new Color(1f, 0.28f, 0.36f, 1f));
+        Color playerAccent = displayPlayerIndex == 0
+            ? new Color(0.05f, 0.78f, 1f, 1f)
+            : new Color(1f, 0.28f, 0.36f, 1f);
+        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(0.31f, 0.18f), new Vector2(0.69f, 0.38f),
+            playerAccent);
 
         TMP_Text footer = CreateLabel(
-            title, "TitleFooter", "PRESS AND HOLD BOTH PEDALS TO JOIN THE GRID",
+            title, "TitleFooter", $"PLAYER {displayPlayerIndex + 1}  /  PRESS AND HOLD TO JOIN THE GRID",
             new Vector2(0.2f, 0.085f), new Vector2(0.8f, 0.145f), 19f,
             new Color(0.46f, 0.55f, 0.64f, 1f));
         footer.characterSpacing = 5f;
@@ -545,33 +560,17 @@ public sealed class ScreenTransitionController : MonoBehaviour
         instruction.alignment = TextAlignmentOptions.Left;
         instruction.characterSpacing = 4f;
 
-        titlePedalValues[playerIndex] = CreateLabel(panel.transform, "Value", "0%",
-            new Vector2(0.73f, 0.57f), new Vector2(0.93f, 0.85f), 25f, accent);
-        titlePedalValues[playerIndex].alignment = TextAlignmentOptions.Right;
-        titlePedalValues[playerIndex].fontStyle = FontStyles.Bold;
 
-        GameObject track = CreatePanel(panel.transform, "GaugeTrack",
-            new Vector2(0.27f, 0.31f), new Vector2(0.93f, 0.42f),
-            new Color(0.22f, 0.27f, 0.33f, 0.9f));
-        GameObject fill = CreatePanel(track.transform, "Fill", Vector2.zero, Vector2.one, accent);
-        Image fillImage = fill.GetComponent<Image>();
-        titlePedalFills[playerIndex] = fillImage;
-        titlePedalFillRects[playerIndex] = fill.GetComponent<RectTransform>();
+        PedalButtonFeedback feedback = panel.GetComponent<PedalButtonFeedback>();
+        if (feedback == null) feedback = panel.AddComponent<PedalButtonFeedback>();
+        feedback.Configure(accent);
+        titleButtonFeedback[playerIndex] = feedback;
 
-        GameObject threshold = CreatePanel(track.transform, "Threshold",
-            new Vector2(0.79f, -0.2f), new Vector2(0.805f, 1.2f), Color.white);
-        threshold.GetComponent<Image>().raycastTarget = false;
-
-        titlePedalStates[playerIndex] = CreateLabel(panel.transform, "State", "RELEASE PEDAL",
-            new Vector2(0.27f, 0.06f), new Vector2(0.93f, 0.27f), 18f,
-            new Color(0.55f, 0.63f, 0.72f, 1f));
-        titlePedalStates[playerIndex].alignment = TextAlignmentOptions.Left;
-        titlePedalStates[playerIndex].characterSpacing = 3f;
     }
 
     private void UpdateTitlePedal(int playerIndex, float value, bool ready, bool armed)
     {
-        if (playerIndex < 0 || playerIndex >= titlePedalFills.Length || titlePedalFills[playerIndex] == null)
+        if (playerIndex < 0 || playerIndex >= titleButtonFeedback.Length || titleButtonFeedback[playerIndex] == null)
         {
             return;
         }
@@ -581,15 +580,13 @@ public sealed class ScreenTransitionController : MonoBehaviour
             ? new Color(0.05f, 0.78f, 1f, 1f)
             : new Color(1f, 0.28f, 0.36f, 1f);
         Color readyColor = new Color(0.2f, 1f, 0.58f, 1f);
-        RectTransform fillRect = titlePedalFillRects[playerIndex];
-        fillRect.anchorMax = new Vector2(amount, 1f);
-        fillRect.offsetMin = Vector2.zero;
-        fillRect.offsetMax = Vector2.zero;
-        titlePedalFills[playerIndex].color = ready ? readyColor : accent;
-        titlePedalValues[playerIndex].text = ready ? "READY" : $"{Mathf.RoundToInt(amount * 100f):00}%";
-        titlePedalValues[playerIndex].color = ready ? readyColor : accent;
-        titlePedalStates[playerIndex].text = !armed ? "RELEASE TO ARM" : ready ? "ON THE GRID" : "HOLD TO READY";
-        titlePedalStates[playerIndex].color = ready ? readyColor : new Color(0.55f, 0.63f, 0.72f, 1f);
+        titleButtonFeedback[playerIndex].SetState(armed, amount, ready ? readyColor : accent);
+        if (titlePrompt != null)
+        {
+            titlePrompt.text = !armed
+                ? $"P{playerIndex + 1}  RELEASE PEDAL"
+                : ready ? $"P{playerIndex + 1}  READY — WAITING FOR RACE" : $"P{playerIndex + 1}  PRESS PEDAL TO START";
+        }
     }
 
     private void SetRaceStatusValue(string value, string caption)
@@ -643,6 +640,25 @@ public sealed class ScreenTransitionController : MonoBehaviour
         {
             resultContentBasePosition = resultContent.anchoredPosition;
         }
+
+        for (int index = 0; index < resultRows.Length; index++)
+        {
+            Transform row = card != null ? card.Find($"ResultRow{index + 1}") : null;
+            resultRows[index] = row != null ? row.GetComponent<RectTransform>() : null;
+            if (resultRows[index] == null)
+            {
+                continue;
+            }
+            resultRowBasePositions[index] = resultRows[index].anchoredPosition;
+            resultRowGroups[index] = row.GetComponent<CanvasGroup>();
+            if (resultRowGroups[index] == null)
+            {
+                resultRowGroups[index] = row.gameObject.AddComponent<CanvasGroup>();
+            }
+        }
+
+        Transform winner = card != null ? card.Find("Winner") : null;
+        resultWinnerLabel = winner != null ? winner.GetComponent<TMP_Text>() : null;
     }
 
     private void RestoreResultContent()
@@ -654,6 +670,107 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
         resultContent.anchoredPosition = resultContentBasePosition;
         resultContent.localScale = Vector3.one;
+    }
+
+    private void PrepareResultRowsForEntrance()
+    {
+        for (int index = 0; index < resultRows.Length; index++)
+        {
+            if (resultRows[index] == null)
+            {
+                continue;
+            }
+            resultRows[index].anchoredPosition = resultRowBasePositions[index] + Vector2.right * (240f + index * 70f);
+            resultRows[index].localScale = Vector3.one * 0.9f;
+            resultRowGroups[index].alpha = 0f;
+        }
+    }
+
+    private void AnimateResultRowsIn(float normalizedTime)
+    {
+        for (int index = 0; index < resultRows.Length; index++)
+        {
+            if (resultRows[index] == null)
+            {
+                continue;
+            }
+            float rowTime = Mathf.Clamp01((normalizedTime - 0.08f - index * 0.09f) / 0.56f);
+            float eased = 1f - Mathf.Pow(1f - rowTime, 3f);
+            float overshoot = Mathf.Sin(rowTime * Mathf.PI) * 0.045f;
+            resultRowGroups[index].alpha = eased;
+            resultRows[index].anchoredPosition = resultRowBasePositions[index] + Vector2.right * Mathf.Lerp(240f + index * 70f, 0f, eased);
+            resultRows[index].localScale = Vector3.one * (Mathf.Lerp(0.9f, 1f, eased) + overshoot);
+        }
+    }
+
+    private void AnimateResultRowsOut(float normalizedTime)
+    {
+        for (int index = 0; index < resultRows.Length; index++)
+        {
+            if (resultRows[index] == null)
+            {
+                continue;
+            }
+            float rowTime = Mathf.Clamp01((normalizedTime - (resultRows.Length - 1 - index) * 0.08f) / 0.8f);
+            resultRowGroups[index].alpha = 1f - rowTime;
+            resultRows[index].anchoredPosition = resultRowBasePositions[index] + Vector2.left * (130f * rowTime);
+            resultRows[index].localScale = Vector3.one * Mathf.Lerp(1f, 0.94f, rowTime);
+        }
+    }
+
+    private void RestoreResultRows(bool celebrateWinner)
+    {
+        for (int index = 0; index < resultRows.Length; index++)
+        {
+            if (resultRows[index] == null)
+            {
+                continue;
+            }
+            resultRows[index].anchoredPosition = resultRowBasePositions[index];
+            resultRows[index].localScale = Vector3.one;
+            resultRowGroups[index].alpha = 1f;
+        }
+
+        if (celebrateWinner && resultWinnerLabel != null)
+        {
+            UIValuePulse pulse = resultWinnerLabel.GetComponent<UIValuePulse>();
+            if (pulse == null)
+            {
+                pulse = resultWinnerLabel.gameObject.AddComponent<UIValuePulse>();
+            }
+            pulse.Play(new Color(1f, 0.82f, 0.12f, 1f), -4f);
+        }
+    }
+
+    private static GameObject InstantiateScreenBackground(Transform parent, string resourcePath, string objectName)
+    {
+        Transform existing = parent.Find(objectName);
+        if (existing != null)
+        {
+            existing.SetAsFirstSibling();
+            return existing.gameObject;
+        }
+
+        GameObject prefab = Resources.Load<GameObject>(resourcePath);
+        if (prefab == null)
+        {
+            Debug.LogWarning($"UI background prefab was not found at Resources/{resourcePath}.");
+            return null;
+        }
+
+        GameObject instance = Instantiate(prefab, parent, false);
+        instance.name = objectName;
+        instance.layer = parent.gameObject.layer;
+        RectTransform rectTransform = instance.GetComponent<RectTransform>();
+        if (rectTransform != null)
+        {
+            rectTransform.anchorMin = Vector2.zero;
+            rectTransform.anchorMax = Vector2.one;
+            rectTransform.offsetMin = Vector2.zero;
+            rectTransform.offsetMax = Vector2.zero;
+        }
+        instance.transform.SetAsFirstSibling();
+        return instance;
     }
 
     private static GameObject CreatePanel(
