@@ -1,45 +1,41 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>全てのペダル操作カードに共通の背景塗り・選択時の弾性振動を適用します。</summary>
+/// <summary>選択時の弾性振動、踏み込み中の縁光、決定時の全体フラッシュ。</summary>
 [DisallowMultipleComponent]
 public sealed class PedalButtonFeedback : MonoBehaviour
 {
     private RectTransform rect;
-    private RectTransform fill;
-    private Image background;
-    private Image fillImage;
-    private Outline outline;
+    private PedalButtonSurface surface;
     private Vector2 basePosition;
     private Vector3 baseScale;
     private Quaternion baseRotation;
-    private Color baseColor;
-    private Color accent;
     private bool selected;
+    private bool confirmed;
     private float selectedAt;
+    private float confirmedAt = -10f;
+    private float pedalAmount;
 
     public void Configure(Color color)
     {
         rect = GetComponent<RectTransform>();
-        background = GetComponent<Image>();
-        outline = GetComponent<Outline>();
         basePosition = rect.anchoredPosition;
         baseScale = rect.localScale;
         baseRotation = rect.localRotation;
-        baseColor = background.color;
-        accent = color;
-        Transform existing = transform.Find("PedalBackgroundFill");
-        GameObject obj = existing != null ? existing.gameObject : new GameObject("PedalBackgroundFill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        GetComponent<Image>().enabled = false;
+        Outline outline = GetComponent<Outline>();
+        if (outline != null) outline.enabled = false;
+        Transform existing = transform.Find("ButtonSurface");
+        GameObject obj = existing != null ? existing.gameObject : new GameObject("ButtonSurface", typeof(RectTransform), typeof(CanvasRenderer), typeof(PedalButtonSurface));
         obj.layer = gameObject.layer;
         obj.transform.SetParent(transform, false);
         obj.transform.SetAsFirstSibling();
-        fill = obj.GetComponent<RectTransform>();
-        fill.anchorMin = Vector2.zero;
-        fill.anchorMax = new Vector2(0f, 1f);
-        fill.offsetMin = Vector2.zero;
-        fill.offsetMax = Vector2.zero;
-        fillImage = obj.GetComponent<Image>();
-        fillImage.raycastTarget = false;
+        RectTransform face = obj.GetComponent<RectTransform>();
+        face.anchorMin = Vector2.zero;
+        face.anchorMax = Vector2.one;
+        face.offsetMin = face.offsetMax = Vector2.zero;
+        surface = obj.GetComponent<PedalButtonSurface>();
+        surface.raycastTarget = false;
         selected = false;
         SetState(false, 0f, color);
     }
@@ -49,11 +45,16 @@ public sealed class PedalButtonFeedback : MonoBehaviour
         if (rect == null) return;
         if (isSelected && !selected) selectedAt = Time.unscaledTime;
         selected = isSelected;
-        accent = color;
-        fill.anchorMax = new Vector2(Mathf.Clamp01(pedal), 1f);
-        // 半透明の塗りで文字のコントラストを保ち、左から面全体を染めます。
-        fillImage.color = new Color(accent.r, accent.g, accent.b, 0.42f);
+        pedalAmount = Mathf.Clamp01(pedal);
     }
+
+    public void SetConfirmed(bool value)
+    {
+        if (value && !confirmed) PlayConfirm();
+        confirmed = value;
+    }
+
+    public void PlayConfirm() => confirmedAt = Time.unscaledTime;
 
     private void OnEnable()
     {
@@ -65,19 +66,14 @@ public sealed class PedalButtonFeedback : MonoBehaviour
         if (rect == null) return;
         float age = Time.unscaledTime - selectedAt;
         float wobble = selected ? Mathf.Sin(age * 25f) * Mathf.Exp(-age * 6f) : 0f;
-        float bob = selected ? Mathf.Sin(age * 3.4f) * 7f : 0f;
-        float scale = selected ? 1.025f : 1f;
+        float bob = selected ? Mathf.Sin(age * 3.4f) * 4f : 0f;
+        float flashAge = Time.unscaledTime - confirmedAt;
+        float flash = flashAge < 0.45f ? Mathf.Sin(Mathf.Clamp01(flashAge / 0.45f) * Mathf.PI) : 0f;
+        float scale = (selected ? 1.025f : 1f) + flash * 0.035f;
         rect.anchoredPosition = basePosition + Vector2.up * bob;
-        rect.localScale = Vector3.Scale(baseScale, new Vector3(scale + wobble * 0.075f, scale - wobble * 0.065f, 1f));
-        rect.localRotation = baseRotation * Quaternion.Euler(0f, 0f, wobble * 2.5f);
-        Color target = selected ? Color.Lerp(baseColor, new Color(accent.r, accent.g, accent.b, baseColor.a), 0.18f) : baseColor;
-        background.color = Color.Lerp(background.color, target, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 12f));
-        if (outline != null)
-        {
-            Color border = selected ? accent : new Color(0.35f, 0.43f, 0.52f, 0.55f);
-            outline.effectColor = Color.Lerp(outline.effectColor, border, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 12f));
-            outline.effectDistance = selected ? new Vector2(3f, -3f) : new Vector2(2f, -2f);
-        }
+        rect.localScale = Vector3.Scale(baseScale, new Vector3(scale + wobble * 0.06f, scale - wobble * 0.05f, 1f));
+        rect.localRotation = baseRotation * Quaternion.Euler(0f, 0f, wobble * 1.8f);
+        surface.SetVisual(pedalAmount, selected, flash);
     }
 
     private void OnDisable()
@@ -86,8 +82,9 @@ public sealed class PedalButtonFeedback : MonoBehaviour
         rect.anchoredPosition = basePosition;
         rect.localScale = baseScale;
         rect.localRotation = baseRotation;
-        background.color = baseColor;
-        fill.anchorMax = new Vector2(0f, 1f);
-        selected = false;
+        pedalAmount = 0f;
+        confirmedAt = -10f;
+        confirmed = selected = false;
+        surface.SetVisual(0f, false, 0f);
     }
 }
