@@ -139,8 +139,8 @@ public class ResultUIManager
             index == 0 ? new Color(1f, 0.8f, 0.18f, 1f) : textColor, FontStyles.Bold | FontStyles.Italic, TextAlignmentOptions.Center, FontRole.English);
         playerLabels[index] = CreateLabel(row.transform, "Player", "---", new Vector2(0.17f, 0.05f), new Vector2(0.49f, 0.95f), 27f,
             Color.white, FontStyles.Bold, TextAlignmentOptions.Left, FontRole.Japanese);
-        localBadges[index] = CreateLabel(row.transform, "LocalBadge", "YOU", new Vector2(0.40f, 0.1f), new Vector2(0.48f, 0.9f), 13f,
-            new Color(0.4f, 0.9f, 1f, 1f), FontStyles.Bold, TextAlignmentOptions.Right, FontRole.English);
+        localBadges[index] = CreateLabel(row.transform, "LocalBadge", "あなた", new Vector2(0.40f, 0.1f), new Vector2(0.48f, 0.9f), 27f,
+            new Color(0.4f, 0.9f, 1f, 1f), FontStyles.Bold, TextAlignmentOptions.Right, FontRole.Japanese);
         localBadges[index].gameObject.SetActive(false);
         timeLabels[index] = CreateLabel(row.transform, "Time", "--:--.---", new Vector2(0.49f, 0.05f), new Vector2(0.73f, 0.95f), 28f,
             textColor, FontStyles.Bold | FontStyles.Italic, TextAlignmentOptions.Center, FontRole.English);
