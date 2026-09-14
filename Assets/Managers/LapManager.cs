@@ -143,6 +143,33 @@ public class LapManager : MonoBehaviour
         return OnCarPassGoal(rb, null);
     }
 
+    /// <summary>
+    /// デバッグ用に、チェックポイント通過を待たずに周回を進めます。
+    /// finish を指定した場合は次の周回でゴールする状態にしてから処理します。
+    /// </summary>
+    public bool DebugAdvanceLap(Rigidbody rb, bool finish)
+    {
+        if (!raceActive || rb == null)
+        {
+            return false;
+        }
+
+        CarTimeData data = GetOrCreateCarData(rb);
+        if (data.isFinished)
+        {
+            return false;
+        }
+
+        // OnCarPassGoal の通常の周回完了処理を再利用する。
+        data.allCheckpointsPassed = true;
+        if (finish && goalLap > 0)
+        {
+            data.lapCount = Mathf.Max(data.lapCount, goalLap - 1);
+        }
+
+        return OnCarPassGoal(rb);
+    }
+
     public void RegisterCar(Rigidbody rb, Transform startTransform = null)
     {
         if (rb == null)

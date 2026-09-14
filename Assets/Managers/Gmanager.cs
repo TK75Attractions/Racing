@@ -22,6 +22,10 @@ public class Gmanager : MonoBehaviour
         public RaceResultRecord result;
         public bool isReady;
         public float readyHoldTimer;
+        public int resultSelection;
+        public float resultConfirmTimer;
+        public bool resultSteeringLatch;
+        public bool returnedToTitle;
     }
 
     public static Gmanager Control = null;
@@ -53,6 +57,7 @@ public class Gmanager : MonoBehaviour
     [SerializeField] private float resultReturnPedalThreshold = 0.8f;
     [SerializeField] private float resultReturnHoldSeconds = 1f;
     [SerializeField] private float resultReturnInputDelaySeconds = 3f;
+    [SerializeField, Range(0.1f, 1f)] private float resultSteeringThreshold = 0.45f;
     [SerializeField, Min(1.2f)] private float goalCelebrationSeconds = 5.5f;
 
     [Header("Camera")]
@@ -66,7 +71,6 @@ public class Gmanager : MonoBehaviour
     private readonly ResultUIManager[] resultUIManagers = new ResultUIManager[PlayerCount];
     private readonly ScreenTransitionController[] screenTransitions = new ScreenTransitionController[PlayerCount];
     private PlayerDisplayRig[] displayRigs = new PlayerDisplayRig[0];
-    private float resultReturnHoldTimer;
     private float resultReturnInputDelayTimer;
     private float titlePedalReleaseTimer;
     private bool titleStartArmed;
@@ -198,6 +202,81 @@ public class Gmanager : MonoBehaviour
         if (Control == this) VManager?.ResetDriftBoosts();
     }
 
+    private void OnGUI()
+    {
+        if (IManager == null || !IManager.isDebugMode)
+        {
+            return;
+        }
+
+        GUILayout.BeginArea(new Rect(16f, 16f, 300f, 184f), GUI.skin.box);
+        GUILayout.Label("DEBUG RACE CONTROLS");
+        GUILayout.Label($"State: {state}");
+        bool previousGuiEnabled = GUI.enabled;
+
+        for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"PLAYER {playerIndex + 1}", GUILayout.Width(90f));
+
+            bool canAdvance = state == State.Game && players[playerIndex]?.rigidbody != null;
+            GUI.enabled = canAdvance;
+            if (GUILayout.Button("+1 LAP"))
+            {
+                AdvanceDebugLap(playerIndex, finish: false);
+            }
+            if (GUILayout.Button("GOAL"))
+            {
+                AdvanceDebugLap(playerIndex, finish: true);
+            }
+            GUI.enabled = previousGuiEnabled;
+            GUILayout.EndHorizontal();
+        }
+
+        GUI.enabled = state == State.Title;
+        if (GUILayout.Button("PREVIEW RESULT")) DebugPreviewResult();
+        GUI.enabled = previousGuiEnabled;
+
+        GUILayout.EndArea();
+    }
+
+    public void DebugPreviewResult()
+    {
+        ResetResultPlayerInputs();
+        RaceSessionResult preview = new RaceSessionResult();
+        preview.SetPlayerResult(0, new RaceResultRecord
+        {
+            playerNumber = 1, finishPosition = 1, didFinish = true, totalRaceTime = 92.461f
+        });
+        preview.SetPlayerResult(1, new RaceResultRecord
+        {
+            playerNumber = 2, finishPosition = 2, didFinish = true, totalRaceTime = 94.012f
+        });
+        latestSessionResult = preview;
+        latestResult = preview.GetResultAtPosition(1);
+        state = State.Result;
+        resultReturnInputDelayTimer = 0f;
+        foreach (ResultUIManager manager in resultUIManagers) manager?.ShowResults(preview);
+        foreach (ScreenTransitionController transition in screenTransitions) transition?.TryShowResultAnimated();
+    }
+
+    private void AdvanceDebugLap(int playerIndex, bool finish)
+    {
+        if (state != State.Game || lapManager == null || playerIndex < 0 || playerIndex >= players.Length)
+        {
+            return;
+        }
+
+        Rigidbody playerRigidbody = players[playerIndex]?.rigidbody;
+        if (playerRigidbody == null)
+        {
+            return;
+        }
+
+        lapManager.DebugAdvanceLap(playerRigidbody, finish);
+        UpdateOnPlayUI();
+    }
+
     public void StartGame()
     {
         if (state != State.Title || IsScreenTransitioning()) return;
@@ -248,6 +327,25 @@ public class Gmanager : MonoBehaviour
         }
     }
 
+    public void RetryGame()
+    {
+        if (state != State.Result || IsScreenTransitioning()) return;
+        ScreenTransitionController primary = screenTransitions[0];
+        for (int index = 1; index < screenTransitions.Length; index++)
+            screenTransitions[index]?.TryCloseResultAndTransition(State.Countdown, null);
+
+        if (primary == null)
+        {
+            RetryGameWhenScreenCovered();
+            ApplyStateImmediate(State.Countdown);
+            CompleteGameStart();
+            return;
+        }
+
+        if (!primary.TryCloseResultAndTransition(State.Countdown, RetryGameWhenScreenCovered, CompleteGameStart))
+            Debug.LogWarning("Result close animation was ignored because another transition is active.");
+    }
+
     private void InitializePlayerDisplays()
     {
         if (displayRigs.Length != PlayerCount)
@@ -278,7 +376,8 @@ public class Gmanager : MonoBehaviour
                 rig.CanvasRoot.transform.Find("OnPlay"),
                 rig.CanvasRoot.transform.Find("Result"),
                 titleText,
-                titlePromptText);
+                titlePromptText,
+                playerIndex);
             screenTransitions[playerIndex] = transition;
 
             OnPlayUIManager playUi = playerIndex == 0 && onPlayUIManager != null
@@ -362,7 +461,6 @@ public class Gmanager : MonoBehaviour
         car = players[0].car;
         SwitchCameraForState(State.Countdown);
         time = 0f;
-        resultReturnHoldTimer = 0f;
         resultReturnInputDelayTimer = 0f;
         UpdateOnPlayUI();
         Debug.Log("Two-player game start");
@@ -515,7 +613,6 @@ public class Gmanager : MonoBehaviour
         latestResult = sessionResult?.GetResultAtPosition(1);
         state = State.Goal;
         ClearRaceStatus();
-        resultReturnHoldTimer = 0f;
         resultReturnInputDelayTimer = 0f;
         lapManager?.PauseRace();
         foreach (PlayerRuntime player in players) FreezePlayer(player, disableCollisions: false);
@@ -552,7 +649,7 @@ public class Gmanager : MonoBehaviour
         }
 
         state = State.Result;
-        resultReturnHoldTimer = 0f;
+        ResetResultPlayerInputs();
         resultReturnInputDelayTimer = 0f;
         foreach (ResultUIManager manager in resultUIManagers) manager?.ShowResults(latestSessionResult);
         foreach (ScreenTransitionController transition in screenTransitions)
@@ -565,6 +662,22 @@ public class Gmanager : MonoBehaviour
     private void ResetGameWhenScreenCovered()
     {
         state = State.Title;
+        ClearCurrentRaceObjects();
+        SwitchCameraForState(State.Title);
+        ResetTitleStartInputGate();
+        Debug.Log("Two-player game reset");
+    }
+
+    private void RetryGameWhenScreenCovered()
+    {
+        ClearCurrentRaceObjects();
+        StartGameWhenScreenCovered();
+        Debug.Log("Two-player race retry");
+    }
+
+    private void ClearCurrentRaceObjects()
+    {
+        ResetResultPlayerInputs();
         foreach (PlayerRuntime player in players)
         {
             if (player == null) continue;
@@ -589,12 +702,8 @@ public class Gmanager : MonoBehaviour
         countdownTimeRemaining = 0f;
         goMessageTimeRemaining = 0f;
         time = 0f;
-        resultReturnHoldTimer = 0f;
         resultReturnInputDelayTimer = 0f;
         foreach (ResultUIManager manager in resultUIManagers) manager?.HideResults();
-        SwitchCameraForState(State.Title);
-        ResetTitleStartInputGate();
-        Debug.Log("Two-player game reset");
     }
 
     private static string FormatRaceTime(float seconds)
@@ -739,19 +848,74 @@ public class Gmanager : MonoBehaviour
         if (resultReturnInputDelayTimer < resultReturnInputDelaySeconds)
         {
             resultReturnInputDelayTimer += dt;
-            resultReturnHoldTimer = 0f;
             return;
         }
-        bool returnRequested = false;
-        for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
-            if (IManager.GetInputState(playerIndex).pedal > resultReturnPedalThreshold) returnRequested = true;
-        if (!returnRequested)
+        for (int index = 0; index < PlayerCount; index++)
         {
-            resultReturnHoldTimer = 0f;
-            return;
+            PlayerRuntime player = players[index];
+            if (player == null || player.returnedToTitle || screenTransitions[index]?.IsTransitioning == true) continue;
+            DriveInputState input = IManager.GetInputState(index);
+            if (!player.resultSteeringLatch && Mathf.Abs(input.steering) >= resultSteeringThreshold)
+            {
+                player.resultSelection = input.steering > 0f ? 1 : 0;
+                player.resultSteeringLatch = true;
+                player.resultConfirmTimer = 0f;
+            }
+            else if (Mathf.Abs(input.steering) < resultSteeringThreshold * 0.45f)
+            {
+                player.resultSteeringLatch = false;
+            }
+            resultUIManagers[index]?.SetMenuState(player.resultSelection, input.pedal);
+            player.resultConfirmTimer = input.pedal > resultReturnPedalThreshold ? player.resultConfirmTimer + dt : 0f;
+            if (player.resultConfirmTimer < Mathf.Max(0.01f, resultReturnHoldSeconds)) continue;
+            player.resultConfirmTimer = 0f;
+            if (player.resultSelection == 0)
+            {
+                RetryGame();
+                return;
+            }
+            ReturnPlayerToTitle(index);
         }
-        resultReturnHoldTimer += dt;
-        if (resultReturnHoldTimer >= Mathf.Max(0.01f, resultReturnHoldSeconds)) ResetGame();
+    }
+
+    private void ResetResultPlayerInputs()
+    {
+        foreach (PlayerRuntime player in players)
+        {
+            if (player == null) continue;
+            player.resultSelection = 0;
+            player.resultConfirmTimer = 0f;
+            player.resultSteeringLatch = false;
+            player.returnedToTitle = false;
+        }
+    }
+
+    private void ReturnPlayerToTitle(int index)
+    {
+        PlayerRuntime player = players[index];
+        Action covered = () =>
+        {
+            player.returnedToTitle = true;
+            resultUIManagers[index]?.HideResults();
+            player.titleCamera.Priority = 20;
+            player.displayRig.RaceCamera.Priority = 10;
+            screenTransitions[index]?.UpdateTitlePedals(0f, 0f, false, false, false);
+            screenTransitions[index]?.SetTitlePrompt("WAITING FOR THE OTHER PLAYER TO RETURN");
+        };
+        Action completed = () =>
+        {
+            foreach (PlayerRuntime participant in players)
+                if (participant == null || !participant.returnedToTitle) return;
+            // 両者が戻るまでは結果データともう一方の画面を保持します。
+            ResetGameWhenScreenCovered();
+        };
+        ScreenTransitionController transition = screenTransitions[index];
+        if (transition == null)
+        {
+            covered();
+            completed();
+        }
+        else transition.TryCloseResultAndTransition(State.Title, covered, completed);
     }
 
     private void ResetTitleStartInputGate()
