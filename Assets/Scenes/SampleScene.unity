@@ -302,9 +302,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.055555552
+    y: 0.36262375
     width: 1
-    height: 0.8888889
+    height: 0.27475247
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -1116,9 +1116,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.055555552
+    y: 0.36262375
     width: 1
-    height: 0.8888889
+    height: 0.27475247
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -2364,9 +2364,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.055555552
+    y: 0.36262375
     width: 1
-    height: 0.8888889
+    height: 0.27475247
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60.01804
@@ -3400,9 +3400,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.055555552
+    y: 0.36262375
     width: 1
-    height: 0.8888889
+    height: 0.27475247
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -4163,8 +4163,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efbba3f7903b486984008e28da08b001, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   weather: 1
   timeOfDay: 1
   directionalLights:
@@ -4193,7 +4193,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d3f28c6a41b74e5db0c917e6a2f83c01, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SakuraPetalController
   petalsEnabled: 1
   targetCameras: []
