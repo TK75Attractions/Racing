@@ -56,6 +56,7 @@ public class InputManager : MonoBehaviour
 
     private readonly IDriveInputSource[] inputSources =
         new IDriveInputSource[SupportedPlayerCount];
+    private TwoPlayerSerialInputSource sharedSerialInputSource;
     private bool initialized;
 
     public void Init()
@@ -77,15 +78,10 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        string[] resolvedPorts = ResolveSerialPorts();
-        for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
-        {
-            SerialControllerConfiguration configuration = serialControllers[playerIndex];
-            inputSources[playerIndex] = new SerialDriveInputSource(
-                configuration,
-                resolvedPorts[playerIndex]);
-            ((SerialDriveInputSource)inputSources[playerIndex]).LineProcessed += OnSerialLineProcessed;
-        }
+        // One microcontroller sends both players in a single four-column frame.
+        sharedSerialInputSource = new TwoPlayerSerialInputSource(
+            serialControllers[0], ResolveSharedSerialPort());
+        sharedSerialInputSource.LineProcessed += OnSharedSerialLineProcessed;
 
         initialized = true;
     }
@@ -98,10 +94,7 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        foreach (IDriveInputSource source in inputSources)
-        {
-            source?.UpdateInput(deltaTime);
-        }
+        sharedSerialInputSource?.UpdateInput(deltaTime);
 
         DriveInputState playerOneState = GetInputState(0);
         handle = playerOneState.steering;
@@ -115,14 +108,68 @@ public class InputManager : MonoBehaviour
 
     public DriveInputState GetInputState(int playerIndex)
     {
+        if (!isDebugMode && sharedSerialInputSource != null)
+        {
+            return sharedSerialInputSource.GetInputState(playerIndex);
+        }
+
         IDriveInputSource source = GetPlayerInputSource(playerIndex);
         return source != null ? source.CurrentState : DriveInputState.Neutral;
     }
 
     public bool IsPlayerConnected(int playerIndex)
     {
+        if (!isDebugMode && sharedSerialInputSource != null)
+        {
+            return sharedSerialInputSource.IsConnected(playerIndex);
+        }
+
         IDriveInputSource source = GetPlayerInputSource(playerIndex);
         return source != null && source.IsConnected;
+    }
+
+    private string ResolveSharedSerialPort()
+    {
+        string configuredPort = serialControllers[0].PortName?.Trim();
+        if (!string.IsNullOrEmpty(configuredPort)) return configuredPort;
+
+        string[] availablePorts;
+        try
+        {
+            availablePorts = SerialPort.GetPortNames();
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"Failed to enumerate serial ports: {exception.Message}");
+            return null;
+        }
+
+        Array.Sort(availablePorts, (left, right) =>
+        {
+            int priority = GetPortPriority(left).CompareTo(GetPortPriority(right));
+            return priority != 0 ? priority : StringComparer.OrdinalIgnoreCase.Compare(left, right);
+        });
+
+        foreach (string candidate in availablePorts)
+        {
+            if (SerialControllerDiscovery.FindPortForDevice(
+                    serialControllers[0], new[] { candidate }) != null)
+            {
+                return candidate;
+            }
+        }
+
+        if (allowLegacyPlayerOneDiscovery)
+        {
+            foreach (string candidate in availablePorts)
+            {
+                if (SerialControllerDiscovery.IsLegacyController(serialControllers[0], candidate))
+                    return candidate;
+            }
+        }
+
+        Debug.LogError("Could not resolve the shared serial controller for both players.");
+        return null;
     }
 
     private string[] ResolveSerialPorts()
@@ -289,6 +336,11 @@ public class InputManager : MonoBehaviour
         AddSerialDebugLog($"P{source.PlayerIndex + 1} {status}", line);
     }
 
+    private void OnSharedSerialLineProcessed(string status, string line)
+    {
+        AddSerialDebugLog($"P1/P2 {status}", line);
+    }
+
     void AddSerialDebugLog(string status, string line)
     {
         if (!serialDebugMode)
@@ -344,6 +396,14 @@ public class InputManager : MonoBehaviour
         serialDebugScrollPosition = GUILayout.BeginScrollView(serialDebugScrollPosition);
         GUILayout.Label($"InputManager / Serial Monitor  [{serialDebugToggleKey}: hide]", serialDebugHeaderStyle);
         GUILayout.Label($"Input source: {(isDebugMode ? "Keyboard (serial disabled)" : "Serial")}", serialDebugLabelStyle);
+        if (!isDebugMode && sharedSerialInputSource != null)
+        {
+            string age = sharedSerialInputSource.LastSerialLineTime < 0f ? "-" :
+                $"{Mathf.Max(0f, Time.realtimeSinceStartup - sharedSerialInputSource.LastSerialLineTime):F2} s ago";
+            GUILayout.Label($"Shared controller: {(sharedSerialInputSource.IsPortOpen ? "Connected" : "Disconnected")}    Port: {sharedSerialInputSource.PortName}", serialDebugLabelStyle);
+            GUILayout.Label($"Raw lines: {sharedSerialInputSource.LinesReceived}    Processed: {sharedSerialInputSource.LinesProcessed}    Parse errors: {sharedSerialInputSource.ParseErrorCount}", serialDebugLabelStyle);
+            GUILayout.Label($"Last input: {age}    Raw: {sharedSerialInputSource.LastSerialLine}    Parse: {sharedSerialInputSource.LastParseResult}", serialDebugLabelStyle);
+        }
         for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
         {
             if (!(inputSources[playerIndex] is SerialDriveInputSource source))
@@ -416,6 +476,13 @@ public class InputManager : MonoBehaviour
 
     private void DisposeInputSources()
     {
+        if (sharedSerialInputSource != null)
+        {
+            sharedSerialInputSource.LineProcessed -= OnSharedSerialLineProcessed;
+            sharedSerialInputSource.Dispose();
+            sharedSerialInputSource = null;
+        }
+
         for (int index = 0; index < inputSources.Length; index++)
         {
             if (inputSources[index] is SerialDriveInputSource serialSource)
