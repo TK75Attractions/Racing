@@ -159,6 +159,15 @@ public class RaceCourse : MonoBehaviour
         return new Vector3(nearest.x, worldPosition.y, nearest.y);
     }
 
+    /// <summary>速度感用の路面・沿道ビジュアルが利用する中心線のキャッシュをコピーします。</summary>
+    public void CopyCenterPathWorld(List<Vector3> destination)
+    {
+        if (destination == null) return;
+        EnsureCache();
+        destination.Clear();
+        destination.AddRange(cachedCenterPath);
+    }
+
     /// <summary>
     /// 指定位置に最も近いセンターライン区間の、レース進行方向を取得します。
     /// waypoint の配列順をレース進行方向として扱います。

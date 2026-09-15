@@ -80,7 +80,7 @@ public static class BoostVolumeValidation
             manager.ResetDriftBoosts();
             Near(manager.GetDriftBoostWeight(1), 0f, "Reset must immediately clear all effects.");
             manager.ConfigurePlayerCameras(cameras);
-            Require(root.GetComponentsInChildren<Volume>().Length == 3, "Reconfiguration must not leak boost volumes.");
+            Require(root.GetComponentsInChildren<Volume>().Length == 5, "Reconfiguration must not leak player visual volumes.");
             UnityEngine.Object.DestroyImmediate(manager);
             Require(p1Data.volumeLayerMask.value == 1 && !p1Data.renderPostProcessing,
                 "Disposal must restore the camera configuration.");

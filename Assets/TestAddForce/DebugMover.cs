@@ -87,6 +87,9 @@ public class DebugMover : MonoBehaviour
     private float driftDirection;
 
     public IDriveInputSource InputSource => inputSource;
+    /// <summary>実際に走行へ反映しているペダル入力（-1:ブレーキ 〜 1:アクセル）。</summary>
+    public float PedalInput => appliedPedalInput;
+    public float SpeedMetersPerSecond => speedMetersPerSecond;
     public bool IsInputSuppressed => Time.time < inputSuppressedUntil;
     public bool IsDrifting => isDrifting;
     public float DriftCharge => driftCharge;
