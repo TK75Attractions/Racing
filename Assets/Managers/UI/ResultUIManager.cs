@@ -180,14 +180,19 @@ public class ResultUIManager
         timeLabels[index].text = result == null ? "---" : result.didFinish ? FormatTime(result.totalRaceTime) : "DNF";
         gapLabels[index].text = index == 0 || result == null || !result.didFinish ? "—" : $"+{Mathf.Max(0f, result.totalRaceTime - winnerTime):0.000}";
         bool isLocalPlayer = result != null && result.playerNumber == localPlayerNumber;
+        bool isLocalWinner = isLocalPlayer && index == 0;
+        Color localColor = isLocalWinner ? new Color(1f, 0.8f, 0.22f, 1f) : new Color(0.4f, 0.9f, 1f, 1f);
         localAccents[index].gameObject.SetActive(isLocalPlayer);
+        localAccents[index].color = localColor;
         localBadges[index].gameObject.SetActive(isLocalPlayer);
+        localBadges[index].color = localColor;
         playerLabels[index].rectTransform.anchorMax = new Vector2(isLocalPlayer ? 0.39f : 0.49f, 0.95f);
         playerLabels[index].color = Color.white;
         rankLabels[index].fontSizeMax = isLocalPlayer ? 42f : 34f;
-        rankLabels[index].color = isLocalPlayer ? new Color(0.4f, 0.9f, 1f, 1f)
+        rankLabels[index].color = isLocalPlayer ? localColor
             : index == 0 ? new Color(1f, 0.8f, 0.18f, 1f) : Color.white;
-        rowBackgrounds[index].color = isLocalPlayer ? new Color(0.015f, 0.22f, 0.34f, 0.9f)
+        rowBackgrounds[index].color = isLocalWinner ? new Color(0.43f, 0.29f, 0.035f, 0.94f)
+            : isLocalPlayer ? new Color(0.015f, 0.22f, 0.34f, 0.9f)
             : index == 0 ? new Color(0.12f, 0.09f, 0.025f, 0.58f) : new Color(0.02f, 0.09f, 0.13f, 0.52f);
     }
 

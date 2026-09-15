@@ -36,6 +36,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
     private TMP_Text finishWarningText;
     private int lastWarningSecond = -1;
     private UIValuePulse raceStatusPulse;
+    private readonly Image[] countdownSignals = new Image[3];
+    private Material titleLogoMaterial;
 
     public bool IsTransitioning { get; private set; }
     public string RaceStatusText => finishWarningRoot != null && finishWarningRoot.activeSelf
@@ -415,6 +417,31 @@ public sealed class ScreenTransitionController : MonoBehaviour
             Color.white);
         mainTitle.fontStyle = FontStyles.Bold | FontStyles.Italic;
         mainTitle.characterSpacing = 5f;
+        Texture2D logoTexture = Resources.Load<Texture2D>("UI/TsukukomaCircuitLogo");
+        Shader logoShader = Resources.Load<Shader>("UI/LogoWhiteKey");
+        if (logoTexture != null && logoShader != null)
+        {
+            mainTitle.gameObject.SetActive(false);
+            GameObject logoContainer = new GameObject("TitleLogo", typeof(RectTransform));
+            logoContainer.layer = title.gameObject.layer;
+            logoContainer.transform.SetParent(title, false);
+            RectTransform logoRect = logoContainer.GetComponent<RectTransform>();
+            logoRect.anchorMin = new Vector2(0.09f, 0.51f);
+            logoRect.anchorMax = new Vector2(0.91f, 0.80f);
+            logoRect.offsetMin = logoRect.offsetMax = Vector2.zero;
+            GameObject logoObject = new GameObject("Artwork", typeof(RectTransform), typeof(RawImage), typeof(AspectRatioFitter));
+            logoObject.layer = title.gameObject.layer;
+            logoObject.transform.SetParent(logoContainer.transform, false);
+            AspectRatioFitter aspect = logoObject.GetComponent<AspectRatioFitter>();
+            aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            aspect.aspectRatio = logoTexture.width / (logoTexture.height * 0.42f);
+            RawImage logo = logoObject.GetComponent<RawImage>();
+            logo.texture = logoTexture;
+            logo.uvRect = new Rect(0f, 0.30f, 1f, 0.42f);
+            titleLogoMaterial = new Material(logoShader);
+            logo.material = titleLogoMaterial;
+            logo.raycastTarget = false;
+        }
 
         TMP_Text subtitle = CreateLabel(
             title, "TitleSubtitle", "SPEED  /  CONTROL  /  VICTORY",
@@ -489,26 +516,39 @@ public sealed class ScreenTransitionController : MonoBehaviour
         }
 
         countdownStatusRoot = CreatePanel(onPlay, "CountdownStatus",
-            new Vector2(0.39f, 0.57f), new Vector2(0.61f, 0.86f),
-            new Color(0.015f, 0.03f, 0.055f, 0.9f));
+            new Vector2(0.37f, 0.49f), new Vector2(0.63f, 0.84f),
+            new Color(0.006f, 0.018f, 0.034f, 0.78f));
         Outline countdownOutline = countdownStatusRoot.GetComponent<Outline>();
         if (countdownOutline == null)
         {
             countdownOutline = countdownStatusRoot.AddComponent<Outline>();
         }
-        countdownOutline.effectColor = new Color(0.08f, 0.82f, 1f, 0.8f);
-        countdownOutline.effectDistance = new Vector2(3f, -3f);
+        countdownOutline.effectColor = new Color(0.2f, 0.53f, 0.68f, 0.25f);
+        countdownOutline.effectDistance = new Vector2(1f, -1f);
+        CreatePanel(countdownStatusRoot.transform, "TopAccent", new Vector2(0.30f, 0.985f), new Vector2(0.70f, 1f), new Color(0.15f, 0.8f, 1f, 1f));
 
         raceStatusCaption = CreateLabel(
             countdownStatusRoot.transform, "Caption", "RACE START",
-            new Vector2(0.08f, 0.72f), new Vector2(0.92f, 0.91f), 24f,
-            new Color(0.22f, 0.88f, 1f, 1f));
-        raceStatusCaption.characterSpacing = 8f;
+            new Vector2(0.08f, 0.79f), new Vector2(0.92f, 0.93f), 19f,
+            new Color(0.6f, 0.79f, 0.88f, 1f));
+        raceStatusCaption.characterSpacing = 5f;
         raceStatus = CreateLabel(
             countdownStatusRoot.transform, "RaceStatus", string.Empty,
-            new Vector2(0.05f, 0.08f), new Vector2(0.95f, 0.78f), 154f,
+            new Vector2(0.05f, 0.19f), new Vector2(0.95f, 0.80f), 164f,
             Color.white);
-        raceStatus.fontStyle = FontStyles.Bold;
+        raceStatus.fontStyle = FontStyles.Bold | FontStyles.Italic;
+        TMP_FontAsset countdownFont = RacingUIFontCatalog.Get(FontRole.English);
+        if (countdownFont != null)
+        {
+            raceStatus.font = countdownFont;
+            raceStatusCaption.font = countdownFont;
+        }
+        for (int i = 0; i < countdownSignals.Length; i++)
+        {
+            float left = 0.24f + i * 0.18f;
+            countdownSignals[i] = CreatePanel(countdownStatusRoot.transform, $"Signal{i + 1}",
+                new Vector2(left, 0.12f), new Vector2(left + 0.15f, 0.14f), new Color(0.12f, 0.22f, 0.29f, 1f)).GetComponent<Image>();
+        }
         raceStatusPulse = raceStatus.GetComponent<UIValuePulse>();
         if (raceStatusPulse == null)
         {
@@ -598,14 +638,25 @@ public sealed class ScreenTransitionController : MonoBehaviour
         }
         bool changed = raceStatus.text != value;
         raceStatus.text = value;
+        bool go = value == "GO!";
+        int.TryParse(value, out int seconds);
+        Color accent = go ? new Color(0.25f, 0.9f, 1f, 1f) : new Color(0.18f, 0.75f, 1f, 1f);
+        for (int i = 0; i < countdownSignals.Length; i++)
+            if (countdownSignals[i] != null)
+                countdownSignals[i].color = go || i < Mathf.Clamp(4 - seconds, 0, 3) ? accent : new Color(0.12f, 0.22f, 0.29f, 1f);
         if (raceStatusCaption != null)
         {
             raceStatusCaption.text = caption;
         }
         if (changed)
         {
-            raceStatusPulse?.Play(value == "GO!" ? new Color(0.2f, 1f, 0.55f, 1f) : Color.white, -5f);
+            raceStatusPulse?.Play(go ? accent : Color.white, -3f);
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (titleLogoMaterial != null) Destroy(titleLogoMaterial);
     }
 
     private void SetStatusVisibility(bool showCountdown, bool showWarning)
