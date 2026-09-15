@@ -7,7 +7,7 @@ using UnityEngine;
 // Reads one physical serial stream and exposes the latest state for both players.
 public sealed class TwoPlayerSerialInputSource : IDisposable
 {
-    private readonly SerialControllerConfiguration configuration;
+    private readonly Esp32SerialConfiguration configuration;
     private readonly string portName;
     private readonly ConcurrentQueue<string> receivedLines = new ConcurrentQueue<string>();
     private readonly ConcurrentQueue<string> diagnosticMessages = new ConcurrentQueue<string>();
@@ -32,7 +32,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     public string LastParseResult { get; private set; } = "Waiting for input";
     public float LastSerialLineTime { get; private set; } = -1f;
 
-    public TwoPlayerSerialInputSource(SerialControllerConfiguration configuration, string resolvedPortName)
+    public TwoPlayerSerialInputSource(Esp32SerialConfiguration configuration, string resolvedPortName)
     {
         this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         portName = resolvedPortName;
@@ -170,4 +170,24 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     {
         while (diagnosticMessages.TryDequeue(out string message)) Debug.LogError(message);
     }
+}
+
+// The cars use one logical input source each, while both adapters read the same port.
+public sealed class SharedPlayerDriveInputSource : IDriveInputSource
+{
+    private readonly TwoPlayerSerialInputSource sharedSource;
+
+    public int PlayerIndex { get; }
+    public string DeviceId => $"P{PlayerIndex + 1}";
+    public bool IsConnected => sharedSource.IsConnected(PlayerIndex);
+    public DriveInputState CurrentState => sharedSource.GetInputState(PlayerIndex);
+
+    public SharedPlayerDriveInputSource(TwoPlayerSerialInputSource sharedSource, int playerIndex)
+    {
+        this.sharedSource = sharedSource ?? throw new ArgumentNullException(nameof(sharedSource));
+        PlayerIndex = playerIndex;
+    }
+
+    public void UpdateInput(float deltaTime) { }
+    public void Dispose() { }
 }

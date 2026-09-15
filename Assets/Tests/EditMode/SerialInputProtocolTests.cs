@@ -67,8 +67,10 @@ public class SerialInputProtocolTests
         Assert.That(frame.PlayerTwo.Steering, Is.EqualTo(-10f));
     }
 
-    [TestCase("nan,15,0.25,-30", true, true)]
+    [TestCase("nan,15,0.25,-30", false, true)]
+    [TestCase("0.5,nan,0.25,-30", false, true)]
     [TestCase("0.5,15,nan,-30", true, false)]
+    [TestCase("0.5,15,0.25,nan", true, false)]
     [TestCase("nan,15,nan,-30", false, false)]
     public void TwoPlayerInput_IgnoresPlayerWhenEitherAxisIsNan(
         string line, bool playerOneValid, bool playerTwoValid)

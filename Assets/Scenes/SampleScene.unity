@@ -542,38 +542,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f52a755a3309da548a6b36b8c8bc56bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InputManager
-  isDebugMode: 1
-  serialControllers:
-  - playerIndex: 0
-    deviceId: P1
+  isDebugMode: 0
+  esp32Serial:
     portName: 
     baudRate: 115200
     steeringDivisor: 15
     readTimeoutMilliseconds: 200
-    discoveryTimeoutMilliseconds: 1500
     inputTimeoutSeconds: 2
-  - playerIndex: 1
-    deviceId: P2
-    portName: 
-    baudRate: 115200
-    steeringDivisor: 15
-    readTimeoutMilliseconds: 200
-    discoveryTimeoutMilliseconds: 1500
-    inputTimeoutSeconds: 2
-  allowLegacyPlayerOneDiscovery: 1
-  serialPortNameHints:
-  - usbserial
-  - usbmodem
-  - ttyUSB
-  - ttyACM
-  - COM
   handle: 0
   peddale: 0
-  serialDebugMode: 0
-  serialDebugDisplayVisible: 1
-  serialDebugToggleKey: 101
-  serialDebugLogCapacity: 12
-  mirrorSerialInputToConsole: 0
+  serialDebugMode: 1
 --- !u!114 &165928644
 MonoBehaviour:
   m_ObjectHideFlags: 0
