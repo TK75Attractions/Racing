@@ -42,8 +42,22 @@ public class DebugMover : MonoBehaviour
 
     [Tooltip("ドリフト中の速度抵抗倍率。1より大きくすると減速します。")]
     [SerializeField, Min(1f)] private float driftResistanceMultiplier = 1.25f;
-    [Tooltip("ドリフト中に残す後輪の横グリップの割合。")]
-    [SerializeField, Range(0f, 1f)] private float driftRearGripMultiplier = 0.65f;
+    [Tooltip("ドリフト中に残す後輪の横グリップ倍率。1が通常、1より大きい値で通常以上のグリップ。")]
+    [SerializeField, Min(0f)] private float driftRearGripMultiplier = 0.9f;
+
+    [Header("Runtime Force Toggles")]
+    [Tooltip("タイヤの横滑りを抑える横力を適用するか。プレイ中の原因切り分け用。")]
+    [SerializeField] private bool enableLateralTireForces = true;
+
+    [Tooltip("前輪の駆動力を適用するか。プレイ中の原因切り分け用。")]
+    [SerializeField] private bool enableFrontDriveForce = true;
+
+    [Tooltip("ドリフト状態、後輪グリップ低下、ドリフト抵抗、ドリフトブーストを有効にするか。")]
+    [SerializeField] private bool enableDriftDynamics = true;
+
+    [Tooltip("ドリフト中に後輪の横グリップを低下させるか。")]
+    [SerializeField] private bool enableDriftRearGripReduction = true;
+
     [Header("Drift Boost")]
     [Tooltip("ドリフト解放後に加速を続ける時間（秒）。0で加速を無効化します。")]
     [SerializeField, Min(0f)] private float driftBoostDuration = 1f;
@@ -81,6 +95,12 @@ public class DebugMover : MonoBehaviour
     [SerializeField] private float driftBoostTimeRemaining;
     [SerializeField] private float activeDriftBoostAcceleration;
 
+    [Header("Acceleration Pad Boost")]
+    [Tooltip("加速度盤から受けた加速の残り時間（実行時モニター）。")]
+    [SerializeField] private float accelerationPadBoostTimeRemaining;
+    [Tooltip("加速度盤から受けた加速度（実行時モニター）。")]
+    [SerializeField] private float activeAccelerationPadBoostAcceleration;
+
     private Rigidbody rb;
     private IDriveInputSource inputSource;
     private float inputSuppressedUntil;
@@ -100,6 +120,11 @@ public class DebugMover : MonoBehaviour
         ? Mathf.Clamp01(activeDriftBoostAcceleration /
             Mathf.Max(0.0001f, maxDriftCharge * driftBoostAccelerationPerCharge))
         : 0f;
+    public bool IsAccelerationPadBoosting => isActiveAndEnabled && !IsInputSuppressed &&
+        accelerationPadBoostTimeRemaining > 0f && activeAccelerationPadBoostAcceleration > 0f;
+    /// <summary>ドリフトと加速度盤を合わせた、既存の加速画面演出用の強度です。</summary>
+    public float BoostVisualIntensity => Mathf.Max(DriftBoostVisualIntensity,
+        IsAccelerationPadBoosting ? 1f : 0f);
 
     private void Awake()
     {
@@ -113,22 +138,29 @@ public class DebugMover : MonoBehaviour
             Gmanager.Control == null ||
             !Gmanager.Control.IsDrivingEnabled)
         {
-            ResetDrift();
+            ResetBoosts();
             return;
         }
 
         if (IsInputSuppressed)
         {
             ClearUserInput();
-            ResetDrift();
+            ResetBoosts();
         }
         else
         {
             ReadInput();
-            float boostAcceleration = UpdateDrift(Time.fixedDeltaTime);
+            float boostAcceleration = enableDriftDynamics
+                ? UpdateDrift(Time.fixedDeltaTime)
+                : 0f;
             if (boostAcceleration > 0f)
             {
                 StartDriftBoost(boostAcceleration);
+            }
+
+            if (!enableDriftDynamics)
+            {
+                ResetDrift();
             }
 
             float boostSpeedDelta = ConsumeDriftBoost(Time.fixedDeltaTime);
@@ -138,6 +170,12 @@ public class DebugMover : MonoBehaviour
                 // 加速度×経過時間を各物理フレームに加算し、質量に依存しない持続加速にする。
                 rb.AddForce(forward * boostSpeedDelta, ForceMode.VelocityChange);
             }
+
+            float padSpeedDelta = ConsumeAccelerationPadBoost(Time.fixedDeltaTime, out Vector3 padDirection);
+            if (padSpeedDelta > 0f)
+            {
+                rb.AddForce(padDirection * padSpeedDelta, ForceMode.VelocityChange);
+            }
         }
 
         ApplyTireForces();
@@ -146,7 +184,7 @@ public class DebugMover : MonoBehaviour
 
     public void SetInputSource(IDriveInputSource source)
     {
-        ResetDrift();
+        ResetBoosts();
         inputSource = source;
     }
 
@@ -155,7 +193,7 @@ public class DebugMover : MonoBehaviour
         float duration = Mathf.Max(0f, respawnInputSuppressionSeconds);
         inputSuppressedUntil = Mathf.Max(inputSuppressedUntil, Time.time + duration);
         ClearUserInput();
-        ResetDrift();
+        ResetBoosts();
 
         foreach (TireForce tire in tires)
         {
@@ -165,7 +203,7 @@ public class DebugMover : MonoBehaviour
 
     private void OnDisable()
     {
-        ResetDrift();
+        ResetBoosts();
     }
 
     private void ResetDrift()
@@ -175,6 +213,14 @@ public class DebugMover : MonoBehaviour
         driftDirection = 0f;
         driftBoostTimeRemaining = 0f;
         activeDriftBoostAcceleration = 0f;
+    }
+
+    private void ResetBoosts()
+    {
+        ResetDrift();
+        accelerationPadBoostTimeRemaining = 0f;
+        activeAccelerationPadBoostAcceleration = 0f;
+        accelerationPadBoostDirection = Vector3.zero;
     }
 
     private void StartDriftBoost(float acceleration)
@@ -192,6 +238,37 @@ public class DebugMover : MonoBehaviour
         if (driftBoostTimeRemaining <= 0f)
         {
             activeDriftBoostAcceleration = 0f;
+        }
+
+        return speedDelta;
+    }
+
+    private Vector3 accelerationPadBoostDirection;
+
+    /// <summary>加速度盤から呼び出す、質量に依存しない時間制限付き加速です。</summary>
+    public void StartAccelerationPadBoost(float acceleration, float duration, Vector3 direction)
+    {
+        accelerationPadBoostTimeRemaining = Mathf.Max(0f, duration);
+        activeAccelerationPadBoostAcceleration = accelerationPadBoostTimeRemaining > 0f
+            ? Mathf.Max(0f, acceleration)
+            : 0f;
+        accelerationPadBoostDirection = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
+        if (accelerationPadBoostDirection.sqrMagnitude < 0.0001f)
+        {
+            accelerationPadBoostDirection = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+        }
+    }
+
+    private float ConsumeAccelerationPadBoost(float deltaTime, out Vector3 direction)
+    {
+        float elapsed = Mathf.Min(Mathf.Max(0f, deltaTime), accelerationPadBoostTimeRemaining);
+        float speedDelta = activeAccelerationPadBoostAcceleration * elapsed;
+        direction = accelerationPadBoostDirection;
+        accelerationPadBoostTimeRemaining = Mathf.Max(0f, accelerationPadBoostTimeRemaining - elapsed);
+        if (accelerationPadBoostTimeRemaining <= 0f)
+        {
+            activeAccelerationPadBoostAcceleration = 0f;
+            accelerationPadBoostDirection = Vector3.zero;
         }
 
         return speedDelta;
@@ -278,7 +355,8 @@ public class DebugMover : MonoBehaviour
                 ? frontCorneringStiffness
                 : rearCorneringStiffness;
             float gripMultiplier = isDrifting && !tire.IsFrontWheel
-                ? Mathf.Clamp01(driftRearGripMultiplier)
+                && enableDriftDynamics && enableDriftRearGripReduction
+                ? Mathf.Max(0f, driftRearGripMultiplier)
                 : 1f;
 
             tire.ApplyForces(
@@ -288,7 +366,9 @@ public class DebugMover : MonoBehaviour
                 appliedPedalInput,
                 driveForcePerFrontWheel,
                 corneringStiffness * gripMultiplier,
-                maxLateralForcePerTire * gripMultiplier);
+                maxLateralForcePerTire * gripMultiplier,
+                enableLateralTireForces,
+                enableFrontDriveForce);
         }
     }
 
@@ -296,7 +376,7 @@ public class DebugMover : MonoBehaviour
     {
         Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
         Vector3 resistance = -planarVelocity * velocityResistance;
-        if (isDrifting)
+        if (enableDriftDynamics && isDrifting)
         {
             resistance *= Mathf.Max(1f, driftResistanceMultiplier);
         }

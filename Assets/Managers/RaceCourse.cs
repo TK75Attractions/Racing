@@ -25,11 +25,24 @@ public class RaceCourse : MonoBehaviour
     private readonly List<float> cachedWidthPath = new List<float>();
     private readonly List<Vector3> cachedInnerPath = new List<Vector3>();
     private readonly List<Vector3> cachedOuterPath = new List<Vector3>();
+    private readonly List<float> cachedCumulativeDistances = new List<float>();
     private readonly List<Vector2> cachedCoursePolygon = new List<Vector2>();
     private bool cacheDirty = true;
     private Vector3 cachedPosition;
     private Quaternion cachedRotation;
     private Vector3 cachedScale;
+
+    /// <summary>中心線を一周したときの距離です。</summary>
+    public float TotalLength
+    {
+        get
+        {
+            EnsureCache();
+            return cachedCumulativeDistances.Count == 0
+                ? 0f
+                : cachedCumulativeDistances[cachedCumulativeDistances.Count - 1];
+        }
+    }
 
     private void Awake()
     {
@@ -159,6 +172,44 @@ public class RaceCourse : MonoBehaviour
         return new Vector3(nearest.x, worldPosition.y, nearest.y);
     }
 
+    /// <summary>
+    /// 車の位置を中心線へ投影し、スタート地点から進行方向に沿った距離を返します。
+    /// 中心線は閉じたパスとして扱い、返値は [0, TotalLength) の範囲です。
+    /// </summary>
+    public float GetProgressDistance(Vector3 worldPosition)
+    {
+        EnsureCache();
+        if (cachedCenterPath.Count < 2 || cachedCumulativeDistances.Count != cachedCenterPath.Count)
+        {
+            return 0f;
+        }
+
+        Vector2 point = ToXZ(worldPosition);
+        float nearestDistanceSqr = float.PositiveInfinity;
+        float progress = 0f;
+
+        for (int index = 1; index < cachedCenterPath.Count; index++)
+        {
+            Vector2 start = ToXZ(cachedCenterPath[index - 1]);
+            Vector2 end = ToXZ(cachedCenterPath[index]);
+            Vector2 segment = end - start;
+            float segmentLengthSqr = segment.sqrMagnitude;
+            if (segmentLengthSqr <= Mathf.Epsilon) continue;
+
+            Vector2 nearestPoint = ClosestPointOnSegment2D(point, start, end);
+            float distanceSqr = (nearestPoint - point).sqrMagnitude;
+            if (distanceSqr >= nearestDistanceSqr) continue;
+
+            nearestDistanceSqr = distanceSqr;
+            float t = Mathf.Clamp01(Vector2.Dot(nearestPoint - start, segment) / segmentLengthSqr);
+            progress = cachedCumulativeDistances[index - 1] +
+                       Mathf.Sqrt(segmentLengthSqr) * t;
+        }
+
+        float totalLength = TotalLength;
+        return totalLength > Mathf.Epsilon ? Mathf.Repeat(progress, totalLength) : 0f;
+    }
+
     /// <summary>速度感用の路面・沿道ビジュアルが利用する中心線のキャッシュをコピーします。</summary>
     public void CopyCenterPathWorld(List<Vector3> destination)
     {
@@ -220,6 +271,7 @@ public class RaceCourse : MonoBehaviour
         cachedWidthPath.Clear();
         cachedInnerPath.Clear();
         cachedOuterPath.Clear();
+        cachedCumulativeDistances.Clear();
         cachedCoursePolygon.Clear();
 
         if (waypoints == null || waypoints.Length < 2)
@@ -229,6 +281,7 @@ public class RaceCourse : MonoBehaviour
         }
 
         BuildCenterPath(cachedCenterPath, cachedWidthPath);
+        BuildCumulativeDistances(cachedCenterPath, cachedCumulativeDistances);
         if (cachedCenterPath.Count >= 2)
         {
             BuildOffsetPaths(cachedCenterPath, cachedWidthPath, cachedInnerPath, cachedOuterPath);
@@ -243,6 +296,20 @@ public class RaceCourse : MonoBehaviour
         cachedPosition = transform.position;
         cachedRotation = transform.rotation;
         cachedScale = transform.lossyScale;
+    }
+
+    private static void BuildCumulativeDistances(List<Vector3> path, List<float> cumulativeDistances)
+    {
+        cumulativeDistances.Clear();
+        if (path == null || path.Count == 0) return;
+
+        float distance = 0f;
+        cumulativeDistances.Add(0f);
+        for (int i = 1; i < path.Count; i++)
+        {
+            distance += Vector3.Distance(path[i - 1], path[i]);
+            cumulativeDistances.Add(distance);
+        }
     }
 
     private void EnsureCache()
