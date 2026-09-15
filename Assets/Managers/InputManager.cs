@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Ports;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -9,36 +10,24 @@ public class InputManager : MonoBehaviour
     public const int SupportedPlayerCount = 2;
 
     [Header("Input Mode")]
-    [Tooltip("Enable two keyboard layouts instead of opening the ESP32 serial controllers.")]
+    [Tooltip("Use two keyboard layouts instead of the ESP32 USB serial input.")]
     public bool isDebugMode = false;
 
-    [Header("ESP32 Controllers")]
-    [SerializeField] private SerialControllerConfiguration[] serialControllers =
-    {
-        new SerialControllerConfiguration(0, "P1"),
-        new SerialControllerConfiguration(1, "P2")
-    };
+    [Header("ESP32 USB Serial (P1 + P2)")]
+    [SerializeField] private Esp32SerialConfiguration esp32Serial = new Esp32SerialConfiguration();
 
-    [Tooltip("Allow an older controller without DEVICE identity to be discovered for Player 1.")]
-    [SerializeField] private bool allowLegacyPlayerOneDiscovery = true;
-    [SerializeField] private string[] serialPortNameHints =
-        { "usbserial", "usbmodem", "ttyUSB", "ttyACM", "COM" };
-
-    [Header("Player 1 Legacy Monitor")]
-    [Tooltip("Player 1 steering value. Kept for the existing title/result input flow.")]
+    // Kept for the title/result flow, but not user-editable input settings.
+    [HideInInspector]
     public float handle;
-    [Tooltip("Player 1 pedal value. Kept for the existing title/result input flow.")]
+    [HideInInspector]
     public float peddale;
 
-    [Header("Serial Debug Monitor")]
-    [Tooltip("シリアル入力の状態と受信履歴を画面に表示できるようにします。キーボード入力モードとは独立しています。")]
+    [Header("Serial Monitor")]
+    [Tooltip("受信したUSBシリアル行とP1/P2の状態を表示します。F8で表示を切り替えます。")]
     [SerializeField] private bool serialDebugMode = false;
-    [Tooltip("デバッグモニターを起動時から表示します。実行中は指定キーで切り替えられます。")]
-    [SerializeField] private bool serialDebugDisplayVisible = true;
-    [SerializeField] private Key serialDebugToggleKey = Key.F8;
-    [SerializeField, Range(1, 50)] private int serialDebugLogCapacity = 12;
-    [Tooltip("画面表示に加えて、受信したシリアル行をUnity Consoleにも出力します。")]
-    [SerializeField] private bool mirrorSerialInputToConsole = false;
+    private bool serialDebugDisplayVisible = true;
+    private const Key SerialDebugToggleKey = Key.F8;
+    private const int SerialDebugLogCapacity = 12;
 
     private readonly Queue<string> serialDebugLog = new Queue<string>();
     private Vector2 serialDebugScrollPosition;
@@ -56,12 +45,13 @@ public class InputManager : MonoBehaviour
 
     private readonly IDriveInputSource[] inputSources =
         new IDriveInputSource[SupportedPlayerCount];
+    private TwoPlayerSerialInputSource sharedSerialInputSource;
     private bool initialized;
 
     public void Init()
     {
         DisposeInputSources();
-        EnsureControllerConfigurations();
+        esp32Serial ??= new Esp32SerialConfiguration();
 
         if (isDebugMode)
         {
@@ -77,14 +67,14 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        string[] resolvedPorts = ResolveSerialPorts();
+        // One microcontroller sends both players in a single four-column frame.
+        sharedSerialInputSource = new TwoPlayerSerialInputSource(
+            esp32Serial, ResolveSharedSerialPort());
+        sharedSerialInputSource.LineProcessed += OnSharedSerialLineProcessed;
         for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
         {
-            SerialControllerConfiguration configuration = serialControllers[playerIndex];
-            inputSources[playerIndex] = new SerialDriveInputSource(
-                configuration,
-                resolvedPorts[playerIndex]);
-            ((SerialDriveInputSource)inputSources[playerIndex]).LineProcessed += OnSerialLineProcessed;
+            inputSources[playerIndex] = new SharedPlayerDriveInputSource(
+                sharedSerialInputSource, playerIndex);
         }
 
         initialized = true;
@@ -98,9 +88,13 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        foreach (IDriveInputSource source in inputSources)
+        if (isDebugMode)
         {
-            source?.UpdateInput(deltaTime);
+            foreach (IDriveInputSource source in inputSources) source?.UpdateInput(deltaTime);
+        }
+        else
+        {
+            sharedSerialInputSource?.UpdateInput(deltaTime);
         }
 
         DriveInputState playerOneState = GetInputState(0);
@@ -115,39 +109,30 @@ public class InputManager : MonoBehaviour
 
     public DriveInputState GetInputState(int playerIndex)
     {
+        if (!isDebugMode && sharedSerialInputSource != null)
+        {
+            return sharedSerialInputSource.GetInputState(playerIndex);
+        }
+
         IDriveInputSource source = GetPlayerInputSource(playerIndex);
         return source != null ? source.CurrentState : DriveInputState.Neutral;
     }
 
     public bool IsPlayerConnected(int playerIndex)
     {
+        if (!isDebugMode && sharedSerialInputSource != null)
+        {
+            return sharedSerialInputSource.IsConnected(playerIndex);
+        }
+
         IDriveInputSource source = GetPlayerInputSource(playerIndex);
         return source != null && source.IsConnected;
     }
 
-    private string[] ResolveSerialPorts()
+    private string ResolveSharedSerialPort()
     {
-        string[] resolvedPorts = new string[SupportedPlayerCount];
-        HashSet<string> claimedPorts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
-        {
-            string configuredPort = serialControllers[playerIndex].PortName?.Trim();
-            if (string.IsNullOrEmpty(configuredPort))
-            {
-                continue;
-            }
-
-            if (!claimedPorts.Add(configuredPort))
-            {
-                Debug.LogError(
-                    $"Serial port {configuredPort} is assigned to more than one player. " +
-                    $"Player {playerIndex + 1} will remain disconnected.");
-                continue;
-            }
-
-            resolvedPorts[playerIndex] = configuredPort;
-        }
+        string configuredPort = esp32Serial.PortName?.Trim();
+        if (!string.IsNullOrEmpty(configuredPort)) return configuredPort;
 
         string[] availablePorts;
         try
@@ -157,136 +142,71 @@ public class InputManager : MonoBehaviour
         catch (Exception exception)
         {
             Debug.LogError($"Failed to enumerate serial ports: {exception.Message}");
-            return resolvedPorts;
+            return null;
         }
 
-        Array.Sort(availablePorts, StringComparer.OrdinalIgnoreCase);
-
-        for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
+        List<string> usbPorts = new List<string>();
+        foreach (string port in availablePorts)
         {
-            if (!string.IsNullOrEmpty(serialControllers[playerIndex].PortName?.Trim()))
+            // Mono on macOS also returns hundreds of pseudo-terminals. Use USB ports only.
+            if (!IsUsbSerialPort(port)) continue;
+
+            if (port.StartsWith("/dev/tty.", StringComparison.Ordinal))
             {
-                continue;
+                string calloutPort = "/dev/cu." + port.Substring("/dev/tty.".Length);
+                if (File.Exists(calloutPort)) usbPorts.Add(calloutPort);
             }
-
-            List<string> candidates = new List<string>();
-            foreach (string availablePort in availablePorts)
-            {
-                if (!claimedPorts.Contains(availablePort))
-                {
-                    candidates.Add(availablePort);
-                }
-            }
-
-            SerialControllerConfiguration configuration = serialControllers[playerIndex];
-            string discoveredPort = SerialControllerDiscovery.FindPortForDevice(
-                configuration,
-                candidates.ToArray());
-
-            if (string.IsNullOrEmpty(discoveredPort))
-            {
-                continue;
-            }
-
-            resolvedPorts[playerIndex] = discoveredPort;
-            claimedPorts.Add(discoveredPort);
+            usbPorts.Add(port);
         }
 
-        // Resolve both identities first so a legacy fallback cannot claim Player 2's port.
-        if (allowLegacyPlayerOneDiscovery && string.IsNullOrEmpty(resolvedPorts[0]) &&
-            string.IsNullOrWhiteSpace(serialControllers[0].PortName))
+        usbPorts.Sort((left, right) =>
         {
-            Array.Sort(availablePorts, (left, right) =>
-            {
-                int priority = GetPortPriority(left).CompareTo(GetPortPriority(right));
-                return priority != 0 ? priority : StringComparer.OrdinalIgnoreCase.Compare(left, right);
-            });
-            foreach (string candidate in availablePorts)
-            {
-                if (!claimedPorts.Contains(candidate) &&
-                    SerialControllerDiscovery.IsLegacyController(serialControllers[0], candidate))
-                {
-                    resolvedPorts[0] = candidate;
-                    break;
-                }
-            }
-        }
+            // The installed ESP32 uses a Silicon Labs CP2102 USB bridge.
+            int priority = GetPortPriority(left).CompareTo(GetPortPriority(right));
+            return priority != 0 ? priority : StringComparer.OrdinalIgnoreCase.Compare(left, right);
+        });
 
-        for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
+        if (usbPorts.Count > 0)
         {
-            if (string.IsNullOrEmpty(resolvedPorts[playerIndex]))
-            {
-                Debug.LogError($"Could not resolve controller for Player {playerIndex + 1}. " +
-                    "Configure its COM port explicitly or make the firmware answer IDENTIFY with DEVICE,<id>.");
-            }
+            Debug.Log($"Selected ESP32 USB serial port: {usbPorts[0]}");
+            return usbPorts[0];
         }
 
-        return resolvedPorts;
+        Debug.LogError("No ESP32 USB serial port found. Connect the ESP32 or enter its Port Name in ESP32 USB Serial.");
+        return null;
     }
 
-    private int GetPortPriority(string portName)
+    private static bool IsUsbSerialPort(string portName)
     {
-        if (serialPortNameHints == null) return 0;
-        for (int index = 0; index < serialPortNameHints.Length; index++)
-        {
-            if (!string.IsNullOrEmpty(serialPortNameHints[index]) &&
-                portName.IndexOf(serialPortNameHints[index], StringComparison.OrdinalIgnoreCase) >= 0)
-                return index;
-        }
-        return serialPortNameHints.Length;
+        return portName.StartsWith("COM", StringComparison.OrdinalIgnoreCase) ||
+            portName.IndexOf("USB", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            portName.IndexOf("SLAB_USBtoUART", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
-    private void EnsureControllerConfigurations()
+    private static int GetPortPriority(string portName)
     {
-        if (serialControllers == null || serialControllers.Length != SupportedPlayerCount)
-        {
-            SerialControllerConfiguration[] previous = serialControllers;
-            serialControllers = new SerialControllerConfiguration[SupportedPlayerCount];
-
-            for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
-            {
-                SerialControllerConfiguration matchingConfiguration = null;
-                if (previous != null)
-                {
-                    foreach (SerialControllerConfiguration configuration in previous)
-                    {
-                        if (configuration != null && configuration.PlayerIndex == playerIndex)
-                        {
-                            matchingConfiguration = configuration;
-                            break;
-                        }
-                    }
-                }
-
-                serialControllers[playerIndex] = matchingConfiguration;
-            }
-        }
-
-        for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
-        {
-            serialControllers[playerIndex] ??=
-                new SerialControllerConfiguration(playerIndex, $"P{playerIndex + 1}");
-            serialControllers[playerIndex].AssignPlayerIndex(playerIndex);
-        }
+        if (portName.IndexOf("SLAB_USBtoUART", StringComparison.OrdinalIgnoreCase) >= 0) return 0;
+        if (portName.StartsWith("/dev/cu.", StringComparison.OrdinalIgnoreCase)) return 1;
+        return 2;
     }
 
     void UpdateSerialDebugDisplayToggle()
     {
-        if (!serialDebugMode || serialDebugToggleKey == Key.None)
+        if (!serialDebugMode)
         {
             return;
         }
 
         Keyboard keyboard = Keyboard.current;
-        if (keyboard != null && keyboard[serialDebugToggleKey].wasPressedThisFrame)
+        if (keyboard != null && keyboard[SerialDebugToggleKey].wasPressedThisFrame)
         {
             ToggleSerialDebugDisplay();
         }
     }
 
-    private void OnSerialLineProcessed(SerialDriveInputSource source, string status, string line)
+    private void OnSharedSerialLineProcessed(string status, string line)
     {
-        AddSerialDebugLog($"P{source.PlayerIndex + 1} {status}", line);
+        AddSerialDebugLog($"P1/P2 {status}", line);
     }
 
     void AddSerialDebugLog(string status, string line)
@@ -299,16 +219,12 @@ public class InputManager : MonoBehaviour
         string displayLine = line.Length <= 512 ? line : line.Substring(0, 512) + "...";
         serialDebugLog.Enqueue($"[{Time.realtimeSinceStartup,9:F3}] {status,-7} {displayLine}");
 
-        int capacity = Mathf.Max(1, serialDebugLogCapacity);
+        int capacity = SerialDebugLogCapacity;
         while (serialDebugLog.Count > capacity)
         {
             serialDebugLog.Dequeue();
         }
 
-        if (mirrorSerialInputToConsole)
-        {
-            Debug.Log($"[InputManager Serial] {status}: {line}", this);
-        }
     }
 
     public void ToggleSerialDebugDisplay()
@@ -331,7 +247,7 @@ public class InputManager : MonoBehaviour
         EnsureSerialDebugStyles();
 
         float width = Mathf.Min(620f, Mathf.Max(100f, Screen.width - 20f));
-        float desiredHeight = 340f + serialDebugLogCapacity * 20f;
+        float desiredHeight = 340f + SerialDebugLogCapacity * 20f;
         float height = Mathf.Min(desiredHeight, Mathf.Max(100f, Screen.height - 20f));
         Rect panelRect = new Rect(10f, 10f, width, height);
 
@@ -342,26 +258,27 @@ public class InputManager : MonoBehaviour
 
         GUILayout.BeginArea(new Rect(panelRect.x + 12f, panelRect.y + 10f, panelRect.width - 24f, panelRect.height - 20f));
         serialDebugScrollPosition = GUILayout.BeginScrollView(serialDebugScrollPosition);
-        GUILayout.Label($"InputManager / Serial Monitor  [{serialDebugToggleKey}: hide]", serialDebugHeaderStyle);
+        GUILayout.Label($"InputManager / Serial Monitor  [{SerialDebugToggleKey}: hide]", serialDebugHeaderStyle);
         GUILayout.Label($"Input source: {(isDebugMode ? "Keyboard (serial disabled)" : "Serial")}", serialDebugLabelStyle);
+        if (!isDebugMode && sharedSerialInputSource != null)
+        {
+            string age = sharedSerialInputSource.LastSerialLineTime < 0f ? "-" :
+                $"{Mathf.Max(0f, Time.realtimeSinceStartup - sharedSerialInputSource.LastSerialLineTime):F2} s ago";
+            GUILayout.Label($"Shared controller: {(sharedSerialInputSource.IsPortOpen ? "Connected" : "Disconnected")}    Port: {sharedSerialInputSource.PortName}", serialDebugLabelStyle);
+            GUILayout.Label($"Raw lines: {sharedSerialInputSource.LinesReceived}    Processed: {sharedSerialInputSource.LinesProcessed}    Parse errors: {sharedSerialInputSource.ParseErrorCount}", serialDebugLabelStyle);
+            GUILayout.Label($"Last input: {age}    Raw: {sharedSerialInputSource.LastSerialLine}    Parse: {sharedSerialInputSource.LastParseResult}", serialDebugLabelStyle);
+        }
         for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
         {
-            if (!(inputSources[playerIndex] is SerialDriveInputSource source))
+            if (sharedSerialInputSource == null)
             {
                 GUILayout.Label($"Player {playerIndex + 1}: serial inactive", serialDebugLabelStyle);
                 continue;
             }
 
-            string age = source.LastSerialLineTime < 0f ? "-" :
-                $"{Mathf.Max(0f, Time.realtimeSinceStartup - source.LastSerialLineTime):F2} s ago";
-            GUILayout.Label($"Player {playerIndex + 1} / {source.DeviceId}: " +
-                $"{(source.IsConnected ? "Connected" : source.IsPortOpen ? "Waiting for input" : "Disconnected")}    Port: {source.PortName}", serialDebugLabelStyle);
-            GUILayout.Label($"Baud: {serialControllers[playerIndex].BaudRate}    Read timeout: {serialControllers[playerIndex].ReadTimeoutMilliseconds} ms    Queue: {source.PendingLineCount}", serialDebugLabelStyle);
-            GUILayout.Label($"Raw lines: {source.LinesReceived}    Processed: {source.LinesProcessed}    Parse errors: {source.ParseErrorCount}", serialDebugLabelStyle);
-            GUILayout.Label($"Pedal: {source.CurrentState.pedal:F4}    Handle: {source.CurrentState.steering:F4}    Parse: {source.LastParseResult}", serialDebugLabelStyle);
-            string raw = source.LastSerialLine;
-            if (raw.Length > 512) raw = raw.Substring(0, 512) + "...";
-            GUILayout.Label($"Last input: {age}    Raw: {raw}", serialDebugLabelStyle);
+            DriveInputState state = GetInputState(playerIndex);
+            GUILayout.Label($"Player {playerIndex + 1}: {(sharedSerialInputSource.IsConnected(playerIndex) ? "Connected" : "Waiting for input")}", serialDebugLabelStyle);
+            GUILayout.Label($"Pedal: {state.pedal:F4}    Handle: {state.steering:F4}", serialDebugLabelStyle);
         }
         GUILayout.Space(6f);
         GUILayout.Label("Serial input log", serialDebugHeaderStyle);
@@ -416,12 +333,15 @@ public class InputManager : MonoBehaviour
 
     private void DisposeInputSources()
     {
+        if (sharedSerialInputSource != null)
+        {
+            sharedSerialInputSource.LineProcessed -= OnSharedSerialLineProcessed;
+            sharedSerialInputSource.Dispose();
+            sharedSerialInputSource = null;
+        }
+
         for (int index = 0; index < inputSources.Length; index++)
         {
-            if (inputSources[index] is SerialDriveInputSource serialSource)
-            {
-                serialSource.LineProcessed -= OnSerialLineProcessed;
-            }
             inputSources[index]?.Dispose();
             inputSources[index] = null;
         }

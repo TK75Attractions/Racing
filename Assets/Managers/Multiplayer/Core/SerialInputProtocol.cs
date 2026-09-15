@@ -17,6 +17,26 @@ public readonly struct SerialInputFrame
     }
 }
 
+public readonly struct TwoPlayerSerialInputFrame
+{
+    public SerialInputFrame PlayerOne { get; }
+    public SerialInputFrame PlayerTwo { get; }
+    public bool PlayerOneValid { get; }
+    public bool PlayerTwoValid { get; }
+
+    public TwoPlayerSerialInputFrame(
+        SerialInputFrame playerOne,
+        SerialInputFrame playerTwo,
+        bool playerOneValid,
+        bool playerTwoValid)
+    {
+        PlayerOne = playerOne;
+        PlayerTwo = playerTwo;
+        PlayerOneValid = playerOneValid;
+        PlayerTwoValid = playerTwoValid;
+    }
+}
+
 public static class SerialInputProtocol
 {
     private const string DevicePrefix = "DEVICE";
@@ -45,6 +65,40 @@ public static class SerialInputProtocol
         bool parsed = TryParsePartialInput(line, steeringDivisor, out frame,
             out bool pedalParsed, out bool steeringParsed);
         return parsed && pedalParsed && steeringParsed;
+    }
+
+    // A shared controller sends: P1 pedal, P1 steering, P2 pedal, P2 steering.
+    // "nan" disables the complete player pair for this frame.
+    public static bool TryParseTwoPlayerInput(
+        string line,
+        float steeringDivisor,
+        out TwoPlayerSerialInputFrame frame)
+    {
+        frame = default;
+        if (string.IsNullOrWhiteSpace(line)) return false;
+
+        string payload = line.Split(new[] { "||" }, StringSplitOptions.None)[0].Trim();
+        string[] parts = payload.Split(',');
+        if (parts.Length != 4) return false;
+
+        bool p1PedalParsed = TryParseFloatOrNan(parts[0], out float p1Pedal, out bool p1PedalNan);
+        bool p1SteeringParsed = TryParseFloatOrNan(parts[1], out float p1Steering, out bool p1SteeringNan);
+        bool p2PedalParsed = TryParseFloatOrNan(parts[2], out float p2Pedal, out bool p2PedalNan);
+        bool p2SteeringParsed = TryParseFloatOrNan(parts[3], out float p2Steering, out bool p2SteeringNan);
+        if (!p1PedalParsed || !p1SteeringParsed || !p2PedalParsed || !p2SteeringParsed)
+        {
+            return false;
+        }
+
+        bool playerOneValid = !p1PedalNan && !p1SteeringNan;
+        bool playerTwoValid = !p2PedalNan && !p2SteeringNan;
+        float divisor = Math.Abs(steeringDivisor) < 0.0001f ? 1f : steeringDivisor;
+        frame = new TwoPlayerSerialInputFrame(
+            new SerialInputFrame(Clamp(p1Pedal, -1f, 1f), p1Steering / divisor, false, false),
+            new SerialInputFrame(Clamp(p2Pedal, -1f, 1f), p2Steering / divisor, false, false),
+            playerOneValid,
+            playerTwoValid);
+        return true;
     }
 
     // Legacy controllers can send one valid axis while the other is unavailable.
@@ -86,6 +140,18 @@ public static class SerialInputProtocol
         return (float.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out result)
                 || float.TryParse(value.Trim(), out result))
             && !float.IsNaN(result) && !float.IsInfinity(result);
+    }
+
+    private static bool TryParseFloatOrNan(string value, out float result, out bool isNan)
+    {
+        isNan = string.Equals(value.Trim(), "nan", StringComparison.OrdinalIgnoreCase);
+        if (isNan)
+        {
+            result = 0f;
+            return true;
+        }
+
+        return TryParseFloat(value, out result);
     }
 
     private static bool TryParseButton(string value)

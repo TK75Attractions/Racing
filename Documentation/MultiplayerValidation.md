@@ -19,7 +19,7 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Validate-Multiplayer.ps1 `
 
 1. 全スクリプトのコンパイル
 2. EditModeテスト
-   - `DEVICE,P1` / `DEVICE,P2`の識別
+   - 共有シリアルの4列入力とプレイヤー別の`nan`判定
    - 旧2列入力と拡張4列入力
    - 異常なシリアル行の拒否
    - 1位・2位の到着順
@@ -42,7 +42,7 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Validate-Multiplayer.ps1 `
 
 | 項目 | 合格条件 |
 |---|---|
-| ESP32識別 | P1/P2を逆のUSBポートへ挿しても正しいプレイヤーへ割り当たる |
+| USB検出 | 共有マイコンを接続したポートで4列入力を検出する |
 | 再接続 | レース開始前の抜き差し後、入力が復帰する |
 | 入力独立性 | P1の操作がP2車両へ、P2の操作がP1車両へ影響しない |
 | モニター割り当て | Display 0はP1、Display 1はP2を常時追従する |
@@ -53,4 +53,4 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Validate-Multiplayer.ps1 `
 | タイムアウト | 1位から40秒後に未完走側がDNFとなる |
 | 長時間運転 | 連続10レースでシリアルスレッド、カメラ、車両が重複しない |
 
-実機試験では、`InputManager > Is Debug Mode`を無効にし、各ESP32が `IDENTIFY` に対して `DEVICE,P1` または `DEVICE,P2` を返す状態で実行します。
+実機試験では、`InputManager > Is Debug Mode`を無効にし、1台のマイコンが `<P1ペダル>,<P1ハンドル>,<P2ペダル>,<P2ハンドル>` を改行区切りで送る状態で実行します。

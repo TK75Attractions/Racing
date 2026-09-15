@@ -53,6 +53,35 @@ public class SerialInputProtocolTests
         Assert.That(frame.ReadyHeld, Is.True);
     }
 
+    [Test]
+    public void TwoPlayerInput_ParsesBothPlayers()
+    {
+        Assert.That(
+            SerialInputProtocol.TryParseTwoPlayerInput("0.5,15,-0.25,-30", 3f, out TwoPlayerSerialInputFrame frame),
+            Is.True);
+        Assert.That(frame.PlayerOneValid, Is.True);
+        Assert.That(frame.PlayerTwoValid, Is.True);
+        Assert.That(frame.PlayerOne.Pedal, Is.EqualTo(0.5f));
+        Assert.That(frame.PlayerOne.Steering, Is.EqualTo(5f));
+        Assert.That(frame.PlayerTwo.Pedal, Is.EqualTo(-0.25f));
+        Assert.That(frame.PlayerTwo.Steering, Is.EqualTo(-10f));
+    }
+
+    [TestCase("nan,15,0.25,-30", false, true)]
+    [TestCase("0.5,nan,0.25,-30", false, true)]
+    [TestCase("0.5,15,nan,-30", true, false)]
+    [TestCase("0.5,15,0.25,nan", true, false)]
+    [TestCase("nan,15,nan,-30", false, false)]
+    public void TwoPlayerInput_IgnoresPlayerWhenEitherAxisIsNan(
+        string line, bool playerOneValid, bool playerTwoValid)
+    {
+        Assert.That(
+            SerialInputProtocol.TryParseTwoPlayerInput(line, 3f, out TwoPlayerSerialInputFrame frame),
+            Is.True);
+        Assert.That(frame.PlayerOneValid, Is.EqualTo(playerOneValid));
+        Assert.That(frame.PlayerTwoValid, Is.EqualTo(playerTwoValid));
+    }
+
     [TestCase("")]
     [TestCase("not-a-frame")]
     [TestCase("0.5,not-a-number")]
