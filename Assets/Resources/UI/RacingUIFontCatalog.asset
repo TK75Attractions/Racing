@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bb9e0a6f4ac4bc18a48f4e2d99015d3, type: 3}
+  m_Name: RacingUIFontCatalog
+  m_EditorClassIdentifier: 
+  mplus: {fileID: 11400000, guid: 17411b6378ee541f595727625f5eec0b, type: 2}
+  video: {fileID: 11400000, guid: 8d8b417d536cb418b8e7906161752e2a, type: 2}
+  dseg7: {fileID: 11400000, guid: 4071a46dfea764c5a970bb30f644ff81, type: 2}
