@@ -4334,7 +4334,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SakuraPetalController
   petalsEnabled: 1
-  petalShader: {fileID: 4800000, guid: d3f28c6a41b74e5db0c917e6a2f83c02, type: 3}
   targetCameras: []
   petalRate: 240
   areaSize: 60
