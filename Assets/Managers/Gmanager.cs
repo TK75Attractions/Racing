@@ -396,7 +396,7 @@ public class Gmanager : MonoBehaviour
 
             OnPlayUIManager playUi = playerIndex == 0 && onPlayUIManager != null
                 ? onPlayUIManager : new OnPlayUIManager();
-            playUi.Init(rig.CanvasRoot.transform.Find("OnPlay"));
+            playUi.Init(rig.CanvasRoot.transform.Find("OnPlay"), course, playerIndex);
             onPlayUIManagers[playerIndex] = playUi;
 
             ResultUIManager resultsUi = playerIndex == 0 && resultUIManager != null
@@ -486,6 +486,7 @@ public class Gmanager : MonoBehaviour
 
         lapManager?.PauseRace();
         car = players[0].car;
+        BindMiniMapCars();
         SwitchCameraForState(State.Countdown);
         time = 0f;
         resultReturnInputDelayTimer = 0f;
@@ -722,6 +723,7 @@ public class Gmanager : MonoBehaviour
         }
 
         car = null;
+        BindMiniMapCars();
         lapManager?.ResetRace();
         latestResult = null;
         latestSessionResult = null;
@@ -768,6 +770,17 @@ public class Gmanager : MonoBehaviour
             float totalSeconds = lapData != null ? lapData.totalRaceTime + lapData.currentLapTime : time;
             float speedValue = player.rigidbody.linearVelocity.magnitude * speedUnitMultiplier;
             ui.UpdateUI(GetRacePosition(playerIndex), lapValue, totalSeconds, lapSeconds, speedValue);
+        }
+    }
+
+    /// <summary>両プレイヤーのミニマップに、現在の車を割り当て直します。</summary>
+    private void BindMiniMapCars()
+    {
+        Transform playerOneCar = players[0]?.car != null ? players[0].car.transform : null;
+        Transform playerTwoCar = players[1]?.car != null ? players[1].car.transform : null;
+        foreach (OnPlayUIManager ui in onPlayUIManagers)
+        {
+            ui?.SetMiniMapCars(playerOneCar, playerTwoCar);
         }
     }
 
