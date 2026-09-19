@@ -218,7 +218,7 @@ public class Gmanager : MonoBehaviour
 
     private void OnGUI()
     {
-        if (IManager == null || !IManager.isDebugMode)
+        if (IManager == null || !IManager.IsAnyDebugMode)
         {
             return;
         }

@@ -9,6 +9,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 {
     private readonly Esp32SerialConfiguration configuration;
     private readonly string portName;
+    private readonly bool playerOneOnly;
     private readonly ConcurrentQueue<string> receivedLines = new ConcurrentQueue<string>();
     private readonly ConcurrentQueue<string> diagnosticMessages = new ConcurrentQueue<string>();
     private readonly DriveInputState[] currentStates = { DriveInputState.Neutral, DriveInputState.Neutral };
@@ -32,10 +33,14 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     public string LastParseResult { get; private set; } = "Waiting for input";
     public float LastSerialLineTime { get; private set; } = -1f;
 
-    public TwoPlayerSerialInputSource(Esp32SerialConfiguration configuration, string resolvedPortName)
+    public TwoPlayerSerialInputSource(
+        Esp32SerialConfiguration configuration,
+        string resolvedPortName,
+        bool playerOneOnly = false)
     {
         this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         portName = resolvedPortName;
+        this.playerOneOnly = playerOneOnly;
         Open();
     }
 
@@ -63,6 +68,21 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
             if (SerialInputProtocol.TryReadDeviceId(line, out _))
             {
                 RecordParseResult("IDENTITY", line);
+                continue;
+            }
+
+            if (playerOneOnly)
+            {
+                if (!SerialInputProtocol.TryParseInput(
+                        line, configuration.SteeringDivisor, out SerialInputFrame playerOneFrame))
+                {
+                    ParseErrorCount++;
+                    RecordParseResult("INVALID", line);
+                    continue;
+                }
+
+                RecordParseResult("OK", line);
+                ApplyPlayerFrame(0, playerOneFrame, valid: true);
                 continue;
             }
 
