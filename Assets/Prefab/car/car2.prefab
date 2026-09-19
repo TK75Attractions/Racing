@@ -444,6 +444,8 @@ MonoBehaviour:
   steeringFadeStartSpeed: 10
   steeringFadeFullSpeed: 30
   highSpeedSteeringMultiplier: 0.35
+  steeringFadeSharpness: 1
+  enableSpeedSensitiveSteering: 1
   driftStartHandle: 8
   driftFullChargeHandle: 30
   maxDriftCharge: 3
@@ -456,6 +458,10 @@ MonoBehaviour:
   enableDriftRearGripReduction: 1
   driftBoostDuration: 1
   driftBoostAccelerationPerCharge: 10
+  driftChargeTierThresholds:
+  - 0.34
+  - 0.67
+  - 1
   respawnInputSuppressionSeconds: 0.3
   frontCorneringStiffness: 10
   rearCorneringStiffness: 12
@@ -466,6 +472,7 @@ MonoBehaviour:
   appliedPedalInput: 0
   rawSteeringInput: 0
   appliedSteeringAngle: 0
+  appliedSteeringMultiplier: 1
   resistanceForce: 0
   isDrifting: 0
   driftCharge: 0

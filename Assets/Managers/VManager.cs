@@ -25,6 +25,22 @@ public class VManager : MonoBehaviour
     [SerializeField, Range(-2f, 2f)] private float boostPostExposure = 0.15f;
     [SerializeField, Range(-100f, 100f)] private float boostContrast = 10f;
 
+    [Header("Drift Charge Post Processing")]
+    [Tooltip("チャージ中の画面端の演出を有効にするか。")]
+    [SerializeField] private bool driftChargeEffectsEnabled = true;
+    [Tooltip("満チャージ時の演出の最大の強さ（Volumeのweight）。")]
+    [SerializeField, Range(0f, 1f)] private float chargeMaxWeight = 0.9f;
+    [Tooltip("チャージ量に追従する速さ（秒）。")]
+    [SerializeField, Min(0f)] private float chargeFadeSeconds = 0.18f;
+    [Tooltip("満チャージ時に通常設定へ加算する画面端の暗さ。")]
+    [SerializeField, Range(0f, 1f)] private float chargeVignetteIntensity = 0.2f;
+    [SerializeField, Range(0f, 1f)] private float chargeVignetteSmoothness = 0.45f;
+    [Tooltip("満チャージ時に通常設定へ加算する色収差。")]
+    [SerializeField, Range(0f, 1f)] private float chargeChromaticIntensity = 0.1f;
+    [Tooltip("満チャージ時に演出を脈動させる速さ（Hz）と深さ。")]
+    [SerializeField, Min(0f)] private float chargeFullPulseHz = 2.4f;
+    [SerializeField, Range(0f, 1f)] private float chargeFullPulseDepth = 0.35f;
+
     [Header("Race Speed Post Processing")]
     [SerializeField] private bool raceSpeedEffectsEnabled = true;
     [SerializeField, Range(0f, 1f)] private float speedMotionBlurLow = 0.08f;
@@ -51,6 +67,8 @@ public class VManager : MonoBehaviour
         public VolumeProfile profile;
         public Volume speedVolume;
         public VolumeProfile speedProfile;
+        public Volume chargeVolume;
+        public VolumeProfile chargeProfile;
         public UniversalAdditionalCameraData cameraData;
         public LayerMask originalLayerMask;
         public bool originalPostProcessing;
@@ -67,6 +85,11 @@ public class VManager : MonoBehaviour
         public ChromaticAberration speedChromaticAberration;
         public Vignette speedVignette;
         public ColorAdjustments speedColorAdjustments;
+        public Vignette chargeVignette;
+        public ChromaticAberration chargeChromaticAberration;
+        public float chargeAmount;
+        public bool chargeFull;
+        public Color chargeTint = Color.white;
         public float speed01;
         public bool speedActive;
     }
@@ -181,10 +204,27 @@ public class VManager : MonoBehaviour
             effect.speedVignette = effect.speedProfile.Add<Vignette>();
             effect.speedColorAdjustments = effect.speedProfile.Add<ColorAdjustments>();
 
+            // チャージ演出は加速演出と同じプレイヤー専用レイヤーに置き、優先度だけを速度と加速の間にします。
+            effect.chargeProfile = ScriptableObject.CreateInstance<VolumeProfile>();
+            effect.chargeProfile.name = $"DriftChargeProfile_P{index + 1}";
+            effect.chargeProfile.hideFlags = HideFlags.DontSave;
+            GameObject chargeObject = new GameObject($"DriftChargeVolume_P{index + 1}");
+            chargeObject.hideFlags = HideFlags.DontSave;
+            chargeObject.layer = layer;
+            chargeObject.transform.SetParent(transform, false);
+            effect.chargeVolume = chargeObject.AddComponent<Volume>();
+            effect.chargeVolume.isGlobal = true;
+            effect.chargeVolume.priority = volume.priority + 75f;
+            effect.chargeVolume.weight = 0f;
+            effect.chargeVolume.sharedProfile = effect.chargeProfile;
+            effect.chargeVignette = effect.chargeProfile.Add<Vignette>();
+            effect.chargeChromaticAberration = effect.chargeProfile.Add<ChromaticAberration>();
+
             cameraData.volumeLayerMask = cameraData.volumeLayerMask.value | (1 << visualLayer);
             cameraData.renderPostProcessing = true;
             playerEffects[index] = effect;
             ApplySpeedSettings(effect);
+            ApplyChargeSettings(effect);
             ApplyBoostSettings(effect);
         }
     }
@@ -195,6 +235,22 @@ public class VManager : MonoBehaviour
         PlayerEffect effect = playerEffects[playerIndex];
         if (effect != null) effect.targetWeight = Mathf.Clamp01(intensity);
     }
+
+    /// <summary>チャージ量（0〜1）と段階の色を、そのプレイヤーの画面演出へ渡します。</summary>
+    public void SetDriftCharge(int playerIndex, float charge01, Color tierColor, bool isFull)
+    {
+        if (playerIndex < 0 || playerIndex >= playerEffects.Length) return;
+        PlayerEffect effect = playerEffects[playerIndex];
+        if (effect == null) return;
+        effect.chargeAmount = Mathf.Clamp01(charge01);
+        effect.chargeTint = tierColor;
+        effect.chargeFull = isFull;
+    }
+
+    public float GetDriftChargeWeight(int playerIndex) =>
+        playerIndex >= 0 && playerIndex < playerEffects.Length && playerEffects[playerIndex] != null &&
+        playerEffects[playerIndex].chargeVolume != null
+            ? playerEffects[playerIndex].chargeVolume.weight : 0f;
 
     public float GetDriftBoostWeight(int playerIndex) =>
         playerIndex >= 0 && playerIndex < playerEffects.Length && playerEffects[playerIndex] != null
@@ -233,6 +289,7 @@ public class VManager : MonoBehaviour
         {
             if (effect == null) continue;
             ApplySpeedSettings(effect);
+            TickDriftCharge(effect, deltaTime);
 
             if (!driftBoostEffectsEnabled)
             {
@@ -258,7 +315,32 @@ public class VManager : MonoBehaviour
             effect.speed01 = 0f;
             effect.speedActive = false;
             if (effect.speedVolume != null) effect.speedVolume.weight = 0f;
+            effect.chargeAmount = 0f;
+            effect.chargeFull = false;
+            if (effect.chargeVolume != null) effect.chargeVolume.weight = 0f;
         }
+    }
+
+    private void TickDriftCharge(PlayerEffect effect, float deltaTime)
+    {
+        if (effect.chargeVolume == null) return;
+        if (!driftChargeEffectsEnabled)
+        {
+            effect.chargeVolume.weight = 0f;
+            return;
+        }
+
+        float target = effect.chargeAmount * Mathf.Clamp01(chargeMaxWeight);
+        if (effect.chargeFull && chargeFullPulseHz > 0f)
+        {
+            // 満チャージは強さを脈動させ、解放できることを伝えます。
+            float pulse = 0.5f * (1f - Mathf.Cos(Time.time * chargeFullPulseHz * Mathf.PI * 2f));
+            target *= 1f - chargeFullPulseDepth * pulse;
+        }
+
+        effect.chargeVolume.weight = chargeFadeSeconds <= 0f ? target : Mathf.MoveTowards(
+            effect.chargeVolume.weight, target, Mathf.Max(0f, deltaTime) / chargeFadeSeconds);
+        ApplyChargeSettings(effect);
     }
 
     private void ApplyBoostSettings(PlayerEffect effect)
@@ -271,6 +353,16 @@ public class VManager : MonoBehaviour
         effect.vignette.intensity.Override(EffectiveVignette(effect) + boostVignette);
         effect.colorAdjustments.postExposure.Override(BaseValue(colorAdjustments, colorAdjustments.postExposure) + boostPostExposure);
         effect.colorAdjustments.contrast.Override(EffectiveContrast(effect) + boostContrast);
+    }
+
+    private void ApplyChargeSettings(PlayerEffect effect)
+    {
+        if (effect.chargeProfile == null) return;
+        // 速度Volumeの現在値を基準に、段階の色で画面端を染めます。
+        effect.chargeVignette.intensity.Override(EffectiveVignette(effect) + chargeVignetteIntensity);
+        effect.chargeVignette.smoothness.Override(chargeVignetteSmoothness);
+        effect.chargeVignette.color.Override(effect.chargeTint);
+        effect.chargeChromaticAberration.intensity.Override(EffectiveChromatic(effect) + chargeChromaticIntensity);
     }
 
     private void ApplySpeedSettings(PlayerEffect effect)
@@ -355,8 +447,15 @@ public class VManager : MonoBehaviour
                 effect.speedVolume.sharedProfile = null;
                 CoreUtils.Destroy(effect.speedVolume.gameObject);
             }
+            if (effect.chargeVolume != null)
+            {
+                effect.chargeVolume.weight = 0f;
+                effect.chargeVolume.sharedProfile = null;
+                CoreUtils.Destroy(effect.chargeVolume.gameObject);
+            }
             DestroyProfile(effect.profile);
             DestroyProfile(effect.speedProfile);
+            DestroyProfile(effect.chargeProfile);
             playerEffects[index] = null;
         }
     }

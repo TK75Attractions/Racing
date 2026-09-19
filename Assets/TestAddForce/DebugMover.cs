@@ -29,6 +29,12 @@ public class DebugMover : MonoBehaviour
     [Tooltip("高速時に残す操舵角の割合。")]
     [SerializeField, Range(0f, 1f)] private float highSpeedSteeringMultiplier = 0.35f;
 
+    [Tooltip("操舵角を小さくしていく曲線の形。1で直線的、1より大きいと高速側で一気に曲がりにくくなり、1より小さいと低速側から曲がりにくくなります。")]
+    [SerializeField, Range(0.1f, 5f)] private float steeringFadeSharpness = 1f;
+
+    [Tooltip("速度に応じて操舵角を変えるか。無効にすると全速度で同じ曲がりやすさになります。")]
+    [SerializeField] private bool enableSpeedSensitiveSteering = true;
+
     [Header("Drift")]
     [Tooltip("ドリフトを開始する生のハンドル入力の絶対値（高速時の操舵補正前）。")]
     [SerializeField, Min(0.01f)] private float driftStartHandle = 8f;
@@ -65,6 +71,10 @@ public class DebugMover : MonoBehaviour
     [FormerlySerializedAs("driftBoostSpeedPerCharge")]
     [SerializeField, Min(0f)] private float driftBoostAccelerationPerCharge = 3f;
 
+    [Header("Drift Charge Display")]
+    [Tooltip("チャージ表示を段階に分けるしきい値（正規化チャージ 0〜1）。小さい順に並べます。挙動は変わらず、見た目の段階だけが変わります。")]
+    [SerializeField] private float[] driftChargeTierThresholds = { 0.34f, 0.67f, 1f };
+
     [Header("Respawn")]
     [Tooltip("リスポーン直後にアクセル、ハンドルなどの運転入力を無効化する時間（秒）。")]
     [FormerlySerializedAs("respawnSteeringSuppressionSeconds")]
@@ -89,6 +99,8 @@ public class DebugMover : MonoBehaviour
     [SerializeField] private float appliedPedalInput;
     [SerializeField] private float rawSteeringInput;
     [SerializeField] private float appliedSteeringAngle;
+    [Tooltip("速度によって操舵角にかけている倍率（実行時モニター）。1で通常、小さいほど曲がりにくい状態です。")]
+    [SerializeField] private float appliedSteeringMultiplier = 1f;
     [SerializeField] private float resistanceForce;
     [SerializeField] private bool isDrifting;
     [SerializeField] private float driftCharge;
@@ -110,10 +122,18 @@ public class DebugMover : MonoBehaviour
     /// <summary>実際に走行へ反映しているペダル入力（-1:ブレーキ 〜 1:アクセル）。</summary>
     public float PedalInput => appliedPedalInput;
     public float SpeedMetersPerSecond => speedMetersPerSecond;
+    /// <summary>速度によって操舵角にかけている倍率（1で通常、小さいほど曲がりにくい）。</summary>
+    public float SteeringSpeedMultiplier => appliedSteeringMultiplier;
     public bool IsInputSuppressed => Time.time < inputSuppressedUntil;
     public bool IsDrifting => isDrifting;
     public float DriftCharge => driftCharge;
     public float NormalizedDriftCharge => maxDriftCharge > 0f ? driftCharge / maxDriftCharge : 0f;
+    /// <summary>チャージ表示の段階数です。0 は段階分けなしを表します。</summary>
+    public int MaxDriftChargeTier => driftChargeTierThresholds != null ? driftChargeTierThresholds.Length : 0;
+    /// <summary>現在のチャージ段階です。0 はドリフト開始直後のチャージが乏しい状態を表します。</summary>
+    public int DriftChargeTier => GetDriftChargeTier(NormalizedDriftCharge);
+    /// <summary>解放時に最大の加速を得られる段階へ達しているかどうかです。</summary>
+    public bool IsDriftChargeFull => MaxDriftChargeTier > 0 && DriftChargeTier >= MaxDriftChargeTier;
     public bool IsDriftBoosting => isActiveAndEnabled && !IsInputSuppressed &&
         driftBoostTimeRemaining > 0f && activeDriftBoostAcceleration > 0f;
     public float DriftBoostVisualIntensity => IsDriftBoosting
@@ -306,6 +326,26 @@ public class DebugMover : MonoBehaviour
         return 0f;
     }
 
+    // しきい値を超えた数がそのまま段階になる。表示専用で、解放時の加速量は従来どおりチャージ量に比例する。
+    private int GetDriftChargeTier(float normalizedCharge)
+    {
+        if (driftChargeTierThresholds == null)
+        {
+            return 0;
+        }
+
+        int tier = 0;
+        for (int index = 0; index < driftChargeTierThresholds.Length; index++)
+        {
+            if (normalizedCharge >= driftChargeTierThresholds[index] - 0.0001f)
+            {
+                tier = index + 1;
+            }
+        }
+
+        return tier;
+    }
+
     private void RefreshTires()
     {
         tires.Clear();
@@ -327,14 +367,26 @@ public class DebugMover : MonoBehaviour
         Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
         speedMetersPerSecond = planarVelocity.magnitude;
 
-        float fullSpeed = Mathf.Max(steeringFadeStartSpeed + 0.01f, steeringFadeFullSpeed);
-        float speedRatio = Mathf.InverseLerp(steeringFadeStartSpeed, fullSpeed, speedMetersPerSecond);
-        float speedSteeringMultiplier = Mathf.Lerp(1f, highSpeedSteeringMultiplier, speedRatio);
-
+        appliedSteeringMultiplier = GetSpeedSteeringMultiplier(speedMetersPerSecond);
         appliedSteeringAngle = Mathf.Clamp(
-            rawSteeringInput * steeringInputMultiplier * speedSteeringMultiplier,
+            rawSteeringInput * steeringInputMultiplier * appliedSteeringMultiplier,
             -maxSteeringAngle,
             maxSteeringAngle);
+    }
+
+    // 遅いほど大きく、速いほど小さい操舵倍率を返す。ドリフト判定に使う生のハンドル入力には影響しない。
+    private float GetSpeedSteeringMultiplier(float speed)
+    {
+        if (!enableSpeedSensitiveSteering)
+        {
+            return 1f;
+        }
+
+        float fullSpeed = Mathf.Max(steeringFadeStartSpeed + 0.01f, steeringFadeFullSpeed);
+        float speedRatio = Mathf.InverseLerp(steeringFadeStartSpeed, fullSpeed, speed);
+        // 1より大きい鋭さでは低速側の効きを保ち、1より小さいと早い段階から曲がりにくくする。
+        float fadeRatio = Mathf.Pow(speedRatio, Mathf.Max(0.01f, steeringFadeSharpness));
+        return Mathf.Lerp(1f, Mathf.Clamp01(highSpeedSteeringMultiplier), fadeRatio);
     }
 
     private void ClearUserInput()
@@ -343,6 +395,7 @@ public class DebugMover : MonoBehaviour
         appliedPedalInput = 0f;
         rawSteeringInput = 0f;
         appliedSteeringAngle = 0f;
+        appliedSteeringMultiplier = 1f;
     }
 
     private void ApplyTireForces()
