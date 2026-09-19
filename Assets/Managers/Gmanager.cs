@@ -14,6 +14,7 @@ public class Gmanager : MonoBehaviour
         public GameObject car;
         public Rigidbody rigidbody;
         public DebugMover mover;
+        public DriftChargeVisual chargeVisual;
         public RaceDirectionCameraController cameraController;
         public PlayerDisplayRig displayRig;
         public CinemachineCamera titleCamera;
@@ -207,6 +208,13 @@ public class Gmanager : MonoBehaviour
         {
             DebugMover mover = players[index]?.mover;
             VManager.SetDriftBoost(index, mover != null ? mover.BoostVisualIntensity : 0f);
+            // 画面端の色は、車体の火花と同じ段階色を使って揃えます。
+            DriftChargeVisual chargeVisual = players[index]?.chargeVisual;
+            VManager.SetDriftCharge(
+                index,
+                mover != null ? mover.NormalizedDriftCharge : 0f,
+                chargeVisual != null ? chargeVisual.CurrentTierColor : Color.white,
+                mover != null && mover.IsDriftChargeFull);
         }
         VManager.TickDriftBoost(Time.deltaTime);
     }
@@ -471,6 +479,9 @@ public class Gmanager : MonoBehaviour
                 VManager);
             if (player.car.GetComponent<CarCollisionSparks>() == null)
                 player.car.AddComponent<CarCollisionSparks>();
+            player.chargeVisual = player.car.GetComponent<DriftChargeVisual>();
+            if (player.chargeVisual == null)
+                player.chargeVisual = player.car.AddComponent<DriftChargeVisual>();
             if (player.car.GetComponent<CarLightController>() == null)
                 player.car.AddComponent<CarLightController>();
             player.result = null;
