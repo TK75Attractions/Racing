@@ -10,6 +10,7 @@ public class EngineAudioCore : MonoBehaviour
     [SerializeField] private float targetFrequency;
     private float targetGain;
     private System.Random sysRandom = new System.Random();
+    
 
     // わけんの cylinders / phases に相当する設定
     private int cylinders = 4;
