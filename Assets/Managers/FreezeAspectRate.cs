@@ -63,9 +63,8 @@ public class FreezeAspectRate : MonoBehaviour
     {
         ChangeSize();
 
-        if (IsChangeAspect()) return;
+        if (IsViewportCurrent()) return;
         UpdateScreenRate();
-        main.ResetAspect();
     }
 
     private void CreateBackCamera()
@@ -105,33 +104,16 @@ public class FreezeAspectRate : MonoBehaviour
         if (main == null || UICamera == null || frontCamera == null || backImageCamera == null) return;
 
         aspectRate = (float)aspect.x / aspect.y;
-        float baseAspect = (float)aspect.y / aspect.x;
-        float nowAspect = (float)displayHeight / displayWidth;
-
-        if (float.IsNaN(baseAspect) || float.IsInfinity(baseAspect)) return;
-        if (float.IsNaN(nowAspect) || float.IsInfinity(nowAspect)) return;
-        
-        if (baseAspect > nowAspect)
-        {
-            float change = nowAspect / baseAspect;
-            Rect set = new Rect((1 - change) * 0.5f, 0, change, 1);
-            ApplyCameraRect(set);
-        }
-        else
-        {
-            float change = baseAspect / nowAspect;
-            Rect set = new Rect(0, (1 - change) * 0.5f, 1, change);
-            ApplyCameraRect(set);
-        }
+        ApplyCameraRect(CalculateViewportRect(displayWidth, displayHeight, aspectRate));
     }
 
     private void ApplyCameraRect(Rect set)
     {
         currentRect = set;
-        main.rect = set;
-        UICamera.rect = set;
-        frontCamera.rect = set;
-        backImageCamera.rect = set;
+        ApplyViewport(main, set);
+        ApplyViewport(UICamera, set);
+        ApplyViewport(frontCamera, set);
+        ApplyViewport(backImageCamera, set);
 
         if (backCamera != null)
         {
@@ -144,14 +126,63 @@ public class FreezeAspectRate : MonoBehaviour
         lastColorbase = colorbase;
     }
 
-    private bool IsChangeAspect()
+    private bool IsViewportCurrent()
     {
         GetDisplaySize(out int displayWidth, out int displayHeight);
+        if (displayWidth <= 0 || displayHeight <= 0 || aspect.x <= 0 || aspect.y <= 0)
+        {
+            return false;
+        }
+
+        float targetAspect = (float)aspect.x / aspect.y;
+        Rect expectedRect = CalculateViewportRect(displayWidth, displayHeight, targetAspect);
+
         return displayWidth == lastScreenWidth
             && displayHeight == lastScreenHeight
             && lastAspect == aspect
             && lastColorbase.Equals(colorbase)
-            && Mathf.Approximately(currentRect.width / currentRect.height, aspectRate);
+            && RectApproximately(currentRect, expectedRect)
+            && HasViewport(main, expectedRect, targetAspect)
+            && HasViewport(UICamera, expectedRect, targetAspect)
+            && HasViewport(frontCamera, expectedRect, targetAspect)
+            && HasViewport(backImageCamera, expectedRect, targetAspect);
+    }
+
+    private static Rect CalculateViewportRect(int displayWidth, int displayHeight, float targetAspect)
+    {
+        float displayAspect = (float)displayWidth / displayHeight;
+        if (displayAspect > targetAspect)
+        {
+            float width = targetAspect / displayAspect;
+            return new Rect((1f - width) * 0.5f, 0f, width, 1f);
+        }
+
+        float height = displayAspect / targetAspect;
+        return new Rect(0f, (1f - height) * 0.5f, 1f, height);
+    }
+
+    private void ApplyViewport(Camera target, Rect viewport)
+    {
+        target.rect = viewport;
+
+        // Camera.rect only changes where the image is drawn. Unity otherwise keeps
+        // using the full display's aspect ratio, which crops or stretches the view.
+        target.aspect = aspectRate;
+    }
+
+    private static bool HasViewport(Camera target, Rect viewport, float targetAspect)
+    {
+        return target != null
+            && RectApproximately(target.rect, viewport)
+            && Mathf.Approximately(target.aspect, targetAspect);
+    }
+
+    private static bool RectApproximately(Rect left, Rect right)
+    {
+        return Mathf.Approximately(left.x, right.x)
+            && Mathf.Approximately(left.y, right.y)
+            && Mathf.Approximately(left.width, right.width)
+            && Mathf.Approximately(left.height, right.height);
     }
 
     private void ChangeSize()

@@ -10,6 +10,7 @@ public class OnPlayUIManager
     [SerializeField] private UILap lap = new UILap();
     [SerializeField] private UITime time = new UITime();
     [SerializeField] private UISpeed speed = new UISpeed();
+    [SerializeField] private UIMiniMap miniMap = new UIMiniMap();
 
     private bool initialized = false;
 
@@ -17,8 +18,9 @@ public class OnPlayUIManager
     public UILap Lap => lap;
     public UITime TimeView => time;
     public UISpeed Speed => speed;
+    public UIMiniMap MiniMap => miniMap;
 
-    public void Init(Transform parent)
+    public void Init(Transform parent, RaceCourse course, int playerIndex)
     {
         trans = parent;
         if (parent == null)
@@ -31,11 +33,14 @@ public class OnPlayUIManager
         if (lap == null) lap = new UILap();
         if (time == null) time = new UITime();
         if (speed == null) speed = new UISpeed();
+        if (miniMap == null) miniMap = new UIMiniMap();
 
         position.Init(parent.Find("Position"));
         lap.Init(parent.Find("Lap"));
         time.Init(parent.Find("Time"));
         speed.Init(parent.Find("Speed"));
+        // ミニマップはノードが無ければ自前で生成するため、OnPlay ルートごと渡します。
+        miniMap.Init(parent, course, playerIndex);
         initialized = true;
     }
 
@@ -45,6 +50,12 @@ public class OnPlayUIManager
         SetLap(lapValue);
         SetTime(totalSeconds, lapSeconds);
         SetSpeed(speedValue);
+        miniMap.UpdateMarkers();
+    }
+
+    public void SetMiniMapCars(Transform playerOneCar, Transform playerTwoCar)
+    {
+        miniMap.SetCars(playerOneCar, playerTwoCar);
     }
 
     public void SetActive(bool isActive)

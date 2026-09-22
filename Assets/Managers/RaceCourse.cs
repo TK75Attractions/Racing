@@ -219,6 +219,17 @@ public class RaceCourse : MonoBehaviour
         destination.AddRange(cachedCenterPath);
     }
 
+    /// <summary>ミニマップ用に、コース内側・外側の縁をワールド座標でコピーします。</summary>
+    public void CopyCourseBandWorld(List<Vector3> innerDestination, List<Vector3> outerDestination)
+    {
+        if (innerDestination == null || outerDestination == null) return;
+        EnsureCache();
+        innerDestination.Clear();
+        innerDestination.AddRange(cachedInnerPath);
+        outerDestination.Clear();
+        outerDestination.AddRange(cachedOuterPath);
+    }
+
     /// <summary>
     /// 指定位置に最も近いセンターライン区間の、レース進行方向を取得します。
     /// waypoint の配列順をレース進行方向として扱います。

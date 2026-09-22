@@ -11,6 +11,8 @@ public sealed class SakuraPetalController : MonoBehaviour
     [SerializeField] private bool petalsEnabled = true;
 
     [Header("シーン参照")]
+    [Tooltip("桜専用シェーダー。シーンから直接参照してビルドにも確実に含めます。")]
+    [SerializeField] private Shader petalShader;
     [Tooltip("空の場合は MainCamera という名前またはタグのカメラを自動検出します（2人プレイ対応）。")]
     [SerializeField] private Camera[] targetCameras = new Camera[0];
 
@@ -310,8 +312,10 @@ public sealed class SakuraPetalController : MonoBehaviour
 
     private bool CreateSharedAssets()
     {
-        // Resources参照により、ビルド時にも専用シェーダーが含まれます。
-        Shader shader = Resources.Load<Shader>("SakuraPetal");
+        // シーン参照を優先します。Resourcesの登録情報が壊れていても、花びらの描画は継続できます。
+        Shader shader = petalShader;
+        if (shader == null) shader = Resources.Load<Shader>("SakuraPetal");
+        if (shader == null) shader = Shader.Find("Racing/SakuraPetal");
         if (shader == null)
         {
             Debug.LogError("SakuraPetal shader was not found.", this);

@@ -14,6 +14,7 @@ public class Gmanager : MonoBehaviour
         public GameObject car;
         public Rigidbody rigidbody;
         public DebugMover mover;
+        public DriftChargeVisual chargeVisual;
         public RaceDirectionCameraController cameraController;
         public PlayerDisplayRig displayRig;
         public CinemachineCamera titleCamera;
@@ -207,6 +208,13 @@ public class Gmanager : MonoBehaviour
         {
             DebugMover mover = players[index]?.mover;
             VManager.SetDriftBoost(index, mover != null ? mover.BoostVisualIntensity : 0f);
+            // 画面端の色は、車体の火花と同じ段階色を使って揃えます。
+            DriftChargeVisual chargeVisual = players[index]?.chargeVisual;
+            VManager.SetDriftCharge(
+                index,
+                mover != null ? mover.NormalizedDriftCharge : 0f,
+                chargeVisual != null ? chargeVisual.CurrentTierColor : Color.white,
+                mover != null && mover.IsDriftChargeFull);
         }
         VManager.TickDriftBoost(Time.deltaTime);
     }
@@ -396,7 +404,7 @@ public class Gmanager : MonoBehaviour
 
             OnPlayUIManager playUi = playerIndex == 0 && onPlayUIManager != null
                 ? onPlayUIManager : new OnPlayUIManager();
-            playUi.Init(rig.CanvasRoot.transform.Find("OnPlay"));
+            playUi.Init(rig.CanvasRoot.transform.Find("OnPlay"), course, playerIndex);
             onPlayUIManagers[playerIndex] = playUi;
 
             ResultUIManager resultsUi = playerIndex == 0 && resultUIManager != null
@@ -471,6 +479,9 @@ public class Gmanager : MonoBehaviour
                 VManager);
             if (player.car.GetComponent<CarCollisionSparks>() == null)
                 player.car.AddComponent<CarCollisionSparks>();
+            player.chargeVisual = player.car.GetComponent<DriftChargeVisual>();
+            if (player.chargeVisual == null)
+                player.chargeVisual = player.car.AddComponent<DriftChargeVisual>();
             if (player.car.GetComponent<CarLightController>() == null)
                 player.car.AddComponent<CarLightController>();
             player.result = null;
@@ -486,6 +497,7 @@ public class Gmanager : MonoBehaviour
 
         lapManager?.PauseRace();
         car = players[0].car;
+        BindMiniMapCars();
         SwitchCameraForState(State.Countdown);
         time = 0f;
         resultReturnInputDelayTimer = 0f;
@@ -722,6 +734,7 @@ public class Gmanager : MonoBehaviour
         }
 
         car = null;
+        BindMiniMapCars();
         lapManager?.ResetRace();
         latestResult = null;
         latestSessionResult = null;
@@ -768,6 +781,17 @@ public class Gmanager : MonoBehaviour
             float totalSeconds = lapData != null ? lapData.totalRaceTime + lapData.currentLapTime : time;
             float speedValue = player.rigidbody.linearVelocity.magnitude * speedUnitMultiplier;
             ui.UpdateUI(GetRacePosition(playerIndex), lapValue, totalSeconds, lapSeconds, speedValue);
+        }
+    }
+
+    /// <summary>両プレイヤーのミニマップに、現在の車を割り当て直します。</summary>
+    private void BindMiniMapCars()
+    {
+        Transform playerOneCar = players[0]?.car != null ? players[0].car.transform : null;
+        Transform playerTwoCar = players[1]?.car != null ? players[1].car.transform : null;
+        foreach (OnPlayUIManager ui in onPlayUIManagers)
+        {
+            ui?.SetMiniMapCars(playerOneCar, playerTwoCar);
         }
     }
 
