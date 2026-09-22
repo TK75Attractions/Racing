@@ -479,6 +479,8 @@ public class Gmanager : MonoBehaviour
                 VManager);
             if (player.car.GetComponent<CarCollisionSparks>() == null)
                 player.car.AddComponent<CarCollisionSparks>();
+            if (player.car.GetComponent<CarWallCollisionResponse>() == null)
+                player.car.AddComponent<CarWallCollisionResponse>();
             player.chargeVisual = player.car.GetComponent<DriftChargeVisual>();
             if (player.chargeVisual == null)
                 player.chargeVisual = player.car.AddComponent<DriftChargeVisual>();

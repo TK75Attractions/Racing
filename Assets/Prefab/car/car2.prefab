@@ -368,6 +368,7 @@ GameObject:
   - component: {fileID: 811489908772547292}
   - component: {fileID: 6124809731544772365}
   - component: {fileID: 2095029467354775146}
+  - component: {fileID: 3847291058392017461}
   m_Layer: 8
   m_Name: car2
   m_TagString: Player
@@ -577,6 +578,20 @@ MonoBehaviour:
   lampsOn: 0
   braking: 0
   lampBlend: 0
+--- !u!114 &3847291058392017461
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9218658769128752567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f3a4dc1a1f54cc69bf7eac1e442390e, type: 3}
+  m_Name: CarWallCollisionResponse
+  m_EditorClassIdentifier: Assembly-CSharp::CarWallCollisionResponse
+  wallBounceImpulse: 20
+  maximumWallNormalY: 0.65
 --- !u!1001 &1531075579662938594
 PrefabInstance:
   m_ObjectHideFlags: 0
