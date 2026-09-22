@@ -2,98 +2,65 @@ using UnityEngine;
 
 public class EngineAudioCore : MonoBehaviour
 {
-    
-    private double phase;
-    private double samplingRate;
+    // Inspectorから直接AudioSourceを登録する方式に変更
+    [Header("Audio Sources")]
+    [SerializeField] private AudioSource idle;
+    [SerializeField] private AudioSource low_on, low_off;
+    [SerializeField] private AudioSource med_on, med_off;
+    [SerializeField] private AudioSource high_on, high_off;
 
+    private AudioSource[] sources;
+    private float targetRpm;
+    private float targetLoad;
 
-    [SerializeField] private float targetFrequency;
-    private float targetGain;
-    private System.Random sysRandom = new System.Random();
-    
-
-    // わけんの cylinders / phases に相当する設定
-    private int cylinders = 4;
-    private float[] phases;
-
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void Awake()
     {
-        samplingRate = AudioSettings.outputSampleRate;
+        // 配列にまとめる（Inspectorで登録したものがここに入る）
+        sources = new AudioSource[] { idle, low_on, low_off, med_on, med_off, high_on, high_off };
 
-        // シリンダーごとの位相初期化
-        phases = new float[cylinders];
-        for (int i = 0; i < cylinders; i++)
+        foreach (var s in sources)
         {
-            phases[i] = (i * 4f * Mathf.PI / cylinders) + Random.Range(-0.1f, 0.1f);
-        }
-
-        AudioSource aud = GetComponent<AudioSource>();
-        if (aud != null)
-        {
-            aud.spatialBlend = 0;
-            aud.Play();
+            if (s != null)
+            {
+                s.loop = true;
+                s.volume = 0f;
+                s.Play();
+            }
         }
     }
 
-    //ほかのスクリプトから音を変える
-    public void UpdateParameters(float frequency, float gain)
+    public void UpdateParameters(float rpm, float load)
     {
-        this.targetFrequency = frequency;
-        this.targetGain = gain;
+        targetRpm = rpm;
+        targetLoad = load;
+
+        // ピッチの計算（ベースの回転数を800rpmとして調整）
+        float pitch = Mathf.Clamp(rpm / 800f, 0.5f, 2.5f);
+        foreach (var s in sources) if (s != null) s.pitch = pitch;
+
+        UpdateVolumes();
     }
 
-    // Update is called once per frame
-    void OnAudioFilterRead(float[] data, int channels)
+    private void UpdateVolumes()
     {
-        if (samplingRate <= 0) return;
+        if (sources == null) return;
 
-        // targetFrequency を RPM として計算
-        float currentRpm = Mathf.Max(100f, targetFrequency);
-        float baseFreq = currentRpm / 60f;
-        float fireFreq = baseFreq * (cylinders / 2f);
+        // 1. Idle (0 - 2000rpm)
+        sources[0].volume = Mathf.Clamp01(1f - (targetRpm / 1500f));
+        
+        // 2. Low (1000 - 3000rpm)
+        float lowWeight = Mathf.Clamp01(1f - Mathf.Abs(targetRpm - 2000f) / 1000f);
+        sources[1].volume = lowWeight * targetLoad;
+        sources[2].volume = lowWeight * (1f - targetLoad);
 
-        double phaseIncrement = 1.0 / samplingRate;
+        // 3. Med (2500 - 5000rpm)
+        float medWeight = Mathf.Clamp01(1f - Mathf.Abs(targetRpm - 3750f) / 1250f);
+        sources[3].volume = medWeight * targetLoad;
+        sources[4].volume = medWeight * (1f - targetLoad);
 
-        for (int i = 0; i < data.Length; i += channels)
-        {
-            // --- ここから：元の「のこぎり波」を Python ロジックに差し替え ---
-
-            // 1. シリンダー爆発パルス
-            float pulse = 0f;
-            for (int c = 0; c < cylinders; c++)
-            {
-                double tPhase = (phase * baseFreq + phases[c] / (2.0 * Mathf.PI)) % 1.0;
-                float fire = (Mathf.Sin((float)(2.0 * Mathf.PI * baseFreq * phase + phases[c])) > 0.95f) ? 1f : 0f;
-                float envelope = Mathf.Exp(-50f * (float)(tPhase % (1.0 / (baseFreq / 2.0))));
-                pulse += fire * envelope;
-            }
-
-            // 2. 高調波（倍音）
-            float harmonics = 0f;
-            for (int h = 2; h < 8; h++)
-            {
-                harmonics += (1f / h) * Mathf.Sin((float)(2.0 * Mathf.PI * fireFreq * h * phase));
-            }
-
-            // 3. 吸気・排気ノイズ
-            float noise = (float)(sysRandom.NextDouble() * 2.0 - 1.0) * 0.2f;
-
-            // 4. 合成と非線形歪み (tanh)
-            float sample = (0.6f * pulse) + (0.3f * harmonics) + (0.2f * noise);
-            sample = (float)System.Math.Tanh(sample * 3.0);
-
-            // --- ここまで ---
-
-            // チャンネルへの書き込み
-            for (int j = 0; j < channels; j++)
-            {
-                data[i + j] = sample * targetGain;
-            }
-
-            // 位相の更新
-            phase += phaseIncrement;
-        }
+        // 4. High (4500rpm以上)
+        float highWeight = Mathf.Clamp01((targetRpm - 4500f) / 2500f);
+        sources[5].volume = highWeight * targetLoad;
+        sources[6].volume = highWeight * (1f - targetLoad);
     }
 }

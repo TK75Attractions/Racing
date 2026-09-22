@@ -1,40 +1,43 @@
+
 using UnityEngine;
 
 public class CarSoundController : MonoBehaviour
 {
-    [Header("Dependencies")]
     public EngineAudioCore audioCore;
     public Rigidbody carRigidbody;
 
     [Header("Engine Settings")]
-    public float minRpm = 800f;   // アイドリング時の回転数
-    public float maxRpm = 7000f;  // レッドゾーンの回転数
-    public float maxSpeed = 30f;  // エンジンが最高回転に達する速度
+    public float maxSpeed = 30f;
+    public float minRpm = 800f;
+    public float maxRpm = 7000f;
+    public float maxAcceleration = 15f; // 加速度の最大値（負荷の最大判定用）
 
-    [Header("Debug Info")]
-    [SerializeField] private float currentSpeed;
-    [SerializeField] private float currentRpm;
+    private Vector3 lastVelocity;
+    private float forwardAcceleration;
 
-    // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         if (carRigidbody == null || audioCore == null) return;
 
-        // 1. 速度からエンジン負荷（0.0 - 1.0）を計算
-        float speed = carRigidbody.linearVelocity.magnitude;
-        float ratio = Mathf.Clamp01(speed / maxSpeed);
+        // 1. 全加速度ベクトルを計算
+        Vector3 currentVelocity = carRigidbody.linearVelocity;
+        Vector3 accelerationVector = (currentVelocity - lastVelocity) / Time.fixedDeltaTime;
+        lastVelocity = currentVelocity;
 
-        // 2. 速度をベースにRPMを算出（アイドリング回転数からスタート）
-        // 速度が0のときはminRpm、maxSpeedのときはmaxRpmになる
-        float rpm = Mathf.Lerp(minRpm, maxRpm, ratio);
+        // 2. 「前方」への加速度のみを抽出（内積を使用）
+        // 車両の前方向 (transform.forward) と加速度ベクトルの内積をとる
+        forwardAcceleration = Vector3.Dot(accelerationVector, transform.forward);
 
-        // 3. デバッグ表示
-        currentSpeed = speed;
-        currentRpm = rpm;
+        // 3. RPM計算（速度依存）
+        float rpm = Mathf.Lerp(minRpm, maxRpm, Mathf.Clamp01(currentVelocity.magnitude / maxSpeed));
 
-        // 4. EngineAudioCore へ渡す（周波数としてRPMをそのまま使用）
-        // gain(音量)も適宜コントロール可能にしておくと良いでしょう
-        audioCore.UpdateParameters(rpm, 1f);
+        // 4. 前方加速度を負荷（0～1）に変換
+        // 負の加速（ブレーキやエンジンブレーキ）も考慮するなら、Mathf.Clamp01で0以下をカット
+        float load = Mathf.Clamp01(forwardAcceleration / maxAcceleration);
 
+        // デバッグ表示
+        // Debug.Log($"Forward Accel: {forwardAcceleration}, Load: {load}");
+
+        audioCore.UpdateParameters(rpm, load);
     }
 }
