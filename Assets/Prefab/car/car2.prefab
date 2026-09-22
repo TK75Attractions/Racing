@@ -479,6 +479,8 @@ MonoBehaviour:
   driftCharge: 0
   driftBoostTimeRemaining: 0
   activeDriftBoostAcceleration: 0
+  accelerationPadBoostTimeRemaining: 0
+  activeAccelerationPadBoostAcceleration: 0
 --- !u!114 &703174277945583282
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -590,7 +592,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f3a4dc1a1f54cc69bf7eac1e442390e, type: 3}
   m_Name: CarWallCollisionResponse
   m_EditorClassIdentifier: Assembly-CSharp::CarWallCollisionResponse
-  wallBounceImpulse: 20
+  wallBounceImpulse: 40
   maximumWallNormalY: 0.65
 --- !u!1001 &1531075579662938594
 PrefabInstance:
