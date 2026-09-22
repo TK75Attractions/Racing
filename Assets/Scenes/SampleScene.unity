@@ -543,10 +543,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InputManager
   isDebugMode: 1
+  isP1SerialP2KeyboardDebugMode: 0
   esp32Serial:
     portName: 
     baudRate: 115200
-    steeringDivisor: 15
+    steeringDivisor: 6.5
     readTimeoutMilliseconds: 200
     inputTimeoutSeconds: 2
   handle: 0
