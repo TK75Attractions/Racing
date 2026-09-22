@@ -71,6 +71,7 @@ public class UIMiniMap
         if (background == null) background = root.AddComponent<Image>();
         background.color = backgroundColor;
         background.raycastTarget = false;
+        RacingUITheme.Surface(rect);
 
         borderGraphic = EnsureGraphic<MiniMapTrackGraphic>(rect, "Border", trackBorderColor);
         borderGraphic.WidthScale = trackBorderScale;

@@ -13,7 +13,7 @@ public sealed class ResultMenuAnimator : MonoBehaviour
         {
             feedback[index] = cards[index].GetComponent<PedalButtonFeedback>();
             if (feedback[index] == null) feedback[index] = cards[index].gameObject.AddComponent<PedalButtonFeedback>();
-            feedback[index].Configure(Accent);
+            feedback[index].Configure(Accent, index == 0 ? RacingPanelGraphic.SurfaceStyle.Primary : RacingPanelGraphic.SurfaceStyle.Secondary);
         }
         SetState(0, 0f);
     }

@@ -8,6 +8,7 @@ public class UISpeed
     [SerializeField] private GameObject root;
     private RectTransform meter;
     private TMP_Text speedText;
+    private RacingSpeedGauge gauge;
 
     [SerializeField] private float speedVelocity = 0f;
     [SerializeField] private float speedValue = 0f;
@@ -30,6 +31,7 @@ public class UISpeed
             return;
         }
 
+        gauge = rootTransform.GetComponentInChildren<RacingSpeedGauge>(true);
         if (meter == null)
         {
             Transform meterTransform = rootTransform.Find("parent");
@@ -43,7 +45,7 @@ public class UISpeed
                 : rootTransform.GetComponentInChildren<RectTransform>(true);
         }
 
-        if (speedText == null)
+        if (rootTransform != null)
         {
             Transform textTransform = rootTransform.Find("Txt");
             speedText = textTransform != null
@@ -56,10 +58,11 @@ public class UISpeed
 
     public void UpdateSpeedMeter(float speed, float dt)
     {
-        if (speedText == null || meter == null) return;
+        if (speedText == null) return;
 
         UpdateSpeedText(speed);
-        UpdateMeter(speed, dt);
+        if (gauge != null) gauge.SetSpeed(speed);
+        else UpdateMeter(speed, dt);
     }
 
     private void UpdateSpeedText(float speed)

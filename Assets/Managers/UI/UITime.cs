@@ -23,19 +23,13 @@ public class UITime
             root = parent.gameObject;
         }
 
-        TMP_Text[] texts = root != null ? root.GetComponentsInChildren<TMP_Text>(true) : null;
-
-        /*
-        if (totalTimeText == null && texts != null && texts.Length > 0)
+        if (parent != null && parent.Find("Total") != null)
         {
-            totalTimeText = texts[0];
+            totalTimeText = parent.Find("Total").GetComponent<TMP_Text>();
+            totalTimeTextMillis = parent.Find("TotalFraction").GetComponent<TMP_Text>();
+            lapTimeText = parent.Find("Lap").GetComponent<TMP_Text>();
+            lapTimeTextMillis = parent.Find("LapFraction").GetComponent<TMP_Text>();
         }
-
-        if (lapTimeText == null && texts != null && texts.Length > 1)
-        {
-            lapTimeText = texts[1];
-        }
-        */
         SetTotalTime(totalTime);
         SetLapTime(lapTime);
     }
@@ -81,7 +75,7 @@ public class UITime
     private static string FormatTimeMillis(float seconds)
     {
         int totalMilliseconds = Mathf.FloorToInt(Mathf.Max(0f, seconds) * 1000f);
-        int milliseconds = totalMilliseconds % 100;
+        int milliseconds = totalMilliseconds / 10 % 100;
         return $".{milliseconds:00}";
     }
 }
