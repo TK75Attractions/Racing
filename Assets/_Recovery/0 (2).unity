@@ -921,11 +921,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InputManager
   isDebugMode: 1
-  isP1SerialP2KeyboardDebugMode: 0
   esp32Serial:
     portName: 
     baudRate: 115200
-    steeringDivisor: 6.5
+    steeringDivisor: 15
     readTimeoutMilliseconds: 200
     inputTimeoutSeconds: 2
   handle: 0
@@ -3930,11 +3929,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8f96c0584952f944b695ab54ffa3152, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FreezeAspectRate
-  aspect: {x: 16, y: 9}
+  aspect: {x: 2, y: 1}
   colorbase:
     serializedVersion: 2
     rgba: 4278190080
-  aspectRate: 1.7777778
+  aspectRate: 2
   cameraSize: 0
   oldSize: 0
   setTime: 0
