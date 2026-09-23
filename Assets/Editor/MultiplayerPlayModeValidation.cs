@@ -99,17 +99,22 @@ public static class MultiplayerPlayModeValidation
                     break;
 
                 case 2 when manager.state == Gmanager.State.Game:
-                    ValidateFinishFlow();
+                    ValidateFirstFinish();
                     stage = 3;
+                    break;
+
+                case 3 when GameObject.Find("GameManagers/MainCanvas/SpectatorOverlay") != null:
+                    ValidateSpectatorAndFinishSecondPlayer();
+                    stage = 4;
                     stageStartTime = EditorApplication.timeSinceStartup;
                     break;
 
-                case 3 when EditorApplication.timeSinceStartup - stageStartTime > 0.25d:
-                    ValidateGoalCelebration();
-                    stage = 4;
+                case 4 when EditorApplication.timeSinceStartup - stageStartTime > 0.25d:
+                    ValidateSecondPlayerGoal();
+                    stage = 5;
                     break;
 
-                case 4 when manager.state == Gmanager.State.Result:
+                case 5 when manager.state == Gmanager.State.Result:
                     ValidateSharedResult();
                     Debug.Log("MULTIPLAYER_PLAYMODE_VALIDATION_PASS");
                     Finish(0);
@@ -170,10 +175,9 @@ public static class MultiplayerPlayModeValidation
             "Countdown status differs between displays.");
     }
 
-    private static void ValidateFinishFlow()
+    private static void ValidateFirstFinish()
     {
         GameObject p1Car = GameObject.Find("Player1_Car");
-        GameObject p2Car = GameObject.Find("Player2_Car");
         finishMethod = typeof(Gmanager).GetMethod("HandleCarFinished", BindingFlags.NonPublic | BindingFlags.Instance);
         Require(finishMethod != null, "Finish handler is missing.");
 
@@ -191,9 +195,26 @@ public static class MultiplayerPlayModeValidation
             Require(!collider.enabled, "First-place car still blocks the course.");
         }
 
-        Require(GetRaceStatus(0) == GetRaceStatus(1) && GetRaceStatus(0).Contains("40.0"),
-            "Second-place timer differs between displays.");
+        GameObject p1Goal = GameObject.Find("GameManagers/MainCanvas/Goal");
+        GameObject p2Goal = GameObject.Find("GameManagers/MainCanvas_P2/Goal");
+        Require(p1Goal != null && p2Goal == null,
+            "Only the player who finished should see the goal screen.");
+        Require(!IsFinishWarningVisible(0) && IsFinishWarningVisible(1) && GetRaceStatus(1).Contains("40.0"),
+            "Only the unfinished player should see the second-place timer.");
+    }
 
+    private static void ValidateSpectatorAndFinishSecondPlayer()
+    {
+        TMP_Text spectatorLabel = FindComponent<TMP_Text>(
+            "GameManagers/MainCanvas/SpectatorOverlay/PlayerPlate/PlayerLabel");
+        CinemachineCamera p1Camera = FindComponent<CinemachineCamera>("GameManagers/VCamera");
+        CinemachineCamera p2Camera = FindComponent<CinemachineCamera>("GameManagers/VCamera_P2");
+        Require(spectatorLabel != null && spectatorLabel.text.Contains("P2"),
+            "The finished player's display does not identify the watched player.");
+        Require(p1Camera != null && p2Camera != null && p1Camera.Follow == p2Camera.Follow,
+            "The finished player's camera is not following the unfinished player.");
+
+        GameObject p2Car = GameObject.Find("Player2_Car");
         finishMethod.Invoke(manager, new object[]
         {
             p2Car.GetComponent<Rigidbody>(),
@@ -214,18 +235,16 @@ public static class MultiplayerPlayModeValidation
             "Result does not contain both players.");
     }
 
-    private static void ValidateGoalCelebration()
+    private static void ValidateSecondPlayerGoal()
     {
         TMP_Text p1Goal = FindComponent<TMP_Text>("GameManagers/MainCanvas/Goal/Hero/GoalText");
         TMP_Text p2Goal = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Goal/Hero/GoalText");
-        GameObject p1Confetti = GameObject.Find("GameManagers/MainCanvas/Goal/Confetti");
         GameObject p2Confetti = GameObject.Find("GameManagers/MainCanvas_P2/Goal/Confetti");
         Require(manager.state == Gmanager.State.Goal, "Goal celebration state was not reached.");
-        Require(p1Goal != null && p2Goal != null && p1Goal.text == "GOAL!" && p2Goal.text == "GOAL!",
-            "Goal message differs between displays.");
-        Require(p1Confetti != null && p2Confetti != null &&
-                p1Confetti.transform.childCount > 0 && p2Confetti.transform.childCount > 0,
-            "Goal confetti was not created for both displays.");
+        Require(p1Goal == null && p2Goal != null && p2Goal.text == "GOAL!",
+            "Only the second finisher should see the second goal screen.");
+        Require(p2Confetti != null && p2Confetti.transform.childCount > 0,
+            "Goal confetti was not created for the second finisher.");
     }
 
     private static string GetRaceStatus(int playerIndex)
@@ -236,6 +255,13 @@ public static class MultiplayerPlayModeValidation
         return warning != null && warning.gameObject.activeInHierarchy
             ? warning.text
             : countdown != null ? countdown.text : string.Empty;
+    }
+
+    private static bool IsFinishWarningVisible(int playerIndex)
+    {
+        string canvasName = playerIndex == 0 ? "MainCanvas" : "MainCanvas_P2";
+        GameObject warning = GameObject.Find($"GameManagers/{canvasName}/OnPlay/FinishWarningStatus");
+        return warning != null && warning.activeInHierarchy;
     }
 
     private static T FindComponent<T>(string path) where T : Component
