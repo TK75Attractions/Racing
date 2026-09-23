@@ -28,6 +28,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
     private readonly Vector2[] resultRowBasePositions = new Vector2[5];
     private TMP_Text resultWinnerLabel;
     private GoalCelebrationUI goalCelebration;
+    private SpectatorOverlayUI spectatorOverlay;
     private CanvasGroup fadeCanvasGroup;
     private RectTransform fadeOverlay;
     private TMP_Text titlePrompt;
@@ -77,6 +78,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
             fontSource = onPlay.GetComponentInChildren<TMP_Text>(true);
         }
         goalCelebration = GoalCelebrationUI.Create(transform, fontSource != null ? fontSource.font : null);
+        spectatorOverlay = SpectatorOverlayUI.Create(transform, fontSource != null ? fontSource.font : null);
         InitializeFadeOverlay();
     }
 
@@ -200,6 +202,17 @@ public sealed class ScreenTransitionController : MonoBehaviour
     {
         lastWarningSecond = -1;
         SetStatusVisibility(showCountdown: false, showWarning: false);
+    }
+
+    public void ShowSpectator(int watchedPlayerIndex)
+    {
+        ClearRaceStatus();
+        spectatorOverlay?.Show(watchedPlayerIndex);
+    }
+
+    public void HideSpectator()
+    {
+        spectatorOverlay?.Hide();
     }
 
     public void SetRaceStatus(string statusText)
@@ -370,6 +383,11 @@ public sealed class ScreenTransitionController : MonoBehaviour
         if (goalCelebration != null && state != Gmanager.State.Goal)
         {
             goalCelebration.HideImmediate();
+        }
+
+        if (state != Gmanager.State.Game)
+        {
+            spectatorOverlay?.Hide();
         }
 
         if (fadeOverlay != null)

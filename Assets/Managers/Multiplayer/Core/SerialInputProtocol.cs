@@ -94,8 +94,8 @@ public static class SerialInputProtocol
         bool playerTwoValid = !p2PedalNan && !p2SteeringNan;
         float divisor = Math.Abs(steeringDivisor) < 0.0001f ? 1f : steeringDivisor;
         frame = new TwoPlayerSerialInputFrame(
-            new SerialInputFrame(Clamp(p1Pedal, -1f, 1f), p1Steering / divisor, false, false),
-            new SerialInputFrame(Clamp(p2Pedal, -1f, 1f), p2Steering / divisor, false, false),
+            new SerialInputFrame(-Clamp(p1Pedal, -1f, 1f), p1Steering / divisor, false, false),
+            new SerialInputFrame(-Clamp(p2Pedal, -1f, 1f), p2Steering / divisor, false, false),
             playerOneValid,
             playerTwoValid);
         return true;
@@ -128,7 +128,7 @@ public static class SerialInputProtocol
         bool resetHeld = parts.Length > 2 && TryParseButton(parts[2]);
         bool readyHeld = parts.Length > 3 && TryParseButton(parts[3]);
         frame = new SerialInputFrame(
-            Clamp(pedal, -1f, 1f),
+            -Clamp(pedal, -1f, 1f),
             steering / divisor,
             resetHeld,
             readyHeld);

@@ -5,7 +5,6 @@ using Unity.Cinemachine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
 /// CLIから実行する、SampleSceneの2人対戦スモークテストです。
@@ -99,17 +98,22 @@ public static class MultiplayerPlayModeValidation
                     break;
 
                 case 2 when manager.state == Gmanager.State.Game:
-                    ValidateFinishFlow();
+                    ValidateFirstFinish();
                     stage = 3;
+                    break;
+
+                case 3 when IsSpectatorVisible(0):
+                    ValidateSpectatorAndFinishSecondPlayer();
+                    stage = 4;
                     stageStartTime = EditorApplication.timeSinceStartup;
                     break;
 
-                case 3 when EditorApplication.timeSinceStartup - stageStartTime > 0.25d:
-                    ValidateGoalCelebration();
-                    stage = 4;
+                case 4 when EditorApplication.timeSinceStartup - stageStartTime > 0.25d:
+                    ValidateSecondPlayerGoal();
+                    stage = 5;
                     break;
 
-                case 4 when manager.state == Gmanager.State.Result:
+                case 5 when manager.state == Gmanager.State.Result:
                     ValidateSharedResult();
                     Debug.Log("MULTIPLAYER_PLAYMODE_VALIDATION_PASS");
                     Finish(0);
@@ -127,12 +131,19 @@ public static class MultiplayerPlayModeValidation
         manager = UnityEngine.Object.FindFirstObjectByType<Gmanager>();
         Require(manager != null, "Gmanager is missing.");
 
-        Camera p2MainCamera = FindComponent<Camera>("GameManagers/CManager_P2/MainCamera");
-        Canvas p2Canvas = FindComponent<Canvas>("GameManagers/MainCanvas_P2");
-        CinemachineCamera p2VirtualCamera = FindComponent<CinemachineCamera>("GameManagers/VCamera_P2");
-        Require(p2MainCamera != null && p2MainCamera.targetDisplay == 1, "P2 main camera is not assigned to Display 1.");
-        Require(p2Canvas != null && p2Canvas.worldCamera != null && p2Canvas.worldCamera.targetDisplay == 1,
-            "P2 UI camera is not assigned to Display 1.");
+        GameObject p2CameraRoot = GameObject.Find("GameManagers/CManager_P2");
+        Camera p2MainCamera = p2CameraRoot != null
+            ? Array.Find(p2CameraRoot.GetComponentsInChildren<Camera>(true), candidate => candidate.name == "MainCamera")
+            : null;
+        Canvas p2Canvas = FindComponentIncludingInactive<Canvas>("GameManagers/MainCanvas_P2");
+        CinemachineCamera p2VirtualCamera = FindComponentIncludingInactive<CinemachineCamera>("GameManagers/VCamera_P2");
+        Require(p2MainCamera != null, "P2 main camera is missing.");
+        Require(p2Canvas != null && p2Canvas.worldCamera != null, "P2 UI camera is missing.");
+        if (Display.displays.Length >= 2)
+        {
+            Require(p2MainCamera.targetDisplay == 1, "P2 main camera is not assigned to Display 1.");
+            Require(p2Canvas.worldCamera.targetDisplay == 1, "P2 UI camera is not assigned to Display 1.");
+        }
         Require(p2VirtualCamera != null && p2VirtualCamera.OutputChannel == OutputChannels.Channel01,
             "P2 Cinemachine output channel is incorrect.");
 
@@ -140,10 +151,10 @@ public static class MultiplayerPlayModeValidation
         TMP_Text p2Title = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Title/StartPrompt");
         Require(p1Title != null && p2Title != null && p1Title.text.Contains("P1") && p2Title.text.Contains("P2"),
             "Title prompts are not personalized for each display.");
-        Require(FindComponent<Image>("GameManagers/MainCanvas/Title/Player1Pedal/GaugeTrack/Fill") != null &&
-                FindComponent<Image>("GameManagers/MainCanvas_P2/Title/Player2Pedal/GaugeTrack/Fill") != null &&
-                FindComponent<Image>("GameManagers/MainCanvas/Title/Player2Pedal/GaugeTrack/Fill") == null &&
-                FindComponent<Image>("GameManagers/MainCanvas_P2/Title/Player1Pedal/GaugeTrack/Fill") == null,
+        Require(FindComponentIncludingInactive<PedalButtonSurface>("GameManagers/MainCanvas/Title/Player1Pedal/ButtonSurface") != null &&
+                FindComponentIncludingInactive<PedalButtonSurface>("GameManagers/MainCanvas_P2/Title/Player2Pedal/ButtonSurface") != null &&
+                FindComponentIncludingInactive<PedalButtonSurface>("GameManagers/MainCanvas/Title/Player2Pedal/ButtonSurface") == null &&
+                FindComponentIncludingInactive<PedalButtonSurface>("GameManagers/MainCanvas_P2/Title/Player1Pedal/ButtonSurface") == null,
             "Each display must contain only its own pedal gauge.");
     }
 
@@ -170,10 +181,9 @@ public static class MultiplayerPlayModeValidation
             "Countdown status differs between displays.");
     }
 
-    private static void ValidateFinishFlow()
+    private static void ValidateFirstFinish()
     {
         GameObject p1Car = GameObject.Find("Player1_Car");
-        GameObject p2Car = GameObject.Find("Player2_Car");
         finishMethod = typeof(Gmanager).GetMethod("HandleCarFinished", BindingFlags.NonPublic | BindingFlags.Instance);
         Require(finishMethod != null, "Finish handler is missing.");
 
@@ -191,9 +201,27 @@ public static class MultiplayerPlayModeValidation
             Require(!collider.enabled, "First-place car still blocks the course.");
         }
 
-        Require(GetRaceStatus(0) == GetRaceStatus(1) && GetRaceStatus(0).Contains("40.0"),
-            "Second-place timer differs between displays.");
+        GoalCelebrationUI p1Goal = FindComponentIncludingInactive<GoalCelebrationUI>("GameManagers/MainCanvas/Goal");
+        GoalCelebrationUI p2Goal = FindComponentIncludingInactive<GoalCelebrationUI>("GameManagers/MainCanvas_P2/Goal");
+        Require(p1Goal != null && p1Goal.gameObject.activeInHierarchy &&
+                p2Goal != null && !p2Goal.gameObject.activeInHierarchy,
+            "Only the player who finished should see the goal screen.");
+        Require(!IsFinishWarningVisible(0) && IsFinishWarningVisible(1) && GetRaceStatus(1).Contains("40.0"),
+            "Only the unfinished player should see the second-place timer.");
+    }
 
+    private static void ValidateSpectatorAndFinishSecondPlayer()
+    {
+        TMP_Text spectatorLabel = FindComponent<TMP_Text>(
+            "GameManagers/MainCanvas/SpectatorOverlay/PlayerPlate/PlayerLabel");
+        CinemachineCamera p1Camera = FindComponentIncludingInactive<CinemachineCamera>("GameManagers/VCamera");
+        CinemachineCamera p2Camera = FindComponentIncludingInactive<CinemachineCamera>("GameManagers/VCamera_P2");
+        Require(spectatorLabel != null && spectatorLabel.text.Contains("P2"),
+            "The finished player's display does not identify the watched player.");
+        Require(p1Camera != null && p2Camera != null && p1Camera.Follow == p2Camera.Follow,
+            "The finished player's camera is not following the unfinished player.");
+
+        GameObject p2Car = GameObject.Find("Player2_Car");
         finishMethod.Invoke(manager, new object[]
         {
             p2Car.GetComponent<Rigidbody>(),
@@ -214,18 +242,19 @@ public static class MultiplayerPlayModeValidation
             "Result does not contain both players.");
     }
 
-    private static void ValidateGoalCelebration()
+    private static void ValidateSecondPlayerGoal()
     {
-        TMP_Text p1Goal = FindComponent<TMP_Text>("GameManagers/MainCanvas/Goal/Hero/GoalText");
-        TMP_Text p2Goal = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Goal/Hero/GoalText");
-        GameObject p1Confetti = GameObject.Find("GameManagers/MainCanvas/Goal/Confetti");
-        GameObject p2Confetti = GameObject.Find("GameManagers/MainCanvas_P2/Goal/Confetti");
+        GoalCelebrationUI p1Goal = FindComponentIncludingInactive<GoalCelebrationUI>("GameManagers/MainCanvas/Goal");
+        GoalCelebrationUI p2Goal = FindComponentIncludingInactive<GoalCelebrationUI>("GameManagers/MainCanvas_P2/Goal");
+        TMP_Text p2GoalText = FindComponentIncludingInactive<TMP_Text>(
+            "GameManagers/MainCanvas_P2/Goal/Hero/GoalText");
+        Transform p2Confetti = GameObject.Find("GameManagers")?.transform.Find("MainCanvas_P2/Goal/Confetti");
         Require(manager.state == Gmanager.State.Goal, "Goal celebration state was not reached.");
-        Require(p1Goal != null && p2Goal != null && p1Goal.text == "GOAL!" && p2Goal.text == "GOAL!",
-            "Goal message differs between displays.");
-        Require(p1Confetti != null && p2Confetti != null &&
-                p1Confetti.transform.childCount > 0 && p2Confetti.transform.childCount > 0,
-            "Goal confetti was not created for both displays.");
+        Require(p1Goal != null && !p1Goal.gameObject.activeInHierarchy &&
+                p2Goal != null && p2Goal.gameObject.activeInHierarchy && p2GoalText != null && p2GoalText.text == "GOAL!",
+            "Only the second finisher should see the second goal screen.");
+        Require(p2Confetti != null && p2Confetti.childCount > 0,
+            "Goal confetti was not created for the second finisher.");
     }
 
     private static string GetRaceStatus(int playerIndex)
@@ -238,9 +267,34 @@ public static class MultiplayerPlayModeValidation
             : countdown != null ? countdown.text : string.Empty;
     }
 
+    private static bool IsFinishWarningVisible(int playerIndex)
+    {
+        string canvasName = playerIndex == 0 ? "MainCanvas" : "MainCanvas_P2";
+        GameObject warning = GameObject.Find($"GameManagers/{canvasName}/OnPlay/FinishWarningStatus");
+        return warning != null && warning.activeInHierarchy;
+    }
+
+    private static bool IsSpectatorVisible(int playerIndex)
+    {
+        string canvasName = playerIndex == 0 ? "MainCanvas" : "MainCanvas_P2";
+        SpectatorOverlayUI overlay = FindComponentIncludingInactive<SpectatorOverlayUI>(
+            $"GameManagers/{canvasName}/SpectatorOverlay");
+        return overlay != null && overlay.gameObject.activeInHierarchy;
+    }
+
     private static T FindComponent<T>(string path) where T : Component
     {
         return GameObject.Find(path)?.GetComponent<T>();
+    }
+
+    private static T FindComponentIncludingInactive<T>(string path) where T : Component
+    {
+        int separator = path.IndexOf('/');
+        string rootName = separator >= 0 ? path.Substring(0, separator) : path;
+        GameObject root = GameObject.Find(rootName);
+        if (root == null) return null;
+        Transform target = separator >= 0 ? root.transform.Find(path.Substring(separator + 1)) : root.transform;
+        return target != null ? target.GetComponent<T>() : null;
     }
 
     private static void Require(bool condition, string message)

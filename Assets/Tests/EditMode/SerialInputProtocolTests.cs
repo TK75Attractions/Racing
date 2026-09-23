@@ -10,7 +10,7 @@ public class SerialInputProtocolTests
             out bool pedalParsed, out bool steeringParsed), Is.True);
         Assert.That(pedalParsed, Is.EqualTo(pedal));
         Assert.That(steeringParsed, Is.EqualTo(steering));
-        if (pedal) Assert.That(frame.Pedal, Is.EqualTo(0.5f));
+        if (pedal) Assert.That(frame.Pedal, Is.EqualTo(-0.5f));
         if (steering) Assert.That(frame.Steering, Is.EqualTo(5f));
         Assert.That(SerialInputProtocol.TryParseInput(line, 3f, out _), Is.False);
     }
@@ -35,7 +35,7 @@ public class SerialInputProtocolTests
     public void LegacyInput_ParsesPedalAndScaledSteering()
     {
         Assert.That(SerialInputProtocol.TryParseInput("0.75,-15", 15f, out SerialInputFrame frame), Is.True);
-        Assert.That(frame.Pedal, Is.EqualTo(0.75f).Within(0.0001f));
+        Assert.That(frame.Pedal, Is.EqualTo(-0.75f).Within(0.0001f));
         Assert.That(frame.Steering, Is.EqualTo(-1f).Within(0.0001f));
         Assert.That(frame.ResetHeld, Is.False);
         Assert.That(frame.ReadyHeld, Is.False);
@@ -47,7 +47,7 @@ public class SerialInputProtocolTests
         Assert.That(
             SerialInputProtocol.TryParseInput("1.2,30,true,on||adc=4095", 15f, out SerialInputFrame frame),
             Is.True);
-        Assert.That(frame.Pedal, Is.EqualTo(1f));
+        Assert.That(frame.Pedal, Is.EqualTo(-1f));
         Assert.That(frame.Steering, Is.EqualTo(2f));
         Assert.That(frame.ResetHeld, Is.True);
         Assert.That(frame.ReadyHeld, Is.True);
@@ -61,9 +61,9 @@ public class SerialInputProtocolTests
             Is.True);
         Assert.That(frame.PlayerOneValid, Is.True);
         Assert.That(frame.PlayerTwoValid, Is.True);
-        Assert.That(frame.PlayerOne.Pedal, Is.EqualTo(0.5f));
+        Assert.That(frame.PlayerOne.Pedal, Is.EqualTo(-0.5f));
         Assert.That(frame.PlayerOne.Steering, Is.EqualTo(5f));
-        Assert.That(frame.PlayerTwo.Pedal, Is.EqualTo(-0.25f));
+        Assert.That(frame.PlayerTwo.Pedal, Is.EqualTo(0.25f));
         Assert.That(frame.PlayerTwo.Steering, Is.EqualTo(-10f));
     }
 
