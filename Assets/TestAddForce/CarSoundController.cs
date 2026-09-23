@@ -34,7 +34,7 @@ public class CarSoundController : MonoBehaviour
         currentSpeed = speed;
         currentFreq = freq;
 
-        audioCore.UpdateParameters(freq,1f);
+        audioCore.UpdateParameters(freq, Mathf.Clamp01(masterVolume) * RaceAudioSettings.Engine);
 
     }
 }
