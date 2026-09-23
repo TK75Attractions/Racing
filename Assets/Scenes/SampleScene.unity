@@ -920,8 +920,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f52a755a3309da548a6b36b8c8bc56bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InputManager
-  isDebugMode: 1
-  isP1SerialP2KeyboardDebugMode: 0
+  isDebugMode: 0
+  isP1SerialP2KeyboardDebugMode: 1
   esp32Serial:
     portName: 
     baudRate: 115200

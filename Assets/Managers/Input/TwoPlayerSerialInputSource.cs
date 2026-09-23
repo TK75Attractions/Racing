@@ -73,16 +73,17 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 
             if (playerOneOnly)
             {
-                if (!SerialInputProtocol.TryParseInput(
-                        line, configuration.SteeringDivisor, out SerialInputFrame playerOneFrame))
+                if (!SerialInputProtocol.TryParsePartialInput(
+                        line, configuration.SteeringDivisor, out SerialInputFrame playerOneFrame,
+                        out bool pedalValid, out bool steeringValid))
                 {
                     ParseErrorCount++;
                     RecordParseResult("INVALID", line);
                     continue;
                 }
 
-                RecordParseResult("OK", line);
-                ApplyPlayerFrame(0, playerOneFrame, valid: true);
+                RecordParseResult(pedalValid && steeringValid ? "OK" : "PARTIAL", line);
+                ApplyPlayerFrame(0, playerOneFrame, pedalValid, steeringValid);
                 continue;
             }
 
@@ -95,10 +96,12 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
             }
 
             bool anyValid = frame.PlayerOneValid || frame.PlayerTwoValid;
+            bool allValid = frame.PlayerOnePedalValid && frame.PlayerOneSteeringValid &&
+                frame.PlayerTwoPedalValid && frame.PlayerTwoSteeringValid;
             if (!anyValid) ParseErrorCount++;
-            RecordParseResult(anyValid ? "OK" : "IGNORED", line);
-            ApplyPlayerFrame(0, frame.PlayerOne, frame.PlayerOneValid);
-            ApplyPlayerFrame(1, frame.PlayerTwo, frame.PlayerTwoValid);
+            RecordParseResult(!anyValid ? "IGNORED" : allValid ? "OK" : "PARTIAL", line);
+            ApplyPlayerFrame(0, frame.PlayerOne, frame.PlayerOnePedalValid, frame.PlayerOneSteeringValid);
+            ApplyPlayerFrame(1, frame.PlayerTwo, frame.PlayerTwoPedalValid, frame.PlayerTwoSteeringValid);
         }
     }
 
@@ -119,12 +122,12 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         readThread = null;
     }
 
-    private void ApplyPlayerFrame(int playerIndex, SerialInputFrame frame, bool valid)
+    private void ApplyPlayerFrame(int playerIndex, SerialInputFrame frame, bool pedalValid, bool steeringValid)
     {
-        if (!valid) return; // Keep the previous state when either axis is nan.
+        if (!pedalValid && !steeringValid) return;
         DriveInputState state = currentStates[playerIndex];
-        state.pedal = frame.Pedal;
-        state.steering = frame.Steering;
+        state.pedal = pedalValid ? frame.Pedal : 0f;
+        state.steering = steeringValid ? frame.Steering : 0f;
         currentStates[playerIndex] = state;
         hasReceivedInput[playerIndex] = true;
         lastInputTimes[playerIndex] = Time.realtimeSinceStartup;

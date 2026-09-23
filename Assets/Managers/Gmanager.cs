@@ -1152,9 +1152,17 @@ public class Gmanager : MonoBehaviour
             if (!player.isReady)
             {
                 DriveInputState input = IManager.GetInputState(playerIndex);
-                bool readyInput = input.readyPressed || input.pedal >= titleStartPedalThreshold;
-                player.readyHoldTimer = readyInput ? player.readyHoldTimer + dt : 0f;
-                player.isReady = player.readyHoldTimer >= Mathf.Max(0.01f, titleStartHoldSeconds);
+                if (input.readyPressed)
+                {
+                    // Ready is a one-frame press event; it cannot satisfy a hold timer.
+                    player.isReady = true;
+                }
+                else
+                {
+                    player.readyHoldTimer = input.pedal >= titleStartPedalThreshold
+                        ? player.readyHoldTimer + dt : 0f;
+                    player.isReady = player.readyHoldTimer >= Mathf.Max(0.01f, titleStartHoldSeconds);
+                }
             }
             allReady &= player.isReady;
         }
