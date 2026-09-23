@@ -28,6 +28,9 @@ public class Gmanager : MonoBehaviour
         public float resultConfirmTimer;
         public bool resultSteeringLatch;
         public bool returnedToTitle;
+        public PlayerDriveInputGate inputGate;
+        public InterruptionMenuUI interruptionMenu;
+        public bool withdrewFromRace;
     }
 
     public static Gmanager Control = null;
@@ -61,6 +64,7 @@ public class Gmanager : MonoBehaviour
     [SerializeField] private float resultReturnInputDelaySeconds = 3f;
     [SerializeField, Range(0.1f, 1f)] private float resultSteeringThreshold = 0.45f;
     [SerializeField, Min(1.2f)] private float goalCelebrationSeconds = 5.5f;
+    [SerializeField, Range(0, PlayerCount - 1)] private int defaultEscapePlayerIndex = 0;
 
     [Header("Camera")]
     [SerializeField] private float cameraBlendSeconds = 0.65f;
@@ -82,6 +86,7 @@ public class Gmanager : MonoBehaviour
     private TwoPlayerRaceSession raceSession;
     private RaceResultRecord latestResult;
     private RaceSessionResult latestSessionResult;
+    private int lastKeyboardPlayerIndex;
 
     public RaceResultRecord LatestResult => latestResult;
     public RaceSessionResult LatestSessionResult => latestSessionResult;
@@ -120,6 +125,7 @@ public class Gmanager : MonoBehaviour
         displayRigs = TwoPlayerDisplayFactory.Create(transform.parent, cameraBlendSeconds);
         InitializePlayerDisplays();
         InitializeVolumes();
+        lastKeyboardPlayerIndex = Mathf.Clamp(defaultEscapePlayerIndex, 0, PlayerCount - 1);
         ApplyStateImmediate(State.Title);
         SwitchCameraForState(State.Title);
         ResetTitleStartInputGate();
@@ -131,6 +137,7 @@ public class Gmanager : MonoBehaviour
         if (IManager != null)
         {
             IManager.UpdateInput(dt);
+            UpdateInterruptionMenuInput();
             if (state == State.Title)
             {
                 UpdateTitlePedalUI();
@@ -411,6 +418,13 @@ public class Gmanager : MonoBehaviour
                 ? resultUIManager : new ResultUIManager();
             resultsUi.Init(rig.CanvasRoot.transform.Find("Result"), playerIndex + 1);
             resultUIManagers[playerIndex] = resultsUi;
+
+            int capturedPlayerIndex = playerIndex;
+            player.interruptionMenu = InterruptionMenuUI.Create(
+                rig.CanvasRoot.transform,
+                () => InterruptPlayer(capturedPlayerIndex),
+                () => TogglePlayerDirection(capturedPlayerIndex),
+                () => RestartPlayerFromStart(capturedPlayerIndex));
         }
 
         VCamera = displayRigs[0].RaceCamera;
@@ -487,6 +501,7 @@ public class Gmanager : MonoBehaviour
             if (player.car.GetComponent<CarLightController>() == null)
                 player.car.AddComponent<CarLightController>();
             player.result = null;
+            player.withdrewFromRace = false;
             player.displayedRacePosition = playerIndex + 1;
             AssignPlayerInput(player.car, playerIndex);
             lapManager?.RegisterCar(player.rigidbody, spawnPoint);
@@ -662,7 +677,11 @@ public class Gmanager : MonoBehaviour
         ClearRaceStatus();
         resultReturnInputDelayTimer = 0f;
         lapManager?.PauseRace();
-        foreach (PlayerRuntime player in players) FreezePlayer(player, disableCollisions: false);
+        foreach (PlayerRuntime player in players)
+        {
+            player?.interruptionMenu?.Hide();
+            FreezePlayer(player, disableCollisions: false);
+        }
         if (finalFinisher != null)
         {
             PlayPlayerGoal(finalFinisher, ShowResultsAfterGoal);
@@ -758,6 +777,10 @@ public class Gmanager : MonoBehaviour
             player.rigidbody = null;
             player.mover = null;
             player.result = null;
+            player.inputGate?.Reset();
+            player.inputGate = null;
+            player.withdrewFromRace = false;
+            player.interruptionMenu?.Hide();
         }
 
         car = null;
@@ -790,9 +813,82 @@ public class Gmanager : MonoBehaviour
     private void AssignPlayerInput(GameObject playerCar, int playerIndex)
     {
         if (playerCar == null || IManager == null) return;
-        IDriveInputSource inputSource = IManager.GetPlayerInputSource(playerIndex);
-        playerCar.GetComponent<DebugMover>()?.SetInputSource(inputSource);
-        playerCar.GetComponent<CarResetter>()?.SetInputSource(inputSource);
+        IDriveInputSource source = IManager.GetPlayerInputSource(playerIndex);
+        PlayerDriveInputGate gate = new PlayerDriveInputGate(source);
+        players[playerIndex].inputGate = gate;
+        playerCar.GetComponent<DebugMover>()?.SetInputSource(gate);
+        playerCar.GetComponent<CarResetter>()?.SetInputSource(gate);
+    }
+
+    private void UpdateInterruptionMenuInput()
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null) return;
+
+        bool playerOneActive = keyboard.wKey.isPressed || keyboard.aKey.isPressed ||
+            keyboard.sKey.isPressed || keyboard.dKey.isPressed;
+        bool playerTwoActive = keyboard.upArrowKey.isPressed || keyboard.leftArrowKey.isPressed ||
+            keyboard.downArrowKey.isPressed || keyboard.rightArrowKey.isPressed;
+        if (playerOneActive && !playerTwoActive) lastKeyboardPlayerIndex = 0;
+        else if (playerTwoActive && !playerOneActive) lastKeyboardPlayerIndex = 1;
+
+        if (!keyboard.escapeKey.wasPressedThisFrame || state != State.Game || IsScreenTransitioning()) return;
+
+        for (int index = 0; index < players.Length; index++)
+        {
+            PlayerRuntime openPlayer = players[index];
+            if (openPlayer?.interruptionMenu?.IsOpen != true) continue;
+            CloseInterruptionMenu(index);
+            return;
+        }
+
+        OpenInterruptionMenu(lastKeyboardPlayerIndex);
+    }
+
+    public void OpenInterruptionMenu(int playerIndex)
+    {
+        if (state != State.Game || playerIndex < 0 || playerIndex >= players.Length) return;
+        PlayerRuntime player = players[playerIndex];
+        if (player?.car == null || player.result != null || player.withdrewFromRace) return;
+        player.inputGate?.SetBlocked(true);
+        player.interruptionMenu?.Show(player.inputGate?.IsReverse == true);
+    }
+
+    private void CloseInterruptionMenu(int playerIndex)
+    {
+        PlayerRuntime player = players[playerIndex];
+        player?.interruptionMenu?.Hide();
+        if (player != null && !player.withdrewFromRace) player.inputGate?.SetBlocked(false);
+    }
+
+    private void InterruptPlayer(int playerIndex)
+    {
+        if (state != State.Game || playerIndex < 0 || playerIndex >= players.Length) return;
+        PlayerRuntime player = players[playerIndex];
+        if (player?.car == null) return;
+        player.withdrewFromRace = true;
+        player.inputGate?.SetBlocked(true);
+        player.interruptionMenu?.Hide();
+        FreezePlayer(player, disableCollisions: false);
+        Debug.Log($"P{playerIndex + 1} interrupted the race.");
+    }
+
+    private void TogglePlayerDirection(int playerIndex)
+    {
+        if (playerIndex < 0 || playerIndex >= players.Length) return;
+        PlayerRuntime player = players[playerIndex];
+        if (player?.inputGate == null) return;
+        bool isReverse = player.inputGate.ToggleDirection();
+        player.interruptionMenu?.SetDirectionStatus(isReverse);
+        CloseInterruptionMenu(playerIndex);
+    }
+
+    private void RestartPlayerFromStart(int playerIndex)
+    {
+        if (playerIndex < 0 || playerIndex >= players.Length) return;
+        PlayerRuntime player = players[playerIndex];
+        player?.car?.GetComponent<CarResetter>()?.ResetCar();
+        CloseInterruptionMenu(playerIndex);
     }
 
     private void UpdateOnPlayUI()
