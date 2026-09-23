@@ -112,6 +112,8 @@ public class Gmanager : MonoBehaviour
 
         IManager = GetComponent<InputManager>();
         IManager?.Init();
+        if (GetComponent<RaceBackgroundMusic>() == null)
+            gameObject.AddComponent<RaceBackgroundMusic>();
         ResolveLapManager();
         EnsureSpeedScenery();
         if (lapManager != null)
