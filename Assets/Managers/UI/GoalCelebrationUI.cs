@@ -87,7 +87,9 @@ public sealed class GoalCelebrationUI : MonoBehaviour
 
         GameObject glow = GetOrCreate("VictoryGlow", transform, typeof(Image));
         Anchor(glow.GetComponent<RectTransform>(), new Vector2(0f, 0.32f), new Vector2(1f, 0.73f));
-        glow.GetComponent<Image>().color = new Color(0.02f, 0.7f, 1f, 0.2f);
+        glow.GetComponent<Image>().color = new Color(0.02f, 0.07f, 0.1f, 0.9f);
+        RacingUITheme.Rule(glow.transform, "TopEdge", new Vector2(0f, 0.995f), Vector2.one, RacingUITheme.Cyan);
+        RacingUITheme.Rule(glow.transform, "BottomEdge", Vector2.zero, new Vector2(1f, 0.005f), RacingPanelGraphic.Alpha(RacingUITheme.Cyan, 0.4f));
 
         GameObject heroObject = GetOrCreate("Hero", transform, typeof(CanvasGroup));
         hero = heroObject.GetComponent<RectTransform>();
@@ -178,6 +180,7 @@ public sealed class GoalCelebrationUI : MonoBehaviour
         {
             label.font = font;
         }
+        RacingUITheme.ApplyTypography(label, FontRole.English, maximumFontSize);
         label.text = value;
         label.color = color;
         label.fontStyle = FontStyles.Bold;

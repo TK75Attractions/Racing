@@ -18,7 +18,7 @@ public class UIPosition
         }
 
         Transform rootTransform = root != null ? root.transform : parent;
-        if (positionText == null && rootTransform != null)
+        if (rootTransform != null)
         {
             Transform textTransform = rootTransform.Find("Txt");
             positionText = textTransform != null

@@ -411,7 +411,7 @@ public class Gmanager : MonoBehaviour
 
             OnPlayUIManager playUi = playerIndex == 0 && onPlayUIManager != null
                 ? onPlayUIManager : new OnPlayUIManager();
-            playUi.Init(rig.CanvasRoot.transform.Find("OnPlay"), course, playerIndex);
+            playUi.Init(rig.CanvasRoot.transform.Find("OnPlay"), course, playerIndex, lapManager != null ? lapManager.GoalLap : 3);
             onPlayUIManagers[playerIndex] = playUi;
 
             ResultUIManager resultsUi = playerIndex == 0 && resultUIManager != null
@@ -1168,8 +1168,8 @@ public class Gmanager : MonoBehaviour
 
     private string GetReadyPrompt()
     {
-        string p1 = players[0].isReady ? "P1 READY" : "P1 PRESS PEDAL";
-        string p2 = players[1].isReady ? "P2 READY" : "P2 PRESS PEDAL";
+        string p1 = players[0].isReady ? "P1  準備完了" : "P1  ペダルを踏んで準備";
+        string p2 = players[1].isReady ? "P2  準備完了" : "P2  ペダルを踏んで準備";
         return $"{p1}     {p2}";
     }
 

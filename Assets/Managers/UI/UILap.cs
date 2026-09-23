@@ -18,7 +18,7 @@ public class UILap
         }
 
         Transform rootTransform = root != null ? root.transform : parent;
-        if (lapText == null && rootTransform != null)
+        if (rootTransform != null)
         {
             Transform textTransform = rootTransform.Find("Txt");
             lapText = textTransform != null

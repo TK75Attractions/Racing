@@ -79,11 +79,12 @@ public class ResultUIManager
         Anchor(presentation.GetComponent<RectTransform>(), Vector2.zero, Vector2.one);
         presentation.GetComponent<Image>().color = Color.black;
         InstantiateScreenBackground(presentation.transform, "UI/ResultScreenBackground", "ResultBackground");
-        CreatePanel(presentation.transform, "ResultBackgroundTint", Vector2.zero, Vector2.one, new Color(0.002f, 0.008f, 0.016f, 0.65f));
+        CreatePanel(presentation.transform, "ResultBackgroundTint", Vector2.zero, Vector2.one, new Color(0.01f, 0.02f, 0.034f, 0.78f));
 
         GameObject card = GetOrCreate(presentation.transform, "ResultCard", typeof(Image), typeof(CanvasGroup));
-        Anchor(card.GetComponent<RectTransform>(), new Vector2(0.13f, 0.07f), new Vector2(0.87f, 0.95f));
+        Anchor(card.GetComponent<RectTransform>(), new Vector2(0.14f, 0.07f), new Vector2(0.86f, 0.95f));
         card.GetComponent<Image>().color = new Color(0.008f, 0.018f, 0.03f, 0.36f);
+        RacingUITheme.Surface(card.transform);
         CreatePanel(card.transform, "HeaderAccent", new Vector2(0.055f, 0.955f), new Vector2(0.095f, 0.958f), new Color(0.2f, 0.8f, 1f, 0.85f));
         TMP_Text classification = CreateLabel(card.transform, "Classification", "FINAL CLASSIFICATION", new Vector2(0.11f, 0.935f), new Vector2(0.46f, 0.975f), 14f,
             new Color(0.52f, 0.65f, 0.75f, 1f), FontStyles.Normal, TextAlignmentOptions.Left, FontRole.English);
@@ -151,21 +152,29 @@ public class ResultUIManager
     private void BuildMenu(Transform parent)
     {
         GameObject menu = GetOrCreate(parent, "ResultMenu");
-        Anchor(menu.GetComponent<RectTransform>(), new Vector2(0.20f, 0.07f), new Vector2(0.80f, 0.21f));
+        Anchor(menu.GetComponent<RectTransform>(), new Vector2(0.12f, 0.07f), new Vector2(0.88f, 0.21f));
         RectTransform[] cards = new RectTransform[2];
-        string[] labels = { "リトライ", "タイトルにもどる" };
-        string[] captions = { "RETRY", "RETURN TO TITLE" };
+        string[] labels = { "リトライ", "タイトルへ" };
+        string[] captions = { "RETRY", "BACK TO TITLE" };
         for (int index = 0; index < 2; index++)
         {
             float left = index == 0 ? 0.02f : 0.515f;
             float right = index == 0 ? 0.485f : 0.98f;
             GameObject option = CreatePanel(menu.transform, $"Option{index + 1}", new Vector2(left, 0.08f), new Vector2(right, 0.92f), new Color(0.015f, 0.045f, 0.075f, 0.96f));
             cards[index] = option.GetComponent<RectTransform>();
+            if (index == 1)
+            {
+                RectTransform iconRect = RacingUITheme.Rect(option.transform, "BackIcon", new Vector2(0.035f, 0.27f), new Vector2(0.18f, 0.77f));
+                RacingIconGraphic icon = iconRect.GetComponent<RacingIconGraphic>();
+                if (icon == null) icon = iconRect.gameObject.AddComponent<RacingIconGraphic>();
+                icon.symbol = RacingIconGraphic.Icon.Back;
+                icon.color = RacingUITheme.Muted;
+            }
             AddOutline(option, new Color(0.4f, 0.48f, 0.56f, 0.7f), new Vector2(2f, -2f));
-            TMP_Text caption = CreateLabel(option.transform, "Caption", captions[index], new Vector2(0.12f, 0.20f), new Vector2(0.88f, 0.43f), 14f,
+            TMP_Text caption = CreateLabel(option.transform, "Caption", captions[index], new Vector2(0.20f, 0.20f), new Vector2(0.90f, 0.43f), 14f,
                 new Color(0.78f, 0.84f, 0.9f, 1f), FontStyles.Italic, TextAlignmentOptions.Center, FontRole.English);
             caption.characterSpacing = 2f;
-            CreateLabel(option.transform, "Label", labels[index], new Vector2(0.12f, 0.43f), new Vector2(0.88f, 0.85f), 26f,
+            CreateLabel(option.transform, "Label", labels[index], new Vector2(0.20f, 0.43f), new Vector2(0.90f, 0.85f), 26f,
                 Color.white, FontStyles.Bold, TextAlignmentOptions.Center, FontRole.Japanese);
         }
         menuAnimator = menu.GetComponent<ResultMenuAnimator>();
@@ -231,12 +240,13 @@ public class ResultUIManager
         TMP_Text label = obj.GetComponent<TMP_Text>();
         TMP_FontAsset font = RacingUIFontCatalog.Get(role);
         if (font != null) label.font = font; else if (inheritedFont != null) label.font = inheritedFont;
+        RacingUITheme.ApplyTypography(label, role, size);
         label.text = text;
         label.color = color;
         label.fontStyle = style;
         label.alignment = alignment;
         label.enableAutoSizing = true;
-        label.fontSizeMin = 11f;
+        label.fontSizeMin = Mathf.Min(size, Mathf.Max(12f, size * 0.65f));
         label.fontSizeMax = size;
         label.raycastTarget = false;
         return label;
