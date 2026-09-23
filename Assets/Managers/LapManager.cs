@@ -191,6 +191,7 @@ public class LapManager : MonoBehaviour
         data.totalRaceTime = 0f;
         data.bestLapTime = float.MaxValue;
         data.isFinished = false;
+        data.hasCrossedGoal = true;
         ResetCheckpointProgress(data);
         SetRespawnPoint(data, startTransform);
         if (!hasProgressReference && startTransform != null)
@@ -226,7 +227,7 @@ public class LapManager : MonoBehaviour
 
         if (!CanCompleteLap(data))
         {
-            Debug.Log($"{data.carName} goal ignored. Checkpoint {data.nextCheckpointIndex}/{GetCheckpointCount()}");
+            Debug.Log($"{data.carName} goal ignored. Checkpoint {data.nextCheckpointIndex}/{GetCheckpointCount()} (all passed: {data.allCheckpointsPassed})");
             return false;
         }
 
