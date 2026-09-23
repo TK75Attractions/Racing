@@ -102,7 +102,7 @@ public static class MultiplayerPlayModeValidation
                     stage = 3;
                     break;
 
-                case 3 when GameObject.Find("GameManagers/MainCanvas/SpectatorOverlay") != null:
+                case 3 when IsSpectatorVisible(0):
                     ValidateSpectatorAndFinishSecondPlayer();
                     stage = 4;
                     stageStartTime = EditorApplication.timeSinceStartup;
@@ -272,6 +272,14 @@ public static class MultiplayerPlayModeValidation
         string canvasName = playerIndex == 0 ? "MainCanvas" : "MainCanvas_P2";
         GameObject warning = GameObject.Find($"GameManagers/{canvasName}/OnPlay/FinishWarningStatus");
         return warning != null && warning.activeInHierarchy;
+    }
+
+    private static bool IsSpectatorVisible(int playerIndex)
+    {
+        string canvasName = playerIndex == 0 ? "MainCanvas" : "MainCanvas_P2";
+        SpectatorOverlayUI overlay = FindComponentIncludingInactive<SpectatorOverlayUI>(
+            $"GameManagers/{canvasName}/SpectatorOverlay");
+        return overlay != null && overlay.gameObject.activeInHierarchy;
     }
 
     private static T FindComponent<T>(string path) where T : Component
