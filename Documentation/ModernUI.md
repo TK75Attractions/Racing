@@ -1,6 +1,6 @@
 # Modern racing UI
 
-The title, race HUD, countdown, finish warning and results share `RacingUITheme`.
+The title, race HUD, countdown, finish warning, spectator overlay, ESC menu and results share `RacingUITheme`.
 The palette uses navy surfaces, cyan selection and a gold pedal-progress/confirmation state.
 
 - `RacingPanelGraphic` draws rounded panels and slanted primary buttons with gradients and screen-pixel edge feathering. It does not enlarge button textures.
@@ -17,3 +17,10 @@ The palette uses navy surfaces, cyan selection and a gold pedal-progress/confirm
 4. Check at 1920 × 1080 and 3840 × 2160. In the Game view resolution menu, turn off **Low Resolution Aspect Ratios** when using Free Aspect on a Retina display. A magnified low-resolution Game view cannot show the final edge quality.
 
 The legacy scene objects are retained and hidden during initialization; no scene migration is required.
+
+## Spectator and ESC screens
+
+- Spectator status sits between the minimap and timer. Thin corner marks and a compact finish-status panel preserve the camera view. All spectator graphics ignore raycasts.
+- The ESC menu uses `RacingMenuButton`, a standard Unity Button with the same vector surface as pedal buttons. Pointer hover and keyboard selection light cyan; pressing lights gold. Transparent Image hit targets stay enabled, while decorative surfaces ignore raycasts.
+- Restart, direction change and interruption keep the existing callbacks. Forward/reverse is shown beside the direction action. ESC still closes the menu through the game manager.
+- **Racing > UI > Preview Spectator** and **Preview ESC Menu** are visual previews in Play Mode. Exit Play Mode to reset preview state. **Validate Modern UI** also checks both spectator labels, nonblocking overlays, hit targets, action callbacks and repeated menu initialization.

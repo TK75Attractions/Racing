@@ -2,12 +2,14 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 /// <summary>プレイヤー単位の中断メニューを実行時に構築します。</summary>
 public sealed class InterruptionMenuUI : MonoBehaviour
 {
     private GameObject root;
     private TMP_Text directionStatus;
+    private RacingMenuButton firstButton;
     private Action interruptAction;
     private Action toggleDirectionAction;
     private Action restartAction;
@@ -38,17 +40,24 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         root.transform.SetAsLastSibling();
         root.SetActive(true);
         SetDirectionStatus(isReverse);
+        if (EventSystem.current != null && firstButton != null)
+            EventSystem.current.SetSelectedGameObject(firstButton.gameObject);
     }
 
     public void Hide()
     {
-        if (root != null) root.SetActive(false);
+        if (root == null) return;
+        GameObject selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+        if (selected != null && selected.transform.IsChildOf(root.transform))
+            EventSystem.current.SetSelectedGameObject(null);
+        root.SetActive(false);
     }
 
     public void SetDirectionStatus(bool isReverse)
     {
-        if (directionStatus != null)
-            directionStatus.text = isReverse ? "現在: 後退" : "現在: 前進";
+        if (directionStatus == null) return;
+        directionStatus.text = isReverse ? "後退" : "前進";
+        directionStatus.color = isReverse ? RacingUITheme.Gold : RacingUITheme.Cyan;
     }
 
     private void Build(Transform canvasRoot)
@@ -63,46 +72,61 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         backdrop.raycastTarget = true;
 
         GameObject card = GetOrCreate("MenuCard", root.transform, typeof(Image));
-        Stretch(card.GetComponent<RectTransform>(), new Vector2(0.18f, 0.14f), new Vector2(0.82f, 0.86f));
-        Image cardImage = card.GetComponent<Image>();
-        cardImage.color = new Color(0.018f, 0.045f, 0.072f, 0.98f);
-        Outline outline = card.GetComponent<Outline>() ?? card.AddComponent<Outline>();
-        outline.effectColor = new Color(0.18f, 0.75f, 1f, 0.85f);
-        outline.effectDistance = new Vector2(2f, -2f);
-
-        TMP_Text title = CreateLabel(card.transform, "Title", "PAUSE", new Vector2(0.08f, 0.79f), new Vector2(0.92f, 0.95f), 58f, FontRole.English);
+        Stretch(card.GetComponent<RectTransform>(), new Vector2(0.27f, 0.12f), new Vector2(0.73f, 0.88f));
+        RacingUITheme.Surface(card.transform);
+        RacingUITheme.Rule(card.transform, "HeaderAccent", new Vector2(0.08f, 0.926f), new Vector2(0.125f, 0.93f), RacingUITheme.Cyan);
+        TMP_Text eyebrow = CreateLabel(card.transform, "Eyebrow", "RACE MENU", new Vector2(0.15f, 0.895f), new Vector2(0.92f, 0.957f), 16f, FontRole.English);
+        eyebrow.alignment = TextAlignmentOptions.Left;
+        eyebrow.color = RacingUITheme.Muted;
+        eyebrow.characterSpacing = 3f;
+        TMP_Text title = CreateLabel(card.transform, "Title", "PAUSE", new Vector2(0.08f, 0.78f), new Vector2(0.92f, 0.89f), 58f, FontRole.English);
+        title.alignment = TextAlignmentOptions.Left;
         title.fontStyle = FontStyles.Bold | FontStyles.Italic;
-        TMP_Text subtitle = CreateLabel(card.transform, "Subtitle", "操作を一時停止しています", new Vector2(0.08f, 0.72f), new Vector2(0.92f, 0.80f), 22f, FontRole.Japanese);
-        subtitle.color = new Color(0.66f, 0.76f, 0.84f, 1f);
+        TMP_Text subtitle = CreateLabel(card.transform, "Subtitle", "あなたの操作を一時停止しています", new Vector2(0.08f, 0.72f), new Vector2(0.92f, 0.78f), 21f, FontRole.Japanese);
+        subtitle.alignment = TextAlignmentOptions.Left;
+        subtitle.color = RacingUITheme.Muted;
 
-        CreateButton(card.transform, "Interrupt", "中断する", new Vector2(0.11f, 0.53f), new Vector2(0.89f, 0.67f), () => interruptAction?.Invoke());
-        CreateButton(card.transform, "ToggleDirection", "前進後退切り替え", new Vector2(0.11f, 0.34f), new Vector2(0.89f, 0.48f), () => toggleDirectionAction?.Invoke());
-        directionStatus = CreateLabel(card.transform, "DirectionStatus", string.Empty, new Vector2(0.11f, 0.285f), new Vector2(0.89f, 0.34f), 16f, FontRole.Japanese);
-        directionStatus.color = new Color(0.35f, 0.85f, 1f, 1f);
-        CreateButton(card.transform, "Restart", "スタートから", new Vector2(0.11f, 0.10f), new Vector2(0.89f, 0.24f), () => restartAction?.Invoke());
-
-        TMP_Text hint = CreateLabel(card.transform, "Hint", "ESCでもどる", new Vector2(0.11f, 0.025f), new Vector2(0.89f, 0.085f), 16f, FontRole.Japanese);
-        hint.color = new Color(0.52f, 0.62f, 0.70f, 1f);
+        firstButton = CreateButton(card.transform, "Restart", "スタートから", "RETURN TO START", "01", new Vector2(0.08f, 0.535f), new Vector2(0.92f, 0.68f),
+            () => restartAction?.Invoke(), RacingPanelGraphic.SurfaceStyle.Primary);
+        RacingMenuButton direction = CreateButton(card.transform, "ToggleDirection", "走行方向を切り替え", "CHANGE DIRECTION", "02", new Vector2(0.08f, 0.35f), new Vector2(0.92f, 0.495f),
+            () => toggleDirectionAction?.Invoke());
+        directionStatus = CreateLabel(direction.transform, "DirectionStatus", string.Empty, new Vector2(0.78f, 0.35f), new Vector2(0.95f, 0.73f), 22f, FontRole.Japanese);
+        direction.transform.Find("Label").GetComponent<RectTransform>().anchorMax = new Vector2(0.75f, 0.85f);
+        CreateButton(card.transform, "Interrupt", "中断する", "LEAVE RACE", "03", new Vector2(0.08f, 0.165f), new Vector2(0.92f, 0.31f),
+            () => interruptAction?.Invoke());
+        RacingUITheme.Rule(card.transform, "FooterDivider", new Vector2(0.08f, 0.125f), new Vector2(0.92f, 0.1265f), new Color(0.3f, 0.45f, 0.55f, 0.4f));
+        TMP_Text hint = CreateLabel(card.transform, "Hint", "ESC  /  走行にもどる", new Vector2(0.08f, 0.035f), new Vector2(0.92f, 0.105f), 18f, FontRole.Japanese);
+        hint.color = RacingUITheme.Muted;
     }
 
-    private static void CreateButton(Transform parent, string name, string caption, Vector2 min, Vector2 max, UnityEngine.Events.UnityAction action)
+    private static RacingMenuButton CreateButton(Transform parent, string name, string caption, string english, string number,
+        Vector2 min, Vector2 max, UnityEngine.Events.UnityAction action, RacingPanelGraphic.SurfaceStyle style = RacingPanelGraphic.SurfaceStyle.Secondary)
     {
-        GameObject buttonObject = GetOrCreate(name, parent, typeof(Image), typeof(Button));
+        GameObject buttonObject = GetOrCreate(name, parent, typeof(Image), typeof(RacingMenuButton));
         Stretch(buttonObject.GetComponent<RectTransform>(), min, max);
-        Image image = buttonObject.GetComponent<Image>();
-        image.color = new Color(0.035f, 0.12f, 0.18f, 1f);
-        Button button = buttonObject.GetComponent<Button>();
-        ColorBlock colors = button.colors;
-        colors.normalColor = Color.white;
-        colors.highlightedColor = new Color(0.45f, 0.9f, 1f, 1f);
-        colors.pressedColor = new Color(1f, 0.76f, 0.18f, 1f);
-        colors.selectedColor = colors.highlightedColor;
-        button.colors = colors;
+        RacingPanelGraphic surface = RacingUITheme.Surface(buttonObject.transform, style);
+        // Keep a transparent hit target on the button; decorative graphics never intercept input.
+        Image hitTarget = buttonObject.GetComponent<Image>();
+        hitTarget.enabled = true;
+        hitTarget.color = Color.clear;
+        hitTarget.raycastTarget = true;
+        RacingMenuButton button = buttonObject.GetComponent<RacingMenuButton>();
+        button.targetGraphic = hitTarget;
+        button.Configure(surface);
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(action);
-
-        TMP_Text label = CreateLabel(buttonObject.transform, "Label", caption, new Vector2(0.06f, 0.08f), new Vector2(0.94f, 0.92f), 28f, FontRole.Japanese);
-        label.fontStyle = FontStyles.Bold;
+        if (style != RacingPanelGraphic.SurfaceStyle.Primary)
+        {
+            TMP_Text index = CreateLabel(buttonObject.transform, "Index", number, new Vector2(0.04f, 0.27f), new Vector2(0.14f, 0.8f), 20f, FontRole.English);
+            index.color = RacingUITheme.Muted;
+        }
+        TMP_Text label = CreateLabel(buttonObject.transform, "Label", caption, new Vector2(0.18f, 0.4f), new Vector2(0.93f, 0.85f), 29f, FontRole.Japanese);
+        label.alignment = TextAlignmentOptions.Left;
+        TMP_Text detail = CreateLabel(buttonObject.transform, "Caption", english, new Vector2(0.18f, 0.18f), new Vector2(0.93f, 0.40f), 14f, FontRole.English);
+        detail.alignment = TextAlignmentOptions.Left;
+        detail.characterSpacing = 2f;
+        detail.color = RacingUITheme.Muted;
+        return button;
     }
 
     private static TMP_Text CreateLabel(Transform parent, string name, string value, Vector2 min, Vector2 max, float maxSize, FontRole role)
@@ -110,13 +134,12 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         GameObject labelObject = GetOrCreate(name, parent, typeof(TextMeshProUGUI));
         Stretch(labelObject.GetComponent<RectTransform>(), min, max);
         TMP_Text label = labelObject.GetComponent<TMP_Text>();
-        TMP_FontAsset font = RacingUIFontCatalog.Get(role);
-        if (font != null) label.font = font;
+        RacingUITheme.ApplyTypography(label, role, maxSize);
         label.text = value;
         label.color = Color.white;
         label.alignment = TextAlignmentOptions.Center;
         label.enableAutoSizing = true;
-        label.fontSizeMin = 11f;
+        label.fontSizeMin = Mathf.Min(maxSize, Mathf.Max(14f, maxSize * 0.7f));
         label.fontSizeMax = maxSize;
         label.raycastTarget = false;
         return label;

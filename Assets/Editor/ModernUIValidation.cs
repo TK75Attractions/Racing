@@ -14,7 +14,7 @@ public static class ModernUIValidation
         foreach (FontRole role in Enum.GetValues(typeof(FontRole)))
             Require(RacingUIFontCatalog.Get(role) != null, $"Missing UI font: {role}");
         TMP_FontAsset japanese = RacingUIFontCatalog.Get(FontRole.Japanese);
-        Require(japanese.HasCharacters("スタートリトライタイトルへハンドルで操作ペダルを踏み込んで決定準備完了相手待っています", out uint[] missing),
+        Require(japanese.HasCharacters("スタートリトライタイトルへハンドルで操作ペダルを踏み込んで決定準備完了相手待っています観戦中済終了前進後退走行方向切替操作一時停止あなた", out uint[] missing),
             "Japanese UI font is missing required characters.");
         Require(Resources.Load<GameObject>("UI/TitleScreenBackground") != null, "Missing title background.");
         Require(Resources.Load<GameObject>("UI/ResultScreenBackground") != null, "Missing result background.");
@@ -39,7 +39,8 @@ public static class ModernUIValidation
                 Require(Text(hud, "Speed/Txt") == "127", "Speed binding failed.");
                 Require(RacingHUDBuilder.Build(display, player, 5) == hud, "HUD initialization must be idempotent.");
             }
-            Debug.Log("MODERN_UI_VALIDATION_PASS: fonts, backgrounds, both player HUDs, live timing, lap counts and speed.");
+            ValidateOverlays(root.transform);
+            Debug.Log("MODERN_UI_VALIDATION_PASS: fonts, backgrounds, both player HUDs, live timing, lap counts, speed, spectator and ESC actions.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }
@@ -57,6 +58,64 @@ public static class ModernUIValidation
             var speed = new UISpeed(); speed.Init(hud.Find("Speed")); speed.UpdateSpeedMeter(127f, 0f);
             var time = new UITime(); time.Init(hud.Find("Time")); time.SetTotalTime(72.345f); time.SetLapTime(19.876f);
         }
+    }
+
+    [MenuItem("Racing/UI/Preview Spectator")]
+    public static void PreviewSpectator()
+    {
+        if (!Application.isPlaying) return;
+        foreach (ScreenTransitionController transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
+        {
+            transition.GetComponent<InterruptionMenuUI>()?.Hide();
+            transition.ApplyStateImmediate(Gmanager.State.Game);
+            transition.ShowSpectator(1);
+        }
+    }
+
+    [MenuItem("Racing/UI/Preview ESC Menu")]
+    public static void PreviewESC()
+    {
+        if (!Application.isPlaying) return;
+        foreach (ScreenTransitionController transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
+        {
+            transition.ApplyStateImmediate(Gmanager.State.Game);
+            transition.HideSpectator();
+            transition.GetComponent<InterruptionMenuUI>()?.Show(false);
+        }
+    }
+
+    private static void ValidateOverlays(Transform parent)
+    {
+        RectTransform host = RacingUITheme.Rect(parent, "OverlayValidation", Vector2.zero, Vector2.one);
+        SpectatorOverlayUI spectator = SpectatorOverlayUI.Create(host, null);
+        spectator.Show(0);
+        Require(Text(spectator.transform, "PlayerPlate/PlayerLabel") == "プレイヤー 1 を観戦中", "Spectator player one label failed.");
+        spectator.Show(1);
+        Require(Text(spectator.transform, "PlayerPlate/PlayerLabel") == "プレイヤー 2 を観戦中", "Spectator player two label failed.");
+        foreach (Graphic graphic in spectator.GetComponentsInChildren<Graphic>(true))
+            Require(!graphic.raycastTarget, "Spectator decorations must not intercept input.");
+        spectator.Hide();
+        Require(!spectator.gameObject.activeSelf, "Spectator hide failed.");
+        int interrupted = 0, toggled = 0, restarted = 0;
+        InterruptionMenuUI menu = null;
+        for (int build = 0; build < 2; build++)
+            menu = InterruptionMenuUI.Create(host, () => interrupted++, () => toggled++, () => restarted++);
+        menu.Show(false);
+        Transform card = host.Find("InterruptionMenu/MenuCard");
+        Require(menu.IsOpen && Text(card, "ToggleDirection/DirectionStatus") == "前進", "Forward status failed.");
+        menu.SetDirectionStatus(true);
+        Require(Text(card, "ToggleDirection/DirectionStatus") == "後退", "Reverse status failed.");
+        foreach (string name in new[] { "Interrupt", "ToggleDirection", "Restart" })
+        {
+            RacingMenuButton button = card.Find(name).GetComponent<RacingMenuButton>();
+            Require(button != null && button.interactable && button.targetGraphic.enabled && button.targetGraphic.raycastTarget,
+                $"Menu action lacks an active hit target: {name}");
+            Require(button.GetComponentInChildren<RacingPanelGraphic>(true) != null, $"Missing vector button: {name}");
+            button.onClick.Invoke();
+        }
+        Require(interrupted == 1 && toggled == 1 && restarted == 1, "Rebuilding the menu must not duplicate action listeners.");
+        menu.Hide();
+        Require(!menu.IsOpen, "Menu hide failed.");
     }
 
     private static string Text(Transform root, string path) => root.Find(path).GetComponent<TMP_Text>().text;

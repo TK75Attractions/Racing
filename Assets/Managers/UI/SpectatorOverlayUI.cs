@@ -6,7 +6,7 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class SpectatorOverlayUI : MonoBehaviour
 {
-    private static readonly Color FrameColor = new Color(0.08f, 0.82f, 1f, 0.96f);
+    private static readonly Color FrameColor = RacingPanelGraphic.Alpha(RacingUITheme.Cyan, 0.75f);
     private TMP_Text playerLabel;
 
     public static SpectatorOverlayUI Create(Transform canvasRoot, TMP_FontAsset font)
@@ -30,7 +30,7 @@ public sealed class SpectatorOverlayUI : MonoBehaviour
 
     public void Show(int watchedPlayerIndex)
     {
-        playerLabel.text = $"WATCHING  P{watchedPlayerIndex + 1}";
+        playerLabel.text = $"プレイヤー {Mathf.Clamp(watchedPlayerIndex, 0, 1) + 1} を観戦中";
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
     }
@@ -42,40 +42,35 @@ public sealed class SpectatorOverlayUI : MonoBehaviour
 
     private void Build(TMP_FontAsset font)
     {
-        CreateBar("Top", new Vector2(0f, 0.976f), Vector2.one);
-        CreateBar("Bottom", Vector2.zero, new Vector2(1f, 0.024f));
-        CreateBar("Left", Vector2.zero, new Vector2(0.014f, 1f));
-        CreateBar("Right", new Vector2(0.986f, 0f), Vector2.one);
-
-        GameObject plate = GetOrCreate(
-            "PlayerPlate", transform, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-        Anchor(plate.GetComponent<RectTransform>(), new Vector2(0.035f, 0.875f), new Vector2(0.255f, 0.955f));
-        Image plateImage = plate.GetComponent<Image>();
-        plateImage.color = new Color(0.005f, 0.025f, 0.045f, 0.9f);
-        plateImage.raycastTarget = false;
-
-        GameObject labelObject = GetOrCreate(
-            "PlayerLabel", plate.transform, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-        Anchor(labelObject.GetComponent<RectTransform>(), new Vector2(0.08f, 0.08f), new Vector2(0.92f, 0.92f));
-        playerLabel = labelObject.GetComponent<TMP_Text>();
-        if (font != null) playerLabel.font = font;
-        playerLabel.text = "WATCHING  P2";
-        playerLabel.fontSize = 30f;
-        playerLabel.enableAutoSizing = true;
-        playerLabel.fontSizeMin = 14f;
-        playerLabel.fontSizeMax = 30f;
-        playerLabel.fontStyle = FontStyles.Bold | FontStyles.Italic;
-        playerLabel.alignment = TextAlignmentOptions.Center;
-        playerLabel.color = Color.white;
-        playerLabel.raycastTarget = false;
+        // Short corner marks preserve the racing view and leave both HUD corners clear.
+        for (int x = 0; x < 2; x++)
+        for (int y = 0; y < 2; y++)
+        {
+            Vector2 anchor = new Vector2(x, y);
+            CreateCorner($"Corner{x}{y}H", anchor, new Vector2(52f, 2f));
+            CreateCorner($"Corner{x}{y}V", anchor, new Vector2(2f, 52f));
+        }
+        RectTransform plate = RacingUITheme.Rect(transform, "PlayerPlate", new Vector2(0.34f, 0.845f), new Vector2(0.66f, 0.955f));
+        RacingUITheme.Surface(plate);
+        RacingUITheme.Rule(plate, "LiveAccent", new Vector2(0.07f, 0.67f), new Vector2(0.09f, 0.73f), RacingUITheme.Cyan);
+        TMP_Text caption = RacingUITheme.Label(plate, "Caption", "LIVE  /  SPECTATOR", new Vector2(0.12f, 0.57f), new Vector2(0.93f, 0.84f),
+            17f, RacingUITheme.Cyan);
+        caption.characterSpacing = 2f;
+        playerLabel = RacingUITheme.Label(plate, "PlayerLabel", "プレイヤー 2 を観戦中", new Vector2(0.07f, 0.13f), new Vector2(0.93f, 0.54f),
+            28f, RacingUITheme.Text, FontRole.Japanese);
+        RectTransform footer = RacingUITheme.Rect(transform, "FinishStatus", new Vector2(0.32f, 0.025f), new Vector2(0.68f, 0.087f));
+        RacingUITheme.Surface(footer);
+        RacingUITheme.Label(footer, "Status", "ゴール済み  /  レース終了を待っています", new Vector2(0.05f, 0.12f), new Vector2(0.95f, 0.88f),
+            20f, RacingUITheme.Muted, FontRole.Japanese, TextAlignmentOptions.Center);
     }
 
-    private void CreateBar(string name, Vector2 anchorMin, Vector2 anchorMax)
+    private void CreateCorner(string name, Vector2 anchor, Vector2 size)
     {
-        GameObject bar = GetOrCreate(
-            name, transform, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-        Anchor(bar.GetComponent<RectTransform>(), anchorMin, anchorMax);
-        Image image = bar.GetComponent<Image>();
+        RectTransform rect = RacingUITheme.Rect(transform, name, anchor, anchor);
+        rect.pivot = anchor;
+        rect.sizeDelta = size;
+        rect.anchoredPosition = new Vector2(anchor.x == 0f ? 18f : -18f, anchor.y == 0f ? 18f : -18f);
+        Image image = rect.GetComponent<Image>() ?? rect.gameObject.AddComponent<Image>();
         image.color = FrameColor;
         image.raycastTarget = false;
     }
