@@ -64,7 +64,6 @@ public class Gmanager : MonoBehaviour
     [SerializeField] private float resultReturnInputDelaySeconds = 3f;
     [SerializeField, Range(0.1f, 1f)] private float resultSteeringThreshold = 0.45f;
     [SerializeField, Min(1.2f)] private float goalCelebrationSeconds = 5.5f;
-    [SerializeField, Range(0, PlayerCount - 1)] private int defaultEscapePlayerIndex = 0;
 
     [Header("Camera")]
     [SerializeField] private float cameraBlendSeconds = 0.65f;
@@ -86,7 +85,6 @@ public class Gmanager : MonoBehaviour
     private TwoPlayerRaceSession raceSession;
     private RaceResultRecord latestResult;
     private RaceSessionResult latestSessionResult;
-    private int lastKeyboardPlayerIndex;
 
     public RaceResultRecord LatestResult => latestResult;
     public RaceSessionResult LatestSessionResult => latestSessionResult;
@@ -125,7 +123,6 @@ public class Gmanager : MonoBehaviour
         displayRigs = TwoPlayerDisplayFactory.Create(transform.parent, cameraBlendSeconds);
         InitializePlayerDisplays();
         InitializeVolumes();
-        lastKeyboardPlayerIndex = Mathf.Clamp(defaultEscapePlayerIndex, 0, PlayerCount - 1);
         ApplyStateImmediate(State.Title);
         SwitchCameraForState(State.Title);
         ResetTitleStartInputGate();
@@ -824,25 +821,23 @@ public class Gmanager : MonoBehaviour
     {
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null) return;
-
-        bool playerOneActive = keyboard.wKey.isPressed || keyboard.aKey.isPressed ||
-            keyboard.sKey.isPressed || keyboard.dKey.isPressed;
-        bool playerTwoActive = keyboard.upArrowKey.isPressed || keyboard.leftArrowKey.isPressed ||
-            keyboard.downArrowKey.isPressed || keyboard.rightArrowKey.isPressed;
-        if (playerOneActive && !playerTwoActive) lastKeyboardPlayerIndex = 0;
-        else if (playerTwoActive && !playerOneActive) lastKeyboardPlayerIndex = 1;
-
         if (!keyboard.escapeKey.wasPressedThisFrame || state != State.Game || IsScreenTransitioning()) return;
+
+        bool anyMenuOpen = false;
+        for (int index = 0; index < players.Length; index++)
+        {
+            if (players[index]?.interruptionMenu?.IsOpen == true)
+            {
+                anyMenuOpen = true;
+                break;
+            }
+        }
 
         for (int index = 0; index < players.Length; index++)
         {
-            PlayerRuntime openPlayer = players[index];
-            if (openPlayer?.interruptionMenu?.IsOpen != true) continue;
-            CloseInterruptionMenu(index);
-            return;
+            if (anyMenuOpen) CloseInterruptionMenu(index);
+            else OpenInterruptionMenu(index);
         }
-
-        OpenInterruptionMenu(lastKeyboardPlayerIndex);
     }
 
     public void OpenInterruptionMenu(int playerIndex)
