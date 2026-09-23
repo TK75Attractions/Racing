@@ -322,7 +322,7 @@ public class Gmanager : MonoBehaviour
         raceSession.RegisterFinish(0, first);
         raceSession.Tick(0f);
         raceSession.RegisterDnf(1, CreateFallbackResult(1, false, 2));
-        CompleteRace(raceSession.Result);
+        CompleteRace(raceSession.Result, null);
     }
 
     public void ShowResults() => ShowResult();
@@ -601,13 +601,14 @@ public class Gmanager : MonoBehaviour
         if (registration == RaceFinishRegistration.FirstPlace)
         {
             latestResult = result;
+            PlayPlayerGoal(player, () => BeginSpectating(player.playerIndex));
             UpdateSecondPlaceDisplay();
             Debug.Log($"P{player.playerIndex + 1} finished first. Waiting {SecondPlaceTimeRemaining:F0} seconds for second place.");
             if (SecondPlaceTimeRemaining <= 0f && raceSession.Tick(0f)) CompleteRaceAfterTimeout();
             return;
         }
 
-        CompleteRace(latestSessionResult);
+        CompleteRace(latestSessionResult, player);
     }
 
     private void UpdateSecondPlaceTimeout(float dt)
@@ -628,8 +629,13 @@ public class Gmanager : MonoBehaviour
         string playerLabel = unfinishedPlayerIndex >= 0
             ? $"P{unfinishedPlayerIndex + 1}"
             : "SECOND PLACE";
-        foreach (ScreenTransitionController transition in screenTransitions)
-            transition?.ShowFinishWarning(playerLabel, raceSession.SecondPlaceTimeRemaining);
+        for (int playerIndex = 0; playerIndex < screenTransitions.Length; playerIndex++)
+        {
+            if (playerIndex == unfinishedPlayerIndex)
+            {
+                screenTransitions[playerIndex]?.ShowFinishWarning(playerLabel, raceSession.SecondPlaceTimeRemaining);
+            }
+        }
     }
 
     private void CompleteRaceAfterTimeout()
@@ -644,12 +650,12 @@ public class Gmanager : MonoBehaviour
             latestSessionResult = raceSession.Result;
             FreezePlayer(unfinished, disableCollisions: false);
         }
-        CompleteRace(latestSessionResult);
+        CompleteRace(latestSessionResult, null);
     }
 
-    private void CompleteRace(RaceSessionResult sessionResult)
+    private void CompleteRace(RaceSessionResult sessionResult, PlayerRuntime finalFinisher)
     {
-        if (state != State.Game || IsScreenTransitioning()) return;
+        if (state != State.Game) return;
         latestSessionResult = sessionResult;
         latestResult = sessionResult?.GetResultAtPosition(1);
         state = State.Goal;
@@ -657,29 +663,48 @@ public class Gmanager : MonoBehaviour
         resultReturnInputDelayTimer = 0f;
         lapManager?.PauseRace();
         foreach (PlayerRuntime player in players) FreezePlayer(player, disableCollisions: false);
-        PlayGoalCelebration();
-    }
-
-    private void PlayGoalCelebration()
-    {
-        string winner = latestResult != null && latestResult.playerNumber > 0
-            ? $"PLAYER {latestResult.playerNumber} WINS"
-            : "RACE COMPLETE";
-        string finishTime = latestResult != null
-            ? FormatRaceTime(latestResult.totalRaceTime)
-            : "--:--.---";
-
-        ScreenTransitionController primary = screenTransitions[0];
-        for (int index = 1; index < screenTransitions.Length; index++)
+        if (finalFinisher != null)
         {
-            screenTransitions[index]?.TryPlayGoal(winner, finishTime, goalCelebrationSeconds);
+            PlayPlayerGoal(finalFinisher, ShowResultsAfterGoal);
         }
-
-        if (primary == null || !primary.TryPlayGoal(winner, finishTime, goalCelebrationSeconds, ShowResultsAfterGoal))
+        else
         {
             ShowResultsAfterGoal();
         }
-        Debug.Log("Two-player goal celebration started");
+    }
+
+    private void PlayPlayerGoal(PlayerRuntime player, Action onCompleted)
+    {
+        if (player == null)
+        {
+            onCompleted?.Invoke();
+            return;
+        }
+
+        string playerLabel = $"PLAYER {player.playerIndex + 1} FINISHED";
+        string finishTime = player.result != null
+            ? FormatRaceTime(player.result.totalRaceTime)
+            : "--:--.---";
+        ScreenTransitionController transition = screenTransitions[player.playerIndex];
+        if (transition == null || !transition.TryPlayGoal(playerLabel, finishTime, goalCelebrationSeconds, onCompleted))
+        {
+            onCompleted?.Invoke();
+        }
+        Debug.Log($"P{player.playerIndex + 1} goal celebration started");
+    }
+
+    private void BeginSpectating(int finishedPlayerIndex)
+    {
+        if (finishedPlayerIndex < 0 || finishedPlayerIndex >= players.Length) return;
+        int watchedPlayerIndex = 1 - finishedPlayerIndex;
+        PlayerRuntime finished = players[finishedPlayerIndex];
+        PlayerRuntime watched = players[watchedPlayerIndex];
+        if (finished?.displayRig?.RaceCamera == null || watched?.cameraController == null) return;
+
+        finished.displayRig.RaceCamera.Follow = watched.cameraController.CameraTarget;
+        finished.displayRig.RaceCamera.LookAt = watched.cameraController.LookTarget;
+        screenTransitions[finishedPlayerIndex]?.ApplyStateImmediate(State.Game);
+        screenTransitions[finishedPlayerIndex]?.ShowSpectator(watchedPlayerIndex);
     }
 
     private void ShowResultsAfterGoal()
@@ -774,15 +799,22 @@ public class Gmanager : MonoBehaviour
     {
         for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
         {
-            PlayerRuntime player = players[playerIndex];
+            PlayerRuntime displayOwner = players[playerIndex];
             OnPlayUIManager ui = onPlayUIManagers[playerIndex];
-            if (player?.rigidbody == null || ui == null) continue;
+            if (displayOwner == null || ui == null) continue;
+
+            int viewedPlayerIndex = displayOwner.result != null && WaitingForSecondPlace
+                ? 1 - playerIndex
+                : playerIndex;
+            PlayerRuntime player = players[viewedPlayerIndex];
+            if (player?.rigidbody == null) continue;
+
             LapManager.CarTimeData lapData = lapManager?.GetCarData(player.rigidbody);
             int lapValue = GetCurrentLapValue(lapData);
             float lapSeconds = lapData != null ? lapData.currentLapTime : time;
             float totalSeconds = lapData != null ? lapData.totalRaceTime + lapData.currentLapTime : time;
             float speedValue = player.rigidbody.linearVelocity.magnitude * speedUnitMultiplier;
-            ui.UpdateUI(GetRacePosition(playerIndex), lapValue, totalSeconds, lapSeconds, speedValue);
+            ui.UpdateUI(GetRacePosition(viewedPlayerIndex), lapValue, totalSeconds, lapSeconds, speedValue);
         }
     }
 
