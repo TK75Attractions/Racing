@@ -699,10 +699,10 @@ public class Gmanager : MonoBehaviour
         int watchedPlayerIndex = 1 - finishedPlayerIndex;
         PlayerRuntime finished = players[finishedPlayerIndex];
         PlayerRuntime watched = players[watchedPlayerIndex];
-        if (finished?.displayRig?.RaceCamera == null || watched?.cameraController == null) return;
+        if (finished?.displayRig?.RaceCamera == null || watched?.displayRig?.RaceCamera == null) return;
 
-        finished.displayRig.RaceCamera.Follow = watched.cameraController.CameraTarget;
-        finished.displayRig.RaceCamera.LookAt = watched.cameraController.LookTarget;
+        finished.displayRig.RaceCamera.Follow = watched.displayRig.RaceCamera.Follow;
+        finished.displayRig.RaceCamera.LookAt = watched.displayRig.RaceCamera.LookAt;
         screenTransitions[finishedPlayerIndex]?.ApplyStateImmediate(State.Game);
         screenTransitions[finishedPlayerIndex]?.ShowSpectator(watchedPlayerIndex);
     }
