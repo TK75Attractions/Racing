@@ -7,7 +7,7 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
     private const string MenuClipPath = "Audio/BGM/TachibanaMoroe";
     private const string RaceClipPath = "Audio/BGM/Maze";
 
-    [SerializeField, Range(0f, 1f)] private float volume = 0.55f;
+    [SerializeField, Range(0f, 1f)] private float volume = 0.9f;
 
     private Gmanager gameManager;
     private AudioSource audioSource;
@@ -27,7 +27,9 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
         audioSource.playOnAwake = false;
         audioSource.loop = true;
         audioSource.spatialBlend = 0f;
-        audioSource.volume = volume;
+        audioSource.pitch = 1f;
+        audioSource.volume = volume * RaceAudioSettings.Bgm;
+        RaceAudioSettings.ApplyMaster();
 
         if (menuClip == null || raceClip == null)
         {
@@ -41,6 +43,7 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
 
     private void Update()
     {
+        audioSource.volume = volume * RaceAudioSettings.Bgm;
         Refresh(force: false);
     }
 
