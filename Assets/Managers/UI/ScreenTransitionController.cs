@@ -7,6 +7,9 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class ScreenTransitionController : MonoBehaviour
 {
+    [Header("Title") ]
+    [SerializeField] private bool useArtworkLogo;
+
     [Header("Transition")]
     [SerializeField, Min(0f)] private float fadeOutSeconds = 0.25f;
     [SerializeField, Min(0f)] private float fadeInSeconds = 0.35f;
@@ -25,6 +28,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
     private readonly Vector2[] resultRowBasePositions = new Vector2[5];
     private TMP_Text resultWinnerLabel;
     private GoalCelebrationUI goalCelebration;
+    private SpectatorOverlayUI spectatorOverlay;
     private CanvasGroup fadeCanvasGroup;
     private RectTransform fadeOverlay;
     private TMP_Text titlePrompt;
@@ -74,6 +78,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
             fontSource = onPlay.GetComponentInChildren<TMP_Text>(true);
         }
         goalCelebration = GoalCelebrationUI.Create(transform, fontSource != null ? fontSource.font : null);
+        spectatorOverlay = SpectatorOverlayUI.Create(transform, fontSource != null ? fontSource.font : null);
         InitializeFadeOverlay();
     }
 
@@ -197,6 +202,17 @@ public sealed class ScreenTransitionController : MonoBehaviour
     {
         lastWarningSecond = -1;
         SetStatusVisibility(showCountdown: false, showWarning: false);
+    }
+
+    public void ShowSpectator(int watchedPlayerIndex)
+    {
+        ClearRaceStatus();
+        spectatorOverlay?.Show(watchedPlayerIndex);
+    }
+
+    public void HideSpectator()
+    {
+        spectatorOverlay?.Hide();
     }
 
     public void SetRaceStatus(string statusText)
@@ -369,6 +385,11 @@ public sealed class ScreenTransitionController : MonoBehaviour
             goalCelebration.HideImmediate();
         }
 
+        if (state != Gmanager.State.Game)
+        {
+            spectatorOverlay?.Hide();
+        }
+
         if (fadeOverlay != null)
         {
             fadeOverlay.SetAsLastSibling();
@@ -394,32 +415,41 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
         InstantiateScreenBackground(title, "UI/TitleScreenBackground", "TitleBackground");
         CreatePanel(title, "TitleBackgroundTint", Vector2.zero, Vector2.one,
-            new Color(0.005f, 0.015f, 0.03f, 0.47f));
+            new Color(0.012f, 0.024f, 0.040f, 0.68f));
 
         GameObject topLine = CreatePanel(title, "TopLine", new Vector2(0.025f, 0.92f), new Vector2(0.19f, 0.924f),
             new Color(0.15f, 0.85f, 1f, 0.9f));
         topLine.GetComponent<Image>().raycastTarget = false;
 
         TMP_Text circuitLabel = CreateLabel(
-            title, "CircuitLabel", "ENNICH CIRCUIT  /  TWO PLAYER RACING",
+            title, "CircuitLabel", "TSUKUKOMA CIRCUIT   /   RACING",
             new Vector2(0.025f, 0.925f), new Vector2(0.48f, 0.975f), 22f,
             new Color(0.73f, 0.82f, 0.9f, 1f));
         circuitLabel.alignment = TextAlignmentOptions.Left;
-        circuitLabel.characterSpacing = 9f;
+        circuitLabel.characterSpacing = 2.5f;
+        TMP_Text playerBadge = CreateLabel(title, "PlayerBadge", $"PLAYER 0{displayPlayerIndex + 1}   /   LOCAL VERSUS",
+            new Vector2(0.65f, 0.925f), new Vector2(0.975f, 0.975f), 19f, RacingUITheme.Cyan);
+        playerBadge.alignment = TextAlignmentOptions.Right;
+        RacingUITheme.Rule(title, "HeaderRule", new Vector2(0.025f, 0.915f), new Vector2(0.975f, 0.916f), new Color(0.4f, 0.6f, 0.7f, 0.25f));
 
         TMP_Text mainTitle = CreateLabel(
             title,
             "TitleText",
-            titleText,
-            new Vector2(0.12f, 0.51f),
-            new Vector2(0.88f, 0.8f),
+            useArtworkLogo ? titleText : "CIRCUIT",
+            new Vector2(0.12f, 0.53f),
+            new Vector2(0.88f, 0.72f),
             172f,
             Color.white);
         mainTitle.fontStyle = FontStyles.Bold | FontStyles.Italic;
         mainTitle.characterSpacing = 5f;
-        Texture2D logoTexture = Resources.Load<Texture2D>("UI/TsukukomaCircuitLogo");
-        Shader logoShader = Resources.Load<Shader>("UI/LogoWhiteKey");
-        if (logoTexture != null && logoShader != null)
+        if (!useArtworkLogo)
+        {
+            TMP_Text wordmark = CreateLabel(title, "Wordmark", "TSUKUKOMA", new Vector2(0.2f, 0.73f), new Vector2(0.8f, 0.80f), 44f, RacingUITheme.Cyan);
+            wordmark.characterSpacing = 14f;
+        }
+        Texture2D logoTexture = useArtworkLogo ? Resources.Load<Texture2D>("UI/TsukukomaCircuitLogo") : null;
+        Shader logoShader = useArtworkLogo ? Resources.Load<Shader>("UI/LogoWhiteKey") : null;
+        if (useArtworkLogo && logoTexture != null && logoShader != null)
         {
             mainTitle.gameObject.SetActive(false);
             GameObject logoContainer = new GameObject("TitleLogo", typeof(RectTransform));
@@ -447,7 +477,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
             title, "TitleSubtitle", "SPEED  /  CONTROL  /  VICTORY",
             new Vector2(0.25f, 0.465f), new Vector2(0.75f, 0.535f), 27f,
             new Color(0.35f, 0.88f, 1f, 1f));
-        subtitle.characterSpacing = 13f;
+        subtitle.characterSpacing = 5f;
 
         titlePrompt = CreateLabel(
             title,
@@ -457,17 +487,19 @@ public sealed class ScreenTransitionController : MonoBehaviour
             new Vector2(0.76f, 0.475f),
             25f,
             new Color(0.82f, 0.87f, 0.92f, 1f));
-        titlePrompt.characterSpacing = 6f;
+        titlePrompt.characterSpacing = 1f;
+        RacingUITheme.ApplyTypography(titlePrompt, FontRole.Japanese, 24f);
 
         Color playerAccent = PlayerCarPaint.GetPlayerColor(displayPlayerIndex);
-        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(0.36f, 0.23f), new Vector2(0.64f, 0.355f),
+        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(0.35f, 0.235f), new Vector2(0.65f, 0.35f),
             playerAccent);
 
         TMP_Text footer = CreateLabel(
-            title, "TitleFooter", $"PLAYER {displayPlayerIndex + 1}  /  PRESS AND HOLD TO JOIN THE GRID",
+            title, "TitleFooter", "ハンドルで操作   /   ペダルを踏み込んで決定",
             new Vector2(0.2f, 0.085f), new Vector2(0.8f, 0.145f), 19f,
             new Color(0.46f, 0.55f, 0.64f, 1f));
-        footer.characterSpacing = 5f;
+        footer.characterSpacing = 1.5f;
+        RacingUITheme.Rule(title, "FooterRule", new Vector2(0.35f, 0.16f), new Vector2(0.65f, 0.161f), new Color(0.4f, 0.6f, 0.7f, 0.3f));
     }
 
     private void InitializeFadeOverlay()
@@ -523,6 +555,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         }
         countdownOutline.effectColor = new Color(0.2f, 0.53f, 0.68f, 0.25f);
         countdownOutline.effectDistance = new Vector2(1f, -1f);
+        RacingUITheme.Surface(countdownStatusRoot.transform);
         CreatePanel(countdownStatusRoot.transform, "TopAccent", new Vector2(0.30f, 0.985f), new Vector2(0.70f, 1f), new Color(0.15f, 0.8f, 1f, 1f));
 
         raceStatusCaption = CreateLabel(
@@ -555,6 +588,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         finishWarningRoot = CreatePanel(onPlay, "FinishWarningStatus",
             new Vector2(0.31f, 0.78f), new Vector2(0.69f, 0.94f),
             new Color(0.12f, 0.025f, 0.018f, 0.94f));
+        RacingUITheme.Surface(finishWarningRoot.transform);
         GameObject warningAccent = CreatePanel(finishWarningRoot.transform, "WarningAccent",
             new Vector2(0f, 0f), new Vector2(0.018f, 1f), new Color(1f, 0.24f, 0.12f, 1f));
         warningAccent.GetComponent<Image>().raycastTarget = false;
@@ -580,24 +614,12 @@ public sealed class ScreenTransitionController : MonoBehaviour
     {
         GameObject panel = CreatePanel(title, $"Player{playerIndex + 1}Pedal", anchorMin, anchorMax,
             new Color(0.018f, 0.035f, 0.06f, 0.91f));
-        Outline outline = panel.GetComponent<Outline>();
-        if (outline == null)
-        {
-            outline = panel.AddComponent<Outline>();
-        }
-        outline.effectColor = new Color(accent.r, accent.g, accent.b, 0.65f);
-        outline.effectDistance = new Vector2(2f, -2f);
-
-
-        TMP_Text player = CreateLabel(panel.transform, "Player", $"P{playerIndex + 1}",
-            new Vector2(0.12f, 0.25f), new Vector2(0.29f, 0.80f), 38f, accent);
-        player.fontStyle = FontStyles.Bold | FontStyles.Italic;
-        TMP_Text instruction = CreateLabel(panel.transform, "Instruction", "PRESS PEDAL",
-            new Vector2(0.32f, 0.30f), new Vector2(0.86f, 0.77f), 22f,
-            new Color(0.82f, 0.86f, 0.92f, 1f));
-        instruction.alignment = TextAlignmentOptions.Left;
-        instruction.characterSpacing = 4f;
-
+        TMP_Text instruction = CreateLabel(panel.transform, "Instruction", "スタート",
+            new Vector2(0.21f, 0.43f), new Vector2(0.89f, 0.86f), 36f, RacingUITheme.Text);
+        instruction.fontStyle = FontStyles.Bold;
+        TMP_Text caption = CreateLabel(panel.transform, "Caption", "START",
+            new Vector2(0.21f, 0.19f), new Vector2(0.89f, 0.41f), 17f, RacingUITheme.Muted);
+        caption.characterSpacing = 4f;
 
         PedalButtonFeedback feedback = panel.GetComponent<PedalButtonFeedback>();
         if (feedback == null) feedback = panel.AddComponent<PedalButtonFeedback>();
@@ -621,8 +643,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
         if (titlePrompt != null)
         {
             titlePrompt.text = !armed
-                ? $"P{playerIndex + 1}  RELEASE PEDAL"
-                : ready ? $"P{playerIndex + 1}  READY — WAITING FOR RACE" : $"P{playerIndex + 1}  PRESS PEDAL TO START";
+                ? "ペダルを離して準備してください"
+                : ready ? "準備完了  /  相手の準備を待っています" : "ペダルを踏み込んでスタート";
         }
     }
 
@@ -889,11 +911,14 @@ public sealed class ScreenTransitionController : MonoBehaviour
         rectTransform.offsetMax = Vector2.zero;
 
         TMP_Text label = labelObject.GetComponent<TMP_Text>();
+        bool japanese = false;
+        foreach (char c in labelText) if (c > 255) { japanese = true; break; }
+        RacingUITheme.ApplyTypography(label, japanese ? FontRole.Japanese : FontRole.English, maximumFontSize);
         label.text = labelText;
         label.alignment = TextAlignmentOptions.Center;
         label.color = color;
         label.enableAutoSizing = true;
-        label.fontSizeMin = 18f;
+        label.fontSizeMin = Mathf.Min(maximumFontSize, Mathf.Max(12f, maximumFontSize * 0.65f));
         label.fontSizeMax = maximumFontSize;
         label.raycastTarget = false;
         return label;

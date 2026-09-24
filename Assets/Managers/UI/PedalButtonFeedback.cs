@@ -15,8 +15,10 @@ public sealed class PedalButtonFeedback : MonoBehaviour
     private float selectedAt;
     private float confirmedAt = -10f;
     private float pedalAmount;
+    private float displayedPedal;
+    private Color accent;
 
-    public void Configure(Color color)
+    public void Configure(Color color, RacingPanelGraphic.SurfaceStyle style = RacingPanelGraphic.SurfaceStyle.Primary)
     {
         rect = GetComponent<RectTransform>();
         basePosition = rect.anchoredPosition;
@@ -35,7 +37,8 @@ public sealed class PedalButtonFeedback : MonoBehaviour
         face.anchorMax = Vector2.one;
         face.offsetMin = face.offsetMax = Vector2.zero;
         surface = obj.GetComponent<PedalButtonSurface>();
-        surface.raycastTarget = false;
+        surface.Configure(style, color);
+        accent = color;
         selected = false;
         SetState(false, 0f, color);
     }
@@ -46,6 +49,7 @@ public sealed class PedalButtonFeedback : MonoBehaviour
         if (isSelected && !selected) selectedAt = Time.unscaledTime;
         selected = isSelected;
         pedalAmount = Mathf.Clamp01(pedal);
+        accent = color;
     }
 
     public void SetConfirmed(bool value)
@@ -66,14 +70,15 @@ public sealed class PedalButtonFeedback : MonoBehaviour
         if (rect == null) return;
         float age = Time.unscaledTime - selectedAt;
         float wobble = selected ? Mathf.Sin(age * 25f) * Mathf.Exp(-age * 6f) : 0f;
-        float bob = selected ? Mathf.Sin(age * 3.4f) * 4f : 0f;
+        float bob = selected ? Mathf.Sin(age * 3.4f) * 1.2f : 0f;
         float flashAge = Time.unscaledTime - confirmedAt;
         float flash = flashAge < 0.45f ? Mathf.Sin(Mathf.Clamp01(flashAge / 0.45f) * Mathf.PI) : 0f;
-        float scale = (selected ? 1.025f : 1f) + flash * 0.035f;
+        float scale = (selected ? 1.012f : 1f) + flash * 0.035f;
         rect.anchoredPosition = basePosition + Vector2.up * bob;
         rect.localScale = Vector3.Scale(baseScale, new Vector3(scale + wobble * 0.06f, scale - wobble * 0.05f, 1f));
         rect.localRotation = baseRotation * Quaternion.Euler(0f, 0f, wobble * 1.8f);
-        surface.SetVisual(pedalAmount, selected, flash);
+        displayedPedal = Mathf.MoveTowards(displayedPedal, pedalAmount, Time.unscaledDeltaTime * 6f);
+        surface.SetVisual(displayedPedal, selected, flash, accent);
     }
 
     private void OnDisable()
@@ -82,9 +87,9 @@ public sealed class PedalButtonFeedback : MonoBehaviour
         rect.anchoredPosition = basePosition;
         rect.localScale = baseScale;
         rect.localRotation = baseRotation;
-        pedalAmount = 0f;
+        pedalAmount = displayedPedal = 0f;
         confirmedAt = -10f;
         confirmed = selected = false;
-        surface.SetVisual(0f, false, 0f);
+        surface.SetVisual(0f, false, 0f, accent);
     }
 }

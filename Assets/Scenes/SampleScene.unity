@@ -463,9 +463,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.0118483305
+    x: 0.031581372
     y: 0
-    width: 0.97630334
+    width: 0.93683726
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
@@ -920,16 +920,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f52a755a3309da548a6b36b8c8bc56bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InputManager
-  isDebugMode: 1
+  isDebugMode: 0
+  isP1SerialP2KeyboardDebugMode: 1
   esp32Serial:
     portName: 
     baudRate: 115200
-    steeringDivisor: 15
+    steeringDivisor: 6.5
     readTimeoutMilliseconds: 200
     inputTimeoutSeconds: 2
   handle: 0
   peddale: 0
-  serialDebugMode: 1
+  serialDebugMode: 0
 --- !u!114 &165928644
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1810,9 +1811,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.0118483305
+    x: 0.031581372
     y: 0
-    width: 0.97630334
+    width: 0.93683726
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
@@ -3893,9 +3894,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.0118483305
+    x: 0.031581372
     y: 0
-    width: 0.97630334
+    width: 0.93683726
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
@@ -3929,11 +3930,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8f96c0584952f944b695ab54ffa3152, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FreezeAspectRate
-  aspect: {x: 2, y: 1}
+  aspect: {x: 16, y: 9}
   colorbase:
     serializedVersion: 2
     rgba: 4278190080
-  aspectRate: 2
+  aspectRate: 1.7777778
   cameraSize: 0
   oldSize: 0
   setTime: 0
@@ -6225,9 +6226,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.0118483305
+    x: 0.031581372
     y: 0
-    width: 0.97630334
+    width: 0.93683726
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
@@ -8644,8 +8645,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efbba3f7903b486984008e28da08b001, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weather: 1
-  timeOfDay: 1
+  weather: 0
+  timeOfDay: 0
   directionalLights:
   - {fileID: 410087040}
   - {fileID: 989017261}

@@ -21,19 +21,27 @@ public readonly struct TwoPlayerSerialInputFrame
 {
     public SerialInputFrame PlayerOne { get; }
     public SerialInputFrame PlayerTwo { get; }
-    public bool PlayerOneValid { get; }
-    public bool PlayerTwoValid { get; }
+    public bool PlayerOnePedalValid { get; }
+    public bool PlayerOneSteeringValid { get; }
+    public bool PlayerTwoPedalValid { get; }
+    public bool PlayerTwoSteeringValid { get; }
+    public bool PlayerOneValid => PlayerOnePedalValid || PlayerOneSteeringValid;
+    public bool PlayerTwoValid => PlayerTwoPedalValid || PlayerTwoSteeringValid;
 
     public TwoPlayerSerialInputFrame(
         SerialInputFrame playerOne,
         SerialInputFrame playerTwo,
-        bool playerOneValid,
-        bool playerTwoValid)
+        bool playerOnePedalValid,
+        bool playerOneSteeringValid,
+        bool playerTwoPedalValid,
+        bool playerTwoSteeringValid)
     {
         PlayerOne = playerOne;
         PlayerTwo = playerTwo;
-        PlayerOneValid = playerOneValid;
-        PlayerTwoValid = playerTwoValid;
+        PlayerOnePedalValid = playerOnePedalValid;
+        PlayerOneSteeringValid = playerOneSteeringValid;
+        PlayerTwoPedalValid = playerTwoPedalValid;
+        PlayerTwoSteeringValid = playerTwoSteeringValid;
     }
 }
 
@@ -68,7 +76,7 @@ public static class SerialInputProtocol
     }
 
     // A shared controller sends: P1 pedal, P1 steering, P2 pedal, P2 steering.
-    // "nan" disables the complete player pair for this frame.
+    // "nan" marks only that axis as unavailable; the other axis can still update.
     public static bool TryParseTwoPlayerInput(
         string line,
         float steeringDivisor,
@@ -90,14 +98,14 @@ public static class SerialInputProtocol
             return false;
         }
 
-        bool playerOneValid = !p1PedalNan && !p1SteeringNan;
-        bool playerTwoValid = !p2PedalNan && !p2SteeringNan;
         float divisor = Math.Abs(steeringDivisor) < 0.0001f ? 1f : steeringDivisor;
         frame = new TwoPlayerSerialInputFrame(
             new SerialInputFrame(Clamp(p1Pedal, -1f, 1f), p1Steering / divisor, false, false),
             new SerialInputFrame(Clamp(p2Pedal, -1f, 1f), p2Steering / divisor, false, false),
-            playerOneValid,
-            playerTwoValid);
+            !p1PedalNan,
+            !p1SteeringNan,
+            !p2PedalNan,
+            !p2SteeringNan);
         return true;
     }
 

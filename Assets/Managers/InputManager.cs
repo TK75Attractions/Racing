@@ -13,6 +13,10 @@ public class InputManager : MonoBehaviour
     [Tooltip("Use two keyboard layouts instead of the ESP32 USB serial input.")]
     public bool isDebugMode = false;
 
+    [Tooltip("Debug with Player 1 on ESP32 USB serial and Player 2 on the keyboard. " +
+        "This mode takes priority over the keyboard-only debug mode.")]
+    public bool isP1SerialP2KeyboardDebugMode = false;
+
     [Header("ESP32 USB Serial (P1 + P2)")]
     [SerializeField] private Esp32SerialConfiguration esp32Serial = new Esp32SerialConfiguration();
 
@@ -42,6 +46,7 @@ public class InputManager : MonoBehaviour
     }
 
     public bool IsSerialDebugDisplayVisible => serialDebugMode && serialDebugDisplayVisible;
+    public bool IsAnyDebugMode => isDebugMode || isP1SerialP2KeyboardDebugMode;
 
     private readonly IDriveInputSource[] inputSources =
         new IDriveInputSource[SupportedPlayerCount];
@@ -52,6 +57,19 @@ public class InputManager : MonoBehaviour
     {
         DisposeInputSources();
         esp32Serial ??= new Esp32SerialConfiguration();
+
+        if (isP1SerialP2KeyboardDebugMode)
+        {
+            InitializeSharedSerialInput(playerOneOnly: true);
+            inputSources[0] = new SharedPlayerDriveInputSource(sharedSerialInputSource, 0);
+            inputSources[1] = new KeyboardDriveInputSource(1);
+
+            initialized = true;
+            Debug.Log(
+                "InputManager is in P1 serial / P2 keyboard debug mode. " +
+                "Player 1 uses ESP32 USB serial and Player 2 uses arrow keys/Right Ctrl/Right Shift.");
+            return;
+        }
 
         if (isDebugMode)
         {
@@ -68,9 +86,7 @@ public class InputManager : MonoBehaviour
         }
 
         // One microcontroller sends both players in a single four-column frame.
-        sharedSerialInputSource = new TwoPlayerSerialInputSource(
-            esp32Serial, ResolveSharedSerialPort());
-        sharedSerialInputSource.LineProcessed += OnSharedSerialLineProcessed;
+        InitializeSharedSerialInput(playerOneOnly: false);
         for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
         {
             inputSources[playerIndex] = new SharedPlayerDriveInputSource(
@@ -88,14 +104,8 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        if (isDebugMode)
-        {
-            foreach (IDriveInputSource source in inputSources) source?.UpdateInput(deltaTime);
-        }
-        else
-        {
-            sharedSerialInputSource?.UpdateInput(deltaTime);
-        }
+        sharedSerialInputSource?.UpdateInput(deltaTime);
+        foreach (IDriveInputSource source in inputSources) source?.UpdateInput(deltaTime);
 
         DriveInputState playerOneState = GetInputState(0);
         handle = playerOneState.steering;
@@ -109,24 +119,21 @@ public class InputManager : MonoBehaviour
 
     public DriveInputState GetInputState(int playerIndex)
     {
-        if (!isDebugMode && sharedSerialInputSource != null)
-        {
-            return sharedSerialInputSource.GetInputState(playerIndex);
-        }
-
         IDriveInputSource source = GetPlayerInputSource(playerIndex);
         return source != null ? source.CurrentState : DriveInputState.Neutral;
     }
 
     public bool IsPlayerConnected(int playerIndex)
     {
-        if (!isDebugMode && sharedSerialInputSource != null)
-        {
-            return sharedSerialInputSource.IsConnected(playerIndex);
-        }
-
         IDriveInputSource source = GetPlayerInputSource(playerIndex);
         return source != null && source.IsConnected;
+    }
+
+    private void InitializeSharedSerialInput(bool playerOneOnly)
+    {
+        sharedSerialInputSource = new TwoPlayerSerialInputSource(
+            esp32Serial, ResolveSharedSerialPort(), playerOneOnly);
+        sharedSerialInputSource.LineProcessed += OnSharedSerialLineProcessed;
     }
 
     private string ResolveSharedSerialPort()
@@ -206,7 +213,8 @@ public class InputManager : MonoBehaviour
 
     private void OnSharedSerialLineProcessed(string status, string line)
     {
-        AddSerialDebugLog($"P1/P2 {status}", line);
+        string players = isP1SerialP2KeyboardDebugMode ? "P1" : "P1/P2";
+        AddSerialDebugLog($"{players} {status}", line);
     }
 
     void AddSerialDebugLog(string status, string line)
@@ -259,8 +267,8 @@ public class InputManager : MonoBehaviour
         GUILayout.BeginArea(new Rect(panelRect.x + 12f, panelRect.y + 10f, panelRect.width - 24f, panelRect.height - 20f));
         serialDebugScrollPosition = GUILayout.BeginScrollView(serialDebugScrollPosition);
         GUILayout.Label($"InputManager / Serial Monitor  [{SerialDebugToggleKey}: hide]", serialDebugHeaderStyle);
-        GUILayout.Label($"Input source: {(isDebugMode ? "Keyboard (serial disabled)" : "Serial")}", serialDebugLabelStyle);
-        if (!isDebugMode && sharedSerialInputSource != null)
+        GUILayout.Label($"Input source: {GetInputModeLabel()}", serialDebugLabelStyle);
+        if (sharedSerialInputSource != null)
         {
             string age = sharedSerialInputSource.LastSerialLineTime < 0f ? "-" :
                 $"{Mathf.Max(0f, Time.realtimeSinceStartup - sharedSerialInputSource.LastSerialLineTime):F2} s ago";
@@ -270,14 +278,10 @@ public class InputManager : MonoBehaviour
         }
         for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
         {
-            if (sharedSerialInputSource == null)
-            {
-                GUILayout.Label($"Player {playerIndex + 1}: serial inactive", serialDebugLabelStyle);
-                continue;
-            }
-
             DriveInputState state = GetInputState(playerIndex);
-            GUILayout.Label($"Player {playerIndex + 1}: {(sharedSerialInputSource.IsConnected(playerIndex) ? "Connected" : "Waiting for input")}", serialDebugLabelStyle);
+            IDriveInputSource source = GetPlayerInputSource(playerIndex);
+            string device = source?.DeviceId ?? "INACTIVE";
+            GUILayout.Label($"Player {playerIndex + 1} ({device}): {(IsPlayerConnected(playerIndex) ? "Connected" : "Waiting for input")}", serialDebugLabelStyle);
             GUILayout.Label($"Pedal: {state.pedal:F4}    Handle: {state.steering:F4}", serialDebugLabelStyle);
         }
         GUILayout.Space(6f);
@@ -329,6 +333,12 @@ public class InputManager : MonoBehaviour
     private static bool IsValidPlayerIndex(int playerIndex)
     {
         return playerIndex >= 0 && playerIndex < SupportedPlayerCount;
+    }
+
+    private string GetInputModeLabel()
+    {
+        if (isP1SerialP2KeyboardDebugMode) return "P1 Serial / P2 Keyboard (debug)";
+        return isDebugMode ? "Keyboard P1/P2 (debug; serial disabled)" : "Serial P1/P2";
     }
 
     private void DisposeInputSources()

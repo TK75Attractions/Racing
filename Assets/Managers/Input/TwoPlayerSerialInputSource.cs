@@ -9,6 +9,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 {
     private readonly Esp32SerialConfiguration configuration;
     private readonly string portName;
+    private readonly bool playerOneOnly;
     private readonly ConcurrentQueue<string> receivedLines = new ConcurrentQueue<string>();
     private readonly ConcurrentQueue<string> diagnosticMessages = new ConcurrentQueue<string>();
     private readonly DriveInputState[] currentStates = { DriveInputState.Neutral, DriveInputState.Neutral };
@@ -32,10 +33,14 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     public string LastParseResult { get; private set; } = "Waiting for input";
     public float LastSerialLineTime { get; private set; } = -1f;
 
-    public TwoPlayerSerialInputSource(Esp32SerialConfiguration configuration, string resolvedPortName)
+    public TwoPlayerSerialInputSource(
+        Esp32SerialConfiguration configuration,
+        string resolvedPortName,
+        bool playerOneOnly = false)
     {
         this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         portName = resolvedPortName;
+        this.playerOneOnly = playerOneOnly;
         Open();
     }
 
@@ -66,6 +71,22 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
                 continue;
             }
 
+            if (playerOneOnly)
+            {
+                if (!SerialInputProtocol.TryParsePartialInput(
+                        line, configuration.SteeringDivisor, out SerialInputFrame playerOneFrame,
+                        out bool pedalValid, out bool steeringValid))
+                {
+                    ParseErrorCount++;
+                    RecordParseResult("INVALID", line);
+                    continue;
+                }
+
+                RecordParseResult(pedalValid && steeringValid ? "OK" : "PARTIAL", line);
+                ApplyPlayerFrame(0, playerOneFrame, pedalValid, steeringValid);
+                continue;
+            }
+
             if (!SerialInputProtocol.TryParseTwoPlayerInput(
                     line, configuration.SteeringDivisor, out TwoPlayerSerialInputFrame frame))
             {
@@ -75,10 +96,12 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
             }
 
             bool anyValid = frame.PlayerOneValid || frame.PlayerTwoValid;
+            bool allValid = frame.PlayerOnePedalValid && frame.PlayerOneSteeringValid &&
+                frame.PlayerTwoPedalValid && frame.PlayerTwoSteeringValid;
             if (!anyValid) ParseErrorCount++;
-            RecordParseResult(anyValid ? "OK" : "IGNORED", line);
-            ApplyPlayerFrame(0, frame.PlayerOne, frame.PlayerOneValid);
-            ApplyPlayerFrame(1, frame.PlayerTwo, frame.PlayerTwoValid);
+            RecordParseResult(!anyValid ? "IGNORED" : allValid ? "OK" : "PARTIAL", line);
+            ApplyPlayerFrame(0, frame.PlayerOne, frame.PlayerOnePedalValid, frame.PlayerOneSteeringValid);
+            ApplyPlayerFrame(1, frame.PlayerTwo, frame.PlayerTwoPedalValid, frame.PlayerTwoSteeringValid);
         }
     }
 
@@ -99,12 +122,12 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         readThread = null;
     }
 
-    private void ApplyPlayerFrame(int playerIndex, SerialInputFrame frame, bool valid)
+    private void ApplyPlayerFrame(int playerIndex, SerialInputFrame frame, bool pedalValid, bool steeringValid)
     {
-        if (!valid) return; // Keep the previous state when either axis is nan.
+        if (!pedalValid && !steeringValid) return;
         DriveInputState state = currentStates[playerIndex];
-        state.pedal = frame.Pedal;
-        state.steering = frame.Steering;
+        state.pedal = pedalValid ? frame.Pedal : 0f;
+        state.steering = steeringValid ? frame.Steering : 0f;
         currentStates[playerIndex] = state;
         hasReceivedInput[playerIndex] = true;
         lastInputTimes[playerIndex] = Time.realtimeSinceStartup;

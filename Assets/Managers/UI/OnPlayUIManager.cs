@@ -20,7 +20,7 @@ public class OnPlayUIManager
     public UISpeed Speed => speed;
     public UIMiniMap MiniMap => miniMap;
 
-    public void Init(Transform parent, RaceCourse course, int playerIndex)
+    public void Init(Transform parent, RaceCourse course, int playerIndex, int totalLaps = 3)
     {
         trans = parent;
         if (parent == null)
@@ -35,10 +35,11 @@ public class OnPlayUIManager
         if (speed == null) speed = new UISpeed();
         if (miniMap == null) miniMap = new UIMiniMap();
 
-        position.Init(parent.Find("Position"));
-        lap.Init(parent.Find("Lap"));
-        time.Init(parent.Find("Time"));
-        speed.Init(parent.Find("Speed"));
+        Transform hud = RacingHUDBuilder.Build(parent, playerIndex, totalLaps);
+        position.Init(hud.Find("Position"));
+        lap.Init(hud.Find("Lap"));
+        time.Init(hud.Find("Time"));
+        speed.Init(hud.Find("Speed"));
         // ミニマップはノードが無ければ自前で生成するため、OnPlay ルートごと渡します。
         miniMap.Init(parent, course, playerIndex);
         initialized = true;

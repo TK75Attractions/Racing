@@ -28,6 +28,9 @@ public class Gmanager : MonoBehaviour
         public float resultConfirmTimer;
         public bool resultSteeringLatch;
         public bool returnedToTitle;
+        public PlayerDriveInputGate inputGate;
+        public InterruptionMenuUI interruptionMenu;
+        public bool withdrewFromRace;
     }
 
     public static Gmanager Control = null;
@@ -131,6 +134,7 @@ public class Gmanager : MonoBehaviour
         if (IManager != null)
         {
             IManager.UpdateInput(dt);
+            UpdateInterruptionMenuInput();
             if (state == State.Title)
             {
                 UpdateTitlePedalUI();
@@ -226,7 +230,7 @@ public class Gmanager : MonoBehaviour
 
     private void OnGUI()
     {
-        if (IManager == null || !IManager.isDebugMode)
+        if (IManager == null || !IManager.IsAnyDebugMode)
         {
             return;
         }
@@ -322,7 +326,7 @@ public class Gmanager : MonoBehaviour
         raceSession.RegisterFinish(0, first);
         raceSession.Tick(0f);
         raceSession.RegisterDnf(1, CreateFallbackResult(1, false, 2));
-        CompleteRace(raceSession.Result);
+        CompleteRace(raceSession.Result, null);
     }
 
     public void ShowResults() => ShowResult();
@@ -404,13 +408,20 @@ public class Gmanager : MonoBehaviour
 
             OnPlayUIManager playUi = playerIndex == 0 && onPlayUIManager != null
                 ? onPlayUIManager : new OnPlayUIManager();
-            playUi.Init(rig.CanvasRoot.transform.Find("OnPlay"), course, playerIndex);
+            playUi.Init(rig.CanvasRoot.transform.Find("OnPlay"), course, playerIndex, lapManager != null ? lapManager.GoalLap : 3);
             onPlayUIManagers[playerIndex] = playUi;
 
             ResultUIManager resultsUi = playerIndex == 0 && resultUIManager != null
                 ? resultUIManager : new ResultUIManager();
             resultsUi.Init(rig.CanvasRoot.transform.Find("Result"), playerIndex + 1);
             resultUIManagers[playerIndex] = resultsUi;
+
+            int capturedPlayerIndex = playerIndex;
+            player.interruptionMenu = InterruptionMenuUI.Create(
+                rig.CanvasRoot.transform,
+                () => InterruptPlayer(capturedPlayerIndex),
+                () => TogglePlayerDirection(capturedPlayerIndex),
+                () => RestartPlayerFromStart(capturedPlayerIndex));
         }
 
         VCamera = displayRigs[0].RaceCamera;
@@ -490,6 +501,7 @@ public class Gmanager : MonoBehaviour
             if (player.car.GetComponent<CarLightController>() == null)
                 player.car.AddComponent<CarLightController>();
             player.result = null;
+            player.withdrewFromRace = false;
             player.displayedRacePosition = playerIndex + 1;
             AssignPlayerInput(player.car, playerIndex);
             lapManager?.RegisterCar(player.rigidbody, spawnPoint);
@@ -604,13 +616,14 @@ public class Gmanager : MonoBehaviour
         if (registration == RaceFinishRegistration.FirstPlace)
         {
             latestResult = result;
+            PlayPlayerGoal(player, () => BeginSpectating(player.playerIndex));
             UpdateSecondPlaceDisplay();
             Debug.Log($"P{player.playerIndex + 1} finished first. Waiting {SecondPlaceTimeRemaining:F0} seconds for second place.");
             if (SecondPlaceTimeRemaining <= 0f && raceSession.Tick(0f)) CompleteRaceAfterTimeout();
             return;
         }
 
-        CompleteRace(latestSessionResult);
+        CompleteRace(latestSessionResult, player);
     }
 
     private void UpdateSecondPlaceTimeout(float dt)
@@ -631,8 +644,13 @@ public class Gmanager : MonoBehaviour
         string playerLabel = unfinishedPlayerIndex >= 0
             ? $"P{unfinishedPlayerIndex + 1}"
             : "SECOND PLACE";
-        foreach (ScreenTransitionController transition in screenTransitions)
-            transition?.ShowFinishWarning(playerLabel, raceSession.SecondPlaceTimeRemaining);
+        for (int playerIndex = 0; playerIndex < screenTransitions.Length; playerIndex++)
+        {
+            if (playerIndex == unfinishedPlayerIndex)
+            {
+                screenTransitions[playerIndex]?.ShowFinishWarning(playerLabel, raceSession.SecondPlaceTimeRemaining);
+            }
+        }
     }
 
     private void CompleteRaceAfterTimeout()
@@ -647,42 +665,65 @@ public class Gmanager : MonoBehaviour
             latestSessionResult = raceSession.Result;
             FreezePlayer(unfinished, disableCollisions: false);
         }
-        CompleteRace(latestSessionResult);
+        CompleteRace(latestSessionResult, null);
     }
 
-    private void CompleteRace(RaceSessionResult sessionResult)
+    private void CompleteRace(RaceSessionResult sessionResult, PlayerRuntime finalFinisher)
     {
-        if (state != State.Game || IsScreenTransitioning()) return;
+        if (state != State.Game) return;
         latestSessionResult = sessionResult;
         latestResult = sessionResult?.GetResultAtPosition(1);
         state = State.Goal;
         ClearRaceStatus();
         resultReturnInputDelayTimer = 0f;
         lapManager?.PauseRace();
-        foreach (PlayerRuntime player in players) FreezePlayer(player, disableCollisions: false);
-        PlayGoalCelebration();
-    }
-
-    private void PlayGoalCelebration()
-    {
-        string winner = latestResult != null && latestResult.playerNumber > 0
-            ? $"PLAYER {latestResult.playerNumber} WINS"
-            : "RACE COMPLETE";
-        string finishTime = latestResult != null
-            ? FormatRaceTime(latestResult.totalRaceTime)
-            : "--:--.---";
-
-        ScreenTransitionController primary = screenTransitions[0];
-        for (int index = 1; index < screenTransitions.Length; index++)
+        foreach (PlayerRuntime player in players)
         {
-            screenTransitions[index]?.TryPlayGoal(winner, finishTime, goalCelebrationSeconds);
+            player?.interruptionMenu?.Hide();
+            FreezePlayer(player, disableCollisions: false);
         }
-
-        if (primary == null || !primary.TryPlayGoal(winner, finishTime, goalCelebrationSeconds, ShowResultsAfterGoal))
+        if (finalFinisher != null)
+        {
+            PlayPlayerGoal(finalFinisher, ShowResultsAfterGoal);
+        }
+        else
         {
             ShowResultsAfterGoal();
         }
-        Debug.Log("Two-player goal celebration started");
+    }
+
+    private void PlayPlayerGoal(PlayerRuntime player, Action onCompleted)
+    {
+        if (player == null)
+        {
+            onCompleted?.Invoke();
+            return;
+        }
+
+        string playerLabel = $"PLAYER {player.playerIndex + 1} FINISHED";
+        string finishTime = player.result != null
+            ? FormatRaceTime(player.result.totalRaceTime)
+            : "--:--.---";
+        ScreenTransitionController transition = screenTransitions[player.playerIndex];
+        if (transition == null || !transition.TryPlayGoal(playerLabel, finishTime, goalCelebrationSeconds, onCompleted))
+        {
+            onCompleted?.Invoke();
+        }
+        Debug.Log($"P{player.playerIndex + 1} goal celebration started");
+    }
+
+    private void BeginSpectating(int finishedPlayerIndex)
+    {
+        if (finishedPlayerIndex < 0 || finishedPlayerIndex >= players.Length) return;
+        int watchedPlayerIndex = 1 - finishedPlayerIndex;
+        PlayerRuntime finished = players[finishedPlayerIndex];
+        PlayerRuntime watched = players[watchedPlayerIndex];
+        if (finished?.displayRig?.RaceCamera == null || watched?.displayRig?.RaceCamera == null) return;
+
+        finished.displayRig.RaceCamera.Follow = watched.displayRig.RaceCamera.Follow;
+        finished.displayRig.RaceCamera.LookAt = watched.displayRig.RaceCamera.LookAt;
+        screenTransitions[finishedPlayerIndex]?.ApplyStateImmediate(State.Game);
+        screenTransitions[finishedPlayerIndex]?.ShowSpectator(watchedPlayerIndex);
     }
 
     private void ShowResultsAfterGoal()
@@ -736,6 +777,10 @@ public class Gmanager : MonoBehaviour
             player.rigidbody = null;
             player.mover = null;
             player.result = null;
+            player.inputGate?.Reset();
+            player.inputGate = null;
+            player.withdrewFromRace = false;
+            player.interruptionMenu?.Hide();
         }
 
         car = null;
@@ -768,24 +813,102 @@ public class Gmanager : MonoBehaviour
     private void AssignPlayerInput(GameObject playerCar, int playerIndex)
     {
         if (playerCar == null || IManager == null) return;
-        IDriveInputSource inputSource = IManager.GetPlayerInputSource(playerIndex);
-        playerCar.GetComponent<DebugMover>()?.SetInputSource(inputSource);
-        playerCar.GetComponent<CarResetter>()?.SetInputSource(inputSource);
+        IDriveInputSource source = IManager.GetPlayerInputSource(playerIndex);
+        PlayerDriveInputGate gate = new PlayerDriveInputGate(source);
+        players[playerIndex].inputGate = gate;
+        playerCar.GetComponent<DebugMover>()?.SetInputSource(gate);
+        playerCar.GetComponent<CarResetter>()?.SetInputSource(gate);
+    }
+
+    private void UpdateInterruptionMenuInput()
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null) return;
+        if (!keyboard.escapeKey.wasPressedThisFrame || state != State.Game || IsScreenTransitioning()) return;
+
+        bool anyMenuOpen = false;
+        for (int index = 0; index < players.Length; index++)
+        {
+            if (players[index]?.interruptionMenu?.IsOpen == true)
+            {
+                anyMenuOpen = true;
+                break;
+            }
+        }
+
+        for (int index = 0; index < players.Length; index++)
+        {
+            if (anyMenuOpen) CloseInterruptionMenu(index);
+            else OpenInterruptionMenu(index);
+        }
+    }
+
+    public void OpenInterruptionMenu(int playerIndex)
+    {
+        if (state != State.Game || playerIndex < 0 || playerIndex >= players.Length) return;
+        PlayerRuntime player = players[playerIndex];
+        if (player?.car == null || player.result != null || player.withdrewFromRace) return;
+        player.inputGate?.SetBlocked(true);
+        player.interruptionMenu?.Show(player.inputGate?.IsReverse == true);
+    }
+
+    private void CloseInterruptionMenu(int playerIndex)
+    {
+        PlayerRuntime player = players[playerIndex];
+        player?.interruptionMenu?.Hide();
+        if (player != null && !player.withdrewFromRace) player.inputGate?.SetBlocked(false);
+    }
+
+    private void InterruptPlayer(int playerIndex)
+    {
+        if (state != State.Game || playerIndex < 0 || playerIndex >= players.Length) return;
+        PlayerRuntime player = players[playerIndex];
+        if (player?.car == null) return;
+        player.withdrewFromRace = true;
+        player.inputGate?.SetBlocked(true);
+        player.interruptionMenu?.Hide();
+        FreezePlayer(player, disableCollisions: false);
+        Debug.Log($"P{playerIndex + 1} interrupted the race.");
+    }
+
+    private void TogglePlayerDirection(int playerIndex)
+    {
+        if (playerIndex < 0 || playerIndex >= players.Length) return;
+        PlayerRuntime player = players[playerIndex];
+        if (player?.inputGate == null) return;
+        bool isReverse = player.inputGate.ToggleDirection();
+        player.interruptionMenu?.SetDirectionStatus(isReverse);
+        CloseInterruptionMenu(playerIndex);
+    }
+
+    private void RestartPlayerFromStart(int playerIndex)
+    {
+        if (playerIndex < 0 || playerIndex >= players.Length) return;
+        PlayerRuntime player = players[playerIndex];
+        player?.car?.GetComponent<CarResetter>()?.ResetCar();
+        CloseInterruptionMenu(playerIndex);
     }
 
     private void UpdateOnPlayUI()
     {
         for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
         {
-            PlayerRuntime player = players[playerIndex];
+            PlayerRuntime displayOwner = players[playerIndex];
             OnPlayUIManager ui = onPlayUIManagers[playerIndex];
-            if (player?.rigidbody == null || ui == null) continue;
+            if (displayOwner == null || ui == null) continue;
+
+            int viewedPlayerIndex = displayOwner.result != null && WaitingForSecondPlace
+                ? 1 - playerIndex
+                : playerIndex;
+            PlayerRuntime player = players[viewedPlayerIndex];
+            if (player?.rigidbody == null) continue;
+
             LapManager.CarTimeData lapData = lapManager?.GetCarData(player.rigidbody);
             int lapValue = GetCurrentLapValue(lapData);
             float lapSeconds = lapData != null ? lapData.currentLapTime : time;
             float totalSeconds = lapData != null ? lapData.totalRaceTime + lapData.currentLapTime : time;
             float speedValue = player.rigidbody.linearVelocity.magnitude * speedUnitMultiplier;
-            ui.UpdateUI(GetRacePosition(playerIndex), lapValue, totalSeconds, lapSeconds, speedValue);
+            ui.UpdateUI(GetRacePosition(viewedPlayerIndex), lapValue, totalSeconds, lapSeconds, speedValue);
         }
     }
 
@@ -1027,9 +1150,17 @@ public class Gmanager : MonoBehaviour
             if (!player.isReady)
             {
                 DriveInputState input = IManager.GetInputState(playerIndex);
-                bool readyInput = input.readyPressed || input.pedal >= titleStartPedalThreshold;
-                player.readyHoldTimer = readyInput ? player.readyHoldTimer + dt : 0f;
-                player.isReady = player.readyHoldTimer >= Mathf.Max(0.01f, titleStartHoldSeconds);
+                if (input.readyPressed)
+                {
+                    // Ready is a one-frame press event; it cannot satisfy a hold timer.
+                    player.isReady = true;
+                }
+                else
+                {
+                    player.readyHoldTimer = input.pedal >= titleStartPedalThreshold
+                        ? player.readyHoldTimer + dt : 0f;
+                    player.isReady = player.readyHoldTimer >= Mathf.Max(0.01f, titleStartHoldSeconds);
+                }
             }
             allReady &= player.isReady;
         }
@@ -1043,8 +1174,8 @@ public class Gmanager : MonoBehaviour
 
     private string GetReadyPrompt()
     {
-        string p1 = players[0].isReady ? "P1 READY" : "P1 PRESS PEDAL";
-        string p2 = players[1].isReady ? "P2 READY" : "P2 PRESS PEDAL";
+        string p1 = players[0].isReady ? "P1  準備完了" : "P1  ペダルを踏んで準備";
+        string p2 = players[1].isReady ? "P2  準備完了" : "P2  ペダルを踏んで準備";
         return $"{p1}     {p2}";
     }
 
