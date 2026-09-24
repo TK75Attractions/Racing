@@ -1,12 +1,12 @@
 using UnityEngine;
 
-/// <summary>壁への衝突時に車を停止させ、車体後方へ一定の反発を与えます。</summary>
+/// <summary>壁への衝突時に車を停止させ、衝突面の法線方向へ一定の反発を与えます。</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody))]
 public sealed class CarWallCollisionResponse : MonoBehaviour
 {
     [SerializeField, Min(0f)]
-    [Tooltip("壁に当たったときに車体後方へ加える反発の大きさです。")]
+    [Tooltip("壁に当たったときに衝突面の法線方向へ加える反発の大きさです。")]
     private float wallBounceImpulse = 8f;
 
     [SerializeField, Range(0f, 1f)]
@@ -22,7 +22,7 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (!IsWallCollision(collision))
+        if (!TryGetWallNormal(collision, out Vector3 wallNormal))
         {
             return;
         }
@@ -30,15 +30,16 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
         // 衝突前の速さには依存させず、まず現在の並進速度を必ず消します。
         body.linearVelocity = Vector3.zero;
 
-        Vector3 backward = Vector3.ProjectOnPlane(-transform.forward, Vector3.up);
-        if (backward.sqrMagnitude > 0.0001f)
+        if (wallNormal.sqrMagnitude > 0.0001f)
         {
-            body.AddForce(backward.normalized * wallBounceImpulse, ForceMode.Impulse);
+            // 車体の向きではなく、実際にぶつかった面の法線方向へ押し出します。
+            body.AddForce(wallNormal.normalized * wallBounceImpulse, ForceMode.Impulse);
         }
     }
 
-    private bool IsWallCollision(Collision collision)
+    private bool TryGetWallNormal(Collision collision, out Vector3 wallNormal)
     {
+        wallNormal = Vector3.zero;
         if (collision == null || collision.contactCount == 0 ||
             (collision.rigidbody != null && !collision.rigidbody.isKinematic))
         {
@@ -56,12 +57,13 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
         // 建物などの静的コライダーは、地面と区別できる接触法線で壁判定します。
         for (int index = 0; index < collision.contactCount; index++)
         {
-            if (Mathf.Abs(collision.GetContact(index).normal.y) <= maximumWallNormalY)
+            Vector3 contactNormal = collision.GetContact(index).normal;
+            if (Mathf.Abs(contactNormal.y) <= maximumWallNormalY)
             {
-                return true;
+                wallNormal += contactNormal;
             }
         }
 
-        return false;
+        return wallNormal.sqrMagnitude > 0.0001f;
     }
 }

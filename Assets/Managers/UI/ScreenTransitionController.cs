@@ -459,9 +459,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
             new Color(0.82f, 0.87f, 0.92f, 1f));
         titlePrompt.characterSpacing = 6f;
 
-        Color playerAccent = displayPlayerIndex == 0
-            ? new Color(0.05f, 0.78f, 1f, 1f)
-            : new Color(1f, 0.28f, 0.36f, 1f);
+        Color playerAccent = PlayerCarPaint.GetPlayerColor(displayPlayerIndex);
         BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(0.36f, 0.23f), new Vector2(0.64f, 0.355f),
             playerAccent);
 
@@ -616,9 +614,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         }
 
         float amount = Mathf.Clamp01(value);
-        Color accent = playerIndex == 0
-            ? new Color(0.05f, 0.78f, 1f, 1f)
-            : new Color(1f, 0.28f, 0.36f, 1f);
+        Color accent = PlayerCarPaint.GetPlayerColor(playerIndex);
         Color readyColor = new Color(0.2f, 1f, 0.58f, 1f);
         titleButtonFeedback[playerIndex].SetState(armed, amount, ready ? readyColor : accent);
         titleButtonFeedback[playerIndex].SetConfirmed(ready);

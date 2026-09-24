@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b1531099f43b1342b0805ae04f85ec6, type: 3}
+  m_Name: CourseLightCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::CourseLightPlacementCatalog
+  entries:
+  - displayName: "\u30CD\u30AA\u30F3\u884C\u71C8"
+    prefab: {fileID: 4318921034812340001, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b03, type: 3}
+  - displayName: "\u77E2\u5370\u30AC\u30FC\u30C9\u30EC\u30FC\u30EB"
+    prefab: {fileID: 1115897135339455419, guid: a113a551b254b3549bd8e7ab987c1fd3, type: 3}
+  - displayName: "\u77E2\u5370\u6848\u5185\u770B\u677F"
+    prefab: {fileID: 8867755474988012150, guid: c669c85f5696fc244b3bcd63e44202ce, type: 3}
+  - displayName: "\u9EC4\u9ED2\u306E\u9032\u5165\u7981\u6B62\u30DD\u30FC\u30EB"
+    prefab: {fileID: 7732062838852594541, guid: b53da9c4175dfb742baee70440b8e2f6, type: 3}
