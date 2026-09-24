@@ -490,9 +490,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         titlePrompt.characterSpacing = 1f;
         RacingUITheme.ApplyTypography(titlePrompt, FontRole.Japanese, 24f);
 
-        Color playerAccent = displayPlayerIndex == 0
-            ? new Color(0.05f, 0.78f, 1f, 1f)
-            : new Color(1f, 0.28f, 0.36f, 1f);
+        Color playerAccent = PlayerCarPaint.GetPlayerColor(displayPlayerIndex);
         BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(0.35f, 0.235f), new Vector2(0.65f, 0.35f),
             playerAccent);
 
@@ -638,9 +636,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         }
 
         float amount = Mathf.Clamp01(value);
-        Color accent = playerIndex == 0
-            ? new Color(0.05f, 0.78f, 1f, 1f)
-            : new Color(1f, 0.28f, 0.36f, 1f);
+        Color accent = PlayerCarPaint.GetPlayerColor(playerIndex);
         Color readyColor = new Color(0.2f, 1f, 0.58f, 1f);
         titleButtonFeedback[playerIndex].SetState(armed, amount, ready ? readyColor : accent);
         titleButtonFeedback[playerIndex].SetConfirmed(ready);

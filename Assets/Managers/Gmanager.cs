@@ -478,6 +478,9 @@ public class Gmanager : MonoBehaviour
             Vector3 spawnPosition = basePosition + gridRight * startGridSpacing * side;
             player.car = Instantiate(carPrefab, spawnPosition, spawnRotation);
             player.car.name = $"Player{playerIndex + 1}_Car";
+            PlayerCarPaint paint = player.car.GetComponent<PlayerCarPaint>();
+            if (paint == null) paint = player.car.AddComponent<PlayerCarPaint>();
+            paint.SetPlayerIndex(playerIndex);
             player.rigidbody = player.car.GetComponent<Rigidbody>();
             player.mover = player.car.GetComponent<DebugMover>();
             player.displayRig.RaceVisuals?.Configure(
