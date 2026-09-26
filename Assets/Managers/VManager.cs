@@ -41,6 +41,16 @@ public class VManager : MonoBehaviour
     [SerializeField, Min(0f)] private float chargeFullPulseHz = 2.4f;
     [SerializeField, Range(0f, 1f)] private float chargeFullPulseDepth = 0.35f;
 
+    [Header("Lightning Flash")]
+    [Tooltip("稲妻の瞬間に、そのプレイヤーの画面を白く光らせるか。")]
+    [SerializeField] private bool lightningFlashEnabled = true;
+    [Tooltip("強さ1の光で通常設定へ加算する露出。")]
+    [SerializeField, Range(0f, 4f)] private float lightningFlashExposure = 1.6f;
+    [Tooltip("強さ1の光で通常設定へ加算するブルーム。")]
+    [SerializeField, Min(0f)] private float lightningFlashBloom = 1.5f;
+    [Tooltip("強さ1の光が消えるまでの時間（秒）。")]
+    [SerializeField, Min(0.01f)] private float lightningFlashFadeSeconds = 0.35f;
+
     [Header("Race Speed Post Processing")]
     [SerializeField] private bool raceSpeedEffectsEnabled = true;
     [SerializeField, Range(0f, 1f)] private float speedMotionBlurLow = 0.08f;
@@ -87,6 +97,12 @@ public class VManager : MonoBehaviour
         public ColorAdjustments speedColorAdjustments;
         public Vignette chargeVignette;
         public ChromaticAberration chargeChromaticAberration;
+        public Volume flashVolume;
+        public VolumeProfile flashProfile;
+        public ColorAdjustments flashColorAdjustments;
+        public Bloom flashBloom;
+        public float flash01;
+        public Color flashTint = Color.white;
         public float chargeAmount;
         public bool chargeFull;
         public Color chargeTint = Color.white;
@@ -220,14 +236,46 @@ public class VManager : MonoBehaviour
             effect.chargeVignette = effect.chargeProfile.Add<Vignette>();
             effect.chargeChromaticAberration = effect.chargeProfile.Add<ChromaticAberration>();
 
+            // 稲妻の光は他の演出より手前に重ね、一瞬だけ画面全体を照らします。
+            effect.flashProfile = ScriptableObject.CreateInstance<VolumeProfile>();
+            effect.flashProfile.name = $"LightningFlashProfile_P{index + 1}";
+            effect.flashProfile.hideFlags = HideFlags.DontSave;
+            GameObject flashObject = new GameObject($"LightningFlashVolume_P{index + 1}");
+            flashObject.hideFlags = HideFlags.DontSave;
+            flashObject.layer = layer;
+            flashObject.transform.SetParent(transform, false);
+            effect.flashVolume = flashObject.AddComponent<Volume>();
+            effect.flashVolume.isGlobal = true;
+            effect.flashVolume.priority = volume.priority + 150f;
+            effect.flashVolume.weight = 0f;
+            effect.flashVolume.sharedProfile = effect.flashProfile;
+            effect.flashColorAdjustments = effect.flashProfile.Add<ColorAdjustments>();
+            effect.flashBloom = effect.flashProfile.Add<Bloom>();
+
             cameraData.volumeLayerMask = cameraData.volumeLayerMask.value | (1 << visualLayer);
             cameraData.renderPostProcessing = true;
             playerEffects[index] = effect;
             ApplySpeedSettings(effect);
             ApplyChargeSettings(effect);
             ApplyBoostSettings(effect);
+            ApplyFlashSettings(effect);
         }
     }
+
+    /// <summary>稲妻の瞬間に、そのプレイヤーの画面だけを一瞬光らせます。強さは 0〜1 です。</summary>
+    public void FlashLightning(int playerIndex, float strength, Color tint)
+    {
+        if (!lightningFlashEnabled || playerIndex < 0 || playerIndex >= playerEffects.Length) return;
+        PlayerEffect effect = playerEffects[playerIndex];
+        if (effect == null || effect.flashVolume == null) return;
+        effect.flash01 = Mathf.Max(effect.flash01, Mathf.Clamp01(strength));
+        effect.flashTint = tint;
+    }
+
+    public float GetLightningFlashWeight(int playerIndex) =>
+        playerIndex >= 0 && playerIndex < playerEffects.Length && playerEffects[playerIndex] != null &&
+        playerEffects[playerIndex].flashVolume != null
+            ? playerEffects[playerIndex].flashVolume.weight : 0f;
 
     public void SetDriftBoost(int playerIndex, float intensity)
     {
@@ -290,6 +338,7 @@ public class VManager : MonoBehaviour
             if (effect == null) continue;
             ApplySpeedSettings(effect);
             TickDriftCharge(effect, deltaTime);
+            TickLightningFlash(effect, deltaTime);
 
             if (!driftBoostEffectsEnabled)
             {
@@ -318,7 +367,29 @@ public class VManager : MonoBehaviour
             effect.chargeAmount = 0f;
             effect.chargeFull = false;
             if (effect.chargeVolume != null) effect.chargeVolume.weight = 0f;
+            effect.flash01 = 0f;
+            if (effect.flashVolume != null) effect.flashVolume.weight = 0f;
         }
+    }
+
+    private void TickLightningFlash(PlayerEffect effect, float deltaTime)
+    {
+        if (effect.flashVolume == null) return;
+        if (!lightningFlashEnabled) effect.flash01 = 0f;
+        effect.flashVolume.weight = effect.flash01;
+        if (effect.flash01 > 0f) ApplyFlashSettings(effect);
+        effect.flash01 = Mathf.MoveTowards(
+            effect.flash01, 0f, Mathf.Max(0f, deltaTime) / lightningFlashFadeSeconds);
+    }
+
+    private void ApplyFlashSettings(PlayerEffect effect)
+    {
+        if (effect.flashProfile == null) return;
+        // Volumeのweightで通常の画面と混ざるため、強さ1のときの値だけを書き込みます。
+        effect.flashColorAdjustments.postExposure.Override(
+            BaseValue(colorAdjustments, colorAdjustments.postExposure) + lightningFlashExposure);
+        effect.flashColorAdjustments.colorFilter.Override(effect.flashTint);
+        effect.flashBloom.intensity.Override(EffectiveBloom(effect) + lightningFlashBloom);
     }
 
     private void TickDriftCharge(PlayerEffect effect, float deltaTime)
@@ -453,9 +524,16 @@ public class VManager : MonoBehaviour
                 effect.chargeVolume.sharedProfile = null;
                 CoreUtils.Destroy(effect.chargeVolume.gameObject);
             }
+            if (effect.flashVolume != null)
+            {
+                effect.flashVolume.weight = 0f;
+                effect.flashVolume.sharedProfile = null;
+                CoreUtils.Destroy(effect.flashVolume.gameObject);
+            }
             DestroyProfile(effect.profile);
             DestroyProfile(effect.speedProfile);
             DestroyProfile(effect.chargeProfile);
+            DestroyProfile(effect.flashProfile);
             playerEffects[index] = null;
         }
     }

@@ -58,6 +58,10 @@ public class LapManager : MonoBehaviour
     private float progressStartDistance;
 
     public int GoalLap => goalLap;
+    /// <summary>
+    /// レースの進行方向が RaceCourse の waypoint 順と逆かどうかです。スタート地点の向きから決まります。
+    /// </summary>
+    public bool IsProgressReversed => reverseProgressDirection;
     public event Action<Rigidbody, RaceResultRecord> CarFinished;
 
     private void Awake()

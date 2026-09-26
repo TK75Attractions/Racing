@@ -31,6 +31,8 @@ public class Gmanager : MonoBehaviour
         public PlayerDriveInputGate inputGate;
         public InterruptionMenuUI interruptionMenu;
         public bool withdrewFromRace;
+        public CarItemEffects itemEffects;
+        public PlayerItemHUD itemHud;
     }
 
     public static Gmanager Control = null;
@@ -85,6 +87,7 @@ public class Gmanager : MonoBehaviour
     private TwoPlayerRaceSession raceSession;
     private RaceResultRecord latestResult;
     private RaceSessionResult latestSessionResult;
+    private RaceLightningDirector raceLightning;
 
     public RaceResultRecord LatestResult => latestResult;
     public RaceSessionResult LatestSessionResult => latestSessionResult;
@@ -123,6 +126,7 @@ public class Gmanager : MonoBehaviour
         displayRigs = TwoPlayerDisplayFactory.Create(transform.parent, cameraBlendSeconds);
         InitializePlayerDisplays();
         InitializeVolumes();
+        InitializeRaceLightning();
         ApplyStateImmediate(State.Title);
         SwitchCameraForState(State.Title);
         ResetTitleStartInputGate();
@@ -153,6 +157,7 @@ public class Gmanager : MonoBehaviour
         {
             time += dt;
             UpdateOnPlayUI();
+            UpdateRaceLightning();
             UpdateSecondPlaceTimeout(dt);
             UpdateGoMessage(dt);
         }
@@ -193,6 +198,38 @@ public class Gmanager : MonoBehaviour
         if (course == null) return;
         if (course.GetComponent<RaceSpeedSceneryController>() == null)
             course.gameObject.AddComponent<RaceSpeedSceneryController>();
+    }
+
+    private void InitializeRaceLightning()
+    {
+        raceLightning = GetComponent<RaceLightningDirector>();
+        if (raceLightning == null) raceLightning = gameObject.AddComponent<RaceLightningDirector>();
+        RaceSpeedVisualController[] visuals = new RaceSpeedVisualController[displayRigs.Length];
+        for (int index = 0; index < displayRigs.Length; index++) visuals[index] = displayRigs[index].RaceVisuals;
+        raceLightning.Configure(VManager, visuals);
+    }
+
+    /// <summary>追い抜きとファイナルラップ突入を、稲妻の演出へ伝えます。</summary>
+    private void UpdateRaceLightning()
+    {
+        if (raceLightning == null) return;
+        PlayerRuntime playerOne = players[0];
+        PlayerRuntime playerTwo = players[1];
+        bool bothRacing = playerOne?.car != null && playerTwo?.car != null &&
+            playerOne.result == null && playerTwo.result == null &&
+            !playerOne.withdrewFromRace && !playerTwo.withdrewFromRace;
+        int leaderIndex = -1;
+        if (bothRacing && playerOne.displayedRacePosition != playerTwo.displayedRacePosition)
+            leaderIndex = playerOne.displayedRacePosition == 1 ? 0 : 1;
+        raceLightning.UpdateOvertake(time, leaderIndex);
+
+        if (lapManager == null) return;
+        foreach (PlayerRuntime player in players)
+        {
+            if (player?.rigidbody == null || player.result != null || player.withdrewFromRace) continue;
+            LapManager.CarTimeData lapData = lapManager.GetCarData(player.rigidbody);
+            if (lapData != null) raceLightning.UpdateLap(player.playerIndex, lapData.lapCount, lapManager.GoalLap);
+        }
     }
 
     private void LateUpdate()
@@ -422,6 +459,7 @@ public class Gmanager : MonoBehaviour
                 () => InterruptPlayer(capturedPlayerIndex),
                 () => TogglePlayerDirection(capturedPlayerIndex),
                 () => RestartPlayerFromStart(capturedPlayerIndex));
+            player.itemHud = PlayerItemHUD.Create(rig.CanvasRoot.transform);
         }
 
         VCamera = displayRigs[0].RaceCamera;
@@ -464,6 +502,10 @@ public class Gmanager : MonoBehaviour
         Vector3 gridRight = spawnPoint != null ? spawnPoint.right : Vector3.right;
 
         lapManager?.ResetRace();
+        TireMarkRenderer.ClearAll();
+        OilSlick.ClearAll();
+        RaceItemPickup.ResetAll();
+        raceLightning?.ResetRace();
         raceSession = new TwoPlayerRaceSession(secondPlaceTimeoutSeconds);
         raceSession.Start();
         countdownTimeRemaining = Mathf.Max(0f, raceCountdownSeconds);
@@ -491,15 +533,29 @@ public class Gmanager : MonoBehaviour
                 player.displayRig.RaceCamera,
                 player.displayRig.VisualEffectPivot,
                 VManager);
-            if (player.car.GetComponent<CarCollisionSparks>() == null)
-                player.car.AddComponent<CarCollisionSparks>();
+            CarCollisionSparks collisionSparks = player.car.GetComponent<CarCollisionSparks>();
+            if (collisionSparks == null) collisionSparks = player.car.AddComponent<CarCollisionSparks>();
+            // 衝突の揺れは、ぶつかった車を操作しているプレイヤーのカメラだけに伝えます。
+            RaceSpeedVisualController raceVisuals = player.displayRig.RaceVisuals;
+            if (raceVisuals != null) collisionSparks.Impact += raceVisuals.AddImpact;
+            if (player.car.GetComponent<TireEffectsVisual>() == null)
+                player.car.AddComponent<TireEffectsVisual>();
             if (player.car.GetComponent<CarWallCollisionResponse>() == null)
                 player.car.AddComponent<CarWallCollisionResponse>();
             player.chargeVisual = player.car.GetComponent<DriftChargeVisual>();
             if (player.chargeVisual == null)
                 player.chargeVisual = player.car.AddComponent<DriftChargeVisual>();
+            DriftLightningVisual driftLightning = player.car.GetComponent<DriftLightningVisual>();
+            if (driftLightning == null) driftLightning = player.car.AddComponent<DriftLightningVisual>();
+            driftLightning.Configure(playerIndex, VManager, player.displayRig.RaceVisuals);
+            raceLightning?.SetCar(playerIndex, player.car.transform);
             if (player.car.GetComponent<CarLightController>() == null)
                 player.car.AddComponent<CarLightController>();
+            player.itemEffects = player.car.GetComponent<CarItemEffects>();
+            if (player.itemEffects == null)
+                player.itemEffects = player.car.AddComponent<CarItemEffects>();
+            player.itemEffects.Configure(playerIndex);
+            player.itemHud?.Bind(player.itemEffects);
             player.result = null;
             player.withdrewFromRace = false;
             player.displayedRacePosition = playerIndex + 1;
@@ -781,11 +837,16 @@ public class Gmanager : MonoBehaviour
             player.inputGate = null;
             player.withdrewFromRace = false;
             player.interruptionMenu?.Hide();
+            player.itemHud?.Bind(null);
+            player.itemEffects = null;
         }
 
+        OilSlick.ClearAll();
         car = null;
         BindMiniMapCars();
         lapManager?.ResetRace();
+        TireMarkRenderer.ClearAll();
+        raceLightning?.ResetRace();
         latestResult = null;
         latestSessionResult = null;
         raceSession = null;
@@ -1019,6 +1080,7 @@ public class Gmanager : MonoBehaviour
         SetBehaviourEnabled<CarStabilityController>(player.car, false);
         SetBehaviourEnabled<CarResetter>(player.car, false);
         SetBehaviourEnabled<CarSoundController>(player.car, false);
+        SetBehaviourEnabled<CarItemEffects>(player.car, false);
         foreach (AudioSource audioSource in player.car.GetComponentsInChildren<AudioSource>(true)) audioSource.Stop();
         if (disableCollisions)
             foreach (Collider collider in player.car.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
@@ -1220,6 +1282,33 @@ public class Gmanager : MonoBehaviour
             finalLapTime = currentLapTime,
             bestLapTime = bestLapTime
         };
+    }
+
+    /// <summary>
+    /// アイテム抽選用に、指定車両の現在順位と、妨害対象になる相手車両の効果を返します。
+    /// 相手がゴール済み・中断済みの場合、opponentEffects は null です。
+    /// </summary>
+    /// <summary>
+    /// コース中心線の進行距離が増える向きにレースが進むなら 1、逆なら -1 です。
+    /// ロケットの自動操縦が、周回判定と同じ向きへ走るために使います。
+    /// </summary>
+    public float CourseProgressSign => lapManager != null && lapManager.IsProgressReversed ? -1f : 1f;
+
+    public bool TryGetItemContext(Rigidbody target, out int racePosition, out CarItemEffects opponentEffects)
+    {
+        racePosition = 1;
+        opponentEffects = null;
+        PlayerRuntime player = FindPlayer(target);
+        if (player == null) return false;
+
+        racePosition = GetRacePosition(player.playerIndex);
+        PlayerRuntime opponent = players[1 - player.playerIndex];
+        if (opponent != null && opponent.result == null && !opponent.withdrewFromRace &&
+            opponent.itemEffects != null && opponent.itemEffects.isActiveAndEnabled)
+        {
+            opponentEffects = opponent.itemEffects;
+        }
+        return true;
     }
 
     private PlayerRuntime FindPlayer(Rigidbody target)

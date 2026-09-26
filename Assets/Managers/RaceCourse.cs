@@ -210,6 +210,38 @@ public class RaceCourse : MonoBehaviour
         return totalLength > Mathf.Epsilon ? Mathf.Repeat(progress, totalLength) : 0f;
     }
 
+    /// <summary>
+    /// スタート地点から進行方向に沿った距離に対応する、中心線上のワールド座標を返します。
+    /// 中心線は閉じたパスとして扱うため、TotalLength を超える距離や負の距離も周回として扱います。
+    /// </summary>
+    public bool TryGetPointAtProgress(float progressDistance, out Vector3 point)
+    {
+        point = Vector3.zero;
+        EnsureCache();
+        int count = cachedCenterPath.Count;
+        if (count < 2 || cachedCumulativeDistances.Count != count) return false;
+
+        float totalLength = TotalLength;
+        if (totalLength <= Mathf.Epsilon) return false;
+        float distance = Mathf.Repeat(progressDistance, totalLength);
+
+        // 累積距離は単調増加なので、二分探索で distance を含む区間を探します。
+        int low = 1;
+        int high = count - 1;
+        while (low < high)
+        {
+            int middle = (low + high) / 2;
+            if (cachedCumulativeDistances[middle] < distance) low = middle + 1;
+            else high = middle;
+        }
+
+        float startDistance = cachedCumulativeDistances[low - 1];
+        float segmentLength = cachedCumulativeDistances[low] - startDistance;
+        float t = segmentLength > Mathf.Epsilon ? Mathf.Clamp01((distance - startDistance) / segmentLength) : 0f;
+        point = Vector3.Lerp(cachedCenterPath[low - 1], cachedCenterPath[low], t);
+        return true;
+    }
+
     /// <summary>速度感用の路面・沿道ビジュアルが利用する中心線のキャッシュをコピーします。</summary>
     public void CopyCenterPathWorld(List<Vector3> destination)
     {
