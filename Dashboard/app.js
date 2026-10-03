@@ -20,12 +20,29 @@ function setConnection(isConnected) {
     currentState = null;
     $('game-state').textContent = '接続待機';
     $('state-detail').textContent = 'Unity を起動してください';
+    $('race-time').textContent = '00:00.0';
+    $('goal-lap').innerHTML = '--<span class="unit"> LAPS</span>';
+    $('serial-count').textContent = '--';
+    $('parse-errors').textContent = '--';
+    $('serial-sub').textContent = 'ポート未接続';
+    $('serial-port').textContent = 'PORT —';
+    $('port-status').textContent = '待機中';
+    $('port-status').classList.remove('active');
+    $('input-mode').textContent = '—';
+    $('last-result').textContent = '—';
+    $('serial-log').innerHTML = '<div class="empty-log">シリアル入力を待っています。Unity の接続状態を確認してください。</div>';
     for (const button of document.querySelectorAll('[data-action]')) button.disabled = true;
     for (let i = 1; i <= 2; i++) {
       $('player-status-' + i).textContent = '待機中';
       $('player-status-' + i).classList.remove('active');
+      $('lap-' + i).textContent = '-- / --';
+      $('speed-' + i).innerHTML = '-- <small>km/h</small>';
+      $('pedal-' + i).textContent = '--';
+      $('steer-' + i).textContent = '--';
       $('feed-' + i).hidden = true;
       $('placeholder-' + i).hidden = false;
+      if (frameUrls[i - 1]) URL.revokeObjectURL(frameUrls[i - 1]);
+      frameUrls[i - 1] = null;
     }
   }
 }
