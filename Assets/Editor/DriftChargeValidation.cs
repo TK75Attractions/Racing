@@ -150,8 +150,8 @@ public static class DriftChargeValidation
             manager.TickDriftBoost(1f);
             Near(manager.GetDriftChargeWeight(0), 0f, "Disabling charge visuals must keep the screen untouched.");
 
-            // 通常Volume 1個と、プレイヤーごとの加速・速度・チャージ Volume 3個ずつ。
-            Require(root.GetComponentsInChildren<Volume>().Length == 7,
+            // 通常Volume 1個と、プレイヤーごとの加速・速度・チャージ・稲妻の光 Volume 4個ずつ。
+            Require(root.GetComponentsInChildren<Volume>().Length == 9,
                 "Charge volumes must be created once per player.");
             UnityEngine.Object.DestroyImmediate(manager);
             Require(p1Data.volumeLayerMask.value == 1, "Disposal must restore the camera configuration.");
