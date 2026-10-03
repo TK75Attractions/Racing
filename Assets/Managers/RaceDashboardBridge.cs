@@ -12,6 +12,7 @@ using UnityEngine.Rendering;
 public sealed class RaceDashboardBridge : MonoBehaviour
 {
     private const string Prefix = "http://127.0.0.1:8765/";
+    private const string DashboardUrl = "https://tk75attractions.github.io/Racing/";
     private const int MaxSerialLines = 80;
     private readonly ConcurrentQueue<HttpListenerContext> requests = new ConcurrentQueue<HttpListenerContext>();
     private readonly Queue<SerialEntry> serialLines = new Queue<SerialEntry>();
@@ -105,11 +106,25 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         try
         {
             string origin = context.Request.Headers["Origin"];
-            if (!AllowedOrigin(origin)) { Respond(context, 403, "text/plain", Encoding.UTF8.GetBytes("Origin denied"), null); return; }
+            string path = context.Request.Url.AbsolutePath;
+            bool isGet = context.Request.HttpMethod == "GET";
+            // Address-bar navigation does not send Origin. Send the user to the actual UI.
+            if (isGet && path == "/")
+            {
+                context.Response.Redirect(DashboardUrl);
+                context.Response.Close();
+                return;
+            }
+            // Direct navigation to the read-only status endpoint is useful for diagnostics.
+            bool directStatusRead = isGet && path == "/api/status" && string.IsNullOrEmpty(origin);
+            if (!directStatusRead && !AllowedOrigin(origin))
+            {
+                Respond(context, 403, "text/plain", Encoding.UTF8.GetBytes("Origin denied"), null);
+                return;
+            }
             if (context.Request.HttpMethod == "OPTIONS") { Respond(context, 204, "text/plain", new byte[0], origin); return; }
 
-            string path = context.Request.Url.AbsolutePath;
-            if (context.Request.HttpMethod == "GET" && path == "/api/status")
+            if (isGet && path == "/api/status")
                 Respond(context, 200, "application/json", Encoding.UTF8.GetBytes(JsonUtility.ToJson(BuildSnapshot())), origin);
             else if (context.Request.HttpMethod == "GET" && (path == "/api/player/1/frame" || path == "/api/player/2/frame"))
             {
