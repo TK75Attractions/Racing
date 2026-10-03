@@ -43,13 +43,13 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
     [SerializeField, Min(0f)] private float boostPullback = 0.12f;
 
     [Header("Camera Shake")]
-    [SerializeField, Min(0f)] private float highSpeedShakePosition = 0.015f;
-    [SerializeField, Min(0f)] private float boostShakePosition = 0.012f;
-    [SerializeField, Min(0f)] private float highSpeedShakeRotation = 0.12f;
+    [SerializeField, Min(0f)] private float highSpeedShakePosition = 0.075f;
+    [SerializeField, Min(0f)] private float boostShakePosition = 0.006f;
+    [SerializeField, Min(0f)] private float highSpeedShakeRotation = 0.06f;
     [Tooltip("ブースト中に加える回転の揺れ（度）。")]
     [SerializeField, Min(0f)] private float boostShakeRotation = 0.1f;
-    [SerializeField, Min(0f)] private float minShakeFrequency = 4f;
-    [SerializeField, Min(0f)] private float maxShakeFrequency = 11f;
+    [SerializeField, Min(0f)] private float minShakeFrequency = 1f;
+    [SerializeField, Min(0f)] private float maxShakeFrequency = 5f;
 
     [Header("Impact Shake")]
     [Tooltip("衝突の強さが最大のときの位置の揺れ（m）。")]
