@@ -2,6 +2,35 @@
   "rules": {
     ".read": false,
     ".write": false,
+    "roles": {
+      "operators": {
+        "$uid": { ".read": "auth !== null && auth.uid === $uid" }
+      }
+    },
+    "control": {
+      "request": {
+        ".read": "auth !== null && (auth.uid === root.child('roles').child('writerUid').val() || root.child('roles').child('operators').child(auth.uid).val() === true)",
+        ".write": "auth !== null && root.child('roles').child('operators').child(auth.uid).val() === true && newData.exists() && root.child('live').child('updatedAt').val() >= now - 15000 && newData.child('targetSession').val() === root.child('live').child('sessionId').val() && newData.child('expectedState').val() === root.child('live').child('state').val() && newData.child('targetSeq').val() >= root.child('live').child('seq').val() - 1 && newData.child('targetSeq').val() <= root.child('live').child('seq').val() && (!data.exists() || root.child('control').child('ack').child('id').val() === data.child('id').val() || data.child('createdAt').val() < now - 30000)",
+        ".validate": "newData.hasChildren(['id','action','targetSession','targetSeq','expectedState','createdAt']) && ((newData.child('action').val() === 'start' && newData.child('expectedState').val() === 'Title') || (newData.child('action').val() === 'result' && newData.child('expectedState').val() === 'Game') || ((newData.child('action').val() === 'retry' || newData.child('action').val() === 'title') && newData.child('expectedState').val() === 'Result'))",
+        "id": { ".validate": "newData.isString() && newData.val().length === 32" },
+        "action": { ".validate": "newData.isString()" },
+        "targetSession": { ".validate": "newData.isString() && newData.val().length === 32" },
+        "targetSeq": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "expectedState": { ".validate": "newData.isString()" },
+        "createdAt": { ".validate": "newData.isNumber() && newData.val() >= now - 1000 && newData.val() <= now + 1000" },
+        "$other": { ".validate": false }
+      },
+      "ack": {
+        ".read": "auth !== null && root.child('roles').child('operators').child(auth.uid).val() === true",
+        ".write": "auth !== null && auth.uid === root.child('roles').child('writerUid').val() && newData.exists() && newData.child('id').val() === root.child('control').child('request').child('id').val()",
+        ".validate": "newData.hasChildren(['id','result','state','completedAt'])",
+        "id": { ".validate": "newData.isString() && newData.val().length === 32" },
+        "result": { ".validate": "newData.isString() && (newData.val() === 'applied' || newData.val() === 'rejected')" },
+        "state": { ".validate": "newData.isString() && (newData.val() === 'Title' || newData.val() === 'Countdown' || newData.val() === 'Game' || newData.val() === 'Goal' || newData.val() === 'Result')" },
+        "completedAt": { ".validate": "newData.isNumber() && newData.val() >= now - 1000 && newData.val() <= now + 1000" },
+        "$other": { ".validate": false }
+      }
+    },
     "live": {
       ".read": "auth !== null && root.child('roles').child('viewers').child(auth.uid).val() === true",
       ".write": "auth !== null && auth.uid === root.child('roles').child('writerUid').val() && newData.exists()",

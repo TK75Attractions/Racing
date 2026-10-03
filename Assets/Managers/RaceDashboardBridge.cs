@@ -303,7 +303,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
 
     private bool ApplyAction(string action)
     {
-        if (race == null) return false;
+        if (race == null || !race.CanUseDashboardControls) return false;
         switch (action)
         {
             case "start": if (race.state != Gmanager.State.Title) return false; race.StartGame(); return true;
@@ -312,6 +312,12 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             case "title": if (race.state != Gmanager.State.Result) return false; race.ResetGame(); return true;
             default: return false;
         }
+    }
+
+    /// <summary>Applies a remote command only while the observed race state still matches.</summary>
+    public bool TryApplyRemoteAction(string action, string expectedState)
+    {
+        return race != null && race.state.ToString() == expectedState && ApplyAction(action);
     }
 
     private byte[] CapturePlayer(int index)
