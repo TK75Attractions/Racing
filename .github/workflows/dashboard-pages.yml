@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'Dashboard/**'
+      - 'Assets/StreamingAssets/Dashboard/**'
       - '.github/workflows/dashboard-pages.yml'
   workflow_dispatch:
 permissions:
@@ -24,6 +24,6 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: Dashboard
+          path: Assets/StreamingAssets/Dashboard
       - id: deployment
         uses: actions/deploy-pages@v4

@@ -12,7 +12,6 @@ using UnityEngine.Rendering;
 public sealed class RaceDashboardBridge : MonoBehaviour
 {
     private const string Prefix = "http://127.0.0.1:8765/";
-    private const string DashboardUrl = "https://tk75attractions.github.io/Racing/";
     private const int MaxSerialLines = 80;
     private readonly ConcurrentQueue<HttpListenerContext> requests = new ConcurrentQueue<HttpListenerContext>();
     private readonly Queue<SerialEntry> serialLines = new Queue<SerialEntry>();
@@ -108,16 +107,20 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             string origin = context.Request.Headers["Origin"];
             string path = context.Request.Url.AbsolutePath;
             bool isGet = context.Request.HttpMethod == "GET";
-            // Address-bar navigation does not send Origin. Send the user to the actual UI.
-            if (isGet && path == "/")
+            if (isGet && TryGetDashboardAsset(path, out string assetName, out string assetType))
             {
-                context.Response.Redirect(DashboardUrl);
-                context.Response.Close();
+                string assetPath = Path.Combine(Application.streamingAssetsPath, "Dashboard", assetName);
+                if (File.Exists(assetPath))
+                    Respond(context, 200, assetType, File.ReadAllBytes(assetPath), null);
+                else
+                    Respond(context, 404, "text/plain; charset=utf-8",
+                        Encoding.UTF8.GetBytes("Dashboard file not found: " + assetName), null);
                 return;
             }
-            // Direct navigation to the read-only status endpoint is useful for diagnostics.
-            bool directStatusRead = isGet && path == "/api/status" && string.IsNullOrEmpty(origin);
-            if (!directStatusRead && !AllowedOrigin(origin))
+            // Browsers omit Origin on same-origin GET requests and address-bar navigation.
+            bool readOnlyApi = isGet && (path == "/api/status" ||
+                path == "/api/player/1/frame" || path == "/api/player/2/frame");
+            if (!(readOnlyApi && string.IsNullOrEmpty(origin)) && !AllowedOrigin(origin))
             {
                 Respond(context, 403, "text/plain", Encoding.UTF8.GetBytes("Origin denied"), null);
                 return;
@@ -145,6 +148,19 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         {
             Debug.LogWarning("Dashboard request failed: " + error.Message);
             try { Respond(context, 500, "text/plain", Encoding.UTF8.GetBytes("Bridge error"), null); } catch { }
+        }
+    }
+
+    private static bool TryGetDashboardAsset(string path, out string fileName, out string contentType)
+    {
+        switch (path)
+        {
+            case "/":
+            case "/index.html": fileName = "index.html"; contentType = "text/html; charset=utf-8"; return true;
+            case "/app.js": fileName = "app.js"; contentType = "application/javascript; charset=utf-8"; return true;
+            case "/style.css": fileName = "style.css"; contentType = "text/css; charset=utf-8"; return true;
+            case "/favicon.svg": fileName = "favicon.svg"; contentType = "image/svg+xml"; return true;
+            default: fileName = null; contentType = null; return false;
         }
     }
 
