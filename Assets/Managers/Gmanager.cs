@@ -95,6 +95,7 @@ public class Gmanager : MonoBehaviour
     public bool WaitingForSecondPlace => raceSession != null && raceSession.WaitingForSecondPlace;
     public float CountdownTimeRemaining => countdownTimeRemaining;
     public bool IsDrivingEnabled => state == State.Game;
+    public bool CanUseDashboardControls => !IsScreenTransitioning();
     public int GoalLap => lapManager != null ? lapManager.GoalLap : 0;
     public int GetPlayerLap(int index)
     {

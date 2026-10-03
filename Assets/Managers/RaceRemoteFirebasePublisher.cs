@@ -5,7 +5,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
-/// <summary>Publishes a small, read-only race snapshot to Firebase Realtime Database.</summary>
+/// <summary>Publishes race state and applies authorized, session-bound remote commands.</summary>
 public sealed class RaceRemoteFirebasePublisher : MonoBehaviour
 {
     private const float IntervalSeconds = 5f;
@@ -37,6 +37,23 @@ public sealed class RaceRemoteFirebasePublisher : MonoBehaviour
         public string expiresIn;
     }
 
+    [Serializable] private sealed class RemoteCommand
+    {
+        public string id;
+        public string action;
+        public string targetSession;
+        public int targetSeq;
+        public string expectedState;
+        public long createdAt;
+    }
+
+    [Serializable] private sealed class CommandAcknowledgement
+    {
+        public string id;
+        public string result;
+        public string state;
+    }
+
     private FirebaseConfig config;
     private WriterCredentials writer;
     private RaceDashboardBridge bridge;
@@ -44,6 +61,9 @@ public sealed class RaceRemoteFirebasePublisher : MonoBehaviour
     private float tokenExpiresAt;
     private readonly string sessionId = Guid.NewGuid().ToString("N");
     private int sequence;
+    private int lastPublishedSequence;
+    private string lastHandledCommandId;
+    private string pendingAcknowledgement;
 
     private IEnumerator Start()
     {
@@ -85,6 +105,7 @@ public sealed class RaceRemoteFirebasePublisher : MonoBehaviour
             yield break;
         }
 
+        StartCoroutine(PollRemoteCommands());
         float retrySeconds = IntervalSeconds;
         while (true)
         {
@@ -126,9 +147,98 @@ public sealed class RaceRemoteFirebasePublisher : MonoBehaviour
             }
 
             retrySeconds = succeeded ? IntervalSeconds : Math.Min(60f, retrySeconds * 2f);
+            if (succeeded) lastPublishedSequence = sequence;
             yield return new WaitForSecondsRealtime(retrySeconds);
         }
     }
+
+    private IEnumerator PollRemoteCommands()
+    {
+        while (true)
+        {
+            if (!string.IsNullOrEmpty(idToken))
+            {
+                if (pendingAcknowledgement != null)
+                    yield return SendAcknowledgement();
+
+                if (pendingAcknowledgement == null && lastPublishedSequence > 0)
+                {
+                    string url = DatabasePath("control/request") + "?auth=" + Uri.EscapeDataString(idToken);
+                    using (UnityWebRequest request = UnityWebRequest.Get(url))
+                    {
+                        request.timeout = RequestTimeoutSeconds;
+                        yield return request.SendWebRequest();
+                        if (request.responseCode == 401) idToken = null;
+                        else if (request.result == UnityWebRequest.Result.Success && request.responseCode == 200 &&
+                                 request.downloadHandler.text != "null")
+                        {
+                            RemoteCommand command = null;
+                            try { command = JsonUtility.FromJson<RemoteCommand>(request.downloadHandler.text); }
+                            catch (Exception) { }
+                            if (command != null && !string.IsNullOrEmpty(command.id) &&
+                                command.id != lastHandledCommandId)
+                            {
+                                // Remember the ID before applying the action: a failed acknowledgement must not replay it.
+                                lastHandledCommandId = command.id;
+                                long serverNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                                if (DateTimeOffset.TryParse(request.GetResponseHeader("Date"), out DateTimeOffset responseTime))
+                                    serverNow = responseTime.ToUnixTimeMilliseconds();
+                                long ageMs = serverNow - command.createdAt;
+                                bool current = command.targetSession == sessionId &&
+                                    command.targetSeq <= lastPublishedSequence &&
+                                    command.targetSeq >= lastPublishedSequence - 4 &&
+                                    ageMs >= -5000 && ageMs <= 15000;
+                                bool applied = false;
+                                if (current)
+                                {
+                                    try { applied = bridge.TryApplyRemoteAction(command.action, command.expectedState); }
+                                    catch (Exception error)
+                                    {
+                                        Debug.LogWarning("Remote dashboard action failed: " + error.GetType().Name);
+                                    }
+                                }
+                                var acknowledgement = new CommandAcknowledgement
+                                {
+                                    id = command.id,
+                                    result = applied ? "applied" : "rejected",
+                                    state = GetComponent<Gmanager>().state.ToString()
+                                };
+                                pendingAcknowledgement = "{\"completedAt\":{\".sv\":\"timestamp\"}," +
+                                    JsonUtility.ToJson(acknowledgement).Substring(1);
+                                yield return SendAcknowledgement();
+                            }
+                        }
+                    }
+                }
+            }
+            yield return new WaitForSecondsRealtime(1.5f);
+        }
+    }
+
+    private IEnumerator SendAcknowledgement()
+    {
+        string url = DatabasePath("control/ack") + "?auth=" +
+            Uri.EscapeDataString(idToken) + "&print=silent";
+        using (UnityWebRequest request = new UnityWebRequest(url, "PUT"))
+        {
+            request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(pendingAcknowledgement));
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.timeout = RequestTimeoutSeconds;
+            yield return request.SendWebRequest();
+            if (request.result == UnityWebRequest.Result.Success && request.responseCode == 204)
+                pendingAcknowledgement = null;
+            else if (request.responseCode == 401)
+                idToken = null;
+            else if (request.responseCode == 403)
+            {
+                // A newer request may have replaced this one after it expired.
+                pendingAcknowledgement = null;
+            }
+        }
+    }
+
+    private string DatabasePath(string path) => config.databaseURL.TrimEnd('/') + "/" + path + ".json";
 
     private IEnumerator SignIn()
     {

@@ -31,6 +31,7 @@ function setConnection(isConnected) {
     $('port-status').classList.remove('active');
     $('input-mode').textContent = '—';
     $('last-result').textContent = '—';
+    updateFlow(null);
     $('serial-log').innerHTML = '<div class="empty-log">シリアル入力を待っています。Unity の接続状態を確認してください。</div>';
     for (const button of document.querySelectorAll('[data-action]')) button.disabled = true;
     for (let i = 1; i <= 2; i++) {
@@ -60,9 +61,25 @@ function setGoalLap(value) {
   $('goal-lap').replaceChildren(String(value), unit);
 }
 
-function render(snapshot) {
+function updateFlow(state) {
+  const order = ['Title', 'Countdown', 'Game', 'Goal', 'Result'];
+  const position = order.indexOf(state);
+  document.querySelectorAll('[data-flow-state]').forEach((step, index) => {
+    step.classList.toggle('current', position === index);
+    step.classList.toggle('complete', position > index);
+    if (position === index) step.setAttribute('aria-current', 'step');
+    else step.removeAttribute('aria-current');
+  });
+  document.querySelectorAll('.flow-line').forEach((line, index) =>
+    line.classList.toggle('complete', position > index));
+  $('flow-state').textContent = position < 0 ? 'Unity の状態を待っています' :
+    `現在：${labels[state]}（${position + 1} / ${order.length}）`;
+}
+
+function render(snapshot, { canControl = localMode } = {}) {
   setConnection(true);
   currentState = snapshot.state;
+  updateFlow(snapshot.state);
   $('game-state').textContent = labels[snapshot.state] || snapshot.state;
   $('state-detail').textContent = snapshot.state === 'Countdown' ? `あと ${Math.ceil(snapshot.countdown)} 秒` : (details[snapshot.state] || '状態を確認中');
   $('race-time').textContent = formatTime(snapshot.raceTime);
@@ -86,7 +103,7 @@ function render(snapshot) {
     $('pedal-' + n).textContent = (player.pedal || 0).toFixed(2);
     $('steer-' + n).textContent = (player.steering || 0).toFixed(2);
   }
-  for (const button of document.querySelectorAll('[data-action]')) button.disabled = !localMode || actions[button.dataset.action] !== currentState;
+  for (const button of document.querySelectorAll('[data-action]')) button.disabled = !canControl || actions[button.dataset.action] !== currentState;
   if (localMode) $('control-note').textContent = snapshot.state === 'Game' ? '「結果を表示」はレースを終了し、現在の記録で結果画面へ進みます。' : '現在のゲーム状態に応じて操作できます。';
   renderLog(snapshot.serial.lines || []);
 }

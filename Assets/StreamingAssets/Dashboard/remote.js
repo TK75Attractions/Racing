@@ -51,18 +51,37 @@ export async function startRemote({ render, setConnection }) {
   let stopLive = null;
   let stopConnection = null;
   let stopClockOffset = null;
+  let stopOperator = null;
+  let stopAck = null;
   let latest = null;
   let serverOffset = 0;
   let databaseConnected = false;
   let lastSession = null;
   let lastSequence = -1;
   let showingFresh = false;
+  let operator = false;
+  let busy = false;
+  let pendingId = null;
+  let pendingTimer = null;
+  let lastOutcome = '';
+
+  function disableControls() {
+    document.querySelectorAll('[data-action]').forEach((button) => { button.disabled = true; });
+  }
 
   function clearListeners() {
     if (stopLive) stopLive();
     if (stopConnection) stopConnection();
     if (stopClockOffset) stopClockOffset();
-    stopLive = stopConnection = stopClockOffset = null;
+    if (stopOperator) stopOperator();
+    if (stopAck) stopAck();
+    stopLive = stopConnection = stopClockOffset = stopOperator = stopAck = null;
+    if (pendingTimer) clearTimeout(pendingTimer);
+    pendingTimer = null;
+    pendingId = null;
+    busy = false;
+    operator = false;
+    lastOutcome = '';
     latest = null;
     lastSession = null;
     lastSequence = -1;
@@ -81,6 +100,7 @@ export async function startRemote({ render, setConnection }) {
       return;
     }
     if (age > 15000) {
+      disableControls();
       const badge = $('connection');
       badge.classList.remove('online');
       badge.classList.add('offline');
@@ -89,10 +109,54 @@ export async function startRemote({ render, setConnection }) {
       status.textContent = '最後の更新から 15 秒以上経過しました。';
       return;
     }
-    if (!showingFresh) render(latest);
+    if (!showingFresh) render(latest, { canControl: operator && !busy });
     showingFresh = true;
-    status.textContent = 'Unity からの状態を受信しています。映像とゲーム操作はローカル画面専用です。';
+    status.textContent = operator ? 'Unity の状態を受信中です。進行操作を実行できます。' :
+      'Unity の状態を受信中です。このアカウントは閲覧専用です。';
+    $('control-note').textContent = lastOutcome || (busy ? 'Unity の応答を待っています…' :
+      operator ? '現在のゲーム状態に応じて遠隔操作できます。' : '操作するには担当者 UID の登録が必要です。');
   }
+
+  document.querySelectorAll('[data-action]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      if (!operator || busy || !auth.currentUser || !latest || !databaseConnected) return;
+      const expected = { start: 'Title', result: 'Game', retry: 'Result', title: 'Result' }[button.dataset.action];
+      const age = Date.now() + serverOffset - latest.updatedAt;
+      if (latest.state !== expected || age < -30000 || age > 15000) return;
+
+      busy = true;
+      lastOutcome = '';
+      const commandId = crypto.randomUUID().replaceAll('-', '');
+      pendingId = commandId;
+      showingFresh = false;
+      updateFreshness();
+      try {
+        await sdk.database.set(sdk.database.ref(db, 'control/request'), {
+          id: commandId,
+          action: button.dataset.action,
+          targetSession: latest.sessionId,
+          targetSeq: latest.seq,
+          expectedState: latest.state,
+          createdAt: sdk.database.serverTimestamp()
+        });
+        if (pendingId !== commandId) return;
+        pendingTimer = setTimeout(() => {
+          busy = false;
+          pendingId = null;
+          pendingTimer = null;
+          lastOutcome = 'Unity からの応答を確認できませんでした。状態を確認してから再操作してください。';
+          showingFresh = false;
+          updateFreshness();
+        }, 30000);
+      } catch {
+        busy = false;
+        pendingId = null;
+        lastOutcome = '命令を送信できませんでした。状態が更新された可能性があります。再確認してください。';
+        showingFresh = false;
+        updateFreshness();
+      }
+    });
+  });
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -154,6 +218,32 @@ export async function startRemote({ render, setConnection }) {
     }, () => {
       setConnection(false);
       status.textContent = 'データの閲覧権限がありません。管理者に UID の登録を依頼してください。';
+    });
+    stopOperator = sdk.database.onValue(sdk.database.ref(db, `roles/operators/${user.uid}`), (snapshot) => {
+      operator = snapshot.val() === true;
+      if (stopAck) { stopAck(); stopAck = null; }
+      if (operator) {
+        stopAck = sdk.database.onValue(sdk.database.ref(db, 'control/ack'), (ackSnapshot) => {
+          const ack = ackSnapshot.val();
+          if (!ack || ack.id !== pendingId) return;
+          if (pendingTimer) clearTimeout(pendingTimer);
+          pendingTimer = null;
+          pendingId = null;
+          busy = false;
+          lastOutcome = ack.result === 'applied' ? '操作を Unity が実行しました。' :
+            'Unity が操作を受け付けませんでした。現在の状態を確認してください。';
+          showingFresh = false;
+          updateFreshness();
+        });
+      } else {
+        disableControls();
+      }
+      showingFresh = false;
+      updateFreshness();
+    }, () => {
+      operator = false;
+      disableControls();
+      $('control-note').textContent = '操作権限を確認できませんでした。';
     });
   });
 

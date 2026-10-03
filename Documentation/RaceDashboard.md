@@ -6,7 +6,7 @@
 
 1. Unity で `Assets/Scenes/SampleScene.unity` を開き、Play またはビルドを実行します。`Gmanager` がブリッジを自動起動します。
 2. 同じ PC のブラウザで `http://127.0.0.1:8765/` を開きます。画面と API は同じ Unity プロセスから配信されます。
-3. GitHub Pages の画面は、Firebase を設定すると別端末・外出先から閲覧専用の状態監視に使えます。Firebase 設定が空の場合は設定待ちを表示します。
+3. GitHub Pages の画面は、Firebase を設定すると別端末・外出先から状態監視に使えます。操作担当 UID には進行コントロールも表示されます。Firebase 設定が空の場合は設定待ちを表示します。
 4. `UNITY 接続中` が表示されたら、状態・2人のカメラ画像・シリアル入力を確認できます。
 
 `http://127.0.0.1:8765/` をアドレスバーで開くとローカルのダッシュボードを表示します。`http://127.0.0.1:8765/api/status` を開くと JSON で状態を確認できます。操作 API は許可されたダッシュボードからのみ受け付けます。
@@ -17,6 +17,6 @@
 
 ## 接続と公開
 
-ローカル画面は同じ PC のループバックアドレスで配信します。GitHub Pages 自体はゲームデータを保存しません。Firebase 設定後は、Unity が HTTPS で Realtime Database の `/live` を更新し、公開画面は認証後にその値だけを閲覧します。公開画面にゲーム操作と映像はありません。
+ローカル画面は同じ PC のループバックアドレスで配信します。GitHub Pages 自体はゲームデータを保存しません。Firebase 設定後は、Unity が HTTPS で Realtime Database の `/live` を更新し、公開画面は認証後にその値を閲覧します。操作担当 UID は `/control/request` に命令を送り、Unity が状態を確認して実行し、`/control/ack` へ結果を返します。映像はローカル画面のみです。
 
 `.github/workflows/dashboard-pages.yml` は `main` に `Assets/StreamingAssets/Dashboard` の変更が入ると、同じファイルを GitHub Pages に公開します。公開先は `https://tk75attractions.github.io/Racing/` です。Firebase の接続は [具体的な設定手順](FirebaseSetup.md)、構成の根拠は [遠隔監視の設計](RemoteRaceDashboardPlan.md) を参照してください。
