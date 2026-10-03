@@ -969,7 +969,10 @@ public class Gmanager : MonoBehaviour
             float lapSeconds = lapData != null ? lapData.currentLapTime : time;
             float totalSeconds = lapData != null ? lapData.totalRaceTime + lapData.currentLapTime : time;
             float speedValue = player.rigidbody.linearVelocity.magnitude * speedUnitMultiplier;
-            ui.UpdateUI(GetRacePosition(viewedPlayerIndex), lapValue, totalSeconds, lapSeconds, speedValue);
+            DebugMover mover = player.mover;
+            ui.UpdateUI(GetRacePosition(viewedPlayerIndex), lapValue, totalSeconds, lapSeconds, speedValue,
+                mover != null ? mover.AccelerationPadBoostTimeRemaining : 0f,
+                mover != null ? mover.AccelerationPadBoostDuration : 0f);
         }
     }
 

@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>Replaces enlarged HUD bitmaps with live type and vector instruments.</summary>
 public static class RacingHUDBuilder
@@ -13,6 +14,12 @@ public static class RacingHUDBuilder
         }
         RectTransform root = RacingUITheme.Rect(parent, "ModernHUD", Vector2.zero, Vector2.one);
         root.SetAsFirstSibling();
+        RectTransform boostOverlay = RacingUITheme.Rect(root, "BoostOverlay", Vector2.zero, Vector2.one);
+        boostOverlay.SetAsFirstSibling();
+        RacingBoostGraphic screenGraphic = boostOverlay.GetComponent<RacingBoostGraphic>();
+        if (screenGraphic == null) screenGraphic = boostOverlay.gameObject.AddComponent<RacingBoostGraphic>();
+        screenGraphic.Configure(RacingBoostGraphic.DisplayMode.Screen);
+        boostOverlay.gameObject.SetActive(false);
         RectTransform position = Panel(root, "Position", new Vector2(0.025f, 0.07f), new Vector2(0.145f, 0.23f));
         Label(position, "Heading", "POSITION", 0.12f, 0.70f, 0.88f, 0.91f, 17f, RacingUITheme.Muted);
         Label(position, "Txt", "1", 0.12f, 0.12f, 0.53f, 0.73f, 72f, RacingUITheme.Text);
@@ -38,6 +45,22 @@ public static class RacingHUDBuilder
         if (gauge.GetComponent<RacingSpeedGauge>() == null) gauge.gameObject.AddComponent<RacingSpeedGauge>();
         Label(speed, "Txt", "0", 0.12f, 0.21f, 0.88f, 0.61f, 75f, RacingUITheme.Text, FontRole.InstrumentDigits, TextAlignmentOptions.Center);
         Label(speed, "Unit", "KM/H", 0.2f, 0.095f, 0.8f, 0.24f, 17f, RacingUITheme.Cyan, FontRole.English, TextAlignmentOptions.Center);
+        RectTransform boost = Panel(root, "PadBoost", new Vector2(0.64f, 0.33f), new Vector2(0.975f, 0.47f));
+        Label(boost, "Heading", "BOOST // OVERDRIVE", 0.07f, 0.62f, 0.7f, 0.92f, 21f, RacingUITheme.Gold);
+        Label(boost, "Remaining", "3.0s", 0.73f, 0.62f, 0.93f, 0.92f, 22f, RacingUITheme.Text,
+            FontRole.InstrumentDigits, TextAlignmentOptions.Right);
+        RacingUITheme.Rule(boost, "Track", new Vector2(0.07f, 0.14f), new Vector2(0.93f, 0.52f),
+            new Color(0.20f, 0.07f, 0.05f, 0.95f));
+        RectTransform glow = RacingUITheme.Rect(boost, "Glow", new Vector2(0.06f, 0.11f), new Vector2(0.94f, 0.55f));
+        Image glowImage = glow.GetComponent<Image>();
+        if (glowImage == null) glowImage = glow.gameObject.AddComponent<Image>();
+        glowImage.color = new Color(1f, 0.25f, 0.04f, 0.18f);
+        glowImage.raycastTarget = false;
+        RectTransform fill = RacingUITheme.Rect(boost, "Fill", new Vector2(0.07f, 0.14f), new Vector2(0.93f, 0.52f));
+        RacingBoostGraphic barGraphic = fill.GetComponent<RacingBoostGraphic>();
+        if (barGraphic == null) barGraphic = fill.gameObject.AddComponent<RacingBoostGraphic>();
+        barGraphic.Configure(RacingBoostGraphic.DisplayMode.Bar);
+        boost.gameObject.SetActive(false);
         Label(root, "Player", $"P{playerIndex + 1}  /  TSUKUKOMA CIRCUIT", 0.026f, 0.026f, 0.35f, 0.052f, 17f, RacingUITheme.Text);
         return root;
     }

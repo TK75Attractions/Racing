@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 車両が踏むと、盤面の前方へ一定時間加速させる地面設置用の加速度盤です。
+/// 車両が踏むと、進行方向へ瞬間的な速度上昇と一定時間の加速を与える地面設置用の加速度盤です。
 /// </summary>
 [ExecuteAlways]
 [DisallowMultipleComponent]
@@ -10,10 +10,12 @@ using UnityEngine;
 public sealed class AccelerationPad : MonoBehaviour
 {
     [Header("Acceleration")]
-    [Tooltip("盤面の前方へ加える加速度（m/s²）。")]
+    [Tooltip("ブースト中に進行方向へ加える加速度（m/s²）。")]
     [SerializeField, Min(0f)] private float acceleration = 12f;
+    [Tooltip("踏んだ瞬間に加える速度（m/s）。7 m/s は約 25 km/h です。")]
+    [SerializeField, Min(0f)] private float instantSpeedBonus = 7f;
     [Tooltip("踏んだ後に加速を続ける時間（秒）。")]
-    [SerializeField, Min(0f)] private float boostDuration = 1f;
+    [SerializeField, Min(0f)] private float boostDuration = 3f;
 
     [Header("Pad Size")]
     [Tooltip("盤面のローカルサイズ。Yは盤面の厚みです。")]
@@ -32,6 +34,7 @@ public sealed class AccelerationPad : MonoBehaviour
 
     public Vector3 PadSize => padSize;
     public float Acceleration => acceleration;
+    public float InstantSpeedBonus => instantSpeedBonus;
     public float BoostDuration => boostDuration;
 
     private void OnEnable()
@@ -61,6 +64,7 @@ public sealed class AccelerationPad : MonoBehaviour
         padSize.y = Mathf.Max(0.02f, padSize.y);
         padSize.z = Mathf.Max(0.1f, padSize.z);
         acceleration = Mathf.Max(0f, acceleration);
+        instantSpeedBonus = Mathf.Max(0f, instantSpeedBonus);
         boostDuration = Mathf.Max(0f, boostDuration);
         triggerMargin = Mathf.Max(0f, triggerMargin);
 
@@ -112,7 +116,7 @@ public sealed class AccelerationPad : MonoBehaviour
         if (mover == null) return;
 
         Vector3 direction = Vector3.ProjectOnPlane(transform.forward, transform.up).normalized;
-        mover.StartAccelerationPadBoost(acceleration, boostDuration, direction);
+        mover.StartAccelerationPadBoost(acceleration, boostDuration, instantSpeedBonus, direction);
     }
 
     /// <summary>盤面の中心位置から下方向へレイを飛ばし、地面に接地させます。</summary>
