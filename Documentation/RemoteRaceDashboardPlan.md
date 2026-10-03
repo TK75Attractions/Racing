@@ -1,85 +1,93 @@
-# 別端末・外出先からのレース監視：実装計画
+# 別端末・外出先からのレース監視：無料構成の実装計画
 
-## 到達点と現状
+## 結論と現状
 
-到達点は、Unity の PC と異なる端末から GitHub Pages の画面を開き、ゲーム状態、P1/P2 のカメラ画像、シリアル診断を閲覧できること。遠隔版は**閲覧専用**にする。開始・結果表示・再挑戦・タイトル復帰は `127.0.0.1:8765` のローカル画面だけで行う。
+**Firebase Realtime Database の Spark（無料）プランを採用する。** Unity が最新状態を 5 秒ごとに 1 箇所へ上書きし、GitHub Pages の画面が Firebase の変更通知で受け取る。遠隔版はゲーム状態、2 人の入力・ラップ・速度、シリアルポートの状態と直近 10 行を表示する。**遠隔映像と遠隔操作は対象外**。開始・結果表示・再挑戦・タイトル復帰と 2 画面の映像は、従来どおり `http://127.0.0.1:8765/` のローカル画面で扱う。
 
-**この文書は実装計画であり、中継サービス・遠隔送信・閲覧認証はまだ実装していない。** 現在の公開ページは同じ PC のループバック API にしか接続できない。GitHub Pages はサーバー側プログラムを実行できないため、別端末向けには中継サービスが必要になる。これは [GitHub Pages の公式説明](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site) と現行コードから導かれる構成上の結論。
-
-## 構成
+この文書は設計であり、Firebase プロジェクト、Unity 送信処理、公開ページの受信処理は**まだ作成していない**。現在の GitHub Pages は同じ PC のループバック API に接続する実装で、外出先からの監視はまだできない。
 
 ```mermaid
 flowchart LR
-  ESP[ESP32] -->|USB シリアル| UNITY[Unity / InputManager]
-  UNITY -->|ローカル HTTP| LOCAL[127.0.0.1:8765<br>画面・監視・操作]
-  UNITY -->|HTTPS POST / 送信用トークン| WORKER[Cloudflare Worker<br>認証・入力検証・CORS]
-  WORKER <--> DO[Durable Object<br>最新状態と2画面のみ]
-  PAGES[GitHub Pages<br>公開画面] -->|HTTPS GET / 閲覧用トークン| WORKER
-  VIEWER[別端末の運営者] --> PAGES
+  ESP[ESP32] -->|USB シリアル| UNITY[Unity]
+  UNITY -->|ローカル HTTP| LOCAL[127.0.0.1:8765<br>状態・映像・操作]
+  UNITY -->|HTTPS PUT / 書込ユーザー| DB[Firebase Realtime Database<br>最新スナップショット 1 件]
+  DB -->|変更通知 / 閲覧ユーザー| PAGES[GitHub Pages<br>遠隔監視画面]
+  VIEWER[別端末・外出先] --> PAGES
 ```
 
-Unity から外向きの HTTPS のみを使用する。ゲーム PC へのインターネット側ポート開放は行わない。Worker は認証と入力検証を担当し、固定名の Durable Object 1 個を最新状態の共有先にする。Durable Object は同じ ID 宛ての要求を 1 つのアクティブなインスタンスに集められる。[Cloudflare の名前付き Object](https://developers.cloudflare.com/durable-objects/api/namespace/) と [メモリ上の状態](https://developers.cloudflare.com/durable-objects/reference/in-memory-state/) に沿う。
+ゲーム PC は外向き HTTPS のみを使い、ポート開放は不要。Firebase の [Realtime Database REST API](https://firebase.google.com/docs/database/rest/save-data) は Unity からの上書き送信に使える。ブラウザは [Web SDK の `onValue`](https://firebase.google.com/docs/database/web/read-and-write) で最初の値と変更を受け取れるので、独自の Worker や Durable Object を運用しなくてよい。
 
-最新状態と画像はメモリにだけ保持し、履歴を残さない。Object の再起動・退避でメモリは失われるため、その間は「再接続中」と表示し、次の Unity 送信で復旧する。[Cloudflare のライフサイクル仕様](https://developers.cloudflare.com/durable-objects/concepts/durable-object-lifecycle/) により、メモリを永続保存とみなさない。
+## なぜこの構成か
 
-## API 契約（案）
-
-| メソッド・パス | 呼び出し元 | 内容 |
+| 候補 | 無料枠と手間 | この用途での判断 |
 | --- | --- | --- |
-| `POST /v1/ingest/session` | Unity | 送信用トークンを検証し、サーバー発行のセッション ID を返す。前のセッションの状態と画像を破棄する。 |
-| `POST /v1/ingest/status` | Unity | 状態 JSON。セッション ID、単調増加する連番、P1/P2、シリアルの新規ログを含む。上限 32 KiB。 |
-| `POST /v1/ingest/frame/1` と `/2` | Unity | JPEG 1 枚。セッション ID・各プレイヤーの連番をヘッダーに付ける。上限 150 KiB。 |
-| `GET /v1/view/status` | 公開画面 | 最新状態、サーバー受信時刻、オンライン／古い状態を返す。 |
-| `GET /v1/view/frame/1` と `/2` | 公開画面 | 最新 JPEG。画像がない・古い場合は `204` を返す。 |
+| Firebase Realtime Database | Spark は保存 1 GB、ダウンロード 10 GB/月、同時接続 100。認証と変更通知を利用できる。 | **採用**。最新 1 件だけなら保存量は小さく、イベント中だけの少人数閲覧に向く。 |
+| Supabase | Free は DB 500 MB、転送 5 GB、API 要求数に固定上限なし。低利用が続くとプロジェクトが一時停止する。 | レース間隔が長い運用では、当日の手動再開が必要になる可能性があるため今回は見送る。 |
+| Cloudflare Worker + Durable Object | 前案では API、認証、状態保管を自作する必要がある。 | 小規模な閲覧専用監視には実装点が多いため採用しない。 |
 
-全 API を HTTPS にし、`Cache-Control: no-store` を付ける。Worker は `Content-Type`、サイズ、スキーマ版、状態の列挙値、数値範囲、JPEG の先頭・末尾、プレイヤー番号を検証する。予期しないフィールドをそのまま画面へ表示しない。Unity の時計ではなく、Worker が受信した時刻で鮮度を判定する。新セッションで旧画像を消し、古い連番や旧セッションからの遅延送信は拒否する。
+無料枠は [Firebase 料金表](https://firebase.google.com/pricing)、[Spark の扱い](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans)、[Supabase Free の料金表](https://supabase.com/pricing)、[一時停止の仕様](https://supabase.com/docs/guides/platform/free-project-pausing) で確認した（2026-10-03）。無料枠や利用条件は変更され得るため、利用開始時にも再確認する。Spark は上限超過時に従量課金へ自動移行するプランではないが、制限により配信できなくなる可能性がある。[Firebase の課金説明](https://firebase.google.com/docs/database/usage/billing)を参照。
 
-状態送信の最小形は次の通り。`serialDelta` は最後に確認できた行の後から最大 20 行とし、`latestSerialId` により欠落を検知する。ネットワーク断で 20 行を超えて欠けた場合は、ログを完全な履歴と偽らず「N 行を取得できませんでした」と表示する。Durable Object は受信した行を最大 80 件だけ保持する。
+**Firebase Unity SDK は使わない。** 公式の [Unity セットアップ文書](https://firebase.google.com/docs/unity/setup)ではデスクトップ対応が開発用ベータとされている。このゲームは Windows/macOS/Linux の実行を想定するため、Unity 標準の `UnityWebRequest` と Firebase の HTTPS REST API を使う。ブラウザ側だけ公式 Web SDK を使う。
+
+## 保存するデータと通信
+
+データベースには `/live` の 1 件だけを保持し、履歴を増やさない。Unity が前回の送信完了後に次のスナップショットを作り、`PUT /live.json?auth=<Firebase ID token>&print=silent` で丸ごと置き換える。Firebase の ID token を使う REST 呼び出しでは公式仕様上 [`auth` クエリ引数](https://firebase.google.com/docs/database/rest/auth)が必要。HTTPS を必須とし、トークンを Unity のログ、例外文、解析基盤へ出さない。リクエスト URL をログに残すネットワーク機器の有無も運用前に確認する。
 
 ```json
 {
   "schemaVersion": 1,
-  "sessionId": "server-issued-id",
+  "sessionId": "Unity起動時に生成したUUID",
   "seq": 42,
+  "updatedAt": {".sv": "timestamp"},
   "state": "Game",
-  "raceTimeSeconds": 83.2,
+  "raceTime": 83.2,
+  "countdown": 0,
   "goalLap": 3,
+  "inputMode": "Serial",
   "players": [
-    {"number": 1, "connected": true, "lap": 2, "speedKmh": 54.1, "pedal": 0.8, "steering": -0.1},
-    {"number": 2, "connected": true, "lap": 1, "speedKmh": 49.3, "pedal": 0.7, "steering": 0.2}
+    {"number": 1, "connected": true, "lap": 2, "speed": 54.1, "pedal": 0.8, "steering": -0.1},
+    {"number": 2, "connected": true, "lap": 1, "speed": 49.3, "pedal": 0.7, "steering": 0.2}
   ],
-  "serial": {"portOpen": true, "received": 2500, "errors": 4, "latestSerialId": 2500,
-    "serialDelta": [{"id": 2500, "time": "12:00:00.000", "status": "OK", "line": "0.8,-1.5,0.7,3.0"}]}
+  "serial": {
+    "portOpen": true,
+    "port": "COM3",
+    "received": 2500,
+    "processed": 2496,
+    "errors": 4,
+    "lastResult": "OK",
+    "latestSerialId": 2500,
+    "lines": [{"id": 2500, "time": "12:00:00.000", "status": "OK", "line": "0.8,-1.5,0.7,3.0"}]
+  }
 }
 ```
 
-Unity はメインスレッドで状態と画像を取得し、`UnityWebRequest` で非同期送信する。通信中に次の周期が来た場合は同種類の古い送信を捨て、キューを伸ばさない。タイムアウト・指数バックオフ・再接続時のセッション再取得を入れる。Unity 6 の [UnityWebRequest](https://docs.unity3d.com/6000.0/ScriptReference/Networking.UnityWebRequest.html) と [UploadHandlerRaw](https://docs.unity3d.com/6000.0/ScriptReference/Networking.UploadHandlerRaw.html) が HTTPS とバイナリ送信に対応することを確認済み。
+`updatedAt` は Firebase が置き換える [サーバー時刻](https://firebase.google.com/docs/database/rest/save-data)で、閲覧端末の表示では 15 秒を超えたら「更新停止」、30 秒を超えたら「オフライン」とする。時計の大幅なずれが疑われる場合は更新時刻をそのまま表示し、接続中と断言しない。Unity は 1 件ずつ送信し、送信中に次の周期が来たら古い候補を捨てる。通信断時は指数バックオフで再試行し、ゲーム進行とローカル画面は止めない。`sessionId` と `seq` は画面側の再起動・逆順検知に用いる。**同一 Firebase プロジェクトへの同時書込 Unity は 1 プロセス**を運用条件とする。
 
-## 認証と公開画面
+シリアル行は最新 10 件・各行最大 120 文字に制限する。送信 JSON は 3 KiB を目標、4 KiB を上限として送信前に測る。上限を超えた場合は古い行から削り、状態や接続診断は残す。`latestSerialId` の飛びを画面で検知し、欠けた行を全履歴のように見せない。Firebase 側は旧データを上書きするため、レース履歴の保存先にはならない。
 
-- Worker の `INGEST_TOKEN` と `VIEW_TOKEN` は別々の十分長いランダム値にする。Worker では [Secrets](https://developers.cloudflare.com/workers/configuration/secrets/) として設定する。Git、GitHub Pages の JavaScript、ワークフロー、ログには含めない。
-- Unity 側の送信用トークンは PC ごとの非公開設定から読み込む。ソースや Unity アセットとしてコミットしない。
-- 公開ページは閲覧用トークンを運営者に入力してもらい、画面を閉じるまでメモリにだけ置く。URL、`localStorage`、画像 URL、コンソールには載せない。閲覧の GET も `Authorization: Bearer` を必須とする。`fetch` で画像を取得し、Blob URL にして表示する。
-- Worker の CORS は `https://tk75attractions.github.io` のみを許可し、`Authorization` のプリフライトに対応する。**CORS は認証の代わりではない**ため、送信・閲覧ともトークンを必ず検証する。
-- 公開ページの遠隔モードでは操作ボタンを表示しないか無効化する。Worker にゲーム操作エンドポイントを作らない。ローカルの操作 API は引き続きループバック専用とする。
-- 送信用・閲覧用トークンは個別にローテーションできるようにする。少人数での共通閲覧トークンを初期案とし、利用者ごとの権限・失効が必要になったらログイン方式を別途設計する。
+## 認証とアクセス制御
 
-## 更新周期と負荷の仮設定
+1. Firebase Authentication のメール／パスワードで、**Unity 専用の書込ユーザー**と、運営者ごとの**閲覧ユーザー**を作る。閲覧者 UID は許可リストに登録する。ユーザーを追加しただけで自動的に閲覧権限を与えない。
+2. Realtime Database Security Rules は既定で全体を拒否し、`/live` の `.write` を書込 UID だけ、`.read` を許可リスト内 UID だけに与える。`/live` の `.validate` で必須項目、型、長さ、数値範囲を検証し、未知の項目を拒否する。`null` による削除は `.validate` の対象外なので `.write` で `newData.exists()` を要求する。[Rules の仕様](https://firebase.google.com/docs/database/security)に従い、Emulator で許可・拒否をテストしてから本番に適用する。
+3. Unity は書込ユーザーで [Auth REST API](https://firebase.google.com/docs/reference/rest/auth)へログインし、期限が来る前に ID token を更新する。メール／パスワードや refresh token は Git、Unity アセット、公開ページに入れない。ゲーム PC のローカル設定ファイルを OS ユーザー限定権限で保存する。**サービスアカウント鍵は Unity ビルドへ入れない。**
+4. GitHub Pages は閲覧ユーザーでサインインし、Web SDK が ID token を管理する。Web 設定の API key と database URL は公開可能な識別情報だが、認証の代わりではない。書込権限は Rules だけで制限する。サイトでは明示的なサインアウトを用意し、端末の共有状況に応じてブラウザの認証保持方法を選ぶ。
+5. 公開ページではゲーム操作ボタンを非表示にする。Firebase には操作用データを置かず、遠隔操作経路を作らない。ローカル画面の操作 API は従来どおりループバックのみ。
 
-- 状態：Unity から 2 秒ごとに送信、公開画面は 2 秒ごとに取得。最終受信から 6 秒を超えたら「オフライン」。
-- 画像：P1/P2 を各 5 秒ごとに 480×270 JPEG で送信、公開画面も各 5 秒ごとに取得。最終受信から 12 秒を超えた画像は表示しない。ローカル画面の 640×360 / 約2秒とは独立させる。
-- 1 人が 8 時間連続閲覧する場合、概算は (状態送信 0.5 + 画像送信 0.4 + 状態取得 0.5 + 画像取得 0.4) × 28,800 秒 = **51,840 リクエスト**。24 時間では **155,520 リクエスト**で、Cloudflare Workers Free の現行 100,000 リクエスト/日の枠を超える。全要求を Durable Object に転送する設計なので、Durable Object 側にも同程度の要求数が発生する。複数閲覧者・CORS プリフライト・再試行でも増えるため、本番前にプランと利用時間を決める。[Workers の制限](https://developers.cloudflare.com/workers/platform/limits/)と [Durable Objects の料金・無料枠](https://developers.cloudflare.com/durable-objects/platform/pricing/)を参照。画像の実際のバイト数と転送量も現地映像で測る。
+## 無料枠の概算と画像の扱い
 
-## 実装順序と判定条件
+4 KiB のスナップショットを 5 秒ごとに受け取る閲覧者 1 人が 24 時間・30 日接続すると、本文だけで約 **2.1 GB/月**。8 時間/日なら約 **0.69 GB/月**。接続処理、プロトコル、再接続、初回読込なども転送量に含まれるため、10 GB/月を人数に単純配分して保証はできない。Firebase コンソールで実測し、5 GB/月を超えたら送信周期やログ件数を見直す。保存は 1 件の上書きなので、1 GB の保存枠には十分な余裕がある想定。ただし他のデータが同じプロジェクトにある場合は合算される。
 
-1. **Worker / Durable Object の雛形**：認証、CORS、固定名 Object、表にある 5 種類の読み書き API をローカルで作る。新規 Object は SQLite バックエンドとして登録する。無料プランでは SQLite バックエンドのみ利用でき、現在の Wrangler では [Durable Object class exports](https://developers.cloudflare.com/durable-objects/reference/durable-objects-migrations/) で宣言する。未認証は `401`、不正データは `400` または `413`、未受信はオフラインを返す。
-2. **契約テスト**：新旧セッション、逆順連番、サイズ超過、画像の誤形式、6 秒/12 秒の期限切れ、Object 再起動で旧画像が残らないことを確認する。エラー応答にも必要な CORS ヘッダーを付け、公開画面に理由を表示できるようにする。
-3. **Unity 送信**：送信用トークンを非公開設定から読み、状態・2画面を HTTPS で送る。Unity のフレームレート、通信断時のキュー長、送信再開を測る。中継サービスが落ちてもレース進行とローカル画面が止まらないことを確認する。
-4. **公開画面の遠隔モード**：閲覧用トークン入力、接続中／オフライン／認証失敗の区別、状態と画像の取得、遠隔操作ボタンの無効化を実装する。ローカル画面の API 呼び出しは維持する。
-5. **本番設定**：Cloudflare の Worker と Durable Object をデプロイし、Secrets を設定する。Worker の URL だけを公開画面に設定する。GitHub Pages の現行ワークフローで画面を更新する。
-6. **別端末での受け入れ試験**：Unity PC とは別ネットワークの端末からログインして状態・P1/P2 映像・シリアルを確認する。無効トークン、Unity 停止、ネットワーク断、再接続、複数閲覧者、長時間運用を試し、API 回数と画像転送量を測る。これを通過するまで遠隔監視の完成とは扱わない。
+映像は扱わない。仮に 40 KiB JPEG を 2 画面・10 秒ごとに配信すると、閲覧者 1 人が 8 時間/日・30 日見るだけで本文約 **6.9 GB/月**。データベース内の画像表現や通信オーバーヘッドはさらに増える。[Cloud Storage for Firebase は現在 Blaze プランが必要](https://firebase.google.com/docs/storage/faq-and-troubleshooting)なので、画像を無料前提の初期構成へ加えない。ローカルの映像表示は維持する。
 
-## 確認済みの前提と未確認事項
+## 実装手順と確認項目
 
-- **確認済み**：GitHub Pages は静的配信のみ。Unity 6 は `UnityWebRequest` による HTTPS・バイナリ送信が可能。Durable Object のメモリは退避・再起動で消える。Cloudflare Worker Secrets が利用できる。上記の一次資料と照合した。
-- **未確認**：Cloudflare アカウント／料金プラン、運用時間、同時閲覧者数、現地の画像サイズ、ネットワーク品質。これらは実装・実測時に確定する。設計だけで動作を保証しない。
+1. **Firebase 設定**：Spark プロジェクトを作り、Realtime Database とメール／パスワード認証を有効化。書込 1 アカウント、閲覧アカウントを作る。DB URL、Web API key、UID を取得。Rules をコードとして管理し、Emulator で書込／閲覧／未許可／匿名／削除／不正型を確認する。
+2. **Unity 送信**：既存の `RaceDashboardBridge` と同じゲーム・入力元から遠隔用の軽量スナップショットを作る。書込アカウントでログインし、5 秒周期の `PUT`、token 更新、タイムアウト、送信中スキップ、バックオフ、サイズ上限を実装する。設定がない場合は送信だけ無効にする。
+3. **公開画面**：ローカル画面は現行 API を使い続ける。GitHub Pages では Firebase の閲覧ログインと `/live` の `onValue` を使い、状態・入力・シリアルを表示。未受信、認証失敗、権限不足、更新停止、オフラインを区別し、操作ボタンと映像枠は遠隔モードで非表示にする。
+4. **試験**：Firebase Emulator で Rules とデータの型を検証。Unity 停止・回線断・再接続・トークン期限切れ・閲覧者失効・Unity 再起動・悪意ある書込・スナップショット肥大化を試す。別ネットワークのスマートフォンから実際に閲覧し、5 秒周期の遅延とダウンロード量を測る。
+5. **公開**：GitHub Pages の現行ワークフローから更新。DB URL と Web API key だけを公開設定に入れる。書込資格情報はゲーム PC にのみ置く。無料枠のアラートとイベント当日の事前接続確認を運用手順に加える。
+
+## 前提と未確認事項
+
+- 公式資料で、Spark の枠、RTDB の REST 上書き・サーバー時刻、Web SDK の変更通知、Auth と Rules の役割、Unity SDK のデスクトップ制約を確認した。**実サービスでの疎通と料金計測はまだ行っていない。**
+- Firebase プロジェクトの所有者、実際の閲覧人数・時間、ネットワーク環境、シリアル行の実サイズは未確認。実装後の受け入れ試験を通るまで、遠隔監視を完成とは扱わない。
