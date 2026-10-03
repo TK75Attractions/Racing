@@ -1,4 +1,4 @@
-const API = 'http://127.0.0.1:8765';
+const API = location.origin === 'http://127.0.0.1:8765' ? '' : 'http://127.0.0.1:8765';
 const $ = (id) => document.getElementById(id);
 const labels = { Title: 'タイトル', Countdown: 'カウントダウン', Game: 'レース中', Goal: 'ゴール処理中', Result: '結果表示' };
 const details = { Title: '開始操作を待っています', Countdown: 'スタートまでまもなく', Game: 'レース進行中', Goal: '完走処理中', Result: '次のレースを選択できます' };
@@ -106,7 +106,7 @@ function renderLog(lines) {
 }
 
 async function apiFetch(path, options = {}) {
-  return fetch(API + path, { cache: 'no-store', targetAddressSpace: 'loopback', ...options });
+  return fetch(API + path, { cache: 'no-store', ...(API ? { targetAddressSpace: 'loopback' } : {}), ...options });
 }
 
 async function poll() {
