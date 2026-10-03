@@ -1,7 +1,7 @@
 {
-  "apiKey": "",
-  "authDomain": "",
-  "databaseURL": "",
-  "projectId": "",
-  "appId": ""
+  "apiKey": "AIzaSyCzTfdhwTXkCFcFfXZCPVbwM7myYDrcgTE",
+  "authDomain": "racegamemonitor.firebaseapp.com",
+  "databaseURL": "https://racegamemonitor-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  "projectId": "racegamemonitor",
+  "appId": "1:940565131996:web:b2287234729be8217e7a19"
 }
