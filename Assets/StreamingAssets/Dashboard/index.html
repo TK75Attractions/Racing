@@ -23,6 +23,17 @@
         <div class="overview-row"><div><h1>レース管理<span class="accent">.</span></h1><p>2人の走行と入力を、ひとつの画面で。</p></div><div class="state-summary"><span>現在のゲーム状態</span><strong id="game-state">接続待機</strong><small id="state-detail">Unity を起動してください</small></div></div>
       </section>
 
+      <section class="panel remote-login" id="remote-login" hidden aria-labelledby="remote-login-title">
+        <div class="panel-heading"><div><span class="section-kicker">REMOTE / VIEW ONLY</span><h2 id="remote-login-title">遠隔監視に接続</h2></div></div>
+        <p id="remote-status" role="status">Firebase の設定を確認中です。</p>
+        <form id="remote-login-form">
+          <label>閲覧用メールアドレス <input id="remote-email" type="email" autocomplete="username" required></label>
+          <label>パスワード <input id="remote-password" type="password" autocomplete="current-password" required></label>
+          <button class="primary" type="submit">監視を開始</button>
+        </form>
+        <div id="remote-account" hidden><span id="remote-user"></span><button id="remote-signout" type="button">ログアウト</button></div>
+      </section>
+
       <section class="stats" aria-label="ゲーム状態">
         <article class="stat"><span class="stat-label">レースタイム</span><strong class="mono" id="race-time">00:00.0</strong><small>RACE TIME</small></article>
         <article class="stat"><span class="stat-label">規定周回</span><strong class="mono" id="goal-lap">--<span class="unit"> LAPS</span></strong><small>RACE DISTANCE</small></article>

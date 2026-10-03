@@ -147,6 +147,7 @@ public class Gmanager : MonoBehaviour
         SwitchCameraForState(State.Title);
         ResetTitleStartInputGate();
         gameObject.AddComponent<RaceDashboardBridge>();
+        gameObject.AddComponent<RaceRemoteFirebasePublisher>();
     }
 
     public void Update()

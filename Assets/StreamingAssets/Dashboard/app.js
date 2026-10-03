@@ -1,4 +1,5 @@
-const API = location.origin === 'http://127.0.0.1:8765' ? '' : 'http://127.0.0.1:8765';
+const localMode = location.origin === 'http://127.0.0.1:8765';
+const API = localMode ? '' : 'http://127.0.0.1:8765';
 const $ = (id) => document.getElementById(id);
 const labels = { Title: 'タイトル', Countdown: 'カウントダウン', Game: 'レース中', Goal: 'ゴール処理中', Result: '結果表示' };
 const details = { Title: '開始操作を待っています', Countdown: 'スタートまでまもなく', Game: 'レース進行中', Goal: '完走処理中', Result: '次のレースを選択できます' };
@@ -14,14 +15,14 @@ function setConnection(isConnected) {
   const badge = $('connection');
   badge.classList.toggle('online', isConnected);
   badge.classList.toggle('offline', !isConnected);
-  badge.querySelector('span').textContent = isConnected ? 'UNITY 接続中' : 'UNITY 未接続';
+  badge.querySelector('span').textContent = isConnected ? (localMode ? 'UNITY 接続中' : '遠隔監視中') : (localMode ? 'UNITY 未接続' : '遠隔未接続');
   $('footer-status').textContent = isConnected ? 'Unity からデータを受信中' : 'Unity との接続を確認中';
   if (!isConnected) {
     currentState = null;
     $('game-state').textContent = '接続待機';
-    $('state-detail').textContent = 'Unity を起動してください';
+    $('state-detail').textContent = localMode ? 'Unity を起動してください' : '遠隔データを待っています';
     $('race-time').textContent = '00:00.0';
-    $('goal-lap').innerHTML = '--<span class="unit"> LAPS</span>';
+    setGoalLap('--');
     $('serial-count').textContent = '--';
     $('parse-errors').textContent = '--';
     $('serial-sub').textContent = 'ポート未接続';
@@ -52,13 +53,20 @@ function formatTime(seconds) {
   return String(Math.floor(value / 60)).padStart(2, '0') + ':' + String(Math.floor(value % 60)).padStart(2, '0') + '.' + Math.floor((value % 1) * 10);
 }
 
+function setGoalLap(value) {
+  const unit = document.createElement('span');
+  unit.className = 'unit';
+  unit.textContent = ' LAPS';
+  $('goal-lap').replaceChildren(String(value), unit);
+}
+
 function render(snapshot) {
   setConnection(true);
   currentState = snapshot.state;
   $('game-state').textContent = labels[snapshot.state] || snapshot.state;
   $('state-detail').textContent = snapshot.state === 'Countdown' ? `あと ${Math.ceil(snapshot.countdown)} 秒` : (details[snapshot.state] || '状態を確認中');
   $('race-time').textContent = formatTime(snapshot.raceTime);
-  $('goal-lap').innerHTML = `${snapshot.goalLap || '--'}<span class="unit"> LAPS</span>`;
+  setGoalLap(snapshot.goalLap || '--');
   $('serial-count').textContent = (snapshot.serial.received ?? 0).toLocaleString('ja-JP');
   $('parse-errors').textContent = (snapshot.serial.errors ?? 0).toLocaleString('ja-JP');
   $('serial-sub').textContent = snapshot.serial.portOpen ? 'RAW LINES RECEIVED' : 'ポート未接続';
@@ -78,8 +86,8 @@ function render(snapshot) {
     $('pedal-' + n).textContent = (player.pedal || 0).toFixed(2);
     $('steer-' + n).textContent = (player.steering || 0).toFixed(2);
   }
-  for (const button of document.querySelectorAll('[data-action]')) button.disabled = actions[button.dataset.action] !== currentState;
-  $('control-note').textContent = snapshot.state === 'Game' ? '「結果を表示」はレースを終了し、現在の記録で結果画面へ進みます。' : '現在のゲーム状態に応じて操作できます。';
+  for (const button of document.querySelectorAll('[data-action]')) button.disabled = !localMode || actions[button.dataset.action] !== currentState;
+  if (localMode) $('control-note').textContent = snapshot.state === 'Game' ? '「結果を表示」はレースを終了し、現在の記録で結果画面へ進みます。' : '現在のゲーム状態に応じて操作できます。';
   renderLog(snapshot.serial.lines || []);
 }
 
@@ -148,7 +156,7 @@ async function refreshFrames() {
 
 document.querySelectorAll('[data-action]').forEach((button) => {
   button.addEventListener('click', async () => {
-    if (!connected || actions[button.dataset.action] !== currentState) return;
+    if (!localMode || !connected || actions[button.dataset.action] !== currentState) return;
     button.disabled = true;
     $('control-note').textContent = 'Unity に操作を送信中…';
     try {
@@ -165,5 +173,11 @@ document.querySelectorAll('[data-action]').forEach((button) => {
 function updateClock() { $('clock').textContent = new Date().toLocaleTimeString('ja-JP', { hour12: false }); }
 updateClock();
 setInterval(updateClock, 1000);
-poll();
-setInterval(poll, 1000);
+if (localMode) {
+  poll();
+  setInterval(poll, 1000);
+} else {
+  document.body.classList.add('remote');
+  import('./remote.js').then(({ startRemote }) => startRemote({ render, setConnection }))
+    .catch(() => { $('remote-status').textContent = '遠隔監視の読み込みに失敗しました。ページを再読み込みしてください。'; });
+}
