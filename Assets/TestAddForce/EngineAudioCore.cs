@@ -34,8 +34,8 @@ public class EngineAudioCore : MonoBehaviour
         targetRpm = rpm;
         targetLoad = load;
 
-        // ピッチの計算（ベースの回転数を800rpmとして調整）
-        float pitch = Mathf.Clamp(rpm / 800f, 0.5f, 2.5f);
+        // ピッチの計算（ベースの回転数を2000rpmとして調整）
+        float pitch = Mathf.Clamp(rpm / 4000f, 0.8f, 1.2f);
         foreach (var s in sources) if (s != null) s.pitch = pitch;
 
         UpdateVolumes();
@@ -45,22 +45,32 @@ public class EngineAudioCore : MonoBehaviour
     {
         if (sources == null) return;
 
-        // 1. Idle (0 - 2000rpm)
-        sources[0].volume = Mathf.Clamp01(1f - (targetRpm / 1500f));
+        // 【修正2】重なりを増やす（クロスフェードを広くする）
+        // 0.0〜1.0 に正規化した RPM を使うと計算が楽になります
+        float rpm01 = Mathf.Clamp01(targetRpm / 7000f);
+
+        // 各レイヤーの音量カーブを少し重ねる
+        sources[0].volume = Mathf.Clamp01(1f - rpm01 * 3f); // Idle
         
-        // 2. Low (1000 - 3000rpm)
-        float lowWeight = Mathf.Clamp01(1f - Mathf.Abs(targetRpm - 2000f) / 1000f);
+        float lowWeight = Mathf.Clamp01(1f - Mathf.Abs(rpm01 - 0.3f) * 4f);
         sources[1].volume = lowWeight * targetLoad;
         sources[2].volume = lowWeight * (1f - targetLoad);
 
-        // 3. Med (2500 - 5000rpm)
-        float medWeight = Mathf.Clamp01(1f - Mathf.Abs(targetRpm - 3750f) / 1250f);
+        float medWeight = Mathf.Clamp01(1f - Mathf.Abs(rpm01 - 0.6f) * 4f);
         sources[3].volume = medWeight * targetLoad;
         sources[4].volume = medWeight * (1f - targetLoad);
 
-        // 4. High (4500rpm以上)
-        float highWeight = Mathf.Clamp01((targetRpm - 4500f) / 2500f);
+        float highWeight = Mathf.Clamp01((rpm01 - 0.5f) * 3f);
         sources[5].volume = highWeight * targetLoad;
         sources[6].volume = highWeight * (1f - targetLoad);
+        // 【追加】高速度での音量減衰処理
+        // rpm01 が 0.5 (約3500rpm) から徐々に音量が下がり始め、
+        // 1.0 (7000rpm) で 0.5倍になるように計算します。
+        float speedVolumeMultiplier = Mathf.Lerp(1.0f, 0.5f, Mathf.InverseLerp(0.5f, 1.0f, rpm01));
+
+        foreach (var s in sources)
+        {
+            s.volume *= speedVolumeMultiplier;
+        }
     }
 }
