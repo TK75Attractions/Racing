@@ -20,32 +20,36 @@ public static class RacingHUDBuilder
         if (screenGraphic == null) screenGraphic = boostOverlay.gameObject.AddComponent<RacingBoostGraphic>();
         screenGraphic.Configure(RacingBoostGraphic.DisplayMode.Screen);
         boostOverlay.gameObject.SetActive(false);
-        RectTransform position = Panel(root, "Position", new Vector2(0.025f, 0.07f), new Vector2(0.145f, 0.23f));
-        Label(position, "Heading", "POSITION", 0.12f, 0.70f, 0.88f, 0.91f, 17f, RacingUITheme.Muted);
-        Label(position, "Txt", "1", 0.12f, 0.12f, 0.53f, 0.73f, 72f, RacingUITheme.Text);
-        Label(position, "Field", "/ 2", 0.56f, 0.17f, 0.88f, 0.51f, 24f, RacingUITheme.Muted);
-        RacingUITheme.Rule(position, "Accent", new Vector2(0.12f, 0.045f), new Vector2(0.45f, 0.06f), RacingUITheme.Cyan);
+        RectTransform position = Plate(root, "Position", new Vector2(0.025f, 0.07f), new Vector2(0.15f, 0.24f),
+            RacingHUDPlateGraphic.PlateShape.Position, RacingUITheme.Cyan);
+        Label(position, "Heading", "POSITION", 0.12f, 0.72f, 0.82f, 0.89f, 17f, RacingUITheme.Muted);
+        Label(position, "Txt", "1", 0.12f, 0.16f, 0.52f, 0.73f, 72f, RacingUITheme.Text);
+        Label(position, "Field", "/ 2", 0.53f, 0.17f, 0.79f, 0.49f, 24f, RacingUITheme.Muted);
 
-        RectTransform lap = Panel(root, "Lap", new Vector2(0.155f, 0.07f), new Vector2(0.265f, 0.23f));
-        Label(lap, "Heading", "LAP", 0.12f, 0.70f, 0.88f, 0.91f, 17f, RacingUITheme.Muted);
-        Label(lap, "Txt", "1", 0.12f, 0.12f, 0.53f, 0.73f, 72f, RacingUITheme.Text);
-        Label(lap, "Total", $"/ {totalLaps}", 0.56f, 0.17f, 0.9f, 0.51f, 24f, RacingUITheme.Muted);
+        RectTransform lap = Plate(root, "Lap", new Vector2(0.156f, 0.075f), new Vector2(0.274f, 0.225f),
+            RacingHUDPlateGraphic.PlateShape.Lap, RacingUITheme.Gold);
+        Label(lap, "Heading", "LAP", 0.20f, 0.69f, 0.72f, 0.84f, 17f, RacingUITheme.Muted);
+        Label(lap, "Txt", "1", 0.20f, 0.17f, 0.55f, 0.72f, 67f, RacingUITheme.Text);
+        Label(lap, "Total", $"/ {totalLaps}", 0.55f, 0.20f, 0.79f, 0.51f, 24f, RacingUITheme.Muted);
 
-        RectTransform time = Panel(root, "Time", new Vector2(0.73f, 0.77f), new Vector2(0.975f, 0.95f));
-        Label(time, "Heading", "RACE TIME", 0.075f, 0.74f, 0.925f, 0.93f, 17f, RacingUITheme.Muted);
-        Label(time, "Total", "00:00", 0.075f, 0.32f, 0.62f, 0.76f, 48f, RacingUITheme.Text);
+        RectTransform time = Plate(root, "Time", new Vector2(0.73f, 0.77f), new Vector2(0.975f, 0.95f),
+            RacingHUDPlateGraphic.PlateShape.Timer, RacingUITheme.Cyan);
+        Label(time, "Heading", "RACE TIME", 0.17f, 0.74f, 0.925f, 0.91f, 17f, RacingUITheme.Muted);
+        Label(time, "Total", "00:00", 0.14f, 0.32f, 0.62f, 0.75f, 48f, RacingUITheme.Text);
         Label(time, "TotalFraction", ".00", 0.64f, 0.33f, 0.92f, 0.70f, 32f, RacingUITheme.Cyan);
         RacingUITheme.Rule(time, "Divider", new Vector2(0.075f, 0.29f), new Vector2(0.925f, 0.296f), new Color(0.3f, 0.45f, 0.55f, 0.4f));
         Label(time, "LapHeading", "LAP TIME", 0.075f, 0.055f, 0.43f, 0.255f, 15f, RacingUITheme.Muted);
         Label(time, "Lap", "00:00", 0.47f, 0.04f, 0.74f, 0.255f, 20f, RacingUITheme.Text);
         Label(time, "LapFraction", ".00", 0.75f, 0.04f, 0.925f, 0.255f, 19f, RacingUITheme.Muted);
 
-        RectTransform speed = Panel(root, "Speed", new Vector2(0.79f, 0.06f), new Vector2(0.975f, 0.32f));
+        RectTransform speed = Plate(root, "Speed", new Vector2(0.79f, 0.06f), new Vector2(0.975f, 0.32f),
+            RacingHUDPlateGraphic.PlateShape.Speed, RacingUITheme.Cyan);
         RectTransform gauge = RacingUITheme.Rect(speed, "Gauge", new Vector2(0.08f, 0.18f), new Vector2(0.92f, 0.93f));
         if (gauge.GetComponent<RacingSpeedGauge>() == null) gauge.gameObject.AddComponent<RacingSpeedGauge>();
         Label(speed, "Txt", "0", 0.12f, 0.21f, 0.88f, 0.61f, 75f, RacingUITheme.Text, FontRole.InstrumentDigits, TextAlignmentOptions.Center);
         Label(speed, "Unit", "KM/H", 0.2f, 0.095f, 0.8f, 0.24f, 17f, RacingUITheme.Cyan, FontRole.English, TextAlignmentOptions.Center);
-        RectTransform boost = Panel(root, "PadBoost", new Vector2(0.64f, 0.33f), new Vector2(0.975f, 0.47f));
+        RectTransform boost = Plate(root, "PadBoost", new Vector2(0.64f, 0.33f), new Vector2(0.975f, 0.47f),
+            RacingHUDPlateGraphic.PlateShape.Boost, RacingUITheme.Gold);
         Label(boost, "Heading", "BOOST // OVERDRIVE", 0.07f, 0.62f, 0.7f, 0.92f, 21f, RacingUITheme.Gold);
         Label(boost, "Remaining", "3.0s", 0.73f, 0.62f, 0.93f, 0.92f, 22f, RacingUITheme.Text,
             FontRole.InstrumentDigits, TextAlignmentOptions.Right);
@@ -65,10 +69,17 @@ public static class RacingHUDBuilder
         return root;
     }
 
-    private static RectTransform Panel(Transform parent, string name, Vector2 min, Vector2 max)
+    private static RectTransform Plate(Transform parent, string name, Vector2 min, Vector2 max,
+        RacingHUDPlateGraphic.PlateShape shape, Color accent)
     {
         RectTransform rect = RacingUITheme.Rect(parent, name, min, max);
-        RacingUITheme.Surface(rect);
+        RectTransform face = RacingUITheme.Rect(rect, "ModernSurface", Vector2.zero, Vector2.one);
+        face.SetAsFirstSibling();
+        RacingPanelGraphic oldFace = face.GetComponent<RacingPanelGraphic>();
+        if (oldFace != null) oldFace.enabled = false;
+        RacingHUDPlateGraphic graphic = face.GetComponent<RacingHUDPlateGraphic>();
+        if (graphic == null) graphic = face.gameObject.AddComponent<RacingHUDPlateGraphic>();
+        graphic.Configure(shape, accent);
         return rect;
     }
 

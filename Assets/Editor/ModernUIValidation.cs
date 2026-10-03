@@ -28,6 +28,11 @@ public static class ModernUIValidation
                 Transform hud = RacingHUDBuilder.Build(display, player, 5);
                 foreach (Graphic graphic in hud.GetComponentsInChildren<Graphic>(true))
                     Require(graphic.GetComponent<CanvasRenderer>() != null, $"Missing renderer: {graphic.name}");
+                foreach (string panel in new[] { "Position", "Lap", "Time", "Speed", "PadBoost" })
+                {
+                    RacingHUDPlateGraphic plate = hud.Find(panel + "/ModernSurface")?.GetComponent<RacingHUDPlateGraphic>();
+                    Require(plate != null && !plate.raycastTarget, $"Missing nonblocking HUD plate: {panel}");
+                }
                 var position = new UIPosition(); position.Init(hud.Find("Position")); position.SetPosition(2);
                 var lap = new UILap(); lap.Init(hud.Find("Lap")); lap.SetLap(4);
                 var time = new UITime(); time.Init(hud.Find("Time")); time.SetTotalTime(72.345f); time.SetLapTime(19.876f);

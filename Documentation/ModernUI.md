@@ -5,6 +5,7 @@ The palette uses navy surfaces, cyan selection and a gold pedal-progress/confirm
 
 - `RacingPanelGraphic` draws rounded panels and slanted primary buttons with gradients and screen-pixel edge feathering. It does not enlarge button textures.
 - `RacingHUDBuilder` replaces the legacy HUD bitmaps at runtime. Position, lap count, both clocks and speed remain bound to the existing race state. The lap denominator comes from `LapManager.GoalLap`.
+- `RacingHUDPlateGraphic` gives the race instruments distinct angular silhouettes: a pointed position plate, a lap ribbon, a tapered timing panel and a faceted speed dial. The shapes scale with the HUD and do not block pointer input.
 - `RacingSpeedGauge` and `RacingIconGraphic` draw scalable geometry. Each custom graphic requires its own `CanvasRenderer`.
 - All text uses the font catalog. A shared SDF material adds weight to the existing M PLUS Thin atlas for readable Japanese labels without modifying the font asset.
 - The title uses live TSUKUKOMA CIRCUIT lettering. `ScreenTransitionController.useArtworkLogo` can restore the original artwork. The artwork import also disables block compression and mipmaps.
