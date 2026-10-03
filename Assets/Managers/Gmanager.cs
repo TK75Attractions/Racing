@@ -95,6 +95,22 @@ public class Gmanager : MonoBehaviour
     public bool WaitingForSecondPlace => raceSession != null && raceSession.WaitingForSecondPlace;
     public float CountdownTimeRemaining => countdownTimeRemaining;
     public bool IsDrivingEnabled => state == State.Game;
+    public int GoalLap => lapManager != null ? lapManager.GoalLap : 0;
+    public int GetPlayerLap(int index)
+    {
+        if (index < 0 || index >= players.Length) return 0;
+        return lapManager?.GetCarData(players[index]?.rigidbody)?.lapCount ?? 0;
+    }
+    public float GetPlayerSpeed(int index)
+    {
+        if (index < 0 || index >= players.Length || players[index]?.rigidbody == null) return 0f;
+        return players[index].rigidbody.linearVelocity.magnitude * speedUnitMultiplier;
+    }
+    public Camera GetPlayerCaptureCamera(int index)
+    {
+        if (index < 0 || index >= displayRigs.Length) return null;
+        return displayRigs[index]?.BackImageCamera ?? displayRigs[index]?.MainCamera;
+    }
 
     public RaceCourse course;
     public Transform test;
@@ -130,6 +146,7 @@ public class Gmanager : MonoBehaviour
         ApplyStateImmediate(State.Title);
         SwitchCameraForState(State.Title);
         ResetTitleStartInputGate();
+        gameObject.AddComponent<RaceDashboardBridge>();
     }
 
     public void Update()
