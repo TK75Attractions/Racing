@@ -4,7 +4,7 @@
 
 **Firebase Realtime Database の Spark（無料）プランを採用する。** Unity が最新状態を 5 秒ごとに 1 箇所へ上書きし、GitHub Pages の画面が Firebase の変更通知で受け取る。遠隔版はゲーム状態、2 人の入力・ラップ・速度、シリアルポートの状態と直近 10 行を表示する。**遠隔映像と遠隔操作は対象外**。開始・結果表示・再挑戦・タイトル復帰と 2 画面の映像は、従来どおり `http://127.0.0.1:8765/` のローカル画面で扱う。
 
-この文書は設計であり、Firebase プロジェクト、Unity 送信処理、公開ページの受信処理は**まだ作成していない**。現在の GitHub Pages は同じ PC のループバック API に接続する実装で、外出先からの監視はまだできない。
+Unity 送信処理、公開ページの受信処理、Security Rules はリポジトリに実装済み。**Firebase プロジェクトは未作成で、実サービス接続は未検証**。接続には [Firebase の設定手順](FirebaseSetup.md)を実施する必要がある。設定値が空の公開ページは「設定待ち」を表示する。
 
 ```mermaid
 flowchart LR
@@ -67,7 +67,7 @@ flowchart LR
 
 ## 認証とアクセス制御
 
-1. Firebase Authentication のメール／パスワードで、**Unity 専用の書込ユーザー**と、運営者ごとの**閲覧ユーザー**を作る。閲覧者 UID は許可リストに登録する。ユーザーを追加しただけで自動的に閲覧権限を与えない。
+1. Firebase Authentication のメール／パスワードで、**Unity 専用の書込ユーザー**と、運営者ごとの**閲覧ユーザー**を作る。閲覧者 UID はデータベースの `roles/viewers` に登録する。ユーザーを追加しただけで自動的に閲覧権限を与えない。
 2. Realtime Database Security Rules は既定で全体を拒否し、`/live` の `.write` を書込 UID だけ、`.read` を許可リスト内 UID だけに与える。`/live` の `.validate` で必須項目、型、長さ、数値範囲を検証し、未知の項目を拒否する。`null` による削除は `.validate` の対象外なので `.write` で `newData.exists()` を要求する。[Rules の仕様](https://firebase.google.com/docs/database/security)に従い、Emulator で許可・拒否をテストしてから本番に適用する。
 3. Unity は書込ユーザーで [Auth REST API](https://firebase.google.com/docs/reference/rest/auth)へログインし、期限が来る前に ID token を更新する。メール／パスワードや refresh token は Git、Unity アセット、公開ページに入れない。ゲーム PC のローカル設定ファイルを OS ユーザー限定権限で保存する。**サービスアカウント鍵は Unity ビルドへ入れない。**
 4. GitHub Pages は閲覧ユーザーでサインインし、Web SDK が ID token を管理する。Web 設定の API key と database URL は公開可能な識別情報だが、認証の代わりではない。書込権限は Rules だけで制限する。サイトでは明示的なサインアウトを用意し、端末の共有状況に応じてブラウザの認証保持方法を選ぶ。
@@ -79,15 +79,14 @@ flowchart LR
 
 映像は扱わない。仮に 40 KiB JPEG を 2 画面・10 秒ごとに配信すると、閲覧者 1 人が 8 時間/日・30 日見るだけで本文約 **6.9 GB/月**。データベース内の画像表現や通信オーバーヘッドはさらに増える。[Cloud Storage for Firebase は現在 Blaze プランが必要](https://firebase.google.com/docs/storage/faq-and-troubleshooting)なので、画像を無料前提の初期構成へ加えない。ローカルの映像表示は維持する。
 
-## 実装手順と確認項目
+## 接続と確認項目
 
-1. **Firebase 設定**：Spark プロジェクトを作り、Realtime Database とメール／パスワード認証を有効化。書込 1 アカウント、閲覧アカウントを作る。DB URL、Web API key、UID を取得。Rules をコードとして管理し、Emulator で書込／閲覧／未許可／匿名／削除／不正型を確認する。
-2. **Unity 送信**：既存の `RaceDashboardBridge` と同じゲーム・入力元から遠隔用の軽量スナップショットを作る。書込アカウントでログインし、5 秒周期の `PUT`、token 更新、タイムアウト、送信中スキップ、バックオフ、サイズ上限を実装する。設定がない場合は送信だけ無効にする。
-3. **公開画面**：ローカル画面は現行 API を使い続ける。GitHub Pages では Firebase の閲覧ログインと `/live` の `onValue` を使い、状態・入力・シリアルを表示。未受信、認証失敗、権限不足、更新停止、オフラインを区別し、操作ボタンと映像枠は遠隔モードで非表示にする。
-4. **試験**：Firebase Emulator で Rules とデータの型を検証。Unity 停止・回線断・再接続・トークン期限切れ・閲覧者失効・Unity 再起動・悪意ある書込・スナップショット肥大化を試す。別ネットワークのスマートフォンから実際に閲覧し、5 秒周期の遅延とダウンロード量を測る。
-5. **公開**：GitHub Pages の現行ワークフローから更新。DB URL と Web API key だけを公開設定に入れる。書込資格情報はゲーム PC にのみ置く。無料枠のアラートとイベント当日の事前接続確認を運用手順に加える。
+1. [接続手順](FirebaseSetup.md)に沿って Spark プロジェクト、Realtime Database、メール／パスワード認証、書込・閲覧アカウントを作成する。
+2. [Security Rules](../Firebase/database.rules.json)と `roles` データを設定し、Emulator または Rules Playground で書込／閲覧／未許可／匿名／削除／不正型を確認する。
+3. 公開設定をサイトと Unity に、書込資格情報をゲーム PC だけに登録する。別ネットワークのスマートフォンから閲覧し、Unity 停止・回線断・再接続・閲覧者失効・スナップショット肥大化を試す。
+4. イベント中の転送量を実測し、無料枠に近づく場合は送信周期や行数を調整する。
 
 ## 前提と未確認事項
 
-- 公式資料で、Spark の枠、RTDB の REST 上書き・サーバー時刻、Web SDK の変更通知、Auth と Rules の役割、Unity SDK のデスクトップ制約を確認した。**実サービスでの疎通と料金計測はまだ行っていない。**
+- 公式資料で、Spark の枠、RTDB の REST 上書き・サーバー時刻、Web SDK の変更通知、Auth と Rules の役割、Unity SDK のデスクトップ制約を確認した。**Firebase プロジェクトがまだないため、実サービスでの疎通と料金計測は未検証。**
 - Firebase プロジェクトの所有者、実際の閲覧人数・時間、ネットワーク環境、シリアル行の実サイズは未確認。実装後の受け入れ試験を通るまで、遠隔監視を完成とは扱わない。

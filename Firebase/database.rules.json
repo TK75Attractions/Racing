@@ -1,0 +1,66 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "live": {
+      ".read": "auth !== null && root.child('roles').child('viewers').child(auth.uid).val() === true",
+      ".write": "auth !== null && auth.uid === root.child('roles').child('writerUid').val() && newData.exists()",
+      ".validate": "newData.hasChildren(['schemaVersion','sessionId','seq','updatedAt','state','raceTime','countdown','goalLap','inputMode','players','serial'])",
+      "schemaVersion": { ".validate": "newData.isNumber() && newData.val() === 1" },
+      "sessionId": { ".validate": "newData.isString() && newData.val().length === 32" },
+      "seq": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+      "updatedAt": { ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 1000" },
+      "state": { ".validate": "newData.isString() && (newData.val() === 'Title' || newData.val() === 'Countdown' || newData.val() === 'Game' || newData.val() === 'Goal' || newData.val() === 'Result')" },
+      "raceTime": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 86400" },
+      "countdown": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3600" },
+      "goalLap": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+      "inputMode": { ".validate": "newData.isString() && newData.val().length <= 64" },
+      "players": {
+        ".validate": "newData.hasChildren(['0','1'])",
+        "0": {
+          ".validate": "newData.hasChildren(['number','connected','lap','speed','pedal','steering']) && newData.child('number').val() === 1",
+          "number": { ".validate": "newData.isNumber() && newData.val() === 1" },
+          "connected": { ".validate": "newData.isBoolean()" },
+          "lap": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+          "speed": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000" },
+          "pedal": { ".validate": "newData.isNumber() && newData.val() >= -1 && newData.val() <= 1" },
+          "steering": { ".validate": "newData.isNumber() && newData.val() >= -1 && newData.val() <= 1" },
+          "$other": { ".validate": false }
+        },
+        "1": {
+          ".validate": "newData.hasChildren(['number','connected','lap','speed','pedal','steering']) && newData.child('number').val() === 2",
+          "number": { ".validate": "newData.isNumber() && newData.val() === 2" },
+          "connected": { ".validate": "newData.isBoolean()" },
+          "lap": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+          "speed": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000" },
+          "pedal": { ".validate": "newData.isNumber() && newData.val() >= -1 && newData.val() <= 1" },
+          "steering": { ".validate": "newData.isNumber() && newData.val() >= -1 && newData.val() <= 1" },
+          "$other": { ".validate": false }
+        },
+        "$other": { ".validate": false }
+      },
+      "serial": {
+        ".validate": "newData.hasChildren(['portOpen','port','received','processed','errors','latestSerialId','lastResult'])",
+        "portOpen": { ".validate": "newData.isBoolean()" },
+        "port": { ".validate": "newData.isString() && newData.val().length <= 64" },
+        "received": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "processed": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "errors": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "latestSerialId": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "lastResult": { ".validate": "newData.isString() && newData.val().length <= 120" },
+        "lines": {
+          "$index": {
+            ".validate": "($index === '0' || $index === '1' || $index === '2' || $index === '3' || $index === '4' || $index === '5' || $index === '6' || $index === '7' || $index === '8' || $index === '9') && newData.hasChildren(['id','time','status','line'])",
+            "id": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+            "time": { ".validate": "newData.isString() && newData.val().length <= 16" },
+            "status": { ".validate": "newData.isString() && newData.val().length <= 16" },
+            "line": { ".validate": "newData.isString() && newData.val().length <= 120" },
+            "$other": { ".validate": false }
+          }
+        },
+        "$other": { ".validate": false }
+      },
+      "$other": { ".validate": false }
+    }
+  }
+}

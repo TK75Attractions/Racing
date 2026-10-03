@@ -46,12 +46,27 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public long received;
         public int processed;
         public int errors;
+        public int latestSerialId;
         public string lastResult;
         public SerialEntry[] lines;
     }
 
     [Serializable] private sealed class DashboardSnapshot
     {
+        public string state;
+        public float raceTime;
+        public float countdown;
+        public int goalLap;
+        public string inputMode;
+        public PlayerSnapshot[] players;
+        public SerialSnapshot serial;
+    }
+
+    [Serializable] private sealed class RemoteSnapshot
+    {
+        public int schemaVersion = 1;
+        public string sessionId;
+        public int seq;
         public string state;
         public float raceTime;
         public float countdown;
@@ -160,6 +175,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             case "/app.js": fileName = "app.js"; contentType = "application/javascript; charset=utf-8"; return true;
             case "/style.css": fileName = "style.css"; contentType = "text/css; charset=utf-8"; return true;
             case "/favicon.svg": fileName = "favicon.svg"; contentType = "image/svg+xml"; return true;
+            case "/firebase-config.json": fileName = "firebase-config.json"; contentType = "application/json; charset=utf-8"; return true;
+            case "/remote.js": fileName = "remote.js"; contentType = "application/javascript; charset=utf-8"; return true;
             default: fileName = null; contentType = null; return false;
         }
     }
@@ -219,11 +236,60 @@ public sealed class RaceDashboardBridge : MonoBehaviour
                 portOpen = serial != null && serial.IsPortOpen,
                 port = serial?.PortName ?? "-", received = serial?.LinesReceived ?? 0,
                 processed = serial?.LinesProcessed ?? 0, errors = serial?.ParseErrorCount ?? 0,
+                latestSerialId = serialSequence,
                 lastResult = serial?.LastParseResult ?? "Waiting for input",
                 lines = serialLines.ToArray()
             }
         };
     }
+
+    /// <summary>Creates a bounded, image-free snapshot for the remote viewer.</summary>
+    public string BuildRemoteSnapshotJson(string sessionId, int sequence)
+    {
+        DashboardSnapshot source = BuildSnapshot();
+        SerialEntry[] allLines = source.serial.lines;
+        int count = Math.Min(10, allLines.Length);
+        RemoteSnapshot remote = new RemoteSnapshot
+        {
+            sessionId = sessionId,
+            seq = sequence,
+            state = source.state,
+            raceTime = source.raceTime,
+            countdown = source.countdown,
+            goalLap = source.goalLap,
+            inputMode = Limit(source.inputMode, 64),
+            players = source.players,
+            serial = source.serial
+        };
+        foreach (PlayerSnapshot player in remote.players)
+        {
+            player.pedal = Mathf.Clamp(player.pedal, -1f, 1f);
+            player.steering = Mathf.Clamp(player.steering, -1f, 1f);
+            player.speed = Mathf.Clamp(player.speed, 0f, 1000f);
+        }
+        remote.serial.port = Limit(remote.serial.port, 64);
+        remote.serial.lastResult = Limit(remote.serial.lastResult, 120);
+        while (true)
+        {
+            remote.serial.lines = new SerialEntry[count];
+            for (int i = 0; i < count; i++)
+            {
+                SerialEntry entry = allLines[allLines.Length - count + i];
+                remote.serial.lines[i] = new SerialEntry
+                {
+                    id = entry.id, time = entry.time, status = Limit(entry.status, 16),
+                    line = Limit(entry.line, 120)
+                };
+            }
+            string json = "{\"updatedAt\":{\".sv\":\"timestamp\"}," + JsonUtility.ToJson(remote).Substring(1);
+            if (Encoding.UTF8.GetByteCount(json) <= 4096) return json;
+            if (count == 0) return null;
+            count--;
+        }
+    }
+
+    private static string Limit(string value, int maximum) =>
+        string.IsNullOrEmpty(value) || value.Length <= maximum ? value : value.Substring(0, maximum);
 
     private void RecordSerialLine(string status, string line)
     {
