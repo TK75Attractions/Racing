@@ -18,6 +18,11 @@ public class TireForce : MonoBehaviour
     private Quaternion initialLocalRotation;
 
     public bool IsFrontWheel => isFrontTire;
+    /// <summary>直近の物理フレームで接地していたか。タイヤ痕や煙などの表示用です。</summary>
+    public bool IsGrounded => isGrounded;
+    /// <summary>タイヤの向きに対する横滑りの速さ（m/s、絶対値）。</summary>
+    public float LateralSlipSpeed => Mathf.Abs(lateralVelocity);
+    public RaycastHit GroundHit => groundCheck != null ? groundCheck.GroundHit : default;
 
     private void Awake()
     {
