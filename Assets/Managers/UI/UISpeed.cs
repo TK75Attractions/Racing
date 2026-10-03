@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 [Serializable]
 public class UISpeed
@@ -12,6 +13,12 @@ public class UISpeed
     private GameObject boostRoot;
     private TMP_Text boostRemainingText;
     private RectTransform boostFill;
+    private RacingBoostGraphic boostBar;
+    private RacingBoostGraphic boostScreen;
+    private Image boostGlow;
+    private float screenIntensity;
+    private float entryFlash;
+    private bool wasBoosting;
 
     [SerializeField] private float speedVelocity = 0f;
     [SerializeField] private float speedValue = 0f;
@@ -39,7 +46,15 @@ public class UISpeed
         boostRoot = boostTransform != null ? boostTransform.gameObject : null;
         boostRemainingText = boostTransform != null ? boostTransform.Find("Remaining")?.GetComponent<TMP_Text>() : null;
         boostFill = boostTransform != null ? boostTransform.Find("Fill")?.GetComponent<RectTransform>() : null;
+        boostBar = boostFill != null ? boostFill.GetComponent<RacingBoostGraphic>() : null;
+        boostGlow = boostTransform != null ? boostTransform.Find("Glow")?.GetComponent<Image>() : null;
+        Transform screenTransform = rootTransform.parent != null ? rootTransform.parent.Find("BoostOverlay") : null;
+        boostScreen = screenTransform != null ? screenTransform.GetComponent<RacingBoostGraphic>() : null;
+        screenIntensity = 0f;
+        entryFlash = 0f;
+        wasBoosting = false;
         if (boostRoot != null) boostRoot.SetActive(false);
+        if (boostScreen != null) boostScreen.gameObject.SetActive(false);
         if (meter == null)
         {
             Transform meterTransform = rootTransform.Find("parent");
@@ -75,9 +90,21 @@ public class UISpeed
 
     public void UpdateBoostGauge(float remainingSeconds, float durationSeconds)
     {
-        if (boostRoot == null) return;
-
         bool active = remainingSeconds > 0f && durationSeconds > 0f;
+        if (active && !wasBoosting) entryFlash = 1f;
+        wasBoosting = active;
+        float dt = Time.deltaTime;
+        screenIntensity = Mathf.MoveTowards(screenIntensity, active ? 1f : 0f, dt * (active ? 8f : 3f));
+        entryFlash = Mathf.MoveTowards(entryFlash, 0f, dt * 2.5f);
+        float phase = Mathf.Repeat(Time.time * 0.75f, 1f);
+        if (boostScreen != null)
+        {
+            boostScreen.gameObject.SetActive(screenIntensity > 0.001f);
+            if (boostScreen.gameObject.activeSelf)
+                boostScreen.SetEffect(screenIntensity, entryFlash, phase);
+        }
+
+        if (boostRoot == null) return;
         boostRoot.SetActive(active);
         if (!active) return;
 
@@ -86,9 +113,13 @@ public class UISpeed
         if (boostFill != null)
         {
             Vector2 anchorMax = boostFill.anchorMax;
-            anchorMax.x = Mathf.Lerp(0.08f, 0.92f, Mathf.Clamp01(remainingSeconds / durationSeconds));
+            anchorMax.x = Mathf.Lerp(0.07f, 0.93f, Mathf.Clamp01(remainingSeconds / durationSeconds));
             boostFill.anchorMax = anchorMax;
         }
+        if (boostBar != null) boostBar.SetEffect(1f, entryFlash, phase);
+        if (boostGlow != null)
+            boostGlow.color = new Color(1f, 0.24f, 0.04f,
+                0.13f + 0.09f * Mathf.Sin(phase * Mathf.PI * 2f) + 0.16f * entryFlash);
     }
 
     private void UpdateSpeedText(float speed)
