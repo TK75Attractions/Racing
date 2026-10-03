@@ -3502,7 +3502,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AccelerationPad
   acceleration: 12
-  boostDuration: 1
+  instantSpeedBonus: 7
+  boostDuration: 3
   padSize: {x: 4, y: 0.2, z: 8}
   triggerMargin: 0.15
   visualMaterial: {fileID: 0}

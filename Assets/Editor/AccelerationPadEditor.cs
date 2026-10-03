@@ -39,7 +39,7 @@ public sealed class AccelerationPadEditor : Editor
         }
         EditorGUILayout.EndHorizontal();
 
-        EditorGUILayout.HelpBox("Sceneビューで移動・回転・盤面サイズを直接調整できます。盤面の青い矢印が加速方向です。", MessageType.Info);
+        EditorGUILayout.HelpBox("Sceneビューで移動・回転・盤面サイズを直接調整できます。加速は車両の進行方向に沿ってかかります。", MessageType.Info);
     }
 
     private void OnSceneGUI()

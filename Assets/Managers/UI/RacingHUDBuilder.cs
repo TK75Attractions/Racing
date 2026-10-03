@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>Replaces enlarged HUD bitmaps with live type and vector instruments.</summary>
 public static class RacingHUDBuilder
@@ -38,6 +39,17 @@ public static class RacingHUDBuilder
         if (gauge.GetComponent<RacingSpeedGauge>() == null) gauge.gameObject.AddComponent<RacingSpeedGauge>();
         Label(speed, "Txt", "0", 0.12f, 0.21f, 0.88f, 0.61f, 75f, RacingUITheme.Text, FontRole.InstrumentDigits, TextAlignmentOptions.Center);
         Label(speed, "Unit", "KM/H", 0.2f, 0.095f, 0.8f, 0.24f, 17f, RacingUITheme.Cyan, FontRole.English, TextAlignmentOptions.Center);
+        RectTransform boost = Panel(root, "PadBoost", new Vector2(0.79f, 0.33f), new Vector2(0.975f, 0.41f));
+        Label(boost, "Heading", "BOOST", 0.08f, 0.48f, 0.55f, 0.9f, 18f, RacingUITheme.Gold);
+        Label(boost, "Remaining", "3.0s", 0.6f, 0.48f, 0.92f, 0.9f, 18f, RacingUITheme.Text,
+            FontRole.InstrumentDigits, TextAlignmentOptions.Right);
+        RacingUITheme.Rule(boost, "Track", new Vector2(0.08f, 0.2f), new Vector2(0.92f, 0.36f),
+            new Color(0.35f, 0.29f, 0.16f, 0.8f));
+        RectTransform fill = RacingUITheme.Rect(boost, "Fill", new Vector2(0.08f, 0.2f), new Vector2(0.92f, 0.36f));
+        Image fillImage = fill.gameObject.AddComponent<Image>();
+        fillImage.color = RacingUITheme.Gold;
+        fillImage.raycastTarget = false;
+        boost.gameObject.SetActive(false);
         Label(root, "Player", $"P{playerIndex + 1}  /  TSUKUKOMA CIRCUIT", 0.026f, 0.026f, 0.35f, 0.052f, 17f, RacingUITheme.Text);
         return root;
     }

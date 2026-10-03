@@ -9,6 +9,9 @@ public class UISpeed
     private RectTransform meter;
     private TMP_Text speedText;
     private RacingSpeedGauge gauge;
+    private GameObject boostRoot;
+    private TMP_Text boostRemainingText;
+    private RectTransform boostFill;
 
     [SerializeField] private float speedVelocity = 0f;
     [SerializeField] private float speedValue = 0f;
@@ -32,6 +35,11 @@ public class UISpeed
         }
 
         gauge = rootTransform.GetComponentInChildren<RacingSpeedGauge>(true);
+        Transform boostTransform = rootTransform.parent != null ? rootTransform.parent.Find("PadBoost") : null;
+        boostRoot = boostTransform != null ? boostTransform.gameObject : null;
+        boostRemainingText = boostTransform != null ? boostTransform.Find("Remaining")?.GetComponent<TMP_Text>() : null;
+        boostFill = boostTransform != null ? boostTransform.Find("Fill")?.GetComponent<RectTransform>() : null;
+        if (boostRoot != null) boostRoot.SetActive(false);
         if (meter == null)
         {
             Transform meterTransform = rootTransform.Find("parent");
@@ -63,6 +71,24 @@ public class UISpeed
         UpdateSpeedText(speed);
         if (gauge != null) gauge.SetSpeed(speed);
         else UpdateMeter(speed, dt);
+    }
+
+    public void UpdateBoostGauge(float remainingSeconds, float durationSeconds)
+    {
+        if (boostRoot == null) return;
+
+        bool active = remainingSeconds > 0f && durationSeconds > 0f;
+        boostRoot.SetActive(active);
+        if (!active) return;
+
+        if (boostRemainingText != null)
+            boostRemainingText.text = (Mathf.Ceil(remainingSeconds * 10f) / 10f).ToString("F1") + "s";
+        if (boostFill != null)
+        {
+            Vector2 anchorMax = boostFill.anchorMax;
+            anchorMax.x = Mathf.Lerp(0.08f, 0.92f, Mathf.Clamp01(remainingSeconds / durationSeconds));
+            boostFill.anchorMax = anchorMax;
+        }
     }
 
     private void UpdateSpeedText(float speed)
