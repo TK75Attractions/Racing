@@ -12,6 +12,18 @@ public sealed class RacingUIFontCatalog : ScriptableObject
     [SerializeField] private TMP_FontAsset dseg7;
     private static RacingUIFontCatalog instance;
     private Material japaneseUIMaterial;
+    private static TMP_FontAsset hudMedium, hudBold;
+
+    public static TMP_FontAsset GetHUD(bool bold)
+    {
+        if (bold)
+        {
+            if (hudBold == null) hudBold = Resources.Load<TMP_FontAsset>("UI/HUD/MPLUS HUD Bold");
+            return hudBold;
+        }
+        if (hudMedium == null) hudMedium = Resources.Load<TMP_FontAsset>("UI/HUD/MPLUS HUD Medium");
+        return hudMedium;
+    }
 
     public static Material GetJapaneseUIMaterial()
     {

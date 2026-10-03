@@ -13,12 +13,12 @@ public sealed class PlayerItemHUD : MonoBehaviour
     private const float ToastFadeSeconds = 0.35f;
     private const float OilExtraFadeSeconds = 1.2f;
 
-    private static readonly Color ShieldColor = new Color(0.3f, 0.88f, 1f, 1f);
-    private static readonly Color RocketColor = new Color(1f, 0.55f, 0.15f, 1f);
-    private static readonly Color OilColor = new Color(0.95f, 0.72f, 0.3f, 1f);
-    private static readonly Color ConfuseColor = new Color(1f, 0.3f, 0.85f, 1f);
-    private static readonly Color ChargeColor = new Color(0.4f, 0.95f, 1f, 1f);
-    private static readonly Color WarningColor = new Color(1f, 0.35f, 0.3f, 1f);
+    private static readonly Color ShieldColor = RacingHUDStyle.Teal;
+    private static readonly Color RocketColor = RacingHUDStyle.Amber;
+    private static readonly Color OilColor = RacingHUDStyle.Amber;
+    private static readonly Color ConfuseColor = new Color(.79f, .64f, .91f, 1f);
+    private static readonly Color ChargeColor = RacingHUDStyle.Teal;
+    private static readonly Color WarningColor = RacingHUDStyle.Alert;
 
     private static Sprite[] oilSprites;
     private static Sprite edgeSprite;
@@ -29,6 +29,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
     private TMP_Text toastTitle;
     private TMP_Text toastCaption;
     private TMP_Text statusLabel;
+    private RectTransform statusRect;
     private Image confuseFrame;
     private Image oilTint;
     private readonly Image[] oilBlobs = new Image[OilBlobCount];
@@ -121,14 +122,14 @@ public sealed class PlayerItemHUD : MonoBehaviour
         switch (item)
         {
             case RaceItemType.Oil:
-                ShowToast("オイルを踏んだ!", "SLIPPING", WarningColor);
+                ShowToast("オイルを踏んだ!", "SLIPPING / すべりやすくなっています", WarningColor);
                 StartOilSplatter();
                 break;
             case RaceItemType.Confuse:
-                ShowToast("ハンドル反転!", "CONFUSED", ConfuseColor);
+                ShowToast("ハンドル反転!", "CONFUSED / 左右の操作が逆になります", ConfuseColor);
                 break;
             case RaceItemType.Shield:
-                ShowToast("スピン!", "SPUN BY SHIELD", WarningColor);
+                ShowToast("スピン!", "SPIN / 車の向きに気をつけて", WarningColor);
                 break;
         }
     }
@@ -158,7 +159,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
         // 出現時に少し大きく表示してから戻し、最後はフェードアウトします。
         float pop = Mathf.Clamp01(toastAge / 0.15f);
-        toastRect.localScale = Vector3.one * Mathf.Lerp(1.3f, 1f, 1f - (1f - pop) * (1f - pop));
+        toastRect.localScale = Vector3.one * Mathf.Lerp(1.06f, 1f, 1f - (1f - pop) * (1f - pop));
         float fade = Mathf.Clamp01((ToastSeconds - toastAge) / ToastFadeSeconds);
         toastGroup.alpha = fade;
     }
@@ -230,32 +231,33 @@ public sealed class PlayerItemHUD : MonoBehaviour
         Color tint = Color.white;
         if (effects.IsRocketActive)
         {
-            text = $"ROCKET  自動操縦  {effects.RocketTimeRemaining:0.0}";
+            text = $"自動操縦 / ROCKET   {effects.RocketTimeRemaining:0.0}秒";
             tint = RocketColor;
         }
         else if (effects.IsSpinning)
         {
-            text = "SPIN";
+            text = "スピン中 / SPIN";
             tint = WarningColor;
         }
         else if (effects.IsConfused)
         {
-            text = $"ハンドル反転  {effects.ConfuseTimeRemaining:0.0}";
+            text = $"ハンドル反転 / CONFUSED   {effects.ConfuseTimeRemaining:0.0}秒";
             tint = ConfuseColor;
         }
         else if (effects.IsOiled)
         {
-            text = "SLIPPING";
+            text = "すべっています / SLIPPING";
             tint = OilColor;
         }
         else if (effects.IsShieldActive)
         {
-            text = $"SHIELD  {effects.ShieldTimeRemaining:0.0}";
+            text = $"シールド / SHIELD   {effects.ShieldTimeRemaining:0.0}秒";
             tint = ShieldColor;
         }
 
         statusLabel.text = text;
         statusLabel.color = tint;
+        statusRect.gameObject.SetActive(!string.IsNullOrEmpty(text));
     }
 
     private int GetTargetSiblingIndex()
@@ -295,21 +297,20 @@ public sealed class PlayerItemHUD : MonoBehaviour
         confuseFrame = CreateImage(root, "ConfuseFrame", edgeSprite, Vector2.zero, Vector2.one);
         confuseFrame.enabled = false;
 
-        toastRect = RacingUITheme.Rect(root, "Toast", new Vector2(0.2f, 0.62f), new Vector2(0.8f, 0.8f));
+        toastRect = RacingHUDStyle.Plate(root, "Toast", new Vector2(.345f, .725f), new Vector2(.655f, .845f),
+            RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
         toastGroup = toastRect.gameObject.AddComponent<CanvasGroup>();
         toastGroup.alpha = 0f;
         toastGroup.blocksRaycasts = false;
-        toastTitle = RacingUITheme.Label(toastRect, "Title", string.Empty, new Vector2(0f, 0.38f), new Vector2(1f, 1f),
-            64f, Color.white, FontRole.Japanese, TextAlignmentOptions.Center);
-        toastTitle.fontStyle = FontStyles.Bold;
-        toastTitle.outlineWidth = 0.18f;
-        toastTitle.outlineColor = new Color32(0, 0, 0, 200);
-        toastCaption = RacingUITheme.Label(toastRect, "Caption", string.Empty, new Vector2(0f, 0f), new Vector2(1f, 0.36f),
-            24f, RacingUITheme.Text, FontRole.Japanese, TextAlignmentOptions.Center);
-
-        statusLabel = RacingUITheme.Label(root, "Status", string.Empty, new Vector2(0.3f, 0.2f), new Vector2(0.7f, 0.26f),
-            30f, Color.white, FontRole.Japanese, TextAlignmentOptions.Center);
-        statusLabel.fontStyle = FontStyles.Bold;
+        toastTitle = RacingHUDStyle.Label(toastRect, "Title", string.Empty, .06f, .40f, .94f, .90f,
+            32f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
+        toastCaption = RacingHUDStyle.Label(toastRect, "Caption", string.Empty, .06f, .12f, .94f, .41f,
+            19f, RacingHUDStyle.Muted, TextAlignmentOptions.Center);
+        statusRect = RacingHUDStyle.Plate(root, "StatusPlate", new Vector2(.345f, .065f), new Vector2(.655f, .125f),
+            RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
+        statusLabel = RacingHUDStyle.Label(statusRect, "Status", string.Empty, .05f, .15f, .95f, .85f,
+            23f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
+        statusRect.gameObject.SetActive(false);
     }
 
     private static Image CreateImage(Transform parent, string name, Sprite sprite, Vector2 min, Vector2 max)

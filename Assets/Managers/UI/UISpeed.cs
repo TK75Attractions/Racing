@@ -109,7 +109,7 @@ public class UISpeed
         if (!active) return;
 
         if (boostRemainingText != null)
-            boostRemainingText.text = (Mathf.Ceil(remainingSeconds * 10f) / 10f).ToString("F1") + "s";
+            boostRemainingText.text = (Mathf.Ceil(remainingSeconds * 10f) / 10f).ToString("F1") + "秒";
         if (boostFill != null)
         {
             Vector2 anchorMax = boostFill.anchorMax;
@@ -118,8 +118,8 @@ public class UISpeed
         }
         if (boostBar != null) boostBar.SetEffect(1f, entryFlash, phase);
         if (boostGlow != null)
-            boostGlow.color = new Color(1f, 0.24f, 0.04f,
-                0.13f + 0.09f * Mathf.Sin(phase * Mathf.PI * 2f) + 0.16f * entryFlash);
+            boostGlow.color = new Color(.96f, .70f, .38f,
+                .10f + .04f * Mathf.Sin(phase * Mathf.PI * 2f) + .08f * entryFlash);
     }
 
     private void UpdateSpeedText(float speed)

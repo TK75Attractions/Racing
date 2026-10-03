@@ -37,6 +37,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
     private GameObject finishWarningRoot;
     private TMP_Text raceStatus;
     private TMP_Text raceStatusCaption;
+    private TMP_Text raceStatusEnglishCaption;
     private TMP_Text finishWarningText;
     private int lastWarningSecond = -1;
     private UIValuePulse raceStatusPulse;
@@ -187,7 +188,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         SetStatusVisibility(showCountdown: false, showWarning: true);
         if (finishWarningText != null)
         {
-            string value = $"{playerLabel}   {Mathf.Max(0f, secondsRemaining):0.0}s";
+            string value = $"{playerLabel}   あと {Mathf.Max(0f, secondsRemaining):0.0}秒";
             finishWarningText.text = value;
             int displayedSecond = Mathf.CeilToInt(secondsRemaining);
             if (displayedSecond <= 10 && displayedSecond != lastWarningSecond)
@@ -545,67 +546,30 @@ public sealed class ScreenTransitionController : MonoBehaviour
             return;
         }
 
-        countdownStatusRoot = CreatePanel(onPlay, "CountdownStatus",
-            new Vector2(0.37f, 0.49f), new Vector2(0.63f, 0.84f),
-            new Color(0.006f, 0.018f, 0.034f, 0.78f));
-        Outline countdownOutline = countdownStatusRoot.GetComponent<Outline>();
-        if (countdownOutline == null)
-        {
-            countdownOutline = countdownStatusRoot.AddComponent<Outline>();
-        }
-        countdownOutline.effectColor = new Color(0.2f, 0.53f, 0.68f, 0.25f);
-        countdownOutline.effectDistance = new Vector2(1f, -1f);
-        RacingUITheme.Surface(countdownStatusRoot.transform);
-        CreatePanel(countdownStatusRoot.transform, "TopAccent", new Vector2(0.30f, 0.985f), new Vector2(0.70f, 1f), new Color(0.15f, 0.8f, 1f, 1f));
-
-        raceStatusCaption = CreateLabel(
-            countdownStatusRoot.transform, "Caption", "RACE START",
-            new Vector2(0.08f, 0.79f), new Vector2(0.92f, 0.93f), 19f,
-            new Color(0.6f, 0.79f, 0.88f, 1f));
-        raceStatusCaption.characterSpacing = 5f;
-        raceStatus = CreateLabel(
-            countdownStatusRoot.transform, "RaceStatus", string.Empty,
-            new Vector2(0.05f, 0.19f), new Vector2(0.95f, 0.80f), 164f,
-            Color.white);
-        raceStatus.fontStyle = FontStyles.Bold | FontStyles.Italic;
-        TMP_FontAsset countdownFont = RacingUIFontCatalog.Get(FontRole.English);
-        if (countdownFont != null)
-        {
-            raceStatus.font = countdownFont;
-            raceStatusCaption.font = countdownFont;
-        }
+        countdownStatusRoot = RacingHUDStyle.Plate(onPlay, "CountdownStatus",
+            new Vector2(.415f, .43f), new Vector2(.585f, .735f),
+            RacingHUDPlateGraphic.PlateShape.Speed, RacingHUDStyle.Teal).gameObject;
+        raceStatusCaption = RacingHUDStyle.Label(countdownStatusRoot.transform, "Caption", "スタートまで",
+            .12f, .73f, .88f, .85f, 25f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
+        raceStatusEnglishCaption = RacingHUDStyle.Label(countdownStatusRoot.transform, "EnglishCaption", "RACE START",
+            .12f, .655f, .88f, .735f, 14f, RacingHUDStyle.Muted, TextAlignmentOptions.Center);
+        raceStatus = RacingHUDStyle.Label(countdownStatusRoot.transform, "RaceStatus", string.Empty,
+            .08f, .22f, .92f, .66f, 132f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
         for (int i = 0; i < countdownSignals.Length; i++)
         {
-            float left = 0.24f + i * 0.18f;
+            float left = .30f + i * .15f;
             countdownSignals[i] = CreatePanel(countdownStatusRoot.transform, $"Signal{i + 1}",
-                new Vector2(left, 0.12f), new Vector2(left + 0.15f, 0.14f), new Color(0.12f, 0.22f, 0.29f, 1f)).GetComponent<Image>();
+                new Vector2(left, .16f), new Vector2(left + .10f, .177f), new Color(.30f, .38f, .39f, 1f)).GetComponent<Image>();
         }
-        raceStatusPulse = raceStatus.GetComponent<UIValuePulse>();
-        if (raceStatusPulse == null)
-        {
-            raceStatusPulse = raceStatus.gameObject.AddComponent<UIValuePulse>();
-        }
-        finishWarningRoot = CreatePanel(onPlay, "FinishWarningStatus",
-            new Vector2(0.31f, 0.78f), new Vector2(0.69f, 0.94f),
-            new Color(0.12f, 0.025f, 0.018f, 0.94f));
-        RacingUITheme.Surface(finishWarningRoot.transform);
-        GameObject warningAccent = CreatePanel(finishWarningRoot.transform, "WarningAccent",
-            new Vector2(0f, 0f), new Vector2(0.018f, 1f), new Color(1f, 0.24f, 0.12f, 1f));
-        warningAccent.GetComponent<Image>().raycastTarget = false;
-        TMP_Text warningCaption = CreateLabel(
-            finishWarningRoot.transform, "Caption", "FINAL CHANCE  /  TIME TO FINISH",
-            new Vector2(0.08f, 0.57f), new Vector2(0.92f, 0.9f), 21f,
-            new Color(1f, 0.45f, 0.25f, 1f));
-        warningCaption.characterSpacing = 5f;
-        finishWarningText = CreateLabel(
-            finishWarningRoot.transform, "FinishWarningText", string.Empty,
-            new Vector2(0.08f, 0.08f), new Vector2(0.92f, 0.62f), 45f,
-            Color.white);
-        finishWarningText.fontStyle = FontStyles.Bold;
+        raceStatusPulse = raceStatus.GetComponent<UIValuePulse>() ?? raceStatus.gameObject.AddComponent<UIValuePulse>();
+        finishWarningRoot = RacingHUDStyle.Plate(onPlay, "FinishWarningStatus",
+            new Vector2(.34f, .815f), new Vector2(.66f, .95f),
+            RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Amber).gameObject;
+        RacingHUDStyle.Heading(finishWarningRoot.transform, "もうすぐレース終了", "TIME TO FINISH", .06f, .54f, .94f, .91f, 24f);
+        finishWarningText = RacingHUDStyle.Label(finishWarningRoot.transform, "FinishWarningText", string.Empty,
+            .06f, .08f, .94f, .54f, 38f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
         if (finishWarningText.GetComponent<UIValuePulse>() == null)
-        {
             finishWarningText.gameObject.AddComponent<UIValuePulse>();
-        }
 
         SetStatusVisibility(showCountdown: false, showWarning: false);
     }
@@ -658,13 +622,14 @@ public sealed class ScreenTransitionController : MonoBehaviour
         raceStatus.text = value;
         bool go = value == "GO!";
         int.TryParse(value, out int seconds);
-        Color accent = go ? new Color(0.25f, 0.9f, 1f, 1f) : new Color(0.18f, 0.75f, 1f, 1f);
+        Color accent = go ? RacingHUDStyle.Teal : RacingHUDStyle.Amber;
         for (int i = 0; i < countdownSignals.Length; i++)
             if (countdownSignals[i] != null)
-                countdownSignals[i].color = go || i < Mathf.Clamp(4 - seconds, 0, 3) ? accent : new Color(0.12f, 0.22f, 0.29f, 1f);
+                countdownSignals[i].color = go || i < Mathf.Clamp(4 - seconds, 0, 3) ? accent : new Color(.30f, .38f, .39f, 1f);
         if (raceStatusCaption != null)
         {
-            raceStatusCaption.text = caption;
+            raceStatusCaption.text = go ? "スタート!" : "スタートまで";
+            raceStatusEnglishCaption.text = caption;
         }
         if (changed)
         {

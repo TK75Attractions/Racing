@@ -105,8 +105,8 @@ public static class MiniMapValidation
                 "The course band graphics were not created.");
             Require(mapRoot.Find("Marker_P1") != null && mapRoot.Find("Marker_P2") != null,
                 "Car markers were not created.");
-            Require(mapRoot.GetComponentsInChildren<Graphic>(true).Length == 5,
-                "Unexpected number of mini map graphics.");
+            Require(mapRoot.Find("MapFrame/Heading") != null && mapRoot.Find("MapFrame/You") != null && mapRoot.Find("MapFrame/Rival") != null,
+                "The bilingual map header and player legend were not created.");
             foreach (Graphic graphic in mapRoot.GetComponentsInChildren<Graphic>(true))
             {
                 Require(!graphic.raycastTarget, $"{graphic.name} still blocks raycasts.");
@@ -132,15 +132,15 @@ public static class MiniMapValidation
                 "The marker heading does not match the car yaw.");
             UnityEngine.Object.DestroyImmediate(dummyCar);
 
-            // 既存HUDと重ならないことを、シーンの実配置から確認します。
-            if (sceneOnPlay != null)
+            // Compare the full bilingual map frame with the live HUD, including fresh runtime layout.
+            Transform liveHUD = RacingHUDBuilder.Build(onPlay.transform, 0, 3);
             {
-                Bounds mapBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(onPlayRect, mapRect);
+                Bounds mapBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(onPlayRect, mapRoot.Find("MapFrame") as RectTransform);
                 foreach (string hudName in new[] { "Position", "Lap", "Time", "Speed" })
                 {
-                    Transform hud = sceneOnPlay.Find(hudName);
+                    Transform hud = liveHUD.Find(hudName);
                     if (hud == null) continue;
-                    if (!TryGetGraphicBounds(sceneOnPlay, hud, out Bounds hudBounds)) continue;
+                    if (!TryGetGraphicBounds(onPlayRect, hud, out Bounds hudBounds)) continue;
 
                     Require(!Overlaps(mapBounds, hudBounds),
                         $"The mini map overlaps the {hudName} HUD element " +

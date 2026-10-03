@@ -97,6 +97,8 @@ public sealed class GoalCelebrationUI : MonoBehaviour
 
         TMP_Text goalText = CreateLabel(hero, "GoalText", "GOAL!", new Vector2(0f, 0.36f), new Vector2(1f, 0.9f),
             190f, Color.white, font);
+        RacingHUDStyle.Label(hero, "JapaneseGoal", "ゴール!", .12f, .84f, .88f, .97f, 38f,
+            RacingHUDStyle.Teal, TextAlignmentOptions.Center, bold: true);
         goalText.characterSpacing = 7f;
         winnerText = CreateLabel(hero, "WinnerText", "PLAYER 1 WINS", new Vector2(0.12f, 0.2f), new Vector2(0.88f, 0.42f),
             52f, new Color(1f, 0.84f, 0.12f, 1f), font);

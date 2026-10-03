@@ -147,10 +147,10 @@ public static class MultiplayerPlayModeValidation
         Require(p2VirtualCamera != null && p2VirtualCamera.OutputChannel == OutputChannels.Channel01,
             "P2 Cinemachine output channel is incorrect.");
 
-        TMP_Text p1Title = FindComponent<TMP_Text>("GameManagers/MainCanvas/Title/StartPrompt");
-        TMP_Text p2Title = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Title/StartPrompt");
-        Require(p1Title != null && p2Title != null && p1Title.text.Contains("P1") && p2Title.text.Contains("P2"),
-            "Title prompts are not personalized for each display.");
+        TMP_Text p1Title = FindComponent<TMP_Text>("GameManagers/MainCanvas/Title/PlayerBadge");
+        TMP_Text p2Title = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Title/PlayerBadge");
+        Require(p1Title != null && p2Title != null && p1Title.text.Contains("PLAYER 01") && p2Title.text.Contains("PLAYER 02"),
+            "Title player badges are not personalized for each display.");
         Require(FindComponentIncludingInactive<PedalButtonSurface>("GameManagers/MainCanvas/Title/Player1Pedal/ButtonSurface") != null &&
                 FindComponentIncludingInactive<PedalButtonSurface>("GameManagers/MainCanvas_P2/Title/Player2Pedal/ButtonSurface") != null &&
                 FindComponentIncludingInactive<PedalButtonSurface>("GameManagers/MainCanvas/Title/Player2Pedal/ButtonSurface") == null &&
@@ -183,6 +183,14 @@ public static class MultiplayerPlayModeValidation
 
     private static void ValidateFirstFinish()
     {
+        foreach (string canvasName in new[] { "MainCanvas", "MainCanvas_P2" })
+        {
+            TMP_Text positionHeading = FindComponent<TMP_Text>($"GameManagers/{canvasName}/OnPlay/ModernHUD/Position/Heading");
+            TMP_Text speedHeading = FindComponent<TMP_Text>($"GameManagers/{canvasName}/OnPlay/ModernHUD/Speed/Heading");
+            Require(positionHeading != null && positionHeading.text == "順位" &&
+                    speedHeading != null && speedHeading.text == "スピード",
+                "The bilingual HUD was not initialized for both players.");
+        }
         GameObject p1Car = GameObject.Find("Player1_Car");
         finishMethod = typeof(Gmanager).GetMethod("HandleCarFinished", BindingFlags.NonPublic | BindingFlags.Instance);
         Require(finishMethod != null, "Finish handler is missing.");
@@ -216,7 +224,7 @@ public static class MultiplayerPlayModeValidation
             "GameManagers/MainCanvas/SpectatorOverlay/PlayerPlate/PlayerLabel");
         CinemachineCamera p1Camera = FindComponentIncludingInactive<CinemachineCamera>("GameManagers/VCamera");
         CinemachineCamera p2Camera = FindComponentIncludingInactive<CinemachineCamera>("GameManagers/VCamera_P2");
-        Require(spectatorLabel != null && spectatorLabel.text.Contains("P2"),
+        Require(spectatorLabel != null && spectatorLabel.text == "プレイヤー 2 を観戦中",
             "The finished player's display does not identify the watched player.");
         Require(p1Camera != null && p2Camera != null && p1Camera.Follow == p2Camera.Follow,
             "The finished player's camera is not following the unfinished player.");

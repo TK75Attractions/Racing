@@ -6,7 +6,7 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class SpectatorOverlayUI : MonoBehaviour
 {
-    private static readonly Color FrameColor = RacingPanelGraphic.Alpha(RacingUITheme.Cyan, 0.75f);
+    private static readonly Color FrameColor = RacingPanelGraphic.Alpha(RacingHUDStyle.Teal, .60f);
     private TMP_Text playerLabel;
 
     public static SpectatorOverlayUI Create(Transform canvasRoot, TMP_FontAsset font)
@@ -51,17 +51,18 @@ public sealed class SpectatorOverlayUI : MonoBehaviour
             CreateCorner($"Corner{x}{y}V", anchor, new Vector2(2f, 52f));
         }
         RectTransform plate = RacingUITheme.Rect(transform, "PlayerPlate", new Vector2(0.34f, 0.845f), new Vector2(0.66f, 0.955f));
-        RacingUITheme.Surface(plate);
-        RacingUITheme.Rule(plate, "LiveAccent", new Vector2(0.07f, 0.67f), new Vector2(0.09f, 0.73f), RacingUITheme.Cyan);
-        TMP_Text caption = RacingUITheme.Label(plate, "Caption", "LIVE  /  SPECTATOR", new Vector2(0.12f, 0.57f), new Vector2(0.93f, 0.84f),
-            17f, RacingUITheme.Cyan);
+        RacingHUDStyle.Surface(plate, RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
+        RacingUITheme.Rule(plate, "LiveAccent", new Vector2(0.07f, 0.67f), new Vector2(0.09f, 0.73f), RacingHUDStyle.Teal);
+        TMP_Text caption = RacingHUDStyle.Label(plate, "Caption", "LIVE / SPECTATOR", .12f, .57f, .93f, .84f, 15f, RacingHUDStyle.Teal);
         caption.characterSpacing = 2f;
-        playerLabel = RacingUITheme.Label(plate, "PlayerLabel", "プレイヤー 2 を観戦中", new Vector2(0.07f, 0.13f), new Vector2(0.93f, 0.54f),
-            28f, RacingUITheme.Text, FontRole.Japanese);
+        playerLabel = RacingHUDStyle.Label(plate, "PlayerLabel", "プレイヤー 2 を観戦中", .07f, .13f, .93f, .54f,
+            28f, RacingHUDStyle.Text, bold: true);
         RectTransform footer = RacingUITheme.Rect(transform, "FinishStatus", new Vector2(0.32f, 0.025f), new Vector2(0.68f, 0.087f));
-        RacingUITheme.Surface(footer);
-        RacingUITheme.Label(footer, "Status", "ゴール済み  /  レース終了を待っています", new Vector2(0.05f, 0.12f), new Vector2(0.95f, 0.88f),
-            20f, RacingUITheme.Muted, FontRole.Japanese, TextAlignmentOptions.Center);
+        RacingHUDStyle.Surface(footer, RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
+        RacingHUDStyle.Label(footer, "Status", "ゴール済み / レース終了を待っています", .05f, .37f, .95f, .92f,
+            20f, RacingHUDStyle.Text, TextAlignmentOptions.Center);
+        RacingHUDStyle.Label(footer, "EnglishStatus", "FINISHED / WAITING FOR RACE END", .05f, .04f, .95f, .39f,
+            12f, RacingHUDStyle.Muted, TextAlignmentOptions.Center);
     }
 
     private void CreateCorner(string name, Vector2 anchor, Vector2 size)

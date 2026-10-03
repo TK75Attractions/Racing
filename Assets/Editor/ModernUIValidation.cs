@@ -13,8 +13,9 @@ public static class ModernUIValidation
     {
         foreach (FontRole role in Enum.GetValues(typeof(FontRole)))
             Require(RacingUIFontCatalog.Get(role) != null, $"Missing UI font: {role}");
+        Require(RacingUIFontCatalog.GetHUD(false) != null && RacingUIFontCatalog.GetHUD(true) != null, "Missing medium/bold HUD fonts.");
         TMP_FontAsset japanese = RacingUIFontCatalog.Get(FontRole.Japanese);
-        Require(japanese.HasCharacters("スタートリトライタイトルへハンドルで操作ペダルを踏み込んで決定準備完了相手待っています観戦中済終了前進後退走行方向切替操作一時停止あなた", out uint[] missing),
+        Require(japanese.HasCharacters("スタートリトライタイトルへハンドルで操作ペダルを踏み込んで決定準備完了相手待っています観戦中済終了前進後退走行方向切替操作一時停止あなた順位いまの周位人走行タイムこのスピードコースあいてプレイヤー加速秒もうすぐレース終了", out uint[] missing),
             "Japanese UI font is missing required characters.");
         Require(Resources.Load<GameObject>("UI/TitleScreenBackground") != null, "Missing title background.");
         Require(Resources.Load<GameObject>("UI/ResultScreenBackground") != null, "Missing result background.");
@@ -42,6 +43,12 @@ public static class ModernUIValidation
                 Require(Text(hud, "Time/Total") == "01:12" && Text(hud, "Time/TotalFraction") == ".34", "Total time binding failed.");
                 Require(Text(hud, "Time/Lap") == "00:19" && Text(hud, "Time/LapFraction") == ".87", "Lap time binding failed.");
                 Require(Text(hud, "Speed/Txt") == "127", "Speed binding failed.");
+                Require(Text(hud, "Position/Heading") == "順位" && Text(hud, "Position/EnglishHeading") == "POSITION", "Bilingual position label failed.");
+                Require(Text(hud, "Lap/Heading") == "いまの周" && Text(hud, "Speed/Heading") == "スピード", "Japanese instrument labels failed.");
+                speed.UpdateBoostGauge(2.45f, 3f);
+                Require(hud.Find("PadBoost").gameObject.activeSelf && Text(hud, "PadBoost/Remaining") == "2.5秒", "Boost seconds binding failed.");
+                speed.UpdateBoostGauge(0f, 3f);
+                Require(!hud.Find("PadBoost").gameObject.activeSelf, "Boost must hide when inactive.");
                 Require(RacingHUDBuilder.Build(display, player, 5) == hud, "HUD initialization must be idempotent.");
             }
             ValidateOverlays(root.transform);

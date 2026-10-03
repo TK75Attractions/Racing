@@ -71,16 +71,26 @@ public class UIMiniMap
         if (background == null) background = root.AddComponent<Image>();
         background.color = backgroundColor;
         background.raycastTarget = false;
-        RacingUITheme.Surface(rect);
+        background.enabled = false;
+        Transform oldSurface = rect.Find("ModernSurface");
+        if (oldSurface != null) oldSurface.gameObject.SetActive(false);
+        RectTransform frame = RacingHUDStyle.Plate(rect, "MapFrame", new Vector2(0f, -.25f), new Vector2(1f, 1.30f),
+            RacingHUDPlateGraphic.PlateShape.Map, RacingHUDStyle.Teal);
+        frame.SetAsFirstSibling();
+        RacingHUDStyle.Heading(frame, "コース", "COURSE MAP", .08f, .81f, .92f, .97f, 22f);
+        RacingHUDStyle.Label(frame, "You", "あなた / YOU", .12f, .03f, .49f, .14f, 15f, RacingHUDStyle.Text);
+        RacingHUDStyle.Label(frame, "Rival", "あいて / RIVAL", .59f, .03f, .97f, .14f, 15f, RacingHUDStyle.Text);
+        LegendMarker(frame, "YouMarker", .045f, RacingHUDStyle.Teal);
+        LegendMarker(frame, "RivalMarker", .515f, RacingHUDStyle.Amber);
 
         borderGraphic = EnsureGraphic<MiniMapTrackGraphic>(rect, "Border", trackBorderColor);
-        borderGraphic.WidthScale = trackBorderScale;
+        borderGraphic.WidthScale = .22f * trackBorderScale;
         trackGraphic = EnsureGraphic<MiniMapTrackGraphic>(rect, "Track", trackColor);
-        trackGraphic.WidthScale = 1f;
+        trackGraphic.WidthScale = .22f;
 
         for (int index = 0; index < MarkerCount; index++)
         {
-            Color markerColor = index == ownPlayerIndex ? ownMarkerColor : rivalMarkerColor;
+            Color markerColor = index == ownPlayerIndex ? RacingHUDStyle.Teal : RacingHUDStyle.Amber;
             markers[index] = EnsureGraphic<MiniMapMarkerGraphic>(rect, $"Marker_P{index + 1}", markerColor);
             RectTransform markerRect = markers[index].rectTransform;
             markerRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -173,9 +183,18 @@ public class UIMiniMap
         rect.anchorMax = new Vector2(0f, 1f);
         rect.pivot = new Vector2(0f, 1f);
         rect.sizeDelta = mapSize;
-        rect.anchoredPosition = new Vector2(screenMargin.x, -screenMargin.y);
+        // The course projection keeps its original dimensions; the bilingual header sits above it.
+        rect.anchoredPosition = new Vector2(screenMargin.x, -screenMargin.y - mapSize.y * .30f);
         rect.localScale = Vector3.one;
         rect.localRotation = Quaternion.identity;
+    }
+
+    private static void LegendMarker(Transform parent, string name, float x, Color tint)
+    {
+        RectTransform marker = RacingUITheme.Rect(parent, name, new Vector2(x, .062f), new Vector2(x + .05f, .11f));
+        MiniMapMarkerGraphic graphic = marker.GetComponent<MiniMapMarkerGraphic>() ?? marker.gameObject.AddComponent<MiniMapMarkerGraphic>();
+        graphic.color = tint;
+        graphic.raycastTarget = false;
     }
 
     private static T EnsureGraphic<T>(RectTransform parent, string name, Color color) where T : Graphic
