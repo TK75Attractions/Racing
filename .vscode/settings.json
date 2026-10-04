@@ -2,6 +2,7 @@
     "files.exclude": {
         "**/.DS_Store": true,
         "**/.git": true,
+        "**/*.meta": true,
         "library/": true,
         "Library/": true,
         "logs/": true,
