@@ -17,8 +17,8 @@ public static class ModernUIValidation
         TMP_FontAsset japanese = RacingUIFontCatalog.Get(FontRole.Japanese);
         Require(japanese.HasCharacters("スタートリトライタイトルへハンドルで操作ペダルを踏み込んで決定準備完了相手待っています観戦中済終了前進後退走行方向切替操作一時停止あなた順位いまの周位人走行タイムこのスピードコースあいてプレイヤー加速秒もうすぐレース終了", out uint[] missing),
             "Japanese UI font is missing required characters.");
-        Require(Resources.Load<GameObject>("UI/TitleScreenBackground") != null, "Missing title background.");
-        Require(Resources.Load<GameObject>("UI/ResultScreenBackground") != null, "Missing result background.");
+        foreach(string asset in new[]{"TitleBackground","ResultBackground","MedalGold","MedalSilver"})
+            Require(Resources.Load<Texture2D>("UI/Neon/"+asset)!=null,"Missing neon art: "+asset);
         GameObject root = new GameObject("Modern UI validation", typeof(RectTransform), typeof(Canvas));
         root.hideFlags = HideFlags.HideAndDontSave;
         try
@@ -52,9 +52,47 @@ public static class ModernUIValidation
                 Require(RacingHUDBuilder.Build(display, player, 5) == hud, "HUD initialization must be idempotent.");
             }
             ValidateOverlays(root.transform);
+            ValidateNeonMenus(root.transform);
             Debug.Log("MODERN_UI_VALIDATION_PASS: fonts, backgrounds, both player HUDs, live timing, lap counts, speed, spectator and ESC actions.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+
+    private static void ValidateNeonMenus(Transform parent)
+    {
+        RectTransform host=RacingUITheme.Rect(parent,"ScreenValidation",Vector2.zero,Vector2.one);
+        RectTransform title=RacingUITheme.Rect(host,"Title",Vector2.zero,Vector2.one);
+        RectTransform play=RacingUITheme.Rect(host,"OnPlay",Vector2.zero,Vector2.one);
+        RectTransform result=RacingUITheme.Rect(host,"Result",Vector2.zero,Vector2.one);
+        ScreenTransitionController transition=host.gameObject.AddComponent<ScreenTransitionController>();
+        transition.Initialize(title,play,result,"","準備",1);
+        RacingMenuButton start=title.Find("Player2Pedal").GetComponent<RacingMenuButton>();
+        Require(start.IsActive() && start.targetGraphic.enabled && start.targetGraphic.raycastTarget,"Title start has no active pointer hit target.");
+        foreach(RacingMenuButton button in title.GetComponentsInChildren<RacingMenuButton>(true))
+            Require(button.targetGraphic.enabled && button.targetGraphic.raycastTarget,"Menu control has no pointer hit target: "+button.name);
+        NeonTitleMenu menu=title.GetComponent<NeonTitleMenu>();
+        float volume=AudioListener.volume;
+        try
+        {
+            menu.Build(title,1);menu.Open(NeonTitleMenu.Page.Settings);
+            AudioListener.volume=.65f;
+            title.Find("MenuSheet/Card/Action").GetComponent<RacingMenuButton>().onClick.Invoke();
+            Require(AudioListener.volume==0f,"Settings action did not toggle sound exactly once.");
+            menu.Close();Require(!menu.IsOpen,"Title sheet did not close.");
+        }
+        finally { AudioListener.volume=volume; }
+        ResultUIManager results=new ResultUIManager();results.Init(result,2);
+        RaceSessionResult session=new RaceSessionResult();
+        session.SetPlayerResult(0,new RaceResultRecord{playerNumber=1,finishPosition=1,totalRaceTime=40});
+        session.SetPlayerResult(1,new RaceResultRecord{playerNumber=2,finishPosition=2,totalRaceTime=42.125f});
+        results.ShowResults(session);
+        Transform card=result.Find("ResultPresentation/ResultCard");
+        Require(Text(card,"ResultRow2/Gap")=="+2.125" && Text(card,"PlacementRibbon/Ordinal")=="2ND","Result times and local medal do not match real data.");
+        Require(card.Find("ResultMenu").childCount==4,"Result must have four actions.");
+        foreach(RacingMenuButton button in card.Find("ResultMenu").GetComponentsInChildren<RacingMenuButton>(true))
+            Require(button.targetGraphic.enabled && button.targetGraphic.raycastTarget,"Result action has no pointer hit target.");
+        session.GetPlayerResult(1).didFinish=false;results.ShowResults(session);
+        Require(Text(card,"ResultRow2/Time")=="DNF" && Text(card,"PlacementRibbon/Ordinal")=="DNF" && !card.Find("Medal/Artwork").gameObject.activeSelf,"DNF must not award a finish medal.");
     }
 
     [MenuItem("Racing/UI/Preview HUD")]

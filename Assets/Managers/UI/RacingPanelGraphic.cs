@@ -5,7 +5,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasRenderer))]
 public class RacingPanelGraphic : MaskableGraphic
 {
-    public enum SurfaceStyle { Panel, Primary, Secondary }
+    public enum SurfaceStyle { Panel, Primary, Secondary, Danger }
     private const int PointCount = 8;
     private readonly Vector2[] outer = new Vector2[PointCount];
     private readonly Vector2[] inner = new Vector2[PointCount];
@@ -52,6 +52,11 @@ public class RacingPanelGraphic : MaskableGraphic
         {
             bottom = new Color(.28f, .007f, .095f, .98f);
             top = new Color(.91f, .012f, .34f, .99f);
+        }
+        if (style == SurfaceStyle.Danger)
+        {
+            bottom = new Color(.08f,.012f,.045f,.97f);
+            top = new Color(.25f,.015f,.095f,.97f);
         }
         top = Color.Lerp(top, light, selection * .12f + pressure * .24f + confirmation * .25f);
         Fill(vh, bounds, bottom, top);
@@ -115,7 +120,7 @@ public class RacingPanelGraphic : MaskableGraphic
 
     private void DrawChecks(VertexHelper vh, Rect r, Color tint)
     {
-        float h = r.height;
+        float h = Mathf.Min(r.height, 110f);
         // Diagonal bands, inset from the silhouette so they never create rectangular corners.
         for (int i = 0; i < 3; i++)
         {
@@ -124,8 +129,8 @@ public class RacingPanelGraphic : MaskableGraphic
             Color c = Alpha(tint, .04f + i * .015f) * color;
             vh.AddVert(new Vector2(x, r.yMin + 4f), c, Vector2.zero);
             vh.AddVert(new Vector2(x + h * .20f, r.yMin + 4f), c, Vector2.zero);
-            vh.AddVert(new Vector2(x + h * .80f, r.yMax - 4f), c, Vector2.zero);
-            vh.AddVert(new Vector2(x + h * .60f, r.yMax - 4f), c, Vector2.zero);
+            vh.AddVert(new Vector2(x + h * .80f, r.yMin + h - 4f), c, Vector2.zero);
+            vh.AddVert(new Vector2(x + h * .60f, r.yMin + h - 4f), c, Vector2.zero);
             vh.AddTriangle(n, n + 1, n + 2); vh.AddTriangle(n, n + 2, n + 3);
         }
         float cut = Mathf.Clamp(h * .20f, 8f, 26f);

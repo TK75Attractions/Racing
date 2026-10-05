@@ -511,6 +511,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         PedalButtonFeedback feedback = start.GetComponent<PedalButtonFeedback>() ?? start.gameObject.AddComponent<PedalButtonFeedback>();
         feedback.Configure(NeonUI.Pink);
         start.transform.Find("ModernSurface").gameObject.SetActive(false);
+        Image hit = start.GetComponent<Image>(); hit.enabled = true; hit.color = Color.clear; hit.raycastTarget = true;
         start.Configure(start.transform.Find("ButtonSurface").GetComponent<RacingPanelGraphic>());
         titleButtonFeedback[playerIndex] = feedback;
     }

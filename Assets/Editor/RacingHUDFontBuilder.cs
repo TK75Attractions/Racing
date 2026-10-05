@@ -17,12 +17,13 @@ public static class RacingHUDFontBuilder
         string directory = "Assets/Resources/UI/HUD";
         Directory.CreateDirectory(directory);
         AssetDatabase.Refresh();
-        foreach (string image in new[] { "Assets/Resources/UI/Neon/TitleBackground.png", "Assets/Resources/UI/Neon/ResultBackground.png", "Assets/Editor/ReferenceArt/RaceBackdrop.png" })
+        foreach (string image in new[] { "Assets/Resources/UI/Neon/TitleBackground.png", "Assets/Resources/UI/Neon/ResultBackground.png", "Assets/Resources/UI/Neon/MedalGold.png", "Assets/Resources/UI/Neon/MedalSilver.png", "Assets/Editor/ReferenceArt/RaceBackdrop.png" })
         {
             TextureImporter importer = AssetImporter.GetAtPath(image) as TextureImporter;
             if (importer == null) continue;
             importer.npotScale = TextureImporterNPOTScale.None;
             importer.mipmapEnabled = false;
+            importer.alphaIsTransparency = true;
             importer.wrapMode = TextureWrapMode.Clamp;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.maxTextureSize = 2048;

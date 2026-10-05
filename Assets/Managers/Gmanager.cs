@@ -1138,6 +1138,15 @@ public class Gmanager : MonoBehaviour
         foreach (T behaviour in target.GetComponentsInChildren<T>(true)) behaviour.enabled = isEnabled;
     }
 
+    public void SelectResultOption(int playerIndex, int option)
+    {
+        if(state != State.Result || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount || players[playerIndex].returnedToTitle) return;
+        resultUIManagers[playerIndex]?.PlayConfirm(option);
+        if(option == 0) { RetryGame(); return; }
+        NeonTitleMenu.Page? page = option == 1 ? NeonTitleMenu.Page.Cars : option == 2 ? NeonTitleMenu.Page.Course : (NeonTitleMenu.Page?)null;
+        ReturnPlayerToTitle(playerIndex, page);
+    }
+
     private void UpdateResultReturnInput(float dt)
     {
         if (resultReturnInputDelayTimer < resultReturnInputDelaySeconds)
@@ -1152,7 +1161,7 @@ public class Gmanager : MonoBehaviour
             DriveInputState input = IManager.GetInputState(index);
             if (!player.resultSteeringLatch && Mathf.Abs(input.steering) >= resultSteeringThreshold)
             {
-                player.resultSelection = input.steering > 0f ? 1 : 0;
+                player.resultSelection = (player.resultSelection + (input.steering > 0f ? 1 : 3)) % 4;
                 player.resultSteeringLatch = true;
                 player.resultConfirmTimer = 0f;
             }
@@ -1164,13 +1173,8 @@ public class Gmanager : MonoBehaviour
             player.resultConfirmTimer = input.pedal > resultReturnPedalThreshold ? player.resultConfirmTimer + dt : 0f;
             if (player.resultConfirmTimer < Mathf.Max(0.01f, resultReturnHoldSeconds)) continue;
             player.resultConfirmTimer = 0f;
-            resultUIManagers[index]?.PlayConfirm(player.resultSelection);
-            if (player.resultSelection == 0)
-            {
-                RetryGame();
-                return;
-            }
-            ReturnPlayerToTitle(index);
+            SelectResultOption(index, player.resultSelection);
+            if (player.resultSelection == 0) return;
         }
     }
 
@@ -1186,7 +1190,7 @@ public class Gmanager : MonoBehaviour
         }
     }
 
-    private void ReturnPlayerToTitle(int index)
+    private void ReturnPlayerToTitle(int index, NeonTitleMenu.Page? page = null)
     {
         PlayerRuntime player = players[index];
         Action covered = () =>
@@ -1200,6 +1204,8 @@ public class Gmanager : MonoBehaviour
         };
         Action completed = () =>
         {
+            if (page.HasValue)
+                player.displayRig.CanvasRoot.transform.Find("Title")?.GetComponent<NeonTitleMenu>()?.Open(page.Value);
             foreach (PlayerRuntime participant in players)
                 if (participant == null || !participant.returnedToTitle) return;
             // 両者が戻るまでは結果データともう一方の画面を保持します。

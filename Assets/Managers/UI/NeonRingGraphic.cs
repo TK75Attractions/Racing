@@ -5,7 +5,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class NeonRingGraphic : MaskableGraphic
 {
-    public enum Display { Countdown, Boost, Medal, Light }
+    public enum Display { Countdown, Boost, Light }
     public Display display;
     public float amount = 1f;
     private VertexHelper mesh;
@@ -26,7 +26,6 @@ public sealed class NeonRingGraphic : MaskableGraphic
                 if(x*x+y*y<20) Dot(center+new Vector2(x,y)*radius*.15f,radius*.045f,color);
             return;
         }
-        if(display==Display.Medal) { Medal(); return; }
         Disc(radius,new Color(.015f,.025f,.085f,.78f),new Color(.015f,.025f,.085f,.15f));
         for(int layer=5;layer>0;layer--)
         {
@@ -43,31 +42,6 @@ public sealed class NeonRingGraphic : MaskableGraphic
         for(int i=0;i<120;i++)
         {float a=i*3f;Color c=i<60?NeonUI.Pink:NeonUI.Cyan;c.a=.46f;Line(Point(radius*.83f,a),Point(radius*.86f,a),1f,c);}
         if(display==Display.Boost)Arc(radius*.91f,-90,-90+360*Mathf.Clamp01(amount),9f,NeonUI.Pink);
-    }
-    private void Medal()
-    {
-        radius*=.82f;
-        Color gold=new Color(1f,.70f,.27f),dark=new Color(.20f,.065f,.035f);
-        if(amount>1.5f){gold=new Color(.84f,.92f,1f);dark=new Color(.12f,.20f,.30f);}
-        Disc(radius,gold,dark);Arc(radius*.96f,0,360,5f,gold);Arc(radius*.85f,0,360,2f,new Color(1f,.88f,.67f));
-        Disc(radius*.79f,new Color(.47f,.24f,.15f),dark);
-        for(int side=-1;side<=1;side+=2)
-        {
-            Vector2 previous=Vector2.zero;
-            for(int i=0;i<11;i++)
-            {
-                float angle=side<0?205f-i*8f:335f+i*8f;
-                Vector2 a=Point(radius*1.12f,angle),b=Point(radius*1.12f,angle+(side<0?-8:8));
-                Line(a,b,3f,gold);
-                Vector2 d=(b-a).normalized,n=new Vector2(-d.y,d.x)*side;
-                int k=mesh.currentVertCount;
-                mesh.AddVert(a,gold,Vector2.zero);mesh.AddVert(a+d*radius*.21f+n*radius*.16f,gold,Vector2.zero);
-                mesh.AddVert(a+d*radius*.33f,new Color(.98f,.88f,.60f),Vector2.zero);
-                mesh.AddVert(a+d*radius*.11f-n*radius*.08f,dark,Vector2.zero);
-                mesh.AddTriangle(k,k+1,k+2);mesh.AddTriangle(k,k+2,k+3);
-                previous=b;
-            }
-        }
     }
     private Vector2 Point(float r,float degrees) {float a=degrees*Mathf.Deg2Rad;return center+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*r;}
     private void Line(Vector2 a,Vector2 b,float width,Color c)=>RacingPanelGraphic.Line(mesh,a,b,width,c,aa);

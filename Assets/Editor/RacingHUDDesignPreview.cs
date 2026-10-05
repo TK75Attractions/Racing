@@ -25,6 +25,7 @@ public static class RacingHUDDesignPreview
         try
         {
             CaptureView(course, output, 1920, 1080, 0, "title");
+            CaptureView(course, output, 1920, 1080, 1, "result");
             CaptureView(course, output, 1920, 1080, 0, "race");
             CaptureView(course, output, 1920, 1080, 1, "boost");
             CaptureView(course, output, 1920, 1080, 0, "countdown");
@@ -113,9 +114,16 @@ public static class RacingHUDDesignPreview
             map.SetCars(cars[0].transform, cars[1].transform);
             ScreenTransitionController transition = canvasObject.AddComponent<ScreenTransitionController>();
             RectTransform title = RacingUITheme.Rect(canvas.transform, "Title", Vector2.zero, Vector2.one);
-            transition.Initialize(title, play, null, string.Empty, "ペダルを踏んで準備", player);
+            RectTransform result=RacingUITheme.Rect(canvas.transform,"Result",Vector2.zero,Vector2.one);
+            ResultUIManager results=new ResultUIManager();results.Init(result,player+1);
+            RaceSessionResult session=new RaceSessionResult();
+            session.SetPlayerResult(0,new RaceResultRecord{playerNumber=1,finishPosition=1,totalRaceTime=82.418f,carName="SPORT CAR",bestLapTime=26.184f,finalLapTime=28.162f});
+            session.SetPlayerResult(1,new RaceResultRecord{playerNumber=2,finishPosition=2,totalRaceTime=84.531f,carName="SPORT CAR",bestLapTime=27.205f,finalLapTime=29.125f});
+            results.ShowResults(session);
+            transition.Initialize(title, play, result, string.Empty, "ペダルを踏んで準備", player);
             transition.ApplyStateImmediate(Gmanager.State.Game);
-            if (state == "title") transition.ApplyStateImmediate(Gmanager.State.Title);
+            if (state == "result") transition.ApplyStateImmediate(Gmanager.State.Result);
+            else if (state == "title") transition.ApplyStateImmediate(Gmanager.State.Title);
             else if (state == "countdown") transition.ShowCountdown(3);
             else if (state == "finish-warning") transition.ShowFinishWarning("P1", 8.4f);
             else if (state == "spectator") transition.ShowSpectator(1);

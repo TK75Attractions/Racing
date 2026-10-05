@@ -25,7 +25,12 @@ public sealed class NeonTitleMenu : MonoBehaviour
             RacingMenuButton button=NeonUI.Button(title,"MenuOption"+i,labels[i],english[i],icons[i],
                 new Vector2(.678f,top-.098f),new Vector2(.970f,top),false,
                 () => { if(option==3) Exit();else Open((Page)option); });
-            if(i==3) button.transform.Find("ModernSurface").GetComponent<RacingPanelGraphic>().Configure(RacingPanelGraphic.SurfaceStyle.Secondary, NeonUI.Pink);
+            if(i==3)
+            {
+                RacingPanelGraphic surface=button.transform.Find("ModernSurface").GetComponent<RacingPanelGraphic>();
+                surface.Configure(RacingPanelGraphic.SurfaceStyle.Danger, NeonUI.Pink);
+                button.Configure(surface);
+            }
         }
         modal = RacingUITheme.Rect(title,"MenuSheet",Vector2.zero,Vector2.one);
         Image dim=modal.GetComponent<Image>() ?? modal.gameObject.AddComponent<Image>(); dim.color=new Color(.001f,.005f,.025f,.84f); dim.raycastTarget=true;
