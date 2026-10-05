@@ -5,7 +5,7 @@ using UnityEngine;
 public sealed class RaceBackgroundMusic : MonoBehaviour
 {
     private const string MenuClipPath = "Audio/BGM/TachibanaMoroe";
-    private const string RaceClipPath = "Audio/BGM/Maze";
+    private const string RaceClipPath = "Audio/BGM/racegame_v3";
 
     [SerializeField, Range(0f, 1f)] private float volume = 0.9f;
 
