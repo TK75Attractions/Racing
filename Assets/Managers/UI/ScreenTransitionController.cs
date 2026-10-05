@@ -41,7 +41,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
     private TMP_Text finishWarningText;
     private int lastWarningSecond = -1;
     private UIValuePulse raceStatusPulse;
-    private readonly Image[] countdownSignals = new Image[3];
+    private readonly NeonRingGraphic[] countdownSignals = new NeonRingGraphic[5];
     private Material titleLogoMaterial;
 
     public bool IsTransitioning { get; private set; }
@@ -464,22 +464,34 @@ public sealed class ScreenTransitionController : MonoBehaviour
             return;
         }
 
-        countdownStatusRoot = RacingHUDStyle.Plate(onPlay, "CountdownStatus",
-            new Vector2(.415f, .43f), new Vector2(.585f, .735f),
-            RacingHUDPlateGraphic.PlateShape.Speed, RacingHUDStyle.Teal).gameObject;
-        raceStatusCaption = RacingHUDStyle.Label(countdownStatusRoot.transform, "Caption", "スタートまで",
-            .12f, .73f, .88f, .85f, 25f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
-        raceStatusEnglishCaption = RacingHUDStyle.Label(countdownStatusRoot.transform, "EnglishCaption", "RACE START",
-            .12f, .655f, .88f, .735f, 14f, RacingHUDStyle.Muted, TextAlignmentOptions.Center);
-        raceStatus = RacingHUDStyle.Label(countdownStatusRoot.transform, "RaceStatus", string.Empty,
-            .08f, .22f, .92f, .66f, 132f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
-        for (int i = 0; i < countdownSignals.Length; i++)
+        countdownStatusRoot = RacingUITheme.Rect(onPlay, "CountdownStatus", new Vector2(.37f,.39f),new Vector2(.63f,.77f)).gameObject;
+        RectTransform ring = RacingUITheme.Rect(countdownStatusRoot.transform,"NeonRing",Vector2.zero,Vector2.one);
+        NeonRingGraphic graphic = ring.GetComponent<NeonRingGraphic>() ?? ring.gameObject.AddComponent<NeonRingGraphic>();
+        graphic.display = NeonRingGraphic.Display.Countdown;
+        raceStatusCaption = NeonUI.Text(countdownStatusRoot.transform,"Caption","スタートまで",new Vector2(.15f,.13f),new Vector2(.85f,.21f),23f,TextAlignmentOptions.Center);
+        raceStatusEnglishCaption = NeonUI.Text(countdownStatusRoot.transform,"EnglishCaption","RACE START",new Vector2(.15f,.07f),new Vector2(.85f,.13f),13f,TextAlignmentOptions.Center);
+        raceStatus = NeonUI.Text(countdownStatusRoot.transform,"RaceStatus","",new Vector2(.08f,.23f),new Vector2(.92f,.85f),240f,TextAlignmentOptions.Center,true);
+        NeonUI.GlowText(raceStatus, NeonUI.Pink);
+        for(int i=0;i<countdownSignals.Length;i++)
         {
-            float left = .30f + i * .15f;
-            countdownSignals[i] = CreatePanel(countdownStatusRoot.transform, $"Signal{i + 1}",
-                new Vector2(left, .16f), new Vector2(left + .10f, .177f), new Color(.30f, .38f, .39f, 1f)).GetComponent<Image>();
+            float left=-.02f+i*.21f;
+            RectTransform lamp = NeonUI.Panel(countdownStatusRoot.transform,"Lamp"+i,new Vector2(left,1.06f),new Vector2(left+.18f,1.29f));
+            RectTransform dot=RacingUITheme.Rect(lamp,"Signal",new Vector2(.06f,.05f),new Vector2(.94f,.95f));
+            countdownSignals[i]=dot.GetComponent<NeonRingGraphic>() ?? dot.gameObject.AddComponent<NeonRingGraphic>();
+            countdownSignals[i].display=NeonRingGraphic.Display.Light;
         }
         raceStatusPulse = raceStatus.GetComponent<UIValuePulse>() ?? raceStatus.gameObject.AddComponent<UIValuePulse>();
+        RectTransform courseCard = NeonUI.Panel(onPlay,"CountdownCourse",new Vector2(.02f,.855f),new Vector2(.335f,.975f));
+        RectTransform courseIcon = RacingUITheme.Rect(courseCard,"Outline",new Vector2(.02f,.09f),new Vector2(.26f,.91f));
+        NeonCourseOutlineGraphic courseOutline=courseIcon.GetComponent<NeonCourseOutlineGraphic>() ?? courseIcon.gameObject.AddComponent<NeonCourseOutlineGraphic>();
+        courseOutline.Configure(Gmanager.Control != null ? Gmanager.Control.course : FindFirstObjectByType<RaceCourse>());
+        NeonUI.Text(courseCard,"Name","つくこまサーキット",new Vector2(.29f,.45f),new Vector2(.96f,.91f),32f,italic:true);
+        NeonUI.Text(courseCard,"Caption","グランプリコース / GRAND PRIX",new Vector2(.29f,.12f),new Vector2(.96f,.46f),18f);
+        RectTransform countdownLap=NeonUI.Panel(onPlay,"CountdownLap",new Vector2(.80f,.855f),new Vector2(.98f,.975f));
+        NeonUI.Text(countdownLap,"Heading","LAP / 周",new Vector2(.10f,.68f),new Vector2(.88f,.93f),22f,italic:true);
+        NeonUI.Text(countdownLap,"Current","1",new Vector2(.36f,.05f),new Vector2(.65f,.77f),97f,italic:true,tint:NeonUI.Pink);
+        NeonUI.Text(countdownLap,"Total","/ " + (Gmanager.Control != null ? Gmanager.Control.GoalLap : 3),new Vector2(.67f,.08f),new Vector2(.93f,.64f),44f,italic:true);
+
         finishWarningRoot = RacingHUDStyle.Plate(onPlay, "FinishWarningStatus",
             new Vector2(.34f, .815f), new Vector2(.66f, .95f),
             RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Amber).gameObject;
@@ -533,10 +545,10 @@ public sealed class ScreenTransitionController : MonoBehaviour
         raceStatus.text = value;
         bool go = value == "GO!";
         int.TryParse(value, out int seconds);
-        Color accent = go ? RacingHUDStyle.Teal : RacingHUDStyle.Amber;
+        Color accent = go ? NeonUI.Cyan : NeonUI.Pink;
         for (int i = 0; i < countdownSignals.Length; i++)
             if (countdownSignals[i] != null)
-                countdownSignals[i].color = go || i < Mathf.Clamp(4 - seconds, 0, 3) ? accent : new Color(.30f, .38f, .39f, 1f);
+                countdownSignals[i].color = accent;
         if (raceStatusCaption != null)
         {
             raceStatusCaption.text = go ? "スタート!" : "スタートまで";
@@ -557,6 +569,13 @@ public sealed class ScreenTransitionController : MonoBehaviour
     {
         countdownStatusRoot?.SetActive(showCountdown);
         finishWarningRoot?.SetActive(showWarning);
+        if(onPlayRoot != null)
+        {
+            foreach(string node in new[]{"ModernHUD","MiniMap"})
+                onPlayRoot.transform.Find(node)?.gameObject.SetActive(!showCountdown);
+            onPlayRoot.transform.Find("CountdownCourse")?.gameObject.SetActive(showCountdown);
+            onPlayRoot.transform.Find("CountdownLap")?.gameObject.SetActive(showCountdown);
+        }
     }
 
     private void SetFadeInputBlocking(bool blocksInput)

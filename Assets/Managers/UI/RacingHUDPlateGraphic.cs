@@ -29,7 +29,7 @@ public sealed class RacingHUDPlateGraphic : MaskableGraphic
         float aa = 1f / Mathf.Max(.1f, canvas != null ? canvas.scaleFactor : 1f);
         for (int i = 0; i < count; i++)
             RacingPanelGraphic.Line(vh, points[i], points[(i + 1) % count], 1f,
-                new Color(.62f, .75f, .76f, .26f) * color, aa);
+                NeonUI.Cyan * color, aa);
         if (shape == PlateShape.Speed) return; // The live arc is this instrument's accent.
         float x = r.xMin + r.width * .10f;
         RacingPanelGraphic.Line(vh, new Vector2(x, r.yMax), new Vector2(x + r.width * .23f, r.yMax),
@@ -47,7 +47,7 @@ public sealed class RacingHUDPlateGraphic : MaskableGraphic
     private Color Tint(Rect r, float y, bool shadow)
     {
         if (shadow) return new Color(0f, 0f, 0f, .17f) * color;
-        return Color.Lerp(new Color(.075f, .095f, .11f, .94f), new Color(.14f, .18f, .20f, .94f),
+        return Color.Lerp(new Color(.008f, .018f, .06f, .93f), new Color(.018f, .04f, .115f, .93f),
             Mathf.InverseLerp(r.yMin, r.yMax, y)) * color;
     }
 
@@ -55,11 +55,12 @@ public sealed class RacingHUDPlateGraphic : MaskableGraphic
     {
         if (shape == PlateShape.Speed)
         {
-            float radius = Mathf.Min(r.width, r.height) * .48f;
+            float radius = Mathf.Min(r.width * .48f, r.height * .94f);
+            Vector2 center = new Vector2(r.center.x, r.yMin + r.height * .035f);
             for (int i = 0; i < points.Length; i++)
             {
-                float a = i * Mathf.PI * 2f / points.Length;
-                points[i] = r.center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * radius;
+                float a = i * Mathf.PI / (points.Length - 1);
+                points[i] = center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * radius;
             }
             return points.Length;
         }

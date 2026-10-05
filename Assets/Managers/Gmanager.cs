@@ -112,6 +112,14 @@ public class Gmanager : MonoBehaviour
         return displayRigs[index]?.BackImageCamera ?? displayRigs[index]?.MainCamera;
     }
 
+    public Transform GetPlayerCarTransform(int index) => index >= 0 && index < PlayerCount ? players[index]?.car?.transform : null;
+    public int GetPlayerRacePosition(int index) => index >= 0 && index < PlayerCount ? GetRacePosition(index) : 0;
+    public float GetPlayerProgressGap(int index)
+    {
+        if (index < 0 || index >= PlayerCount || lapManager == null || players[index]?.rigidbody == null || players[1-index]?.rigidbody == null) return 0f;
+        return lapManager.GetRaceProgressDistance(players[index].rigidbody) - lapManager.GetRaceProgressDistance(players[1-index].rigidbody);
+    }
+
     public RaceCourse course;
     public Transform test;
     public float time = 0f;

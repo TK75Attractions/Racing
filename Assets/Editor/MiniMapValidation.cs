@@ -95,11 +95,11 @@ public static class MiniMapValidation
             Transform mapRoot = onPlay.transform.Find("MiniMap");
             Require(mapRoot != null, "The MiniMap node was not created under OnPlay.");
             RectTransform mapRect = mapRoot as RectTransform;
-            Require(mapRect.anchorMin == new Vector2(0f, 1f) &&
-                    mapRect.anchorMax == new Vector2(0f, 1f) &&
-                    mapRect.pivot == new Vector2(0f, 1f),
-                "The mini map is not anchored to the top-left corner.");
-            Require(mapRect.anchoredPosition.x > 0f && mapRect.anchoredPosition.y < 0f,
+            Require(mapRect.anchorMin == Vector2.zero &&
+                    mapRect.anchorMax == Vector2.zero &&
+                    mapRect.pivot == Vector2.zero,
+                "The mini map is not anchored to the bottom-left corner.");
+            Require(mapRect.anchoredPosition.x > 0f && mapRect.anchoredPosition.y > 0f,
                 "The mini map is placed outside the visible area.");
             Require(mapRoot.Find("Border") != null && mapRoot.Find("Track") != null,
                 "The course band graphics were not created.");

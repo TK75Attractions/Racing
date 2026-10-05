@@ -49,6 +49,7 @@ public class OnPlayUIManager
         float padBoostRemainingSeconds, float padBoostDurationSeconds)
     {
         SetPosition(positionValue);
+        trans.Find("ModernHUD/Leaderboard")?.GetComponent<RacingLeaderboardUI>()?.SetPosition(positionValue, 0f);
         SetLap(lapValue);
         SetTime(totalSeconds, lapSeconds);
         SetSpeed(speedValue);

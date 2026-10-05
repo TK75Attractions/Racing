@@ -19,6 +19,7 @@ public class UISpeed
     private float screenIntensity;
     private float entryFlash;
     private bool wasBoosting;
+    private NeonRingGraphic boostBadge;
 
     [SerializeField] private float speedVelocity = 0f;
     [SerializeField] private float speedValue = 0f;
@@ -41,6 +42,7 @@ public class UISpeed
             return;
         }
 
+        boostBadge = rootTransform.parent.Find("BoostBadge")?.GetComponent<NeonRingGraphic>();
         gauge = rootTransform.GetComponentInChildren<RacingSpeedGauge>(true);
         Transform boostTransform = rootTransform.parent != null ? rootTransform.parent.Find("PadBoost") : null;
         boostRoot = boostTransform != null ? boostTransform.gameObject : null;
@@ -104,6 +106,7 @@ public class UISpeed
                 boostScreen.SetEffect(screenIntensity, entryFlash, phase);
         }
 
+        boostBadge?.SetAmount(active ? Mathf.Clamp01(remainingSeconds / durationSeconds) : 0f);
         if (boostRoot == null) return;
         boostRoot.SetActive(active);
         if (!active) return;
@@ -118,7 +121,7 @@ public class UISpeed
         }
         if (boostBar != null) boostBar.SetEffect(1f, entryFlash, phase);
         if (boostGlow != null)
-            boostGlow.color = new Color(.96f, .70f, .38f,
+            boostGlow.color = new Color(1f, .025f, .39f,
                 .10f + .04f * Mathf.Sin(phase * Mathf.PI * 2f) + .08f * entryFlash);
     }
 

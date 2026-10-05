@@ -87,13 +87,16 @@ public static class RacingHUDDesignPreview
             scaler.matchWidthOrHeight = .5f;
             RectTransform background = RacingUITheme.Rect(canvas.transform, "ReferenceBackground", Vector2.zero, Vector2.one);
             RawImage backdrop = background.gameObject.AddComponent<RawImage>();
-            backdrop.texture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Managers/UI/Elements/hud/race_background.png");
+            backdrop.texture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/ReferenceArt/RaceBackdrop.png");
             backdrop.raycastTarget = false;
             RectTransform play = RacingUITheme.Rect(canvas.transform, "OnPlay", Vector2.zero, Vector2.one);
             Transform hud = RacingHUDBuilder.Build(play, player, 3);
             UIPosition position = new UIPosition(); position.Init(hud.Find("Position")); position.SetPosition(player + 1);
             UILap lap = new UILap(); lap.Init(hud.Find("Lap")); lap.SetLap(2);
             UITime time = new UITime(); time.Init(hud.Find("Time")); time.SetTotalTime(72.345f); time.SetLapTime(19.876f);
+            RawImage mirrorFeed=hud.Find("RearView/Crop/Feed").GetComponent<RawImage>();
+            mirrorFeed.texture=Resources.Load<Texture2D>("UI/Neon/ResultBackground");mirrorFeed.color=Color.white;
+            mirrorFeed.uvRect=new Rect(0,.2f,1,.28f);
             UISpeed speed = new UISpeed(); speed.Init(hud.Find("Speed")); speed.UpdateSpeedMeter(state == "boost" ? 168f : 127f, 0f);
             Canvas.ForceUpdateCanvases();
             UIMiniMap map = new UIMiniMap(); map.Init(play, course, player);
@@ -136,13 +139,14 @@ public static class RacingHUDDesignPreview
                 number.transform.localRotation = Quaternion.identity;
                 number.color = RacingHUDStyle.Text;
             }
+            var overflows = new List<string>();
             foreach (TMP_Text label in canvas.GetComponentsInChildren<TMP_Text>(false))
             {
                 if (!label.font.HasCharacters(label.text))
                     throw new InvalidOperationException($"Missing HUD glyph: {label.name} / {label.text}");
                 label.ForceMeshUpdate();
                 if (label.isTextTruncated || label.isTextOverflowing)
-                    throw new InvalidOperationException($"HUD text overflow at {width}x{height}: {label.name} / {label.text}");
+                    overflows.Add($"{label.transform.parent.name}/{label.name} / {label.text} / rect {label.rectTransform.rect.size} / font {label.fontSize} (min {label.fontSizeMin}) / preferred {label.preferredWidth}x{label.preferredHeight}");
             }
             Canvas.ForceUpdateCanvases();
             camera.Render();
@@ -150,6 +154,7 @@ public static class RacingHUDDesignPreview
             png.ReadPixels(new Rect(0f, 0f, width, height), 0, 0);
             png.Apply();
             File.WriteAllBytes(Path.Combine(directory, $"hud-{state}-{width}x{height}.png"), png.EncodeToPNG());
+            if(overflows.Count>0) throw new InvalidOperationException($"HUD text overflow at {width}x{height}: " + string.Join("; ",overflows));
         }
         finally
         {

@@ -26,6 +26,24 @@ public static class NeonUI
         return text;
     }
 
+    public static void GlowText(TMP_Text text, Color tint)
+    {
+        Material material = text.fontMaterial;
+        material.EnableKeyword("GLOW_ON");
+        if (material.HasProperty("_GlowColor"))
+        {
+            material.SetColor("_GlowColor", tint);
+            material.SetFloat("_GlowOuter", .16f);
+            material.SetFloat("_GlowPower", .55f);
+        }
+        if (material.HasProperty("_OutlineColor"))
+        {
+            material.SetColor("_OutlineColor", tint);
+            material.SetFloat("_OutlineWidth", .035f);
+        }
+        text.UpdateMeshPadding();
+    }
+
     public static RacingIconGraphic Icon(Transform parent, string name, RacingIconGraphic.Icon symbol, Vector2 min, Vector2 max)
     {
         RectTransform r = RacingUITheme.Rect(parent, name, min, max);

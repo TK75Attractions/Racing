@@ -17,9 +17,9 @@ public static class RacingHUDFontBuilder
         string directory = "Assets/Resources/UI/HUD";
         Directory.CreateDirectory(directory);
         AssetDatabase.Refresh();
-        foreach (string image in new[] { "TitleBackground", "ResultBackground" })
+        foreach (string image in new[] { "Assets/Resources/UI/Neon/TitleBackground.png", "Assets/Resources/UI/Neon/ResultBackground.png", "Assets/Editor/ReferenceArt/RaceBackdrop.png" })
         {
-            TextureImporter importer = AssetImporter.GetAtPath("Assets/Resources/UI/Neon/" + image + ".png") as TextureImporter;
+            TextureImporter importer = AssetImporter.GetAtPath(image) as TextureImporter;
             if (importer == null) continue;
             importer.npotScale = TextureImporterNPOTScale.None;
             importer.mipmapEnabled = false;
@@ -38,16 +38,7 @@ public static class RacingHUDFontBuilder
         {
             string path = directory + "/MPLUS HUD " + weight + ".asset";
             TMP_FontAsset existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
-            if (existing != null)
-            {
-                existing.atlasPopulationMode = AtlasPopulationMode.Dynamic;
-                if (!existing.TryAddCharacters(characters, out string missingExisting))
-                    throw new InvalidOperationException("HUD atlas is missing: " + missingExisting);
-                existing.atlasPopulationMode = AtlasPopulationMode.Static;
-                EditorUtility.SetDirty(existing);
-                foreach (Texture2D atlas in existing.atlasTextures) EditorUtility.SetDirty(atlas);
-                continue;
-            }
+            if (existing != null && existing.material != null && existing.atlasTextures.All(t => t != null) && existing.HasCharacters(characters)) continue;
             Font source = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/MPLUS1-HUD-" + weight + ".ttf");
             if (source == null) throw new InvalidOperationException("Missing static HUD font: " + weight);
             TMP_FontAsset font = TMP_FontAsset.CreateFontAsset(source, 80, 8, GlyphRenderMode.SDFAA, 2048, 2048, AtlasPopulationMode.Dynamic, false);
@@ -57,7 +48,15 @@ public static class RacingHUDFontBuilder
             font.atlasPopulationMode = AtlasPopulationMode.Static;
             font.material.name = font.name + " Material";
             font.material.SetFloat(ShaderUtilities.ID_FaceDilate, 0f);
-            AssetDatabase.CreateAsset(font, path);
+            if (existing == null) AssetDatabase.CreateAsset(font, path);
+            else
+            {
+                foreach (UnityEngine.Object child in AssetDatabase.LoadAllAssetsAtPath(path))
+                    if (child != existing) UnityEngine.Object.DestroyImmediate(child, true);
+                EditorUtility.CopySerialized(font, existing);
+                // The temporary TMP asset owns its atlas/material; retain it until editor teardown.
+                font = existing;
+            }
             AssetDatabase.AddObjectToAsset(font.material, font);
             foreach (Texture2D atlas in font.atlasTextures)
             {
