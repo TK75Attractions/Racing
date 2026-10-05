@@ -62,6 +62,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
             player.camera = player.world.AddComponent<RaceDirectionCameraController>();
             player.camera.SetCamera(displays[i].RaceCamera);
             player.camera.SetCar(player.car.transform);
+            player.camera.SetLookHeight(.6f);
             displays[i].RaceCamera.Follow = player.camera.CameraTarget;
             displays[i].RaceCamera.LookAt = player.camera.LookTarget;
             Vector3 cameraPosition = player.camera.CameraTarget.position;
@@ -179,37 +180,9 @@ public sealed class DrivingTutorialController : MonoBehaviour
 
     private static void BuildCourse(Transform root, Material asphalt, Material ground, Material cyan, Material pink, Material white)
     {
-        Box(root, "Safety floor", new Vector3(38f, -.6f, 0f), new Vector3(180f, 1f, 172f), ground, true);
-        Vector3 previous = new Vector3(0f, 0f, -64f);
-        for (int i = 0; i <= 30; i++)
-        {
-            Vector3 next;
-            if (i <= 10) next = new Vector3(0f, 0f, -64f + i * 7f);
-            else if (i <= 22)
-            {
-                float angle = (i - 10) / 12f * Mathf.PI * .5f;
-                next = new Vector3(30f - Mathf.Cos(angle) * 30f, 0f, 6f + Mathf.Sin(angle) * 30f);
-            }
-            else next = new Vector3(30f + (i - 22) * 10f, 0f, 36f);
-            if (i > 0)
-            {
-                Vector3 delta = next - previous;
-                Quaternion rotation = Quaternion.LookRotation(delta);
-                GameObject road = Box(root, $"Road{i}", (next + previous) * .5f + Vector3.down * .05f,
-                    new Vector3(24f, .1f, delta.magnitude + .3f), asphalt, true);
-                road.transform.localRotation = rotation;
-                for (int side = -1; side <= 1; side += 2)
-                {
-                    GameObject rail = Box(root, $"NeonRail{i}_{side}", (next + previous) * .5f + rotation * Vector3.right * side * 12f + Vector3.up * .45f,
-                        new Vector3(.4f, .9f, delta.magnitude + .5f), side < 0 ? cyan : pink, true);
-                    rail.transform.localRotation = rotation;
-                }
-                GameObject marking = Box(root, $"LaneDash{i}", (next + previous) * .5f + Vector3.up * .012f,
-                    new Vector3(.22f, .025f, delta.magnitude * .4f), white, false);
-                marking.transform.localRotation = rotation;
-            }
-            previous = next;
-        }
+        // One collider at y=0: the visual ribbon and lane markings never participate in tire contact.
+        Box(root, "Safety floor", new Vector3(38f, -.5f, 0f), new Vector3(180f, 1f, 172f), ground, true);
+        DrivingTutorialRoad.Build(root, asphalt, cyan, pink, white);
         Box(root, "Back boundary", new Vector3(38f, 2f, -86f), new Vector3(180f, 5f, 1f), cyan, true);
         Box(root, "Front boundary", new Vector3(38f, 2f, 86f), new Vector3(180f, 5f, 1f), pink, true);
         Box(root, "Left boundary", new Vector3(-52f, 2f, 0f), new Vector3(1f, 5f, 172f), cyan, true);
