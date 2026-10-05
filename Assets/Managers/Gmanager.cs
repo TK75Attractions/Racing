@@ -357,6 +357,16 @@ public class Gmanager : MonoBehaviour
         UpdateOnPlayUI();
     }
 
+    public void ConfirmTitleStart(int playerIndex)
+    {
+        if (state != State.Title || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount) return;
+        players[playerIndex].isReady = true;
+        titleStartArmed = true;
+        SetTitlePrompt(GetReadyPrompt());
+        foreach (PlayerRuntime participant in players) if (participant == null || !participant.isReady) return;
+        StartGame();
+    }
+
     public void StartGame()
     {
         if (state != State.Title || IsScreenTransitioning()) return;
@@ -1231,6 +1241,8 @@ public class Gmanager : MonoBehaviour
             PlayerRuntime player = players[playerIndex];
             if (!player.isReady)
             {
+                NeonTitleMenu menu = player.displayRig.CanvasRoot.transform.Find("Title")?.GetComponent<NeonTitleMenu>();
+                if (menu != null && menu.IsOpen) { allReady = false; continue; }
                 DriveInputState input = IManager.GetInputState(playerIndex);
                 if (input.readyPressed)
                 {

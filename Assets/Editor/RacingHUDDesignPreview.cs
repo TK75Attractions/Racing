@@ -24,6 +24,7 @@ public static class RacingHUDDesignPreview
         byte[][] originals = Array.ConvertAll(settings, File.ReadAllBytes);
         try
         {
+            CaptureView(course, output, 1920, 1080, 0, "title");
             CaptureView(course, output, 1920, 1080, 0, "race");
             CaptureView(course, output, 1920, 1080, 1, "boost");
             CaptureView(course, output, 1920, 1080, 0, "countdown");
@@ -108,9 +109,11 @@ public static class RacingHUDDesignPreview
             }
             map.SetCars(cars[0].transform, cars[1].transform);
             ScreenTransitionController transition = canvasObject.AddComponent<ScreenTransitionController>();
-            transition.Initialize(null, play, null, string.Empty, string.Empty, player);
+            RectTransform title = RacingUITheme.Rect(canvas.transform, "Title", Vector2.zero, Vector2.one);
+            transition.Initialize(title, play, null, string.Empty, "ペダルを踏んで準備", player);
             transition.ApplyStateImmediate(Gmanager.State.Game);
-            if (state == "countdown") transition.ShowCountdown(3);
+            if (state == "title") transition.ApplyStateImmediate(Gmanager.State.Title);
+            else if (state == "countdown") transition.ShowCountdown(3);
             else if (state == "finish-warning") transition.ShowFinishWarning("P1", 8.4f);
             else if (state == "spectator") transition.ShowSpectator(1);
             else transition.ClearRaceStatus();

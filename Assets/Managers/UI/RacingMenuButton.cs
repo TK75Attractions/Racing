@@ -5,10 +5,12 @@ using UnityEngine.UI;
 public sealed class RacingMenuButton : Button
 {
     private RacingPanelGraphic surface;
+    private Color accent;
 
     public void Configure(RacingPanelGraphic value)
     {
         surface = value;
+        accent = value != null ? value.Accent : RacingUITheme.Cyan;
         transition = Transition.None;
         DoStateTransition(currentSelectionState, true);
     }
@@ -20,6 +22,6 @@ public sealed class RacingMenuButton : Button
         bool focused = state == SelectionState.Highlighted || state == SelectionState.Selected;
         bool pressed = state == SelectionState.Pressed;
         surface.color = state == SelectionState.Disabled ? new Color(0.55f, 0.55f, 0.55f, 0.65f) : Color.white;
-        surface.SetState(focused || pressed ? 1f : 0f, pressed ? 1f : 0f, 0f, RacingUITheme.Cyan);
+        surface.SetState(focused || pressed ? 1f : 0f, pressed ? 1f : 0f, 0f, accent);
     }
 }

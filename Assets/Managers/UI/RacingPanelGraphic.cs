@@ -13,6 +13,8 @@ public class RacingPanelGraphic : MaskableGraphic
     private Color accent = RacingUITheme.Cyan;
     private float selection, pressure, confirmation;
 
+    public Color Accent => accent;
+
     public void Configure(SurfaceStyle value, Color tint)
     {
         style = value;
@@ -89,7 +91,7 @@ public class RacingPanelGraphic : MaskableGraphic
         Shape(r, 0f, outer);
         int start = vh.currentVertCount;
         for (int i = 0; i < PointCount; i++)
-            vh.AddVert(outer[i], Color.Lerp(bottom, top, Mathf.InverseLerp(r.yMin, r.yMax, outer[i].y)) * color, Vector2.zero);
+            vh.AddVert(outer[i], (style == SurfaceStyle.Primary ? Color.Lerp(top, bottom, Mathf.InverseLerp(r.xMin, r.xMax, outer[i].x) * .9f) : Color.Lerp(bottom, top, Mathf.InverseLerp(r.yMin, r.yMax, outer[i].y))) * color, Vector2.zero);
         for (int i = 1; i < PointCount - 1; i++) vh.AddTriangle(start, start + i, start + i + 1);
     }
 

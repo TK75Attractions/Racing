@@ -405,102 +405,20 @@ public sealed class ScreenTransitionController : MonoBehaviour
             return;
         }
 
-        Image background = title.GetComponent<Image>();
-        if (background == null)
-        {
-            background = title.gameObject.AddComponent<Image>();
-        }
-
-        background.color = Color.black;
-        background.raycastTarget = false;
-
-        InstantiateScreenBackground(title, "UI/TitleScreenBackground", "TitleBackground");
-        CreatePanel(title, "TitleBackgroundTint", Vector2.zero, Vector2.one,
-            new Color(0.012f, 0.024f, 0.040f, 0.68f));
-
-        GameObject topLine = CreatePanel(title, "TopLine", new Vector2(0.025f, 0.92f), new Vector2(0.19f, 0.924f),
-            new Color(0.15f, 0.85f, 1f, 0.9f));
-        topLine.GetComponent<Image>().raycastTarget = false;
-
-        TMP_Text circuitLabel = CreateLabel(
-            title, "CircuitLabel", "TSUKUKOMA CIRCUIT   /   RACING",
-            new Vector2(0.025f, 0.925f), new Vector2(0.48f, 0.975f), 22f,
-            new Color(0.73f, 0.82f, 0.9f, 1f));
-        circuitLabel.alignment = TextAlignmentOptions.Left;
-        circuitLabel.characterSpacing = 2.5f;
-        TMP_Text playerBadge = CreateLabel(title, "PlayerBadge", $"PLAYER 0{displayPlayerIndex + 1}   /   LOCAL VERSUS",
-            new Vector2(0.65f, 0.925f), new Vector2(0.975f, 0.975f), 19f, RacingUITheme.Cyan);
-        playerBadge.alignment = TextAlignmentOptions.Right;
-        RacingUITheme.Rule(title, "HeaderRule", new Vector2(0.025f, 0.915f), new Vector2(0.975f, 0.916f), new Color(0.4f, 0.6f, 0.7f, 0.25f));
-
-        TMP_Text mainTitle = CreateLabel(
-            title,
-            "TitleText",
-            useArtworkLogo ? titleText : "CIRCUIT",
-            new Vector2(0.12f, 0.53f),
-            new Vector2(0.88f, 0.72f),
-            172f,
-            Color.white);
-        mainTitle.fontStyle = FontStyles.Bold | FontStyles.Italic;
-        mainTitle.characterSpacing = 5f;
-        if (!useArtworkLogo)
-        {
-            TMP_Text wordmark = CreateLabel(title, "Wordmark", "TSUKUKOMA", new Vector2(0.2f, 0.73f), new Vector2(0.8f, 0.80f), 44f, RacingUITheme.Cyan);
-            wordmark.characterSpacing = 14f;
-        }
-        Texture2D logoTexture = useArtworkLogo ? Resources.Load<Texture2D>("UI/TsukukomaCircuitLogo") : null;
-        Shader logoShader = useArtworkLogo ? Resources.Load<Shader>("UI/LogoWhiteKey") : null;
-        if (useArtworkLogo && logoTexture != null && logoShader != null)
-        {
-            mainTitle.gameObject.SetActive(false);
-            GameObject logoContainer = new GameObject("TitleLogo", typeof(RectTransform));
-            logoContainer.layer = title.gameObject.layer;
-            logoContainer.transform.SetParent(title, false);
-            RectTransform logoRect = logoContainer.GetComponent<RectTransform>();
-            logoRect.anchorMin = new Vector2(0.09f, 0.51f);
-            logoRect.anchorMax = new Vector2(0.91f, 0.80f);
-            logoRect.offsetMin = logoRect.offsetMax = Vector2.zero;
-            GameObject logoObject = new GameObject("Artwork", typeof(RectTransform), typeof(RawImage), typeof(AspectRatioFitter));
-            logoObject.layer = title.gameObject.layer;
-            logoObject.transform.SetParent(logoContainer.transform, false);
-            AspectRatioFitter aspect = logoObject.GetComponent<AspectRatioFitter>();
-            aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-            aspect.aspectRatio = logoTexture.width / (logoTexture.height * 0.42f);
-            RawImage logo = logoObject.GetComponent<RawImage>();
-            logo.texture = logoTexture;
-            logo.uvRect = new Rect(0f, 0.30f, 1f, 0.42f);
-            titleLogoMaterial = new Material(logoShader);
-            logo.material = titleLogoMaterial;
-            logo.raycastTarget = false;
-        }
-
-        TMP_Text subtitle = CreateLabel(
-            title, "TitleSubtitle", "SPEED  /  CONTROL  /  VICTORY",
-            new Vector2(0.25f, 0.465f), new Vector2(0.75f, 0.535f), 27f,
-            new Color(0.35f, 0.88f, 1f, 1f));
-        subtitle.characterSpacing = 5f;
-
-        titlePrompt = CreateLabel(
-            title,
-            "StartPrompt",
-            promptText,
-            new Vector2(0.24f, 0.405f),
-            new Vector2(0.76f, 0.475f),
-            25f,
-            new Color(0.82f, 0.87f, 0.92f, 1f));
-        titlePrompt.characterSpacing = 1f;
-        RacingUITheme.ApplyTypography(titlePrompt, FontRole.Japanese, 24f);
-
-        Color playerAccent = PlayerCarPaint.GetPlayerColor(displayPlayerIndex);
-        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(0.35f, 0.235f), new Vector2(0.65f, 0.35f),
-            playerAccent);
-
-        TMP_Text footer = CreateLabel(
-            title, "TitleFooter", "ハンドルで操作   /   ペダルを踏み込んで決定",
-            new Vector2(0.2f, 0.085f), new Vector2(0.8f, 0.145f), 19f,
-            new Color(0.46f, 0.55f, 0.64f, 1f));
-        footer.characterSpacing = 1.5f;
-        RacingUITheme.Rule(title, "FooterRule", new Vector2(0.35f, 0.16f), new Vector2(0.65f, 0.161f), new Color(0.4f, 0.6f, 0.7f, 0.3f));
+        Image background = title.GetComponent<Image>() ?? title.gameObject.AddComponent<Image>();
+        background.color = Color.black; background.raycastTarget = false;
+        NeonUI.Background(title, "TitleBackground", "UI/Neon/TitleBackground");
+        TMP_Text playerBadge = NeonUI.Text(title, "PlayerBadge", $"PLAYER 0{displayPlayerIndex + 1}  /  プレイヤー {displayPlayerIndex + 1}",
+            new Vector2(.69f,.90f), new Vector2(.97f,.955f), 21f, TextAlignmentOptions.Right, tint: NeonUI.Cyan);
+        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(.678f,.645f), new Vector2(.970f,.748f), NeonUI.Pink);
+        NeonTitleMenu menu = title.GetComponent<NeonTitleMenu>() ?? title.gameObject.AddComponent<NeonTitleMenu>();
+        menu.Build(title, displayPlayerIndex);
+        titlePrompt = NeonUI.Text(title, "StartPrompt", promptText,
+            new Vector2(.678f,.12f), new Vector2(.970f,.174f), 18f, TextAlignmentOptions.Center);
+        RectTransform news = NeonUI.Panel(title, "News", new Vector2(.02f,.035f), new Vector2(.977f,.078f));
+        NeonUI.Text(news,"Tag","NEWS",new Vector2(.018f,0),new Vector2(.07f,1),19f,TextAlignmentOptions.Center);
+        NeonUI.Text(news,"Welcome","ようこそ、ツクコマ・サーキットへ！",new Vector2(.09f,0),new Vector2(.78f,1),18f);
+        NeonUI.Text(news,"Version","Ver. " + Application.version,new Vector2(.85f,0),new Vector2(.985f,1),17f,TextAlignmentOptions.Right);
     }
 
     private void InitializeFadeOverlay()
@@ -576,20 +494,13 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     private void BuildTitlePedalPanel(Transform title, int playerIndex, Vector2 anchorMin, Vector2 anchorMax, Color accent)
     {
-        GameObject panel = CreatePanel(title, $"Player{playerIndex + 1}Pedal", anchorMin, anchorMax,
-            new Color(0.018f, 0.035f, 0.06f, 0.91f));
-        TMP_Text instruction = CreateLabel(panel.transform, "Instruction", "スタート",
-            new Vector2(0.21f, 0.43f), new Vector2(0.89f, 0.86f), 36f, RacingUITheme.Text);
-        instruction.fontStyle = FontStyles.Bold;
-        TMP_Text caption = CreateLabel(panel.transform, "Caption", "START",
-            new Vector2(0.21f, 0.19f), new Vector2(0.89f, 0.41f), 17f, RacingUITheme.Muted);
-        caption.characterSpacing = 4f;
-
-        PedalButtonFeedback feedback = panel.GetComponent<PedalButtonFeedback>();
-        if (feedback == null) feedback = panel.AddComponent<PedalButtonFeedback>();
-        feedback.Configure(accent);
+        RacingMenuButton start = NeonUI.Button(title, $"Player{playerIndex + 1}Pedal", "ゲームをはじめる", "START RACE",
+            RacingIconGraphic.Icon.Flag, anchorMin, anchorMax, true, () => Gmanager.Control?.ConfirmTitleStart(playerIndex));
+        PedalButtonFeedback feedback = start.GetComponent<PedalButtonFeedback>() ?? start.gameObject.AddComponent<PedalButtonFeedback>();
+        feedback.Configure(NeonUI.Pink);
+        start.transform.Find("ModernSurface").gameObject.SetActive(false);
+        start.Configure(start.transform.Find("ButtonSurface").GetComponent<RacingPanelGraphic>());
         titleButtonFeedback[playerIndex] = feedback;
-
     }
 
     private void UpdateTitlePedal(int playerIndex, float value, bool ready, bool armed)
@@ -600,8 +511,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
         }
 
         float amount = Mathf.Clamp01(value);
-        Color accent = PlayerCarPaint.GetPlayerColor(playerIndex);
-        Color readyColor = new Color(0.2f, 1f, 0.58f, 1f);
+        Color accent = NeonUI.Pink;
+        Color readyColor = NeonUI.Pink;
         titleButtonFeedback[playerIndex].SetState(armed, amount, ready ? readyColor : accent);
         titleButtonFeedback[playerIndex].SetConfirmed(ready);
         if (titlePrompt != null)
