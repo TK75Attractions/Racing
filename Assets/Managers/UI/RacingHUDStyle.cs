@@ -6,8 +6,8 @@ public static class RacingHUDStyle
 {
     public static readonly Color Text = new Color(.96f, .97f, .94f, 1f);
     public static readonly Color Muted = new Color(.69f, .76f, .77f, 1f);
-    public static readonly Color Teal = new Color(.38f, .80f, .74f, 1f);
-    public static readonly Color Amber = new Color(.96f, .70f, .38f, 1f);
+    public static readonly Color Teal = NeonUI.Cyan;
+    public static readonly Color Amber = NeonUI.Pink;
     public static readonly Color Alert = new Color(.96f, .47f, .38f, 1f);
 
     public static RectTransform Plate(Transform parent, string name, Vector2 min, Vector2 max,
