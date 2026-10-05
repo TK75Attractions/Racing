@@ -749,6 +749,7 @@ public class Gmanager : MonoBehaviour
         latestSessionResult = sessionResult;
         latestResult = sessionResult?.GetResultAtPosition(1);
         state = State.Goal;
+        TireMarkRenderer.ClearAll();
         ClearRaceStatus();
         resultReturnInputDelayTimer = 0f;
         lapManager?.PauseRace();

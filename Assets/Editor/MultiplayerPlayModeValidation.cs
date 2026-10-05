@@ -184,6 +184,9 @@ public static class MultiplayerPlayModeValidation
     private static void ValidateFirstFinish()
     {
         GameObject p1Car = GameObject.Find("Player1_Car");
+        TireMarkRenderer marks = TireMarkRenderer.GetOrCreate();
+        marks.AddSegment(Vector3.zero, Vector3.right, 1f, Vector3.forward, Vector3.one, 1f);
+        Require(marks.SegmentCount > 0, "The race must have tire marks before finishing.");
         finishMethod = typeof(Gmanager).GetMethod("HandleCarFinished", BindingFlags.NonPublic | BindingFlags.Instance);
         Require(finishMethod != null, "Finish handler is missing.");
 
@@ -194,6 +197,7 @@ public static class MultiplayerPlayModeValidation
         });
 
         Require(manager.state == Gmanager.State.Game, "Race ended when only first place finished.");
+        Require(marks.SegmentCount > 0, "Tire marks must remain while the second player is still racing.");
         Require(manager.WaitingForSecondPlace, "Second-place wait did not start.");
         Require(Mathf.Abs(manager.SecondPlaceTimeRemaining - 40f) < 0.2f, "Second-place timeout is not 40 seconds.");
         foreach (Collider collider in p1Car.GetComponentsInChildren<Collider>(true))
@@ -227,6 +231,8 @@ public static class MultiplayerPlayModeValidation
             p2Car.GetComponent<Rigidbody>(),
             new RaceResultRecord { totalRaceTime = 12f, completedLaps = 3, goalLap = 3 }
         });
+        Require(TireMarkRenderer.GetOrCreate().SegmentCount == 0,
+            "Finishing the race must clear all tire marks before the goal celebration.");
     }
 
     private static void ValidateSharedResult()
@@ -236,6 +242,8 @@ public static class MultiplayerPlayModeValidation
         TMP_Text p1First = FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/ResultRow1/Player");
         TMP_Text p1Second = FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/ResultRow2/Player");
         Require(manager.state == Gmanager.State.Result, "Result state was not reached.");
+        Require(TireMarkRenderer.GetOrCreate().SegmentCount == 0,
+            "Tire marks must remain cleared on the result screen.");
         Require(p1Winner != null && p2Winner != null && p1Winner.text == p2Winner.text,
             "Winner text differs between displays.");
         Require(p1First != null && p1Second != null && p1First.text.Contains("1") && p1Second.text.Contains("2"),
