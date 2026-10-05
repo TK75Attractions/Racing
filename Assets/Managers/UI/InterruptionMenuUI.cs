@@ -15,6 +15,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
     private Slider masterSlider;
     private Slider bgmSlider;
     private Slider engineSlider;
+    private readonly TMP_Text[] deviceLabels = new TMP_Text[2];
     private Action interruptAction;
     private Action toggleDirectionAction;
     private Action restartAction;
@@ -68,6 +69,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
             masterSlider.SetValueWithoutNotify(RaceAudioSettings.Master);
             bgmSlider.SetValueWithoutNotify(RaceAudioSettings.Bgm);
             engineSlider.SetValueWithoutNotify(RaceAudioSettings.Engine);
+            RefreshDeviceLabels();
         }
         GameObject selected = visible ? masterSlider.gameObject : optionsButton.gameObject;
         if (root.activeInHierarchy && EventSystem.current != null)
@@ -122,16 +124,46 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         hint.color = RacingUITheme.Muted;
 
         optionsPanel = GetOrCreate("OptionsPanel", card.transform, typeof(Image));
-        Stretch(optionsPanel.GetComponent<RectTransform>(), new Vector2(0.04f, 0.14f), new Vector2(0.96f, 0.73f));
+        Stretch(optionsPanel.GetComponent<RectTransform>(), new Vector2(0.04f, 0.02f), new Vector2(0.96f, 0.78f));
         Image optionsBackground = optionsPanel.GetComponent<Image>();
         optionsBackground.color = new Color(0.012f, 0.035f, 0.055f, 0.98f);
         optionsBackground.raycastTarget = true;
-        masterSlider = CreateVolumeSlider(optionsPanel.transform, "Master", "Master", 0.74f, RaceAudioSettings.SetMaster);
-        bgmSlider = CreateVolumeSlider(optionsPanel.transform, "BGM", "BGM", 0.52f, RaceAudioSettings.SetBgm);
-        engineSlider = CreateVolumeSlider(optionsPanel.transform, "Engine", "エンジン音", 0.30f, RaceAudioSettings.SetEngine);
-        CreateButton(optionsPanel.transform, "Back", "戻る", "BACK", "", new Vector2(0.08f, 0.04f), new Vector2(0.92f, 0.19f),
+        masterSlider = CreateVolumeSlider(optionsPanel.transform, "Master", "Master", 0.82f, RaceAudioSettings.SetMaster);
+        bgmSlider = CreateVolumeSlider(optionsPanel.transform, "BGM", "BGM", 0.66f, RaceAudioSettings.SetBgm);
+        engineSlider = CreateVolumeSlider(optionsPanel.transform, "Engine", "エンジン音", 0.50f, RaceAudioSettings.SetEngine);
+        for (int player = 0; player < 2; player++)
+        {
+            int capturedPlayer = player;
+            float bottom = player == 0 ? 0.33f : 0.18f;
+            RacingMenuButton deviceButton = CreateButton(optionsPanel.transform, $"P{player + 1}Output", "", "CLICK TO CHANGE OUTPUT", "",
+                new Vector2(0.08f, bottom), new Vector2(0.92f, bottom + 0.14f), () =>
+                {
+                    RaceAudioOutput.Instance?.SelectNextDevice(capturedPlayer);
+                    RefreshDeviceLabels();
+                });
+            deviceLabels[player] = deviceButton.transform.Find("Label").GetComponent<TMP_Text>();
+            deviceLabels[player].fontSizeMax = 21f;
+        }
+        CreateButton(optionsPanel.transform, "RefreshDevices", "再検出", "", "", new Vector2(0.08f, 0.02f), new Vector2(0.48f, 0.16f), () =>
+        {
+            RaceAudioOutput.Instance?.RefreshDevices();
+            RefreshDeviceLabels();
+        });
+        CreateButton(optionsPanel.transform, "Back", "戻る", "BACK", "", new Vector2(0.52f, 0.02f), new Vector2(0.92f, 0.16f),
             () => ShowOptions(false));
         optionsPanel.SetActive(false);
+    }
+
+    private void RefreshDeviceLabels()
+    {
+        for (int player = 0; player < 2; player++)
+            if (deviceLabels[player] != null)
+                deviceLabels[player].text = $"P{player + 1} 出力: {RaceAudioOutput.Instance?.GetDeviceLabel(player) ?? "未接続"}";
+    }
+
+    private void Update()
+    {
+        if (IsOpen && optionsPanel != null && optionsPanel.activeSelf) RefreshDeviceLabels();
     }
 
     private static Slider CreateVolumeSlider(Transform parent, string name, string caption, float top,

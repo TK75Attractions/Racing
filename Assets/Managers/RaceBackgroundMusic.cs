@@ -1,69 +1,55 @@
 using UnityEngine;
 
-/// <summary>ゲーム進行に合わせて、メニュー用とレース用のBGMを切り替えます。</summary>
+/// <summary>画面ごとに通常走行/Final Lap/メニューのBGMを独立して切り替えます。</summary>
 [DisallowMultipleComponent]
+[RequireComponent(typeof(RaceAudioOutput))]
 public sealed class RaceBackgroundMusic : MonoBehaviour
 {
     private const string MenuClipPath = "Audio/BGM/TachibanaMoroe";
     private const string RaceClipPath = "Audio/BGM/racegame_v3";
-
+    private const string FinalLapClipPath = "Audio/BGM/racegame_v3_final lap";
     [SerializeField, Range(0f, 1f)] private float volume = 0.9f;
-
     private Gmanager gameManager;
-    private AudioSource audioSource;
-    private AudioClip menuClip;
-    private AudioClip raceClip;
-    private Gmanager.State? playingState;
+    private readonly AudioSource[] sources = new AudioSource[2];
+    private AudioClip menuClip, raceClip, finalLapClip;
 
     private void Awake()
     {
         gameManager = GetComponent<Gmanager>();
         menuClip = Resources.Load<AudioClip>(MenuClipPath);
         raceClip = Resources.Load<AudioClip>(RaceClipPath);
-
-        GameObject sourceObject = new GameObject("BackgroundMusic");
-        sourceObject.transform.SetParent(transform, false);
-        audioSource = sourceObject.AddComponent<AudioSource>();
-        audioSource.playOnAwake = false;
-        audioSource.loop = true;
-        audioSource.spatialBlend = 0f;
-        audioSource.pitch = 1f;
-        audioSource.volume = volume * RaceAudioSettings.Bgm;
-        RaceAudioSettings.ApplyMaster();
-
-        if (menuClip == null || raceClip == null)
+        finalLapClip = Resources.Load<AudioClip>(FinalLapClipPath);
+        for (int player = 0; player < sources.Length; player++)
         {
-            Debug.LogError(
-                $"RaceBackgroundMusic: BGMの読み込みに失敗しました。" +
-                $" Menu={menuClip != null}, Race={raceClip != null}", this);
+            GameObject sourceObject = new GameObject($"BackgroundMusic_P{player + 1}");
+            sourceObject.transform.SetParent(transform, false);
+            AudioSource source = sourceObject.AddComponent<AudioSource>();
+            sources[player] = source;
+            source.playOnAwake = false;
+            source.loop = true;
+            source.spatialBlend = 0f;
+            source.pitch = 1f;
+            sourceObject.AddComponent<PlayerAudioCapture>().ConfigureMusic(GetComponent<RaceAudioOutput>(), player);
         }
-
-        Refresh(force: true);
+        RaceAudioSettings.ApplyMaster();
+        if (menuClip == null || raceClip == null || finalLapClip == null)
+            Debug.LogError($"RaceBackgroundMusic: BGMの読み込み失敗。Menu={menuClip != null}, Race={raceClip != null}, FinalLap={finalLapClip != null}", this);
     }
 
     private void Update()
     {
-        audioSource.volume = volume * RaceAudioSettings.Bgm;
-        Refresh(force: false);
-    }
-
-    private void Refresh(bool force)
-    {
-        if (gameManager == null || audioSource == null) return;
-        Gmanager.State state = gameManager.state;
-        if (!force && playingState == state) return;
-
-        AudioClip desiredClip = IsMenuState(state) ? menuClip : raceClip;
-        playingState = state;
-        if (desiredClip == null || (audioSource.clip == desiredClip && audioSource.isPlaying)) return;
-
-        audioSource.Stop();
-        audioSource.clip = desiredClip;
-        audioSource.Play();
-    }
-
-    private static bool IsMenuState(Gmanager.State state)
-    {
-        return state == Gmanager.State.Title || state == Gmanager.State.Result;
+        if (gameManager == null) return;
+        for (int player = 0; player < sources.Length; player++)
+        {
+            AudioSource source = sources[player];
+            source.volume = volume * Mathf.Clamp01(RaceAudioSettings.Bgm);
+            int viewedPlayer = gameManager.GetAudioViewedPlayer(player);
+            bool menu = gameManager.state == Gmanager.State.Title || gameManager.state == Gmanager.State.Result;
+            AudioClip desired = menu ? menuClip : gameManager.IsPlayerOnFinalLap(viewedPlayer) ? finalLapClip : raceClip;
+            if (source.clip == desired && source.isPlaying) continue;
+            source.Stop();
+            source.clip = desired;
+            if (desired != null && source.isActiveAndEnabled) source.Play();
+        }
     }
 }
