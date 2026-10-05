@@ -8,12 +8,13 @@ public sealed class RacingIconGraphic : MaskableGraphic
     public enum Icon { Back, Pedal, Chevron, Flag, Car, Gear, Book, Power, Home, Retry, Course, Bolt }
     public Icon symbol;
     private VertexHelper mesh;
+    private Color ink;
     private Vector2 origin;
     private float size, aa;
     protected override void OnEnable() { base.OnEnable(); raycastTarget = false; }
     protected override void OnPopulateMesh(VertexHelper vh)
     {
-        vh.Clear(); mesh = vh; Rect r = rectTransform.rect;
+        vh.Clear(); mesh = vh; ink = color; Rect r = rectTransform.rect;
         size = Mathf.Min(r.width, r.height); origin = r.center;
         aa = 1f / Mathf.Max(.1f, canvas != null ? canvas.scaleFactor : 1f);
         switch (symbol)
@@ -23,9 +24,9 @@ public sealed class RacingIconGraphic : MaskableGraphic
             case Icon.Pedal: Path(.12f,new Vector2(-.08f,-.28f),new Vector2(.17f,.28f)); Path(.06f,new Vector2(-.3f,-.3f),new Vector2(.3f,-.3f)); break;
             case Icon.Car:
                 Poly(new Vector2(-.37f,-.24f),new Vector2(.37f,-.24f),new Vector2(.37f,.02f),new Vector2(.24f,.33f),new Vector2(-.24f,.33f),new Vector2(-.37f,.02f));
-                Color old = color; color = new Color(.025f,.06f,.15f,old.a);
+                Color old = ink; ink = new Color(.025f,.06f,.15f,old.a);
                 Poly(new Vector2(-.24f,.07f),new Vector2(.24f,.07f),new Vector2(.17f,.23f),new Vector2(-.17f,.23f));
-                Circle(new Vector2(-.24f,-.07f),.055f,true); Circle(new Vector2(.24f,-.07f),.055f,true); color = old;
+                Circle(new Vector2(-.24f,-.07f),.055f,true); Circle(new Vector2(.24f,-.07f),.055f,true); ink = old;
                 Path(.1f,new Vector2(-.26f,-.23f),new Vector2(-.26f,-.36f)); Path(.1f,new Vector2(.26f,-.23f),new Vector2(.26f,-.36f)); break;
             case Icon.Flag:
                 Path(.06f,new Vector2(-.32f,-.4f),new Vector2(-.16f,.38f));
@@ -52,9 +53,9 @@ public sealed class RacingIconGraphic : MaskableGraphic
         }
     }
     private void Path(float thickness, params Vector2[] points)
-    { for(int i=1;i<points.Length;i++) RacingPanelGraphic.Line(mesh,origin+points[i-1]*size,origin+points[i]*size,thickness*size,color,aa); }
+    { for(int i=1;i<points.Length;i++) RacingPanelGraphic.Line(mesh,origin+points[i-1]*size,origin+points[i]*size,thickness*size,ink,aa); }
     private void Poly(params Vector2[] p)
-    { int n=mesh.currentVertCount; foreach(Vector2 v in p) mesh.AddVert(origin+v*size,color,Vector2.zero);for(int i=1;i<p.Length-1;i++)mesh.AddTriangle(n,n+i,n+i+1); }
+    { int n=mesh.currentVertCount; foreach(Vector2 v in p) mesh.AddVert(origin+v*size,ink,Vector2.zero);for(int i=1;i<p.Length-1;i++)mesh.AddTriangle(n,n+i,n+i+1); }
     private void Circle(Vector2 center,float radius,bool fill,float width=.04f,float from=0,float to=360)
     { Vector2 previous=center+new Vector2(Mathf.Cos(from*Mathf.Deg2Rad),Mathf.Sin(from*Mathf.Deg2Rad))*radius;
       for(int i=1;i<=48;i++){float a=Mathf.Lerp(from,to,i/48f)*Mathf.Deg2Rad;Vector2 next=center+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius;

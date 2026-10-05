@@ -38,9 +38,9 @@ public sealed class RacingBoostGraphic : MaskableGraphic
 
     private void DrawBar(VertexHelper vh, Rect bounds)
     {
-        Color red = new Color(.78f, .44f, .27f, 1f);
+        Color red = new Color(.43f, .018f, .29f, 1f);
         Color orange = RacingHUDStyle.Amber;
-        Color gold = new Color(1f, .86f, .61f, 1f);
+        Color gold = new Color(1f, .65f, .84f, 1f);
         float pulse = 0.86f + 0.14f * Mathf.Sin(phase * Mathf.PI * 2f);
         const int segments = 32;
         for (int i = 0; i < segments; i++)
@@ -78,7 +78,7 @@ public sealed class RacingBoostGraphic : MaskableGraphic
         float width = Mathf.Min(bounds.width * 0.11f, 150f);
         float height = Mathf.Min(bounds.height * 0.14f, 100f);
         float pulse = 0.75f + 0.25f * Mathf.Sin(phase * Mathf.PI * 2f);
-        Color edge = new Color(.96f, .55f + flash * .15f, .24f,
+        Color edge = new Color(.025f, .64f + flash * .15f, 1f,
             (.14f * pulse + .15f * flash) * intensity);
         Color clear = edge;
         clear.a = 0f;
@@ -92,7 +92,7 @@ public sealed class RacingBoostGraphic : MaskableGraphic
         Quad(vh, new Vector2(bounds.xMin, bounds.yMin),
             new Vector2(bounds.xMax, bounds.yMin + height), edge, edge, clear, clear);
 
-        Color streak = new Color(1f, 0.56f, 0.18f, (0.24f + flash * 0.38f) * intensity);
+        Color streak = new Color(.025f, .78f, 1f, (0.24f + flash * 0.38f) * intensity);
         for (int i = 0; i < 9; i++)
         {
             float x = Mathf.Lerp(bounds.xMin, bounds.xMax, Mathf.Repeat(phase + i / 9f, 1f));

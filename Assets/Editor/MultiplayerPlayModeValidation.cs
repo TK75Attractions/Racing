@@ -13,9 +13,10 @@ using UnityEngine;
 public static class MultiplayerPlayModeValidation
 {
     private const string SessionKey = "Racing.MultiplayerValidation.Active";
-    private const double TimeoutSeconds = 30d;
+    private const double TimeoutSeconds = 45d;
 
     private static int stage;
+    private static int reportedStage=-1;
     private static int frameCount;
     private static double testStartTime;
     private static double stageStartTime;
@@ -78,9 +79,10 @@ public static class MultiplayerPlayModeValidation
         try
         {
             frameCount++;
+            if(reportedStage!=stage){reportedStage=stage;Debug.Log("MULTIPLAYER_VALIDATION_STAGE: "+stage+" / "+manager?.state);}
             if (EditorApplication.timeSinceStartup - testStartTime > TimeoutSeconds)
             {
-                Fail("Validation timed out.");
+                Fail("Validation timed out at stage " + stage + " / " + manager?.state + " / transition " + AnyTransitionActive());
                 return;
             }
 
@@ -113,9 +115,42 @@ public static class MultiplayerPlayModeValidation
                     stage = 5;
                     break;
 
-                case 5 when manager.state == Gmanager.State.Result:
+                case 5 when manager.state == Gmanager.State.Result && !AnyTransitionActive():
                     ValidateSharedResult();
-                    Debug.Log("MULTIPLAYER_PLAYMODE_VALIDATION_PASS");
+                    manager.SelectResultOption(0,0);
+                    stage=6;
+                    break;
+                case 6 when manager.state == Gmanager.State.Countdown:
+                    ValidateSpawnAndCountdown();
+                    stage=7;
+                    break;
+                case 7 when manager.state == Gmanager.State.Game:
+                    manager.DebugPreviewResult();
+                    stage=8;
+                    break;
+                case 8 when manager.state == Gmanager.State.Result && !AnyTransitionActive():
+                    manager.SelectResultOption(1,1);
+                    stage=9;
+                    break;
+                case 9 when !AnyTransitionActive() && TitleSheet(1)?.IsOpen == true:
+                    Require(manager.state == Gmanager.State.Result,"One player returning must preserve the other result.");
+                    manager.SelectResultOption(0,2);
+                    stage=10;
+                    break;
+                case 10 when manager.state == Gmanager.State.Title && !AnyTransitionActive():
+                    Require(TitleSheet(0)?.IsOpen==true && TitleSheet(1)?.IsOpen==true,"Car/course return actions did not open their title sheets.");
+                    TitleSheet(0).Close();TitleSheet(1).Close();
+                    manager.DebugPreviewResult();stage=11;
+                    break;
+                case 11 when manager.state == Gmanager.State.Result && !AnyTransitionActive():
+                    manager.SelectResultOption(0,3);stage=12;
+                    break;
+                case 12 when !AnyTransitionActive():
+                    manager.SelectResultOption(1,3);stage=13;
+                    break;
+                case 13 when manager.state == Gmanager.State.Title && !AnyTransitionActive():
+                    Require(TitleSheet(0)?.IsOpen==false && TitleSheet(1)?.IsOpen==false,"Main-menu action must return to the main menu.");
+                    Debug.Log("MULTIPLAYER_PLAYMODE_VALIDATION_PASS: race, spectator, shared result, retry, car/course sheets and main menu.");
                     Finish(0);
                     break;
             }
@@ -125,6 +160,14 @@ public static class MultiplayerPlayModeValidation
             Fail(exception.ToString());
         }
     }
+
+    private static bool AnyTransitionActive()
+    {
+        foreach(ScreenTransitionController transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
+            if(transition.IsTransitioning)return true;
+        return false;
+    }
+    private static NeonTitleMenu TitleSheet(int player)=>FindComponentIncludingInactive<NeonTitleMenu>(player==0?"GameManagers/MainCanvas/Title":"GameManagers/MainCanvas_P2/Title");
 
     private static void ValidateDisplayAndTitle()
     {
