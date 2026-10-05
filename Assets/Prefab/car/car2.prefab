@@ -450,7 +450,7 @@ MonoBehaviour:
   driftStartHandle: 8
   driftFullChargeHandle: 30
   maxDriftCharge: 3
-  driftChargePerSecond: 1
+  driftChargePerSecond: 3
   driftResistanceMultiplier: 1.25
   driftRearGripMultiplier: 2
   enableLateralTireForces: 1

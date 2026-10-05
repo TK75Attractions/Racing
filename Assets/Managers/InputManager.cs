@@ -47,6 +47,9 @@ public class InputManager : MonoBehaviour
 
     public bool IsSerialDebugDisplayVisible => serialDebugMode && serialDebugDisplayVisible;
     public bool IsAnyDebugMode => isDebugMode || isP1SerialP2KeyboardDebugMode;
+    public TwoPlayerSerialInputSource SharedSerialInputSource => sharedSerialInputSource;
+    public string InputModeLabel => GetInputModeLabel();
+    public event Action<string, string> SerialLineProcessed;
 
     private readonly IDriveInputSource[] inputSources =
         new IDriveInputSource[SupportedPlayerCount];
@@ -213,6 +216,7 @@ public class InputManager : MonoBehaviour
 
     private void OnSharedSerialLineProcessed(string status, string line)
     {
+        SerialLineProcessed?.Invoke(status, line);
         string players = isP1SerialP2KeyboardDebugMode ? "P1" : "P1/P2";
         AddSerialDebugLog($"{players} {status}", line);
     }

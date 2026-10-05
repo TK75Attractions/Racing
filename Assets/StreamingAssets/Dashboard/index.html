@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10141d">
+  <meta name="description" content="RACING のレース進行、プレイヤー画面、シリアル入力を監視する管理ダッシュボード。">
+  <title>RACING CONTROL | レース管理</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">R<span>·</span></span><div><strong>RACING <em>CONTROL</em></strong><small>レース運営ダッシュボード</small></div></div>
+      <div class="top-right"><span class="clock" id="clock">--:--:--</span><span class="connection pill offline" id="connection"><i></i><span>UNITY 未接続</span></span></div>
+    </header>
+
+    <main>
+      <section class="overview" aria-label="レース概要">
+        <div class="eyebrow"><span class="eyebrow-line"></span> LIVE RACE OPERATIONS <span class="issue">01 / CONTROL DESK</span></div>
+        <div class="overview-row"><div><h1>レース管理<span class="accent">.</span></h1><p>2人の走行と入力を、ひとつの画面で。</p></div><div class="state-summary"><span>現在のゲーム状態</span><strong id="game-state">接続待機</strong><small id="state-detail">Unity を起動してください</small></div></div>
+      </section>
+
+      <section class="panel remote-login" id="remote-login" hidden aria-labelledby="remote-login-title">
+        <div class="panel-heading"><div><span class="section-kicker">REMOTE / RACE CONTROL</span><h2 id="remote-login-title">遠隔監視に接続</h2></div></div>
+        <p id="remote-status" role="status">Firebase の設定を確認中です。</p>
+        <form id="remote-login-form">
+          <label>閲覧用メールアドレス <input id="remote-email" type="email" autocomplete="username" required></label>
+          <label>パスワード <input id="remote-password" type="password" autocomplete="current-password" required></label>
+          <button class="primary" type="submit">監視を開始</button>
+        </form>
+        <div id="remote-account" hidden><span id="remote-user"></span><button id="remote-signout" type="button">ログアウト</button></div>
+      </section>
+
+      <section class="stats" aria-label="ゲーム状態">
+        <article class="stat"><span class="stat-label">レースタイム</span><strong class="mono" id="race-time">00:00.0</strong><small>RACE TIME</small></article>
+        <article class="stat"><span class="stat-label">規定周回</span><strong class="mono" id="goal-lap">--<span class="unit"> LAPS</span></strong><small>RACE DISTANCE</small></article>
+        <article class="stat"><span class="stat-label">シリアル受信</span><strong class="mono" id="serial-count">--</strong><small id="serial-sub">ポート未接続</small></article>
+        <article class="stat"><span class="stat-label">解析エラー</span><strong class="mono" id="parse-errors">--</strong><small>PARSE ERRORS</small></article>
+      </section>
+
+      <div class="grid">
+        <section class="panel cameras" aria-labelledby="cameras-title">
+          <div class="panel-heading"><div><span class="section-kicker">01 / LIVE VIEW</span><h2 id="cameras-title">プレイヤー画面</h2></div><span class="muted-note">約2秒ごとに更新</span></div>
+          <div class="camera-grid">
+            <article class="player-card" id="player-card-1"><div class="player-top"><div class="player-name"><span class="player-number p1">01</span><strong>PLAYER 1</strong></div><span class="mini-status" id="player-status-1">待機中</span></div><div class="feed"><img id="feed-1" alt="プレイヤー1のライブ映像" hidden><div class="feed-placeholder" id="placeholder-1"><span class="crosshair">✳</span><span>映像を待機しています</span></div><span class="feed-label">CAM 01 · LIVE</span></div><div class="player-metrics"><div><span>LAP</span><strong id="lap-1">-- / --</strong></div><div><span>SPEED</span><strong id="speed-1">-- <small>km/h</small></strong></div><div><span>PEDAL</span><strong id="pedal-1">--</strong></div><div><span>STEERING</span><strong id="steer-1">--</strong></div></div></article>
+            <article class="player-card" id="player-card-2"><div class="player-top"><div class="player-name"><span class="player-number p2">02</span><strong>PLAYER 2</strong></div><span class="mini-status" id="player-status-2">待機中</span></div><div class="feed"><img id="feed-2" alt="プレイヤー2のライブ映像" hidden><div class="feed-placeholder" id="placeholder-2"><span class="crosshair">✳</span><span>映像を待機しています</span></div><span class="feed-label">CAM 02 · LIVE</span></div><div class="player-metrics"><div><span>LAP</span><strong id="lap-2">-- / --</strong></div><div><span>SPEED</span><strong id="speed-2">-- <small>km/h</small></strong></div><div><span>PEDAL</span><strong id="pedal-2">--</strong></div><div><span>STEERING</span><strong id="steer-2">--</strong></div></div></article>
+          </div>
+        </section>
+
+        <section class="panel controls" aria-labelledby="controls-title"><div class="panel-heading"><div><span class="section-kicker">02 / RACE FLOW</span><h2 id="controls-title">進行コントロール</h2></div></div><div class="flow" aria-label="レース進行状況"><div class="flow-step" data-flow-state="Title"><span>01</span><strong>タイトル</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Countdown"><span>02</span><strong>カウントダウン</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Game"><span>03</span><strong>レース</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Goal"><span>04</span><strong>ゴール処理</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Result"><span>05</span><strong>結果</strong></div></div><p class="flow-state" id="flow-state" role="status">Unity の状態を待っています</p><div class="buttons"><button class="primary" data-action="start" disabled><span>▶</span> レース開始</button><button data-action="result" disabled>結果を表示</button><button data-action="retry" disabled>もう一度走る</button><button data-action="title" disabled>タイトルへ戻る</button></div><p class="control-note" id="control-note">Unity の接続後、現在の状態に応じて操作できます。</p></section>
+
+        <section class="panel serial" aria-labelledby="serial-title"><div class="panel-heading"><div><span class="section-kicker">03 / INPUT STREAM</span><h2 id="serial-title">シリアルモニター</h2></div><div class="serial-heading-right"><span class="serial-port" id="serial-port">PORT —</span><span class="mini-status" id="port-status">待機中</span></div></div><div class="serial-meta"><span>入力モード <strong id="input-mode">—</strong></span><span>最終解析 <strong id="last-result">—</strong></span></div><div class="log-head"><span>時刻</span><span>状態</span><span>受信データ</span></div><div class="log" id="serial-log" role="log" aria-live="off"><div class="empty-log">シリアル入力を待っています。Unity の接続状態を確認してください。</div></div></section>
+      </div>
+      <footer><span>RACING CONTROL / OPERATOR VIEW</span><span id="footer-status">Unity との接続を確認中</span></footer>
+    </main>
+  </div>
+</body>
+</html>

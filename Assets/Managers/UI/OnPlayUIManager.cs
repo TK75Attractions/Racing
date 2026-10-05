@@ -45,12 +45,14 @@ public class OnPlayUIManager
         initialized = true;
     }
 
-    public void UpdateUI(int positionValue, int lapValue, float totalSeconds, float lapSeconds, float speedValue)
+    public void UpdateUI(int positionValue, int lapValue, float totalSeconds, float lapSeconds, float speedValue,
+        float padBoostRemainingSeconds, float padBoostDurationSeconds)
     {
         SetPosition(positionValue);
         SetLap(lapValue);
         SetTime(totalSeconds, lapSeconds);
         SetSpeed(speedValue);
+        speed.UpdateBoostGauge(padBoostRemainingSeconds, padBoostDurationSeconds);
         miniMap.UpdateMarkers();
     }
 

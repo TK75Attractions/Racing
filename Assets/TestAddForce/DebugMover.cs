@@ -117,6 +117,7 @@ public class DebugMover : MonoBehaviour
     private IDriveInputSource inputSource;
     private float inputSuppressedUntil;
     private float driftDirection;
+    private CarItemEffects itemEffects;
 
     public IDriveInputSource InputSource => inputSource;
     /// <summary>実際に走行へ反映しているペダル入力（-1:ブレーキ 〜 1:アクセル）。</summary>
@@ -142,13 +143,19 @@ public class DebugMover : MonoBehaviour
         : 0f;
     public bool IsAccelerationPadBoosting => isActiveAndEnabled && !IsInputSuppressed &&
         accelerationPadBoostTimeRemaining > 0f && activeAccelerationPadBoostAcceleration > 0f;
-    /// <summary>ドリフトと加速度盤を合わせた、既存の加速画面演出用の強度です。</summary>
+    public float AccelerationPadBoostTimeRemaining => IsAccelerationPadBoosting
+        ? accelerationPadBoostTimeRemaining : 0f;
+    public float AccelerationPadBoostDuration => IsAccelerationPadBoosting
+        ? accelerationPadBoostDuration : 0f;
+    public bool IsRocketBoosting => isActiveAndEnabled && itemEffects != null && itemEffects.IsRocketActive;
+    /// <summary>ドリフト、加速度盤、ロケットを合わせた加速画面演出用の強度です。</summary>
     public float BoostVisualIntensity => Mathf.Max(DriftBoostVisualIntensity,
-        IsAccelerationPadBoosting ? 1f : 0f);
+        IsAccelerationPadBoosting || IsRocketBoosting ? 1f : 0f);
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        if (itemEffects == null) itemEffects = GetComponent<CarItemEffects>();
         RefreshTires();
     }
 
@@ -166,6 +173,15 @@ public class DebugMover : MonoBehaviour
         {
             ClearUserInput();
             ResetBoosts();
+        }
+        else if (itemEffects != null && itemEffects.IsRocketActive)
+        {
+            // ロケット中は自動操縦が速度と向きを直接決めるため、運転入力・タイヤ力・速度抵抗を使いません。
+            // ドリフトチャージは保持し、ロケット後に解放できるようにします。
+            ClearUserInput();
+            itemEffects.ApplyRocketAutopilot(Time.fixedDeltaTime);
+            speedMetersPerSecond = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up).magnitude;
+            return;
         }
         else
         {
@@ -214,6 +230,7 @@ public class DebugMover : MonoBehaviour
         inputSuppressedUntil = Mathf.Max(inputSuppressedUntil, Time.time + duration);
         ClearUserInput();
         ResetBoosts();
+        itemEffects?.ClearAll();
 
         foreach (TireForce tire in tires)
         {
@@ -224,6 +241,30 @@ public class DebugMover : MonoBehaviour
     private void OnDisable()
     {
         ResetBoosts();
+    }
+
+    /// <summary>CarItemEffects が自身を登録します。車両生成後に追加された場合にも対応します。</summary>
+    public void BindItemEffects(CarItemEffects effects)
+    {
+        itemEffects = effects;
+    }
+
+    /// <summary>スピンなどでドリフト状態とたまったチャージを失わせます。</summary>
+    public void CancelDrift()
+    {
+        ResetDrift();
+    }
+
+    /// <summary>
+    /// ドリフトチャージを加算します（最大チャージに対する割合）。チャージはドリフト解放まで保持されます。
+    /// 既に満タンなどで増えなかった場合は false を返します。
+    /// </summary>
+    public bool AddDriftCharge(float normalizedAmount)
+    {
+        if (!enableDriftDynamics || maxDriftCharge <= 0f || normalizedAmount <= 0f) return false;
+        float previous = driftCharge;
+        driftCharge = Mathf.Clamp(driftCharge + normalizedAmount * maxDriftCharge, 0f, maxDriftCharge);
+        return driftCharge > previous + 0.0001f;
     }
 
     private void ResetDrift()
@@ -239,6 +280,7 @@ public class DebugMover : MonoBehaviour
     {
         ResetDrift();
         accelerationPadBoostTimeRemaining = 0f;
+        accelerationPadBoostDuration = 0f;
         activeAccelerationPadBoostAcceleration = 0f;
         accelerationPadBoostDirection = Vector3.zero;
     }
@@ -264,11 +306,14 @@ public class DebugMover : MonoBehaviour
     }
 
     private Vector3 accelerationPadBoostDirection;
+    private float accelerationPadBoostDuration;
 
-    /// <summary>加速度盤から呼び出す、質量に依存しない時間制限付き加速です。</summary>
-    public void StartAccelerationPadBoost(float acceleration, float duration, Vector3 direction)
+    /// <summary>加速度盤から呼び出す、質量に依存しない瞬間加速と時間制限付き加速です。</summary>
+    public void StartAccelerationPadBoost(float acceleration, float duration, float instantSpeedBonus, Vector3 direction)
     {
+        bool wasBoosting = IsAccelerationPadBoosting;
         accelerationPadBoostTimeRemaining = Mathf.Max(0f, duration);
+        accelerationPadBoostDuration = accelerationPadBoostTimeRemaining;
         activeAccelerationPadBoostAcceleration = accelerationPadBoostTimeRemaining > 0f
             ? Mathf.Max(0f, acceleration)
             : 0f;
@@ -277,13 +322,28 @@ public class DebugMover : MonoBehaviour
         {
             accelerationPadBoostDirection = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
         }
+
+        // 複数の車体Colliderが同じ盤面へ入っても、瞬間加速は一度だけ与える。
+        if (!wasBoosting && accelerationPadBoostTimeRemaining > 0f && instantSpeedBonus > 0f)
+        {
+            rb.AddForce(GetAccelerationPadBoostDirection() * instantSpeedBonus, ForceMode.VelocityChange);
+        }
+    }
+
+    private Vector3 GetAccelerationPadBoostDirection()
+    {
+        Vector3 travel = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
+        if (travel.sqrMagnitude > 1f) return travel.normalized;
+
+        Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+        return forward.sqrMagnitude > 0.0001f ? forward.normalized : accelerationPadBoostDirection;
     }
 
     private float ConsumeAccelerationPadBoost(float deltaTime, out Vector3 direction)
     {
         float elapsed = Mathf.Min(Mathf.Max(0f, deltaTime), accelerationPadBoostTimeRemaining);
         float speedDelta = activeAccelerationPadBoostAcceleration * elapsed;
-        direction = accelerationPadBoostDirection;
+        direction = GetAccelerationPadBoostDirection();
         accelerationPadBoostTimeRemaining = Mathf.Max(0f, accelerationPadBoostTimeRemaining - elapsed);
         if (accelerationPadBoostTimeRemaining <= 0f)
         {
@@ -362,7 +422,14 @@ public class DebugMover : MonoBehaviour
         DriveInputState input = inputSource.CurrentState;
         rawPedalInput = input.pedal;
         appliedPedalInput = Mathf.Clamp(rawPedalInput, -1f, 1f);
-        rawSteeringInput = input.steering;
+        // コンフューズ中はハンドルを左右反転します。ドリフト判定も反転後の値で行います。
+        rawSteeringInput = input.steering * (itemEffects != null ? itemEffects.SteeringSign : 1f);
+        if (itemEffects != null && itemEffects.BlocksDriverInput)
+        {
+            rawPedalInput = 0f;
+            appliedPedalInput = 0f;
+            rawSteeringInput = 0f;
+        }
 
         Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
         speedMetersPerSecond = planarVelocity.magnitude;
@@ -411,6 +478,13 @@ public class DebugMover : MonoBehaviour
                 && enableDriftDynamics && enableDriftRearGripReduction
                 ? Mathf.Max(0f, driftRearGripMultiplier)
                 : 1f;
+            // オイルやスピンによるグリップ低下を重ねます。
+            if (itemEffects != null)
+            {
+                gripMultiplier *= tire.IsFrontWheel
+                    ? itemEffects.FrontGripMultiplier
+                    : itemEffects.RearGripMultiplier;
+            }
 
             tire.ApplyForces(
                 vehicleForward,

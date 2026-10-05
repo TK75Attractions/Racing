@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "test": "cd .. && tests/node_modules/.bin/firebase emulators:exec --only database --project demo-racing-remote \"node tests/test.mjs\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.2",
+    "firebase": "12.19.0",
+    "firebase-tools": "15.32.1"
+  }
+}

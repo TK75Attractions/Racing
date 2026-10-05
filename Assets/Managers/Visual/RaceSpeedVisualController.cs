@@ -46,8 +46,19 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
     [SerializeField, Min(0f)] private float highSpeedShakePosition = 0.015f;
     [SerializeField, Min(0f)] private float boostShakePosition = 0.012f;
     [SerializeField, Min(0f)] private float highSpeedShakeRotation = 0.12f;
+    [Tooltip("ブースト中に加える回転の揺れ（度）。")]
+    [SerializeField, Min(0f)] private float boostShakeRotation = 0.1f;
     [SerializeField, Min(0f)] private float minShakeFrequency = 4f;
     [SerializeField, Min(0f)] private float maxShakeFrequency = 11f;
+
+    [Header("Impact Shake")]
+    [Tooltip("衝突の強さが最大のときの位置の揺れ（m）。")]
+    [SerializeField, Min(0f)] private float impactShakePosition = 0.09f;
+    [Tooltip("衝突の強さが最大のときの回転の揺れ（度）。")]
+    [SerializeField, Min(0f)] private float impactShakeRotation = 1.4f;
+    [SerializeField, Min(0f)] private float impactShakeFrequency = 24f;
+    [Tooltip("最大の揺れが収まるまでの時間（秒）。")]
+    [SerializeField, Min(0.01f)] private float impactShakeSeconds = 0.35f;
 
     [Header("Speed Lines")]
     [SerializeField, Range(0f, 1f)] private float speedLinesStart = 0.45f;
@@ -76,6 +87,7 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
     private float boostBlend;
     private float boostKick01;
     private float externalBoostIntensity;
+    private float impact01;
     private bool wasBoosting;
     private bool gameplayActive;
     private bool configured;
@@ -83,6 +95,7 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
 
     public float CurrentVisualSpeed01 => visualSpeed01;
     public float CurrentBoostIntensity => boostBlend;
+    public float CurrentImpact01 => impact01;
 
     public void Configure(
         int index,
@@ -137,6 +150,13 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
         externalBoostIntensity = Mathf.Clamp01(intensity);
     }
 
+    /// <summary>衝突の強さ（0〜1）を受け取り、このプレイヤーのカメラを短く揺らします。</summary>
+    public void AddImpact(float strength01)
+    {
+        if (!configured || !gameplayActive) return;
+        impact01 = Mathf.Max(impact01, Mathf.Clamp01(strength01));
+    }
+
     public void SetGameplayActive(bool active)
     {
         gameplayActive = active;
@@ -161,6 +181,7 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
 
         UpdateSpeed(Time.deltaTime);
         UpdateBoost(Time.deltaTime);
+        impact01 = Mathf.MoveTowards(impact01, 0f, Time.deltaTime / Mathf.Max(0.01f, impactShakeSeconds));
         volumeManager?.SetRaceSpeedVisual(playerIndex, visualSpeed01);
     }
 
@@ -252,11 +273,22 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
             + Vector3.back * pullback
             + new Vector3(noiseX, noiseY, 0f) * shakeStrength;
 
-        float rotationStrength = highSpeedShakeRotation * speed01 + boostShakePosition * boost01;
-        visualEffectPivot.localRotation = basePivotRotation * Quaternion.Euler(
-            noiseY * rotationStrength,
-            noiseX * rotationStrength,
-            noiseZ * rotationStrength);
+        float rotationStrength = highSpeedShakeRotation * speed01 + boostShakeRotation * boost01;
+        Vector3 rotationShake = new Vector3(noiseY, noiseX, noiseZ) * rotationStrength;
+
+        // 衝突の揺れは強さの2乗で効かせ、軽い接触では控えめに、強い衝突ではしっかり揺らします。
+        float trauma = impact01 * impact01;
+        if (trauma > 0f)
+        {
+            float impactTime = Time.time * impactShakeFrequency;
+            float impactX = Mathf.PerlinNoise(impactTime, 3.1f) * 2f - 1f;
+            float impactY = Mathf.PerlinNoise(5.7f, impactTime) * 2f - 1f;
+            float impactZ = Mathf.PerlinNoise(impactTime, 8.3f) * 2f - 1f;
+            visualEffectPivot.localPosition += new Vector3(impactX, impactY, 0f) * (impactShakePosition * trauma);
+            rotationShake += new Vector3(impactY, impactX, impactZ) * (impactShakeRotation * trauma);
+        }
+
+        visualEffectPivot.localRotation = basePivotRotation * Quaternion.Euler(rotationShake);
     }
 
     private void UpdateSpeedLines(float speed01, float boost01)
@@ -361,6 +393,7 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
         boostBlend = 0f;
         boostKick01 = 0f;
         externalBoostIntensity = 0f;
+        impact01 = 0f;
         wasBoosting = false;
         volumeManager?.ClearRaceSpeedVisual(playerIndex);
 
