@@ -31,6 +31,7 @@ public class Gmanager : MonoBehaviour
         public PlayerDriveInputGate inputGate;
         public InterruptionMenuUI interruptionMenu;
         public bool withdrewFromRace;
+        public bool isSpectating;
         public CarItemEffects itemEffects;
         public PlayerItemHUD itemHud;
     }
@@ -142,6 +143,8 @@ public class Gmanager : MonoBehaviour
 
         displayRigs = TwoPlayerDisplayFactory.Create(transform.parent, cameraBlendSeconds);
         InitializePlayerDisplays();
+        if (GetComponent<RaceAudioOutput>() == null) gameObject.AddComponent<RaceAudioOutput>();
+        if (GetComponent<RaceBackgroundMusic>() == null) gameObject.AddComponent<RaceBackgroundMusic>();
         InitializeVolumes();
         InitializeRaceLightning();
         ApplyStateImmediate(State.Title);
@@ -539,6 +542,13 @@ public class Gmanager : MonoBehaviour
             Vector3 spawnPosition = basePosition + gridRight * startGridSpacing * side;
             player.car = Instantiate(carPrefab, spawnPosition, spawnRotation);
             player.car.name = $"Player{playerIndex + 1}_Car";
+            player.isSpectating = false;
+            foreach (AudioSource source in player.car.GetComponentsInChildren<AudioSource>(true))
+            {
+                PlayerAudioCapture capture = source.GetComponent<PlayerAudioCapture>();
+                if (capture == null) capture = source.gameObject.AddComponent<PlayerAudioCapture>();
+                capture.ConfigureEngine(GetComponent<RaceAudioOutput>(), this, player.car.transform, playerIndex);
+            }
             PlayerCarPaint paint = player.car.GetComponent<PlayerCarPaint>();
             if (paint == null) paint = player.car.AddComponent<PlayerCarPaint>();
             paint.SetPlayerIndex(playerIndex);
@@ -798,6 +808,7 @@ public class Gmanager : MonoBehaviour
 
         finished.displayRig.RaceCamera.Follow = watched.displayRig.RaceCamera.Follow;
         finished.displayRig.RaceCamera.LookAt = watched.displayRig.RaceCamera.LookAt;
+        finished.isSpectating = true;
         screenTransitions[finishedPlayerIndex]?.ApplyStateImmediate(State.Game);
         screenTransitions[finishedPlayerIndex]?.ShowSpectator(watchedPlayerIndex);
     }
@@ -856,6 +867,7 @@ public class Gmanager : MonoBehaviour
             player.inputGate?.Reset();
             player.inputGate = null;
             player.withdrewFromRace = false;
+            player.isSpectating = false;
             player.interruptionMenu?.Hide();
             player.itemHud?.Bind(null);
             player.itemEffects = null;
@@ -889,6 +901,26 @@ public class Gmanager : MonoBehaviour
     private void ResolveLapManager()
     {
         if (lapManager == null) lapManager = FindFirstObjectByType<LapManager>(FindObjectsInactive.Include);
+    }
+
+    public int GetAudioViewedPlayer(int displayPlayerIndex)
+    {
+        if (displayPlayerIndex < 0 || displayPlayerIndex >= players.Length) return -1;
+        return state == State.Game && players[displayPlayerIndex]?.isSpectating == true
+            ? 1 - displayPlayerIndex : displayPlayerIndex;
+    }
+
+    public bool IsPlayerOnFinalLap(int playerIndex)
+    {
+        if (playerIndex < 0 || playerIndex >= players.Length || lapManager == null || lapManager.GoalLap <= 0) return false;
+        LapManager.CarTimeData data = lapManager.GetCarData(players[playerIndex]?.rigidbody);
+        return data != null && data.lapCount >= lapManager.GoalLap - 1;
+    }
+
+    public Transform GetPlayerAudioPerspective(int displayPlayerIndex)
+    {
+        if (displayPlayerIndex < 0 || displayPlayerIndex >= players.Length) return null;
+        return players[displayPlayerIndex]?.displayRig?.MainCamera?.transform;
     }
 
     private void AssignPlayerInput(GameObject playerCar, int playerIndex)

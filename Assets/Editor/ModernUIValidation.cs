@@ -105,7 +105,7 @@ public static class ModernUIValidation
         Require(menu.IsOpen && Text(card, "ToggleDirection/DirectionStatus") == "前進", "Forward status failed.");
         menu.SetDirectionStatus(true);
         Require(Text(card, "ToggleDirection/DirectionStatus") == "後退", "Reverse status failed.");
-        foreach (string name in new[] { "Interrupt", "ToggleDirection", "Restart" })
+        foreach (string name in new[] { "Interrupt", "ToggleDirection", "Restart", "Options" })
         {
             RacingMenuButton button = card.Find(name).GetComponent<RacingMenuButton>();
             Require(button != null && button.interactable && button.targetGraphic.enabled && button.targetGraphic.raycastTarget,
@@ -114,6 +114,12 @@ public static class ModernUIValidation
             button.onClick.Invoke();
         }
         Require(interrupted == 1 && toggled == 1 && restarted == 1, "Rebuilding the menu must not duplicate action listeners.");
+        Transform options = card.Find("OptionsPanel");
+        Require(options != null && options.gameObject.activeSelf, "Audio settings did not open.");
+        foreach (string name in new[] { "MasterSlider", "BGMSlider", "EngineSlider" })
+            Require(options.Find(name)?.GetComponent<Slider>() != null, $"Missing audio slider: {name}");
+        options.Find("Back").GetComponent<RacingMenuButton>().onClick.Invoke();
+        Require(!options.gameObject.activeSelf, "Audio settings did not close.");
         menu.Hide();
         Require(!menu.IsOpen, "Menu hide failed.");
     }

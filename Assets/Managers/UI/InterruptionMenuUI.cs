@@ -10,6 +10,12 @@ public sealed class InterruptionMenuUI : MonoBehaviour
     private GameObject root;
     private TMP_Text directionStatus;
     private RacingMenuButton firstButton;
+    private GameObject optionsPanel;
+    private RacingMenuButton optionsButton;
+    private Slider masterSlider;
+    private Slider bgmSlider;
+    private Slider engineSlider;
+    private readonly TMP_Text[] deviceLabels = new TMP_Text[2];
     private Action interruptAction;
     private Action toggleDirectionAction;
     private Action restartAction;
@@ -39,6 +45,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         if (root == null) return;
         root.transform.SetAsLastSibling();
         root.SetActive(true);
+        ShowOptions(false);
         SetDirectionStatus(isReverse);
         if (EventSystem.current != null && firstButton != null)
             EventSystem.current.SetSelectedGameObject(firstButton.gameObject);
@@ -51,6 +58,22 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         if (selected != null && selected.transform.IsChildOf(root.transform))
             EventSystem.current.SetSelectedGameObject(null);
         root.SetActive(false);
+    }
+
+    private void ShowOptions(bool visible)
+    {
+        if (optionsPanel == null) return;
+        optionsPanel.SetActive(visible);
+        if (visible)
+        {
+            masterSlider.SetValueWithoutNotify(RaceAudioSettings.Master);
+            bgmSlider.SetValueWithoutNotify(RaceAudioSettings.Bgm);
+            engineSlider.SetValueWithoutNotify(RaceAudioSettings.Engine);
+            RefreshDeviceLabels();
+        }
+        GameObject selected = visible ? masterSlider.gameObject : optionsButton.gameObject;
+        if (root.activeInHierarchy && EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(selected);
     }
 
     public void SetDirectionStatus(bool isReverse)
@@ -86,17 +109,91 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         subtitle.alignment = TextAlignmentOptions.Left;
         subtitle.color = RacingUITheme.Muted;
 
-        firstButton = CreateButton(card.transform, "Restart", "スタートから", "RETURN TO START", "01", new Vector2(0.08f, 0.535f), new Vector2(0.92f, 0.68f),
+        firstButton = CreateButton(card.transform, "Restart", "スタートから", "RETURN TO START", "01", new Vector2(0.08f, 0.595f), new Vector2(0.92f, 0.705f),
             () => restartAction?.Invoke(), RacingPanelGraphic.SurfaceStyle.Primary);
-        RacingMenuButton direction = CreateButton(card.transform, "ToggleDirection", "走行方向を切り替え", "CHANGE DIRECTION", "02", new Vector2(0.08f, 0.35f), new Vector2(0.92f, 0.495f),
+        RacingMenuButton direction = CreateButton(card.transform, "ToggleDirection", "走行方向を切り替え", "CHANGE DIRECTION", "02", new Vector2(0.08f, 0.455f), new Vector2(0.92f, 0.565f),
             () => toggleDirectionAction?.Invoke());
         directionStatus = CreateLabel(direction.transform, "DirectionStatus", string.Empty, new Vector2(0.78f, 0.35f), new Vector2(0.95f, 0.73f), 22f, FontRole.Japanese);
         direction.transform.Find("Label").GetComponent<RectTransform>().anchorMax = new Vector2(0.75f, 0.85f);
-        CreateButton(card.transform, "Interrupt", "中断する", "LEAVE RACE", "03", new Vector2(0.08f, 0.165f), new Vector2(0.92f, 0.31f),
+        optionsButton = CreateButton(card.transform, "Options", "設定", "AUDIO SETTINGS", "03", new Vector2(0.08f, 0.315f), new Vector2(0.92f, 0.425f),
+            () => ShowOptions(true));
+        CreateButton(card.transform, "Interrupt", "中断する", "LEAVE RACE", "04", new Vector2(0.08f, 0.175f), new Vector2(0.92f, 0.285f),
             () => interruptAction?.Invoke());
         RacingUITheme.Rule(card.transform, "FooterDivider", new Vector2(0.08f, 0.125f), new Vector2(0.92f, 0.1265f), new Color(0.3f, 0.45f, 0.55f, 0.4f));
         TMP_Text hint = CreateLabel(card.transform, "Hint", "ESC  /  走行にもどる", new Vector2(0.08f, 0.035f), new Vector2(0.92f, 0.105f), 18f, FontRole.Japanese);
         hint.color = RacingUITheme.Muted;
+
+        optionsPanel = GetOrCreate("OptionsPanel", card.transform, typeof(Image));
+        Stretch(optionsPanel.GetComponent<RectTransform>(), new Vector2(0.04f, 0.02f), new Vector2(0.96f, 0.78f));
+        Image optionsBackground = optionsPanel.GetComponent<Image>();
+        optionsBackground.color = new Color(0.012f, 0.035f, 0.055f, 0.98f);
+        optionsBackground.raycastTarget = true;
+        masterSlider = CreateVolumeSlider(optionsPanel.transform, "Master", "Master", 0.82f, RaceAudioSettings.SetMaster);
+        bgmSlider = CreateVolumeSlider(optionsPanel.transform, "BGM", "BGM", 0.66f, RaceAudioSettings.SetBgm);
+        engineSlider = CreateVolumeSlider(optionsPanel.transform, "Engine", "エンジン音", 0.50f, RaceAudioSettings.SetEngine);
+        for (int player = 0; player < 2; player++)
+        {
+            int capturedPlayer = player;
+            float bottom = player == 0 ? 0.33f : 0.18f;
+            RacingMenuButton deviceButton = CreateButton(optionsPanel.transform, $"P{player + 1}Output", "", "CLICK TO CHANGE OUTPUT", "",
+                new Vector2(0.08f, bottom), new Vector2(0.92f, bottom + 0.14f), () =>
+                {
+                    RaceAudioOutput.Instance?.SelectNextDevice(capturedPlayer);
+                    RefreshDeviceLabels();
+                });
+            deviceLabels[player] = deviceButton.transform.Find("Label").GetComponent<TMP_Text>();
+            deviceLabels[player].fontSizeMax = 21f;
+        }
+        CreateButton(optionsPanel.transform, "RefreshDevices", "再検出", "", "", new Vector2(0.08f, 0.02f), new Vector2(0.48f, 0.16f), () =>
+        {
+            RaceAudioOutput.Instance?.RefreshDevices();
+            RefreshDeviceLabels();
+        });
+        CreateButton(optionsPanel.transform, "Back", "戻る", "BACK", "", new Vector2(0.52f, 0.02f), new Vector2(0.92f, 0.16f),
+            () => ShowOptions(false));
+        optionsPanel.SetActive(false);
+    }
+
+    private void RefreshDeviceLabels()
+    {
+        for (int player = 0; player < 2; player++)
+            if (deviceLabels[player] != null)
+                deviceLabels[player].text = $"P{player + 1} 出力: {RaceAudioOutput.Instance?.GetDeviceLabel(player) ?? "未接続"}";
+    }
+
+    private void Update()
+    {
+        if (IsOpen && optionsPanel != null && optionsPanel.activeSelf) RefreshDeviceLabels();
+    }
+
+    private static Slider CreateVolumeSlider(Transform parent, string name, string caption, float top,
+        UnityEngine.Events.UnityAction<float> onChanged)
+    {
+        TMP_Text label = CreateLabel(parent, name + "Label", caption, new Vector2(0.08f, top), new Vector2(0.45f, top + 0.15f), 23f, FontRole.Japanese);
+        label.alignment = TextAlignmentOptions.Left;
+        GameObject sliderObject = GetOrCreate(name + "Slider", parent, typeof(Slider));
+        Stretch(sliderObject.GetComponent<RectTransform>(), new Vector2(0.45f, top + 0.015f), new Vector2(0.92f, top + 0.125f));
+        GameObject track = GetOrCreate("Track", sliderObject.transform, typeof(Image));
+        Stretch(track.GetComponent<RectTransform>(), new Vector2(0f, 0.34f), new Vector2(1f, 0.66f));
+        track.GetComponent<Image>().color = new Color(0.12f, 0.21f, 0.27f);
+        GameObject fill = GetOrCreate("Fill", sliderObject.transform, typeof(Image));
+        Stretch(fill.GetComponent<RectTransform>(), new Vector2(0f, 0.34f), new Vector2(1f, 0.66f));
+        fill.GetComponent<Image>().color = RacingUITheme.Cyan;
+        GameObject handle = GetOrCreate("Handle", sliderObject.transform, typeof(Image));
+        RectTransform handleRect = handle.GetComponent<RectTransform>();
+        Stretch(handleRect, new Vector2(0f, 0.1f), new Vector2(0f, 0.9f));
+        handleRect.sizeDelta = new Vector2(16f, 0f);
+        handle.GetComponent<Image>().color = Color.white;
+        Slider slider = sliderObject.GetComponent<Slider>();
+        slider.direction = Slider.Direction.LeftToRight;
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.fillRect = fill.GetComponent<RectTransform>();
+        slider.handleRect = handleRect;
+        slider.targetGraphic = handle.GetComponent<Image>();
+        slider.onValueChanged.RemoveAllListeners();
+        slider.onValueChanged.AddListener(onChanged);
+        return slider;
     }
 
     private static RacingMenuButton CreateButton(Transform parent, string name, string caption, string english, string number,

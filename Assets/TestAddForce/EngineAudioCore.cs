@@ -15,6 +15,14 @@ public class EngineAudioCore : MonoBehaviour
     private int cylinders = 4;
     private float[] phases;
 
+    private void OnEnable() => AudioSettings.OnAudioConfigurationChanged += RefreshSampleRate;
+    private void OnDisable() => AudioSettings.OnAudioConfigurationChanged -= RefreshSampleRate;
+    private void RefreshSampleRate(bool deviceWasChanged)
+    {
+        samplingRate = AudioSettings.outputSampleRate;
+        GetComponent<AudioSource>()?.Play();
+    }
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -46,7 +54,7 @@ public class EngineAudioCore : MonoBehaviour
     // Update is called once per frame
     void OnAudioFilterRead(float[] data, int channels)
     {
-        if (samplingRate <= 0) return;
+        if (samplingRate <= 0 || phases == null) return;
 
         // targetFrequency を RPM として計算
         float currentRpm = Mathf.Max(100f, targetFrequency);
