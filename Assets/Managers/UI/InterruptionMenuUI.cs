@@ -115,6 +115,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
             () => toggleDirectionAction?.Invoke());
         directionStatus = CreateLabel(direction.transform, "DirectionStatus", string.Empty, new Vector2(0.78f, 0.35f), new Vector2(0.95f, 0.73f), 22f, FontRole.Japanese);
         direction.transform.Find("Label").GetComponent<RectTransform>().anchorMax = new Vector2(0.75f, 0.85f);
+        direction.GetComponent<PedalButtonFeedback>().CacheContent();
         optionsButton = CreateButton(card.transform, "Options", "設定", "AUDIO SETTINGS", "03", new Vector2(0.08f, 0.315f), new Vector2(0.92f, 0.425f),
             () => ShowOptions(true));
         CreateButton(card.transform, "Interrupt", "中断する", "LEAVE RACE", "04", new Vector2(0.08f, 0.175f), new Vector2(0.92f, 0.285f),
@@ -199,30 +200,15 @@ public sealed class InterruptionMenuUI : MonoBehaviour
     private static RacingMenuButton CreateButton(Transform parent, string name, string caption, string english, string number,
         Vector2 min, Vector2 max, UnityEngine.Events.UnityAction action, RacingPanelGraphic.SurfaceStyle style = RacingPanelGraphic.SurfaceStyle.Secondary)
     {
-        GameObject buttonObject = GetOrCreate(name, parent, typeof(Image), typeof(RacingMenuButton));
-        Stretch(buttonObject.GetComponent<RectTransform>(), min, max);
-        RacingPanelGraphic surface = RacingUITheme.Surface(buttonObject.transform, style);
-        // Keep a transparent hit target on the button; decorative graphics never intercept input.
-        Image hitTarget = buttonObject.GetComponent<Image>();
-        hitTarget.enabled = true;
-        hitTarget.color = Color.clear;
-        hitTarget.raycastTarget = true;
-        RacingMenuButton button = buttonObject.GetComponent<RacingMenuButton>();
-        button.targetGraphic = hitTarget;
-        button.Configure(surface);
-        button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(action);
-        if (style != RacingPanelGraphic.SurfaceStyle.Primary)
+        bool danger=name=="Interrupt";
+        RacingIconGraphic.Icon icon=name=="Restart"?RacingIconGraphic.Icon.Retry:danger?RacingIconGraphic.Icon.Power:name.Contains("Back")?RacingIconGraphic.Icon.Back:RacingIconGraphic.Icon.Gear;
+        RacingMenuButton button=NeonUI.Button(parent,name,caption,english,icon,min,max,style==RacingPanelGraphic.SurfaceStyle.Primary,action);
+        if(danger)
         {
-            TMP_Text index = CreateLabel(buttonObject.transform, "Index", number, new Vector2(0.04f, 0.27f), new Vector2(0.14f, 0.8f), 20f, FontRole.English);
-            index.color = RacingUITheme.Muted;
+            RacingPanelGraphic surface=button.transform.Find("ModernSurface").GetComponent<RacingPanelGraphic>();
+            surface.Configure(RacingPanelGraphic.SurfaceStyle.Danger,NeonUI.Red);button.Configure(surface);button.ConfigureHold(.65f,false);
         }
-        TMP_Text label = CreateLabel(buttonObject.transform, "Label", caption, new Vector2(0.18f, 0.4f), new Vector2(0.93f, 0.85f), 29f, FontRole.Japanese);
-        label.alignment = TextAlignmentOptions.Left;
-        TMP_Text detail = CreateLabel(buttonObject.transform, "Caption", english, new Vector2(0.18f, 0.18f), new Vector2(0.93f, 0.40f), 14f, FontRole.English);
-        detail.alignment = TextAlignmentOptions.Left;
-        detail.characterSpacing = 2f;
-        detail.color = RacingUITheme.Muted;
+        button.GetComponent<PedalButtonFeedback>().CacheContent();
         return button;
     }
 

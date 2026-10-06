@@ -19,6 +19,8 @@ public class UISpeed
     private float screenIntensity;
     private float entryFlash;
     private bool wasBoosting;
+    private NeonRingGraphic boostBadge;
+    private int displayedSpeed = int.MinValue, displayedBoostTenths = -1;
 
     [SerializeField] private float speedVelocity = 0f;
     [SerializeField] private float speedValue = 0f;
@@ -41,6 +43,7 @@ public class UISpeed
             return;
         }
 
+        boostBadge = rootTransform.parent.Find("BoostBadge")?.GetComponent<NeonRingGraphic>();
         gauge = rootTransform.GetComponentInChildren<RacingSpeedGauge>(true);
         Transform boostTransform = rootTransform.parent != null ? rootTransform.parent.Find("PadBoost") : null;
         boostRoot = boostTransform != null ? boostTransform.gameObject : null;
@@ -50,6 +53,7 @@ public class UISpeed
         boostGlow = boostTransform != null ? boostTransform.Find("Glow")?.GetComponent<Image>() : null;
         Transform screenTransform = rootTransform.parent != null ? rootTransform.parent.Find("BoostOverlay") : null;
         boostScreen = screenTransform != null ? screenTransform.GetComponent<RacingBoostGraphic>() : null;
+        displayedSpeed = int.MinValue; displayedBoostTenths = -1;
         screenIntensity = 0f;
         entryFlash = 0f;
         wasBoosting = false;
@@ -104,12 +108,17 @@ public class UISpeed
                 boostScreen.SetEffect(screenIntensity, entryFlash, phase);
         }
 
+        boostBadge?.SetAmount(active ? Mathf.Clamp01(remainingSeconds / durationSeconds) : 0f);
         if (boostRoot == null) return;
         boostRoot.SetActive(active);
         if (!active) return;
 
-        if (boostRemainingText != null)
-            boostRemainingText.text = (Mathf.Ceil(remainingSeconds * 10f) / 10f).ToString("F1") + "s";
+        int tenths = Mathf.CeilToInt(remainingSeconds * 10f);
+        if (boostRemainingText != null && tenths != displayedBoostTenths)
+        {
+            boostRemainingText.SetText("{0:0}.{1:0}秒", tenths / 10, tenths % 10);
+            displayedBoostTenths = tenths;
+        }
         if (boostFill != null)
         {
             Vector2 anchorMax = boostFill.anchorMax;
@@ -118,15 +127,18 @@ public class UISpeed
         }
         if (boostBar != null) boostBar.SetEffect(1f, entryFlash, phase);
         if (boostGlow != null)
-            boostGlow.color = new Color(1f, 0.24f, 0.04f,
-                0.13f + 0.09f * Mathf.Sin(phase * Mathf.PI * 2f) + 0.16f * entryFlash);
+            boostGlow.color = new Color(1f, .025f, .39f,
+                .10f + .04f * Mathf.Sin(phase * Mathf.PI * 2f) + .08f * entryFlash);
     }
 
     private void UpdateSpeedText(float speed)
     {
         if (speedText != null)
         {
-            speedText.text = Mathf.RoundToInt(speed).ToString();
+            int value = Mathf.RoundToInt(speed);
+            if (displayedSpeed == value) return;
+            speedText.SetText("{0}", value);
+            displayedSpeed = value;
         }
     }
 

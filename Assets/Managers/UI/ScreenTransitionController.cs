@@ -37,10 +37,11 @@ public sealed class ScreenTransitionController : MonoBehaviour
     private GameObject finishWarningRoot;
     private TMP_Text raceStatus;
     private TMP_Text raceStatusCaption;
+    private TMP_Text raceStatusEnglishCaption;
     private TMP_Text finishWarningText;
     private int lastWarningSecond = -1;
     private UIValuePulse raceStatusPulse;
-    private readonly Image[] countdownSignals = new Image[3];
+    private readonly NeonRingGraphic[] countdownSignals = new NeonRingGraphic[5];
     private Material titleLogoMaterial;
 
     public bool IsTransitioning { get; private set; }
@@ -187,7 +188,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         SetStatusVisibility(showCountdown: false, showWarning: true);
         if (finishWarningText != null)
         {
-            string value = $"{playerLabel}   {Mathf.Max(0f, secondsRemaining):0.0}s";
+            string value = $"{playerLabel}   あと {Mathf.Max(0f, secondsRemaining):0.0}秒";
             finishWarningText.text = value;
             int displayedSecond = Mathf.CeilToInt(secondsRemaining);
             if (displayedSecond <= 10 && displayedSecond != lastWarningSecond)
@@ -404,102 +405,20 @@ public sealed class ScreenTransitionController : MonoBehaviour
             return;
         }
 
-        Image background = title.GetComponent<Image>();
-        if (background == null)
-        {
-            background = title.gameObject.AddComponent<Image>();
-        }
-
-        background.color = Color.black;
-        background.raycastTarget = false;
-
-        InstantiateScreenBackground(title, "UI/TitleScreenBackground", "TitleBackground");
-        CreatePanel(title, "TitleBackgroundTint", Vector2.zero, Vector2.one,
-            new Color(0.012f, 0.024f, 0.040f, 0.68f));
-
-        GameObject topLine = CreatePanel(title, "TopLine", new Vector2(0.025f, 0.92f), new Vector2(0.19f, 0.924f),
-            new Color(0.15f, 0.85f, 1f, 0.9f));
-        topLine.GetComponent<Image>().raycastTarget = false;
-
-        TMP_Text circuitLabel = CreateLabel(
-            title, "CircuitLabel", "TSUKUKOMA CIRCUIT   /   RACING",
-            new Vector2(0.025f, 0.925f), new Vector2(0.48f, 0.975f), 22f,
-            new Color(0.73f, 0.82f, 0.9f, 1f));
-        circuitLabel.alignment = TextAlignmentOptions.Left;
-        circuitLabel.characterSpacing = 2.5f;
-        TMP_Text playerBadge = CreateLabel(title, "PlayerBadge", $"PLAYER 0{displayPlayerIndex + 1}   /   LOCAL VERSUS",
-            new Vector2(0.65f, 0.925f), new Vector2(0.975f, 0.975f), 19f, RacingUITheme.Cyan);
-        playerBadge.alignment = TextAlignmentOptions.Right;
-        RacingUITheme.Rule(title, "HeaderRule", new Vector2(0.025f, 0.915f), new Vector2(0.975f, 0.916f), new Color(0.4f, 0.6f, 0.7f, 0.25f));
-
-        TMP_Text mainTitle = CreateLabel(
-            title,
-            "TitleText",
-            useArtworkLogo ? titleText : "CIRCUIT",
-            new Vector2(0.12f, 0.53f),
-            new Vector2(0.88f, 0.72f),
-            172f,
-            Color.white);
-        mainTitle.fontStyle = FontStyles.Bold | FontStyles.Italic;
-        mainTitle.characterSpacing = 5f;
-        if (!useArtworkLogo)
-        {
-            TMP_Text wordmark = CreateLabel(title, "Wordmark", "TSUKUKOMA", new Vector2(0.2f, 0.73f), new Vector2(0.8f, 0.80f), 44f, RacingUITheme.Cyan);
-            wordmark.characterSpacing = 14f;
-        }
-        Texture2D logoTexture = useArtworkLogo ? Resources.Load<Texture2D>("UI/TsukukomaCircuitLogo") : null;
-        Shader logoShader = useArtworkLogo ? Resources.Load<Shader>("UI/LogoWhiteKey") : null;
-        if (useArtworkLogo && logoTexture != null && logoShader != null)
-        {
-            mainTitle.gameObject.SetActive(false);
-            GameObject logoContainer = new GameObject("TitleLogo", typeof(RectTransform));
-            logoContainer.layer = title.gameObject.layer;
-            logoContainer.transform.SetParent(title, false);
-            RectTransform logoRect = logoContainer.GetComponent<RectTransform>();
-            logoRect.anchorMin = new Vector2(0.09f, 0.51f);
-            logoRect.anchorMax = new Vector2(0.91f, 0.80f);
-            logoRect.offsetMin = logoRect.offsetMax = Vector2.zero;
-            GameObject logoObject = new GameObject("Artwork", typeof(RectTransform), typeof(RawImage), typeof(AspectRatioFitter));
-            logoObject.layer = title.gameObject.layer;
-            logoObject.transform.SetParent(logoContainer.transform, false);
-            AspectRatioFitter aspect = logoObject.GetComponent<AspectRatioFitter>();
-            aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-            aspect.aspectRatio = logoTexture.width / (logoTexture.height * 0.42f);
-            RawImage logo = logoObject.GetComponent<RawImage>();
-            logo.texture = logoTexture;
-            logo.uvRect = new Rect(0f, 0.30f, 1f, 0.42f);
-            titleLogoMaterial = new Material(logoShader);
-            logo.material = titleLogoMaterial;
-            logo.raycastTarget = false;
-        }
-
-        TMP_Text subtitle = CreateLabel(
-            title, "TitleSubtitle", "SPEED  /  CONTROL  /  VICTORY",
-            new Vector2(0.25f, 0.465f), new Vector2(0.75f, 0.535f), 27f,
-            new Color(0.35f, 0.88f, 1f, 1f));
-        subtitle.characterSpacing = 5f;
-
-        titlePrompt = CreateLabel(
-            title,
-            "StartPrompt",
-            promptText,
-            new Vector2(0.24f, 0.405f),
-            new Vector2(0.76f, 0.475f),
-            25f,
-            new Color(0.82f, 0.87f, 0.92f, 1f));
-        titlePrompt.characterSpacing = 1f;
-        RacingUITheme.ApplyTypography(titlePrompt, FontRole.Japanese, 24f);
-
-        Color playerAccent = PlayerCarPaint.GetPlayerColor(displayPlayerIndex);
-        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(0.35f, 0.235f), new Vector2(0.65f, 0.35f),
-            playerAccent);
-
-        TMP_Text footer = CreateLabel(
-            title, "TitleFooter", "ハンドルで操作   /   ペダルを踏み込んで決定",
-            new Vector2(0.2f, 0.085f), new Vector2(0.8f, 0.145f), 19f,
-            new Color(0.46f, 0.55f, 0.64f, 1f));
-        footer.characterSpacing = 1.5f;
-        RacingUITheme.Rule(title, "FooterRule", new Vector2(0.35f, 0.16f), new Vector2(0.65f, 0.161f), new Color(0.4f, 0.6f, 0.7f, 0.3f));
+        Image background = title.GetComponent<Image>() ?? title.gameObject.AddComponent<Image>();
+        background.color = Color.black; background.raycastTarget = false;
+        NeonUI.Background(title, "TitleBackground", "UI/Neon/TitleBackground");
+        TMP_Text playerBadge = NeonUI.Text(title, "PlayerBadge", $"PLAYER 0{displayPlayerIndex + 1}  /  プレイヤー {displayPlayerIndex + 1}",
+            new Vector2(.69f,.90f), new Vector2(.97f,.955f), 21f, TextAlignmentOptions.Right, tint: NeonUI.Cyan);
+        foreach(Button legacy in title.GetComponentsInChildren<Button>(true)) legacy.gameObject.SetActive(false);
+        Transform oldSheet=title.Find("MenuSheet"); if(oldSheet!=null)oldSheet.gameObject.SetActive(false);
+        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(.678f,.41f), new Vector2(.970f,.56f), NeonUI.Pink);
+        titlePrompt = NeonUI.Text(title, "StartPrompt", promptText,
+            new Vector2(.66f,.31f), new Vector2(.985f,.385f), 18f, TextAlignmentOptions.Center);
+        RectTransform news = NeonUI.Panel(title, "News", new Vector2(.02f,.035f), new Vector2(.977f,.078f));
+        NeonUI.Text(news,"Tag","NEWS",new Vector2(.018f,0),new Vector2(.07f,1),19f,TextAlignmentOptions.Center);
+        NeonUI.Text(news,"Welcome","ようこそ、ツクコマ・サーキットへ！",new Vector2(.09f,0),new Vector2(.78f,1),18f);
+        NeonUI.Text(news,"Version","Ver. " + Application.version,new Vector2(.85f,0),new Vector2(.985f,1),17f,TextAlignmentOptions.Right);
     }
 
     private void InitializeFadeOverlay()
@@ -545,87 +464,60 @@ public sealed class ScreenTransitionController : MonoBehaviour
             return;
         }
 
-        countdownStatusRoot = CreatePanel(onPlay, "CountdownStatus",
-            new Vector2(0.37f, 0.49f), new Vector2(0.63f, 0.84f),
-            new Color(0.006f, 0.018f, 0.034f, 0.78f));
-        Outline countdownOutline = countdownStatusRoot.GetComponent<Outline>();
-        if (countdownOutline == null)
+        countdownStatusRoot = RacingUITheme.Rect(onPlay, "CountdownStatus", new Vector2(.37f,.39f),new Vector2(.63f,.77f)).gameObject;
+        RectTransform ring = RacingUITheme.Rect(countdownStatusRoot.transform,"NeonRing",Vector2.zero,Vector2.one);
+        NeonRingGraphic graphic = ring.GetComponent<NeonRingGraphic>() ?? ring.gameObject.AddComponent<NeonRingGraphic>();
+        graphic.display = NeonRingGraphic.Display.Countdown;
+        raceStatusCaption = NeonUI.Text(countdownStatusRoot.transform,"Caption","スタートまで",new Vector2(.15f,.13f),new Vector2(.85f,.21f),23f,TextAlignmentOptions.Center);
+        raceStatusEnglishCaption = NeonUI.Text(countdownStatusRoot.transform,"EnglishCaption","RACE START",new Vector2(.15f,.07f),new Vector2(.85f,.13f),13f,TextAlignmentOptions.Center);
+        raceStatus = NeonUI.Text(countdownStatusRoot.transform,"RaceStatus","",new Vector2(.08f,.23f),new Vector2(.92f,.85f),240f,TextAlignmentOptions.Center,true);
+        NeonUI.GlowText(raceStatus, NeonUI.Pink);
+        for(int i=0;i<countdownSignals.Length;i++)
         {
-            countdownOutline = countdownStatusRoot.AddComponent<Outline>();
+            float left=-.02f+i*.21f;
+            RectTransform lamp = NeonUI.Panel(countdownStatusRoot.transform,"Lamp"+i,new Vector2(left,1.06f),new Vector2(left+.18f,1.29f));
+            RectTransform dot=RacingUITheme.Rect(lamp,"Signal",new Vector2(.06f,.05f),new Vector2(.94f,.95f));
+            countdownSignals[i]=dot.GetComponent<NeonRingGraphic>() ?? dot.gameObject.AddComponent<NeonRingGraphic>();
+            countdownSignals[i].display=NeonRingGraphic.Display.Light;
         }
-        countdownOutline.effectColor = new Color(0.2f, 0.53f, 0.68f, 0.25f);
-        countdownOutline.effectDistance = new Vector2(1f, -1f);
-        RacingUITheme.Surface(countdownStatusRoot.transform);
-        CreatePanel(countdownStatusRoot.transform, "TopAccent", new Vector2(0.30f, 0.985f), new Vector2(0.70f, 1f), new Color(0.15f, 0.8f, 1f, 1f));
+        raceStatusPulse = raceStatus.GetComponent<UIValuePulse>() ?? raceStatus.gameObject.AddComponent<UIValuePulse>();
+        RectTransform courseCard = NeonUI.Panel(onPlay,"CountdownCourse",new Vector2(.02f,.855f),new Vector2(.335f,.975f));
+        RectTransform courseIcon = RacingUITheme.Rect(courseCard,"Outline",new Vector2(.02f,.09f),new Vector2(.26f,.91f));
+        NeonCourseOutlineGraphic courseOutline=courseIcon.GetComponent<NeonCourseOutlineGraphic>() ?? courseIcon.gameObject.AddComponent<NeonCourseOutlineGraphic>();
+        courseOutline.Configure(Gmanager.Control != null ? Gmanager.Control.course : FindFirstObjectByType<RaceCourse>());
+        NeonUI.Text(courseCard,"Name","つくこまサーキット",new Vector2(.29f,.45f),new Vector2(.96f,.91f),32f,italic:true);
+        NeonUI.Text(courseCard,"Caption","グランプリコース / GRAND PRIX",new Vector2(.29f,.12f),new Vector2(.96f,.46f),18f);
+        RectTransform countdownLap=NeonUI.Panel(onPlay,"CountdownLap",new Vector2(.80f,.855f),new Vector2(.98f,.975f));
+        NeonUI.Text(countdownLap,"Heading","LAP / 周",new Vector2(.10f,.68f),new Vector2(.88f,.93f),22f,italic:true);
+        NeonUI.Text(countdownLap,"Current","1",new Vector2(.36f,.05f),new Vector2(.65f,.77f),97f,italic:true,tint:NeonUI.Pink);
+        NeonUI.Text(countdownLap,"Total","/ " + (Gmanager.Control != null ? Gmanager.Control.GoalLap : 3),new Vector2(.67f,.08f),new Vector2(.93f,.64f),44f,italic:true);
 
-        raceStatusCaption = CreateLabel(
-            countdownStatusRoot.transform, "Caption", "RACE START",
-            new Vector2(0.08f, 0.79f), new Vector2(0.92f, 0.93f), 19f,
-            new Color(0.6f, 0.79f, 0.88f, 1f));
-        raceStatusCaption.characterSpacing = 5f;
-        raceStatus = CreateLabel(
-            countdownStatusRoot.transform, "RaceStatus", string.Empty,
-            new Vector2(0.05f, 0.19f), new Vector2(0.95f, 0.80f), 164f,
-            Color.white);
-        raceStatus.fontStyle = FontStyles.Bold | FontStyles.Italic;
-        TMP_FontAsset countdownFont = RacingUIFontCatalog.Get(FontRole.English);
-        if (countdownFont != null)
-        {
-            raceStatus.font = countdownFont;
-            raceStatusCaption.font = countdownFont;
-        }
-        for (int i = 0; i < countdownSignals.Length; i++)
-        {
-            float left = 0.24f + i * 0.18f;
-            countdownSignals[i] = CreatePanel(countdownStatusRoot.transform, $"Signal{i + 1}",
-                new Vector2(left, 0.12f), new Vector2(left + 0.15f, 0.14f), new Color(0.12f, 0.22f, 0.29f, 1f)).GetComponent<Image>();
-        }
-        raceStatusPulse = raceStatus.GetComponent<UIValuePulse>();
-        if (raceStatusPulse == null)
-        {
-            raceStatusPulse = raceStatus.gameObject.AddComponent<UIValuePulse>();
-        }
-        finishWarningRoot = CreatePanel(onPlay, "FinishWarningStatus",
-            new Vector2(0.31f, 0.78f), new Vector2(0.69f, 0.94f),
-            new Color(0.12f, 0.025f, 0.018f, 0.94f));
-        RacingUITheme.Surface(finishWarningRoot.transform);
-        GameObject warningAccent = CreatePanel(finishWarningRoot.transform, "WarningAccent",
-            new Vector2(0f, 0f), new Vector2(0.018f, 1f), new Color(1f, 0.24f, 0.12f, 1f));
-        warningAccent.GetComponent<Image>().raycastTarget = false;
-        TMP_Text warningCaption = CreateLabel(
-            finishWarningRoot.transform, "Caption", "FINAL CHANCE  /  TIME TO FINISH",
-            new Vector2(0.08f, 0.57f), new Vector2(0.92f, 0.9f), 21f,
-            new Color(1f, 0.45f, 0.25f, 1f));
-        warningCaption.characterSpacing = 5f;
-        finishWarningText = CreateLabel(
-            finishWarningRoot.transform, "FinishWarningText", string.Empty,
-            new Vector2(0.08f, 0.08f), new Vector2(0.92f, 0.62f), 45f,
-            Color.white);
-        finishWarningText.fontStyle = FontStyles.Bold;
+        finishWarningRoot = RacingHUDStyle.Plate(onPlay, "FinishWarningStatus",
+            new Vector2(.34f, .815f), new Vector2(.66f, .95f),
+            RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Amber).gameObject;
+        RacingHUDStyle.Heading(finishWarningRoot.transform, "もうすぐレース終了", "TIME TO FINISH", .06f, .54f, .94f, .91f, 24f);
+        finishWarningText = RacingHUDStyle.Label(finishWarningRoot.transform, "FinishWarningText", string.Empty,
+            .06f, .08f, .94f, .54f, 38f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
         if (finishWarningText.GetComponent<UIValuePulse>() == null)
-        {
             finishWarningText.gameObject.AddComponent<UIValuePulse>();
-        }
 
         SetStatusVisibility(showCountdown: false, showWarning: false);
     }
 
     private void BuildTitlePedalPanel(Transform title, int playerIndex, Vector2 anchorMin, Vector2 anchorMax, Color accent)
     {
-        GameObject panel = CreatePanel(title, $"Player{playerIndex + 1}Pedal", anchorMin, anchorMax,
-            new Color(0.018f, 0.035f, 0.06f, 0.91f));
-        TMP_Text instruction = CreateLabel(panel.transform, "Instruction", "スタート",
-            new Vector2(0.21f, 0.43f), new Vector2(0.89f, 0.86f), 36f, RacingUITheme.Text);
-        instruction.fontStyle = FontStyles.Bold;
-        TMP_Text caption = CreateLabel(panel.transform, "Caption", "START",
-            new Vector2(0.21f, 0.19f), new Vector2(0.89f, 0.41f), 17f, RacingUITheme.Muted);
-        caption.characterSpacing = 4f;
-
-        PedalButtonFeedback feedback = panel.GetComponent<PedalButtonFeedback>();
-        if (feedback == null) feedback = panel.AddComponent<PedalButtonFeedback>();
-        feedback.Configure(accent);
+        RacingMenuButton start = NeonUI.Button(title, $"Player{playerIndex + 1}Pedal", "はじめる", "START",
+            RacingIconGraphic.Icon.Flag, anchorMin, anchorMax, true, () => Gmanager.Control?.ConfirmTitleStart(playerIndex));
+        PedalButtonFeedback feedback = start.GetComponent<PedalButtonFeedback>() ?? start.gameObject.AddComponent<PedalButtonFeedback>();
+        feedback.Configure(NeonUI.Pink);
+        start.transform.Find("ModernSurface").gameObject.SetActive(false);
+        Image hit = start.GetComponent<Image>(); hit.enabled = true; hit.color = Color.clear; hit.raycastTarget = true;
+        start.Configure(start.transform.Find("ButtonSurface").GetComponent<RacingPanelGraphic>());
+        start.gameObject.SetActive(true);
+        start.ConfigureHold(.65f, true);
+        start.transform.Find("Label").GetComponent<TMP_Text>().fontSizeMax=46f;
+        start.transform.Find("Caption").GetComponent<TMP_Text>().fontSizeMax=18f;
         titleButtonFeedback[playerIndex] = feedback;
-
     }
 
     private void UpdateTitlePedal(int playerIndex, float value, bool ready, bool armed)
@@ -636,15 +528,15 @@ public sealed class ScreenTransitionController : MonoBehaviour
         }
 
         float amount = Mathf.Clamp01(value);
-        Color accent = PlayerCarPaint.GetPlayerColor(playerIndex);
-        Color readyColor = new Color(0.2f, 1f, 0.58f, 1f);
+        Color accent = NeonUI.Pink;
+        Color readyColor = NeonUI.Pink;
         titleButtonFeedback[playerIndex].SetState(armed, amount, ready ? readyColor : accent);
         titleButtonFeedback[playerIndex].SetConfirmed(ready);
         if (titlePrompt != null)
         {
             titlePrompt.text = !armed
                 ? "ペダルを離して準備してください"
-                : ready ? "準備完了  /  相手の準備を待っています" : "ペダルを踏み込んでスタート";
+                : ready ? "準備完了  /  相手の準備を待っています" : "長押しでスタート / ペダルを踏み込む";
         }
     }
 
@@ -658,13 +550,14 @@ public sealed class ScreenTransitionController : MonoBehaviour
         raceStatus.text = value;
         bool go = value == "GO!";
         int.TryParse(value, out int seconds);
-        Color accent = go ? new Color(0.25f, 0.9f, 1f, 1f) : new Color(0.18f, 0.75f, 1f, 1f);
+        Color accent = go ? NeonUI.Cyan : NeonUI.Pink;
         for (int i = 0; i < countdownSignals.Length; i++)
             if (countdownSignals[i] != null)
-                countdownSignals[i].color = go || i < Mathf.Clamp(4 - seconds, 0, 3) ? accent : new Color(0.12f, 0.22f, 0.29f, 1f);
+                countdownSignals[i].color = accent;
         if (raceStatusCaption != null)
         {
-            raceStatusCaption.text = caption;
+            raceStatusCaption.text = go ? "スタート!" : "スタートまで";
+            raceStatusEnglishCaption.text = caption;
         }
         if (changed)
         {
@@ -681,6 +574,13 @@ public sealed class ScreenTransitionController : MonoBehaviour
     {
         countdownStatusRoot?.SetActive(showCountdown);
         finishWarningRoot?.SetActive(showWarning);
+        if(onPlayRoot != null)
+        {
+            foreach(string node in new[]{"ModernHUD","MiniMap"})
+                onPlayRoot.transform.Find(node)?.gameObject.SetActive(!showCountdown);
+            onPlayRoot.transform.Find("CountdownCourse")?.gameObject.SetActive(showCountdown);
+            onPlayRoot.transform.Find("CountdownLap")?.gameObject.SetActive(showCountdown);
+        }
     }
 
     private void SetFadeInputBlocking(bool blocksInput)

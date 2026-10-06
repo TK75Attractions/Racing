@@ -114,6 +114,14 @@ public class Gmanager : MonoBehaviour
         return displayRigs[index]?.BackImageCamera ?? displayRigs[index]?.MainCamera;
     }
 
+    public Transform GetPlayerCarTransform(int index) => index >= 0 && index < PlayerCount ? players[index]?.car?.transform : null;
+    public int GetPlayerRacePosition(int index) => index >= 0 && index < PlayerCount ? GetRacePosition(index) : 0;
+    public float GetPlayerProgressGap(int index)
+    {
+        if (index < 0 || index >= PlayerCount || lapManager == null || players[index]?.rigidbody == null || players[1-index]?.rigidbody == null) return 0f;
+        return lapManager.GetRaceProgressDistance(players[index].rigidbody) - lapManager.GetRaceProgressDistance(players[1-index].rigidbody);
+    }
+
     public RaceCourse course;
     public Transform test;
     public float time = 0f;
@@ -360,6 +368,16 @@ public class Gmanager : MonoBehaviour
 
         lapManager.DebugAdvanceLap(playerRigidbody, finish);
         UpdateOnPlayUI();
+    }
+
+    public void ConfirmTitleStart(int playerIndex)
+    {
+        if (state != State.Title || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount) return;
+        players[playerIndex].isReady = true;
+        titleStartArmed = true;
+        SetTitlePrompt(GetReadyPrompt());
+        foreach (PlayerRuntime participant in players) if (participant == null || !participant.isReady) return;
+        StartGame();
     }
 
     public void StartGame()
@@ -1004,6 +1022,7 @@ public class Gmanager : MonoBehaviour
 
     private void UpdateOnPlayUI()
     {
+        float progressGap = GetPlayerProgressGap(0);
         for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
         {
             PlayerRuntime displayOwner = players[playerIndex];
@@ -1022,9 +1041,12 @@ public class Gmanager : MonoBehaviour
             float totalSeconds = lapData != null ? lapData.totalRaceTime + lapData.currentLapTime : time;
             float speedValue = player.rigidbody.linearVelocity.magnitude * speedUnitMultiplier;
             DebugMover mover = player.mover;
-            ui.UpdateUI(GetRacePosition(viewedPlayerIndex), lapValue, totalSeconds, lapSeconds, speedValue,
+            int ownerPosition = GetRacePosition(playerIndex, playerIndex == 0 ? progressGap : -progressGap);
+            int viewedPosition = viewedPlayerIndex == playerIndex ? ownerPosition
+                : GetRacePosition(viewedPlayerIndex, viewedPlayerIndex == 0 ? progressGap : -progressGap);
+            ui.UpdateUI(viewedPosition, lapValue, totalSeconds, lapSeconds, speedValue,
                 mover != null ? mover.AccelerationPadBoostTimeRemaining : 0f,
-                mover != null ? mover.AccelerationPadBoostDuration : 0f);
+                mover != null ? mover.AccelerationPadBoostDuration : 0f, ownerPosition, playerIndex == 0 ? progressGap : -progressGap);
         }
     }
 
@@ -1047,7 +1069,7 @@ public class Gmanager : MonoBehaviour
         return Mathf.Max(1, lapValue);
     }
 
-    private int GetRacePosition(int playerIndex)
+    private int GetRacePosition(int playerIndex, float? knownProgressDelta = null)
     {
         PlayerRuntime current = players[playerIndex];
         PlayerRuntime other = players[1 - playerIndex];
@@ -1057,9 +1079,8 @@ public class Gmanager : MonoBehaviour
         LapManager.CarTimeData otherData = lapManager?.GetCarData(other?.rigidbody);
         if (currentData == null || otherData == null) return playerIndex == 0 ? playerPosition : 2;
 
-        float currentProgress = lapManager.GetRaceProgressDistance(current.rigidbody);
-        float otherProgress = lapManager.GetRaceProgressDistance(other.rigidbody);
-        float progressDelta = currentProgress - otherProgress;
+        float progressDelta = knownProgressDelta ?? (lapManager.GetRaceProgressDistance(current.rigidbody)
+            - lapManager.GetRaceProgressDistance(other.rigidbody));
         int position;
 
         if (Mathf.Abs(progressDelta) <= Mathf.Max(0f, racePositionTieDistance))
@@ -1155,6 +1176,14 @@ public class Gmanager : MonoBehaviour
         foreach (T behaviour in target.GetComponentsInChildren<T>(true)) behaviour.enabled = isEnabled;
     }
 
+    public void SelectResultOption(int playerIndex, int option)
+    {
+        if(option < 0 || option > 1 || state != State.Result || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount || players[playerIndex].returnedToTitle) return;
+        resultUIManagers[playerIndex]?.PlayConfirm(option);
+        if(option == 0) { RetryGame(); return; }
+        ReturnPlayerToTitle(playerIndex);
+    }
+
     private void UpdateResultReturnInput(float dt)
     {
         if (resultReturnInputDelayTimer < resultReturnInputDelaySeconds)
@@ -1169,7 +1198,7 @@ public class Gmanager : MonoBehaviour
             DriveInputState input = IManager.GetInputState(index);
             if (!player.resultSteeringLatch && Mathf.Abs(input.steering) >= resultSteeringThreshold)
             {
-                player.resultSelection = input.steering > 0f ? 1 : 0;
+                player.resultSelection = 1 - player.resultSelection;
                 player.resultSteeringLatch = true;
                 player.resultConfirmTimer = 0f;
             }
@@ -1177,17 +1206,12 @@ public class Gmanager : MonoBehaviour
             {
                 player.resultSteeringLatch = false;
             }
-            resultUIManagers[index]?.SetMenuState(player.resultSelection, input.pedal);
             player.resultConfirmTimer = input.pedal > resultReturnPedalThreshold ? player.resultConfirmTimer + dt : 0f;
+            resultUIManagers[index]?.SetMenuState(player.resultSelection, Mathf.Clamp01(player.resultConfirmTimer / Mathf.Max(.01f,resultReturnHoldSeconds)));
             if (player.resultConfirmTimer < Mathf.Max(0.01f, resultReturnHoldSeconds)) continue;
             player.resultConfirmTimer = 0f;
-            resultUIManagers[index]?.PlayConfirm(player.resultSelection);
-            if (player.resultSelection == 0)
-            {
-                RetryGame();
-                return;
-            }
-            ReturnPlayerToTitle(index);
+            SelectResultOption(index, player.resultSelection);
+            if (player.resultSelection == 0) return;
         }
     }
 
@@ -1303,8 +1327,9 @@ public class Gmanager : MonoBehaviour
 
     private void UpdateTitlePedalUI()
     {
-        float playerOne = IManager.GetInputState(0).pedal;
-        float playerTwo = IManager.GetInputState(1).pedal;
+        float duration=Mathf.Max(.01f,titleStartHoldSeconds);
+        float playerOne=players[0]!=null ? (players[0].isReady?1f:Mathf.Clamp01(players[0].readyHoldTimer/duration)):0f;
+        float playerTwo=players[1]!=null ? (players[1].isReady?1f:Mathf.Clamp01(players[1].readyHoldTimer/duration)):0f;
         bool playerOneReady = players[0] != null && players[0].isReady;
         bool playerTwoReady = players[1] != null && players[1].isReady;
         foreach (ScreenTransitionController transition in screenTransitions)

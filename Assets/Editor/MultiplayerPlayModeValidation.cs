@@ -4,6 +4,8 @@ using TMPro;
 using Unity.Cinemachine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using UnityEngine;
 
 /// <summary>
@@ -13,14 +15,19 @@ using UnityEngine;
 public static class MultiplayerPlayModeValidation
 {
     private const string SessionKey = "Racing.MultiplayerValidation.Active";
-    private const double TimeoutSeconds = 30d;
+    private const double TimeoutSeconds = 45d;
 
     private static int stage;
+    private static int reportedStage=-1;
     private static int frameCount;
     private static double testStartTime;
     private static double stageStartTime;
     private static Gmanager manager;
     private static MethodInfo finishMethod;
+    private static GameObject buttonFixture;
+    private static RacingMenuButton holdButton;
+    private static PointerEventData holdPointer;
+    private static int holdClicks;
 
     public static void RunBatch()
     {
@@ -78,9 +85,10 @@ public static class MultiplayerPlayModeValidation
         try
         {
             frameCount++;
+            if(reportedStage!=stage){reportedStage=stage;Debug.Log("MULTIPLAYER_VALIDATION_STAGE: "+stage+" / "+manager?.state);}
             if (EditorApplication.timeSinceStartup - testStartTime > TimeoutSeconds)
             {
-                Fail("Validation timed out.");
+                Fail("Validation timed out at stage " + stage + " / " + manager?.state + " / transition " + AnyTransitionActive());
                 return;
             }
 
@@ -88,8 +96,32 @@ public static class MultiplayerPlayModeValidation
             {
                 case 0 when frameCount > 5:
                     ValidateDisplayAndTitle();
-                    manager.StartGame();
-                    stage = 1;
+                    BuildHoldButtonFixture();
+                    holdButton.OnPointerEnter(holdPointer);holdButton.OnPointerDown(holdPointer);
+                    stageStartTime=EditorApplication.timeSinceStartup;stage=100;
+                    break;
+
+                case 100 when EditorApplication.timeSinceStartup-stageStartTime>.12d:
+                    holdButton.OnPointerUp(holdPointer);holdButton.OnPointerClick(holdPointer);
+                    Require(holdClicks==0,"A short hold must not commit.");
+                    stageStartTime=EditorApplication.timeSinceStartup;stage=101;
+                    break;
+                case 101 when EditorApplication.timeSinceStartup-stageStartTime>.2d:
+                    Require(holdClicks==0,"Cancelled holds must not commit later.");
+                    holdButton.OnPointerEnter(holdPointer);holdButton.OnPointerDown(holdPointer);
+                    stageStartTime=EditorApplication.timeSinceStartup;stage=102;
+                    break;
+                case 102 when EditorApplication.timeSinceStartup-stageStartTime>1.1d:
+                    Require(holdClicks==1 && holdButton.GetComponent<PedalButtonFeedback>().IsRetained,"Full hold must commit once and retain start selection.");
+                    holdButton.OnPointerUp(holdPointer);holdButton.OnPointerClick(holdPointer);
+                    holdButton.interactable=false;holdButton.OnPointerDown(holdPointer);
+                    stageStartTime=EditorApplication.timeSinceStartup;stage=103;
+                    break;
+                case 103 when EditorApplication.timeSinceStartup-stageStartTime>.5d:
+                    Require(holdClicks==1,"Release/disabled press must not commit again.");
+                    UnityEngine.Object.Destroy(buttonFixture);
+                    Debug.Log("BUTTON_HOLD_PLAYMODE_PASS: short hold cancels, full hold commits once, start retains after release, disabled input cannot commit.");
+                    manager.StartGame();stage=1;
                     break;
 
                 case 1 when manager.state == Gmanager.State.Countdown:
@@ -113,9 +145,30 @@ public static class MultiplayerPlayModeValidation
                     stage = 5;
                     break;
 
-                case 5 when manager.state == Gmanager.State.Result:
+                case 5 when manager.state == Gmanager.State.Result && !AnyTransitionActive():
                     ValidateSharedResult();
-                    Debug.Log("MULTIPLAYER_PLAYMODE_VALIDATION_PASS");
+                    manager.SelectResultOption(0,0);
+                    stage=6;
+                    break;
+                case 6 when manager.state == Gmanager.State.Countdown:
+                    ValidateSpawnAndCountdown();
+                    stage=7;
+                    break;
+                case 7 when manager.state == Gmanager.State.Game:
+                    manager.DebugPreviewResult();
+                    stage=8;
+                    break;
+                case 8 when manager.state == Gmanager.State.Result && !AnyTransitionActive():
+                    manager.SelectResultOption(1,1);
+                    stage=9;
+                    break;
+                case 9 when !AnyTransitionActive() && FindComponentIncludingInactive<ScreenTransitionController>("GameManagers/MainCanvas_P2")?.transform.Find("Title").gameObject.activeSelf == true:
+                    Require(manager.state == Gmanager.State.Result,"One player returning must preserve the other result.");
+                    manager.SelectResultOption(0,1);stage=10;
+                    break;
+                case 10 when manager.state == Gmanager.State.Title && !AnyTransitionActive():
+                    Require(FindComponentIncludingInactive<RacingMenuButton>("GameManagers/MainCanvas/Title/Player1Pedal")!=null,"Main-menu return failed.");
+                    Debug.Log("MULTIPLAYER_PLAYMODE_VALIDATION_PASS: race, spectator, shared result, retry and two main-menu returns.");
                     Finish(0);
                     break;
             }
@@ -124,6 +177,23 @@ public static class MultiplayerPlayModeValidation
         {
             Fail(exception.ToString());
         }
+    }
+
+    private static void BuildHoldButtonFixture()
+    {
+        buttonFixture=new GameObject("Hold button validation",typeof(RectTransform),typeof(Canvas),typeof(CanvasGroup));
+        buttonFixture.GetComponent<Canvas>().renderMode=RenderMode.ScreenSpaceOverlay;
+        buttonFixture.GetComponent<CanvasGroup>().alpha=0;
+        holdButton=NeonUI.Button(buttonFixture.transform,"Start","スタート","START",RacingIconGraphic.Icon.Flag,Vector2.zero,Vector2.one,true,
+            ()=>{holdClicks++;holdButton.GetComponent<PedalButtonFeedback>().SetConfirmed(true);});
+        holdButton.ConfigureHold(.8f,true);holdPointer=new PointerEventData(EventSystem.current){button=PointerEventData.InputButton.Left};
+    }
+
+    private static bool AnyTransitionActive()
+    {
+        foreach(ScreenTransitionController transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
+            if(transition.IsTransitioning)return true;
+        return false;
     }
 
     private static void ValidateDisplayAndTitle()
@@ -147,10 +217,10 @@ public static class MultiplayerPlayModeValidation
         Require(p2VirtualCamera != null && p2VirtualCamera.OutputChannel == OutputChannels.Channel01,
             "P2 Cinemachine output channel is incorrect.");
 
-        TMP_Text p1Title = FindComponent<TMP_Text>("GameManagers/MainCanvas/Title/StartPrompt");
-        TMP_Text p2Title = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Title/StartPrompt");
-        Require(p1Title != null && p2Title != null && p1Title.text.Contains("P1") && p2Title.text.Contains("P2"),
-            "Title prompts are not personalized for each display.");
+        TMP_Text p1Title = FindComponent<TMP_Text>("GameManagers/MainCanvas/Title/PlayerBadge");
+        TMP_Text p2Title = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Title/PlayerBadge");
+        Require(p1Title != null && p2Title != null && p1Title.text.Contains("PLAYER 01") && p2Title.text.Contains("PLAYER 02"),
+            "Title player badges are not personalized for each display.");
         Require(FindComponentIncludingInactive<PedalButtonSurface>("GameManagers/MainCanvas/Title/Player1Pedal/ButtonSurface") != null &&
                 FindComponentIncludingInactive<PedalButtonSurface>("GameManagers/MainCanvas_P2/Title/Player2Pedal/ButtonSurface") != null &&
                 FindComponentIncludingInactive<PedalButtonSurface>("GameManagers/MainCanvas/Title/Player2Pedal/ButtonSurface") == null &&
@@ -183,6 +253,14 @@ public static class MultiplayerPlayModeValidation
 
     private static void ValidateFirstFinish()
     {
+        foreach (string canvasName in new[] { "MainCanvas", "MainCanvas_P2" })
+        {
+            TMP_Text positionHeading = FindComponent<TMP_Text>($"GameManagers/{canvasName}/OnPlay/ModernHUD/Position/Heading");
+            TMP_Text speedHeading = FindComponent<TMP_Text>($"GameManagers/{canvasName}/OnPlay/ModernHUD/Speed/Heading");
+            Require(positionHeading != null && positionHeading.text == "順位" &&
+                    speedHeading != null && speedHeading.text == "スピード",
+                "The bilingual HUD was not initialized for both players.");
+        }
         GameObject p1Car = GameObject.Find("Player1_Car");
         TireMarkRenderer marks = TireMarkRenderer.GetOrCreate();
         marks.AddSegment(Vector3.zero, Vector3.right, 1f, Vector3.forward, Vector3.one, 1f);
@@ -220,7 +298,7 @@ public static class MultiplayerPlayModeValidation
             "GameManagers/MainCanvas/SpectatorOverlay/PlayerPlate/PlayerLabel");
         CinemachineCamera p1Camera = FindComponentIncludingInactive<CinemachineCamera>("GameManagers/VCamera");
         CinemachineCamera p2Camera = FindComponentIncludingInactive<CinemachineCamera>("GameManagers/VCamera_P2");
-        Require(spectatorLabel != null && spectatorLabel.text.Contains("P2"),
+        Require(spectatorLabel != null && spectatorLabel.text == "プレイヤー 2 を観戦中",
             "The finished player's display does not identify the watched player.");
         Require(p1Camera != null && p2Camera != null && p1Camera.Follow == p2Camera.Follow,
             "The finished player's camera is not following the unfinished player.");

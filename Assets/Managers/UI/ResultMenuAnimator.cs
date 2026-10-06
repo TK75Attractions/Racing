@@ -13,7 +13,8 @@ public sealed class ResultMenuAnimator : MonoBehaviour
         {
             feedback[index] = cards[index].GetComponent<PedalButtonFeedback>();
             if (feedback[index] == null) feedback[index] = cards[index].gameObject.AddComponent<PedalButtonFeedback>();
-            feedback[index].Configure(Accent, index == 0 ? RacingPanelGraphic.SurfaceStyle.Primary : RacingPanelGraphic.SurfaceStyle.Secondary);
+            feedback[index].Configure(index == 0 ? NeonUI.Pink : Accent, index == 0 ? RacingPanelGraphic.SurfaceStyle.Primary : RacingPanelGraphic.SurfaceStyle.Secondary);
+            feedback[index].EnableGauge(index == 0);
         }
         SetState(0, 0f);
     }
@@ -31,6 +32,8 @@ public sealed class ResultMenuAnimator : MonoBehaviour
 
     public void PlayConfirm(int index)
     {
-        if (feedback != null && index >= 0 && index < feedback.Length) feedback[index].PlayConfirm();
+        if (feedback == null || index < 0 || index >= feedback.Length) return;
+        if(index == 0) feedback[index].SetConfirmed(true);
+        else feedback[index].PlayConfirm();
     }
 }
