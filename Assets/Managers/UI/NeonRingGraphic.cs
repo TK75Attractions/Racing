@@ -11,13 +11,22 @@ public sealed class NeonRingGraphic : MaskableGraphic
     private VertexHelper mesh;
     private Vector2 center;
     private float radius, aa;
+    private RacingBoostArcGraphic progressArc;
     protected override void OnEnable() { base.OnEnable(); raycastTarget = false; }
+    public void BindProgress(RacingBoostArcGraphic arc)
+    {
+        bool changed = progressArc != arc;
+        progressArc = arc;
+        if (progressArc != null) progressArc.SetAmount(amount);
+        if (changed) SetVerticesDirty();
+    }
     public void SetAmount(float value)
     {
         float next = Mathf.Clamp01(value);
         if (Mathf.Approximately(amount, next)) return;
         amount = next;
-        SetVerticesDirty();
+        if (progressArc != null) progressArc.SetAmount(next);
+        else SetVerticesDirty();
     }
     protected override void OnPopulateMesh(VertexHelper vh)
     {
@@ -47,7 +56,7 @@ public sealed class NeonRingGraphic : MaskableGraphic
         Arc(radius*.84f,0,360,1f,new Color(.49f,.38f,.94f,.45f));
         for(int i=0;i<120;i++)
         {float a=i*3f;Color c=i<60?NeonUI.Pink:NeonUI.Cyan;c.a=.46f;Line(Point(radius*.83f,a),Point(radius*.86f,a),1f,c);}
-        if(display==Display.Boost)Arc(radius*.91f,-90,-90+360*Mathf.Clamp01(amount),9f,NeonUI.Pink);
+        if(display==Display.Boost && progressArc==null)Arc(radius*.91f,-90,-90+360*Mathf.Clamp01(amount),9f,NeonUI.Pink);
     }
     private Vector2 Point(float r,float degrees) {float a=degrees*Mathf.Deg2Rad;return center+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*r;}
     private void Line(Vector2 a,Vector2 b,float width,Color c)=>RacingPanelGraphic.Line(mesh,a,b,width,c,aa);

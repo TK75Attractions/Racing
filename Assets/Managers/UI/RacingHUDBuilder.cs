@@ -27,6 +27,7 @@ public static class RacingHUDBuilder
         RacingHUDStyle.Label(lap,"LapUnit","周",.78f,.05f,.94f,.23f,14f,RacingHUDStyle.Muted);
 
         RectTransform time=RacingHUDStyle.Plate(root,"Time",new Vector2(.02f,.715f),new Vector2(.235f,.79f),RacingHUDPlateGraphic.PlateShape.Timer,NeonUI.Cyan);
+        IsolateCanvas(time);
         RacingHUDStyle.Label(time,"Heading","タイム",.06f,.52f,.32f,.94f,18f,Color.white,TextAlignmentOptions.Left);
         RacingHUDStyle.Label(time,"EnglishHeading","TIME",.06f,.16f,.25f,.58f,17f,NeonUI.Cyan);
         Number(time,"Total","00:00",.34f,.35f,.73f,.97f,40f,Color.white);
@@ -48,6 +49,7 @@ public static class RacingHUDBuilder
         RacingHUDStyle.Label(speed,"Heading","スピード",.29f,.51f,.72f,.64f,18f,RacingHUDStyle.Muted,TextAlignmentOptions.Center);
         RacingHUDStyle.Label(speed,"EnglishHeading","SPEED",.33f,.43f,.67f,.51f,12f,RacingHUDStyle.Muted,TextAlignmentOptions.Center);
         Number(speed,"Txt","0",.21f,.08f,.78f,.53f,96f,Color.white,TextAlignmentOptions.Center);
+        IsolateCanvas(speed.Find("Txt") as RectTransform);
         RacingHUDStyle.Label(speed,"Unit","km/h",.32f,.01f,.66f,.12f,22f,Color.white,TextAlignmentOptions.Center);
         for(int i=0;i<=5;i++)
         {
@@ -61,11 +63,17 @@ public static class RacingHUDBuilder
         RectTransform boostBadge=RacingUITheme.Rect(root,"BoostBadge",new Vector2(.93f,.13f),new Vector2(.986f,.275f));
         IsolateCanvas(boostBadge);
         NeonRingGraphic badge=boostBadge.GetComponent<NeonRingGraphic>() ?? boostBadge.gameObject.AddComponent<NeonRingGraphic>();badge.display=NeonRingGraphic.Display.Boost;badge.amount=0;
+        RectTransform progress=RacingUITheme.Rect(boostBadge,"Progress",Vector2.zero,Vector2.one);
+        progress.SetAsFirstSibling();
+        IsolateCanvas(progress);
+        RacingBoostArcGraphic arc=progress.GetComponent<RacingBoostArcGraphic>() ?? progress.gameObject.AddComponent<RacingBoostArcGraphic>();
+        badge.BindProgress(arc);
         NeonUI.Icon(boostBadge,"Bolt",RacingIconGraphic.Icon.Bolt,new Vector2(.33f,.52f),new Vector2(.67f,.79f));
         NeonUI.Text(boostBadge,"Name","BOOST",new Vector2(.1f,.33f),new Vector2(.9f,.51f),16f,TextAlignmentOptions.Center,true);
         NeonUI.Text(boostBadge,"Japanese","加速",new Vector2(.16f,.19f),new Vector2(.84f,.33f),14f,TextAlignmentOptions.Center);
 
         RectTransform boost=RacingHUDStyle.Plate(root,"PadBoost",new Vector2(.71f,.35f),new Vector2(.98f,.405f),RacingHUDPlateGraphic.PlateShape.Boost,NeonUI.Pink);
+        IsolateCanvas(boost);
         RacingHUDStyle.Label(boost,"Heading","加速中",.06f,.33f,.30f,.95f,21f,NeonUI.Pink,bold:true);
         RacingHUDStyle.Label(boost,"EnglishHeading","BOOST",.34f,.42f,.55f,.93f,14f,Color.white);
         RacingHUDStyle.Label(boost,"Remaining","3.0秒",.68f,.35f,.93f,.94f,22f,Color.white,TextAlignmentOptions.Right);
@@ -74,6 +82,7 @@ public static class RacingHUDBuilder
         RectTransform fill=RacingUITheme.Rect(boost,"Fill",new Vector2(.07f,.14f),new Vector2(.93f,.25f));
         RacingBoostGraphic bar=fill.GetComponent<RacingBoostGraphic>() ?? fill.gameObject.AddComponent<RacingBoostGraphic>();bar.Configure(RacingBoostGraphic.DisplayMode.Bar);boost.gameObject.SetActive(false);
         RectTransform telemetry=NeonUI.Panel(root,"Telemetry",new Vector2(.71f,.045f),new Vector2(.98f,.115f));
+        IsolateCanvas(telemetry);
         RacingTelemetryUI controls=telemetry.GetComponent<RacingTelemetryUI>() ?? telemetry.gameObject.AddComponent<RacingTelemetryUI>();controls.Configure(playerIndex);
         RacingHUDStyle.Label(root,"Player",$"プレイヤー {playerIndex+1} / PLAYER {playerIndex+1}",.022f,.003f,.32f,.029f,17f,Color.white);
         return root;

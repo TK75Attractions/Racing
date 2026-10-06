@@ -25,8 +25,16 @@ public sealed class RacingTelemetryUI : MonoBehaviour
     {
         if(Gmanager.Control?.IManager==null || pedal==null)return;
         DriveInputState input=Gmanager.Control.IManager.GetInputState(player);
-        pedal.anchorMax=new Vector2(Mathf.Lerp(.39f,.54f,Mathf.Clamp01(input.pedal)),.41f);
-        float x=Mathf.Lerp(.815f,.945f,(Mathf.Clamp(input.steering,-1,1)+1)*.5f);
-        steering.anchorMin=new Vector2(x,.17f);steering.anchorMax=new Vector2(x+.015f,.41f);
+        SetInput(input.pedal, input.steering);
+    }
+    public void SetInput(float pedalAmount, float steeringAmount)
+    {
+        if(pedal==null || steering==null)return;
+        Vector2 max=new Vector2(Mathf.Lerp(.39f,.54f,Mathf.Clamp01(pedalAmount)),.41f);
+        if(pedal.anchorMax!=max)pedal.anchorMax=max;
+        float x=Mathf.Lerp(.815f,.945f,(Mathf.Clamp(steeringAmount,-1,1)+1)*.5f);
+        Vector2 min=new Vector2(x,.17f); max=new Vector2(x+.015f,.41f);
+        if(steering.anchorMin!=min)steering.anchorMin=min;
+        if(steering.anchorMax!=max)steering.anchorMax=max;
     }
 }

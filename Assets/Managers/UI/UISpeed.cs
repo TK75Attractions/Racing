@@ -20,6 +20,7 @@ public class UISpeed
     private float entryFlash;
     private bool wasBoosting;
     private NeonRingGraphic boostBadge;
+    private int displayedSpeed = int.MinValue, displayedBoostTenths = -1;
 
     [SerializeField] private float speedVelocity = 0f;
     [SerializeField] private float speedValue = 0f;
@@ -52,6 +53,7 @@ public class UISpeed
         boostGlow = boostTransform != null ? boostTransform.Find("Glow")?.GetComponent<Image>() : null;
         Transform screenTransform = rootTransform.parent != null ? rootTransform.parent.Find("BoostOverlay") : null;
         boostScreen = screenTransform != null ? screenTransform.GetComponent<RacingBoostGraphic>() : null;
+        displayedSpeed = int.MinValue; displayedBoostTenths = -1;
         screenIntensity = 0f;
         entryFlash = 0f;
         wasBoosting = false;
@@ -111,8 +113,12 @@ public class UISpeed
         boostRoot.SetActive(active);
         if (!active) return;
 
-        if (boostRemainingText != null)
-            boostRemainingText.text = (Mathf.Ceil(remainingSeconds * 10f) / 10f).ToString("F1") + "秒";
+        int tenths = Mathf.CeilToInt(remainingSeconds * 10f);
+        if (boostRemainingText != null && tenths != displayedBoostTenths)
+        {
+            boostRemainingText.SetText("{0:0}.{1:0}秒", tenths / 10, tenths % 10);
+            displayedBoostTenths = tenths;
+        }
         if (boostFill != null)
         {
             Vector2 anchorMax = boostFill.anchorMax;
@@ -129,7 +135,10 @@ public class UISpeed
     {
         if (speedText != null)
         {
-            speedText.text = Mathf.RoundToInt(speed).ToString();
+            int value = Mathf.RoundToInt(speed);
+            if (displayedSpeed == value) return;
+            speedText.SetText("{0}", value);
+            displayedSpeed = value;
         }
     }
 

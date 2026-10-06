@@ -5,12 +5,14 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class RacingSpeedGauge : MaskableGraphic
 {
-    private float speed;
+    private const int Segments = 50;
+    private int litSegments;
     public void SetSpeed(float value)
     {
-        float next = Mathf.Clamp01(value / 180f);
-        if (Mathf.Abs(next - speed) < .001f) return;
-        speed = next;
+        // The original i + .12 threshold determines exactly which segments are visible.
+        int next = Mathf.Clamp(Mathf.CeilToInt(Mathf.Clamp01(value / 180f) * Segments - .12f), 0, Segments);
+        if (next == litSegments) return;
+        litSegments = next;
         SetVerticesDirty();
     }
     protected override void OnEnable() { base.OnEnable(); raycastTarget = false; }
@@ -21,12 +23,11 @@ public sealed class RacingSpeedGauge : MaskableGraphic
         float radius = Mathf.Min(r.width * .47f, r.height * .92f);
         Vector2 center = new Vector2(r.center.x, r.yMin + r.height * .035f);
         float aa = 1f / Mathf.Max(.1f, canvas != null ? canvas.scaleFactor : 1f);
-        const int segments = 50;
-        for (int i = 0; i < segments; i++)
+        for (int i = 0; i < Segments; i++)
         {
-            float t0 = (i + .12f) / segments, t1 = (i + .88f) / segments;
+            float t0 = (i + .12f) / Segments, t1 = (i + .88f) / Segments;
             Color tint = t0 > .60f ? NeonUI.Pink : NeonUI.Cyan;
-            tint.a = t0 < speed ? 1f : .46f;
+            tint.a = i < litSegments ? 1f : .46f;
             RacingPanelGraphic.Line(vh, center + Direction(t0) * radius, center + Direction(t1) * radius, 10f, tint, aa);
         }
         for (int i = 0; i < 90; i++)
