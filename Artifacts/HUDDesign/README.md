@@ -13,7 +13,7 @@
 | ブースト中 | [加速演出](hud-boost-1920x1080.png) |
 | 制限時間・観戦 | [終了予告](hud-finish-warning-1920x1080.png) / [観戦](hud-spectator-1920x1080.png) |
 
-プレビューは実際のUIビルダーと状態表示をUnityのCanvasで描画したものです。レース中・カウントダウンの背景には比較用の参考アートを使用しています。実プレイでは3Dコースと車をゲームカメラで描画し、ミラーはプレイヤーごとの後方カメラを表示します。
+プレビューは実際のUIビルダーと状態表示をUnityのCanvasで描画したものです。レース中・カウントダウンの背景には比較用の参考アートを使用しています。実プレイでは3Dコースと車をゲームカメラで描画します。後方ミラーは負荷削減のため削除しました。
 
 ## デザインと操作
 
@@ -34,7 +34,7 @@
 - `RacingPanelGraphic.cs` / `RacingIconGraphic.cs`: Canvas解像度に合わせて描画する形・枠・アイコン。
 - `ScreenTransitionController.cs` / `NeonTitleMenu.cs`: タイトル、カウントダウン、各メニュー。
 - `RacingHUDBuilder.cs`: レース中のレイアウトとデータの表示ノード。
-- `RacingLeaderboardUI.cs` / `RacingTelemetryUI.cs` / `RacingRearViewUI.cs`: 実データ・実入力・後方映像。
+- `RacingLeaderboardUI.cs` / `RacingTelemetryUI.cs`: 実データ・実入力。
 - `ResultUIManager.cs`: 実際のレース結果と4つの操作。
 - `RacingHUDFontBuilder.cs`: 表示する文字からフォントを再生成。既存アセットのGUIDを維持。
 - `RacingHUDDesignPreview.cs`: 実UIのプレビューを書き出し、文字欠け・はみ出しを検査。
@@ -51,6 +51,10 @@
 | `Assets/Resources/UI/Neon/MedalGold.png` / `MedalSilver.png` | リザルト参考画像 | 右の円形メダルと月桂樹だけを抽出・再現。金／銀の金属、細かい反射・凹凸・ピンク／シアンの縁光を維持。中央の数字、3RD帯、すべての文字・UI・背景を消し、数字を重ねるための空の面と実際の透過背景を作る。全体が収まる正方形。 |
 
 ボタン、パネル、ゲージ、アイコン、リング、コース形状、文字はUnity側の部品です。背景に焼き付いたボタンやレース情報は使用していません。
+
+## 負荷対策
+
+後方ミラーと専用カメラを削除し、未使用ブースト・不変のボタン・順位表の再生成を停止。順位表の二重更新を一本化し、速度計・ブースト・順位表を独立したCanvasにしてタイマー更新による再バッチを抑えています。[原因と検証記録](Performance.md)。
 
 ## 検証
 
