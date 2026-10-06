@@ -1172,8 +1172,8 @@ public class Gmanager : MonoBehaviour
             {
                 player.resultSteeringLatch = false;
             }
-            resultUIManagers[index]?.SetMenuState(player.resultSelection, input.pedal);
             player.resultConfirmTimer = input.pedal > resultReturnPedalThreshold ? player.resultConfirmTimer + dt : 0f;
+            resultUIManagers[index]?.SetMenuState(player.resultSelection, Mathf.Clamp01(player.resultConfirmTimer / Mathf.Max(.01f,resultReturnHoldSeconds)));
             if (player.resultConfirmTimer < Mathf.Max(0.01f, resultReturnHoldSeconds)) continue;
             player.resultConfirmTimer = 0f;
             SelectResultOption(index, player.resultSelection);
@@ -1297,8 +1297,9 @@ public class Gmanager : MonoBehaviour
 
     private void UpdateTitlePedalUI()
     {
-        float playerOne = IManager.GetInputState(0).pedal;
-        float playerTwo = IManager.GetInputState(1).pedal;
+        float duration=Mathf.Max(.01f,titleStartHoldSeconds);
+        float playerOne=players[0]!=null ? (players[0].isReady?1f:Mathf.Clamp01(players[0].readyHoldTimer/duration)):0f;
+        float playerTwo=players[1]!=null ? (players[1].isReady?1f:Mathf.Clamp01(players[1].readyHoldTimer/duration)):0f;
         bool playerOneReady = players[0] != null && players[0].isReady;
         bool playerTwoReady = players[1] != null && players[1].isReady;
         foreach (ScreenTransitionController transition in screenTransitions)

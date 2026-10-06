@@ -100,7 +100,9 @@ public class ResultUIManager
         {
             button.Find("ModernSurface").gameObject.SetActive(false);
             Image hit=button.GetComponent<Image>();hit.enabled=true;hit.color=Color.clear;hit.raycastTarget=true;
-            button.GetComponent<RacingMenuButton>().Configure(button.Find("ButtonSurface").GetComponent<RacingPanelGraphic>());
+            RacingMenuButton control=button.GetComponent<RacingMenuButton>();
+            control.Configure(button.Find("ButtonSurface").GetComponent<RacingPanelGraphic>());
+            control.ConfigureHold(1f,button.name=="Option1");
         }
         NeonUI.Text(parent,"MenuHint","ハンドルで選択 / ペダルで決定",new Vector2(.28f,.008f),new Vector2(.72f,.042f),17f,TextAlignmentOptions.Center);
     }

@@ -35,7 +35,11 @@ public sealed class RacingButtonGaugeGraphic : MaskableGraphic
                 Quad(vh,fill,Color.Lerp(edge,lit,.5f));
                 RacingPanelGraphic.Line(vh,new Vector2(fill.xMin,fill.yMax),new Vector2(fill.xMax,fill.yMax),1.5f,lit);
             }
-            Outline(vh,cell,.7f,RacingPanelGraphic.Alpha(edge,.42f));
+            Color divider=RacingPanelGraphic.Alpha(edge,.42f);
+            RacingPanelGraphic.Line(vh,new Vector2(cell.xMin,cell.yMin),new Vector2(cell.xMax,cell.yMin),.7f,divider);
+            RacingPanelGraphic.Line(vh,new Vector2(cell.xMax,cell.yMin),new Vector2(cell.xMax,cell.yMax),.7f,divider);
+            RacingPanelGraphic.Line(vh,new Vector2(cell.xMax,cell.yMax),new Vector2(cell.xMin,cell.yMax),.7f,divider);
+            RacingPanelGraphic.Line(vh,new Vector2(cell.xMin,cell.yMax),new Vector2(cell.xMin,cell.yMin),.7f,divider);
         }
     }
     private static void Quad(VertexHelper vh,Rect r,Color c)

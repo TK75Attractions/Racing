@@ -28,8 +28,9 @@ public sealed class NeonTitleMenu : MonoBehaviour
             if(i==3)
             {
                 RacingPanelGraphic surface=button.transform.Find("ModernSurface").GetComponent<RacingPanelGraphic>();
-                surface.Configure(RacingPanelGraphic.SurfaceStyle.Danger, NeonUI.Pink);
+                surface.Configure(RacingPanelGraphic.SurfaceStyle.Danger, NeonUI.Red);
                 button.Configure(surface);
+                button.ConfigureHold(.65f,false);
             }
         }
         modal = RacingUITheme.Rect(title,"MenuSheet",Vector2.zero,Vector2.one);

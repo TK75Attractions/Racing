@@ -513,6 +513,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         start.transform.Find("ModernSurface").gameObject.SetActive(false);
         Image hit = start.GetComponent<Image>(); hit.enabled = true; hit.color = Color.clear; hit.raycastTarget = true;
         start.Configure(start.transform.Find("ButtonSurface").GetComponent<RacingPanelGraphic>());
+        start.ConfigureHold(.65f, true);
         titleButtonFeedback[playerIndex] = feedback;
     }
 
@@ -532,7 +533,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         {
             titlePrompt.text = !armed
                 ? "ペダルを離して準備してください"
-                : ready ? "準備完了  /  相手の準備を待っています" : "ペダルを踏み込んでスタート";
+                : ready ? "準備完了  /  相手の準備を待っています" : "長押しでスタート / ペダルを踏み込む";
         }
     }
 
