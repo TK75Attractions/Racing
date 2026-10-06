@@ -69,14 +69,17 @@ public sealed class PedalButtonFeedback : MonoBehaviour
     {
         if (rect == null) return;
         float age = Time.unscaledTime - selectedAt;
-        float wobble = selected ? Mathf.Sin(age * 25f) * Mathf.Exp(-age * 6f) : 0f;
-        float bob = selected ? Mathf.Sin(age * 3.4f) * 1.2f : 0f;
+        float wobble = selected && age < .6f ? Mathf.Sin(age * 25f) * Mathf.Exp(-age * 6f) : 0f;
+        float bob = selected && age < .6f ? Mathf.Sin(age * 3.4f) * Mathf.Exp(-age * 8f) * 1.2f : 0f;
         float flashAge = Time.unscaledTime - confirmedAt;
         float flash = flashAge < 0.45f ? Mathf.Sin(Mathf.Clamp01(flashAge / 0.45f) * Mathf.PI) : 0f;
         float scale = (selected ? 1.012f : 1f) + flash * 0.035f;
-        rect.anchoredPosition = basePosition + Vector2.up * bob;
-        rect.localScale = Vector3.Scale(baseScale, new Vector3(scale + wobble * 0.06f, scale - wobble * 0.05f, 1f));
-        rect.localRotation = baseRotation * Quaternion.Euler(0f, 0f, wobble * 1.8f);
+        Vector2 position = basePosition + Vector2.up * bob;
+        Vector3 nextScale = Vector3.Scale(baseScale, new Vector3(scale + wobble * .06f, scale - wobble * .05f, 1f));
+        Quaternion rotation = baseRotation * Quaternion.Euler(0f, 0f, wobble * 1.8f);
+        if (rect.anchoredPosition != position) rect.anchoredPosition = position;
+        if (rect.localScale != nextScale) rect.localScale = nextScale;
+        if (rect.localRotation != rotation) rect.localRotation = rotation;
         displayedPedal = Mathf.MoveTowards(displayedPedal, pedalAmount, Time.unscaledDeltaTime * 6f);
         surface.SetVisual(displayedPedal, selected, flash, accent);
     }

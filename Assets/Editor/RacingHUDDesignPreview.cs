@@ -95,9 +95,6 @@ public static class RacingHUDDesignPreview
             UIPosition position = new UIPosition(); position.Init(hud.Find("Position")); position.SetPosition(player + 1);
             UILap lap = new UILap(); lap.Init(hud.Find("Lap")); lap.SetLap(2);
             UITime time = new UITime(); time.Init(hud.Find("Time")); time.SetTotalTime(72.345f); time.SetLapTime(19.876f);
-            RawImage mirrorFeed=hud.Find("RearView/Crop/Feed").GetComponent<RawImage>();
-            mirrorFeed.texture=Resources.Load<Texture2D>("UI/Neon/ResultBackground");mirrorFeed.color=Color.white;
-            mirrorFeed.uvRect=new Rect(0,.2f,1,.28f);
             UISpeed speed = new UISpeed(); speed.Init(hud.Find("Speed")); speed.UpdateSpeedMeter(state == "boost" ? 168f : 127f, 0f);
             Canvas.ForceUpdateCanvases();
             UIMiniMap map = new UIMiniMap(); map.Init(play, course, player);

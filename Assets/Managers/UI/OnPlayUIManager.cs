@@ -13,6 +13,7 @@ public class OnPlayUIManager
     [SerializeField] private UIMiniMap miniMap = new UIMiniMap();
 
     private bool initialized = false;
+    private RacingLeaderboardUI leaderboard;
 
     public UIPosition Position => position;
     public UILap Lap => lap;
@@ -36,6 +37,7 @@ public class OnPlayUIManager
         if (miniMap == null) miniMap = new UIMiniMap();
 
         Transform hud = RacingHUDBuilder.Build(parent, playerIndex, totalLaps);
+        leaderboard = hud.Find("Leaderboard")?.GetComponent<RacingLeaderboardUI>();
         position.Init(hud.Find("Position"));
         lap.Init(hud.Find("Lap"));
         time.Init(hud.Find("Time"));
@@ -46,10 +48,10 @@ public class OnPlayUIManager
     }
 
     public void UpdateUI(int positionValue, int lapValue, float totalSeconds, float lapSeconds, float speedValue,
-        float padBoostRemainingSeconds, float padBoostDurationSeconds)
+        float padBoostRemainingSeconds, float padBoostDurationSeconds, int leaderboardPosition = 0, float progressGap = 0f)
     {
         SetPosition(positionValue);
-        trans.Find("ModernHUD/Leaderboard")?.GetComponent<RacingLeaderboardUI>()?.SetPosition(positionValue, 0f);
+        leaderboard?.SetPosition(leaderboardPosition > 0 ? leaderboardPosition : positionValue, progressGap);
         SetLap(lapValue);
         SetTime(totalSeconds, lapSeconds);
         SetSpeed(speedValue);

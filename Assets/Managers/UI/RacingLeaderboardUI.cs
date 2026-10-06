@@ -5,11 +5,12 @@ using UnityEngine;
 public sealed class RacingLeaderboardUI : MonoBehaviour
 {
     private int owner;
+    private int displayedPosition = -1, displayedDistance = int.MinValue;
     private readonly RectTransform[] rows=new RectTransform[2];
     private readonly TMP_Text[] ranks=new TMP_Text[2],names=new TMP_Text[2],gaps=new TMP_Text[2];
     public void Configure(int player)
     {
-        owner=player;
+        owner=player; displayedPosition=-1; displayedDistance=int.MinValue;
         for(int i=0;i<2;i++)
         {
             rows[i]=NeonUI.Panel(transform,"Player"+i,Vector2.zero,Vector2.one,i==owner);
@@ -21,15 +22,22 @@ public sealed class RacingLeaderboardUI : MonoBehaviour
     }
     public void SetPosition(int position,float distance)
     {
+        position=Mathf.Clamp(position,1,2);
+        int metres=Mathf.RoundToInt(Mathf.Abs(distance));
+        bool rankChanged=displayedPosition!=position;
+        if(!rankChanged && displayedDistance==metres)return;
         for(int i=0;i<2;i++)
         {
-            int rank=i==owner?Mathf.Clamp(position,1,2):3-Mathf.Clamp(position,1,2);
-            float top=rank==1?.98f:.48f;
-            rows[i].anchorMin=new Vector2(0,top-.44f);rows[i].anchorMax=new Vector2(1,top);
-            ranks[i].text=rank.ToString();
-            gaps[i].text=i==owner?"YOU":(position==1?"+":"−")+Mathf.Abs(distance).ToString("0")+" m";
+            int rank=i==owner?position:3-position;
+            if(rankChanged)
+            {
+                float top=rank==1?.98f:.48f;
+                rows[i].anchorMin=new Vector2(0,top-.44f);rows[i].anchorMax=new Vector2(1,top);
+                ranks[i].text=rank==1?"1":"2";
+            }
+            if(i==owner) gaps[i].text="YOU";
+            else gaps[i].text=(position==1?"+":"−")+metres+" m";
         }
+        displayedPosition=position;displayedDistance=metres;
     }
-    private void LateUpdate()
-    { if(Gmanager.Control!=null)SetPosition(Gmanager.Control.GetPlayerRacePosition(owner),Gmanager.Control.GetPlayerProgressGap(owner)); }
 }

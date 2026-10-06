@@ -27,6 +27,9 @@ public static class ModernUIValidation
             {
                 RectTransform display = RacingUITheme.Rect(root.transform, $"Player{player}", Vector2.zero, Vector2.one);
                 Transform hud = RacingHUDBuilder.Build(display, player, 5);
+                Require(hud.Find("RearView") == null, "Rear-view UI/camera must not be created.");
+                foreach(string island in new[]{"BoostBadge","Speed","Leaderboard"})
+                    Require(hud.Find(island).GetComponent<Canvas>()!=null,"Heavy HUD geometry is not isolated from timer rebuilds: "+island);
                 foreach (Graphic graphic in hud.GetComponentsInChildren<Graphic>(true))
                     Require(graphic.GetComponent<CanvasRenderer>() != null, $"Missing renderer: {graphic.name}");
                 foreach (string panel in new[] { "Position", "Lap", "Time", "Speed", "PadBoost" })
@@ -53,9 +56,47 @@ public static class ModernUIValidation
             }
             ValidateOverlays(root.transform);
             ValidateNeonMenus(root.transform);
+            ValidateIdleGraphics(root.transform);
             Debug.Log("MODERN_UI_VALIDATION_PASS: fonts, backgrounds, both player HUDs, live timing, lap counts, speed, spectator and ESC actions.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+
+    private static void ValidateIdleGraphics(Transform parent)
+    {
+        RectTransform fixture = RacingUITheme.Rect(parent, "IdleGraphicsValidation", Vector2.zero, Vector2.one);
+        RectTransform ringRect = RacingUITheme.Rect(fixture, "Boost", Vector2.zero, Vector2.one);
+        NeonRingGraphic ring = ringRect.gameObject.AddComponent<NeonRingGraphic>();
+        ring.display = NeonRingGraphic.Display.Boost;
+        ring.SetAmount(0f);
+        int ringDirty = 0;
+        ring.RegisterDirtyVerticesCallback(() => ringDirty++);
+        for (int frame = 0; frame < 120; frame++) ring.SetAmount(0f);
+        Require(ringDirty == 0, "An inactive boost ring rebuilds every frame.");
+        ring.SetAmount(.5f);
+        Require(ringDirty == 1, "A changed boost value must update its mesh.");
+
+        RacingPanelGraphic button = fixture.gameObject.AddComponent<RacingPanelGraphic>();
+        button.Configure(RacingPanelGraphic.SurfaceStyle.Primary, RacingUITheme.Cyan);
+        int buttonDirty = 0;
+        button.RegisterDirtyVerticesCallback(() => buttonDirty++);
+        for (int frame = 0; frame < 120; frame++) button.SetState(0f, 0f, 0f, RacingUITheme.Cyan);
+        Require(buttonDirty == 0, "Primary button tint normalization causes idle rebuilds.");
+        button.SetState(1f, .5f, 0f, RacingUITheme.Cyan);
+        Require(buttonDirty == 1, "An active button must still animate.");
+
+        RectTransform boardRect = RacingUITheme.Rect(parent, "StableLeaderboardValidation", Vector2.zero, Vector2.one);
+        RacingLeaderboardUI board = boardRect.gameObject.AddComponent<RacingLeaderboardUI>();
+        board.Configure(0);
+        board.SetPosition(1, 4.2f);
+        TMP_Text gap = boardRect.Find("Player1/Gap").GetComponent<TMP_Text>();
+        int gapDirty = 0;
+        gap.RegisterDirtyVerticesCallback(() => gapDirty++);
+        for (int frame = 0; frame < 120; frame++) board.SetPosition(1, 4.4f);
+        Require(gapDirty == 0 && gap.text == "+4 m", "Unchanged visible standings are regenerated.");
+        board.SetPosition(2, 5f);
+        Require(gapDirty > 0 && gap.text == "−5 m", "Live standings must update rank and distance.");
+        Debug.Log("UI_IDLE_VALIDATION_PASS: 120 unchanged frames produce zero ring/button/standings rebuilds; changed values still update.");
     }
 
     private static void ValidateNeonMenus(Transform parent)

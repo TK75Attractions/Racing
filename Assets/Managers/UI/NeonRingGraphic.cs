@@ -12,7 +12,13 @@ public sealed class NeonRingGraphic : MaskableGraphic
     private Vector2 center;
     private float radius, aa;
     protected override void OnEnable() { base.OnEnable(); raycastTarget = false; }
-    public void SetAmount(float value) { amount = value; SetVerticesDirty(); }
+    public void SetAmount(float value)
+    {
+        float next = Mathf.Clamp01(value);
+        if (Mathf.Approximately(amount, next)) return;
+        amount = next;
+        SetVerticesDirty();
+    }
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear(); mesh = vh; Rect r = rectTransform.rect; center=r.center;

@@ -25,12 +25,13 @@ public class RacingPanelGraphic : MaskableGraphic
 
     public void SetState(float focus, float pedal, float flash, Color tint)
     {
+        Color nextAccent = style == SurfaceStyle.Primary ? NeonUI.Pink : tint;
         if (Mathf.Approximately(selection, focus) && Mathf.Approximately(pressure, pedal)
-            && Mathf.Approximately(confirmation, flash) && accent == tint) return;
+            && Mathf.Approximately(confirmation, flash) && accent == nextAccent) return;
         selection = Mathf.Clamp01(focus);
         pressure = Mathf.Clamp01(pedal);
         confirmation = Mathf.Clamp01(flash);
-        accent = style == SurfaceStyle.Primary ? NeonUI.Pink : tint;
+        accent = nextAccent;
         SetVerticesDirty();
     }
 

@@ -39,8 +39,10 @@ public static class RacingHUDBuilder
         RectTransform board=RacingUITheme.Rect(root,"Leaderboard",new Vector2(.02f,.594f),new Vector2(.235f,.702f));
         RacingLeaderboardUI leaderboard=board.GetComponent<RacingLeaderboardUI>() ?? board.gameObject.AddComponent<RacingLeaderboardUI>();
         leaderboard.Configure(playerIndex);
+        IsolateCanvas(board);
 
         RectTransform speed=RacingHUDStyle.Plate(root,"Speed",new Vector2(.71f,.13f),new Vector2(.925f,.335f),RacingHUDPlateGraphic.PlateShape.Speed,NeonUI.Cyan);
+        IsolateCanvas(speed);
         RectTransform gauge=RacingUITheme.Rect(speed,"Gauge",Vector2.zero,Vector2.one);
         if(gauge.GetComponent<RacingSpeedGauge>()==null)gauge.gameObject.AddComponent<RacingSpeedGauge>();
         RacingHUDStyle.Label(speed,"Heading","スピード",.29f,.51f,.72f,.64f,18f,RacingHUDStyle.Muted,TextAlignmentOptions.Center);
@@ -57,6 +59,7 @@ public static class RacingHUDBuilder
         NeonUI.Text(gear,"Value","D",Vector2.zero,Vector2.one,29f,TextAlignmentOptions.Center,true,NeonUI.Cyan);
 
         RectTransform boostBadge=RacingUITheme.Rect(root,"BoostBadge",new Vector2(.93f,.13f),new Vector2(.986f,.275f));
+        IsolateCanvas(boostBadge);
         NeonRingGraphic badge=boostBadge.GetComponent<NeonRingGraphic>() ?? boostBadge.gameObject.AddComponent<NeonRingGraphic>();badge.display=NeonRingGraphic.Display.Boost;badge.amount=0;
         NeonUI.Icon(boostBadge,"Bolt",RacingIconGraphic.Icon.Bolt,new Vector2(.33f,.52f),new Vector2(.67f,.79f));
         NeonUI.Text(boostBadge,"Name","BOOST",new Vector2(.1f,.33f),new Vector2(.9f,.51f),16f,TextAlignmentOptions.Center,true);
@@ -72,10 +75,15 @@ public static class RacingHUDBuilder
         RacingBoostGraphic bar=fill.GetComponent<RacingBoostGraphic>() ?? fill.gameObject.AddComponent<RacingBoostGraphic>();bar.Configure(RacingBoostGraphic.DisplayMode.Bar);boost.gameObject.SetActive(false);
         RectTransform telemetry=NeonUI.Panel(root,"Telemetry",new Vector2(.71f,.045f),new Vector2(.98f,.115f));
         RacingTelemetryUI controls=telemetry.GetComponent<RacingTelemetryUI>() ?? telemetry.gameObject.AddComponent<RacingTelemetryUI>();controls.Configure(playerIndex);
-        RectTransform rear=NeonUI.Panel(root,"RearView",new Vector2(.70f,.86f),new Vector2(.985f,.95f));
-        RacingRearViewUI mirror=rear.GetComponent<RacingRearViewUI>() ?? rear.gameObject.AddComponent<RacingRearViewUI>();mirror.Configure(playerIndex);
         RacingHUDStyle.Label(root,"Player",$"プレイヤー {playerIndex+1} / PLAYER {playerIndex+1}",.022f,.003f,.32f,.029f,17f,Color.white);
         return root;
+    }
+    private static void IsolateCanvas(RectTransform instrument)
+    {
+        // Timer text must not rebatch the thousands of static neon-ring vertices.
+        Canvas island = instrument.GetComponent<Canvas>();
+        if (island == null) island = instrument.gameObject.AddComponent<Canvas>();
+        island.overrideSorting = false;
     }
     private static void Title(Transform p,string japanese,string english)
     {

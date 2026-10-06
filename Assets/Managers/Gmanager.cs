@@ -987,6 +987,7 @@ public class Gmanager : MonoBehaviour
 
     private void UpdateOnPlayUI()
     {
+        float progressGap = GetPlayerProgressGap(0);
         for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
         {
             PlayerRuntime displayOwner = players[playerIndex];
@@ -1005,9 +1006,12 @@ public class Gmanager : MonoBehaviour
             float totalSeconds = lapData != null ? lapData.totalRaceTime + lapData.currentLapTime : time;
             float speedValue = player.rigidbody.linearVelocity.magnitude * speedUnitMultiplier;
             DebugMover mover = player.mover;
-            ui.UpdateUI(GetRacePosition(viewedPlayerIndex), lapValue, totalSeconds, lapSeconds, speedValue,
+            int ownerPosition = GetRacePosition(playerIndex, playerIndex == 0 ? progressGap : -progressGap);
+            int viewedPosition = viewedPlayerIndex == playerIndex ? ownerPosition
+                : GetRacePosition(viewedPlayerIndex, viewedPlayerIndex == 0 ? progressGap : -progressGap);
+            ui.UpdateUI(viewedPosition, lapValue, totalSeconds, lapSeconds, speedValue,
                 mover != null ? mover.AccelerationPadBoostTimeRemaining : 0f,
-                mover != null ? mover.AccelerationPadBoostDuration : 0f);
+                mover != null ? mover.AccelerationPadBoostDuration : 0f, ownerPosition, playerIndex == 0 ? progressGap : -progressGap);
         }
     }
 
@@ -1030,7 +1034,7 @@ public class Gmanager : MonoBehaviour
         return Mathf.Max(1, lapValue);
     }
 
-    private int GetRacePosition(int playerIndex)
+    private int GetRacePosition(int playerIndex, float? knownProgressDelta = null)
     {
         PlayerRuntime current = players[playerIndex];
         PlayerRuntime other = players[1 - playerIndex];
@@ -1040,9 +1044,8 @@ public class Gmanager : MonoBehaviour
         LapManager.CarTimeData otherData = lapManager?.GetCarData(other?.rigidbody);
         if (currentData == null || otherData == null) return playerIndex == 0 ? playerPosition : 2;
 
-        float currentProgress = lapManager.GetRaceProgressDistance(current.rigidbody);
-        float otherProgress = lapManager.GetRaceProgressDistance(other.rigidbody);
-        float progressDelta = currentProgress - otherProgress;
+        float progressDelta = knownProgressDelta ?? (lapManager.GetRaceProgressDistance(current.rigidbody)
+            - lapManager.GetRaceProgressDistance(other.rigidbody));
         int position;
 
         if (Mathf.Abs(progressDelta) <= Mathf.Max(0f, racePositionTieDistance))
