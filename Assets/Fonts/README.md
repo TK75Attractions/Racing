@@ -11,3 +11,5 @@ and Bold (700) masters, including Latin captions and instrument digits. The stat
 are derived from the existing M PLUS variable font; their license is in `MPLUS-HUD-OFL.txt`.
 The atlases are baked by `RacingHUDFontBuilder` and require no runtime character generation.
 Reproduction instructions are in `Documentation/PlayScreenDesign.md`.
+
+The driving tutorial uses a static M PLUS 1 ExtraBold (weight 800) master derived from the bundled variable font, stored at `Assets/Resources/UI/TutorialBold.ttf`. `DrivingTutorialTypography` builds its own SDF atlas and shadow materials, keeping the heavy reference typography separate from the other screens.
