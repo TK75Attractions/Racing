@@ -410,11 +410,11 @@ public sealed class ScreenTransitionController : MonoBehaviour
         NeonUI.Background(title, "TitleBackground", "UI/Neon/TitleBackground");
         TMP_Text playerBadge = NeonUI.Text(title, "PlayerBadge", $"PLAYER 0{displayPlayerIndex + 1}  /  プレイヤー {displayPlayerIndex + 1}",
             new Vector2(.69f,.90f), new Vector2(.97f,.955f), 21f, TextAlignmentOptions.Right, tint: NeonUI.Cyan);
-        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(.678f,.645f), new Vector2(.970f,.748f), NeonUI.Pink);
-        NeonTitleMenu menu = title.GetComponent<NeonTitleMenu>() ?? title.gameObject.AddComponent<NeonTitleMenu>();
-        menu.Build(title, displayPlayerIndex);
+        foreach(Button legacy in title.GetComponentsInChildren<Button>(true)) legacy.gameObject.SetActive(false);
+        Transform oldSheet=title.Find("MenuSheet"); if(oldSheet!=null)oldSheet.gameObject.SetActive(false);
+        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(.678f,.41f), new Vector2(.970f,.56f), NeonUI.Pink);
         titlePrompt = NeonUI.Text(title, "StartPrompt", promptText,
-            new Vector2(.678f,.12f), new Vector2(.970f,.174f), 18f, TextAlignmentOptions.Center);
+            new Vector2(.66f,.31f), new Vector2(.985f,.385f), 18f, TextAlignmentOptions.Center);
         RectTransform news = NeonUI.Panel(title, "News", new Vector2(.02f,.035f), new Vector2(.977f,.078f));
         NeonUI.Text(news,"Tag","NEWS",new Vector2(.018f,0),new Vector2(.07f,1),19f,TextAlignmentOptions.Center);
         NeonUI.Text(news,"Welcome","ようこそ、ツクコマ・サーキットへ！",new Vector2(.09f,0),new Vector2(.78f,1),18f);
@@ -506,14 +506,17 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     private void BuildTitlePedalPanel(Transform title, int playerIndex, Vector2 anchorMin, Vector2 anchorMax, Color accent)
     {
-        RacingMenuButton start = NeonUI.Button(title, $"Player{playerIndex + 1}Pedal", "ゲームをはじめる", "START RACE",
+        RacingMenuButton start = NeonUI.Button(title, $"Player{playerIndex + 1}Pedal", "はじめる", "START",
             RacingIconGraphic.Icon.Flag, anchorMin, anchorMax, true, () => Gmanager.Control?.ConfirmTitleStart(playerIndex));
         PedalButtonFeedback feedback = start.GetComponent<PedalButtonFeedback>() ?? start.gameObject.AddComponent<PedalButtonFeedback>();
         feedback.Configure(NeonUI.Pink);
         start.transform.Find("ModernSurface").gameObject.SetActive(false);
         Image hit = start.GetComponent<Image>(); hit.enabled = true; hit.color = Color.clear; hit.raycastTarget = true;
         start.Configure(start.transform.Find("ButtonSurface").GetComponent<RacingPanelGraphic>());
+        start.gameObject.SetActive(true);
         start.ConfigureHold(.65f, true);
+        start.transform.Find("Label").GetComponent<TMP_Text>().fontSizeMax=46f;
+        start.transform.Find("Caption").GetComponent<TMP_Text>().fontSizeMax=18f;
         titleButtonFeedback[playerIndex] = feedback;
     }
 

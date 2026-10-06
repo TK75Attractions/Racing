@@ -1143,11 +1143,10 @@ public class Gmanager : MonoBehaviour
 
     public void SelectResultOption(int playerIndex, int option)
     {
-        if(state != State.Result || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount || players[playerIndex].returnedToTitle) return;
+        if(option < 0 || option > 1 || state != State.Result || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount || players[playerIndex].returnedToTitle) return;
         resultUIManagers[playerIndex]?.PlayConfirm(option);
         if(option == 0) { RetryGame(); return; }
-        NeonTitleMenu.Page? page = option == 1 ? NeonTitleMenu.Page.Cars : option == 2 ? NeonTitleMenu.Page.Course : (NeonTitleMenu.Page?)null;
-        ReturnPlayerToTitle(playerIndex, page);
+        ReturnPlayerToTitle(playerIndex);
     }
 
     private void UpdateResultReturnInput(float dt)
@@ -1164,7 +1163,7 @@ public class Gmanager : MonoBehaviour
             DriveInputState input = IManager.GetInputState(index);
             if (!player.resultSteeringLatch && Mathf.Abs(input.steering) >= resultSteeringThreshold)
             {
-                player.resultSelection = (player.resultSelection + (input.steering > 0f ? 1 : 3)) % 4;
+                player.resultSelection = 1 - player.resultSelection;
                 player.resultSteeringLatch = true;
                 player.resultConfirmTimer = 0f;
             }
@@ -1193,7 +1192,7 @@ public class Gmanager : MonoBehaviour
         }
     }
 
-    private void ReturnPlayerToTitle(int index, NeonTitleMenu.Page? page = null)
+    private void ReturnPlayerToTitle(int index)
     {
         PlayerRuntime player = players[index];
         Action covered = () =>
@@ -1207,8 +1206,6 @@ public class Gmanager : MonoBehaviour
         };
         Action completed = () =>
         {
-            if (page.HasValue)
-                player.displayRig.CanvasRoot.transform.Find("Title")?.GetComponent<NeonTitleMenu>()?.Open(page.Value);
             foreach (PlayerRuntime participant in players)
                 if (participant == null || !participant.returnedToTitle) return;
             // 両者が戻るまでは結果データともう一方の画面を保持します。
@@ -1258,8 +1255,6 @@ public class Gmanager : MonoBehaviour
             PlayerRuntime player = players[playerIndex];
             if (!player.isReady)
             {
-                NeonTitleMenu menu = player.displayRig.CanvasRoot.transform.Find("Title")?.GetComponent<NeonTitleMenu>();
-                if (menu != null && menu.IsOpen) { allReady = false; continue; }
                 DriveInputState input = IManager.GetInputState(playerIndex);
                 if (input.readyPressed)
                 {

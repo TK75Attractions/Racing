@@ -162,25 +162,13 @@ public static class MultiplayerPlayModeValidation
                     manager.SelectResultOption(1,1);
                     stage=9;
                     break;
-                case 9 when !AnyTransitionActive() && TitleSheet(1)?.IsOpen == true:
+                case 9 when !AnyTransitionActive() && FindComponentIncludingInactive<ScreenTransitionController>("GameManagers/MainCanvas_P2")?.transform.Find("Title").gameObject.activeSelf == true:
                     Require(manager.state == Gmanager.State.Result,"One player returning must preserve the other result.");
-                    manager.SelectResultOption(0,2);
-                    stage=10;
+                    manager.SelectResultOption(0,1);stage=10;
                     break;
                 case 10 when manager.state == Gmanager.State.Title && !AnyTransitionActive():
-                    Require(TitleSheet(0)?.IsOpen==true && TitleSheet(1)?.IsOpen==true,"Car/course return actions did not open their title sheets.");
-                    TitleSheet(0).Close();TitleSheet(1).Close();
-                    manager.DebugPreviewResult();stage=11;
-                    break;
-                case 11 when manager.state == Gmanager.State.Result && !AnyTransitionActive():
-                    manager.SelectResultOption(0,3);stage=12;
-                    break;
-                case 12 when !AnyTransitionActive():
-                    manager.SelectResultOption(1,3);stage=13;
-                    break;
-                case 13 when manager.state == Gmanager.State.Title && !AnyTransitionActive():
-                    Require(TitleSheet(0)?.IsOpen==false && TitleSheet(1)?.IsOpen==false,"Main-menu action must return to the main menu.");
-                    Debug.Log("MULTIPLAYER_PLAYMODE_VALIDATION_PASS: race, spectator, shared result, retry, car/course sheets and main menu.");
+                    Require(FindComponentIncludingInactive<RacingMenuButton>("GameManagers/MainCanvas/Title/Player1Pedal")!=null,"Main-menu return failed.");
+                    Debug.Log("MULTIPLAYER_PLAYMODE_VALIDATION_PASS: race, spectator, shared result, retry and two main-menu returns.");
                     Finish(0);
                     break;
             }
@@ -207,7 +195,6 @@ public static class MultiplayerPlayModeValidation
             if(transition.IsTransitioning)return true;
         return false;
     }
-    private static NeonTitleMenu TitleSheet(int player)=>FindComponentIncludingInactive<NeonTitleMenu>(player==0?"GameManagers/MainCanvas/Title":"GameManagers/MainCanvas_P2/Title");
 
     private static void ValidateDisplayAndTitle()
     {

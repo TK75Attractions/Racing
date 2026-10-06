@@ -180,17 +180,7 @@ public static class ModernUIValidation
         Require(start.IsActive() && start.targetGraphic.enabled && start.targetGraphic.raycastTarget,"Title start has no active pointer hit target.");
         foreach(RacingMenuButton button in title.GetComponentsInChildren<RacingMenuButton>(true))
             Require(button.targetGraphic.enabled && button.targetGraphic.raycastTarget,"Menu control has no pointer hit target: "+button.name);
-        NeonTitleMenu menu=title.GetComponent<NeonTitleMenu>();
-        float volume=AudioListener.volume;
-        try
-        {
-            menu.Build(title,1);menu.Open(NeonTitleMenu.Page.Settings);
-            AudioListener.volume=.65f;
-            title.Find("MenuSheet/Card/Action").GetComponent<RacingMenuButton>().onClick.Invoke();
-            Require(AudioListener.volume==0f,"Settings action did not toggle sound exactly once.");
-            menu.Close();Require(!menu.IsOpen,"Title sheet did not close.");
-        }
-        finally { AudioListener.volume=volume; }
+        Require(title.GetComponentsInChildren<RacingMenuButton>(false).Length==1 && Text(start.transform,"Label")=="はじめる","Title must expose only はじめる.");
         ResultUIManager results=new ResultUIManager();results.Init(result,2);
         RaceSessionResult session=new RaceSessionResult();
         session.SetPlayerResult(0,new RaceResultRecord{playerNumber=1,finishPosition=1,totalRaceTime=40});
@@ -198,7 +188,8 @@ public static class ModernUIValidation
         results.ShowResults(session);
         Transform card=result.Find("ResultPresentation/ResultCard");
         Require(Text(card,"ResultRow2/Gap")=="+2.125" && Text(card,"PlacementRibbon/Ordinal")=="2ND","Result times and local medal do not match real data.");
-        Require(card.Find("ResultMenu").childCount==4,"Result must have four actions.");
+        Require(card.Find("ResultMenu").GetComponentsInChildren<RacingMenuButton>(false).Length==2,"Result must have two actions.");
+        Require(Text(card,"ResultMenu/Option1/Label")=="もう一度" && Text(card,"ResultMenu/Option2/Label")=="メインメニュー","Result action labels are wrong.");
         foreach(RacingMenuButton button in card.Find("ResultMenu").GetComponentsInChildren<RacingMenuButton>(true))
             Require(button.targetGraphic.enabled && button.targetGraphic.raycastTarget,"Result action has no pointer hit target.");
         session.GetPlayerResult(1).didFinish=false;results.ShowResults(session);

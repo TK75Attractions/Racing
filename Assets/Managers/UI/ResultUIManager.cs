@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Neon classification, local-driver medal and four functional result actions.</summary>
+/// <summary>Neon classification, local-driver medal and two functional result actions.</summary>
 public class ResultUIManager
 {
     private RaceResultRecord currentResult;
@@ -82,16 +82,18 @@ public class ResultUIManager
     }
     private void BuildMenu(Transform parent)
     {
-        RectTransform menu=RacingUITheme.Rect(parent,"ResultMenu",new Vector2(.03f,.048f),new Vector2(.97f,.14f));
-        string[] labels={"もう一度レースする","車の選択に戻る","コース選択に戻る","メインメニューへ"};
-        string[] english={"RACE AGAIN","SELECT CAR","SELECT COURSE","MAIN MENU"};
-        RacingIconGraphic.Icon[] icons={RacingIconGraphic.Icon.Retry,RacingIconGraphic.Icon.Car,RacingIconGraphic.Icon.Course,RacingIconGraphic.Icon.Home};
-        RectTransform[] buttons=new RectTransform[4];
-        for(int i=0;i<4;i++)
+        RectTransform menu=RacingUITheme.Rect(parent,"ResultMenu",new Vector2(.22f,.048f),new Vector2(.78f,.14f));
+        foreach(string name in new[]{"Option3","Option4"})
+        {Transform stale=menu.Find(name);if(stale!=null)Object.DestroyImmediate(stale.gameObject);}
+        string[] labels={"もう一度","メインメニュー"};
+        string[] english={"RACE AGAIN","MAIN MENU"};
+        RacingIconGraphic.Icon[] icons={RacingIconGraphic.Icon.Retry,RacingIconGraphic.Icon.Home};
+        RectTransform[] buttons=new RectTransform[2];
+        for(int i=0;i<2;i++)
         {
             int option=i;
             RacingMenuButton button=NeonUI.Button(menu,"Option"+(i+1),labels[i],english[i],icons[i],
-                new Vector2(i*.252f,0),new Vector2(i*.252f+.240f,1),i==0,()=>Gmanager.Control?.SelectResultOption(localPlayerNumber-1,option));
+                new Vector2(i*.525f,0),new Vector2(i*.525f+.475f,1),i==0,()=>Gmanager.Control?.SelectResultOption(localPlayerNumber-1,option));
             buttons[i]=button.GetComponent<RectTransform>();
             button.transform.Find("Label").GetComponent<TMP_Text>().fontSizeMax=28f;
         }
