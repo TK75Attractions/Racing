@@ -24,6 +24,8 @@ public static class RacingHUDDesignPreview
         byte[][] originals = Array.ConvertAll(settings, File.ReadAllBytes);
         try
         {
+            CaptureView(course, output, 1920, 1080, 0, "tutorial");
+            CaptureView(course, Path.GetTempPath(), 1280, 720, 1, "tutorial");
             CaptureView(course, output, 1920, 1080, 0, "button-guide");
             CaptureView(course, output, 1920, 1080, 0, "title-ready");
             CaptureView(course, output, 1920, 1080, 0, "title");
@@ -157,7 +159,15 @@ public static class RacingHUDDesignPreview
             results.ShowResults(session);
             transition.Initialize(title, play, result, string.Empty, "ペダルを踏んで準備", player);
             transition.ApplyStateImmediate(Gmanager.State.Game);
-            if (state == "button-guide")
+            if (state == "tutorial")
+            {
+                title.gameObject.SetActive(false);result.gameObject.SetActive(false);play.gameObject.SetActive(false);
+                DrivingTutorialUI practice=new DrivingTutorialUI(canvas.transform,player);
+                var lesson=new DrivingTutorialProgress();lesson.Tick(.01f,true,0,0,0,0);
+                practice.Update(lesson,new DriveInputState{pedal=.65f,steering=0},6f,true);
+                canvas.transform.Find("DrivingTutorial").SetAsLastSibling();
+            }
+            else if (state == "button-guide")
             {
                 title.gameObject.SetActive(false);result.gameObject.SetActive(false);play.gameObject.SetActive(false);
                 BuildButtonGuide(canvas.transform);

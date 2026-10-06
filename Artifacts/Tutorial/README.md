@@ -13,3 +13,17 @@ The automated drive completed accelerate → steer → stop independently for bo
 Offscreen snapshots use the actual camera stack and temporarily freeze each screen-space canvas into the same world-space plane, preserving its camera, dimensions and layout. Normal gameplay keeps the original screen-space canvas mode.
 
 Run `Racing > Tutorial > Validate and Capture` to repeat the checks, or `Racing > Tutorial > Play Preview` to inspect the practice flow with keyboard controls. P1: W/A/D; P2: arrow keys.
+
+
+## Decorated neon UI
+
+The simplified title/result menu checkpoint is merged into local main at `bee7edb`.
+The tutorial refinement is on `codex/tutorial-neon-ui`, integrating the existing `codex/tutorial` implementation.
+
+The updated UI adds diagonal racing bands, double neon frames, bright corner cuts, circular 01/02/03 markers, cyan-to-pink connector cards, and the wordmark from the supplied reference. Steering and pedal values remain live; acceleration, turning, stopping, recovery and the two-player completion gate remain unchanged.
+
+The bold tutorial font is now a pre-baked static atlas. Instrument strings only update when displayed values change, panel outlines reuse vertex arrays, and striped pedal-meter clipping reuses buffers rather than allocating lists each frame.
+
+`Artifacts/HUDDesign/hud-tutorial-1920x1080.png` is a UI layout comparison on the existing reference backdrop. The screenshots in this directory show the real practice car and road, whose 3D scenery has not been replaced by a static image.
+
+The source reference is stored at `Assets/Resources/UI/TutorialReferenceDecorated.png`. Its logo is displayed through the UI shader; no image-generation step is used.
