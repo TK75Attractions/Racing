@@ -12,8 +12,17 @@ public class RacingPanelGraphic : MaskableGraphic
     private SurfaceStyle style;
     private Color accent = RacingUITheme.Cyan;
     private float selection, pressure, confirmation;
+    private bool disabled, waiting;
 
     public Color Accent => accent;
+    public SurfaceStyle Style => style;
+
+    public void SetButtonModifiers(bool unavailable, bool retained)
+    {
+        if (disabled == unavailable && waiting == retained) return;
+        disabled = unavailable; waiting = retained;
+        SetVerticesDirty();
+    }
 
     public void Configure(SurfaceStyle value, Color tint)
     {
@@ -41,12 +50,18 @@ public class RacingPanelGraphic : MaskableGraphic
         Rect bounds = rectTransform.rect;
         if (bounds.width < 2f || bounds.height < 2f) return;
         float aa = 1f / Mathf.Max(0.1f, canvas != null ? canvas.scaleFactor : 1f);
-        float glow = style == SurfaceStyle.Primary ? .85f : .18f + selection * .6f;
-        glow = Mathf.Max(glow, pressure, confirmation);
-        Color light = accent;
-        for (int i = 7; i > 0; i--)
-            Ring(vh, bounds, -i * 2f, -(i - 1) * 2f,
-                Alpha(light, glow * (7 - i) * .014f), Alpha(light, glow * (8 - i) * .014f));
+        bool button = style != SurfaceStyle.Panel;
+        float glow = style == SurfaceStyle.Primary ? .52f : .17f;
+        glow += selection * .75f + confirmation * .6f;
+        if (button) glow *= 1f - pressure * .65f * (1f - confirmation);
+        if (disabled) glow = 0f;
+        Color light = waiting ? RacingUITheme.Gold : style == SurfaceStyle.Danger ? NeonUI.Red : accent;
+        for (int i = 12; i > 0; i--)
+        {
+            float outerAlpha = .20f * glow * Mathf.Pow(1f - i / 12f, 2f);
+            float innerAlpha = .20f * glow * Mathf.Pow(1f - (i - 1f) / 12f, 2f);
+            Ring(vh, bounds, -i * 1.25f, -(i - 1) * 1.25f, Alpha(light,outerAlpha), Alpha(light,innerAlpha));
+        }
         Color bottom = new Color(.012f, .025f, .075f, .92f);
         Color top = new Color(.025f, .065f, .16f, .93f);
         if (style == SurfaceStyle.Primary)
@@ -56,24 +71,34 @@ public class RacingPanelGraphic : MaskableGraphic
         }
         if (style == SurfaceStyle.Danger)
         {
-            bottom = new Color(.08f,.012f,.045f,.97f);
-            top = new Color(.25f,.015f,.095f,.97f);
+            bottom = new Color(.10f,.004f,.026f,.99f);
+            top = new Color(.49f,.008f,.08f,.99f);
         }
-        top = Color.Lerp(top, light, selection * .12f + pressure * .24f + confirmation * .25f);
+        if (waiting) { bottom = new Color(.17f,.075f,.004f,1f); top = new Color(.72f,.39f,.015f,1f); }
+        top = Color.Lerp(top, light, selection * .20f + confirmation * .25f);
+        if (button)
+        {
+            top = Color.Lerp(top, new Color(.025f,.012f,.035f,1f), pressure * .72f * (1f - confirmation * .55f));
+            bottom = Color.Lerp(bottom, Color.black, pressure * .45f);
+        }
+        if (disabled) { top = new Color(.14f,.16f,.21f,.97f); bottom = new Color(.06f,.075f,.11f,.98f); light = new Color(.42f,.47f,.57f); }
         Fill(vh, bounds, bottom, top);
 
-        Color border = style == SurfaceStyle.Primary ? Color.Lerp(NeonUI.Pink, Color.white, .64f) : Alpha(light, .8f);
+        Color border = button ? Color.Lerp(light, Color.white, selection * .45f + confirmation * .2f) : Alpha(light,.8f);
         float thickness = style == SurfaceStyle.Panel ? 1.2f : 2f;
         Ring(vh, bounds, -aa, 0f, Alpha(border, 0f), border);
         Ring(vh, bounds, 0f, thickness, border, border);
         Ring(vh, bounds, thickness, thickness + aa, border, Alpha(border, 0f));
         DrawChecks(vh, bounds, light);
-        if (style != SurfaceStyle.Panel)
+        if (button)
         {
-            float left = bounds.xMin + 26f, right = bounds.xMax - 26f, y = bounds.yMin + 10f;
-            Line(vh, new Vector2(left, y), new Vector2(right, y), 3f, new Color(0.4f, 0.6f, 0.7f, 0.13f), aa);
-            if (pressure > 0.001f)
-                Line(vh, new Vector2(left, y), new Vector2(Mathf.Lerp(left, right, pressure), y), 4f, light, aa);
+            Color bevel = Alpha(Color.Lerp(light,Color.white,.3f), disabled ? .14f : .32f);
+            Ring(vh,bounds,3f,4f,bevel,bevel);
+            if (pressure > .001f)
+            {
+                Color shadow = new Color(0,0,0,pressure*.7f);
+                Ring(vh,bounds,5f,10f,shadow,Alpha(shadow,0));
+            }
         }
     }
 

@@ -9,6 +9,7 @@ public static class NeonUI
     public static readonly Color Pink = new Color(1f, .025f, .39f, 1f);
     public static readonly Color Cyan = new Color(.015f, .78f, 1f, 1f);
     public static readonly Color Violet = new Color(.47f, .29f, 1f, 1f);
+    public static readonly Color Red = new Color(1f, .045f, .21f, 1f);
 
     public static RectTransform Panel(Transform parent, string name, Vector2 min, Vector2 max, bool primary = false)
     {
@@ -56,6 +57,7 @@ public static class NeonUI
         RacingIconGraphic.Icon icon, Vector2 min, Vector2 max, bool primary, UnityAction action)
     {
         RectTransform r = Panel(parent, name, min, max, primary);
+        RacingUITheme.Surface(r, primary ? RacingPanelGraphic.SurfaceStyle.Primary : RacingPanelGraphic.SurfaceStyle.Secondary);
         Image hit = r.GetComponent<Image>() ?? r.gameObject.AddComponent<Image>();
         hit.enabled = true; hit.color = Color.clear; hit.raycastTarget = true;
         RacingMenuButton button = r.GetComponent<RacingMenuButton>() ?? r.gameObject.AddComponent<RacingMenuButton>();
@@ -64,10 +66,11 @@ public static class NeonUI
         button.onClick.RemoveAllListeners();
         if (action != null) button.onClick.AddListener(action);
         Icon(r, "Icon", icon, new Vector2(.085f, .23f), new Vector2(.24f, .79f));
-        Icon(r, "Chevron", RacingIconGraphic.Icon.Chevron, new Vector2(.875f, .26f), new Vector2(.96f, .74f));
+        Icon(r, "Chevron", primary ? RacingIconGraphic.Icon.DoubleChevron : RacingIconGraphic.Icon.Chevron, new Vector2(.875f, .26f), new Vector2(.96f, .74f));
         Text(r, "Label", japanese, new Vector2(.28f, .30f), new Vector2(.88f, .84f), 34f);
         Text(r, "Caption", english, new Vector2(.285f, .095f), new Vector2(.87f, .32f), 13f,
             tint: new Color(.76f, .84f, .96f));
+        button.GetComponent<PedalButtonFeedback>().CacheContent();
         return button;
     }
 

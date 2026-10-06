@@ -5,7 +5,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class RacingIconGraphic : MaskableGraphic
 {
-    public enum Icon { Back, Pedal, Chevron, Flag, Car, Gear, Book, Power, Home, Retry, Course, Bolt }
+    public enum Icon { Back, Pedal, Chevron, Flag, Car, Gear, Book, Power, Home, Retry, Course, Bolt, DoubleChevron }
     public Icon symbol;
     private VertexHelper mesh;
     private Color ink;
@@ -21,6 +21,9 @@ public sealed class RacingIconGraphic : MaskableGraphic
         {
             case Icon.Back: Path(.08f, new Vector2(.16f,.32f),new Vector2(-.16f,0),new Vector2(.16f,-.32f)); break;
             case Icon.Chevron: Path(.07f, new Vector2(-.12f,.29f),new Vector2(.14f,0),new Vector2(-.12f,-.29f)); break;
+            case Icon.DoubleChevron:
+                Path(.06f,new Vector2(-.29f,.28f),new Vector2(-.02f,0),new Vector2(-.29f,-.28f));
+                Path(.06f,new Vector2(.02f,.28f),new Vector2(.29f,0),new Vector2(.02f,-.28f));break;
             case Icon.Pedal: Path(.12f,new Vector2(-.08f,-.28f),new Vector2(.17f,.28f)); Path(.06f,new Vector2(-.3f,-.3f),new Vector2(.3f,-.3f)); break;
             case Icon.Car:
                 Poly(new Vector2(-.37f,-.24f),new Vector2(.37f,-.24f),new Vector2(.37f,.02f),new Vector2(.24f,.33f),new Vector2(-.24f,.33f),new Vector2(-.37f,.02f));
