@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Segmented 250-degree speed arc with a warm high-speed zone.</summary>
+/// <summary>Semicircular 50-segment speed arc; rebuilds only when visible lighting changes.</summary>
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class RacingSpeedGauge : MaskableGraphic
 {

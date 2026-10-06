@@ -57,6 +57,7 @@ public static class ModernUIValidation
             ValidateOverlays(root.transform);
             ValidateNeonMenus(root.transform);
             ValidateIdleGraphics(root.transform);
+            ValidateHUDHotPaths(root.transform);
             Debug.Log("MODERN_UI_VALIDATION_PASS: fonts, backgrounds, both player HUDs, live timing, lap counts, speed, spectator and ESC actions.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
@@ -97,6 +98,44 @@ public static class ModernUIValidation
         board.SetPosition(2, 5f);
         Require(gapDirty > 0 && gap.text == "−5 m", "Live standings must update rank and distance.");
         Debug.Log("UI_IDLE_VALIDATION_PASS: 120 unchanged frames produce zero ring/button/standings rebuilds; changed values still update.");
+    }
+
+    private static void ValidateHUDHotPaths(Transform parent)
+    {
+        RectTransform fixture = RacingUITheme.Rect(parent, "HUDHotPathValidation", Vector2.zero, Vector2.one);
+        Transform hud = RacingHUDBuilder.Build(fixture, 0, 3);
+        RacingSpeedGauge gauge = hud.Find("Speed/Gauge").GetComponent<RacingSpeedGauge>();
+        int gaugeDirty = 0;
+        gauge.RegisterDirtyVerticesCallback(() => gaugeDirty++);
+        for (int i = 0; i <= 3600; i++) gauge.SetSpeed(i / 20f);
+        Require(gaugeDirty == 50, "The 50-segment gauge must only rebuild when a visible segment changes.");
+
+        NeonRingGraphic ring = hud.Find("BoostBadge").GetComponent<NeonRingGraphic>();
+        RacingBoostArcGraphic arc = hud.Find("BoostBadge/Progress").GetComponent<RacingBoostArcGraphic>();
+        int ringDirty = 0, arcDirty = 0;
+        ring.RegisterDirtyVerticesCallback(() => ringDirty++);
+        arc.RegisterDirtyVerticesCallback(() => arcDirty++);
+        ring.SetAmount(.5f);
+        Require(ringDirty == 0 && arcDirty == 1 && arc.Amount == .5f, "A changing boost must not regenerate the static glow/ticks.");
+
+        UITime timer = new UITime(); timer.Init(hud.Find("Time"));
+        UISpeed speed = new UISpeed(); speed.Init(hud.Find("Speed"));
+        for (int i = 0; i < 200; i++)
+        {
+            timer.SetTotalTime(72f + i * .01f); timer.SetLapTime(19f + i * .01f);
+            speed.UpdateSpeedMeter(120f + i % 60, 0f);
+            speed.UpdateBoostGauge(2.45f, 3f);
+        }
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 1000; i++)
+        {
+            timer.SetTotalTime(72f + i * .01f); timer.SetLapTime(19f + i * .01f);
+            speed.UpdateSpeedMeter(120f + i % 60, 0f);
+            speed.UpdateBoostGauge(2.45f, 3f);
+        }
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Require(allocated == 0, "HUD formatting still allocates: " + allocated + " bytes / 1000 updates.");
+        Debug.Log("UI_HOT_PATH_VALIDATION_PASS: 3601 speed inputs -> 50 gauge rebuilds; changing charge -> zero static-ring rebuilds; 1000 time/speed/boost updates -> " + allocated + " managed bytes.");
     }
 
     private static void ValidateNeonMenus(Transform parent)
