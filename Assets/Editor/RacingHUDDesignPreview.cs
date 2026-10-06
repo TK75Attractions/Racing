@@ -24,6 +24,8 @@ public static class RacingHUDDesignPreview
         byte[][] originals = Array.ConvertAll(settings, File.ReadAllBytes);
         try
         {
+            CaptureView(course, output, 1920, 1080, 0, "button-guide");
+            CaptureView(course, output, 1920, 1080, 0, "title-ready");
             CaptureView(course, output, 1920, 1080, 0, "title");
             CaptureView(course, output, 1920, 1080, 1, "result");
             CaptureView(course, output, 1920, 1080, 0, "race");
@@ -49,6 +51,42 @@ public static class RacingHUDDesignPreview
         ModernUIValidation.Run();
         MiniMapValidation.RunBatch();
         Capture();
+    }
+
+    private static void BuildButtonGuide(Transform canvas)
+    {
+        RectTransform root=RacingUITheme.Rect(canvas,"ButtonGuide",Vector2.zero,Vector2.one);
+        Image background=root.gameObject.AddComponent<Image>();background.color=new Color(.004f,.012f,.035f);background.raycastTarget=false;
+        NeonUI.Text(root,"Title","NEON BUTTONS / INTERACTION SYSTEM",new Vector2(.028f,.89f),new Vector2(.975f,.98f),51f,italic:true);
+        RacingUITheme.Rule(root,"Line",new Vector2(.028f,.885f),new Vector2(.975f,.888f),NeonUI.Pink);
+        string[] columns={"NORMAL","HOVER / FOCUS","PRESSED","HOLD 25%","HOLD 75% / MAX","MAX / READY"};
+        for(int col=0;col<6;col++)
+            NeonUI.Text(root,"Column"+col,columns[col],new Vector2(.028f+col*.16f,.837f),new Vector2(.176f+col*.16f,.882f),17f,TextAlignmentOptions.Center);
+        string[] rows={"MAIN ACTION / PINK","SECONDARY / BLUE","DANGER / RED","START / RETAINED GOLD","DISABLED / NO GLOW"};
+        for(int row=0;row<5;row++)
+        {
+            float top=.80f-row*.15f;
+            NeonUI.Text(root,"Row"+row,rows[row],new Vector2(.03f,top+.008f),new Vector2(.975f,top+.04f),19f,tint:row==2?NeonUI.Red:row==1?NeonUI.Cyan:row==3?RacingUITheme.Gold:Color.white);
+            for(int col=0;col<6;col++)
+            {
+                string label=row==1?"戻る":row==2?"終了":row==4?"設定":"スタート";
+                RacingIconGraphic.Icon icon=row==1?RacingIconGraphic.Icon.Back:row==2?RacingIconGraphic.Icon.Power:row==4?RacingIconGraphic.Icon.Gear:RacingIconGraphic.Icon.Flag;
+                RacingMenuButton button=NeonUI.Button(root,"Sample"+row+"_"+col,label,row==4?"DISABLED":row==1?"BACK":row==2?"EXIT":"START",icon,
+                    new Vector2(.028f+col*.16f,top-.105f),new Vector2(.176f+col*.16f,top),row==0||row==3,null);
+                if(row==2)
+                {
+                    RacingPanelGraphic face=button.transform.Find("ModernSurface").GetComponent<RacingPanelGraphic>();face.Configure(RacingPanelGraphic.SurfaceStyle.Danger,NeonUI.Red);button.Configure(face);
+                }
+                bool gauge=row==3||col>=3 && row!=4;
+                if(gauge)button.ConfigureHold(.65f,row==3);
+                if(row==4)button.interactable=false;
+                float charge=col==3?.25f:col==4?.75f:col==5?1f:0f;
+                if(row==3 && col==4)charge=1f;
+                bool waiting=row==3 && col==5;
+                button.GetComponent<PedalButtonFeedback>().Preview(col==0?0:1,col>=2 && !waiting?1:0,charge,waiting,row==4,col==5 && !waiting?.8f:0);
+            }
+        }
+        NeonUI.Text(root,"Footer","FINITE SPRING + LIGHT SWEEP + INSET PRESS + SEGMENTED HOLD + CONFIRM SPARKS",new Vector2(.03f,.025f),new Vector2(.975f,.077f),20f,TextAlignmentOptions.Center,tint:NeonUI.Cyan);
     }
 
     private static void CaptureView(RaceCourse course, string directory, int width, int height, int player, string state)
@@ -119,7 +157,17 @@ public static class RacingHUDDesignPreview
             results.ShowResults(session);
             transition.Initialize(title, play, result, string.Empty, "ペダルを踏んで準備", player);
             transition.ApplyStateImmediate(Gmanager.State.Game);
-            if (state == "result") transition.ApplyStateImmediate(Gmanager.State.Result);
+            if (state == "button-guide")
+            {
+                title.gameObject.SetActive(false);result.gameObject.SetActive(false);play.gameObject.SetActive(false);
+                BuildButtonGuide(canvas.transform);
+            }
+            else if (state == "title-ready")
+            {
+                transition.ApplyStateImmediate(Gmanager.State.Title);
+                title.Find("Player1Pedal").GetComponent<PedalButtonFeedback>().Preview(1,0,1,true,false,.5f);
+            }
+            else if (state == "result") transition.ApplyStateImmediate(Gmanager.State.Result);
             else if (state == "title") transition.ApplyStateImmediate(Gmanager.State.Title);
             else if (state == "countdown") transition.ShowCountdown(3);
             else if (state == "finish-warning") transition.ShowFinishWarning("P1", 8.4f);

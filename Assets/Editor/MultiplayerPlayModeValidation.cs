@@ -4,6 +4,8 @@ using TMPro;
 using Unity.Cinemachine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using UnityEngine;
 
 /// <summary>
@@ -22,6 +24,10 @@ public static class MultiplayerPlayModeValidation
     private static double stageStartTime;
     private static Gmanager manager;
     private static MethodInfo finishMethod;
+    private static GameObject buttonFixture;
+    private static RacingMenuButton holdButton;
+    private static PointerEventData holdPointer;
+    private static int holdClicks;
 
     public static void RunBatch()
     {
@@ -90,8 +96,32 @@ public static class MultiplayerPlayModeValidation
             {
                 case 0 when frameCount > 5:
                     ValidateDisplayAndTitle();
-                    manager.StartGame();
-                    stage = 1;
+                    BuildHoldButtonFixture();
+                    holdButton.OnPointerEnter(holdPointer);holdButton.OnPointerDown(holdPointer);
+                    stageStartTime=EditorApplication.timeSinceStartup;stage=100;
+                    break;
+
+                case 100 when EditorApplication.timeSinceStartup-stageStartTime>.12d:
+                    holdButton.OnPointerUp(holdPointer);holdButton.OnPointerClick(holdPointer);
+                    Require(holdClicks==0,"A short hold must not commit.");
+                    stageStartTime=EditorApplication.timeSinceStartup;stage=101;
+                    break;
+                case 101 when EditorApplication.timeSinceStartup-stageStartTime>.2d:
+                    Require(holdClicks==0,"Cancelled holds must not commit later.");
+                    holdButton.OnPointerEnter(holdPointer);holdButton.OnPointerDown(holdPointer);
+                    stageStartTime=EditorApplication.timeSinceStartup;stage=102;
+                    break;
+                case 102 when EditorApplication.timeSinceStartup-stageStartTime>1.1d:
+                    Require(holdClicks==1 && holdButton.GetComponent<PedalButtonFeedback>().IsRetained,"Full hold must commit once and retain start selection.");
+                    holdButton.OnPointerUp(holdPointer);holdButton.OnPointerClick(holdPointer);
+                    holdButton.interactable=false;holdButton.OnPointerDown(holdPointer);
+                    stageStartTime=EditorApplication.timeSinceStartup;stage=103;
+                    break;
+                case 103 when EditorApplication.timeSinceStartup-stageStartTime>.5d:
+                    Require(holdClicks==1,"Release/disabled press must not commit again.");
+                    UnityEngine.Object.Destroy(buttonFixture);
+                    Debug.Log("BUTTON_HOLD_PLAYMODE_PASS: short hold cancels, full hold commits once, start retains after release, disabled input cannot commit.");
+                    manager.StartGame();stage=1;
                     break;
 
                 case 1 when manager.state == Gmanager.State.Countdown:
@@ -159,6 +189,16 @@ public static class MultiplayerPlayModeValidation
         {
             Fail(exception.ToString());
         }
+    }
+
+    private static void BuildHoldButtonFixture()
+    {
+        buttonFixture=new GameObject("Hold button validation",typeof(RectTransform),typeof(Canvas),typeof(CanvasGroup));
+        buttonFixture.GetComponent<Canvas>().renderMode=RenderMode.ScreenSpaceOverlay;
+        buttonFixture.GetComponent<CanvasGroup>().alpha=0;
+        holdButton=NeonUI.Button(buttonFixture.transform,"Start","スタート","START",RacingIconGraphic.Icon.Flag,Vector2.zero,Vector2.one,true,
+            ()=>{holdClicks++;holdButton.GetComponent<PedalButtonFeedback>().SetConfirmed(true);});
+        holdButton.ConfigureHold(.8f,true);holdPointer=new PointerEventData(EventSystem.current){button=PointerEventData.InputButton.Left};
     }
 
     private static bool AnyTransitionActive()

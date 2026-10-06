@@ -58,6 +58,7 @@ public static class ModernUIValidation
             ValidateNeonMenus(root.transform);
             ValidateIdleGraphics(root.transform);
             ValidateHUDHotPaths(root.transform);
+            ValidateButtonStates(root.transform);
             Debug.Log("MODERN_UI_VALIDATION_PASS: fonts, backgrounds, both player HUDs, live timing, lap counts, speed, spectator and ESC actions.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
@@ -136,6 +137,35 @@ public static class ModernUIValidation
         long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
         Require(allocated == 0, "HUD formatting still allocates: " + allocated + " bytes / 1000 updates.");
         Debug.Log("UI_HOT_PATH_VALIDATION_PASS: 3601 speed inputs -> 50 gauge rebuilds; changing charge -> zero static-ring rebuilds; 1000 time/speed/boost updates -> " + allocated + " managed bytes.");
+    }
+
+    private static void ValidateButtonStates(Transform parent)
+    {
+        RacingMenuButton button=NeonUI.Button(parent,"ButtonStateValidation","スタート","START",RacingIconGraphic.Icon.Flag,Vector2.zero,Vector2.one,true,null);
+        button.ConfigureHold(.65f,true);
+        PedalButtonFeedback feedback=button.GetComponent<PedalButtonFeedback>();
+        RacingPanelGraphic surface=button.transform.Find("ModernSurface").GetComponent<RacingPanelGraphic>();
+        RacingButtonGaugeGraphic gauge=button.transform.Find("HoldGauge").GetComponent<RacingButtonGaugeGraphic>();
+        feedback.SetState(true,.5f,NeonUI.Pink);
+        for(int frame=0;frame<60;frame++)feedback.Tick(1f/60f);
+        Require(Text(button.transform,"HoldPercent")=="50%","Hold percentage does not match actual progress.");
+        feedback.SetConfirmed(true);feedback.SetState(false,0,NeonUI.Pink);
+        for(int frame=0;frame<60;frame++)feedback.Tick(1f/60f);
+        Require(feedback.IsRetained && Text(button.transform,"HoldPercent")=="100%","Start must remain selected after releasing the hold.");
+        int dirty=0;
+        surface.RegisterDirtyVerticesCallback(()=>dirty++);gauge.RegisterDirtyVerticesCallback(()=>dirty++);
+        button.transform.Find("InteractionFX").GetComponent<RacingButtonFXGraphic>().RegisterDirtyVerticesCallback(()=>dirty++);
+        long before=GC.GetAllocatedBytesForCurrentThread();
+        for(int frame=0;frame<120;frame++)feedback.Tick(1f/60f);
+        long bytes=GC.GetAllocatedBytesForCurrentThread()-before;
+        Require(dirty==0 && bytes==0,"Settled button animation still rebuilds or allocates.");
+        button.interactable=false;feedback.SetConfirmed(false);
+        for(int frame=0;frame<60;frame++)feedback.Tick(1f/60f);
+        int disabledDirty=0;surface.RegisterDirtyVerticesCallback(()=>disabledDirty++);
+        feedback.SetPointerState(false,false,false);
+        for(int frame=0;frame<120;frame++)feedback.Tick(1f/60f);
+        Require(disabledDirty==0 && Text(button.transform,"HoldPercent")=="0%","Disabled buttons must not react or keep a charged gauge.");
+        Debug.Log("BUTTON_STATE_VALIDATION_PASS: 50% hold, retained MAX after release, disabled state, settled 120 frames with zero rebuilds/allocations.");
     }
 
     private static void ValidateNeonMenus(Transform parent)
