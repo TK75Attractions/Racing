@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.TextCore.LowLevel;
 
 /// <summary>Practice uses a real heavy font master rather than dilating the thin variable-font atlas.</summary>
 public static class DrivingTutorialTypography
@@ -34,10 +33,9 @@ public static class DrivingTutorialTypography
     private static void EnsureFont()
     {
         if (font != null) return;
-        Font source = Resources.Load<Font>("UI/TutorialBold");
-        font = TMP_FontAsset.CreateFontAsset(source, 90, 12, GlyphRenderMode.SDFAA, 2048, 2048, AtlasPopulationMode.Dynamic);
-        font.name = "Tutorial MPLUS ExtraBold";
-        font.TryAddCharacters("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz%°−+ /→！：。、ペダルを踏んで加速しようハンドル回て角曲がみ足から離停車まず練習完了もう一人のプレイヤー待っています両後にレース始接続確認くださ自分専用コントローラー準備アクセ解除");
+        font = Resources.Load<TMP_FontAsset>("UI/HUD/Tutorial ExtraBold");
+        if (font == null)
+            throw new System.InvalidOperationException("Build the static tutorial font using Racing/UI/Build HUD Fonts.");
         face = new Material(font.material) { name = "Tutorial bold face" };
         face.EnableKeyword("UNDERLAY_ON");
         face.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(0f, .01f, .025f, .9f));

@@ -17,7 +17,7 @@ public static class RacingHUDFontBuilder
         string directory = "Assets/Resources/UI/HUD";
         Directory.CreateDirectory(directory);
         AssetDatabase.Refresh();
-        foreach (string image in new[] { "Assets/Resources/UI/Neon/TitleBackground.png", "Assets/Resources/UI/Neon/ResultBackground.png", "Assets/Resources/UI/Neon/MedalGold.png", "Assets/Resources/UI/Neon/MedalSilver.png", "Assets/Editor/ReferenceArt/RaceBackdrop.png" })
+        foreach (string image in new[] { "Assets/Resources/UI/Neon/TitleBackground.png", "Assets/Resources/UI/Neon/ResultBackground.png", "Assets/Resources/UI/Neon/MedalGold.png", "Assets/Resources/UI/Neon/MedalSilver.png", "Assets/Editor/ReferenceArt/RaceBackdrop.png", "Assets/Resources/UI/TutorialReferenceDecorated.png" })
         {
             TextureImporter importer = AssetImporter.GetAtPath(image) as TextureImporter;
             if (importer == null) continue;
@@ -35,15 +35,15 @@ public static class RacingHUDFontBuilder
             foreach (Match match in Regex.Matches(File.ReadAllText(source), "\"([^\"\\r\\n]*)\""))
                 corpus += match.Groups[1].Value;
         string characters = new string(corpus.Where(c => c >= 32).Distinct().OrderBy(c => c).ToArray());
-        foreach (string weight in new[] { "Medium", "Bold" })
+        foreach (string weight in new[] { "Medium", "Bold", "Tutorial" })
         {
-            string path = directory + "/MPLUS HUD " + weight + ".asset";
+            string path = directory + (weight == "Tutorial" ? "/Tutorial ExtraBold.asset" : "/MPLUS HUD " + weight + ".asset");
             TMP_FontAsset existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
             if (existing != null && existing.material != null && existing.atlasTextures.All(t => t != null) && existing.HasCharacters(characters)) continue;
-            Font source = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/MPLUS1-HUD-" + weight + ".ttf");
+            Font source = AssetDatabase.LoadAssetAtPath<Font>(weight == "Tutorial" ? "Assets/Resources/UI/TutorialBold.ttf" : "Assets/Fonts/MPLUS1-HUD-" + weight + ".ttf");
             if (source == null) throw new InvalidOperationException("Missing static HUD font: " + weight);
-            TMP_FontAsset font = TMP_FontAsset.CreateFontAsset(source, 80, 8, GlyphRenderMode.SDFAA, 2048, 2048, AtlasPopulationMode.Dynamic, false);
-            font.name = "MPLUS HUD " + weight;
+            TMP_FontAsset font = TMP_FontAsset.CreateFontAsset(source, weight == "Tutorial" ? 90 : 80, weight == "Tutorial" ? 12 : 8, GlyphRenderMode.SDFAA, 2048, 2048, AtlasPopulationMode.Dynamic, false);
+            font.name = weight == "Tutorial" ? "Tutorial ExtraBold" : "MPLUS HUD " + weight;
             if (!font.TryAddCharacters(characters, out string missing))
                 throw new InvalidOperationException("HUD atlas is missing: " + missing);
             font.atlasPopulationMode = AtlasPopulationMode.Static;

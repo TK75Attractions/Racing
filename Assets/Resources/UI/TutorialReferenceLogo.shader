@@ -23,7 +23,9 @@ Shader "Racing/UI/TutorialReferenceLogo"
                 // the dark photographed scenery remains fully transparent over the live course.
                 float white=smoothstep(.22,.50,min(c.r,min(c.g,c.b)));
                 float pink=smoothstep(.35,.70,c.r-max(c.g,c.b))*smoothstep(.40,.68,c.r);
-                c.a*=max(white,pink);
+                // Exclude bright roadway marks outside the brush wordmark's lower-right edge.
+                float edgeMask=smoothstep(.750+.207*i.uv.x,.755+.207*i.uv.x,i.uv.y);
+                c.a*=max(white,pink)*edgeMask;
                 return c*i.color;
             }
             ENDCG

@@ -5,8 +5,8 @@ using UnityEngine.UI;
 /// <summary>Reference composition: live car between cyan/pink instrument glass, with three bright lessons below.</summary>
 public sealed class DrivingTutorialUI
 {
-    public static readonly Color Cyan = new Color(.05f, .69f, 1f);
-    public static readonly Color Pink = new Color(1f, .10f, .31f);
+    public static readonly Color Cyan = new Color(.01f, .78f, 1f);
+    public static readonly Color Pink = new Color(1f, .025f, .39f);
     private readonly GameObject root;
     private Material logoMaterial;
     private readonly TMP_Text angle, pedal, message, status;
@@ -15,6 +15,9 @@ public sealed class DrivingTutorialUI
     private readonly DrivingTutorialPanelGraphic[] steps = new DrivingTutorialPanelGraphic[3];
     private readonly TMP_Text[] stepNumbers = new TMP_Text[3];
     private readonly DrivingTutorialControlGraphic wheel;
+    private readonly DrivingTutorialBadgeGraphic[] badges=new DrivingTutorialBadgeGraphic[3];
+    private int shownAngle=int.MinValue,shownPedal=-1,shownStage=-1;
+    private string shownMessage;
 
     public DrivingTutorialUI(Transform canvas, int playerIndex)
     {
@@ -24,22 +27,23 @@ public sealed class DrivingTutorialUI
         BuildBrand(rect);
         Label(rect, "Player", $"PLAYER {playerIndex + 1} / PRACTICE", new Vector2(.73f, .905f), new Vector2(.965f, .95f), 22f, Color.white).alignment = TextAlignmentOptions.Right;
 
+        RacingUITheme.Rule(rect,"PlayerUnderline",new Vector2(.855f,.898f),new Vector2(.965f,.901f),Pink);
         RectTransform steering = Panel(rect, "Steering", new Vector2(.028f, .33f), new Vector2(.329f, .757f), Cyan);
         wheel = Icon(steering, "Wheel", new Vector2(.065f, .72f), new Vector2(.29f, .975f), DrivingTutorialControlGraphic.Kind.WheelHeader);
-        Label(steering, "Title", "ハンドル", new Vector2(.347f, .83f), new Vector2(.97f, .96f), 43f, Color.white);
+        Label(steering, "Title", "ハンドル", new Vector2(.347f, .815f), new Vector2(.97f, .98f), 43f, Color.white);
         Label(steering, "English", "STEERING", new Vector2(.35f, .73f), new Vector2(.96f, .82f), 25f, Cyan, true).characterSpacing = 5f;
         RectTransform steeringGlass = Panel(steering, "Instrument", new Vector2(.025f, .035f), new Vector2(.975f, .705f), new Color(.05f, .38f, .6f), true);
-        angle = Label(steeringGlass, "Angle", "0°", new Vector2(.05f, .70f), new Vector2(.95f, .98f), 68f, Color.white, false, true);
+        angle = Label(steeringGlass, "Angle", "0°", new Vector2(.05f, .66f), new Vector2(.95f, 1f), 68f, Color.white, false, true);
         angle.alignment = TextAlignmentOptions.Center;
         RectTransform gaugeRect = RacingUITheme.Rect(steeringGlass, "Arc", new Vector2(.075f, .18f), new Vector2(.925f, .71f));
         gauge = gaugeRect.gameObject.AddComponent<DrivingTutorialGaugeGraphic>(); gauge.raycastTarget = false;
         Label(steeringGlass, "Left", "−90°", new Vector2(.07f, .085f), new Vector2(.32f, .225f), 29f, Cyan);
-        Label(steeringGlass, "Center", "0°", new Vector2(.37f, .19f), new Vector2(.63f, .32f), 30f, Cyan).alignment = TextAlignmentOptions.Center;
+        Label(steeringGlass, "Center", "0°", new Vector2(.37f, .18f), new Vector2(.63f, .34f), 30f, Cyan).alignment = TextAlignmentOptions.Center;
         Label(steeringGlass, "Right", "+90°", new Vector2(.69f, .085f), new Vector2(.94f, .225f), 29f, Cyan).alignment = TextAlignmentOptions.Right;
 
         RectTransform accelerator = Panel(rect, "Accelerator", new Vector2(.687f, .325f), new Vector2(.972f, .757f), Pink);
         Icon(accelerator, "PedalIcon", new Vector2(.08f, .735f), new Vector2(.26f, .97f), DrivingTutorialControlGraphic.Kind.PedalHeader);
-        Label(accelerator, "Title", "アクセル", new Vector2(.345f, .83f), new Vector2(.975f, .96f), 43f, Color.white);
+        Label(accelerator, "Title", "アクセル", new Vector2(.345f, .815f), new Vector2(.975f, .98f), 43f, Color.white);
         Label(accelerator, "English", "ACCELERATOR", new Vector2(.345f, .73f), new Vector2(.985f, .82f), 25f, Pink, true).characterSpacing = 3f;
         RectTransform pedalGlass = Panel(accelerator, "Instrument", new Vector2(.03f, .035f), new Vector2(.97f, .715f), new Color(.57f, .07f, .19f), true);
         pedal = Label(pedalGlass, "Value", "0<size=58%>%</size>", new Vector2(.075f, .22f), new Vector2(.59f, .71f), 76f, Color.white, false, true);
@@ -55,20 +59,23 @@ public sealed class DrivingTutorialUI
         Label(pedalGlass, "Full", "100%", new Vector2(.83f, .83f), new Vector2(.99f, .98f), 27f, Color.white);
         Label(pedalGlass, "Empty", "0%", new Vector2(.83f, .025f), new Vector2(.99f, .17f), 27f, Color.white);
 
-        RectTransform strip = Panel(rect, "Lessons", new Vector2(.036f, .06f), new Vector2(.966f, .251f), new Color(.12f, .33f, .47f));
+        RectTransform strip = RacingUITheme.Rect(rect, "Lessons", new Vector2(.028f, .065f), new Vector2(.975f, .267f));
         string[] titles = { "ペダルを踏んで\n加速しよう", "ハンドルを回して\n角を曲がってみよう", "ペダルから足を離して\n停車しよう" };
         DrivingTutorialControlGraphic.Kind[] icons = { DrivingTutorialControlGraphic.Kind.PressPedal, DrivingTutorialControlGraphic.Kind.TurnWheel, DrivingTutorialControlGraphic.Kind.ReleasePedal };
         for (int i = 0; i < 3; i++)
         {
             float x = i / 3f;
-            RectTransform step = RacingUITheme.Rect(strip, $"Step{i + 1}", new Vector2(x, 0f), new Vector2(x + 1f / 3f, 1f));
+            RectTransform step = RacingUITheme.Rect(strip, $"Step{i + 1}", new Vector2(x+.004f, 0f), new Vector2(x + 1f / 3f-.008f, 1f));
             steps[i] = step.gameObject.AddComponent<DrivingTutorialPanelGraphic>();
-            steps[i].Configure(Cyan, i == 0);
-            Icon(step, "Icon", new Vector2(.065f, .08f), new Vector2(.41f, .92f), icons[i]);
-            TMP_Text caption = Label(step, "Caption", titles[i], new Vector2(.45f, .15f), new Vector2(.98f, .85f), 29f, Color.white);
+            steps[i].Configure(Cyan, i == 0, false, true);
+            Icon(step, "Icon", new Vector2(.14f, .10f), new Vector2(.41f, .88f), icons[i]);
+            TMP_Text caption = Label(step, "Caption", titles[i], new Vector2(.45f, .13f), new Vector2(.98f, .84f), 29f, Color.white);
             caption.lineSpacing = 10f;
-            stepNumbers[i] = Label(step, "Number", $"0{i + 1}", new Vector2(.9f, .74f), new Vector2(.98f, .93f), 16f, new Color(.59f, .8f, .91f));
-            if (i < 2) Label(strip, $"Next{i}", "›", new Vector2(x + .322f, .37f), new Vector2(x + .345f, .67f), 42f, new Color(.05f, .5f, .75f)).alignment = TextAlignmentOptions.Center;
+            RectTransform badge=RacingUITheme.Rect(step,"NumberBadge",new Vector2(.026f,.65f),new Vector2(.15f,.93f));
+            badges[i]=badge.gameObject.AddComponent<DrivingTutorialBadgeGraphic>();badges[i].SetState(i==0,false);
+            stepNumbers[i]=Label(badge,"Number",$"0{i+1}",Vector2.zero,Vector2.one,28f,Color.white,true);
+            stepNumbers[i].alignment=TextAlignmentOptions.Center;
+
         }
         message = Label(rect, "Message", "", new Vector2(.31f, .81f), new Vector2(.685f, .91f), 27f, Color.white);
         message.alignment = TextAlignmentOptions.Center;
@@ -79,18 +86,24 @@ public sealed class DrivingTutorialUI
 
     public void Update(DrivingTutorialProgress lesson, DriveInputState input, float metersPerSecond, bool connected)
     {
-        angle.text = $"{input.steering:0}°";
+        int degrees=Mathf.RoundToInt(input.steering);
+        if(shownAngle!=degrees){angle.SetText("{0}°",degrees);shownAngle=degrees;}
         gauge.Angle = input.steering;
         wheel.Angle = input.steering;
         float pressure = Mathf.Clamp01(input.pedal);
-        pedal.text = $"{pressure * 100f:0}<size=58%>%</size>";
+        int percent=Mathf.RoundToInt(pressure*100f);
+        if(shownPedal!=percent){pedal.SetText("{0}<size=58%>%</size>",percent);shownPedal=percent;}
         meter.Pressure = pressure;
         int stage = (int)lesson.CurrentStage;
-        message.text = lesson.IsComplete ? "練習完了！\nもう一人のプレイヤーを待っています" : !connected ? "コントローラーの\n接続を確認してください" : !lesson.PedalReleased ? "まずペダルから\n足を離そう" : "";
+        string prompt=lesson.IsComplete ? "練習完了！\nもう一人のプレイヤーを待っています" : !connected ? "コントローラーの\n接続を確認してください" : !lesson.PedalReleased ? "まずペダルから\n足を離そう" : "";
+        if(shownMessage!=prompt){message.text=prompt;shownMessage=prompt;}
+        if(shownStage==stage)return;
+        shownStage=stage;
         status.text = lesson.IsComplete ? "両プレイヤーの完了後にレース開始" : $"STEP {stage + 1} / 3";
         for (int i = 0; i < 3; i++)
         {
             steps[i].SetSelected(stage == i);
+            badges[i].SetState(stage==i,i<stage);
             stepNumbers[i].text = i < stage ? "OK" : $"0{i + 1}";
             // The reference keeps every instruction white. Selection is expressed by the neon border.
         }
@@ -104,15 +117,19 @@ public sealed class DrivingTutorialUI
 
     private void BuildBrand(Transform parent)
     {
-        Texture2D reference = Resources.Load<Texture2D>("UI/TutorialReference");
+        Texture2D reference = Resources.Load<Texture2D>("UI/TutorialReferenceDecorated");
         Shader shader = Resources.Load<Shader>("UI/TutorialReferenceLogo");
         if (reference != null && shader != null)
         {
-            RectTransform frame = RacingUITheme.Rect(parent, "ReferenceBrand", new Vector2(.015f, .784f), new Vector2(.25f, .995f));
-            RawImage logo = frame.gameObject.AddComponent<RawImage>();
+            RectTransform frame = RacingUITheme.Rect(parent, "ReferenceBrand", new Vector2(0f, .774f), new Vector2(.329f, .995f));
+            RectTransform stripes=RacingUITheme.Rect(frame,"RacingBands",Vector2.zero,Vector2.one);
+            stripes.gameObject.AddComponent<DrivingTutorialBrandGraphic>();
+            RectTransform artwork=RacingUITheme.Rect(frame,"Artwork",Vector2.zero,Vector2.one);
+            RawImage logo = artwork.gameObject.AddComponent<RawImage>();
             logo.texture = reference;
-            logo.uvRect = new Rect(.015f, .787f, .235f, .211f);
+            logo.uvRect = new Rect(0f, .765f, .329f, .23f);
             logoMaterial = new Material(shader); logo.material = logoMaterial; logo.raycastTarget = false;
+            stripes.SetAsFirstSibling();
             return;
         }
         RectTransform brand = RacingUITheme.Rect(parent, "Brand", new Vector2(.025f, .79f), new Vector2(.24f, .99f));

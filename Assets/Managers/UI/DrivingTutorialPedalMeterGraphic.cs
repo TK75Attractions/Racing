@@ -6,6 +6,9 @@ using UnityEngine.UI;
 public sealed class DrivingTutorialPedalMeterGraphic : MaskableGraphic
 {
     private float pressure;
+    private readonly System.Collections.Generic.List<Vector2> stripe=new System.Collections.Generic.List<Vector2>(8);
+    private readonly System.Collections.Generic.List<Vector2> lower=new System.Collections.Generic.List<Vector2>(8);
+    private readonly System.Collections.Generic.List<Vector2> upper=new System.Collections.Generic.List<Vector2>(8);
     public float Pressure { set { float next = Mathf.Clamp01(value); if (Mathf.Approximately(next, pressure)) return; pressure = next; SetVerticesDirty(); } }
     protected override void OnPopulateMesh(VertexHelper vh)
     {
@@ -24,18 +27,19 @@ public sealed class DrivingTutorialPedalMeterGraphic : MaskableGraphic
         // Clip each stripe against the filled meter; no textures or overflowing children.
         for (float y = bottom - r.width * slope - spacing; y < top; y += spacing)
         {
-            var points = new System.Collections.Generic.List<Vector2> { new Vector2(left, y), new Vector2(right, y + (right - left) * slope),
-                new Vector2(right, y + (right - left) * slope + band), new Vector2(left, y + band) };
-            points = Clip(points, bottom, true); points = Clip(points, top, false);
+            stripe.Clear();stripe.Add(new Vector2(left,y));stripe.Add(new Vector2(right,y+(right-left)*slope));
+            stripe.Add(new Vector2(right,y+(right-left)*slope+band));stripe.Add(new Vector2(left,y+band));
+            Clip(stripe,lower,bottom,true);Clip(lower,upper,top,false);
+            var points=upper;
             int index = vh.currentVertCount;
             foreach (Vector2 point in points) vh.AddVert(point, new Color(1f, .51f, .62f, .5f), Vector2.zero);
             for (int i = 1; i + 1 < points.Count; i++) vh.AddTriangle(index, index + i, index + i + 1);
         }
     }
-    private static System.Collections.Generic.List<Vector2> Clip(System.Collections.Generic.List<Vector2> input, float y, bool above)
+    private static void Clip(System.Collections.Generic.List<Vector2> input,System.Collections.Generic.List<Vector2> output,float y,bool above)
     {
-        var output = new System.Collections.Generic.List<Vector2>();
-        if (input.Count == 0) return output;
+        output.Clear();
+        if (input.Count == 0) return;
         Vector2 previous = input[input.Count - 1]; bool wasInside = above ? previous.y >= y : previous.y <= y;
         foreach (Vector2 current in input)
         {
@@ -44,7 +48,6 @@ public sealed class DrivingTutorialPedalMeterGraphic : MaskableGraphic
             if (inside) output.Add(current);
             previous = current; wasInside = inside;
         }
-        return output;
     }
     private static void Rectangle(VertexHelper vh, Rect r, Color tint)
     {
