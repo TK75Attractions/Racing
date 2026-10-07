@@ -89,13 +89,14 @@ public class Gmanager : MonoBehaviour
     private RaceResultRecord latestResult;
     private RaceSessionResult latestSessionResult;
     private RaceLightningDirector raceLightning;
+    private DrivingTutorialController drivingTutorial;
 
     public RaceResultRecord LatestResult => latestResult;
     public RaceSessionResult LatestSessionResult => latestSessionResult;
     public float SecondPlaceTimeRemaining => raceSession?.SecondPlaceTimeRemaining ?? 0f;
     public bool WaitingForSecondPlace => raceSession != null && raceSession.WaitingForSecondPlace;
     public float CountdownTimeRemaining => countdownTimeRemaining;
-    public bool IsDrivingEnabled => state == State.Game;
+    public bool IsDrivingEnabled => state == State.Game || (state == State.Tutorial && !IsScreenTransitioning());
     public bool CanUseDashboardControls => !IsScreenTransitioning();
     public int GoalLap => lapManager != null ? lapManager.GoalLap : 0;
     public int GetPlayerLap(int index)
@@ -126,7 +127,7 @@ public class Gmanager : MonoBehaviour
     public Transform test;
     public float time = 0f;
 
-    public enum State { Title, Countdown, Game, Goal, Result }
+    public enum State { Title, Countdown, Game, Goal, Result, Tutorial }
     public State state = State.Title;
     public Sprite[] NumberSprites;
 
@@ -178,7 +179,13 @@ public class Gmanager : MonoBehaviour
             else if (canHandleStateInput && state == State.Result) UpdateResultReturnInput(dt);
         }
 
-        if (state == State.Countdown && HasSpawnedCars())
+        if (state == State.Tutorial && !IsScreenTransitioning())
+        {
+            drivingTutorial?.Tick(dt);
+            if (drivingTutorial != null && drivingTutorial.AllComplete)
+                TransitionTo(State.Countdown, FinishTutorialWhenScreenCovered, CompleteGameStart);
+        }
+        else if (state == State.Countdown && HasSpawnedCars())
         {
             UpdateOnPlayUI();
             UpdateRaceCountdown(dt);
@@ -264,12 +271,12 @@ public class Gmanager : MonoBehaviour
 
     private void LateUpdate()
     {
-        bool gameplayVisualsActive = IsDrivingEnabled;
+        bool gameplayVisualsActive = state == State.Game;
         foreach (PlayerRuntime player in players)
             player?.displayRig?.RaceVisuals?.SetGameplayActive(gameplayVisualsActive);
 
         if (VManager == null) return;
-        if (!IsDrivingEnabled)
+        if (state != State.Game)
         {
             VManager.ResetDriftBoosts();
             return;
@@ -384,7 +391,7 @@ public class Gmanager : MonoBehaviour
     {
         if (state != State.Title || IsScreenTransitioning()) return;
         titlePedalReleaseTimer = 0f;
-        TransitionTo(State.Countdown, StartGameWhenScreenCovered, CompleteGameStart);
+        TransitionTo(State.Tutorial, BeginTutorialWhenScreenCovered);
     }
 
     public void ShowResult() => ShowResult(null);
@@ -435,17 +442,20 @@ public class Gmanager : MonoBehaviour
         if (state != State.Result || IsScreenTransitioning()) return;
         ScreenTransitionController primary = screenTransitions[0];
         for (int index = 1; index < screenTransitions.Length; index++)
-            screenTransitions[index]?.TryCloseResultAndTransition(State.Countdown, null);
+            screenTransitions[index]?.TryCloseResultAndTransition(State.Tutorial, null);
 
+        Action covered = () =>
+        {
+            ClearCurrentRaceObjects();
+            BeginTutorialWhenScreenCovered();
+        };
         if (primary == null)
         {
-            RetryGameWhenScreenCovered();
-            ApplyStateImmediate(State.Countdown);
-            CompleteGameStart();
+            covered();
+            ApplyStateImmediate(State.Tutorial);
             return;
         }
-
-        if (!primary.TryCloseResultAndTransition(State.Countdown, RetryGameWhenScreenCovered, CompleteGameStart))
+        if (!primary.TryCloseResultAndTransition(State.Tutorial, covered))
             Debug.LogWarning("Result close animation was ignored because another transition is active.");
     }
 
@@ -532,6 +542,21 @@ public class Gmanager : MonoBehaviour
         titleCamera.OutputChannel = (OutputChannels)(1 << player.playerIndex);
         titleCamera.ForceCameraPosition(player.titleCameraPosition, player.titleCameraRotation);
         return titleCamera;
+    }
+
+    private void BeginTutorialWhenScreenCovered()
+    {
+        state = State.Tutorial;
+        ClearRaceStatus();
+        if (drivingTutorial == null) drivingTutorial = gameObject.AddComponent<DrivingTutorialController>();
+        drivingTutorial.Begin(carPrefab, IManager, displayRigs);
+        SwitchCameraForState(State.Tutorial);
+    }
+
+    private void FinishTutorialWhenScreenCovered()
+    {
+        drivingTutorial.End();
+        StartGameWhenScreenCovered();
     }
 
     private void StartGameWhenScreenCovered()
@@ -858,15 +883,9 @@ public class Gmanager : MonoBehaviour
         Debug.Log("Two-player game reset");
     }
 
-    private void RetryGameWhenScreenCovered()
-    {
-        ClearCurrentRaceObjects();
-        StartGameWhenScreenCovered();
-        Debug.Log("Two-player race retry");
-    }
-
     private void ClearCurrentRaceObjects()
     {
+        drivingTutorial?.End();
         ResetResultPlayerInputs();
         foreach (PlayerRuntime player in players)
         {
@@ -1406,6 +1425,7 @@ public class Gmanager : MonoBehaviour
 
     private void OnDestroy()
     {
+        drivingTutorial?.End();
         if (Control == this) VManager?.ResetDriftBoosts();
         if (lapManager != null) lapManager.CarFinished -= HandleCarFinished;
         foreach (PlayerDisplayRig rig in displayRigs) rig?.Dispose();
