@@ -15,8 +15,8 @@ public sealed class CarCollisionSparks : MonoBehaviour
     [Header("壁")]
     [Tooltip("建物やバリアなど、動かない物体との接触でも火花を出します。")]
     [SerializeField] private bool wallSparksEnabled = true;
-    [Tooltip("この値以下の接触法線Yを壁として扱います。地面との接触では火花を出しません。")]
-    [SerializeField, Range(0f, 1f)] private float maximumWallNormalY = 0.65f;
+    [Tooltip("接触法線Yの絶対値がこの値未満の面を壁として扱います。接地できる坂や路面の縁では火花を出しません。")]
+    [SerializeField, Range(0f, 1f)] private float maximumWallNormalY = 0.2f;
     [Tooltip("壁をこする速さ（m/s）がこの値未満では火花を出しません。")]
     [SerializeField, Min(0f)] private float minimumWallSpeed = 3f;
 
@@ -80,7 +80,7 @@ public sealed class CarCollisionSparks : MonoBehaviour
     }
 
     /// <summary>接触法線が壁とみなせる向きかを返します。</summary>
-    public bool IsWallNormal(Vector3 normal) => Mathf.Abs(normal.y) <= maximumWallNormalY;
+    public bool IsWallNormal(Vector3 normal) => Mathf.Abs(normal.y) < Mathf.Min(maximumWallNormalY, 0.2f);
 
     private void EmitContactSparks(Collision collision)
     {

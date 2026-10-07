@@ -592,8 +592,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f3a4dc1a1f54cc69bf7eac1e442390e, type: 3}
   m_Name: CarWallCollisionResponse
   m_EditorClassIdentifier: Assembly-CSharp::CarWallCollisionResponse
-  wallBounceImpulse: 40
-  maximumWallNormalY: 0.65
+  maximumWallNormalY: 0.2
 --- !u!1001 &1531075579662938594
 PrefabInstance:
   m_ObjectHideFlags: 0

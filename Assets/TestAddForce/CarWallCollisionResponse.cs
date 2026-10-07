@@ -1,17 +1,13 @@
 using UnityEngine;
 
-/// <summary>壁への衝突時に車を停止させ、衝突面の法線方向へ一定の反発を与えます。</summary>
+/// <summary>壁への衝突時に、衝突した速さと同じ速さで衝突面の法線方向へ跳ね返します。</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody))]
 public sealed class CarWallCollisionResponse : MonoBehaviour
 {
-    [SerializeField, Min(0f)]
-    [Tooltip("壁に当たったときに衝突面の法線方向へ加える反発の大きさです。")]
-    private float wallBounceImpulse = 8f;
-
     [SerializeField, Range(0f, 1f)]
-    [Tooltip("この値以下の接触法線を壁として扱います。")]
-    private float maximumWallNormalY = 0.65f;
+    [Tooltip("接触法線Yの絶対値がこの値未満の面を壁として扱います。接地判定の下限（0.2）を超えない値にしてください。")]
+    private float maximumWallNormalY = 0.2f;
 
     private Rigidbody body;
 
@@ -27,14 +23,9 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
             return;
         }
 
-        // 衝突前の速さには依存させず、まず現在の並進速度を必ず消します。
-        body.linearVelocity = Vector3.zero;
-
-        if (wallNormal.sqrMagnitude > 0.0001f)
-        {
-            // 車体の向きではなく、実際にぶつかった面の法線方向へ押し出します。
-            body.AddForce(wallNormal.normalized * wallBounceImpulse, ForceMode.Impulse);
-        }
+        // 物理エンジンが衝突を解決した後の速度ではなく、衝突時の速さを使います。
+        float impactSpeed = collision.relativeVelocity.magnitude;
+        body.linearVelocity = wallNormal.normalized * impactSpeed;
     }
 
     private bool TryGetWallNormal(Collision collision, out Vector3 wallNormal)
@@ -58,7 +49,8 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
         for (int index = 0; index < collision.contactCount; index++)
         {
             Vector3 contactNormal = collision.GetContact(index).normal;
-            if (Mathf.Abs(contactNormal.y) <= maximumWallNormalY)
+            // 坂や路面の縁では法線が斜めを向くため、接地できる面を壁判定に含めません。
+            if (Mathf.Abs(contactNormal.y) < Mathf.Min(maximumWallNormalY, 0.2f))
             {
                 wallNormal += contactNormal;
             }
