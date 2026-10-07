@@ -73,7 +73,10 @@ public class TireForce : MonoBehaviour
         Vector3 groundNormal = groundCheck.GroundHit.normal;
         Vector3 tireForward = GetTireForward(vehicleForward, vehicleUp, groundNormal, steeringAngle);
         Vector3 tireRight = Vector3.Cross(groundNormal, tireForward).normalized;
-        Vector3 tirePosition = transform.position;
+        // タイヤの前後・左右位置は保ち、力点を路面に平行な重心の平面へ移します。
+        // 操舵の旋回トルクは残し、傾いたタイヤへの駆動・横力で車体をひっくり返しません。
+        Vector3 tirePosition = carRb.worldCenterOfMass +
+            Vector3.ProjectOnPlane(transform.position - carRb.worldCenterOfMass, groundNormal);
         Vector3 pointVelocity = carRb.GetPointVelocity(tirePosition);
 
         if (enableLateralForce)

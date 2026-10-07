@@ -1,0 +1,517 @@
+{
+    "trials": [
+        {
+            "name": "east-6-up",
+            "maxTilt": 54.10060119628906,
+            "maxAirTilt": 52.34695816040039,
+            "maxAngularSpeed": 4.6271586418151859,
+            "airSeconds": 1.279999017715454,
+            "finalTilt": 0.0,
+            "finalSpeed": 13.773736953735352,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 2.361983060836792,
+            "landingTilt": 53.48571014404297,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 666.5634765625,
+                "y": 0.3479614555835724,
+                "z": 556.173095703125
+            }
+        },
+        {
+            "name": "east-6-down",
+            "maxTilt": 174.5902099609375,
+            "maxAirTilt": 174.5902099609375,
+            "maxAngularSpeed": 5.298967361450195,
+            "airSeconds": 1.0799992084503174,
+            "finalTilt": 0.0,
+            "finalSpeed": 21.02698516845703,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 12.334030151367188,
+            "landingTilt": 92.2396469116211,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 674.708740234375,
+                "y": -14.652017593383789,
+                "z": 486.9202880859375
+            }
+        },
+        {
+            "name": "east-15-up",
+            "maxTilt": 178.85653686523438,
+            "maxAirTilt": 178.85653686523438,
+            "maxAngularSpeed": 4.503203392028809,
+            "airSeconds": 1.5199987888336182,
+            "finalTilt": 0.0,
+            "finalSpeed": 16.651166915893556,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 4.934195041656494,
+            "landingTilt": 94.50102996826172,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 669.3662109375,
+                "y": 0.3479774594306946,
+                "z": 551.5733032226563
+            }
+        },
+        {
+            "name": "east-15-down",
+            "maxTilt": 53.95022201538086,
+            "maxAirTilt": 51.25360107421875,
+            "maxAngularSpeed": 4.607645511627197,
+            "airSeconds": 0.9599992632865906,
+            "finalTilt": 0.0,
+            "finalSpeed": 28.376827239990236,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 0.09691329300403595,
+            "landingTilt": 52.030155181884769,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 668.1580810546875,
+                "y": -14.652042388916016,
+                "z": 452.0223388671875
+            }
+        },
+        {
+            "name": "east-25-up",
+            "maxTilt": 180.0,
+            "maxAirTilt": 177.1285400390625,
+            "maxAngularSpeed": 2.61383318901062,
+            "airSeconds": 1.5999987125396729,
+            "finalTilt": 157.42010498046876,
+            "finalSpeed": 13.695038795471192,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 174.79635620117188,
+            "landingTilt": 177.94290161132813,
+            "landed": true,
+            "groundedWheels": 0,
+            "finalPosition": {
+                "x": 667.0540771484375,
+                "y": 0.33827441930770876,
+                "z": 518.5115966796875
+            }
+        },
+        {
+            "name": "east-25-down",
+            "maxTilt": 77.91947937011719,
+            "maxAirTilt": 76.10559844970703,
+            "maxAngularSpeed": 5.536985874176025,
+            "airSeconds": 1.1199991703033448,
+            "finalTilt": 0.0,
+            "finalSpeed": 27.13054656982422,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 1.7868460416793824,
+            "landingTilt": 77.32042694091797,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 669.6547241210938,
+                "y": -14.6520414352417,
+                "z": 447.9842529296875
+            }
+        },
+        {
+            "name": "west-6-up",
+            "maxTilt": 45.327354431152347,
+            "maxAirTilt": 43.725162506103519,
+            "maxAngularSpeed": 4.243589878082275,
+            "airSeconds": 1.3199989795684815,
+            "finalTilt": 0.0,
+            "finalSpeed": 20.32379150390625,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 4.342710971832275,
+            "landingTilt": 44.71786880493164,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 280.0972595214844,
+                "y": 0.3479986786842346,
+                "z": 562.5236206054688
+            }
+        },
+        {
+            "name": "west-6-down",
+            "maxTilt": 178.49871826171876,
+            "maxAirTilt": 178.49871826171876,
+            "maxAngularSpeed": 5.22218656539917,
+            "airSeconds": 1.0799992084503174,
+            "finalTilt": 0.0,
+            "finalSpeed": 20.89271354675293,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 7.539836406707764,
+            "landingTilt": 92.72987365722656,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 274.83514404296877,
+                "y": -14.652010917663575,
+                "z": 486.8041687011719
+            }
+        },
+        {
+            "name": "west-15-up",
+            "maxTilt": 35.860374450683597,
+            "maxAirTilt": 34.34904098510742,
+            "maxAngularSpeed": 3.9118125438690187,
+            "airSeconds": 1.3399989604949952,
+            "finalTilt": 0.0,
+            "finalSpeed": 22.232398986816408,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 0.2398483157157898,
+            "landingTilt": 35.19844436645508,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 278.4236755371094,
+                "y": 0.34800705313682558,
+                "z": 567.4767456054688
+            }
+        },
+        {
+            "name": "west-15-down",
+            "maxTilt": 53.9502067565918,
+            "maxAirTilt": 51.253578186035159,
+            "maxAngularSpeed": 4.607954025268555,
+            "airSeconds": 0.9599992632865906,
+            "finalTilt": 0.0,
+            "finalSpeed": 28.376867294311525,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 0.15450507402420045,
+            "landingTilt": 52.03013610839844,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 277.8351135253906,
+                "y": -14.652042388916016,
+                "z": 452.022216796875
+            }
+        },
+        {
+            "name": "west-25-up",
+            "maxTilt": 51.73887252807617,
+            "maxAirTilt": 49.6876335144043,
+            "maxAngularSpeed": 4.536243438720703,
+            "airSeconds": 1.1399991512298585,
+            "finalTilt": 0.0,
+            "finalSpeed": 22.94068145751953,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 2.725700855255127,
+            "landingTilt": 50.89954376220703,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 276.6932067871094,
+                "y": 0.34800732135772707,
+                "z": 571.3878784179688
+            }
+        },
+        {
+            "name": "west-25-down",
+            "maxTilt": 77.87911224365235,
+            "maxAirTilt": 76.06605529785156,
+            "maxAngularSpeed": 5.567451477050781,
+            "airSeconds": 1.1199991703033448,
+            "finalTilt": 0.0,
+            "finalSpeed": 28.130260467529298,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 3.0002224445343019,
+            "landingTilt": 77.28023529052735,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 275.33984375,
+                "y": -14.652000427246094,
+                "z": 443.6169128417969
+            }
+        },
+        {
+            "name": "hover-no-contact",
+            "maxTilt": 0.0,
+            "maxAirTilt": 0.0,
+            "maxAngularSpeed": 0.0,
+            "airSeconds": 0.0,
+            "finalTilt": 0.0,
+            "finalSpeed": 7.2623820304870609,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 0.0,
+            "landingTilt": 0.0,
+            "landed": false,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1500.0,
+                "y": 50.86000061035156,
+                "z": 1501.0411376953125
+            }
+        },
+        {
+            "name": "jump--25-20-pedal-1",
+            "maxTilt": 180.0,
+            "maxAirTilt": 147.77513122558595,
+            "maxAngularSpeed": 6.536684513092041,
+            "airSeconds": 1.2999989986419678,
+            "finalTilt": 180.0,
+            "finalSpeed": 27.49661636352539,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 119.55970001220703,
+            "landingTilt": 148.43309020996095,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1538.262451171875,
+                "y": 50.3480339050293,
+                "z": 1489.4052734375
+            }
+        },
+        {
+            "name": "jump--25-20-pedal--1",
+            "maxTilt": 172.93283081054688,
+            "maxAirTilt": 147.77513122558595,
+            "maxAngularSpeed": 6.582334041595459,
+            "airSeconds": 1.2999989986419678,
+            "finalTilt": 0.0,
+            "finalSpeed": 12.623696327209473,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 62.69839096069336,
+            "landingTilt": 148.43309020996095,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1500.2633056640625,
+                "y": 50.347965240478519,
+                "z": 1510.76904296875
+            }
+        },
+        {
+            "name": "jump-40--35-pedal-1",
+            "maxTilt": 180.0,
+            "maxAirTilt": 129.2091064453125,
+            "maxAngularSpeed": 5.63613748550415,
+            "airSeconds": 1.2999989986419678,
+            "finalTilt": 180.0,
+            "finalSpeed": 26.30486297607422,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 42.57450866699219,
+            "landingTilt": 128.84681701660157,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1526.7454833984375,
+                "y": 50.34811019897461,
+                "z": 1540.2132568359375
+            }
+        },
+        {
+            "name": "jump-40--35-pedal--1",
+            "maxTilt": 180.0,
+            "maxAirTilt": 129.2091064453125,
+            "maxAngularSpeed": 5.63613748550415,
+            "airSeconds": 1.2999989986419678,
+            "finalTilt": 180.0,
+            "finalSpeed": 25.01898956298828,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 40.21711349487305,
+            "landingTilt": 128.84681701660157,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1480.6236572265625,
+                "y": 50.348106384277347,
+                "z": 1488.254638671875
+            }
+        },
+        {
+            "name": "jump-0-180-pedal-1",
+            "maxTilt": 180.0,
+            "maxAirTilt": 180.0,
+            "maxAngularSpeed": 6.293447494506836,
+            "airSeconds": 1.3599989414215088,
+            "finalTilt": 0.0,
+            "finalSpeed": 27.722522735595704,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 105.37407684326172,
+            "landingTilt": 8.232514381408692,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1543.8297119140625,
+                "y": 50.347999572753909,
+                "z": 1499.239013671875
+            }
+        },
+        {
+            "name": "jump-0-180-pedal--1",
+            "maxTilt": 180.0,
+            "maxAirTilt": 180.0,
+            "maxAngularSpeed": 6.39239501953125,
+            "airSeconds": 1.3599989414215088,
+            "finalTilt": 0.0,
+            "finalSpeed": 27.533727645874025,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 105.55242156982422,
+            "landingTilt": 8.232514381408692,
+            "landed": true,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1457.4539794921875,
+                "y": 50.34799575805664,
+                "z": 1523.1461181640625
+            }
+        },
+        {
+            "name": "inverted-assist-off-0",
+            "maxTilt": 180.0,
+            "maxAirTilt": 0.0,
+            "maxAngularSpeed": 9.332816262030974e-7,
+            "airSeconds": 0.0,
+            "finalTilt": 180.0,
+            "finalSpeed": 0.000001543127950753842,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 0.0,
+            "landingTilt": 0.0,
+            "landed": false,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1500.0,
+                "y": 50.34799575805664,
+                "z": 1500.0
+            }
+        },
+        {
+            "name": "inverted-assist-off-1",
+            "maxTilt": 180.0,
+            "maxAirTilt": 0.0,
+            "maxAngularSpeed": 0.0004933514283038676,
+            "airSeconds": 0.0,
+            "finalTilt": 180.0,
+            "finalSpeed": 15.86129379272461,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 0.07661668211221695,
+            "landingTilt": 0.0,
+            "landed": false,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1499.991943359375,
+                "y": 50.347991943359378,
+                "z": 1508.8819580078125
+            }
+        },
+        {
+            "name": "inverted-assist-off--1",
+            "maxTilt": 180.0,
+            "maxAirTilt": 0.0,
+            "maxAngularSpeed": 0.0006245606928132474,
+            "airSeconds": 0.0,
+            "finalTilt": 180.0,
+            "finalSpeed": 15.861330032348633,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 0.06255725771188736,
+            "landingTilt": 0.0,
+            "landed": false,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1500.005615234375,
+                "y": 50.34797286987305,
+                "z": 1491.1180419921875
+            }
+        },
+        {
+            "name": "inverted-recovery-0",
+            "maxTilt": 180.0,
+            "maxAirTilt": 0.0,
+            "maxAngularSpeed": 0.00004800001988769509,
+            "airSeconds": 0.0,
+            "finalTilt": 180.0,
+            "finalSpeed": 0.0000015773580344102812,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 0.0,
+            "landingTilt": 0.0,
+            "landed": false,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1500.0,
+                "y": 50.34799575805664,
+                "z": 1500.0
+            }
+        },
+        {
+            "name": "inverted-recovery--1",
+            "maxTilt": 180.0,
+            "maxAirTilt": 0.0,
+            "maxAngularSpeed": 0.006418944336473942,
+            "airSeconds": 0.0,
+            "finalTilt": 180.0,
+            "finalSpeed": 31.870458602905275,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 0.16668903827667237,
+            "landingTilt": 0.0,
+            "landed": false,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1500.15771484375,
+                "y": 50.34815979003906,
+                "z": 1412.4866943359375
+            }
+        },
+        {
+            "name": "flat-steering-1",
+            "maxTilt": 0.0,
+            "maxAirTilt": 0.0,
+            "maxAngularSpeed": 0.9833182096481323,
+            "airSeconds": 0.0,
+            "finalTilt": 0.0,
+            "finalSpeed": 21.306333541870118,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 88.49790954589844,
+            "landingTilt": 0.0,
+            "landed": false,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1519.00830078125,
+                "y": 50.347965240478519,
+                "z": 1514.9818115234375
+            }
+        },
+        {
+            "name": "flat-steering--1",
+            "maxTilt": 0.0,
+            "maxAirTilt": 0.0,
+            "maxAngularSpeed": 1.0752030611038209,
+            "airSeconds": 0.0,
+            "finalTilt": 0.0,
+            "finalSpeed": 21.209514617919923,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 94.74547576904297,
+            "landingTilt": 0.0,
+            "landed": false,
+            "groundedWheels": 4,
+            "finalPosition": {
+                "x": 1517.1611328125,
+                "y": 50.34798812866211,
+                "z": 1483.998291015625
+            }
+        },
+        {
+            "name": "air-yaw",
+            "maxTilt": 0.0,
+            "maxAirTilt": 0.0,
+            "maxAngularSpeed": 1.0,
+            "airSeconds": 0.5199996829032898,
+            "finalTilt": 0.0,
+            "finalSpeed": 7.499995708465576,
+            "maxDriveWhileAirborne": 0.0,
+            "yawChange": 28.278423309326173,
+            "landingTilt": 0.0,
+            "landed": false,
+            "groundedWheels": 0,
+            "finalPosition": {
+                "x": 1500.0,
+                "y": 128.41000366210938,
+                "z": 1500.0
+            }
+        }
+    ]
+}
