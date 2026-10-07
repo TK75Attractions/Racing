@@ -192,8 +192,14 @@ public static class ModernUIValidation
         Require(Text(card,"ResultMenu/Option1/Label")=="もう一度" && Text(card,"ResultMenu/Option2/Label")=="メインメニュー","Result action labels are wrong.");
         foreach(RacingMenuButton button in card.Find("ResultMenu").GetComponentsInChildren<RacingMenuButton>(true))
             Require(button.targetGraphic.enabled && button.targetGraphic.raycastTarget,"Result action has no pointer hit target.");
-        session.GetPlayerResult(1).didFinish=false;results.ShowResults(session);
+        session.GetPlayerResult(1).didFinish=false;
+        session.GetPlayerResult(1).finalLapTime=3.5f;
+        session.GetPlayerResult(1).carName="Player2_Car";
+        results.ShowResults(session);
         Require(Text(card,"ResultRow2/Time")=="DNF" && Text(card,"PlacementRibbon/Ordinal")=="DNF" && !card.Find("Medal/Artwork").gameObject.activeSelf,"DNF must not award a finish medal.");
+        Require(Text(card,"ResultRow2/Rank")=="—" && Text(card,"RaceSummary/Last")=="--'--.---" && Text(card,"ResultRow2/CarName")=="SPORT CAR", "DNF must not display a finish rank, unfinished lap time or internal vehicle name.");
+        session.GetPlayerResult(0).didFinish=false;results.ShowResults(session);
+        Require(!Text(card,"Winner").Contains("優勝"), "A race with two DNF records must not declare a winner.");
     }
 
     [MenuItem("Racing/UI/Preview HUD")]

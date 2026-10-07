@@ -27,6 +27,7 @@ public class Gmanager : MonoBehaviour
         public int resultSelection;
         public float resultConfirmTimer;
         public bool resultSteeringLatch;
+        public bool resultConfirmArmed;
         public bool returnedToTitle;
         public PlayerDriveInputGate inputGate;
         public InterruptionMenuUI interruptionMenu;
@@ -197,6 +198,10 @@ public class Gmanager : MonoBehaviour
             UpdateRaceLightning();
             UpdateSecondPlaceTimeout(dt);
             UpdateGoMessage(dt);
+        }
+        else if (state == State.Goal && !IsScreenTransitioning())
+        {
+            ShowResultsAfterGoal();
         }
 
 #if UNITY_EDITOR
@@ -442,20 +447,21 @@ public class Gmanager : MonoBehaviour
         if (state != State.Result || IsScreenTransitioning()) return;
         ScreenTransitionController primary = screenTransitions[0];
         for (int index = 1; index < screenTransitions.Length; index++)
-            screenTransitions[index]?.TryCloseResultAndTransition(State.Tutorial, null);
+            screenTransitions[index]?.TryCloseResultAndTransition(State.Countdown, null);
 
         Action covered = () =>
         {
             ClearCurrentRaceObjects();
-            BeginTutorialWhenScreenCovered();
+            StartGameWhenScreenCovered();
         };
         if (primary == null)
         {
             covered();
-            ApplyStateImmediate(State.Tutorial);
+            ApplyStateImmediate(State.Countdown);
+            CompleteGameStart();
             return;
         }
-        if (!primary.TryCloseResultAndTransition(State.Tutorial, covered))
+        if (!primary.TryCloseResultAndTransition(State.Countdown, covered, CompleteGameStart))
             Debug.LogWarning("Result close animation was ignored because another transition is active.");
     }
 
@@ -732,7 +738,7 @@ public class Gmanager : MonoBehaviour
     {
         if (state != State.Game || finishedRigidbody == null || result == null) return;
         PlayerRuntime player = FindPlayer(finishedRigidbody);
-        if (player == null || player.result != null) return;
+        if (player == null || player.result != null || player.withdrewFromRace) return;
 
         RaceFinishRegistration registration = raceSession.RegisterFinish(player.playerIndex, result);
         if (registration == RaceFinishRegistration.Ignored) return;
@@ -843,10 +849,13 @@ public class Gmanager : MonoBehaviour
 
     private void BeginSpectating(int finishedPlayerIndex)
     {
+        // A late goal callback must not replace a result screen after timeout/withdrawal.
+        if (state != State.Game) return;
         if (finishedPlayerIndex < 0 || finishedPlayerIndex >= players.Length) return;
         int watchedPlayerIndex = 1 - finishedPlayerIndex;
         PlayerRuntime finished = players[finishedPlayerIndex];
         PlayerRuntime watched = players[watchedPlayerIndex];
+        if (watched?.result != null || watched?.withdrewFromRace == true) return;
         if (finished?.displayRig?.RaceCamera == null || watched?.displayRig?.RaceCamera == null) return;
 
         finished.displayRig.RaceCamera.Follow = watched.displayRig.RaceCamera.Follow;
@@ -858,7 +867,7 @@ public class Gmanager : MonoBehaviour
 
     private void ShowResultsAfterGoal()
     {
-        if (state != State.Goal)
+        if (state != State.Goal || IsScreenTransitioning())
         {
             return;
         }
@@ -1013,11 +1022,17 @@ public class Gmanager : MonoBehaviour
     {
         if (state != State.Game || playerIndex < 0 || playerIndex >= players.Length) return;
         PlayerRuntime player = players[playerIndex];
-        if (player?.car == null) return;
+        if (player?.car == null || player.result != null || player.withdrewFromRace) return;
+        RaceResultRecord result = CreateFallbackResult(playerIndex, false, 2);
+        if (raceSession == null || !raceSession.RegisterWithdrawal(playerIndex, result)) return;
         player.withdrewFromRace = true;
+        player.result = result;
+        latestSessionResult = raceSession.Result;
         player.inputGate?.SetBlocked(true);
         player.interruptionMenu?.Hide();
-        FreezePlayer(player, disableCollisions: false);
+        FreezePlayer(player, disableCollisions: true);
+        if (raceSession.IsComplete) CompleteRace(latestSessionResult, null);
+        else BeginSpectating(playerIndex);
         Debug.Log($"P{playerIndex + 1} interrupted the race.");
     }
 
@@ -1225,6 +1240,15 @@ public class Gmanager : MonoBehaviour
             {
                 player.resultSteeringLatch = false;
             }
+            // Finishing with the pedal down must never confirm the default retry option.
+            if (!player.resultConfirmArmed)
+            {
+                player.resultConfirmArmed = Mathf.Abs(input.pedal) <= 0.05f;
+                player.resultConfirmTimer = 0f;
+                resultUIManagers[index]?.SetMenuState(player.resultSelection, 0f);
+                resultUIManagers[index]?.SetPedalConfirmationReady(player.resultConfirmArmed);
+                continue;
+            }
             player.resultConfirmTimer = input.pedal > resultReturnPedalThreshold ? player.resultConfirmTimer + dt : 0f;
             resultUIManagers[index]?.SetMenuState(player.resultSelection, Mathf.Clamp01(player.resultConfirmTimer / Mathf.Max(.01f,resultReturnHoldSeconds)));
             if (player.resultConfirmTimer < Mathf.Max(0.01f, resultReturnHoldSeconds)) continue;
@@ -1242,6 +1266,7 @@ public class Gmanager : MonoBehaviour
             player.resultSelection = 0;
             player.resultConfirmTimer = 0f;
             player.resultSteeringLatch = false;
+            player.resultConfirmArmed = false;
             player.returnedToTitle = false;
         }
     }

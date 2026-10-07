@@ -68,6 +68,14 @@ public sealed class TwoPlayerRaceSession
         result.didFinish = true;
         Result.SetPlayerResult(playerIndex, result);
 
+        if (UnfinishedPlayerIndex < 0)
+        {
+            WaitingForSecondPlace = false;
+            SecondPlaceTimeRemaining = 0f;
+            IsComplete = true;
+            return RaceFinishRegistration.RaceComplete;
+        }
+
         if (finishedPlayerCount == 1)
         {
             WaitingForSecondPlace = true;
@@ -101,17 +109,33 @@ public sealed class TwoPlayerRaceSession
 
     public bool RegisterDnf(int playerIndex, RaceResultRecord result)
     {
-        if (!IsStarted || IsComplete || !HasTimedOut || !IsValidPlayerIndex(playerIndex) ||
+        return HasTimedOut && RecordDnf(playerIndex, result);
+    }
+
+    /// <summary>Leaving is immediately final, even when neither player has finished yet.</summary>
+    public bool RegisterWithdrawal(int playerIndex, RaceResultRecord result)
+    {
+        return RecordDnf(playerIndex, result);
+    }
+
+    private bool RecordDnf(int playerIndex, RaceResultRecord result)
+    {
+        if (!IsStarted || IsComplete || !IsValidPlayerIndex(playerIndex) ||
             result == null || Result.GetPlayerResult(playerIndex) != null)
         {
             return false;
         }
 
         result.playerNumber = playerIndex + 1;
-        result.finishPosition = 2;
+        result.finishPosition = Result.GetResultAtPosition(2) == null ? 2 : 1;
         result.didFinish = false;
         Result.SetPlayerResult(playerIndex, result);
-        IsComplete = true;
+        IsComplete = UnfinishedPlayerIndex < 0;
+        if (IsComplete)
+        {
+            WaitingForSecondPlace = false;
+            SecondPlaceTimeRemaining = 0f;
+        }
         return true;
     }
 

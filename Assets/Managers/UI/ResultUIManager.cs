@@ -12,7 +12,7 @@ public class ResultUIManager
     private readonly TMP_Text[] ranks=new TMP_Text[2],drivers=new TMP_Text[2],cars=new TMP_Text[2],times=new TMP_Text[2],gaps=new TMP_Text[2];
     private readonly RacingPanelGraphic[] rowSurfaces=new RacingPanelGraphic[2];
     private readonly RacingIconGraphic[] carIcons=new RacingIconGraphic[2];
-    private TMP_Text winnerLabel,medalNumber,ordinal,bestLap,lastLap,completedLaps;
+    private TMP_Text winnerLabel,medalNumber,ordinal,bestLap,lastLap,completedLaps,menuHint;
     private RawImage medalImage;
     private ResultMenuAnimator menuAnimator;
     public RaceResultRecord CurrentResult=>currentResult;
@@ -106,7 +106,7 @@ public class ResultUIManager
             control.Configure(button.Find("ButtonSurface").GetComponent<RacingPanelGraphic>());
             control.ConfigureHold(1f,button.name=="Option1");
         }
-        NeonUI.Text(parent,"MenuHint","ハンドルで選択 / ペダルで決定",new Vector2(.28f,.008f),new Vector2(.72f,.042f),17f,TextAlignmentOptions.Center);
+        menuHint=NeonUI.Text(parent,"MenuHint","",new Vector2(.20f,.008f),new Vector2(.80f,.042f),17f,TextAlignmentOptions.Center);
     }
     public void ShowResults()=>ShowResults((RaceResultRecord)null);
     public void ShowResults(RaceResultRecord record)
@@ -120,7 +120,7 @@ public class ResultUIManager
         currentSessionResult=session;currentResult=session?.GetResultAtPosition(1);
         float winnerTime=currentResult!=null&&currentResult.didFinish?currentResult.totalRaceTime:0f;
         for(int i=0;i<2;i++)ApplyRow(i,session?.GetResultAtPosition(i+1),winnerTime);
-        winnerLabel.text=currentResult!=null?$"PLAYER {currentResult.playerNumber}  WINNER / 優勝":"RACE COMPLETE / レース終了";
+        winnerLabel.text=currentResult!=null&&currentResult.didFinish?$"PLAYER {currentResult.playerNumber}  WINNER / 優勝":"RACE COMPLETE / レース終了";
         RaceResultRecord local=session?.GetPlayerResult(localPlayerNumber-1);
         int position=local!=null?Mathf.Clamp(local.finishPosition,1,2):localPlayerNumber;
         bool finished=local==null||local.didFinish;
@@ -140,16 +140,17 @@ public class ResultUIManager
         ordinal.text=finished?(position==1?"1ST":"2ND"):"DNF";
         completedLaps.text=finished?$"{position} 位 / FINISH": "未完走 / DID NOT FINISH";
         bestLap.text=local!=null&&local.bestLapTime>0?FormatTime(local.bestLapTime):"--'--.---";
-        lastLap.text=local!=null&&local.finalLapTime>0?FormatTime(local.finalLapTime):"--'--.---";
+        lastLap.text=local!=null&&local.didFinish&&local.finalLapTime>0?FormatTime(local.finalLapTime):"--'--.---";
         SetMenuState(0,0);
+        SetPedalConfirmationReady(false);
     }
     private void ApplyRow(int index,RaceResultRecord result,float winnerTime)
     {
         bool local=result!=null&&result.playerNumber==localPlayerNumber;
         rowSurfaces[index].Configure(local?RacingPanelGraphic.SurfaceStyle.Primary:RacingPanelGraphic.SurfaceStyle.Panel,local?NeonUI.Pink:NeonUI.Cyan);
-        ranks[index].text=result!=null?(index+1).ToString():"—";
+        ranks[index].text=result!=null&&result.didFinish?(index+1).ToString():"—";
         drivers[index].text=result!=null?"プレイヤー "+result.playerNumber:"—";
-        cars[index].text=result!=null?(string.IsNullOrEmpty(result.carName)?"SPORT CAR":result.carName):"";
+        cars[index].text=result!=null?(string.IsNullOrEmpty(result.carName)||result.carName==$"Player{result.playerNumber}_Car"?"SPORT CAR":result.carName):"";
         carIcons[index].gameObject.SetActive(result!=null);
         if(result!=null)carIcons[index].color=Color.Lerp(PlayerCarPaint.GetPlayerColor(result.playerNumber-1),Color.white,.3f);
         times[index].text=result==null?"—":result.didFinish?FormatTime(result.totalRaceTime):"DNF";
@@ -158,6 +159,12 @@ public class ResultUIManager
         gaps[index].color=local?new Color(1,.62f,.78f):new Color(.74f,.80f,.95f);
     }
     public void SetMenuState(int selectedIndex,float amount)=>menuAnimator?.SetState(selectedIndex,amount);
+    public void SetPedalConfirmationReady(bool ready)
+    {
+        if (menuHint != null) menuHint.text = ready
+            ? "ハンドルで選択 / ペダルを 1 秒踏んで決定"
+            : "まずペダルから足を離してください / ハンドルで選択";
+    }
     public void PlayConfirm(int selectedIndex)=>menuAnimator?.PlayConfirm(selectedIndex);
     public void HideResults(){currentResult=null;currentSessionResult=null;SetMenuState(0,0);}
     private static string FormatTime(float time)=>$"{Mathf.FloorToInt(time/60f)}'{Mathf.FloorToInt(time%60f):00}.{Mathf.FloorToInt(time*1000f)%1000:000}";
