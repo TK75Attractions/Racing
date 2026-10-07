@@ -136,7 +136,9 @@ public static class VisualEffectsValidation
         {
             CarCollisionSparks sparks = car.AddComponent<CarCollisionSparks>();
             Require(sparks.IsWallNormal(Vector3.right), "A vertical surface must count as a wall.");
-            Require(sparks.IsWallNormal(new Vector3(1f, 0.5f, 0f).normalized), "A steep surface must count as a wall.");
+            Require(!sparks.IsWallNormal(new Vector3(1f, 0.5f, 0f).normalized), "A driveable steep slope must not count as a wall.");
+            Require(!sparks.IsWallNormal(new Vector3(0f, 0.62f, -0.78f).normalized),
+                "A ramp crest must not trigger wall sparks or camera shake.");
             Require(!sparks.IsWallNormal(Vector3.up), "The ground must never make wall sparks.");
             Require(!sparks.IsWallNormal(new Vector3(0.3f, 1f, 0f).normalized), "A gentle slope must not count as a wall.");
 
