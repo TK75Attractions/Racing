@@ -126,7 +126,17 @@ public static class DrivingTutorialValidation
             {
                 DrivingTutorialRoad.Sample(distance, out Vector3 center, out _);
                 Vector3 origin = course.position + center + Vector3.up * 4f;
-                Require(Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 8f), "Missing road contact.");
+                // The production car now has a chassis collider above the road at its spawn.
+                // Check the nearest static surface so a car cannot hide a road seam or gap.
+                RaycastHit hit = default;
+                float nearest = float.PositiveInfinity;
+                foreach (RaycastHit candidate in Physics.RaycastAll(origin, Vector3.down, 8f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    if (candidate.collider.attachedRigidbody != null || candidate.distance >= nearest) continue;
+                    hit = candidate;
+                    nearest = candidate.distance;
+                }
+                Require(hit.collider != null, "Missing road contact.");
                 Require(hit.collider == floor, "Road centerline has an unexpected contact seam.");
                 Require(Mathf.Abs(hit.point.y - course.position.y) < .001f, "Uneven road height.");
             }
