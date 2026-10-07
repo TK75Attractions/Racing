@@ -364,13 +364,12 @@ public class LapManager : MonoBehaviour
 
     private void UpdateCourseState(CarTimeData data, float dt)
     {
-        if (raceCourse == null || !respawnWhenOffCourse)
+        if (raceCourse == null || !raceCourse.HasValidPath)
         {
             return;
         }
 
-        Vector2 carPoint = new Vector2(data.rb.position.x, data.rb.position.z);
-        if (raceCourse.IsPointInsideCourse(carPoint))
+        if (raceCourse.IsPointInsideCourse(data.rb.position))
         {
             data.isOffCourse = false;
             data.offCourseTimer = 0f;
@@ -388,7 +387,7 @@ public class LapManager : MonoBehaviour
         data.isOffCourse = true;
         data.offCourseTimer += dt;
 
-        if (data.offCourseTimer >= Mathf.Max(0.1f, offCourseRespawnDelay))
+        if (respawnWhenOffCourse && data.offCourseTimer >= Mathf.Max(0.1f, offCourseRespawnDelay))
         {
             RespawnCar(data);
         }

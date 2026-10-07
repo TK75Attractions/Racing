@@ -202,7 +202,7 @@ public class Gmanager : MonoBehaviour
 #if UNITY_EDITOR
         if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame && course != null && test != null)
         {
-            Debug.Log(course.IsPointInsideCourse(new Vector2(test.position.x, test.position.z)));
+            Debug.Log(course.IsPointInsideCourse(test.position));
         }
 #endif
     }
