@@ -16,18 +16,24 @@ public class CarStabilityController : MonoBehaviour
     [Tooltip("空中の縦・横回転を抑える係数。旋回の回転は残します。")]
     [SerializeField, Min(0f)] private float airborneAngularDamping = 6f;
 
+    [Tooltip("車体が裏返って地面に乗った場合だけ、広い車体コライダーを起こすトルクを増やします。")]
+    [SerializeField, Range(1f, 5f)] private float overturnedRecoveryMultiplier = 3f;
+
     [Header("Runtime Toggle")]
     [Tooltip("空中・接地中の姿勢補助を適用するか。プレイ中の原因切り分け用。")]
     [SerializeField] private bool enableUprightAssist = true;
 
     private Rigidbody rb;
     private GroundCheck[] tireGroundChecks;
+    private Collider[] bodyColliders;
+    private bool overturnedRecoveryActive;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         rb.centerOfMass = centerOfMass;
         RefreshTireGroundChecks();
+        bodyColliders = GetComponentsInChildren<Collider>();
     }
 
     private void FixedUpdate()
@@ -52,13 +58,34 @@ public class CarStabilityController : MonoBehaviour
                 uprightAxis = Vector3.ProjectOnPlane(rb.rotation * Vector3.right, targetUp);
         }
 
-        float strength = grounded ? uprightStrength : airborneUprightStrength;
+        float upDot = Vector3.Dot(vehicleUp, Vector3.up);
+        bool supportedOverturn = !grounded && upDot < 0.5f &&
+            (overturnedRecoveryActive || upDot < -0.5f) && IsBodySupported();
+        overturnedRecoveryActive = supportedOverturn;
+        float recovery = supportedOverturn ? overturnedRecoveryMultiplier : 1f;
+        float strength = (grounded ? uprightStrength : airborneUprightStrength) * recovery;
         float damping = grounded ? angularDamping : airborneAngularDamping;
         Vector3 correction = uprightAxis.normalized * (tiltAngle * Mathf.Deg2Rad * strength * assist);
         // 路面法線まわりの旋回は保ち、離陸時の回転がそのまま転倒へ育つのを防ぎます。
         Vector3 rollPitchVelocity = Vector3.ProjectOnPlane(rb.angularVelocity, targetUp);
         Vector3 torque = correction - rollPitchVelocity * damping;
-        rb.AddTorque(Vector3.ClampMagnitude(torque, Mathf.Max(0f, maxUprightTorque)), ForceMode.Acceleration);
+        rb.AddTorque(Vector3.ClampMagnitude(torque, Mathf.Max(0f, maxUprightTorque) * recovery), ForceMode.Acceleration);
+    }
+
+    private bool IsBodySupported()
+    {
+        // 空中では強さを変えず、車体コライダーが地面に乗った裏返し状態だけを補助します。
+        float lowest = float.MaxValue;
+        foreach (Collider collider in bodyColliders)
+            if (collider != null && collider.enabled && !collider.isTrigger && collider.attachedRigidbody == rb)
+                lowest = Mathf.Min(lowest, collider.bounds.min.y);
+        if (lowest == float.MaxValue) return false;
+        Vector3 origin = rb.worldCenterOfMass + Vector3.up * 0.02f;
+        float distance = Mathf.Max(0f, origin.y - lowest) + 0.08f;
+        foreach (RaycastHit hit in Physics.RaycastAll(origin, Vector3.down, distance, ~0, QueryTriggerInteraction.Ignore))
+            if (hit.collider != null && hit.collider.attachedRigidbody != rb && hit.normal.y >= 0.2f &&
+                (hit.collider.attachedRigidbody == null || hit.collider.attachedRigidbody.isKinematic)) return true;
+        return false;
     }
 
     private bool TryGetGroundNormal(out Vector3 normal)
