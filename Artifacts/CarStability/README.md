@@ -4,6 +4,7 @@ Measured on 2026-10-07 with Unity 6000.3.9f1. The current `codex/fix-course-cres
 
 - `before.json`: final validation harness with the original stability, ground check and tire force scripts.
 - `after.json`: same scene, assets and harness with the corrected scripts.
+- `main.json`: corrected scripts on main's original scene and settings; excludes the new FBX and passes all 15 vehicle cases on the temporary landing surface.
 
 The branch measurements use its existing gravity of -15 m/s². main retains -9.81 m/s². All trials use real Play Mode physics and the spawned player car. The twelve ramp trials use the actual new course colliders. Controlled landing trials use a temporary flat BoxCollider and disable `LapManager` to prevent off-course respawns from contaminating the measurement. No test scene is saved.
 
