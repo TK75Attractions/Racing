@@ -1,16 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Antialiased speed arc; no raster dial, needle sprite or per-frame allocations.</summary>
+/// <summary>Semicircular 50-segment speed arc; rebuilds only when visible lighting changes.</summary>
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class RacingSpeedGauge : MaskableGraphic
 {
-    private float speed;
+    private const int Segments = 50;
+    private int litSegments;
     public void SetSpeed(float value)
     {
-        float next = Mathf.Clamp01(value / 180f);
-        if (Mathf.Abs(next - speed) < 0.001f) return;
-        speed = next;
+        // The original i + .12 threshold determines exactly which segments are visible.
+        int next = Mathf.Clamp(Mathf.CeilToInt(Mathf.Clamp01(value / 180f) * Segments - .12f), 0, Segments);
+        if (next == litSegments) return;
+        litSegments = next;
         SetVerticesDirty();
     }
     protected override void OnEnable() { base.OnEnable(); raycastTarget = false; }
@@ -18,27 +20,31 @@ public sealed class RacingSpeedGauge : MaskableGraphic
     {
         vh.Clear();
         Rect r = rectTransform.rect;
-        float radius = Mathf.Min(r.width * 0.45f, r.height * 0.78f);
-        Vector2 center = new Vector2(r.center.x, r.yMin + r.height * 0.22f);
-        float aa = 1f / Mathf.Max(0.1f, canvas != null ? canvas.scaleFactor : 1f);
-        for (int i = 0; i < 41; i++)
+        float radius = Mathf.Min(r.width * .47f, r.height * .92f);
+        Vector2 center = new Vector2(r.center.x, r.yMin + r.height * .035f);
+        float aa = 1f / Mathf.Max(.1f, canvas != null ? canvas.scaleFactor : 1f);
+        for (int i = 0; i < Segments; i++)
         {
-            float t = i / 40f;
-            Vector2 d = Direction(t);
-            bool filled = speed > 0f && t <= speed;
-            Color tint = filled ? (t > 0.8f ? RacingUITheme.Gold : RacingUITheme.Cyan) : new Color(0.28f, 0.39f, 0.48f, 0.75f);
-            RacingPanelGraphic.Line(vh, center + d * (radius - (i % 5 == 0 ? 15f : 8f)), center + d * radius, i % 5 == 0 ? 3f : 2f, tint, aa);
+            float t0 = (i + .12f) / Segments, t1 = (i + .88f) / Segments;
+            Color tint = t0 > .60f ? NeonUI.Pink : NeonUI.Cyan;
+            tint.a = i < litSegments ? 1f : .46f;
+            RacingPanelGraphic.Line(vh, center + Direction(t0) * radius, center + Direction(t1) * radius, 10f, tint, aa);
         }
-        for (int i = 0; i < 96; i++)
+        for (int i = 0; i < 90; i++)
         {
-            float t = i / 96f;
-            Color tint = t < speed ? RacingUITheme.Cyan : new Color(0.22f, 0.34f, 0.43f, 0.4f);
-            RacingPanelGraphic.Line(vh, center + Direction(t) * (radius + 7f), center + Direction((i + 1f) / 96f) * (radius + 7f), 2.5f, tint, aa);
+            float a=i/90f,b=(i+1)/90f;
+            RacingPanelGraphic.Line(vh,center+Direction(a)*(radius+11f),center+Direction(b)*(radius+11f),2f,a>.60f?NeonUI.Pink:NeonUI.Cyan,aa);
+        }
+        for (int i = 0; i <= 20; i++)
+        {
+            Vector2 d = Direction(i / 20f);
+            RacingPanelGraphic.Line(vh, center + d * (radius - (i%2==0?22f:15f)), center + d * (radius - 12f), 1.5f,
+                new Color(.89f, .93f, 1f, .9f), aa);
         }
     }
     private static Vector2 Direction(float t)
     {
-        float angle = Mathf.Lerp(195f, -15f, t) * Mathf.Deg2Rad;
+        float angle = Mathf.Lerp(180f, 0f, t) * Mathf.Deg2Rad;
         return new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
     }
 }

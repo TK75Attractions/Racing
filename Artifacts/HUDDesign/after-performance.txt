@@ -1,0 +1,5 @@
+Unity 6000.3.9f1 / Apple M1 / 640x480
+Editor Play Mode; both display cameras forced to 1280x720 render textures; VSync off; stationary cars; 3s warmup + 5s sample per phase. Not a standalone-player FPS estimate.
+hud-on: frames=164; median frame ms=25.58; Canvas.BuildBatch=1.21ms; Main Thread=30.77ms; GC Allocated In Frame=6391.65; Draw Calls Count=368.00; Triangles Count=338788.61; GPU Frame Time=2.62ms
+hud-off: frames=172; median frame ms=28.79; Canvas.BuildBatch=0.00ms; Main Thread=29.32ms; GC Allocated In Frame=6309.73; Draw Calls Count=368.00; Triangles Count=341662.00; GPU Frame Time=2.68ms
+hud-on-repeat: frames=130; median frame ms=36.33; Canvas.BuildBatch=1.47ms; Main Thread=38.87ms; GC Allocated In Frame=6681.40; Draw Calls Count=368.00; Triangles Count=341662.02; GPU Frame Time=2.65ms

@@ -14,6 +14,7 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
     [SerializeField, Min(0f)] private float cameraHeight = 2f;
     [SerializeField, Min(0f)] private float rotationSmoothTime = 0.15f;
 
+    private float lookHeight;
     private Transform car;
     private Transform cameraTarget;
     private Transform cameraLookTarget;
@@ -36,6 +37,13 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
     {
         car = targetCar;
         EnsureCameraTarget();
+        UpdateCameraTarget(immediately: true);
+    }
+
+    /// <summary>Raise the practice view's aim to leave the car between the instrument panels and lesson strip.</summary>
+    public void SetLookHeight(float height)
+    {
+        lookHeight = Mathf.Max(0f, height);
         UpdateCameraTarget(immediately: true);
     }
 
@@ -113,7 +121,7 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
         cameraTarget.SetPositionAndRotation(cameraPosition, cameraRotation);
 
         cameraLookTarget.SetPositionAndRotation(
-            car.position,
+            car.position + Vector3.up * lookHeight,
             cameraRotation);
     }
 

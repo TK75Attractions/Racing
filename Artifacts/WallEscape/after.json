@@ -1,0 +1,388 @@
+{
+    "trials": [
+        {
+            "name": "box-6-angle-0",
+            "maxPenetration": 0.0595703125,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.019999992102384568,
+            "retreatDistance": 28.6165771484375,
+            "maxSpeed": 24.280839920043947,
+            "maxReboundSpeed": 15.293320655822754,
+            "maxTilt": 0.01978234015405178,
+            "maxForwardTravel": 7.1591796875,
+            "finalPosition": {
+                "x": 1500.030029296875,
+                "y": 50.3481559753418,
+                "z": 1477.6412353515625
+            }
+        },
+        {
+            "name": "box-6-angle-35",
+            "maxPenetration": 0.1383056640625,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.019999992102384568,
+            "retreatDistance": 27.616493225097658,
+            "maxSpeed": 24.534626007080079,
+            "maxReboundSpeed": 8.705788612365723,
+            "maxTilt": 0.10835236310958862,
+            "maxForwardTravel": 8.9690523147583,
+            "finalPosition": {
+                "x": 1498.6259765625,
+                "y": 50.34798812866211,
+                "z": 1478.1011962890625
+            }
+        },
+        {
+            "name": "box-25-angle-0",
+            "maxPenetration": 0.104248046875,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.019999992102384568,
+            "retreatDistance": 43.6160888671875,
+            "maxSpeed": 28.104148864746095,
+            "maxReboundSpeed": 26.45330238342285,
+            "maxTilt": 0.11190583556890488,
+            "maxForwardTravel": 7.2025146484375,
+            "finalPosition": {
+                "x": 1500.02685546875,
+                "y": 50.34799575805664,
+                "z": 1462.7496337890625
+            }
+        },
+        {
+            "name": "box-25-angle-35",
+            "maxPenetration": 0.254638671875,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.039999984204769137,
+            "retreatDistance": 23.287517547607423,
+            "maxSpeed": 26.855798721313478,
+            "maxReboundSpeed": 14.621389389038086,
+            "maxTilt": 0.15576636791229249,
+            "maxForwardTravel": 9.164071083068848,
+            "finalPosition": {
+                "x": 1505.513671875,
+                "y": 50.3481559753418,
+                "z": 1477.7852783203125
+            }
+        },
+        {
+            "name": "box-50-angle-0",
+            "maxPenetration": 0.0,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.0,
+            "retreatDistance": 21.260986328125,
+            "maxSpeed": 50.0,
+            "maxReboundSpeed": 48.785362243652347,
+            "maxTilt": 0.0,
+            "maxForwardTravel": 7.0992431640625,
+            "finalPosition": {
+                "x": 1499.9737548828125,
+                "y": 50.34798812866211,
+                "z": 1470.5087890625
+            }
+        },
+        {
+            "name": "box-50-angle-35",
+            "maxPenetration": 0.0169677734375,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.0,
+            "retreatDistance": 16.87796974182129,
+            "maxSpeed": 50.0,
+            "maxReboundSpeed": 16.69544219970703,
+            "maxTilt": 0.1219465583562851,
+            "maxForwardTravel": 11.272171974182129,
+            "finalPosition": {
+                "x": 1514.9156494140625,
+                "y": 50.34799575805664,
+                "z": 1480.765625
+            }
+        },
+        {
+            "name": "mesh-6-angle-0",
+            "maxPenetration": 0.20832586288452149,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.019999992102384568,
+            "retreatDistance": 29.328857421875,
+            "maxSpeed": 24.465444564819337,
+            "maxReboundSpeed": 15.529801368713379,
+            "maxTilt": 0.35221511125564577,
+            "maxForwardTravel": 7.4078369140625,
+            "finalPosition": {
+                "x": 1500.0914306640625,
+                "y": 50.34815216064453,
+                "z": 1476.9407958984375
+            }
+        },
+        {
+            "name": "mesh-6-angle-35",
+            "maxPenetration": 0.03838944435119629,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.0,
+            "retreatDistance": 28.848567962646486,
+            "maxSpeed": 24.731611251831056,
+            "maxReboundSpeed": 9.049574851989746,
+            "maxTilt": 0.4493695795536041,
+            "maxForwardTravel": 9.035077095031739,
+            "finalPosition": {
+                "x": 1496.93115234375,
+                "y": 50.34798812866211,
+                "z": 1477.8648681640625
+            }
+        },
+        {
+            "name": "mesh-25-angle-0",
+            "maxPenetration": 0.10201692581176758,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.019999992102384568,
+            "retreatDistance": 43.0235595703125,
+            "maxSpeed": 28.01270866394043,
+            "maxReboundSpeed": 26.45330238342285,
+            "maxTilt": 0.05595291033387184,
+            "maxForwardTravel": 7.30029296875,
+            "finalPosition": {
+                "x": 1500.0198974609375,
+                "y": 50.34799575805664,
+                "z": 1463.442626953125
+            }
+        },
+        {
+            "name": "mesh-25-angle-35",
+            "maxPenetration": 0.14494776725769044,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.019999992102384568,
+            "retreatDistance": 27.33163070678711,
+            "maxSpeed": 26.78968620300293,
+            "maxReboundSpeed": 9.113255500793457,
+            "maxTilt": 0.8755866885185242,
+            "maxForwardTravel": 10.62833023071289,
+            "finalPosition": {
+                "x": 1503.97216796875,
+                "y": 50.347999572753909,
+                "z": 1476.565673828125
+            }
+        },
+        {
+            "name": "mesh-50-angle-0",
+            "maxPenetration": 0.0,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.0,
+            "retreatDistance": 21.2630615234375,
+            "maxSpeed": 50.0,
+            "maxReboundSpeed": 48.78445816040039,
+            "maxTilt": 0.0,
+            "maxForwardTravel": 7.197265625,
+            "finalPosition": {
+                "x": 1499.98388671875,
+                "y": 50.3480224609375,
+                "z": 1470.6051025390625
+            }
+        },
+        {
+            "name": "mesh-50-angle-35",
+            "maxPenetration": 0.018599271774291993,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.0,
+            "retreatDistance": 17.220550537109376,
+            "maxSpeed": 50.0,
+            "maxReboundSpeed": 16.690654754638673,
+            "maxTilt": 0.02797645516693592,
+            "maxForwardTravel": 11.400437355041504,
+            "finalPosition": {
+                "x": 1514.9783935546875,
+                "y": 50.34800720214844,
+                "z": 1480.4583740234375
+            }
+        },
+        {
+            "name": "straddled-wall-reverse-10",
+            "maxPenetration": 1.2600021362304688,
+            "finalPenetration": 0.0015869140625,
+            "maxPenetrationTime": 0.1799999475479126,
+            "retreatDistance": -2.020263671875,
+            "maxSpeed": 0.18146860599517823,
+            "maxReboundSpeed": 0.0,
+            "maxTilt": 0.3946572542190552,
+            "maxForwardTravel": 2.020263671875,
+            "finalPosition": {
+                "x": 1500.0008544921875,
+                "y": 50.347774505615237,
+                "z": 1512.020263671875
+            }
+        },
+        {
+            "name": "straddled-wall-reverse-3",
+            "maxPenetration": 1.2600021362304688,
+            "finalPenetration": 0.00048828125,
+            "maxPenetrationTime": 0.1799999475479126,
+            "retreatDistance": -2.0206298828125,
+            "maxSpeed": 0.18146860599517823,
+            "maxReboundSpeed": 0.0,
+            "maxTilt": 0.3951527178287506,
+            "maxForwardTravel": 2.020751953125,
+            "finalPosition": {
+                "x": 1499.9962158203125,
+                "y": 50.348026275634769,
+                "z": 1512.0206298828125
+            }
+        },
+        {
+            "name": "post-between-wheels",
+            "maxPenetration": 0.0296630859375,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.0,
+            "retreatDistance": 29.5870361328125,
+            "maxSpeed": 24.531692504882814,
+            "maxReboundSpeed": 8.161513328552246,
+            "maxTilt": 0.01978234015405178,
+            "maxForwardTravel": 1.979248046875,
+            "finalPosition": {
+                "x": 1499.8270263671875,
+                "y": 50.34800720214844,
+                "z": 1472.3612060546875
+            }
+        },
+        {
+            "name": "two-wall-corner",
+            "maxPenetration": 0.2486572265625,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.039999984204769137,
+            "retreatDistance": 61.475563049316409,
+            "maxSpeed": 30.07517433166504,
+            "maxReboundSpeed": 27.142459869384767,
+            "maxTilt": 2.223871946334839,
+            "maxForwardTravel": 10.473069190979004,
+            "finalPosition": {
+                "x": 1451.6004638671875,
+                "y": 50.347999572753909,
+                "z": 1475.355712890625
+            }
+        },
+        {
+            "name": "Plane.017-bottom-6",
+            "maxPenetration": 0.2669677734375,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.039999984204769137,
+            "retreatDistance": 22.687685012817384,
+            "maxSpeed": 22.902851104736329,
+            "maxReboundSpeed": 18.357900619506837,
+            "maxTilt": 1.1766959428787232,
+            "maxForwardTravel": 11.851136207580567,
+            "finalPosition": {
+                "x": 680.7131958007813,
+                "y": -14.651998519897461,
+                "z": 486.1754150390625
+            }
+        },
+        {
+            "name": "Plane.017-bottom-25",
+            "maxPenetration": 0.035888671875,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.0,
+            "retreatDistance": 20.555910110473634,
+            "maxSpeed": 27.33346176147461,
+            "maxReboundSpeed": 27.33346176147461,
+            "maxTilt": 0.0,
+            "maxForwardTravel": 11.619812965393067,
+            "finalPosition": {
+                "x": 678.5623779296875,
+                "y": -14.65201187133789,
+                "z": 485.97564697265627
+            }
+        },
+        {
+            "name": "Plane.018-bottom-6",
+            "maxPenetration": 0.2828369140625,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.039999984204769137,
+            "retreatDistance": 20.788515090942384,
+            "maxSpeed": 22.678211212158204,
+            "maxReboundSpeed": 18.950021743774415,
+            "maxTilt": 1.183990478515625,
+            "maxForwardTravel": 12.976198196411133,
+            "finalPosition": {
+                "x": 657.4989624023438,
+                "y": -14.652006149291993,
+                "z": 485.8521728515625
+            }
+        },
+        {
+            "name": "Plane.018-bottom-25",
+            "maxPenetration": 0.0,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.0,
+            "retreatDistance": 21.179445266723634,
+            "maxSpeed": 27.51588249206543,
+            "maxReboundSpeed": 27.515884399414064,
+            "maxTilt": 0.0,
+            "maxForwardTravel": 12.694276809692383,
+            "finalPosition": {
+                "x": 656.9910888671875,
+                "y": -14.651997566223145,
+                "z": 485.98504638671877
+            }
+        },
+        {
+            "name": "Plane.034-bottom-6",
+            "maxPenetration": 0.297210693359375,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.039999984204769137,
+            "retreatDistance": 23.076570510864259,
+            "maxSpeed": 22.902957916259767,
+            "maxReboundSpeed": 18.358211517333986,
+            "maxTilt": 1.188115119934082,
+            "maxForwardTravel": 11.850983619689942,
+            "finalPosition": {
+                "x": 291.10205078125,
+                "y": -14.652008056640625,
+                "z": 486.1438293457031
+            }
+        },
+        {
+            "name": "Plane.034-bottom-25",
+            "maxPenetration": 0.0367431640625,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.0,
+            "retreatDistance": 19.763063430786134,
+            "maxSpeed": 27.241039276123048,
+            "maxReboundSpeed": 27.24104118347168,
+            "maxTilt": 0.03956468030810356,
+            "maxForwardTravel": 11.591523170471192,
+            "finalPosition": {
+                "x": 287.7192687988281,
+                "y": -14.651959419250489,
+                "z": 485.9806823730469
+            }
+        },
+        {
+            "name": "Plane.023-bottom-6",
+            "maxPenetration": 0.312164306640625,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.039999984204769137,
+            "retreatDistance": 21.258180618286134,
+            "maxSpeed": 22.607202529907228,
+            "maxReboundSpeed": 18.950044631958009,
+            "maxTilt": 1.204797625541687,
+            "maxForwardTravel": 12.976198196411133,
+            "finalPosition": {
+                "x": 267.1729431152344,
+                "y": -14.651998519897461,
+                "z": 485.853759765625
+            }
+        },
+        {
+            "name": "Plane.023-bottom-25",
+            "maxPenetration": 0.0,
+            "finalPenetration": 0.0,
+            "maxPenetrationTime": 0.0,
+            "retreatDistance": 21.177888870239259,
+            "maxSpeed": 27.517053604125978,
+            "maxReboundSpeed": 27.51705551147461,
+            "maxTilt": 0.0,
+            "maxForwardTravel": 12.663667678833008,
+            "finalPosition": {
+                "x": 266.9595947265625,
+                "y": -14.652021408081055,
+                "z": 485.9788818359375
+            }
+        }
+    ]
+}

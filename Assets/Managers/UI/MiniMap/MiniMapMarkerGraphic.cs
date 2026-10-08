@@ -6,6 +6,7 @@ using UnityEngine.UI;
 /// 進行方向が分かるよう、+Y方向を車の前方として組み立てます。
 /// </summary>
 [DisallowMultipleComponent]
+[RequireComponent(typeof(CanvasRenderer))]
 public sealed class MiniMapMarkerGraphic : MaskableGraphic
 {
     [SerializeField, Range(0f, 0.5f)] private float tailNotch = 0.22f;

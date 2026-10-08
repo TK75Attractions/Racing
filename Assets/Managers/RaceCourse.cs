@@ -3,246 +3,221 @@ using System.Collections.Generic;
 
 public class RaceCourse : MonoBehaviour
 {
-
     [System.Serializable]
     private class Waypoint
     {
+        // 旧シーンの position (X,Z) を保持し、高さだけを追加する。
         public Vector2 position;
-        public float curve = 0;
-        public float width = 10.0f;
+        public float height;
+        public float curve;
+        public float width = 10f;
+        public Vector3 LocalPosition => new Vector3(position.x, height, position.y);
+    }
+
+    /// <summary>装飾配置用のワールド座標、方向、幅、左右の縁。</summary>
+    public struct CourseSample
+    {
+        public Vector3 position;
+        public Vector3 forward;
+        public Vector3 right;
+        public Vector3 up;
+        public float width;
+        public Vector3 leftEdge;
+        public Vector3 rightEdge;
     }
 
     [SerializeField] private Waypoint[] waypoints;
+    [SerializeField] private bool closedLoop = true;
+    [Tooltip("コース面から上下に許容するワールド距離。車体の高さやジャンプを考慮して設定します。")]
+    [SerializeField, Min(0f)] private float verticalTolerance = 8f;
 
     [Header("Gizmo")]
     [SerializeField] private Color waypointColor = Color.cyan;
     [SerializeField] private Color pathColor = Color.yellow;
-    [SerializeField] private float waypointRadius = 1.0f;
-    [SerializeField] private int curveSegments = 20;
-    [SerializeField] private bool drawCenterLine = false;
+    [SerializeField, Min(0f)] private float waypointRadius = 1f;
+    [SerializeField, Range(1, 100)] private int curveSegments = 20;
+    [SerializeField] private bool drawCenterLine = true;
 
     private readonly List<Vector3> cachedCenterPath = new List<Vector3>();
     private readonly List<float> cachedWidthPath = new List<float>();
     private readonly List<Vector3> cachedInnerPath = new List<Vector3>();
     private readonly List<Vector3> cachedOuterPath = new List<Vector3>();
     private readonly List<float> cachedCumulativeDistances = new List<float>();
-    private readonly List<Vector2> cachedCoursePolygon = new List<Vector2>();
     private bool cacheDirty = true;
     private Vector3 cachedPosition;
     private Quaternion cachedRotation;
     private Vector3 cachedScale;
 
-    /// <summary>中心線を一周したときの距離です。</summary>
+    public bool ClosedLoop => closedLoop;
+    public bool HasValidPath => TotalLength > Mathf.Epsilon;
+
+    /// <summary>高さを含む中心線の全長（ワールド単位）。</summary>
     public float TotalLength
     {
         get
         {
             EnsureCache();
-            return cachedCumulativeDistances.Count == 0
-                ? 0f
-                : cachedCumulativeDistances[cachedCumulativeDistances.Count - 1];
+            return cachedCumulativeDistances.Count == 0 ? 0f :
+                cachedCumulativeDistances[cachedCumulativeDistances.Count - 1];
         }
     }
 
-    private void Awake()
-    {
-        RebuildCache();
-    }
-
-    private void OnValidate()
-    {
-        cacheDirty = true;
-    }
+    private void Awake() => RebuildCache();
+    private void OnValidate() => cacheDirty = true;
 
     private void OnDrawGizmos()
     {
-        if (waypoints == null || waypoints.Length == 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < waypoints.Length; i++)
-        {
-            Vector3 current = transform.TransformPoint(ToLocalPoint(waypoints[i].position));
-
-            Gizmos.color = waypointColor;
-            Gizmos.DrawSphere(current, waypointRadius);
-
-            if (waypoints.Length < 2)
-            {
-                continue;
-            }
-        }
-
-        if (waypoints.Length < 2)
-        {
-            return;
-        }
-
+        if (waypoints == null) return;
+        Gizmos.color = waypointColor;
+        foreach (Waypoint point in waypoints)
+            Gizmos.DrawSphere(transform.TransformPoint(point.LocalPosition), waypointRadius);
         EnsureCache();
-        if (cachedCenterPath.Count < 2)
-        {
-            return;
-        }
-
         Gizmos.color = pathColor;
-        DrawCourseBand(cachedInnerPath, cachedOuterPath);
-
-        if (drawCenterLine)
-        {
-            DrawPolyline(cachedCenterPath);
-        }
+        DrawPolyline(cachedInnerPath);
+        DrawPolyline(cachedOuterPath);
+        for (int i = 0; i < cachedInnerPath.Count; i++)
+            Gizmos.DrawLine(cachedInnerPath[i], cachedOuterPath[i]);
+        if (drawCenterLine) DrawPolyline(cachedCenterPath);
     }
 
-    public bool IsPointInsideCourse(Vector2 p)
+    /// <summary>高さを無視する旧API。3Dの逸脱判定には Vector3 の overload を使います。</summary>
+    public bool IsPointInsideCourse(Vector2 point) => IsInsideBand(point, null);
+
+    /// <summary>Sceneに表示した帯の範囲と、その地点の路面からの高さで判定します。</summary>
+    public bool IsPointInsideCourse(Vector3 worldPosition) =>
+        IsInsideBand(ToXZ(worldPosition), worldPosition.y);
+
+    private bool IsInsideBand(Vector2 point, float? worldHeight)
     {
-        if (waypoints == null || waypoints.Length < 2)
-        {
-            return false;
-        }
-
         EnsureCache();
-        if (cachedCenterPath.Count < 2 || cachedWidthPath.Count != cachedCenterPath.Count)
+        for (int i = 1; i < cachedInnerPath.Count; i++)
         {
-            return false;
+            // 描画に使う左右の縁と同じ三角形で判定。立体交差では全区間の高さを調べる。
+            if (IsInsideTriangle(point, worldHeight,
+                    cachedInnerPath[i - 1], cachedOuterPath[i - 1], cachedInnerPath[i]) ||
+                IsInsideTriangle(point, worldHeight,
+                    cachedOuterPath[i - 1], cachedOuterPath[i], cachedInnerPath[i])) return true;
         }
-
-        for (int i = 1; i < cachedCenterPath.Count; i++)
-        {
-            Vector2 a = ToXZ(cachedCenterPath[i - 1]);
-            Vector2 b = ToXZ(cachedCenterPath[i]);
-            Vector2 nearestPoint = ClosestPointOnSegment2D(p, a, b);
-            float distanceSqr = (nearestPoint - p).sqrMagnitude;
-
-            float segmentLengthSqr = (b - a).sqrMagnitude;
-            if (segmentLengthSqr <= Mathf.Epsilon)
-            {
-                continue;
-            }
-
-            float t = Vector2.Dot(nearestPoint - a, b - a) / segmentLengthSqr;
-            float width = Mathf.Lerp(cachedWidthPath[i - 1], cachedWidthPath[i], Mathf.Clamp01(t));
-            float halfWidth = Mathf.Max(0f, width) * 0.5f;
-
-            if (distanceSqr <= (halfWidth * halfWidth) + Mathf.Epsilon)
-            {
-                return true;
-            }
-        }
-
         return false;
     }
 
-    public Vector2 GetNearestPointOnCenterLine(Vector2 p)
+    private bool IsInsideTriangle(Vector2 point, float? height, Vector3 a, Vector3 b, Vector3 c)
     {
-        if (waypoints == null || waypoints.Length < 2)
-        {
-            return p;
-        }
+        Vector2 ab = ToXZ(b - a);
+        Vector2 ac = ToXZ(c - a);
+        Vector2 ap = point - ToXZ(a);
+        float determinant = ab.x * ac.y - ab.y * ac.x;
+        if (Mathf.Abs(determinant) < 0.000001f) return false;
+        float u = (ap.x * ac.y - ap.y * ac.x) / determinant;
+        float v = (ab.x * ap.y - ab.y * ap.x) / determinant;
+        const float tolerance = 0.00001f;
+        if (u < -tolerance || v < -tolerance || u + v > 1f + tolerance) return false;
+        float surfaceHeight = a.y + u * (b.y - a.y) + v * (c.y - a.y);
+        return !height.HasValue || Mathf.Abs(height.Value - surfaceHeight) <= Mathf.Max(0f, verticalTolerance);
+    }
 
+    public Vector2 GetNearestPointOnCenterLine(Vector2 point)
+    {
         EnsureCache();
-        if (cachedCenterPath.Count < 2)
-        {
-            return p;
-        }
-
-        Vector2 nearestPoint = ToXZ(cachedCenterPath[0]);
-        float nearestDistanceSqr = float.PositiveInfinity;
-
+        Vector2 nearest = point;
+        float bestDistance = float.PositiveInfinity;
         for (int i = 1; i < cachedCenterPath.Count; i++)
         {
-            Vector2 a = ToXZ(cachedCenterPath[i - 1]);
-            Vector2 b = ToXZ(cachedCenterPath[i]);
-            Vector2 candidate = ClosestPointOnSegment2D(p, a, b);
-            float distanceSqr = (candidate - p).sqrMagnitude;
-
-            if (distanceSqr < nearestDistanceSqr)
-            {
-                nearestDistanceSqr = distanceSqr;
-                nearestPoint = candidate;
-            }
+            Vector2 start = ToXZ(cachedCenterPath[i - 1]);
+            Vector2 delta = ToXZ(cachedCenterPath[i]) - start;
+            float t = delta.sqrMagnitude > Mathf.Epsilon ?
+                Mathf.Clamp01(Vector2.Dot(point - start, delta) / delta.sqrMagnitude) : 0f;
+            Vector2 candidate = start + delta * t;
+            float distance = (point - candidate).sqrMagnitude;
+            if (distance >= bestDistance) continue;
+            bestDistance = distance;
+            nearest = candidate;
         }
-
-        return nearestPoint;
+        return nearest;
     }
 
+    /// <summary>高さを含めて最寄りの区間を選び、実際の中心線の高さを返します。</summary>
     public Vector3 GetNearestPointOnCenterLineWorld(Vector3 worldPosition)
     {
-        Vector2 nearest = GetNearestPointOnCenterLine(ToXZ(worldPosition));
-        return new Vector3(nearest.x, worldPosition.y, nearest.y);
+        return TryGetNearestSegment(worldPosition, out int index, out float t)
+            ? Vector3.Lerp(cachedCenterPath[index - 1], cachedCenterPath[index], t) : worldPosition;
     }
 
-    /// <summary>
-    /// 車の位置を中心線へ投影し、スタート地点から進行方向に沿った距離を返します。
-    /// 中心線は閉じたパスとして扱い、返値は [0, TotalLength) の範囲です。
-    /// </summary>
     public float GetProgressDistance(Vector3 worldPosition)
     {
-        EnsureCache();
-        if (cachedCenterPath.Count < 2 || cachedCumulativeDistances.Count != cachedCenterPath.Count)
-        {
-            return 0f;
-        }
-
-        Vector2 point = ToXZ(worldPosition);
-        float nearestDistanceSqr = float.PositiveInfinity;
-        float progress = 0f;
-
-        for (int index = 1; index < cachedCenterPath.Count; index++)
-        {
-            Vector2 start = ToXZ(cachedCenterPath[index - 1]);
-            Vector2 end = ToXZ(cachedCenterPath[index]);
-            Vector2 segment = end - start;
-            float segmentLengthSqr = segment.sqrMagnitude;
-            if (segmentLengthSqr <= Mathf.Epsilon) continue;
-
-            Vector2 nearestPoint = ClosestPointOnSegment2D(point, start, end);
-            float distanceSqr = (nearestPoint - point).sqrMagnitude;
-            if (distanceSqr >= nearestDistanceSqr) continue;
-
-            nearestDistanceSqr = distanceSqr;
-            float t = Mathf.Clamp01(Vector2.Dot(nearestPoint - start, segment) / segmentLengthSqr);
-            progress = cachedCumulativeDistances[index - 1] +
-                       Mathf.Sqrt(segmentLengthSqr) * t;
-        }
-
-        float totalLength = TotalLength;
-        return totalLength > Mathf.Epsilon ? Mathf.Repeat(progress, totalLength) : 0f;
+        if (!TryGetNearestSegment(worldPosition, out int index, out float t)) return 0f;
+        float progress = Mathf.Lerp(cachedCumulativeDistances[index - 1], cachedCumulativeDistances[index], t);
+        return closedLoop && TotalLength > Mathf.Epsilon ? Mathf.Repeat(progress, TotalLength) : progress;
     }
 
-    /// <summary>
-    /// スタート地点から進行方向に沿った距離に対応する、中心線上のワールド座標を返します。
-    /// 中心線は閉じたパスとして扱うため、TotalLength を超える距離や負の距離も周回として扱います。
-    /// </summary>
     public bool TryGetPointAtProgress(float progressDistance, out Vector3 point)
     {
-        point = Vector3.zero;
+        bool success = TryGetSampleAtProgress(progressDistance, out CourseSample sample);
+        point = sample.position;
+        return success;
+    }
+
+    /// <summary>閉路では距離を周回、開路では端点へ制限。装飾を等間隔に配置するためのAPI。</summary>
+    public bool TryGetSampleAtProgress(float progressDistance, out CourseSample sample)
+    {
+        sample = default;
         EnsureCache();
         int count = cachedCenterPath.Count;
-        if (count < 2 || cachedCumulativeDistances.Count != count) return false;
-
-        float totalLength = TotalLength;
-        if (totalLength <= Mathf.Epsilon) return false;
-        float distance = Mathf.Repeat(progressDistance, totalLength);
-
-        // 累積距離は単調増加なので、二分探索で distance を含む区間を探します。
+        if (count < 2 || TotalLength <= Mathf.Epsilon) return false;
+        float distance = closedLoop ? Mathf.Repeat(progressDistance, TotalLength) :
+            Mathf.Clamp(progressDistance, 0f, TotalLength);
         int low = 1;
         int high = count - 1;
         while (low < high)
         {
             int middle = (low + high) / 2;
-            if (cachedCumulativeDistances[middle] < distance) low = middle + 1;
+            if (cachedCumulativeDistances[middle] <= distance) low = middle + 1;
             else high = middle;
         }
-
-        float startDistance = cachedCumulativeDistances[low - 1];
-        float segmentLength = cachedCumulativeDistances[low] - startDistance;
-        float t = segmentLength > Mathf.Epsilon ? Mathf.Clamp01((distance - startDistance) / segmentLength) : 0f;
-        point = Vector3.Lerp(cachedCenterPath[low - 1], cachedCenterPath[low], t);
+        // 末尾に重複点があっても、最後の有効な区間から端点を取得する。
+        while (low > 1 && cachedCumulativeDistances[low] - cachedCumulativeDistances[low - 1] <= Mathf.Epsilon) low--;
+        float length = cachedCumulativeDistances[low] - cachedCumulativeDistances[low - 1];
+        if (length <= Mathf.Epsilon) return false;
+        float t = Mathf.Clamp01((distance - cachedCumulativeDistances[low - 1]) / length);
+        sample.position = Vector3.Lerp(cachedCenterPath[low - 1], cachedCenterPath[low], t);
+        sample.forward = (cachedCenterPath[low] - cachedCenterPath[low - 1]).normalized;
+        sample.leftEdge = Vector3.Lerp(cachedInnerPath[low - 1], cachedInnerPath[low], t);
+        sample.rightEdge = Vector3.Lerp(cachedOuterPath[low - 1], cachedOuterPath[low], t);
+        sample.right = (sample.rightEdge - sample.leftEdge).normalized;
+        sample.up = Vector3.Cross(sample.forward, sample.right).normalized;
+        sample.width = Mathf.Lerp(cachedWidthPath[low - 1], cachedWidthPath[low], t);
         return true;
     }
 
-    /// <summary>速度感用の路面・沿道ビジュアルが利用する中心線のキャッシュをコピーします。</summary>
+    public bool TryGetNearestCenterLineDirection(Vector3 worldPosition, out Vector3 direction)
+    {
+        direction = Vector3.zero;
+        if (!TryGetNearestSegment(worldPosition, out int index, out _)) return false;
+        direction = (cachedCenterPath[index] - cachedCenterPath[index - 1]).normalized;
+        return true;
+    }
+
+    private bool TryGetNearestSegment(Vector3 point, out int index, out float t)
+    {
+        EnsureCache();
+        index = -1;
+        t = 0f;
+        float bestDistance = float.PositiveInfinity;
+        for (int i = 1; i < cachedCenterPath.Count; i++)
+        {
+            Vector3 start = cachedCenterPath[i - 1];
+            Vector3 delta = cachedCenterPath[i] - start;
+            if (delta.sqrMagnitude <= Mathf.Epsilon) continue;
+            float candidateT = Mathf.Clamp01(Vector3.Dot(point - start, delta) / delta.sqrMagnitude);
+            float distance = (point - (start + delta * candidateT)).sqrMagnitude;
+            if (distance >= bestDistance) continue;
+            bestDistance = distance;
+            index = i;
+            t = candidateT;
+        }
+        return index >= 1;
+    }
+
     public void CopyCenterPathWorld(List<Vector3> destination)
     {
         if (destination == null) return;
@@ -251,7 +226,6 @@ public class RaceCourse : MonoBehaviour
         destination.AddRange(cachedCenterPath);
     }
 
-    /// <summary>ミニマップ用に、コース内側・外側の縁をワールド座標でコピーします。</summary>
     public void CopyCourseBandWorld(List<Vector3> innerDestination, List<Vector3> outerDestination)
     {
         if (innerDestination == null || outerDestination == null) return;
@@ -262,52 +236,6 @@ public class RaceCourse : MonoBehaviour
         outerDestination.AddRange(cachedOuterPath);
     }
 
-    /// <summary>
-    /// 指定位置に最も近いセンターライン区間の、レース進行方向を取得します。
-    /// waypoint の配列順をレース進行方向として扱います。
-    /// </summary>
-    public bool TryGetNearestCenterLineDirection(Vector3 worldPosition, out Vector3 direction)
-    {
-        direction = Vector3.zero;
-
-        if (waypoints == null || waypoints.Length < 2)
-        {
-            return false;
-        }
-
-        EnsureCache();
-        if (cachedCenterPath.Count < 2)
-        {
-            return false;
-        }
-
-        Vector2 point = ToXZ(worldPosition);
-        float nearestDistanceSqr = float.PositiveInfinity;
-
-        for (int index = 1; index < cachedCenterPath.Count; index++)
-        {
-            Vector2 start = ToXZ(cachedCenterPath[index - 1]);
-            Vector2 end = ToXZ(cachedCenterPath[index]);
-            Vector2 segment = end - start;
-            if (segment.sqrMagnitude <= Mathf.Epsilon)
-            {
-                continue;
-            }
-
-            Vector2 nearestPoint = ClosestPointOnSegment2D(point, start, end);
-            float distanceSqr = (nearestPoint - point).sqrMagnitude;
-            if (distanceSqr >= nearestDistanceSqr)
-            {
-                continue;
-            }
-
-            nearestDistanceSqr = distanceSqr;
-            direction = new Vector3(segment.x, 0f, segment.y).normalized;
-        }
-
-        return direction.sqrMagnitude > Mathf.Epsilon;
-    }
-
     public void RebuildCache()
     {
         cachedCenterPath.Clear();
@@ -315,300 +243,88 @@ public class RaceCourse : MonoBehaviour
         cachedInnerPath.Clear();
         cachedOuterPath.Clear();
         cachedCumulativeDistances.Clear();
-        cachedCoursePolygon.Clear();
-
-        if (waypoints == null || waypoints.Length < 2)
+        if (waypoints != null && waypoints.Length >= 2)
         {
-            cacheDirty = false;
-            return;
+            BuildCenterPath();
+            float distance = 0f;
+            cachedCumulativeDistances.Add(0f);
+            for (int i = 1; i < cachedCenterPath.Count; i++)
+            {
+                distance += Vector3.Distance(cachedCenterPath[i - 1], cachedCenterPath[i]);
+                cachedCumulativeDistances.Add(distance);
+            }
+            BuildOffsetPaths();
         }
-
-        BuildCenterPath(cachedCenterPath, cachedWidthPath);
-        BuildCumulativeDistances(cachedCenterPath, cachedCumulativeDistances);
-        if (cachedCenterPath.Count >= 2)
-        {
-            BuildOffsetPaths(cachedCenterPath, cachedWidthPath, cachedInnerPath, cachedOuterPath);
-        }
-
-        if (cachedInnerPath.Count >= 2 && cachedOuterPath.Count >= 2)
-        {
-            BuildCoursePolygon(cachedInnerPath, cachedOuterPath, cachedCoursePolygon);
-        }
-
         cacheDirty = false;
         cachedPosition = transform.position;
         cachedRotation = transform.rotation;
         cachedScale = transform.lossyScale;
     }
 
-    private static void BuildCumulativeDistances(List<Vector3> path, List<float> cumulativeDistances)
-    {
-        cumulativeDistances.Clear();
-        if (path == null || path.Count == 0) return;
-
-        float distance = 0f;
-        cumulativeDistances.Add(0f);
-        for (int i = 1; i < path.Count; i++)
-        {
-            distance += Vector3.Distance(path[i - 1], path[i]);
-            cumulativeDistances.Add(distance);
-        }
-    }
-
     private void EnsureCache()
     {
-        if (cacheDirty ||
-            cachedCenterPath.Count == 0 ||
-            cachedPosition != transform.position ||
-            cachedRotation != transform.rotation ||
-            cachedScale != transform.lossyScale)
-        {
-            RebuildCache();
-        }
+        if (cacheDirty || cachedPosition != transform.position || cachedRotation != transform.rotation ||
+            cachedScale != transform.lossyScale) RebuildCache();
     }
 
-    private void BuildCenterPath(out List<Vector3> centerPath, out List<float> widthPath)
+    private void BuildCenterPath()
     {
-        centerPath = new List<Vector3>();
-        widthPath = new List<float>();
-        BuildCenterPath(centerPath, widthPath);
-    }
-
-    private void BuildCenterPath(List<Vector3> centerPath, List<float> widthPath)
-    {
-        centerPath.Clear();
-        widthPath.Clear();
-
-        int segmentCount = Mathf.Max(1, curveSegments);
-
-        for (int waypointIndex = 0; waypointIndex < waypoints.Length; waypointIndex++)
+        int segments = Mathf.Clamp(curveSegments, 1, 100);
+        int count = closedLoop ? waypoints.Length : waypoints.Length - 1;
+        for (int i = 0; i < count; i++)
         {
-            int nextIndex = (waypointIndex + 1) % waypoints.Length;
-
-            Vector3 start = transform.TransformPoint(ToLocalPoint(waypoints[waypointIndex].position));
-            Vector3 end = transform.TransformPoint(ToLocalPoint(waypoints[nextIndex].position));
-
-            float startWidth = Mathf.Max(0f, waypoints[waypointIndex].width);
-            float endWidth = Mathf.Max(0f, waypoints[nextIndex].width);
-            float curve = waypoints[waypointIndex].curve;
-
-            int sampleStart = waypointIndex == 0 ? 0 : 1;
-            for (int sample = sampleStart; sample <= segmentCount; sample++)
+            Waypoint start = waypoints[i];
+            Waypoint end = waypoints[(i + 1) % waypoints.Length];
+            for (int step = i == 0 ? 0 : 1; step <= segments; step++)
             {
-                float t = sample / (float)segmentCount;
-                centerPath.Add(EvaluateEllipticSegmentPoint(start, end, curve, t));
-
-                float easedT = Mathf.SmoothStep(0f, 1f, t);
-                widthPath.Add(Mathf.Lerp(startWidth, endWidth, easedT));
+                float t = step / (float)segments;
+                // ローカル空間で曲率を計算するため、オブジェクトの回転にも追従する。
+                Vector3 local = EvaluateEllipticSegmentPoint(start.LocalPosition, end.LocalPosition, start.curve, t);
+                cachedCenterPath.Add(transform.TransformPoint(local));
+                cachedWidthPath.Add(Mathf.Max(0f, Mathf.Lerp(start.width, end.width, Mathf.SmoothStep(0f, 1f, t))));
             }
         }
     }
 
-    private static List<Vector2> BuildCoursePolygon(List<Vector3> innerPath, List<Vector3> outerPath)
+    private void BuildOffsetPaths()
     {
-        List<Vector2> polygon = new List<Vector2>(innerPath.Count + outerPath.Count);
-        BuildCoursePolygon(innerPath, outerPath, polygon);
-        return polygon;
-    }
-
-    private static void BuildCoursePolygon(List<Vector3> innerPath, List<Vector3> outerPath, List<Vector2> polygon)
-    {
-        polygon.Clear();
-
-        for (int i = 0; i < outerPath.Count; i++)
+        Vector3 fallback = Vector3.right;
+        int last = cachedCenterPath.Count - 1;
+        for (int i = 0; i <= last; i++)
         {
-            polygon.Add(ToXZ(outerPath[i]));
-        }
-
-        for (int i = innerPath.Count - 1; i >= 0; i--)
-        {
-            polygon.Add(ToXZ(innerPath[i]));
-        }
-    }
-
-    private static bool IsPointInPolygon(Vector2 p, List<Vector2> polygon)
-    {
-        if (polygon == null || polygon.Count < 3)
-        {
-            return false;
-        }
-
-        bool inside = false;
-        int j = polygon.Count - 1;
-
-        for (int i = 0; i < polygon.Count; i++)
-        {
-            Vector2 a = polygon[i];
-            Vector2 b = polygon[j];
-
-            bool crosses = (a.y > p.y) != (b.y > p.y);
-            if (crosses)
-            {
-                float t = (p.y - a.y) / (b.y - a.y);
-                float xAtY = a.x + ((b.x - a.x) * t);
-                if (p.x < xAtY)
-                {
-                    inside = !inside;
-                }
-            }
-
-            j = i;
-        }
-
-        return inside;
-    }
-
-    private static Vector2 ClosestPointOnSegment2D(Vector2 p, Vector2 a, Vector2 b)
-    {
-        Vector2 ab = b - a;
-        float abLengthSqr = ab.sqrMagnitude;
-        if (abLengthSqr <= Mathf.Epsilon)
-        {
-            return a;
-        }
-
-        float t = Vector2.Dot(p - a, ab) / abLengthSqr;
-        t = Mathf.Clamp01(t);
-        return a + (ab * t);
-    }
-
-    private static Vector3 ToLocalPoint(Vector2 p)
-    {
-        return new Vector3(p.x, 0f, p.y);
-    }
-
-    private static Vector2 ToXZ(Vector3 p)
-    {
-        return new Vector2(p.x, p.z);
-    }
-
-    private void BuildOffsetPaths(
-        List<Vector3> centerPath,
-        List<float> widthPath,
-        out List<Vector3> innerPath,
-        out List<Vector3> outerPath)
-    {
-        innerPath = new List<Vector3>(centerPath.Count);
-        outerPath = new List<Vector3>(centerPath.Count);
-        BuildOffsetPaths(centerPath, widthPath, innerPath, outerPath);
-    }
-
-    private void BuildOffsetPaths(
-        List<Vector3> centerPath,
-        List<float> widthPath,
-        List<Vector3> innerPath,
-        List<Vector3> outerPath)
-    {
-        innerPath.Clear();
-        outerPath.Clear();
-
-        Vector3 fallbackLateral = Vector3.right;
-
-        for (int i = 0; i < centerPath.Count; i++)
-        {
-            Vector3 tangent = EvaluatePathTangent(centerPath, i);
-            if (tangent.sqrMagnitude <= Mathf.Epsilon)
-            {
-                tangent = Vector3.forward;
-            }
-
-            Vector3 lateral = Vector3.Cross(Vector3.up, tangent.normalized);
-            if (lateral.sqrMagnitude <= Mathf.Epsilon)
-            {
-                lateral = fallbackLateral;
-            }
-            else
-            {
-                lateral.Normalize();
-                fallbackLateral = lateral;
-            }
-
-            float halfWidth = widthPath[i] * 0.5f;
-            innerPath.Add(centerPath[i] - lateral * halfWidth);
-            outerPath.Add(centerPath[i] + lateral * halfWidth);
+            Vector3 tangent;
+            if (closedLoop && last > 1 && (i == 0 || i == last))
+                tangent = cachedCenterPath[1] - cachedCenterPath[last - 1];
+            else if (i == 0) tangent = cachedCenterPath[1] - cachedCenterPath[0];
+            else if (i == last) tangent = cachedCenterPath[last] - cachedCenterPath[last - 1];
+            else tangent = cachedCenterPath[i + 1] - cachedCenterPath[i - 1];
+            Vector3 lateral = Vector3.Cross(Vector3.up, tangent).normalized;
+            if (lateral.sqrMagnitude <= Mathf.Epsilon) lateral = fallback;
+            else fallback = lateral;
+            float halfWidth = cachedWidthPath[i] * 0.5f;
+            cachedInnerPath.Add(cachedCenterPath[i] - lateral * halfWidth);
+            cachedOuterPath.Add(cachedCenterPath[i] + lateral * halfWidth);
         }
     }
 
-    private static Vector3 EvaluatePathTangent(List<Vector3> path, int index)
-    {
-        if (path.Count < 2)
-        {
-            return Vector3.zero;
-        }
-
-        if (index == 0)
-        {
-            return path[1] - path[0];
-        }
-
-        if (index == path.Count - 1)
-        {
-            return path[path.Count - 1] - path[path.Count - 2];
-        }
-
-        return path[index + 1] - path[index - 1];
-    }
+    private static Vector2 ToXZ(Vector3 point) => new Vector2(point.x, point.z);
 
     private static void DrawPolyline(List<Vector3> points)
     {
-        for (int i = 1; i < points.Count; i++)
-        {
-            Gizmos.DrawLine(points[i - 1], points[i]);
-        }
+        for (int i = 1; i < points.Count; i++) Gizmos.DrawLine(points[i - 1], points[i]);
     }
 
-    private static void DrawCourseBand(List<Vector3> innerPath, List<Vector3> outerPath)
+    private static Vector3 EvaluateEllipticSegmentPoint(Vector3 start, Vector3 end, float curve, float t)
     {
-        int pointCount = Mathf.Min(innerPath.Count, outerPath.Count);
-        if (pointCount < 2)
-        {
-            return;
-        }
-
-        DrawPolyline(innerPath);
-        DrawPolyline(outerPath);
-
-        for (int i = 0; i < pointCount; i++)
-        {
-            Gizmos.DrawLine(innerPath[i], outerPath[i]);
-        }
-    }
-
-    private static Vector3 EvaluateEllipticSegmentPoint(
-        Vector3 start,
-        Vector3 end,
-        float curve,
-        float t,
-        Vector3 worldUp = default)
-    {
+        // 端点を正確に一致させ、閉路や重複点で浮動小数の隙間を作らない。
+        if (t <= 0f) return start;
+        if (t >= 1f) return end;
         Vector3 chord = end - start;
-        float chordLength = chord.magnitude;
-        if (chordLength <= Mathf.Epsilon)
-        {
-            return start;
-        }
-
-        Vector3 direction = chord / chordLength;
-        Vector3 upAxis = worldUp == default ? Vector3.up : worldUp;
-        Vector3 normal = Vector3.Cross(upAxis, direction);
-        if (normal.sqrMagnitude <= Mathf.Epsilon)
-        {
-            normal = Vector3.right;
-        }
-        else
-        {
-            normal.Normalize();
-        }
-
-        Vector3 midpoint = (start + end) * 0.5f;
-        float semiMajorAxis = chordLength * 0.5f;
-        float semiMinorAxis = Mathf.Abs(curve);
-        float normalSign = Mathf.Sign(curve);
-
+        float length = chord.magnitude;
+        if (length <= Mathf.Epsilon) return start;
+        Vector3 normal = Vector3.Cross(Vector3.up, chord / length).normalized;
+        if (normal.sqrMagnitude <= Mathf.Epsilon) normal = Vector3.right;
         float angle = (1f - t) * Mathf.PI;
-
-        float x = Mathf.Cos(angle) * semiMajorAxis;
-        float y = Mathf.Sin(angle) * semiMinorAxis * normalSign;
-        return midpoint + direction * x + normal * y;
+        return (start + end) * 0.5f + chord * (Mathf.Cos(angle) * 0.5f) + normal * (Mathf.Sin(angle) * curve);
     }
 }
