@@ -20,7 +20,7 @@ public static class RaceCourseValidation
             ValidateEmpty(course);
             ValidateEditorOperations(course);
             ValidateOffCourseState(course);
-            Debug.Log("RACE_COURSE_VALIDATION_PASS: legacy, band/height, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.");
+            Debug.Log("RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.");
         }
         finally
         {
@@ -56,9 +56,12 @@ public static class RaceCourseValidation
         Near(course.TotalLength, Mathf.Sqrt(10400f), "Slope length includes height");
         Vector3 midpoint = new Vector3(50f, 10f, 0f);
         Require(course.IsPointInsideCourse(midpoint + Vector3.up), "Slope car above road");
-        Require(!course.IsPointInsideCourse(midpoint + Vector3.up * 4f), "Height rejection");
+        Require(course.IsPointInsideCourse(midpoint + Vector3.up * 100f), "Airborne car stays inside");
+        Require(course.IsPointInsideCourse(midpoint - Vector3.up * 100f), "Containment ignores height below road");
         Require(course.IsPointInsideCourse(midpoint + Vector3.forward * 9.9f), "Interpolated width inside");
         Require(!course.IsPointInsideCourse(midpoint + Vector3.forward * 10.1f), "Interpolated width outside");
+        Require(!course.IsPointInsideCourse(midpoint + Vector3.forward * 10.1f + Vector3.up * 100f),
+            "Airborne car outside width stays outside");
         Near(course.GetProgressDistance(midpoint), course.TotalLength * 0.5f, "3D slope progress");
         Near(course.GetNearestPointOnCenterLineWorld(midpoint + Vector3.forward * 30f), midpoint, "Nearest center has course height");
         Require(course.TryGetSampleAtProgress(course.TotalLength * 0.5f, out RaceCourse.CourseSample sample), "Decoration sample");
@@ -69,6 +72,8 @@ public static class RaceCourseValidation
         Near(Vector3.Distance(sample.leftEdge, sample.rightEdge), 20f, "Sample edges");
         Require(course.IsPointInsideCourse(sample.leftEdge), "Visible left edge is inside");
         Require(course.IsPointInsideCourse(sample.rightEdge), "Visible right edge is inside");
+        Require(course.IsPointInsideCourse(sample.leftEdge + Vector3.up * 100f), "Airborne left edge is inside");
+        Require(course.IsPointInsideCourse(sample.rightEdge + Vector3.up * 100f), "Airborne right edge is inside");
         course.TryGetPointAtProgress(-100f, out Vector3 before);
         course.TryGetPointAtProgress(10000f, out Vector3 after);
         Near(before, Vector3.zero, "Open start clamps");
@@ -84,7 +89,7 @@ public static class RaceCourseValidation
         }, false);
         Require(course.IsPointInsideCourse(new Vector3(0f, 1f, 0f)), "Lower crossing road");
         Require(course.IsPointInsideCourse(new Vector3(0f, 21f, 0f)), "Upper crossing road");
-        Require(!course.IsPointInsideCourse(new Vector3(0f, 10f, 0f)), "Crossing gap must be outside");
+        Require(course.IsPointInsideCourse(new Vector3(0f, 10f, 0f)), "Crossing containment ignores height");
         Near(course.GetProgressDistance(Vector3.zero), 20f, "Lower crossing progress");
         Require(course.GetProgressDistance(new Vector3(0f, 20f, 0f)) > 90f, "Upper crossing progress must use upper segment.");
         Near(course.GetNearestPointOnCenterLineWorld(new Vector3(0f, 20f, 0f)), new Vector3(0f, 20f, 0f), "Upper nearest height");
@@ -189,8 +194,32 @@ public static class RaceCourseValidation
             Require(data.hasValidRacePosition && !data.isOffCourse, "LapManager accepts slope height.");
             rb.position = new Vector3(50f, 100f, 0f);
             update.Invoke(manager, new object[] { data, 3f });
+            Require(data.hasValidRacePosition && !data.isOffCourse && data.offCourseTimer == 0f,
+                "Airborne driving does not start off-course timer.");
+            serialized.Update();
+            serialized.FindProperty("respawnWhenOffCourse").boolValue = true;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            update.Invoke(manager, new object[] { data, 3f });
+            Require(!data.isOffCourse && data.offCourseTimer == 0f,
+                "Airborne driving does not respawn with automatic respawn enabled.");
+            Near(rb.position, new Vector3(50f, 100f, 0f), "Airborne driving preserves position");
+            // 復帰先を路面近くに戻し、横方向の逸脱とリスポーンを検証する。
+            rb.position = new Vector3(50f, 11f, 0f);
+            update.Invoke(manager, new object[] { data, 0.1f });
+            serialized.Update();
+            serialized.FindProperty("respawnWhenOffCourse").boolValue = false;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            rb.position = new Vector3(50f, 100f, 20f);
+            update.Invoke(manager, new object[] { data, 3f });
             Require(data.isOffCourse && data.offCourseTimer >= 3f, "Detection remains active with automatic respawn disabled.");
-            Near(rb.position.y, 100f, "Disabled respawn preserves position");
+            Near(rb.position, new Vector3(50f, 100f, 20f), "Disabled respawn preserves position");
+            rb.position = new Vector3(50f, 100f, 0f);
+            update.Invoke(manager, new object[] { data, 0.1f });
+            Require(!data.isOffCourse && data.offCourseTimer == 0f, "Airborne return clears off-course state.");
+            rb.position = new Vector3(50f, 11f, 0f);
+            update.Invoke(manager, new object[] { data, 0.1f });
+            rb.position = new Vector3(50f, 100f, 20f);
+            update.Invoke(manager, new object[] { data, 3f });
             serialized.Update();
             serialized.FindProperty("respawnWhenOffCourse").boolValue = true;
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -209,7 +238,6 @@ public static class RaceCourseValidation
     {
         SerializedObject serialized = new SerializedObject(course);
         serialized.FindProperty("closedLoop").boolValue = loop;
-        serialized.FindProperty("verticalTolerance").floatValue = 2f;
         SerializedProperty points = serialized.FindProperty("waypoints");
         points.arraySize = positions.Length;
         for (int i = 0; i < positions.Length; i++)

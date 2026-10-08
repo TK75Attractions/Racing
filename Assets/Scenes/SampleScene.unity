@@ -10159,7 +10159,6 @@ MonoBehaviour:
     curve: 0
     width: 60
   closedLoop: 1
-  verticalTolerance: 8
   waypointColor: {r: 0, g: 1, b: 1, a: 1}
   pathColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   waypointRadius: 1

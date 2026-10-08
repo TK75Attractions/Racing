@@ -28,13 +28,13 @@
 
 ## 逸脱判定
 
-`IsPointInsideCourse(Vector3)` はSceneに表示した帯の三角形と、その場所の路面高さを使います。`Vertical Tolerance` は路面から上下に許容するワールド距離で、車体の原点の高さやジャンプ量に合わせて設定します。立体交差の上下間隔より十分小さくすると、上下の道路の間に落ちた車を範囲外として判定できます。
+`IsPointInsideCourse(Vector3)` はSceneに表示した帯の三角形をXZ平面へ投影して判定します。高さの差は判定に使わないため、描画した線から浮いて走行したりジャンプしたりしても、上から見てコース幅の内側ならコース外になりません。コースの下側や立体交差の道路の間も、XZ位置が帯の内側なら範囲内として扱います。横方向に帯から外れた場合は、浮いていてもコース外になります。
 
 `LapManager` は車の3D位置を使って `isOffCourse` と `offCourseTimer` を更新します。`Respawn When Off Course` が有効なら、従来の遅延設定に従ってリスポーンします。無効でも逸脱の状態は取得できます。点が不足している場合や全長0のコースでは判定を行いません。
 
 幅0の区間や、XZへの投影面積が0になる垂直な区間は走行範囲を持ちません。この仕組みは高さのある道路・坂道用で、垂直な壁面走行やバンク角の定義には対応していません。
 
-`IsPointInsideCourse(Vector2)` は互換用の高さを無視するAPIです。車の逸脱検知にはVector3版を使用します。3Dの最寄り点、進捗距離、進行方向の取得も高さを考慮するため、立体交差で上段・下段の区間を区別できます。
+`IsPointInsideCourse(Vector2)` も同じXZの範囲判定を行います。3Dの最寄り点、進捗距離、進行方向の取得は引き続き高さを考慮するため、立体交差で上段・下段の区間を区別できます。
 
 ## 装飾配置用のAPI
 
@@ -54,6 +54,6 @@ for (float distance = 0f; distance < course.TotalLength; distance += 10f)
 
 ## 検証
 
-`Racing > Validate Race Course` で、旧データの読込、閉路の継ぎ目、坂道の距離・高さ・幅、見える境界と判定の一致、立体交差、装飾サンプル、Transform変更、Undo、空コース・重複点、Scene編集による点の追加・挿入・削除とストローク単位のUndo / Redo、`LapManager` の逸脱検知と復帰を検証します。
+`Racing > Validate Race Course` で、旧データの読込、閉路の継ぎ目、坂道の距離・高さ・幅、見える境界と判定の一致、浮いている車の範囲判定と自動リスポーンの抑止、立体交差、装飾サンプル、Transform変更、Undo、空コース・重複点、Scene編集による点の追加・挿入・削除とストローク単位のUndo / Redo、`LapManager` の横方向の逸脱検知と復帰を検証します。
 
 バッチ実行: `-batchmode -nographics -executeMethod RaceCourseValidation.Run -quit`
