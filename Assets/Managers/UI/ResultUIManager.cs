@@ -105,6 +105,7 @@ public class ResultUIManager
             RacingMenuButton control=button.GetComponent<RacingMenuButton>();
             control.Configure(button.Find("ButtonSurface").GetComponent<RacingPanelGraphic>());
             control.ConfigureHold(1f,button.name=="Option1");
+            control.PlayConfirmationSound = false; // Gmanager confirms pointer and pedal actions once.
         }
         menuHint=NeonUI.Text(parent,"MenuHint","",new Vector2(.20f,.008f),new Vector2(.80f,.042f),17f,TextAlignmentOptions.Center);
     }

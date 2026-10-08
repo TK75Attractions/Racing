@@ -15,7 +15,7 @@ public static class ModernUIValidation
             Require(RacingUIFontCatalog.Get(role) != null, $"Missing UI font: {role}");
         Require(RacingUIFontCatalog.GetHUD(false) != null && RacingUIFontCatalog.GetHUD(true) != null, "Missing medium/bold HUD fonts.");
         TMP_FontAsset japanese = RacingUIFontCatalog.Get(FontRole.Japanese);
-        Require(japanese.HasCharacters("スタートリトライタイトルへハンドルで操作ペダルを踏み込んで決定準備完了相手待っています観戦中済終了前進後退走行方向切替操作一時停止あなた順位いまの周位人走行タイムこのスピードコースあいてプレイヤー加速秒もうすぐレース終了", out uint[] missing),
+        Require(japanese.HasCharacters("スタートリトライタイトルへハンドルで操作ペダルを踏み込んで決定準備完了相手待っています観戦中済終了前進後退走行方向切替操作一時停止あなた順位いまの周位人走行タイムこのスピードコースあいてプレイヤー加速秒もうすぐレース終了効果音", out uint[] missing),
             "Japanese UI font is missing required characters.");
         foreach(string asset in new[]{"TitleBackground","ResultBackground","MedalGold","MedalSilver"})
             Require(Resources.Load<Texture2D>("UI/Neon/"+asset)!=null,"Missing neon art: "+asset);
@@ -273,7 +273,7 @@ public static class ModernUIValidation
         Require(interrupted == 1 && toggled == 1 && restarted == 1, "Rebuilding the menu must not duplicate action listeners.");
         Transform options = card.Find("OptionsPanel");
         Require(options != null && options.gameObject.activeSelf, "Audio settings did not open.");
-        foreach (string name in new[] { "MasterSlider", "BGMSlider", "EngineSlider" })
+        foreach (string name in new[] { "MasterSlider", "BGMSlider", "EngineSlider", "EffectsSlider" })
             Require(options.Find(name)?.GetComponent<Slider>() != null, $"Missing audio slider: {name}");
         options.Find("Back").GetComponent<RacingMenuButton>().onClick.Invoke();
         Require(!options.gameObject.activeSelf, "Audio settings did not close.");

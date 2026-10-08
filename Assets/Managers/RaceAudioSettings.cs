@@ -6,10 +6,12 @@ public static class RaceAudioSettings
     private const string MasterKey = "Racing.Audio.Master";
     private const string BgmKey = "Racing.Audio.BGM";
     private const string EngineKey = "Racing.Audio.Engine";
+    private const string EffectsKey = "Racing.Audio.Effects";
 
     public static float Master => PlayerPrefs.GetFloat(MasterKey, 1f);
     public static float Bgm => PlayerPrefs.GetFloat(BgmKey, 1f);
     public static float Engine => PlayerPrefs.GetFloat(EngineKey, 0.35f);
+    public static float Effects => PlayerPrefs.GetFloat(EffectsKey, 1f);
 
     public static void ApplyMaster()
     {
@@ -31,4 +33,5 @@ public static class RaceAudioSettings
     {
         PlayerPrefs.SetFloat(EngineKey, Mathf.Clamp01(value));
     }
+    public static void SetEffects(float value) => PlayerPrefs.SetFloat(EffectsKey, Mathf.Clamp01(value));
 }
