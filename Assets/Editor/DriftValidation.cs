@@ -96,6 +96,7 @@ public static class DriftValidation
             Invoke(mover, "OnDisable");
             Require(!mover.IsDrifting && mover.DriftCharge == 0f, "Disabling must discard charge.");
             ValidateSpinProtection(mover, body);
+            ValidateAirResistance(mover, body);
             ValidateTimedBoost(mover);
             Debug.Log("Drift validation passed.");
         }
@@ -128,6 +129,30 @@ public static class DriftValidation
         Set(mover, "enableDriftSpinProtection", false);
         Near(Evaluate(body.linearVelocity), -30f, "Disabling the protection must restore the original steering.");
         Set(mover, "enableDriftSpinProtection", true);
+        mover.CancelDrift();
+        body.linearVelocity = Vector3.forward * 10f;
+    }
+
+    private static void ValidateAirResistance(DebugMover mover, Rigidbody body)
+    {
+        body.linearVelocity = new Vector3(0f, 5f, 10f);
+        Invoke(mover, "ApplyVelocityResistance");
+        Near(Get(mover, "resistanceForce"), 6f, "Ground resistance must retain its existing strength.");
+        body.transform.position = Vector3.up * 2f;
+        Physics.SyncTransforms();
+        Invoke(mover, "ApplyVelocityResistance");
+        Near(Get(mover, "resistanceForce"), .3f, "Flight resistance must be five percent of road resistance.");
+        Set(mover, "driftGripBlend", 1f);
+        Invoke(mover, "ApplyVelocityResistance");
+        Near(Get(mover, "resistanceForce"), .3f, "Leaving a drift must not add road drag while airborne.");
+        Set(mover, "airborneResistanceMultiplier", 0f);
+        Invoke(mover, "ApplyVelocityResistance");
+        Near(Get(mover, "resistanceForce"), 0f, "Zero air resistance must permit frictionless flight.");
+        Set(mover, "airborneResistanceMultiplier", .05f);
+        body.transform.position = Vector3.zero;
+        Physics.SyncTransforms();
+        Invoke(mover, "ApplyVelocityResistance");
+        Near(Get(mover, "resistanceForce"), 7.5f, "Landing must restore ground drift resistance immediately.");
         mover.CancelDrift();
         body.linearVelocity = Vector3.forward * 10f;
     }

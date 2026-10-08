@@ -38,6 +38,8 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         public float maxSideSlip;
         public float maxSlipAngle;
         public float finalSlipAngle;
+        public float finalPlanarSpeed;
+        public float horizontalDistance;
         public float finalForwardSpeed;
         public float finalVerticalSpeed;
         public float maxYawRate;
@@ -60,6 +62,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
     private TireForce[] tires;
     private Trial trial;
     private Vector3 startingForward;
+    private Vector3 startingPosition;
     private bool observedAir;
     private bool recording;
     private string folder;
@@ -239,6 +242,29 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         yield return new WaitForSeconds(.5f);
         End();
 
+        // Flight keeps the takeoff speed without tire propulsion; gravity still controls landing.
+        foreach (float speed in new[] { 8f, 20f, 40f })
+        foreach (float pedal in new[] { 0f, 1f })
+        {
+            yield return Place(floor + Vector3.up * 80f, Quaternion.identity);
+            body.linearVelocity = new Vector3(0f, 5f, speed);
+            input.CurrentState = new DriveInputState { pedal = pedal };
+            Begin("air-glide-" + speed + "-pedal-" + pedal);
+            trial.initialSpeed = speed;
+            yield return new WaitForSeconds(2f);
+            End();
+        }
+        yield return Place(floor + Vector3.up * 80f, Quaternion.identity);
+        body.linearVelocity = new Vector3(0f, 5f, 20f);
+        Set(mover, "isDrifting", true);
+        Set(mover, "driftDirection", 1f);
+        Set(mover, "driftGripBlend", 1f);
+        input.CurrentState = new DriveInputState { pedal = 1f, steering = 30f };
+        Begin("air-glide-drift");
+        trial.initialSpeed = 20f;
+        yield return new WaitForSeconds(2f);
+        End();
+
         File.WriteAllText(Path.Combine(folder, "report.json"), JsonUtility.ToJson(report, true));
         trace.Dispose();
         trace = null;
@@ -262,6 +288,11 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
                 (result.maxSlipAngle > 20f || result.finalSlipAngle > 5f || result.maxYawRate > 2f ||
                  result.minimumSpeed < result.initialSpeed * .8f || result.finalForwardSpeed < result.initialSpeed * .9f))
                 failures.Add(result.name + ": excessive slip/spin or lost forward motion");
+            if (result.name.StartsWith("air-glide-") &&
+                (result.airSeconds < 1.9f || result.groundedWheels != 0 || result.maxDriveWhileAirborne > .001f ||
+                 result.finalPlanarSpeed < result.initialSpeed * .9f || result.finalPlanarSpeed > result.initialSpeed * 1.02f ||
+                 result.horizontalDistance < result.initialSpeed * 1.9f || Mathf.Abs(result.finalVerticalSpeed + 14.62f) > .5f))
+                failures.Add(result.name + ": excessive air resistance, tire propulsion, or changed gravity");
             if (result.name == "air-yaw-drift" &&
                 (result.yawChange < 20f || result.maxTilt > 1f || Mathf.Abs(result.finalVerticalSpeed) > .5f))
                 failures.Add("air-yaw-drift: grounded spin protection affected flight");
@@ -308,6 +339,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         trial = new Trial { name = name };
         report.trials.Add(trial);
         startingForward = Vector3.ProjectOnPlane(body.rotation * Vector3.forward, Vector3.up).normalized;
+        startingPosition = body.position;
         observedAir = false;
         trialTime = 0f;
         recording = true;
@@ -361,6 +393,8 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         Vector3 planarVelocity = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up);
         trial.finalSlipAngle = planarVelocity.sqrMagnitude > 1f ? Vector3.Angle(forward, planarVelocity) : 0f;
         trial.maxSlipAngle = Mathf.Max(trial.maxSlipAngle, trial.finalSlipAngle);
+        trial.finalPlanarSpeed = planarVelocity.magnitude;
+        trial.horizontalDistance = Vector3.ProjectOnPlane(body.position - startingPosition, Vector3.up).magnitude;
         trial.finalForwardSpeed = Vector3.Dot(planarVelocity, forward);
         trial.finalVerticalSpeed = body.linearVelocity.y;
         trial.maxYawRate = Mathf.Max(trial.maxYawRate, Mathf.Abs(Vector3.Dot(body.angularVelocity, Vector3.up)));

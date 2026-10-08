@@ -12,6 +12,8 @@ public class DebugMover : MonoBehaviour
     [Header("Velocity Resistance")]
     [Tooltip("水平速度に比例し、速度と反対方向に加える抵抗力の係数。")]
     [SerializeField, Min(0f)] private float velocityResistance = 0.6f;
+    [Tooltip("全タイヤが路面から離れている間の水平抵抗倍率。0で減速なし、1で地上と同じ抵抗。")]
+    [SerializeField, Range(0f, 1f)] private float airborneResistanceMultiplier = .05f;
 
     [Header("Steering")]
     [Tooltip("入力ハンドル値を前輪角度に変換する倍率。")]
@@ -643,8 +645,17 @@ public class DebugMover : MonoBehaviour
     private void ApplyVelocityResistance()
     {
         Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
-        Vector3 resistance = -planarVelocity * velocityResistance;
-        if (enableDriftDynamics)
+        bool grounded = false;
+        foreach (TireForce tire in tires)
+        {
+            if (!tire.GetComponent<GroundCheck>().CheckNow()) continue;
+            grounded = true;
+            break;
+        }
+        // In flight there is no tire propulsion to balance road resistance; retain takeoff momentum.
+        float resistanceMultiplier = grounded ? 1f : Mathf.Clamp01(airborneResistanceMultiplier);
+        Vector3 resistance = -planarVelocity * velocityResistance * resistanceMultiplier;
+        if (grounded && enableDriftDynamics)
         {
             resistance *= Mathf.Lerp(1f, Mathf.Max(1f, driftResistanceMultiplier), driftGripBlend);
         }
