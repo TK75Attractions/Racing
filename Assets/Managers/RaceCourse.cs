@@ -28,8 +28,6 @@ public class RaceCourse : MonoBehaviour
 
     [SerializeField] private Waypoint[] waypoints;
     [SerializeField] private bool closedLoop = true;
-    [Tooltip("コース面から上下に許容するワールド距離。車体の高さやジャンプを考慮して設定します。")]
-    [SerializeField, Min(0f)] private float verticalTolerance = 8f;
 
     [Header("Gizmo")]
     [SerializeField] private Color waypointColor = Color.cyan;
@@ -80,28 +78,28 @@ public class RaceCourse : MonoBehaviour
         if (drawCenterLine) DrawPolyline(cachedCenterPath);
     }
 
-    /// <summary>高さを無視する旧API。3Dの逸脱判定には Vector3 の overload を使います。</summary>
-    public bool IsPointInsideCourse(Vector2 point) => IsInsideBand(point, null);
+    /// <summary>上から見たコース帯の範囲で判定します。</summary>
+    public bool IsPointInsideCourse(Vector2 point) => IsInsideBand(point);
 
-    /// <summary>Sceneに表示した帯の範囲と、その地点の路面からの高さで判定します。</summary>
+    /// <summary>高さを無視し、浮いていても上から見たコース帯の内側なら範囲内とします。</summary>
     public bool IsPointInsideCourse(Vector3 worldPosition) =>
-        IsInsideBand(ToXZ(worldPosition), worldPosition.y);
+        IsInsideBand(ToXZ(worldPosition));
 
-    private bool IsInsideBand(Vector2 point, float? worldHeight)
+    private bool IsInsideBand(Vector2 point)
     {
         EnsureCache();
         for (int i = 1; i < cachedInnerPath.Count; i++)
         {
-            // 描画に使う左右の縁と同じ三角形で判定。立体交差では全区間の高さを調べる。
-            if (IsInsideTriangle(point, worldHeight,
+            // 描画に使う左右の縁と同じ三角形をXZへ投影して判定する。
+            if (IsInsideTriangle(point,
                     cachedInnerPath[i - 1], cachedOuterPath[i - 1], cachedInnerPath[i]) ||
-                IsInsideTriangle(point, worldHeight,
+                IsInsideTriangle(point,
                     cachedOuterPath[i - 1], cachedOuterPath[i], cachedInnerPath[i])) return true;
         }
         return false;
     }
 
-    private bool IsInsideTriangle(Vector2 point, float? height, Vector3 a, Vector3 b, Vector3 c)
+    private static bool IsInsideTriangle(Vector2 point, Vector3 a, Vector3 b, Vector3 c)
     {
         Vector2 ab = ToXZ(b - a);
         Vector2 ac = ToXZ(c - a);
@@ -111,9 +109,7 @@ public class RaceCourse : MonoBehaviour
         float u = (ap.x * ac.y - ap.y * ac.x) / determinant;
         float v = (ab.x * ap.y - ab.y * ap.x) / determinant;
         const float tolerance = 0.00001f;
-        if (u < -tolerance || v < -tolerance || u + v > 1f + tolerance) return false;
-        float surfaceHeight = a.y + u * (b.y - a.y) + v * (c.y - a.y);
-        return !height.HasValue || Mathf.Abs(height.Value - surfaceHeight) <= Mathf.Max(0f, verticalTolerance);
+        return u >= -tolerance && v >= -tolerance && u + v <= 1f + tolerance;
     }
 
     public Vector2 GetNearestPointOnCenterLine(Vector2 point)
