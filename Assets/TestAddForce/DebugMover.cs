@@ -12,6 +12,8 @@ public class DebugMover : MonoBehaviour
     [Header("Velocity Resistance")]
     [Tooltip("水平速度に比例し、速度と反対方向に加える抵抗力の係数。")]
     [SerializeField, Min(0f)] private float velocityResistance = 0.6f;
+    [Tooltip("全タイヤが路面から離れている間の水平抵抗倍率。0で減速なし、1で地上と同じ抵抗。")]
+    [SerializeField, Range(0f, 1f)] private float airborneResistanceMultiplier = .05f;
 
     [Header("Steering")]
     [Tooltip("入力ハンドル値を前輪角度に変換する倍率。")]
@@ -63,6 +65,26 @@ public class DebugMover : MonoBehaviour
 
     [Tooltip("ドリフト中に後輪の横グリップを低下させるか。")]
     [SerializeField] private bool enableDriftRearGripReduction = true;
+
+    [Tooltip("前進速度がこの値以上で、前後輪が接地しているときだけドリフトを開始します。")]
+    [SerializeField, Min(0f)] private float driftMinimumSpeed = 6f;
+    [SerializeField, Min(0f)] private float driftStartHoldSeconds = .18f;
+    [SerializeField, Min(0f)] private float driftCountersteerHandle = 2f;
+    [SerializeField, Min(0f)] private float driftReleaseHoldSeconds = .1f;
+    [SerializeField, Min(.01f)] private float driftGripTransitionSeconds = .3f;
+
+    [Header("Drift Spin Protection")]
+    [SerializeField] private bool enableDriftSpinProtection = true;
+    [Tooltip("自然な横滑りとして残す、車の向きと水平移動方向の角度（度）。")]
+    [SerializeField, Range(0f, 30f)] private float driftMaxSlipAngle = 12f;
+    [Tooltip("ドリフト中の旋回速度の目標上限（rad/s）。")]
+    [SerializeField, Min(.1f)] private float driftMaxYawRate = 1.6f;
+    [Tooltip("高速ドリフトの旋回を抑える横加速度の目安（m/s²）。")]
+    [SerializeField, Min(1f)] private float driftMaxLateralAcceleration = 22f;
+    [SerializeField, Min(0f)] private float driftYawResponse = 10f;
+    [SerializeField, Min(0f)] private float driftMaxYawAcceleration = 15f;
+    [SerializeField, Min(0f)] private float driftSlipRecoveryDegreesPerSecond = 60f;
+    [SerializeField, Min(0f)] private float driftRecoverySeconds = .75f;
 
     [Header("Drift Boost")]
     [Tooltip("ドリフト解放後に加速を続ける時間（秒）。0で加速を無効化します。")]
@@ -117,6 +139,12 @@ public class DebugMover : MonoBehaviour
     private IDriveInputSource inputSource;
     private float inputSuppressedUntil;
     private float driftDirection;
+    private float pendingDriftDirection;
+    private float driftStartTime;
+    private float driftReleaseTime;
+    private float driftGripBlend;
+    private float driftRecoveryTimeRemaining;
+    private float wheelbase = 2.6f;
     private CarItemEffects itemEffects;
 
     public IDriveInputSource InputSource => inputSource;
@@ -157,6 +185,8 @@ public class DebugMover : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         if (itemEffects == null) itemEffects = GetComponent<CarItemEffects>();
         RefreshTires();
+        if (Application.isPlaying && GetComponent<CarBodyMotion>() == null)
+            gameObject.AddComponent<CarBodyMotion>();
     }
 
     private void FixedUpdate()
@@ -215,6 +245,7 @@ public class DebugMover : MonoBehaviour
         }
 
         ApplyTireForces();
+        ApplyDriftSpinProtection(Time.fixedDeltaTime);
         ApplyVelocityResistance();
     }
 
@@ -267,11 +298,19 @@ public class DebugMover : MonoBehaviour
         return driftCharge > previous + 0.0001f;
     }
 
-    private void ResetDrift()
+    private void ResetDrift(bool resetGrip = true)
     {
         isDrifting = false;
         driftCharge = 0f;
         driftDirection = 0f;
+        pendingDriftDirection = 0f;
+        driftStartTime = 0f;
+        driftReleaseTime = 0f;
+        if (resetGrip)
+        {
+            driftGripBlend = 0f;
+            driftRecoveryTimeRemaining = 0f;
+        }
         driftBoostTimeRemaining = 0f;
         activeDriftBoostAcceleration = 0f;
     }
@@ -354,36 +393,78 @@ public class DebugMover : MonoBehaviour
         return speedDelta;
     }
 
-    // 中立入力を挟んでも開始時の方向を保持し、逆符号になったときだけ解放する。
+    private bool HasDriftGroundContact()
+    {
+        bool front = false, rear = false;
+        foreach (TireForce tire in tires)
+        {
+            if (!tire.GetComponent<GroundCheck>().CheckNow()) continue;
+            if (tire.IsFrontWheel) front = true;
+            else rear = true;
+        }
+        return front && rear;
+    }
+
     private float UpdateDrift(float deltaTime)
     {
-        if (isDrifting && rawSteeringInput * driftDirection < 0f)
-        {
-            float boostAcceleration = driftCharge * Mathf.Max(0f, driftBoostAccelerationPerCharge);
-            ResetDrift();
-            // この物理フレームでは反対方向のドリフトを開始しない。
-            return boostAcceleration;
-        }
-
+        float elapsed = Mathf.Max(0f, deltaTime);
+        float forwardSpeed = Vector3.Dot(rb.linearVelocity,
+            Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized);
+        bool grounded = HasDriftGroundContact();
         float handleMagnitude = Mathf.Abs(rawSteeringInput);
-        float startHandle = Mathf.Max(0.01f, driftStartHandle);
-        if (!isDrifting && handleMagnitude >= startHandle)
-        {
-            isDrifting = true;
-            driftDirection = Mathf.Sign(rawSteeringInput);
-        }
+        float startHandle = Mathf.Max(.01f, driftStartHandle);
+        float releasedAcceleration = 0f;
+
+        // Low speed and reversing end the slide without rewarding a boost.
+        if (isDrifting && forwardSpeed < driftMinimumSpeed * .5f)
+            ResetDrift(resetGrip: false);
 
         if (isDrifting)
         {
-            float chargeRatio = Mathf.Clamp01(
-                handleMagnitude / Mathf.Max(startHandle, driftFullChargeHandle));
-            driftCharge = Mathf.Clamp(
-                driftCharge + chargeRatio * Mathf.Max(0f, driftChargePerSecond) * Mathf.Max(0f, deltaTime),
-                0f,
-                Mathf.Max(0f, maxDriftCharge));
+            bool countersteering = rawSteeringInput * driftDirection <= -Mathf.Max(.01f, driftCountersteerHandle);
+            driftReleaseTime = grounded && countersteering ? driftReleaseTime + elapsed : 0f;
+            if (grounded && countersteering && driftReleaseTime >= driftReleaseHoldSeconds)
+            {
+                releasedAcceleration = driftCharge * Mathf.Max(0f, driftBoostAccelerationPerCharge);
+                ResetDrift(resetGrip: false);
+            }
+            else if (grounded && rawSteeringInput * driftDirection > 0f)
+            {
+                float chargeRatio = Mathf.Clamp01(handleMagnitude / Mathf.Max(startHandle, driftFullChargeHandle));
+                driftCharge = Mathf.Clamp(driftCharge + chargeRatio * Mathf.Max(0f, driftChargePerSecond) * elapsed,
+                    0f, Mathf.Max(0f, maxDriftCharge));
+            }
+        }
+        else if (grounded && forwardSpeed >= driftMinimumSpeed && handleMagnitude >= startHandle)
+        {
+            float direction = Mathf.Sign(rawSteeringInput);
+            if (direction != pendingDriftDirection) driftStartTime = 0f;
+            pendingDriftDirection = direction;
+            float previousStartTime = driftStartTime;
+            driftStartTime += elapsed;
+            if (driftStartTime >= driftStartHoldSeconds)
+            {
+                isDrifting = true;
+                driftDirection = direction;
+                driftStartTime = 0f;
+                float chargeElapsed = Mathf.Max(0f, elapsed - Mathf.Max(0f, driftStartHoldSeconds - previousStartTime));
+                float chargeRatio = Mathf.Clamp01(handleMagnitude / Mathf.Max(startHandle, driftFullChargeHandle));
+                driftCharge = Mathf.Clamp(driftCharge + chargeRatio * Mathf.Max(0f, driftChargePerSecond) * chargeElapsed,
+                    0f, Mathf.Max(0f, maxDriftCharge));
+            }
+        }
+        else
+        {
+            pendingDriftDirection = 0f;
+            driftStartTime = 0f;
         }
 
-        return 0f;
+        // Centering or countersteering restores grip progressively while retaining charge.
+        float gripTarget = isDrifting && grounded
+            ? Mathf.Clamp01(rawSteeringInput * driftDirection / startHandle) : 0f;
+        driftGripBlend = Mathf.MoveTowards(driftGripBlend, gripTarget,
+            elapsed / Mathf.Max(.01f, driftGripTransitionSeconds));
+        return releasedAcceleration;
     }
 
     // しきい値を超えた数がそのまま段階になる。表示専用で、解放時の加速量は従来どおりチャージ量に比例する。
@@ -411,10 +492,17 @@ public class DebugMover : MonoBehaviour
         tires.Clear();
         tires.AddRange(GetComponentsInChildren<TireForce>());
 
+        float frontZ = 0f, rearZ = 0f;
+        int frontCount = 0, rearCount = 0;
         foreach (TireForce tire in tires)
         {
             tire.Init(rb);
+            float z = transform.InverseTransformPoint(tire.transform.position).z;
+            if (tire.IsFrontWheel) { frontZ += z; frontCount++; }
+            else { rearZ += z; rearCount++; }
         }
+        if (frontCount > 0 && rearCount > 0)
+            wheelbase = Mathf.Max(.5f, Mathf.Abs(frontZ / frontCount - rearZ / rearCount));
     }
 
     private void ReadInput()
@@ -465,18 +553,73 @@ public class DebugMover : MonoBehaviour
         appliedSteeringMultiplier = 1f;
     }
 
+    private bool ShouldProtectDrift => enableDriftDynamics && enableDriftSpinProtection &&
+        !IsInputSuppressed && (itemEffects == null || !itemEffects.BlocksDriverInput) &&
+        (isDrifting || driftStartTime > 0f || driftGripBlend > .001f || driftBoostTimeRemaining > 0f || driftRecoveryTimeRemaining > 0f);
+
+    private float GetDriftYawLimit(float speed)
+    {
+        return Mathf.Min(driftMaxYawRate, driftMaxLateralAcceleration / Mathf.Max(1f, speed));
+    }
+
+    private float GetProtectedSteeringAngle(Vector3 forward, Vector3 velocity)
+    {
+        float forwardSpeed = Vector3.Dot(velocity, forward);
+        if (!ShouldProtectDrift || forwardSpeed < 3f || !HasDriftGroundContact()) return appliedSteeringAngle;
+        // At speed, full lock asks more lateral force than the tires can supply and builds a spin.
+        float safeAngle = Mathf.Atan(GetDriftYawLimit(velocity.magnitude) * wheelbase / forwardSpeed) * Mathf.Rad2Deg;
+        return Mathf.Clamp(appliedSteeringAngle, -safeAngle, safeAngle);
+    }
+
+    private void ApplyDriftSpinProtection(float deltaTime)
+    {
+        if (isDrifting || driftStartTime > 0f || driftGripBlend > .001f || driftBoostTimeRemaining > 0f)
+            driftRecoveryTimeRemaining = driftRecoverySeconds;
+        else
+            driftRecoveryTimeRemaining = Mathf.Max(0f, driftRecoveryTimeRemaining - deltaTime);
+        if (!ShouldProtectDrift || !HasDriftGroundContact()) return;
+
+        Vector3 forward = Vector3.ProjectOnPlane(rb.rotation * Vector3.forward, Vector3.up).normalized;
+        Vector3 velocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
+        float forwardSpeed = Vector3.Dot(velocity, forward);
+        if (forwardSpeed < 3f) return;
+
+        float yawLimit = GetDriftYawLimit(velocity.magnitude);
+        float steeringAngle = GetProtectedSteeringAngle(forward, velocity);
+        float desiredYaw = Mathf.Clamp(forwardSpeed * Mathf.Tan(steeringAngle * Mathf.Deg2Rad) / wheelbase,
+            -yawLimit, yawLimit);
+        float slipAngle = Vector3.SignedAngle(velocity, forward, Vector3.up);
+        float excessSlip = slipAngle - Mathf.Clamp(slipAngle, -driftMaxSlipAngle, driftMaxSlipAngle);
+        // Ease the body back toward its direction of travel rather than allowing rotation to run away.
+        desiredYaw = Mathf.Clamp(desiredYaw - excessSlip * Mathf.Deg2Rad * driftYawResponse, -yawLimit, yawLimit);
+        float yawRate = Vector3.Dot(rb.angularVelocity, Vector3.up);
+        float yawAcceleration = Mathf.Clamp((desiredYaw - yawRate) * driftYawResponse,
+            -driftMaxYawAcceleration, driftMaxYawAcceleration);
+        rb.AddTorque(Vector3.up * yawAcceleration, ForceMode.Acceleration);
+
+        if (Mathf.Abs(excessSlip) > .01f)
+        {
+            float correction = Mathf.Min(Mathf.Abs(excessSlip), driftSlipRecoveryDegreesPerSecond * deltaTime);
+            Vector3 correctedVelocity = Quaternion.AngleAxis(Mathf.Sign(excessSlip) * correction, Vector3.up) * velocity;
+            // Only redirect excess slip: preserve planar speed and all vertical/landing motion.
+            rb.AddForce(correctedVelocity - velocity, ForceMode.VelocityChange);
+        }
+    }
+
     private void ApplyTireForces()
     {
-        Vector3 vehicleForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+        Vector3 vehicleForward = Vector3.ProjectOnPlane(rb.rotation * Vector3.forward, Vector3.up).normalized;
+        Vector3 velocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
+        float tireSteeringAngle = GetProtectedSteeringAngle(vehicleForward, velocity);
 
         foreach (TireForce tire in tires)
         {
             float corneringStiffness = tire.IsFrontWheel
                 ? frontCorneringStiffness
                 : rearCorneringStiffness;
-            float gripMultiplier = isDrifting && !tire.IsFrontWheel
+            float gripMultiplier = !tire.IsFrontWheel
                 && enableDriftDynamics && enableDriftRearGripReduction
-                ? Mathf.Max(0f, driftRearGripMultiplier)
+                ? Mathf.Lerp(1f, Mathf.Max(0f, driftRearGripMultiplier), driftGripBlend)
                 : 1f;
             // オイルやスピンによるグリップ低下を重ねます。
             if (itemEffects != null)
@@ -489,7 +632,7 @@ public class DebugMover : MonoBehaviour
             tire.ApplyForces(
                 vehicleForward,
                 Vector3.up,
-                appliedSteeringAngle,
+                tireSteeringAngle,
                 appliedPedalInput,
                 driveForcePerFrontWheel,
                 corneringStiffness * gripMultiplier,
@@ -502,10 +645,19 @@ public class DebugMover : MonoBehaviour
     private void ApplyVelocityResistance()
     {
         Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
-        Vector3 resistance = -planarVelocity * velocityResistance;
-        if (enableDriftDynamics && isDrifting)
+        bool grounded = false;
+        foreach (TireForce tire in tires)
         {
-            resistance *= Mathf.Max(1f, driftResistanceMultiplier);
+            if (!tire.GetComponent<GroundCheck>().CheckNow()) continue;
+            grounded = true;
+            break;
+        }
+        // In flight there is no tire propulsion to balance road resistance; retain takeoff momentum.
+        float resistanceMultiplier = grounded ? 1f : Mathf.Clamp01(airborneResistanceMultiplier);
+        Vector3 resistance = -planarVelocity * velocityResistance * resistanceMultiplier;
+        if (grounded && enableDriftDynamics)
+        {
+            resistance *= Mathf.Lerp(1f, Mathf.Max(1f, driftResistanceMultiplier), driftGripBlend);
         }
         resistanceForce = resistance.magnitude;
         rb.AddForce(resistance, ForceMode.Force);

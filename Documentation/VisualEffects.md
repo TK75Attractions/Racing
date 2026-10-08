@@ -54,3 +54,15 @@ Unity メニューの `Racing > Validate Visual Effects` は次を検証しま�
 バッチ実行は `-batchmode -nographics -executeMethod VisualEffectsValidation.Run -quit` を使用します。
 
 見た目の濃さや量は、Game ビューで昼と夜、晴れと雨を切り替えて実走し、調整してください。
+
+## 安定した走行カメラ
+
+通常走行・ブースト時の位置と回転のノイズは、`RaceSpeedVisualController > Camera Shake > Enable Driving Camera Shake` を標準で無効にしました。FOVと滑らかなプルバックは維持し、衝突時だけ短いインパクト演出を残します。
+
+`RaceDirectionCameraController` は追従先の Rigidbody を Interpolate にし、車体の高さを 0.25 秒の SmoothDamp で追従・注視ターゲットへ共通適用します。水平移動は遅らせず、車体のピッチ・ロールをカメラへ伝えません。12 m 以上の瞬間移動では補間をリセットしてリスポーンへ即座に追従します。
+
+`CarBodyMotion` は物理・タイヤを含まない描画用の車体ブランチだけを、速度に合わせて最大 0.018 m 上下させます。停車・空中・走行不可では滑らかに収まり、無効化時は元の位置へ戻ります。カメラは Rigidbody のルートを追うため、この演出は視点を揺らしません。練習モードも同じ車両とカメラ設定を使います。
+
+`DrivingFeelValidation.RunBatch` で、±0.12 m の連続した上下振動の減衰、水平追従、水平なカメラ姿勢、リスポーン時の位置復帰、車体演出が物理やタイヤを含まないことを検証します。`RunFullBatch` は加えて実シーンの離陸・着地・姿勢回復と左右の走行を Play Mode で検証します（完了時に終了するため `-quit` は指定しません）。
+
+2026-10-08、Unity 6000.3.9f1 の自動検証ではカメラ振動が最大 0.0029 m となり、17 通りの物理実走もすべて通りました。左右ドリフトの最大横滑りは 0.884 / 0.888 m/s、最大傾きはともに 0° でした。測定値と再実行方法は [DrivingFeel](../Artifacts/DrivingFeel/README.md) を参照してください。手動での運転感覚の評価は未実施です。

@@ -34,6 +34,19 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         public float finalSpeed;
         public float maxDriveWhileAirborne;
         public float yawChange;
+        public float signedYawChange;
+        public float maxSideSlip;
+        public float maxSlipAngle;
+        public float finalSlipAngle;
+        public float finalPlanarSpeed;
+        public float horizontalDistance;
+        public float finalForwardSpeed;
+        public float finalVerticalSpeed;
+        public float maxYawRate;
+        public float minimumSpeed = float.MaxValue;
+        public float initialSpeed;
+        public bool enteredDrift;
+        public bool releasedBoost;
         public float landingTilt;
         public bool landed;
         public int groundedWheels;
@@ -49,6 +62,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
     private TireForce[] tires;
     private Trial trial;
     private Vector3 startingForward;
+    private Vector3 startingPosition;
     private bool observedAir;
     private bool recording;
     private string folder;
@@ -67,8 +81,16 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         Application.runInBackground = true;
         Time.timeScale = 3f;
         var manager = UnityEngine.Object.FindFirstObjectByType<Gmanager>();
+        // Keep this physics validation local and advance past the practice lesson.
+        var publisher = manager.GetComponent<RaceRemoteFirebasePublisher>();
+        if (publisher != null) publisher.enabled = false;
         manager.StartGame();
-        while (!manager.IsDrivingEnabled) yield return null;
+        while (manager.state != Gmanager.State.Tutorial || AnyTransitionActive()) yield return null;
+        typeof(Gmanager).GetMethod("FinishTutorialWhenScreenCovered", Fields).Invoke(manager, null);
+        typeof(Gmanager).GetMethod("CompleteGameStart", Fields).Invoke(manager, null);
+        foreach (var transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
+            transition.ApplyStateImmediate(Gmanager.State.Countdown);
+        while (manager.state != Gmanager.State.Game || !manager.IsDrivingEnabled) yield return null;
         var car = GameObject.Find("Player1_Car");
         body = car.GetComponent<Rigidbody>();
         mover = car.GetComponent<DebugMover>();
@@ -166,11 +188,81 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             End();
         }
 
+        // Matched left/right runs exercise sustained drifting and progressive countersteer recovery.
+        foreach (float steering in new[] { -12f, 12f })
+        {
+            yield return Place(floor, Quaternion.identity);
+            yield return new WaitForSeconds(.3f);
+            body.linearVelocity = Vector3.forward * 15f;
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = steering };
+            Begin(steering < 0f ? "drift-left" : "drift-right");
+            yield return new WaitForSeconds(1.5f);
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = -steering };
+            yield return new WaitForSeconds(.14f);
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = 0f };
+            yield return new WaitForSeconds(1.2f);
+            End();
+        }
+
+        // Full-lock drifts at low/high speed, with and without an existing sideways/yaw disturbance.
+        foreach (float speed in new[] { 8f, 20f, 40f })
+        foreach (float steering in new[] { -30f, 30f })
+        foreach (bool disturbed in new[] { false, true })
+        {
+            yield return Place(floor, Quaternion.identity);
+            yield return new WaitForSeconds(.3f);
+            body.linearVelocity = Vector3.forward * speed + (disturbed ? Vector3.right * Mathf.Sign(steering) * speed * .25f : Vector3.zero);
+            body.angularVelocity = disturbed ? Vector3.up * Mathf.Sign(steering) * 1.8f : Vector3.zero;
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = steering };
+            Begin("spin-guard-" + speed + (steering < 0f ? "-left" : "-right") + (disturbed ? "-disturbed" : "-clean"));
+            trial.initialSpeed = speed;
+            yield return new WaitForSeconds(1.5f);
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = -steering };
+            yield return new WaitForSeconds(.14f);
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = 0f };
+            yield return new WaitForSeconds(1.2f);
+            End();
+        }
+
         // yaw の角速度だけは補正で消さない（地面から十分離した状態）。
         yield return Place(floor + Vector3.up * 80f, Quaternion.identity);
         body.angularVelocity = Vector3.up;
         Begin("air-yaw");
         yield return new WaitForSeconds(0.5f);
+        End();
+
+        // Charged drift state in flight must not redirect falling motion or damp airborne yaw.
+        yield return Place(floor + Vector3.up * 80f, Quaternion.identity);
+        body.linearVelocity = new Vector3(0f, 5f, 15f);
+        body.angularVelocity = Vector3.up;
+        Set(mover, "isDrifting", true);
+        Set(mover, "driftDirection", 1f);
+        input.CurrentState = new DriveInputState { pedal = 1f, steering = 30f };
+        Begin("air-yaw-drift");
+        yield return new WaitForSeconds(.5f);
+        End();
+
+        // Flight keeps the takeoff speed without tire propulsion; gravity still controls landing.
+        foreach (float speed in new[] { 8f, 20f, 40f })
+        foreach (float pedal in new[] { 0f, 1f })
+        {
+            yield return Place(floor + Vector3.up * 80f, Quaternion.identity);
+            body.linearVelocity = new Vector3(0f, 5f, speed);
+            input.CurrentState = new DriveInputState { pedal = pedal };
+            Begin("air-glide-" + speed + "-pedal-" + pedal);
+            trial.initialSpeed = speed;
+            yield return new WaitForSeconds(2f);
+            End();
+        }
+        yield return Place(floor + Vector3.up * 80f, Quaternion.identity);
+        body.linearVelocity = new Vector3(0f, 5f, 20f);
+        Set(mover, "isDrifting", true);
+        Set(mover, "driftDirection", 1f);
+        Set(mover, "driftGripBlend", 1f);
+        input.CurrentState = new DriveInputState { pedal = 1f, steering = 30f };
+        Begin("air-glide-drift");
+        trial.initialSpeed = 20f;
+        yield return new WaitForSeconds(2f);
         End();
 
         File.WriteAllText(Path.Combine(folder, "report.json"), JsonUtility.ToJson(report, true));
@@ -188,6 +280,22 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
                 failures.Add(result.name + ": failed recovery");
             if (result.name.StartsWith("flat-steering-") && (result.maxTilt > 15f || result.yawChange < 5f || result.finalSpeed < 1f))
                 failures.Add(result.name + ": steering or stability regression");
+            if (result.name.StartsWith("drift-") &&
+                (!result.enteredDrift || !result.releasedBoost || result.maxTilt > 15f ||
+                 result.maxAngularSpeed > 3f || result.finalSpeed < 5f || result.maxSideSlip > 8f))
+                failures.Add(result.name + ": drift entry, release, or controlled slide regression");
+            if (result.name.StartsWith("spin-guard-") &&
+                (result.maxSlipAngle > 20f || result.finalSlipAngle > 5f || result.maxYawRate > 2f ||
+                 result.minimumSpeed < result.initialSpeed * .8f || result.finalForwardSpeed < result.initialSpeed * .9f))
+                failures.Add(result.name + ": excessive slip/spin or lost forward motion");
+            if (result.name.StartsWith("air-glide-") &&
+                (result.airSeconds < 1.9f || result.groundedWheels != 0 || result.maxDriveWhileAirborne > .001f ||
+                 result.finalPlanarSpeed < result.initialSpeed * .9f || result.finalPlanarSpeed > result.initialSpeed * 1.02f ||
+                 result.horizontalDistance < result.initialSpeed * 1.9f || Mathf.Abs(result.finalVerticalSpeed + 14.62f) > .5f))
+                failures.Add(result.name + ": excessive air resistance, tire propulsion, or changed gravity");
+            if (result.name == "air-yaw-drift" &&
+                (result.yawChange < 20f || result.maxTilt > 1f || Mathf.Abs(result.finalVerticalSpeed) > .5f))
+                failures.Add("air-yaw-drift: grounded spin protection affected flight");
             if (result.name == "air-yaw" && (result.yawChange < 20f || result.maxTilt > 1f))
                 failures.Add("air-yaw: yaw was damped or tilt was introduced");
             if (result.name == "hover-no-contact" && (result.groundedWheels != 0 || result.finalSpeed > 0.001f || result.maxDriveWhileAirborne > 0.001f))
@@ -196,6 +304,12 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
                 (result.maxTilt > 75f || result.finalTilt > 12f || !result.landed || result.yawChange > 30f))
                 failures.Add(result.name + ": unstable ramp orientation");
         }
+        Trial leftDrift = report.trials.Find(result => result.name == "drift-left");
+        Trial rightDrift = report.trials.Find(result => result.name == "drift-right");
+        if (leftDrift.signedYawChange * rightDrift.signedYawChange >= 0f ||
+            Mathf.Abs(leftDrift.yawChange - rightDrift.yawChange) > 10f ||
+            Mathf.Abs(leftDrift.finalSpeed - rightDrift.finalSpeed) > 2f)
+            failures.Add("drift-left/right: mirrored steering must produce comparable motion");
         string message = "CAR_STABILITY_PLAYMODE_" + (failures.Count == 0 ? "PASS" : "FAIL") +
             " (" + report.trials.Count + " trials): " + string.Join("; ", failures) + " report=" + folder;
         // Baseline は失敗数も保存して比較しますが、正常終了させます。
@@ -225,6 +339,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         trial = new Trial { name = name };
         report.trials.Add(trial);
         startingForward = Vector3.ProjectOnPlane(body.rotation * Vector3.forward, Vector3.up).normalized;
+        startingPosition = body.position;
         observedAir = false;
         trialTime = 0f;
         recording = true;
@@ -273,11 +388,31 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         trial.groundedWheels = grounded;
         Vector3 forward = Vector3.ProjectOnPlane(body.rotation * Vector3.forward, Vector3.up).normalized;
         trial.yawChange = Vector3.Angle(startingForward, forward);
+        trial.signedYawChange = Vector3.SignedAngle(startingForward, forward, Vector3.up);
+        trial.maxSideSlip = Mathf.Max(trial.maxSideSlip, Mathf.Abs(Vector3.Dot(body.linearVelocity, body.rotation * Vector3.right)));
+        Vector3 planarVelocity = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up);
+        trial.finalSlipAngle = planarVelocity.sqrMagnitude > 1f ? Vector3.Angle(forward, planarVelocity) : 0f;
+        trial.maxSlipAngle = Mathf.Max(trial.maxSlipAngle, trial.finalSlipAngle);
+        trial.finalPlanarSpeed = planarVelocity.magnitude;
+        trial.horizontalDistance = Vector3.ProjectOnPlane(body.position - startingPosition, Vector3.up).magnitude;
+        trial.finalForwardSpeed = Vector3.Dot(planarVelocity, forward);
+        trial.finalVerticalSpeed = body.linearVelocity.y;
+        trial.maxYawRate = Mathf.Max(trial.maxYawRate, Mathf.Abs(Vector3.Dot(body.angularVelocity, Vector3.up)));
+        trial.minimumSpeed = Mathf.Min(trial.minimumSpeed, planarVelocity.magnitude);
+        trial.enteredDrift |= mover.IsDrifting;
+        trial.releasedBoost |= mover.IsDriftBoosting;
         var p = body.position;
         var v = body.linearVelocity;
         trace.WriteLine(string.Format(CultureInfo.InvariantCulture,
             "{0},{1:F3},{2:F3},{3:F3},{4:F3},{5:F3},{6:F3},{7:F3},{8:F3},{9:F3},{10},{11:F3}",
             trial.name, trialTime, p.x, p.y, p.z, v.x, v.y, v.z, tilt, body.angularVelocity.magnitude, grounded, drive));
+    }
+
+    private static bool AnyTransitionActive()
+    {
+        foreach (var transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
+            if (transition.IsTransitioning) return true;
+        return false;
     }
 
     private static void Set(object instance, string field, object value) =>

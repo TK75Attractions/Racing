@@ -14,6 +14,12 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
     [SerializeField, Min(0f)] private float cameraHeight = 2f;
     [SerializeField, Min(0f)] private float rotationSmoothTime = 0.15f;
 
+    [SerializeField, Min(0f)] private float heightSmoothTime = .25f;
+    [SerializeField, Min(1f)] private float teleportDistance = 12f;
+
+    private float smoothedHeight;
+    private float heightVelocity;
+    private Vector3 lastCarPosition;
     private float lookHeight;
     private Transform car;
     private Transform cameraTarget;
@@ -36,15 +42,17 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
     public void SetCar(Transform targetCar)
     {
         car = targetCar;
+        if (car != null && car.TryGetComponent<Rigidbody>(out var body))
+            body.interpolation = RigidbodyInterpolation.Interpolate;
         EnsureCameraTarget();
-        UpdateCameraTarget(immediately: true);
+        UpdateCameraTarget(immediately: true, Time.deltaTime);
     }
 
     /// <summary>Raise the practice view's aim to leave the car between the instrument panels and lesson strip.</summary>
     public void SetLookHeight(float height)
     {
         lookHeight = Mathf.Max(0f, height);
-        UpdateCameraTarget(immediately: true);
+        UpdateCameraTarget(immediately: true, Time.deltaTime);
     }
 
     public void ClearCar()
@@ -67,7 +75,7 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
 
     private void LateUpdate()
     {
-        UpdateCameraTarget(immediately: false);
+        UpdateCameraTarget(immediately: false, Time.deltaTime);
     }
 
     private void OnDestroy()
@@ -88,13 +96,23 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
         }
     }
 
-    private void UpdateCameraTarget(bool immediately)
+    private void UpdateCameraTarget(bool immediately, float deltaTime)
     {
         if (car == null || cameraTarget == null || cameraLookTarget == null)
         {
             return;
         }
 
+        immediately |= (car.position - lastCarPosition).sqrMagnitude > teleportDistance * teleportDistance;
+        lastCarPosition = car.position;
+        if (immediately)
+        {
+            smoothedHeight = car.position.y;
+            heightVelocity = 0f;
+        }
+        else
+            smoothedHeight = Mathf.SmoothDamp(smoothedHeight, car.position.y, ref heightVelocity, heightSmoothTime, Mathf.Infinity, deltaTime);
+        Vector3 anchorPosition = new Vector3(car.position.x, smoothedHeight, car.position.z);
         Vector3 carDirection = GetCarDirection();
         float targetYaw = Mathf.Atan2(carDirection.x, carDirection.z) * Mathf.Rad2Deg;
         float yaw;
@@ -110,18 +128,20 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
                 cameraTarget.eulerAngles.y,
                 targetYaw,
                 ref yawVelocity,
-                rotationSmoothTime);
+                rotationSmoothTime,
+                Mathf.Infinity,
+                deltaTime);
         }
 
         Quaternion cameraRotation = Quaternion.Euler(0f, yaw, 0f);
-        Vector3 cameraPosition = car.position
+        Vector3 cameraPosition = anchorPosition
             - cameraRotation * Vector3.forward * Mathf.Max(0.01f, cameraDistance)
             + Vector3.up * Mathf.Max(0f, cameraHeight);
 
         cameraTarget.SetPositionAndRotation(cameraPosition, cameraRotation);
 
         cameraLookTarget.SetPositionAndRotation(
-            car.position + Vector3.up * lookHeight,
+            anchorPosition + Vector3.up * lookHeight,
             cameraRotation);
     }
 
