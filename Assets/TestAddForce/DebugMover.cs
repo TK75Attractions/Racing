@@ -64,6 +64,13 @@ public class DebugMover : MonoBehaviour
     [Tooltip("ドリフト中に後輪の横グリップを低下させるか。")]
     [SerializeField] private bool enableDriftRearGripReduction = true;
 
+    [Tooltip("前進速度がこの値以上で、前後輪が接地しているときだけドリフトを開始します。")]
+    [SerializeField, Min(0f)] private float driftMinimumSpeed = 6f;
+    [SerializeField, Min(0f)] private float driftStartHoldSeconds = .18f;
+    [SerializeField, Min(0f)] private float driftCountersteerHandle = 2f;
+    [SerializeField, Min(0f)] private float driftReleaseHoldSeconds = .1f;
+    [SerializeField, Min(.01f)] private float driftGripTransitionSeconds = .3f;
+
     [Header("Drift Boost")]
     [Tooltip("ドリフト解放後に加速を続ける時間（秒）。0で加速を無効化します。")]
     [SerializeField, Min(0f)] private float driftBoostDuration = 1f;
@@ -117,6 +124,10 @@ public class DebugMover : MonoBehaviour
     private IDriveInputSource inputSource;
     private float inputSuppressedUntil;
     private float driftDirection;
+    private float pendingDriftDirection;
+    private float driftStartTime;
+    private float driftReleaseTime;
+    private float driftGripBlend;
     private CarItemEffects itemEffects;
 
     public IDriveInputSource InputSource => inputSource;
@@ -157,6 +168,8 @@ public class DebugMover : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         if (itemEffects == null) itemEffects = GetComponent<CarItemEffects>();
         RefreshTires();
+        if (Application.isPlaying && GetComponent<CarBodyMotion>() == null)
+            gameObject.AddComponent<CarBodyMotion>();
     }
 
     private void FixedUpdate()
@@ -267,11 +280,15 @@ public class DebugMover : MonoBehaviour
         return driftCharge > previous + 0.0001f;
     }
 
-    private void ResetDrift()
+    private void ResetDrift(bool resetGrip = true)
     {
         isDrifting = false;
         driftCharge = 0f;
         driftDirection = 0f;
+        pendingDriftDirection = 0f;
+        driftStartTime = 0f;
+        driftReleaseTime = 0f;
+        if (resetGrip) driftGripBlend = 0f;
         driftBoostTimeRemaining = 0f;
         activeDriftBoostAcceleration = 0f;
     }
@@ -354,36 +371,78 @@ public class DebugMover : MonoBehaviour
         return speedDelta;
     }
 
-    // 中立入力を挟んでも開始時の方向を保持し、逆符号になったときだけ解放する。
+    private bool HasDriftGroundContact()
+    {
+        bool front = false, rear = false;
+        foreach (TireForce tire in tires)
+        {
+            if (!tire.GetComponent<GroundCheck>().CheckNow()) continue;
+            if (tire.IsFrontWheel) front = true;
+            else rear = true;
+        }
+        return front && rear;
+    }
+
     private float UpdateDrift(float deltaTime)
     {
-        if (isDrifting && rawSteeringInput * driftDirection < 0f)
-        {
-            float boostAcceleration = driftCharge * Mathf.Max(0f, driftBoostAccelerationPerCharge);
-            ResetDrift();
-            // この物理フレームでは反対方向のドリフトを開始しない。
-            return boostAcceleration;
-        }
-
+        float elapsed = Mathf.Max(0f, deltaTime);
+        float forwardSpeed = Vector3.Dot(rb.linearVelocity,
+            Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized);
+        bool grounded = HasDriftGroundContact();
         float handleMagnitude = Mathf.Abs(rawSteeringInput);
-        float startHandle = Mathf.Max(0.01f, driftStartHandle);
-        if (!isDrifting && handleMagnitude >= startHandle)
-        {
-            isDrifting = true;
-            driftDirection = Mathf.Sign(rawSteeringInput);
-        }
+        float startHandle = Mathf.Max(.01f, driftStartHandle);
+        float releasedAcceleration = 0f;
+
+        // Low speed and reversing end the slide without rewarding a boost.
+        if (isDrifting && forwardSpeed < driftMinimumSpeed * .5f)
+            ResetDrift(resetGrip: false);
 
         if (isDrifting)
         {
-            float chargeRatio = Mathf.Clamp01(
-                handleMagnitude / Mathf.Max(startHandle, driftFullChargeHandle));
-            driftCharge = Mathf.Clamp(
-                driftCharge + chargeRatio * Mathf.Max(0f, driftChargePerSecond) * Mathf.Max(0f, deltaTime),
-                0f,
-                Mathf.Max(0f, maxDriftCharge));
+            bool countersteering = rawSteeringInput * driftDirection <= -Mathf.Max(.01f, driftCountersteerHandle);
+            driftReleaseTime = grounded && countersteering ? driftReleaseTime + elapsed : 0f;
+            if (grounded && countersteering && driftReleaseTime >= driftReleaseHoldSeconds)
+            {
+                releasedAcceleration = driftCharge * Mathf.Max(0f, driftBoostAccelerationPerCharge);
+                ResetDrift(resetGrip: false);
+            }
+            else if (grounded && rawSteeringInput * driftDirection > 0f)
+            {
+                float chargeRatio = Mathf.Clamp01(handleMagnitude / Mathf.Max(startHandle, driftFullChargeHandle));
+                driftCharge = Mathf.Clamp(driftCharge + chargeRatio * Mathf.Max(0f, driftChargePerSecond) * elapsed,
+                    0f, Mathf.Max(0f, maxDriftCharge));
+            }
+        }
+        else if (grounded && forwardSpeed >= driftMinimumSpeed && handleMagnitude >= startHandle)
+        {
+            float direction = Mathf.Sign(rawSteeringInput);
+            if (direction != pendingDriftDirection) driftStartTime = 0f;
+            pendingDriftDirection = direction;
+            float previousStartTime = driftStartTime;
+            driftStartTime += elapsed;
+            if (driftStartTime >= driftStartHoldSeconds)
+            {
+                isDrifting = true;
+                driftDirection = direction;
+                driftStartTime = 0f;
+                float chargeElapsed = Mathf.Max(0f, elapsed - Mathf.Max(0f, driftStartHoldSeconds - previousStartTime));
+                float chargeRatio = Mathf.Clamp01(handleMagnitude / Mathf.Max(startHandle, driftFullChargeHandle));
+                driftCharge = Mathf.Clamp(driftCharge + chargeRatio * Mathf.Max(0f, driftChargePerSecond) * chargeElapsed,
+                    0f, Mathf.Max(0f, maxDriftCharge));
+            }
+        }
+        else
+        {
+            pendingDriftDirection = 0f;
+            driftStartTime = 0f;
         }
 
-        return 0f;
+        // Centering or countersteering restores grip progressively while retaining charge.
+        float gripTarget = isDrifting && grounded
+            ? Mathf.Clamp01(rawSteeringInput * driftDirection / startHandle) : 0f;
+        driftGripBlend = Mathf.MoveTowards(driftGripBlend, gripTarget,
+            elapsed / Mathf.Max(.01f, driftGripTransitionSeconds));
+        return releasedAcceleration;
     }
 
     // しきい値を超えた数がそのまま段階になる。表示専用で、解放時の加速量は従来どおりチャージ量に比例する。
@@ -474,9 +533,9 @@ public class DebugMover : MonoBehaviour
             float corneringStiffness = tire.IsFrontWheel
                 ? frontCorneringStiffness
                 : rearCorneringStiffness;
-            float gripMultiplier = isDrifting && !tire.IsFrontWheel
+            float gripMultiplier = !tire.IsFrontWheel
                 && enableDriftDynamics && enableDriftRearGripReduction
-                ? Mathf.Max(0f, driftRearGripMultiplier)
+                ? Mathf.Lerp(1f, Mathf.Max(0f, driftRearGripMultiplier), driftGripBlend)
                 : 1f;
             // オイルやスピンによるグリップ低下を重ねます。
             if (itemEffects != null)
@@ -503,9 +562,9 @@ public class DebugMover : MonoBehaviour
     {
         Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
         Vector3 resistance = -planarVelocity * velocityResistance;
-        if (enableDriftDynamics && isDrifting)
+        if (enableDriftDynamics)
         {
-            resistance *= Mathf.Max(1f, driftResistanceMultiplier);
+            resistance *= Mathf.Lerp(1f, Mathf.Max(1f, driftResistanceMultiplier), driftGripBlend);
         }
         resistanceForce = resistance.magnitude;
         rb.AddForce(resistance, ForceMode.Force);

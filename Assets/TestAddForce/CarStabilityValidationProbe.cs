@@ -34,6 +34,10 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         public float finalSpeed;
         public float maxDriveWhileAirborne;
         public float yawChange;
+        public float signedYawChange;
+        public float maxSideSlip;
+        public bool enteredDrift;
+        public bool releasedBoost;
         public float landingTilt;
         public bool landed;
         public int groundedWheels;
@@ -67,8 +71,16 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         Application.runInBackground = true;
         Time.timeScale = 3f;
         var manager = UnityEngine.Object.FindFirstObjectByType<Gmanager>();
+        // Keep this physics validation local and advance past the practice lesson.
+        var publisher = manager.GetComponent<RaceRemoteFirebasePublisher>();
+        if (publisher != null) publisher.enabled = false;
         manager.StartGame();
-        while (!manager.IsDrivingEnabled) yield return null;
+        while (manager.state != Gmanager.State.Tutorial || AnyTransitionActive()) yield return null;
+        typeof(Gmanager).GetMethod("FinishTutorialWhenScreenCovered", Fields).Invoke(manager, null);
+        typeof(Gmanager).GetMethod("CompleteGameStart", Fields).Invoke(manager, null);
+        foreach (var transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
+            transition.ApplyStateImmediate(Gmanager.State.Countdown);
+        while (manager.state != Gmanager.State.Game || !manager.IsDrivingEnabled) yield return null;
         var car = GameObject.Find("Player1_Car");
         body = car.GetComponent<Rigidbody>();
         mover = car.GetComponent<DebugMover>();
@@ -166,6 +178,22 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             End();
         }
 
+        // Matched left/right runs exercise sustained drifting and progressive countersteer recovery.
+        foreach (float steering in new[] { -12f, 12f })
+        {
+            yield return Place(floor, Quaternion.identity);
+            yield return new WaitForSeconds(.3f);
+            body.linearVelocity = Vector3.forward * 15f;
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = steering };
+            Begin(steering < 0f ? "drift-left" : "drift-right");
+            yield return new WaitForSeconds(1.5f);
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = -steering };
+            yield return new WaitForSeconds(.14f);
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = 0f };
+            yield return new WaitForSeconds(1.2f);
+            End();
+        }
+
         // yaw の角速度だけは補正で消さない（地面から十分離した状態）。
         yield return Place(floor + Vector3.up * 80f, Quaternion.identity);
         body.angularVelocity = Vector3.up;
@@ -188,6 +216,10 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
                 failures.Add(result.name + ": failed recovery");
             if (result.name.StartsWith("flat-steering-") && (result.maxTilt > 15f || result.yawChange < 5f || result.finalSpeed < 1f))
                 failures.Add(result.name + ": steering or stability regression");
+            if (result.name.StartsWith("drift-") &&
+                (!result.enteredDrift || !result.releasedBoost || result.maxTilt > 15f ||
+                 result.maxAngularSpeed > 3f || result.finalSpeed < 5f || result.maxSideSlip > 8f))
+                failures.Add(result.name + ": drift entry, release, or controlled slide regression");
             if (result.name == "air-yaw" && (result.yawChange < 20f || result.maxTilt > 1f))
                 failures.Add("air-yaw: yaw was damped or tilt was introduced");
             if (result.name == "hover-no-contact" && (result.groundedWheels != 0 || result.finalSpeed > 0.001f || result.maxDriveWhileAirborne > 0.001f))
@@ -196,6 +228,12 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
                 (result.maxTilt > 75f || result.finalTilt > 12f || !result.landed || result.yawChange > 30f))
                 failures.Add(result.name + ": unstable ramp orientation");
         }
+        Trial leftDrift = report.trials.Find(result => result.name == "drift-left");
+        Trial rightDrift = report.trials.Find(result => result.name == "drift-right");
+        if (leftDrift.signedYawChange * rightDrift.signedYawChange >= 0f ||
+            Mathf.Abs(leftDrift.yawChange - rightDrift.yawChange) > 10f ||
+            Mathf.Abs(leftDrift.finalSpeed - rightDrift.finalSpeed) > 2f)
+            failures.Add("drift-left/right: mirrored steering must produce comparable motion");
         string message = "CAR_STABILITY_PLAYMODE_" + (failures.Count == 0 ? "PASS" : "FAIL") +
             " (" + report.trials.Count + " trials): " + string.Join("; ", failures) + " report=" + folder;
         // Baseline は失敗数も保存して比較しますが、正常終了させます。
@@ -273,11 +311,22 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         trial.groundedWheels = grounded;
         Vector3 forward = Vector3.ProjectOnPlane(body.rotation * Vector3.forward, Vector3.up).normalized;
         trial.yawChange = Vector3.Angle(startingForward, forward);
+        trial.signedYawChange = Vector3.SignedAngle(startingForward, forward, Vector3.up);
+        trial.maxSideSlip = Mathf.Max(trial.maxSideSlip, Mathf.Abs(Vector3.Dot(body.linearVelocity, body.rotation * Vector3.right)));
+        trial.enteredDrift |= mover.IsDrifting;
+        trial.releasedBoost |= mover.IsDriftBoosting;
         var p = body.position;
         var v = body.linearVelocity;
         trace.WriteLine(string.Format(CultureInfo.InvariantCulture,
             "{0},{1:F3},{2:F3},{3:F3},{4:F3},{5:F3},{6:F3},{7:F3},{8:F3},{9:F3},{10},{11:F3}",
             trial.name, trialTime, p.x, p.y, p.z, v.x, v.y, v.z, tilt, body.angularVelocity.magnitude, grounded, drive));
+    }
+
+    private static bool AnyTransitionActive()
+    {
+        foreach (var transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
+            if (transition.IsTransitioning) return true;
+        return false;
     }
 
     private static void Set(object instance, string field, object value) =>

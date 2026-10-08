@@ -1074,8 +1074,11 @@ public class Gmanager : MonoBehaviour
     {
         Transform playerOneCar = players[0]?.car != null ? players[0].car.transform : null;
         Transform playerTwoCar = players[1]?.car != null ? players[1].car.transform : null;
-        foreach (OnPlayUIManager ui in onPlayUIManagers)
+        for (int index = 0; index < onPlayUIManagers.Length; index++)
         {
+            OnPlayUIManager ui = onPlayUIManagers[index];
+            ui?.MiniMap.SetViewTransform(players[index]?.displayRig?.MainCamera != null
+                ? players[index].displayRig.MainCamera.transform : null);
             ui?.SetMiniMapCars(playerOneCar, playerTwoCar);
         }
     }

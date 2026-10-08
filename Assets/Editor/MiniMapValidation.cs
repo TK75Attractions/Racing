@@ -101,9 +101,9 @@ public static class MiniMapValidation
                 "The mini map is not anchored to the bottom-left corner.");
             Require(mapRect.anchoredPosition.x > 0f && mapRect.anchoredPosition.y > 0f,
                 "The mini map is placed outside the visible area.");
-            Require(mapRoot.Find("Border") != null && mapRoot.Find("Track") != null,
+            Require(mapRoot.Find("Viewport/Content/Border") != null && mapRoot.Find("Viewport/Content/Track") != null,
                 "The course band graphics were not created.");
-            Require(mapRoot.Find("Marker_P1") != null && mapRoot.Find("Marker_P2") != null,
+            Require(mapRoot.Find("Viewport/Content/Marker_P1") != null && mapRoot.Find("Viewport/Content/Marker_P2") != null,
                 "Car markers were not created.");
             Require(mapRoot.Find("MapFrame/Heading") != null && mapRoot.Find("MapFrame/You") != null && mapRoot.Find("MapFrame/Rival") != null,
                 "The bilingual map header and player legend were not created.");
@@ -113,23 +113,58 @@ public static class MiniMapValidation
             }
 
             // 自車マーカーが常に相手より前面になることを確認します。
-            Require(mapRoot.Find("Marker_P1").GetSiblingIndex() > mapRoot.Find("Marker_P2").GetSiblingIndex(),
+            Require(mapRoot.Find("Viewport/Content/Marker_P1").GetSiblingIndex() > mapRoot.Find("Viewport/Content/Marker_P2").GetSiblingIndex(),
                 "The own-car marker is not drawn on top.");
 
             // 車を割り当てていない間はマーカーを隠します。
             miniMap.UpdateMarkers();
-            Require(!mapRoot.Find("Marker_P1").gameObject.activeSelf,
+            Require(!mapRoot.Find("Viewport/Content/Marker_P1").gameObject.activeSelf,
                 "Markers are visible without a car assigned.");
 
             GameObject dummyCar = new GameObject("MiniMapValidationCar");
             dummyCar.transform.SetPositionAndRotation(inner[0], Quaternion.Euler(0f, 90f, 0f));
             miniMap.SetCars(dummyCar.transform, null);
-            RectTransform markerRect = mapRoot.Find("Marker_P1") as RectTransform;
+            RectTransform markerRect = mapRoot.Find("Viewport/Content/Marker_P1") as RectTransform;
             Require(markerRect.gameObject.activeSelf, "The own-car marker stayed hidden after assignment.");
             Require(Vector2.Distance(markerRect.anchoredPosition, projector.ToLocal(inner[0])) < 0.01f,
                 "The marker position does not match the projection.");
             Require(Mathf.Abs(Mathf.DeltaAngle(markerRect.localEulerAngles.z, -90f)) < 0.01f,
                 "The marker heading does not match the car yaw.");
+            RectTransform content = mapRoot.Find("Viewport/Content") as RectTransform;
+            Require(mapRoot.Find("Viewport").GetComponent<RectMask2D>() != null,
+                "Moving map content must be clipped inside the frame.");
+            Require(Vector3.Distance(markerRect.position, content.parent.position) < .01f,
+                "Own marker must stay at the viewport center.");
+            Vector3 oldContentPosition = content.localPosition;
+            dummyCar.transform.position += Vector3.right * 25f;
+            dummyCar.transform.rotation = Quaternion.Euler(0f, 359f, 0f);
+            miniMap.UpdateMarkers();
+            Require(Vector3.Distance(markerRect.position, content.parent.position) < .01f,
+                "Movement and rotation must keep own car centered.");
+            Require(Vector3.Distance(oldContentPosition, content.localPosition) > 1f,
+                "The map must translate as the car moves.");
+            Require(Vector3.Dot(markerRect.up, Vector3.up) > .999f,
+                "Car-relative heading must point own marker up across yaw wrap.");
+            GameObject view = new GameObject("Validation view");
+            view.transform.rotation = Quaternion.Euler(15f, 45f, 0f);
+            miniMap.SetViewTransform(view.transform);
+            Require(Mathf.Abs(Mathf.DeltaAngle(content.localEulerAngles.z, 45f)) < .01f,
+                "Map must follow the camera heading rather than car heading.");
+            GameObject playerTwoHUD = new GameObject("Player two HUD", typeof(RectTransform));
+            playerTwoHUD.transform.SetParent(canvasRoot.transform, false);
+            GameObject rivalCar = new GameObject("Validation second car");
+            rivalCar.transform.SetParent(canvasRoot.transform, false);
+            rivalCar.transform.SetPositionAndRotation(dummyCar.transform.position + Vector3.forward * 20f,
+                Quaternion.Euler(0f, 180f, 0f));
+            UIMiniMap secondMap = new UIMiniMap();
+            secondMap.Init(playerTwoHUD.transform, course, 1);
+            secondMap.SetCars(dummyCar.transform, rivalCar.transform);
+            Transform secondContent = playerTwoHUD.transform.Find("MiniMap/Viewport/Content");
+            Require(Vector3.Distance(secondContent.Find("Marker_P2").position, secondContent.parent.position) < .01f,
+                "Player two must center its own car independently of player one.");
+            Require(secondContent.Find("Marker_P2").GetSiblingIndex() > secondContent.Find("Marker_P1").GetSiblingIndex(),
+                "Player two must draw its own marker above the rival.");
+            UnityEngine.Object.DestroyImmediate(view);
             UnityEngine.Object.DestroyImmediate(dummyCar);
 
             // Compare the full bilingual map frame with the live HUD, including fresh runtime layout.
