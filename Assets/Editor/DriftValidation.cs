@@ -95,6 +95,7 @@ public static class DriftValidation
             Step(mover, 30f, 1f);
             Invoke(mover, "OnDisable");
             Require(!mover.IsDrifting && mover.DriftCharge == 0f, "Disabling must discard charge.");
+            ValidateSpinProtection(mover, body);
             ValidateTimedBoost(mover);
             Debug.Log("Drift validation passed.");
         }
@@ -103,6 +104,32 @@ public static class DriftValidation
             UnityEngine.Object.DestroyImmediate(car);
             UnityEngine.Object.DestroyImmediate(road);
         }
+    }
+
+    private static void ValidateSpinProtection(DebugMover mover, Rigidbody body)
+    {
+        Set(mover, "inputSuppressedUntil", -1f);
+        Set(mover, "appliedSteeringAngle", 30f);
+        body.linearVelocity = Vector3.forward * 40f;
+        var steering = typeof(DebugMover).GetMethod("GetProtectedSteeringAngle", PrivateInstance);
+        float Evaluate(Vector3 velocity) => (float)steering.Invoke(mover, new object[] { Vector3.forward, velocity });
+        Near(Evaluate(body.linearVelocity), 30f, "Normal steering must be unchanged outside drift protection.");
+        Set(mover, "isDrifting", true);
+        float right = Evaluate(body.linearVelocity);
+        Require(right > 0f && right < 5f, "A fast drift must retain turning direction while limiting full lock.");
+        Set(mover, "appliedSteeringAngle", -30f);
+        Near(Evaluate(body.linearVelocity), -right, "Drift steering protection must be symmetric.");
+        Near(Evaluate(Vector3.back * 40f), -30f, "Protection must not affect reverse steering.");
+        body.transform.position = Vector3.up * 2f;
+        Physics.SyncTransforms();
+        Near(Evaluate(body.linearVelocity), -30f, "Protection must not steer an airborne car.");
+        body.transform.position = Vector3.zero;
+        Physics.SyncTransforms();
+        Set(mover, "enableDriftSpinProtection", false);
+        Near(Evaluate(body.linearVelocity), -30f, "Disabling the protection must restore the original steering.");
+        Set(mover, "enableDriftSpinProtection", true);
+        mover.CancelDrift();
+        body.linearVelocity = Vector3.forward * 10f;
     }
 
     private static void ValidateTimedBoost(DebugMover mover)

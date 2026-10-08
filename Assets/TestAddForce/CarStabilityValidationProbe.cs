@@ -36,6 +36,13 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         public float yawChange;
         public float signedYawChange;
         public float maxSideSlip;
+        public float maxSlipAngle;
+        public float finalSlipAngle;
+        public float finalForwardSpeed;
+        public float finalVerticalSpeed;
+        public float maxYawRate;
+        public float minimumSpeed = float.MaxValue;
+        public float initialSpeed;
         public bool enteredDrift;
         public bool releasedBoost;
         public float landingTilt;
@@ -194,11 +201,42 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             End();
         }
 
+        // Full-lock drifts at low/high speed, with and without an existing sideways/yaw disturbance.
+        foreach (float speed in new[] { 8f, 20f, 40f })
+        foreach (float steering in new[] { -30f, 30f })
+        foreach (bool disturbed in new[] { false, true })
+        {
+            yield return Place(floor, Quaternion.identity);
+            yield return new WaitForSeconds(.3f);
+            body.linearVelocity = Vector3.forward * speed + (disturbed ? Vector3.right * Mathf.Sign(steering) * speed * .25f : Vector3.zero);
+            body.angularVelocity = disturbed ? Vector3.up * Mathf.Sign(steering) * 1.8f : Vector3.zero;
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = steering };
+            Begin("spin-guard-" + speed + (steering < 0f ? "-left" : "-right") + (disturbed ? "-disturbed" : "-clean"));
+            trial.initialSpeed = speed;
+            yield return new WaitForSeconds(1.5f);
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = -steering };
+            yield return new WaitForSeconds(.14f);
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = 0f };
+            yield return new WaitForSeconds(1.2f);
+            End();
+        }
+
         // yaw の角速度だけは補正で消さない（地面から十分離した状態）。
         yield return Place(floor + Vector3.up * 80f, Quaternion.identity);
         body.angularVelocity = Vector3.up;
         Begin("air-yaw");
         yield return new WaitForSeconds(0.5f);
+        End();
+
+        // Charged drift state in flight must not redirect falling motion or damp airborne yaw.
+        yield return Place(floor + Vector3.up * 80f, Quaternion.identity);
+        body.linearVelocity = new Vector3(0f, 5f, 15f);
+        body.angularVelocity = Vector3.up;
+        Set(mover, "isDrifting", true);
+        Set(mover, "driftDirection", 1f);
+        input.CurrentState = new DriveInputState { pedal = 1f, steering = 30f };
+        Begin("air-yaw-drift");
+        yield return new WaitForSeconds(.5f);
         End();
 
         File.WriteAllText(Path.Combine(folder, "report.json"), JsonUtility.ToJson(report, true));
@@ -220,6 +258,13 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
                 (!result.enteredDrift || !result.releasedBoost || result.maxTilt > 15f ||
                  result.maxAngularSpeed > 3f || result.finalSpeed < 5f || result.maxSideSlip > 8f))
                 failures.Add(result.name + ": drift entry, release, or controlled slide regression");
+            if (result.name.StartsWith("spin-guard-") &&
+                (result.maxSlipAngle > 20f || result.finalSlipAngle > 5f || result.maxYawRate > 2f ||
+                 result.minimumSpeed < result.initialSpeed * .8f || result.finalForwardSpeed < result.initialSpeed * .9f))
+                failures.Add(result.name + ": excessive slip/spin or lost forward motion");
+            if (result.name == "air-yaw-drift" &&
+                (result.yawChange < 20f || result.maxTilt > 1f || Mathf.Abs(result.finalVerticalSpeed) > .5f))
+                failures.Add("air-yaw-drift: grounded spin protection affected flight");
             if (result.name == "air-yaw" && (result.yawChange < 20f || result.maxTilt > 1f))
                 failures.Add("air-yaw: yaw was damped or tilt was introduced");
             if (result.name == "hover-no-contact" && (result.groundedWheels != 0 || result.finalSpeed > 0.001f || result.maxDriveWhileAirborne > 0.001f))
@@ -313,6 +358,13 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         trial.yawChange = Vector3.Angle(startingForward, forward);
         trial.signedYawChange = Vector3.SignedAngle(startingForward, forward, Vector3.up);
         trial.maxSideSlip = Mathf.Max(trial.maxSideSlip, Mathf.Abs(Vector3.Dot(body.linearVelocity, body.rotation * Vector3.right)));
+        Vector3 planarVelocity = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up);
+        trial.finalSlipAngle = planarVelocity.sqrMagnitude > 1f ? Vector3.Angle(forward, planarVelocity) : 0f;
+        trial.maxSlipAngle = Mathf.Max(trial.maxSlipAngle, trial.finalSlipAngle);
+        trial.finalForwardSpeed = Vector3.Dot(planarVelocity, forward);
+        trial.finalVerticalSpeed = body.linearVelocity.y;
+        trial.maxYawRate = Mathf.Max(trial.maxYawRate, Mathf.Abs(Vector3.Dot(body.angularVelocity, Vector3.up)));
+        trial.minimumSpeed = Mathf.Min(trial.minimumSpeed, planarVelocity.magnitude);
         trial.enteredDrift |= mover.IsDrifting;
         trial.releasedBoost |= mover.IsDriftBoosting;
         var p = body.position;
