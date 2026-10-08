@@ -78,10 +78,12 @@ public class TireForce : MonoBehaviour
         Vector3 tirePosition = carRb.worldCenterOfMass +
             Vector3.ProjectOnPlane(transform.position - carRb.worldCenterOfMass, groundNormal);
         Vector3 pointVelocity = carRb.GetPointVelocity(tirePosition);
+        // Visual slip stays current even while lateral tire forces are disabled (e.g. oil).
+        lateralVelocity = Vector3.Dot(pointVelocity, tireRight);
 
         if (enableLateralForce)
         {
-            ApplyLateralForce(tirePosition, tireRight, pointVelocity, corneringStiffness, maxLateralForce);
+            ApplyLateralForce(tirePosition, tireRight, corneringStiffness, maxLateralForce);
         }
         else
         {
@@ -117,11 +119,9 @@ public class TireForce : MonoBehaviour
     private void ApplyLateralForce(
         Vector3 tirePosition,
         Vector3 tireRight,
-        Vector3 pointVelocity,
         float corneringStiffness,
         float maxLateralForce)
     {
-        lateralVelocity = Vector3.Dot(pointVelocity, tireRight);
         appliedLateralForce = Mathf.Clamp(
             -lateralVelocity * corneringStiffness,
             -maxLateralForce,

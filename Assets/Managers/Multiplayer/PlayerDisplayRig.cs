@@ -107,6 +107,7 @@ public sealed class PlayerDisplayRig
         {
             FreezeAspectRate aspectController = MainCamera.GetComponent<FreezeAspectRate>();
             aspectController?.ConfigureForDisplay(DisplayIndex, BackCamera);
+            aspectController?.ConfigureCanvas(Canvas);
         }
     }
 
