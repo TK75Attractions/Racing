@@ -1,6 +1,6 @@
 # Sceneビューでの3Dコース編集
 
-`RaceCourse` を持つ GameObject を選択すると、Sceneビューに中心線（水色）、左右の境界（黄色）、範囲を示す半透明の帯を表示します。描いた帯はコースの定義・判定用で、道路メッシュやColliderは生成しません。
+`RaceCourse` を持つ GameObject を選択すると、Sceneビューに中心線（水色）、左右の境界（黄色）、範囲を示す半透明の帯を表示します。中心線・高さ・幅から、アスファルトの道路メッシュ、中央の白い破線、両端の赤白模様、路面のMeshColliderも自動生成します。既存の `RaceCourse` にも適用されるので、別のコンポーネントを追加する必要はありません。
 
 ## 描画する
 
@@ -25,6 +25,28 @@
 - クリック、ドラッグ、移動、幅変更、削除はUnityのUndo / Redoに対応します。連続描画は1ストローク単位で取り消せます。
 
 既存の `waypoints.position` は従来どおりローカルX/Zとして保持します。新しい `height` はローカルYです。高さを持たない既存シーン・Prefabは高さ0のまま読み込めるので、移行操作は不要です。編集後は通常どおりシーン・Prefabを保存してください。
+
+## 道路の生成と見た目
+
+Inspectorの「道路生成」で `Generate Road` を有効にすると生成します。点の追加・移動・削除、幅・曲がりの変更、Undo / Redo、GameObjectの移動・回転・Scale変更に追従します。「道路を再生成」ボタンでも更新できます。
+
+`Road` の設定で以下を変更できます。長さ・幅はすべてワールド単位です。
+
+- `Center Line Width`：中央の白線の幅。初期値0.2m。
+- `Dash Length` / `Dash Gap`：破線1本の長さと空白の長さ。初期値はそれぞれ3m。
+- `Curb Width`：両端の赤白模様の幅。初期値0.6m。0で非表示。
+- `Curb Stripe Length`：赤または白1区画の長さ。初期値2m。
+- `Asphalt Material` / `White Material` / `Red Material`：任意のMaterial。未指定なら同梱のURP Lit Materialを使用します。
+- `Generate Collider`：路面の当たり判定。初期値は有効。
+- `Collider Material`：路面の摩擦・反発用PhysicsMaterial。
+
+赤白模様は道路幅の内側に置く平らな模様です。狭い区間では中央線と両端の模様の幅を自動で制限します。模様は路面の各三角形に沿って切り出すため、曲がり・坂・幅の変化で路面へ埋まりません。模様自体にはColliderを追加せず、路面と共通の当たり判定で走行します。
+
+閉路では破線の周期を全長に合わせて調整し、赤白模様は区画数を偶数にして周回の継ぎ目でも赤・白が交互に続きます。開路では末端で模様を切り止めます。道路メッシュはSceneに表示する左右の境界と同じ頂点・三角形を使用し、コース幅の範囲判定と一致します。
+
+生成物は子の `Generated Race Course Road` にまとめます。シーン・Prefabにはコースの点と生成設定を保存し、生成メッシュは読み込み時・ゲーム開始時に再構築します。スクリプト再読み込み・再生成時は古いメッシュを解放します。道路のLayerは `RaceCourse` のGameObjectを引き継ぐため、車のGround CheckやPhysicsの衝突Layer設定で使用するLayerを指定してください。
+
+路面は非凸・非トリガーのMeshColliderです。道路側にはRigidbodyを付けず、静止したコースとして使用します。坂道や立体交差の各高さに実際の接触面があります。幅0・点が不足・全長0のコースは路面を生成しません。既に別の道路Colliderがある場合は、そのColliderの配置も合わせて調整してください。
 
 ## 逸脱判定
 
@@ -57,3 +79,7 @@ for (float distance = 0f; distance < course.TotalLength; distance += 10f)
 `Racing > Validate Race Course` で、旧データの読込、閉路の継ぎ目、坂道の距離・高さ・幅、見える境界と判定の一致、浮いている車の範囲判定と自動リスポーンの抑止、立体交差、装飾サンプル、Transform変更、Undo、空コース・重複点、Scene編集による点の追加・挿入・削除とストローク単位のUndo / Redo、`LapManager` の横方向の逸脱検知と復帰を検証します。
 
 バッチ実行: `-batchmode -nographics -executeMethod RaceCourseValidation.Run -quit`
+
+`Racing > Validate Race Course Road` では、道路とコース境界の一致、上向きの衝突面、破線の空白、左右の赤白模様、Materialの読込、坂道・曲がりの路面と模様の一致、周回の継ぎ目、Transform変更、幅編集のUndo、古いメッシュの解放、生成・Collider切替、狭い道・空コースを確認します。独立したPhysics SceneでRigidbodyを落下させ、生成道路上で静止することも検証し、既存の `RaceCourseValidation` も実行します。
+
+道路生成のバッチ実行: `-batchmode -nographics -executeMethod RaceCourseRoadValidation.Run -quit`
