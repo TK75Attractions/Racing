@@ -49,6 +49,7 @@ public sealed class RaceCourseEditor : Editor
         if (target == null) return;
         serializedObject.Update();
         ((RaceCourse)target).RebuildCache();
+        ((RaceCourse)target).RebuildRoad();
         selected = Mathf.Min(selected, points.arraySize - 1);
         Repaint();
         SceneView.RepaintAll();
@@ -57,7 +58,7 @@ public sealed class RaceCourseEditor : Editor
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
-        EditorGUILayout.HelpBox("Scene上で中心線を描き、幅を持つコース範囲を定義します。位置はXYZで編集できます。", MessageType.Info);
+        EditorGUILayout.HelpBox("中心線と幅から道路・中央の白い破線・両端の赤白模様・MeshColliderを自動生成します。位置はXYZで編集できます。", MessageType.Info);
         DrawPropertiesExcluding(serializedObject, "m_Script", "waypoints");
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Sceneでコースを描く", EditorStyles.boldLabel);
@@ -108,6 +109,7 @@ public sealed class RaceCourseEditor : Editor
             }
         }
         ApplyChanges();
+        if (GUILayout.Button("道路を再生成")) ((RaceCourse)target).RebuildRoad();
         EditorGUILayout.LabelField("中心線の全長", $"{((RaceCourse)target).TotalLength:F1} m");
     }
 
@@ -137,6 +139,7 @@ public sealed class RaceCourseEditor : Editor
     {
         if (!serializedObject.ApplyModifiedProperties()) return;
         ((RaceCourse)target).RebuildCache();
+        ((RaceCourse)target).RebuildRoad();
         SceneView.RepaintAll();
     }
 

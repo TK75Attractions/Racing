@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+[ExecuteAlways]
 public class RaceCourse : MonoBehaviour
 {
     [System.Serializable]
@@ -29,6 +30,10 @@ public class RaceCourse : MonoBehaviour
     [SerializeField] private Waypoint[] waypoints;
     [SerializeField] private bool closedLoop = true;
 
+    [Header("道路生成")]
+    [SerializeField] private bool generateRoad = true;
+    [SerializeField] private RaceCourseRoad.Settings road = new RaceCourseRoad.Settings();
+
     [Header("Gizmo")]
     [SerializeField] private Color waypointColor = Color.cyan;
     [SerializeField] private Color pathColor = Color.yellow;
@@ -42,6 +47,8 @@ public class RaceCourse : MonoBehaviour
     private readonly List<Vector3> cachedOuterPath = new List<Vector3>();
     private readonly List<float> cachedCumulativeDistances = new List<float>();
     private bool cacheDirty = true;
+    private bool roadDirty = true;
+    private int cachedRoadLayer = -1;
     private Vector3 cachedPosition;
     private Quaternion cachedRotation;
     private Vector3 cachedScale;
@@ -60,8 +67,54 @@ public class RaceCourse : MonoBehaviour
         }
     }
 
-    private void Awake() => RebuildCache();
-    private void OnValidate() => cacheDirty = true;
+    private void OnEnable() => RebuildRoad();
+    private void OnDisable()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.delayCall -= RefreshRoadInEditor;
+#endif
+        RaceCourseRoad.Clear(transform);
+    }
+
+    private void OnValidate()
+    {
+        cacheDirty = true;
+        roadDirty = true;
+        // OnValidate may run during deserialization. Create meshes on the editor main thread.
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.delayCall -= RefreshRoadInEditor;
+        UnityEditor.EditorApplication.delayCall += RefreshRoadInEditor;
+#endif
+    }
+
+#if UNITY_EDITOR
+    private void RefreshRoadInEditor()
+    {
+        if (this != null && isActiveAndEnabled && roadDirty) RebuildRoad();
+    }
+#endif
+
+    private void Update()
+    {
+        EnsureCache();
+        if (roadDirty || cachedRoadLayer != gameObject.layer) RebuildRoad();
+    }
+
+    /// <summary>コース境界と同じ形状の路面・模様・非凸MeshColliderを再生成します。</summary>
+    [ContextMenu("道路を再生成")]
+    public void RebuildRoad()
+    {
+        EnsureCache();
+        RaceCourseRoad.Clear(transform);
+        if (generateRoad && isActiveAndEnabled && HasValidPath)
+        {
+            if (road == null) road = new RaceCourseRoad.Settings();
+            RaceCourseRoad.Build(transform, cachedCenterPath, cachedInnerPath, cachedOuterPath,
+                cachedCumulativeDistances, closedLoop, road);
+        }
+        roadDirty = false;
+        cachedRoadLayer = gameObject.layer;
+    }
 
     private void OnDrawGizmos()
     {
@@ -252,6 +305,7 @@ public class RaceCourse : MonoBehaviour
             BuildOffsetPaths();
         }
         cacheDirty = false;
+        roadDirty = true;
         cachedPosition = transform.position;
         cachedRotation = transform.rotation;
         cachedScale = transform.lossyScale;
