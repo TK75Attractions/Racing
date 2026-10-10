@@ -50,7 +50,7 @@ public static class RaceCourseRoad
     }
 
     public static void Build(Transform owner, List<Vector3> center, List<Vector3> left,
-        List<Vector3> right, List<float> distances, bool closedLoop, Settings settings)
+        List<Vector3> right, List<float> distances, bool closedLoop, Settings settings, List<bool> roadSegments)
     {
         int count = left.Count;
         if (count < 2) return;
@@ -81,7 +81,7 @@ public static class RaceCourseRoad
                     curbWidth = Mathf.Min(Mathf.Max(0f, settings.curbWidth), halfWidth * 0.4f)
                 };
             }
-            if (i == 0 || (center[i] - center[i - 1]).sqrMagnitude < 0.00000001f) continue;
+            if (i == 0 || !roadSegments[i - 1] || (center[i] - center[i - 1]).sqrMagnitude < 0.00000001f) continue;
             int previous = (i - 1) * 2;
             AddTriangle(triangles, samples, previous, previous + 2, previous + 1);
             AddTriangle(triangles, samples, previous + 1, previous + 2, previous + 3);

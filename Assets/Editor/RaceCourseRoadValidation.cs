@@ -21,6 +21,8 @@ public static class RaceCourseRoadValidation
             ValidateRebuildAndUndo(course);
             ValidateLoopAndSlope(course);
             ValidateSmoothAlignment(course);
+            ValidateJumpGap(course);
+            ValidateLongCourseJumpPrecision(course);
             ValidateEmptyAndToggles(course);
             ValidateVehicleSupport();
             RaceCourseValidation.Run();
@@ -217,6 +219,44 @@ public static class RaceCourseRoadValidation
         course.RebuildCache(); course.RebuildRoad();
     }
 
+    private static void ValidateJumpGap(RaceCourse course)
+    {
+        SetPath(course, new[] { Vector3.zero, new Vector3(0f, 6f, 30f), new Vector3(0f, 3f, 50f), new Vector3(0f, 3f, 90f) }, false);
+        SerializedObject serialized = new SerializedObject(course);
+        serialized.FindProperty("waypoints").GetArrayElementAtIndex(1).FindPropertyRelative("jumpToNext").boolValue = true;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        SetSmoothing(course, 20f, 20f);
+        Physics.SyncTransforms();
+        MeshCollider collider = Collider(course);
+        Require(collider.Raycast(new Ray(new Vector3(0f, 20f, 20f), Vector3.down), out _, 30f), "Jump approach has physical road.");
+        Require(!collider.Raycast(new Ray(new Vector3(0f, 20f, 40f), Vector3.down), out _, 30f), "Jump gap has no hidden physical bridge.");
+        Require(collider.Raycast(new Ray(new Vector3(0f, 20f, 60f), Vector3.down), out _, 30f), "Jump landing has physical road.");
+        float progress = course.GetProgressDistance(new Vector3(0f, 4.5f, 40f));
+        Require(!course.HasRoadAtProgress(progress), "Jump progress remains available without road.");
+        var path = new List<Vector3>(); course.CopyCenterPathWorld(path);
+        Require(path.Exists(point => Vector3.Distance(point, new Vector3(0f, 6f, 30f)) < 0.001f), "Smoothing preserves exact takeoff edge.");
+        Require(path.Exists(point => Vector3.Distance(point, new Vector3(0f, 3f, 50f)) < 0.001f), "Smoothing preserves exact landing edge.");
+    }
+
+    private static void ValidateLongCourseJumpPrecision(RaceCourse course)
+    {
+        SetPath(course, new[] {
+            Vector3.zero, new Vector3(-600f, 0f, 0f), new Vector3(-600f, 0f, 800f),
+            new Vector3(0f, 0f, 800f), new Vector3(0f, 0f, 200f), new Vector3(150f, 18f, 200f),
+            new Vector3(162f, 16f, 200f), new Vector3(400f, 16f, 200f), new Vector3(400f, 0f, 0f)
+        }, true);
+        SerializedObject serialized = new SerializedObject(course);
+        serialized.FindProperty("waypoints").GetArrayElementAtIndex(5).FindPropertyRelative("jumpToNext").boolValue = true;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        SetSmoothing(course, 35f, 25f);
+        Mesh mesh = Surface(course);
+        Vector3[] vertices = mesh.vertices;
+        int[] indices = mesh.triangles;
+        for (int i = 0; i < indices.Length; i += 3)
+            Require(Vector3.Cross(vertices[indices[i + 1]] - vertices[indices[i]], vertices[indices[i + 2]] - vertices[indices[i]]).y > 0f,
+                "Long-course prefix averaging must not reverse road triangles near jump edges.");
+    }
+
     private static void ValidateVehicleSupport()
     {
         Scene scene = EditorSceneManager.NewPreviewScene();
@@ -254,6 +294,7 @@ public static class RaceCourseRoadValidation
             point.FindPropertyRelative("position").vector2Value = new Vector2(positions[i].x, positions[i].z);
             point.FindPropertyRelative("height").floatValue = positions[i].y;
             point.FindPropertyRelative("curve").floatValue = 0f;
+            point.FindPropertyRelative("jumpToNext").boolValue = false;
             point.FindPropertyRelative("width").floatValue = Mathf.Lerp(startWidth, endWidth, positions.Length > 1 ? i / (float)(positions.Length - 1) : 0f);
         }
         serialized.ApplyModifiedPropertiesWithoutUndo();

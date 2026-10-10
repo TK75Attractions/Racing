@@ -273,6 +273,14 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8513859187771203891, guid: 23c23ed564ddb40e4b7bec3e9d733af8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3849762623622064168, guid: 23c23ed564ddb40e4b7bec3e9d733af8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3196,7 +3204,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -6435,7 +6443,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -6643,7 +6651,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -7598,7 +7606,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -8573,7 +8581,7 @@ Transform:
   m_GameObject: {fileID: 1380679281}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.6979321, z: -0, w: 0.71616393}
-  m_LocalPosition: {x: 636.177735, y: 3.010000, z: 597.504487}
+  m_LocalPosition: {x: 636.177735, y: 16.01, z: 598}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10003,7 +10011,7 @@ Transform:
   m_GameObject: {fileID: 1706793162}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.00249404, z: 0, w: 0.99999689}
-  m_LocalPosition: {x: 484.335065, y: 6.000000, z: 693.567148}
+  m_LocalPosition: {x: 496, y: 6, z: 693.567148}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -10036,8 +10044,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1728890043}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0.61617219, z: 0, w: 0.78761147}
-  m_LocalPosition: {x: 508.586141, y: 6.000000, z: 605.914088}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 620, y: 19, z: 598}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -10158,38 +10166,71 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RaceCourse
   waypoints:
-  - position: {x: -15.205139, y: 285.6693}
+  - position: {x: -4, y: 285.6693}
     height: 0
     curve: 0
     width: 20
+    jumpToNext: 0
   - position: {x: -241.8, y: 296.7}
     height: 0
     curve: 0
     width: 20
+    jumpToNext: 0
   - position: {x: -233.61707, y: 43.582947}
     height: 0
     curve: 0
     width: 18
+    jumpToNext: 0
   - position: {x: -233.61707, y: -45.833344}
     height: -17.88749
     curve: 180
     width: 18
+    jumpToNext: 0
   - position: {x: 176.11069, y: -40.833344}
     height: -17.88749
     curve: 0
     width: 18
-  - position: {x: 172.00003, y: 46.180664}
+    jumpToNext: 0
+  - position: {x: 190, y: 46.180664}
     height: 0
     curve: 0
     width: 18
-  - position: {x: 170.00003, y: 95.5282}
+    jumpToNext: 0
+  - position: {x: 190, y: 98}
+    height: 13
+    curve: 0
+    width: 20
+    jumpToNext: 0
+  - position: {x: 118, y: 98}
+    height: 13
+    curve: 0
+    width: 20
+    jumpToNext: 1
+  - position: {x: 106, y: 98}
+    height: 15
+    curve: 0
+    width: 16
+    jumpToNext: 0
+  - position: {x: 36, y: 98}
+    height: 11.5
+    curve: 0
+    width: 16
+    jumpToNext: 0
+  - position: {x: 28, y: 111}
+    height: 6.5
+    curve: 0
+    width: 16
+    jumpToNext: 0
+  - position: {x: 14, y: 121}
+    height: 1
+    curve: 0
+    width: 18
+    jumpToNext: 0
+  - position: {x: -4, y: 119}
     height: 0
     curve: 0
     width: 20
-  - position: {x: -16.100006, y: 106.47058}
-    height: 0
-    curve: 0
-    width: 20
+    jumpToNext: 0
   closedLoop: 1
   cornerRoundingDistance: 35
   slopeBlendDistance: 25
@@ -10862,7 +10903,7 @@ Transform:
   m_GameObject: {fileID: 1911937252}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 484.525758, y: 5.000000, z: 731.792888}
+  m_LocalPosition: {x: 496, y: 5, z: 731.792888}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10901,7 +10942,7 @@ MonoBehaviour:
   autoFindCheckpoints: 1
   allowLapWithoutCheckpoints: 1
   goalLap: 3
-  respawnWhenOffCourse: 1
+  respawnWhenOffCourse: 0
   offCourseRespawnDelay: 2
   respawnHeightOffset: 0.5
   respawnGroundClearance: 0.05
@@ -11252,7 +11293,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -11360,7 +11401,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -11419,7 +11460,7 @@ Transform:
   m_GameObject: {fileID: 2041026962}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.999967, z: -0, w: -0.0081318775}
-  m_LocalPosition: {x: 491.436685, y: 3.010000, z: 616.130668}
+  m_LocalPosition: {x: 504, y: 4.5, z: 630}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11594,7 +11635,7 @@ Transform:
   m_GameObject: {fileID: 2059898388}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 63.924391, y: 0.000000, z: 101.765575}
+  m_LocalPosition: {x: 140, y: 13, z: 98}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

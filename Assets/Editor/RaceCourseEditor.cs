@@ -131,6 +131,7 @@ public sealed class RaceCourseEditor : Editor
         SerializedProperty width = point.FindPropertyRelative("width");
         width.floatValue = Mathf.Max(0f, EditorGUILayout.FloatField("幅 (World)", width.floatValue));
         EditorGUILayout.PropertyField(point.FindPropertyRelative("curve"), new GUIContent("次の点への曲がり"));
+        EditorGUILayout.PropertyField(point.FindPropertyRelative("jumpToNext"), new GUIContent("次の点までジャンプ区間 (路面なし)"));
     }
 
     private Vector3 WorldPosition(int index) => ((RaceCourse)target).transform.TransformPoint(LocalPosition(points.GetArrayElementAtIndex(index)));
@@ -149,6 +150,7 @@ public sealed class RaceCourseEditor : Editor
         SerializedProperty point = points.GetArrayElementAtIndex(index);
         SetLocalPosition(point, ((RaceCourse)target).transform.InverseTransformPoint(world));
         point.FindPropertyRelative("curve").floatValue = 0f;
+        point.FindPropertyRelative("jumpToNext").boolValue = false;
         point.FindPropertyRelative("width").floatValue = defaultWidth;
         selected = index;
         ApplyChanges();

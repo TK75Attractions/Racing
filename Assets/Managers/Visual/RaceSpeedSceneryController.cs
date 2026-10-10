@@ -57,6 +57,7 @@ public sealed class RaceSpeedSceneryController : MonoBehaviour
 
         BuildRepeatedObjects(markerSpacing, (position, direction, distance) =>
         {
+            if (course.GeneratesRoad && !course.HasRoadAtProgress(distance)) return;
             Vector3 side = Vector3.Cross(Vector3.up, direction).normalized;
             bool sampled = course.TryGetSampleAtProgress(distance, out RaceCourse.CourseSample sample);
             for (int sign = -1; sign <= 1; sign += 2)

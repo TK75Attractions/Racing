@@ -40,7 +40,7 @@ public class LapManager : MonoBehaviour
     [SerializeField] private int goalLap = 3;
 
     [Header("Off Course")]
-    [SerializeField] private bool respawnWhenOffCourse = true;
+    [SerializeField] private bool respawnWhenOffCourse = false;
     [SerializeField] private float offCourseRespawnDelay = 2f;
     [Tooltip("地面を検出できない場合に使う従来のリスポーン高さ。")]
     [SerializeField] private float respawnHeightOffset = 0.5f;

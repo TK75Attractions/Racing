@@ -12,6 +12,7 @@ public class RaceCourse : MonoBehaviour
         public float height;
         public float curve;
         public float width = 10f;
+        public bool jumpToNext;
         public Vector3 LocalPosition => new Vector3(position.x, height, position.y);
     }
 
@@ -55,6 +56,7 @@ public class RaceCourse : MonoBehaviour
     private readonly List<Vector3> cachedOuterPath = new List<Vector3>();
     private readonly List<float> cachedCumulativeDistances = new List<float>();
     private readonly List<int> cachedSegmentIndices = new List<int>();
+    private readonly List<bool> cachedRoadSegments = new List<bool>();
     private bool cacheDirty = true;
     private bool roadDirty = true;
     private int cachedRoadLayer = -1;
@@ -120,7 +122,7 @@ public class RaceCourse : MonoBehaviour
         {
             if (road == null) road = new RaceCourseRoad.Settings();
             RaceCourseRoad.Build(transform, cachedCenterPath, cachedInnerPath, cachedOuterPath,
-                cachedCumulativeDistances, closedLoop, road);
+                cachedCumulativeDistances, closedLoop, road, cachedRoadSegments);
         }
         roadDirty = false;
         cachedRoadLayer = gameObject.layer;
@@ -248,6 +250,22 @@ public class RaceCourse : MonoBehaviour
         return true;
     }
 
+    /// <summary>ジャンプ区間は進捗用の中心線だけを持ち、路面を生成しません。</summary>
+    public bool HasRoadAtProgress(float progressDistance)
+    {
+        EnsureCache();
+        if (cachedCenterPath.Count < 2 || TotalLength <= Mathf.Epsilon) return false;
+        float distance = closedLoop ? Mathf.Repeat(progressDistance, TotalLength) : Mathf.Clamp(progressDistance, 0f, TotalLength);
+        int low = 0, high = cachedCenterPath.Count - 2;
+        while (low < high)
+        {
+            int middle = (low + high) / 2;
+            if (cachedCumulativeDistances[middle + 1] <= distance) low = middle + 1;
+            else high = middle;
+        }
+        return cachedRoadSegments[low];
+    }
+
     public bool TryGetNearestCenterLineDirection(Vector3 worldPosition, out Vector3 direction)
     {
         direction = Vector3.zero;
@@ -298,7 +316,7 @@ public class RaceCourse : MonoBehaviour
     public int GetWaypointInsertionIndexWorld(Vector3 worldPosition)
     {
         return TryGetNearestSegment(worldPosition, out int index, out _)
-            ? Mathf.Min(waypoints.Length, cachedSegmentIndices[index] + 1) : 0;
+            ? Mathf.Min(waypoints.Length, cachedSegmentIndices[index - 1] + 1) : 0;
     }
 
     public void RebuildCache()
@@ -309,12 +327,17 @@ public class RaceCourse : MonoBehaviour
         cachedOuterPath.Clear();
         cachedCumulativeDistances.Clear();
         cachedSegmentIndices.Clear();
+        cachedRoadSegments.Clear();
         if (waypoints != null && waypoints.Length >= 2)
         {
             BuildCenterPath();
+            bool[] jumps = new bool[waypoints.Length];
+            for (int i = 0; i < waypoints.Length; i++) jumps[i] = waypoints[i].jumpToNext;
             if (cornerRoundingDistance > 0f || slopeBlendDistance > 0f)
                 RaceCourseLineSmoothing.Apply(cachedCenterPath, cachedWidthPath, cachedSegmentIndices,
-                    closedLoop, cornerRoundingDistance, slopeBlendDistance, maximumSampleSpacing);
+                    closedLoop, cornerRoundingDistance, slopeBlendDistance, maximumSampleSpacing, jumps);
+            for (int i = 0; i < cachedCenterPath.Count; i++)
+                cachedRoadSegments.Add(!jumps[cachedSegmentIndices[i]]);
             float distance = 0f;
             cachedCumulativeDistances.Add(0f);
             for (int i = 1; i < cachedCenterPath.Count; i++)
@@ -355,6 +378,9 @@ public class RaceCourse : MonoBehaviour
                 cachedSegmentIndices.Add(i);
             }
         }
+        // Each entry owns the outgoing interval, including the interval after a waypoint.
+        for (int i = 0; i < cachedSegmentIndices.Count - 1; i++)
+            cachedSegmentIndices[i] = cachedSegmentIndices[i + 1];
     }
 
     private void BuildOffsetPaths()
