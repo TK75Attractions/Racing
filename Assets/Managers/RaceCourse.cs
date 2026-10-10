@@ -13,6 +13,7 @@ public class RaceCourse : MonoBehaviour
         public float curve;
         public float width = 10f;
         public bool jumpToNext;
+        public bool preserveAlignment;
         public Vector3 LocalPosition => new Vector3(position.x, height, position.y);
     }
 
@@ -332,10 +333,12 @@ public class RaceCourse : MonoBehaviour
         {
             BuildCenterPath();
             bool[] jumps = new bool[waypoints.Length];
+            bool[] alignments = new bool[waypoints.Length];
             for (int i = 0; i < waypoints.Length; i++) jumps[i] = waypoints[i].jumpToNext;
+            for (int i = 0; i < waypoints.Length; i++) alignments[i] = waypoints[i].preserveAlignment;
             if (cornerRoundingDistance > 0f || slopeBlendDistance > 0f)
                 RaceCourseLineSmoothing.Apply(cachedCenterPath, cachedWidthPath, cachedSegmentIndices,
-                    closedLoop, cornerRoundingDistance, slopeBlendDistance, maximumSampleSpacing, jumps);
+                    closedLoop, cornerRoundingDistance, slopeBlendDistance, maximumSampleSpacing, jumps, alignments);
             for (int i = 0; i < cachedCenterPath.Count; i++)
                 cachedRoadSegments.Add(!jumps[cachedSegmentIndices[i]]);
             float distance = 0f;

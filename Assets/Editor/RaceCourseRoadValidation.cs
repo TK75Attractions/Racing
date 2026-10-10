@@ -23,6 +23,7 @@ public static class RaceCourseRoadValidation
             ValidateSmoothAlignment(course);
             ValidateJumpGap(course);
             ValidateLongCourseJumpPrecision(course);
+            ValidateAlignmentTransition(course);
             ValidateEmptyAndToggles(course);
             ValidateVehicleSupport();
             RaceCourseValidation.Run();
@@ -257,6 +258,23 @@ public static class RaceCourseRoadValidation
                 "Long-course prefix averaging must not reverse road triangles near jump edges.");
     }
 
+    private static void ValidateAlignmentTransition(RaceCourse course)
+    {
+        SetPath(course, new[] { Vector3.zero, new Vector3(0f, 0f, 100f), new Vector3(100f, 0f, 100f), new Vector3(200f, 0f, 100f) }, false);
+        SerializedObject serialized = new SerializedObject(course);
+        serialized.FindProperty("waypoints").GetArrayElementAtIndex(1).FindPropertyRelative("preserveAlignment").boolValue = true;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        SetSmoothing(course, 35f, 25f);
+        Mesh mesh = Surface(course); Vector3[] vertices = mesh.vertices; int[] indices = mesh.triangles;
+        for (int i = 0; i < indices.Length; i += 3)
+            Require(Vector3.Cross(vertices[indices[i + 1]] - vertices[indices[i]], vertices[indices[i + 2]] - vertices[indices[i]]).y > 0f,
+                "Entering/exiting a fitted interval must not fold the road.");
+        SetPath(course, new[] { Vector3.zero, new Vector3(0f, 4f, 5f), new Vector3(0f, 0f, 10f) }, false);
+        SetSmoothing(course, 20f, 0f);
+        var path = new List<Vector3>(); course.CopyCenterPathWorld(path);
+        Require(path.Exists(point => point.y > 3.4f), "Disabling slope blending must preserve short-course elevation.");
+    }
+
     private static void ValidateVehicleSupport()
     {
         Scene scene = EditorSceneManager.NewPreviewScene();
@@ -295,6 +313,7 @@ public static class RaceCourseRoadValidation
             point.FindPropertyRelative("height").floatValue = positions[i].y;
             point.FindPropertyRelative("curve").floatValue = 0f;
             point.FindPropertyRelative("jumpToNext").boolValue = false;
+            point.FindPropertyRelative("preserveAlignment").boolValue = false;
             point.FindPropertyRelative("width").floatValue = Mathf.Lerp(startWidth, endWidth, positions.Length > 1 ? i / (float)(positions.Length - 1) : 0f);
         }
         serialized.ApplyModifiedPropertiesWithoutUndo();

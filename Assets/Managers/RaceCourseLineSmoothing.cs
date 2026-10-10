@@ -20,7 +20,7 @@ public static class RaceCourseLineSmoothing
     }
 
     public static void Apply(List<Vector3> path, List<float> widths, List<int> segments,
-        bool closed, float cornerDistance, float slopeDistance, float spacing, bool[] jumps)
+        bool closed, float cornerDistance, float slopeDistance, float spacing, bool[] jumps, bool[] alignments)
     {
         if (path.Count < 2) return;
         Vector3 origin = path[0];
@@ -48,6 +48,15 @@ public static class RaceCourseLineSmoothing
         for (int i = 0; i <= count; i++) sampleDistances.Add(total * i / count);
         var gapStarts = new List<float>();
         var gapEnds = new List<float>();
+        var alignmentEdges = new List<float>();
+        bool aligned = false;
+        for (int i = 0; i < source.Length - 1; i++)
+        {
+            bool next = alignments[sourceSegments[i]];
+            if (next != aligned) alignmentEdges.Add(distances[i]);
+            aligned = next;
+        }
+        if (aligned) alignmentEdges.Add(total);
         bool inGap = false;
         for (int i = 0; i < source.Length - 1; i++)
         {
@@ -72,6 +81,25 @@ public static class RaceCourseLineSmoothing
             float t = length > Mathf.Epsilon ? (distance - distances[index]) / length : 0f;
             Vector3 point = Vector3.Lerp(source[index], source[index + 1], t);
             float radiusLimit = total;
+            float fittedDistance = total;
+            if (alignments[sourceSegments[index]]) radiusLimit = 16f;
+            if (alignments[sourceSegments[index]]) fittedDistance = 0f;
+            else if (alignmentEdges.Count > 0)
+            {
+                float nearest = total;
+                foreach (float edge in alignmentEdges)
+                {
+                    float delta = Mathf.Abs(distance - edge);
+                    if (closed) delta = Mathf.Min(delta, total - delta);
+                    nearest = Mathf.Min(nearest, delta);
+                }
+                // Ramp the limit outside the fitted region, rather than switching the
+                // averaging radius abruptly at a portal and creating a road seam.
+                float blend = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(nearest / Mathf.Max(16f, horizontalRadius)));
+                radiusLimit = Mathf.Min(radiusLimit, Mathf.Lerp(16f, Mathf.Max(16f, horizontalRadius), blend));
+                fittedDistance = nearest;
+            }
+            float gapLimit = total;
             bool gap = jumps[sourceSegments[index]];
             for (int i = 0; i < gapStarts.Count; i++)
             {
@@ -83,10 +111,13 @@ public static class RaceCourseLineSmoothing
                     startDelta = Mathf.Min(startDelta, total - startDelta);
                     endDelta = Mathf.Min(endDelta, total - endDelta);
                 }
-                radiusLimit = Mathf.Min(radiusLimit, Mathf.Min(startDelta, endDelta));
+                gapLimit = Mathf.Min(gapLimit, Mathf.Min(startDelta, endDelta));
             }
-            Vector3 horizontal = gap ? point : Average(source, distances, integrals, distance, Mathf.Min(horizontalRadius, radiusLimit), closed, point);
-            Vector3 vertical = gap ? point : Average(source, distances, integrals, distance, Mathf.Min(verticalRadius, radiusLimit), closed, point);
+            float fittedVerticalRadius = alignmentEdges.Count > 0 && verticalRadius > 0f
+                ? Mathf.Lerp(Mathf.Max(verticalRadius, 35f), verticalRadius,
+                    Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(fittedDistance / 35f))) : verticalRadius;
+            Vector3 horizontal = gap ? point : Average(source, distances, integrals, distance, Mathf.Min(horizontalRadius, Mathf.Min(radiusLimit, gapLimit)), closed, point);
+            Vector3 vertical = gap ? point : Average(source, distances, integrals, distance, Mathf.Min(fittedVerticalRadius, gapLimit), closed, point);
             path.Add(new Vector3(horizontal.x, vertical.y, horizontal.z) + origin);
             widths.Add(Mathf.Lerp(sourceWidths[index], sourceWidths[index + 1], t));
             segments.Add(sourceSegments[index]);

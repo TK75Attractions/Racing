@@ -27,6 +27,7 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
         public float maximumHeight;
         public float maximumTilt;
         public float airborneSeconds;
+        public float maximumUnexpectedAirborneSeconds;
         public bool tookOff;
         public bool landed;
         public Vector3 takeoffPosition;
@@ -56,6 +57,7 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
         public float previousProgress;
         public Vector3 previousPosition;
         public float stalledSeconds;
+        public float unexpectedAirborneSeconds;
     }
 
     private readonly List<Driver> drivers = new List<Driver>();
@@ -155,6 +157,13 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
             driver.trial.maximumTilt = Mathf.Max(driver.trial.maximumTilt, Vector3.Angle(body.rotation * Vector3.up, Vector3.up));
             if (driver.trial.maximumTilt > 80f) Fail(driver.trial.player + " overturned during the trial.");
             int grounded = 0; foreach (TireForce tire in driver.tires) if (tire.IsGrounded) grounded++;
+            bool overJump = body.position.x > 605f && body.position.x < 623f &&
+                body.position.z > 590f && body.position.z < 606f && body.position.y > 14f;
+            driver.unexpectedAirborneSeconds = grounded == 0 && !overJump
+                ? driver.unexpectedAirborneSeconds + Time.fixedDeltaTime : 0f;
+            driver.trial.maximumUnexpectedAirborneSeconds = Mathf.Max(driver.trial.maximumUnexpectedAirborneSeconds,
+                driver.unexpectedAirborneSeconds);
+            if (driver.unexpectedAirborneSeconds > .3f) Fail(driver.trial.player + " became airborne outside the intended jump.");
             if (body.position.x > 548f && body.position.x < 680f && body.position.z < 625f && body.position.z > 550f)
             {
                 if (grounded == 0 && body.position.y > 10f)

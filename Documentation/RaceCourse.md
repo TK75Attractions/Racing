@@ -52,19 +52,19 @@ Inspectorの「道路生成」で `Generate Road` を有効にすると生成し
 
 路面は非凸・非トリガーのMeshColliderです。道路側にはRigidbodyを付けず、静止したコースとして使用します。坂道や立体交差の各高さに実際の接触面があります。幅0・点が不足・全長0のコースは路面を生成しません。既に別の道路Colliderがある場合は、そのColliderの配置も合わせて調整してください。
 
-### SampleSceneの走行線形
+### SampleSceneのチューブコース
 
-南側の大きな曲線と東西の坂を残し、幅は18〜20m（踏切付近は16m）にしています。角の丸め距離35m、勾配の接続距離25m、曲線の分割数80、最大サンプル間隔1.5mです。
+校舎モデルは `Assets/Scenes/1009こうしゃチューブ.fbx` に変更しています。地上のスタート・小さな坂・12mのジャンプを経由して東側の入口から地下のチューブへ入り、西側から地上へ戻る約1,829mの周回コースです。幅は地上18〜20m、坂と踏切16m、チューブ内12mです。
 
-スタート後の右折は校舎の通れる入口へ約12mずらし、次の左折から既存の小さな坂に沿って上ります。坂の上端から約70mの直線で踏切へつなぎ、World X約606〜618mを12mのジャンプ区間にしています。踏切の高さは18m、着地側は16mで、その先で東側の道路へ下ります。進行方向は点の配列順の逆なので、Inspectorでは着地側の点から踏切側への区間をジャンプとして指定しています。
+チューブの断面中心に沿って道路を配置し、World Yは断面中心から10m下げています。入口付近は約5m、最深部は約-25mです。元モデルの西側には約21m折り返す区間がありますが、走行線だけでその往復を省いて滑らかにつなぎ、チューブの外形・壁・天井の4,305頂点は変更していません。内側からも壁が見える両面Materialと、両側から衝突するMeshColliderを用意しています。
 
-道路を丸める積分は倍精度で計算し、長いコースの踏切・着地端で浮動小数の桁落ちによる凸凹や反転を防いでいます。
+「次の区間の線形に沿う (トンネルなど)」を有効にした区間は、角の丸め距離を最大16mに制限して管の中に収め、勾配を少なくとも前後35mでつなぎます。境界では通常の丸め距離へ徐々に戻し、入口・出口に急な接続を作りません。一般区間は角35m・勾配25m、最大サンプル間隔1.5mです。道路の積分は倍精度で計算しています。
 
-旧FBXの `Plane`、`Plane.013`、`Plane.020`、`Plane.028`、坂脇の `Plane.017`、`Plane.018`、`Plane.023`、`Plane.034`、旧カーブの `Cylinder.001`、`Cylinder.006` はシーン上のPrefab overrideで無効にしています。旧道路と生成道路が重なって表示や接地を変えることを防ぎ、校舎・背景は引き続き表示します。
+スタート後の右折は校舎の通れる入口を経由し、次の左折から既存の小さな坂に沿って上ります。坂の上端から約70mの直線で踏切へつなぎ、World X約606〜618mを12mのジャンプ区間にしています。踏切の高さは18m、着地側は16mで、その先でチューブ入口へ下ります。進行方向は点の配列順の逆なので、Inspectorでは着地側の点から踏切側への区間をジャンプとして指定しています。
 
-左右2レーンと車体の寸法で接触を確認し、`tree.004`、`tree.005`、`tree.016`、`tree.017`、`tree.018`、`tree.019` の枝・葉のMeshColliderを無効にしています。木の表示は残し、スタート地点でP2や走行中の車が引っかからないようにしています。
+`Racing > Prepare Tube Course Terrain` で地形の共存用メッシュを再生成できます。元FBXを毎回読み出し、主地面はチューブと地表が交差する断面部分だけ切り抜き、面積の約99.77%を残します。入口の `Plane.012`、坂上の `Plane.009` と `Cube.001` は道路の足元だけ切り抜いて肩の部分を残します。入口の40cmの段差や坂上の床への接触を防ぐため、見た目とColliderの両方に同じ切り抜きを適用します。保存先は `Assets/Scenes/TubeCourseData/` です。
 
-スタート地点・チェックポイント・ゴール・アイテム配置も生成道路に合わせています。スタートは路面の2m上に置き、車が路面に埋まらず着地できるようにしています。`RaceSpeedSceneryController` は生成道路の中央線がある場合に古い黄色の破線を重ねず、近景マーカーも道幅から2.5m外側に配置します。
+新モデルの追加メッシュにもMeshColliderを付けています。道路へ張り出す枝・葉の一体型MeshColliderは無効にし、木の表示は残しています。チェックポイント・ゴール・アイテム・充電クリスタルの高さも道路に合わせています。スタートは路面の2m上に置き、車が埋まらず着地できるようにしています。`RaceSpeedSceneryController` は生成道路の中央線がある場合に古い黄色の破線を重ねず、近景マーカーを道幅から2.5m外側へ配置します。
 
 ## 逸脱判定
 
@@ -102,6 +102,10 @@ for (float distance = 0f; distance < course.TotalLength; distance += 10f)
 
 道路生成のバッチ実行: `-batchmode -nographics -executeMethod RaceCourseRoadValidation.Run -quit`
 
-`Racing > Validate Start And Jump Route (Play Mode)` は、SampleSceneの実際の `car2` PrefabをP1・P2として生成し、ペダルとハンドル入力だけで一周します。車の位置・速度を補正せず、停止・壁への接触・転倒・ジャンプの離陸と着地を記録します。最後にP2をコース外に4秒置き、自動で戻されないことも確認します。試走中のFirebase配信は停止します。結果は一時フォルダの `racing-course-playthrough/report.json` と `trace.csv` に出力します。
+`Racing > Validate Start And Jump Route (Play Mode)` は、SampleSceneの実際の `car2` PrefabをP1・P2として生成し、ペダルとハンドル入力だけで一周します。車の位置・速度を補正せず、停止・壁への接触・転倒・ジャンプの離陸と着地を記録します。意図したジャンプ以外で0.3秒を超えて全輪が浮くと検証を失敗にします。最後にP2をコース外に4秒置き、自動で戻されないことも確認します。試走中のFirebase配信は停止します。結果は一時フォルダの `racing-course-playthrough/report.json` と `trace.csv` に出力します。
 
-試走のバッチ実行: `-batchmode -nographics -executeMethod CourseJumpPlaythroughValidation.RunBatch`（`-quit` は付けず、検証終了時に終了します）。出力先は環境変数 `RACING_COURSE_PLAYTHROUGH_OUTPUT` で指定できます。今回の確認結果は `Artifacts/CourseJumpPlaythrough/` に保存しています。
+試走のバッチ実行: `-batchmode -nographics -executeMethod CourseJumpPlaythroughValidation.RunBatch`（`-quit` は付けず、検証終了時に終了します）。出力先は環境変数 `RACING_COURSE_PLAYTHROUGH_OUTPUT` で指定できます。旧コースの確認結果は `Artifacts/CourseJumpPlaythrough/`、新チューブコースの結果は `Artifacts/TubeCourse/` に保存しています。
+
+`Racing > Validate Tube Course Clearance` はSampleSceneをプレビューで開き、道路の折り返した面、道路端を含む地形の重なり、地下の管壁の障害、元チューブの保持、主地面の残存面積を確認します。5mの区間同士で水平の方向変化20°未満、絶対勾配0.5未満、勾配の差0.2未満を条件にしています。意図したジャンプの前後8mは勾配・方向の比較から除外します。
+
+チューブ検証のバッチ実行: `-batchmode -nographics -executeMethod TubeCourseValidation.Run -quit`。レポート出力先は環境変数 `RACING_TUBE_VALIDATION_OUTPUT` で指定できます。
