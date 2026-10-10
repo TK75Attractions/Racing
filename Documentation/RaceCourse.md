@@ -66,6 +66,14 @@ Inspectorの「道路生成」で `Generate Road` を有効にすると生成し
 
 新モデルの追加メッシュにもMeshColliderを付けています。道路へ張り出す枝・葉の一体型MeshColliderは無効にし、木の表示は残しています。チェックポイント・ゴール・アイテム・充電クリスタルの高さも道路に合わせています。スタートは路面の2m上に置き、車が埋まらず着地できるようにしています。`RaceSpeedSceneryController` は生成道路の中央線がある場合に古い黄色の破線を重ねず、近景マーカーを道幅から2.5m外側へ配置します。
 
+### チューブの発光模様
+
+SampleSceneの `TubeSpeedPatternController` は元チューブと同じメッシュを内面へ3cmずらして重ねます。両壁のシアン・紫のライン、進行方向への二重矢印、20mごとのアーチが、48m周期の滑らかな光の帯と組み合わさって通過感を出します。光の帯は車へ向かって14m/sで流れ、瞬間的な点滅は使いません。路面・壁のMeshColliderと元モデルの形状は変更せず、追加のCollider・Light・テクスチャも不要です。
+
+`Assets/Scenes/TubeCourseData/TubeSpeedPatterns.mat` で色・発光強度・流れる速さを調整できます。管の内側だけ描画し、細い線には画面上の太さに応じたぼかしを入れ、70〜150mで遠くの模様をフェードさせてちらつきを抑えます。既存のURP/Bloom設定を使います。生成物は一時オブジェクトなので、再読み込み・無効化・再生成で重複せず、借りている元メッシュやMaterialも破棄しません。
+
+`Racing > Configure Tube Speed Patterns` でMaterialとSampleSceneの参照を設定できます。`Racing > Capture Tube Gameplay (Play Mode)` は既存の実車試走を実行し、入口・地下直線・カーブ・西側出口の4地点で走行中のプレイヤーカメラをPNGへ保存します。写真のための車の移動・照明の変更は行いません。出力先は `RACING_TUBE_CAPTURE_OUTPUT`、バッチ実行は `-batchmode -executeMethod TubeGameplayCapture.RunBatch`（描画が必要なので `-nographics` と `-quit` は付けません）。
+
 ## 逸脱判定
 
 `IsPointInsideCourse(Vector3)` はSceneに表示した帯の三角形をXZ平面へ投影して判定します。高さの差は判定に使わないため、描画した線から浮いて走行したりジャンプしたりしても、上から見てコース幅の内側ならコース外になりません。コースの下側や立体交差の道路の間も、XZ位置が帯の内側なら範囲内として扱います。横方向に帯から外れた場合は、浮いていてもコース外になります。

@@ -1,0 +1,63 @@
+{
+    "trials": [
+        {
+            "player": "Player1_Car",
+            "distance": 1829.3526611328125,
+            "maximumHeight": 18.37425422668457,
+            "maximumTilt": 24.088499069213868,
+            "airborneSeconds": 0.6999995112419128,
+            "maximumUnexpectedAirborneSeconds": 0.019999992102384568,
+            "tookOff": true,
+            "landed": true,
+            "takeoffPosition": {
+                "x": 607.0514526367188,
+                "y": 18.366943359375,
+                "z": 599.912353515625
+            },
+            "landingPosition": {
+                "x": 619.0436401367188,
+                "y": 16.3565731048584,
+                "z": 599.8970947265625
+            },
+            "wallContacts": 0,
+            "lastWall": "",
+            "finalPosition": {
+                "x": 431.9491271972656,
+                "y": 3.348011016845703,
+                "z": 790.6364135742188
+            }
+        },
+        {
+            "player": "Player2_Car",
+            "distance": 1869.472900390625,
+            "maximumHeight": 18.384307861328126,
+            "maximumTilt": 24.089336395263673,
+            "airborneSeconds": 0.6799995303153992,
+            "maximumUnexpectedAirborneSeconds": 0.0,
+            "tookOff": true,
+            "landed": true,
+            "takeoffPosition": {
+                "x": 607.2516479492188,
+                "y": 18.376985549926759,
+                "z": 595.9119873046875
+            },
+            "landingPosition": {
+                "x": 619.2440185546875,
+                "y": 16.366817474365236,
+                "z": 595.8953857421875
+            },
+            "wallContacts": 0,
+            "lastWall": "",
+            "finalPosition": {
+                "x": 471.0439147949219,
+                "y": 3.3480119705200197,
+                "z": 783.4887084960938
+            }
+        }
+    ],
+    "courseLength": 1829.0640869140625,
+    "simulatedSeconds": 101.95490264892578,
+    "offCoursePositionPreserved": true,
+    "offCourseSeconds": 4.002408027648926,
+    "error": ""
+}

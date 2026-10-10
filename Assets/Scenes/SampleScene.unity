@@ -13596,6 +13596,11 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2056999322788938050, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!33 &1039434661 stripped
+MeshFilter:
+  m_CorrespondingSourceObject: {fileID: 6136698512906446090, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+  m_PrefabInstance: {fileID: 15590328}
+  m_PrefabAsset: {fileID: 0}
 --- !u!64 &1041635261
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -19212,6 +19217,7 @@ GameObject:
   - component: {fileID: 1759542322}
   - component: {fileID: 1759542321}
   - component: {fileID: 1759542323}
+  - component: {fileID: 1759542324}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -20004,6 +20010,20 @@ MonoBehaviour:
   surfaceOffset: 0.08
   roadMarkingColor: {r: 1, g: 0.72, b: 0.18, a: 0.95}
   roadsideColor: {r: 0.08, g: 0.85, b: 1, a: 0.95}
+--- !u!114 &1759542324
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759542320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c826107bf6b4012881fb1d7163ff876, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::TubeSpeedPatternController
+  tube: {fileID: 1039434661}
+  patternMaterial: {fileID: 2100000, guid: 820225e7280214e9c8480aaf40b353f3, type: 2}
 --- !u!64 &1759662080
 MeshCollider:
   m_ObjectHideFlags: 0
