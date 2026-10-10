@@ -217,8 +217,8 @@ public sealed class RaceCourseEditor : Editor
             SetLocalPosition(selectedPoint, course.transform.InverseTransformPoint(moved));
             ApplyChanges();
         }
-        int sampleIndex = Mathf.Min(left.Count - 1, selected * Mathf.Clamp(serializedObject.FindProperty("curveSegments").intValue, 1, 100));
-        Vector3 lateral = sampleIndex >= 0 ? (right[sampleIndex] - left[sampleIndex]).normalized : Vector3.right;
+        course.TryGetNearestCenterLineDirection(position, out Vector3 direction);
+        Vector3 lateral = Vector3.Cross(Vector3.up, direction).normalized;
         if (lateral.sqrMagnitude < 0.001f) lateral = Vector3.right;
         SerializedProperty widthProperty = selectedPoint.FindPropertyRelative("width");
         Vector3 edge = moved + lateral * (widthProperty.floatValue * 0.5f);
@@ -308,19 +308,7 @@ public sealed class RaceCourseEditor : Editor
 
     private int FindInsertionIndex(Vector3 world)
     {
-        int best = 1;
-        float distance = float.PositiveInfinity;
-        int samples = Mathf.Clamp(serializedObject.FindProperty("curveSegments").intValue, 1, 100);
-        for (int i = 1; i < center.Count; i++)
-        {
-            Vector3 delta = center[i] - center[i - 1];
-            float t = delta.sqrMagnitude > Mathf.Epsilon ? Mathf.Clamp01(Vector3.Dot(world - center[i - 1], delta) / delta.sqrMagnitude) : 0f;
-            float candidate = (world - (center[i - 1] + delta * t)).sqrMagnitude;
-            if (candidate >= distance) continue;
-            distance = candidate;
-            best = (i - 1) / samples + 1;
-        }
-        return Mathf.Min(best, points.arraySize);
+        return ((RaceCourse)target).GetWaypointInsertionIndexWorld(world);
     }
 
     private void EndStroke()

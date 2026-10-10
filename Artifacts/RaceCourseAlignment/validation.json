@@ -1,0 +1,29 @@
+{
+  "length": 1625.296875,
+  "foldedTriangles": 0,
+  "maximumDirectionStep": 2.6597683429718018,
+  "maximumGradeStep": 0.006589522585272789,
+  "maximumAlignmentShift": 8.741998672485352,
+  "crestClearances": [
+    0.009955406188964844,
+    0.009955883026123047,
+    0.01021718978881836,
+    0.010452747344970703,
+    0.01107168197631836,
+    0.011910676956176758
+  ],
+  "unityVersion": "6000.3.9f1",
+  "testScene": "SampleScene definition with original FBX in isolated Unity project",
+  "physicsBody": "Guided sphere Rigidbody, vertical velocity controlled by collision and gravity",
+  "speedsMetersPerSecond": [
+    15,
+    25,
+    35
+  ],
+  "lanes": [
+    "west uphill",
+    "east uphill"
+  ],
+  "sampleSceneIntegration": "Passed: 8 old road objects disabled, spawn/checkpoints/pickups on road, 1122 center samples without competing higher ground colliders",
+  "fullVehiclePrefabPlaythrough": "Not performed"
+}

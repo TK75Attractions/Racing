@@ -14,6 +14,7 @@ public sealed class RaceSpeedSceneryController : MonoBehaviour
     [SerializeField, Min(0.01f)] private float dashWidth = 0.18f;
     [SerializeField, Min(4f)] private float markerSpacing = 28f;
     [SerializeField, Min(0.1f)] private float roadsideOffset = 33f;
+    [SerializeField, Min(0f)] private float roadsideMargin = 2.5f;
     [SerializeField, Min(0.1f)] private float markerHeight = 2.2f;
     [SerializeField, Min(0f)] private float surfaceOffset = 0.08f;
     [SerializeField] private Color roadMarkingColor = new Color(1f, 0.72f, 0.18f, 0.95f);
@@ -41,10 +42,10 @@ public sealed class RaceSpeedSceneryController : MonoBehaviour
         generatedRoot.position = Vector3.zero;
         generatedRoot.rotation = Quaternion.identity;
 
-        markingMaterial = CreateMaterial("SpeedRoadMarkings", roadMarkingColor);
+        if (!course.GeneratesRoad) markingMaterial = CreateMaterial("SpeedRoadMarkings", roadMarkingColor);
         roadsideMaterial = CreateMaterial("SpeedRoadsideMarkers", roadsideColor);
 
-        BuildRepeatedObjects(dashSpacing, (position, direction, distance) =>
+        if (!course.GeneratesRoad) BuildRepeatedObjects(dashSpacing, (position, direction, distance) =>
         {
             CreateBox(
                 "RoadSpeedDash",
@@ -57,11 +58,14 @@ public sealed class RaceSpeedSceneryController : MonoBehaviour
         BuildRepeatedObjects(markerSpacing, (position, direction, distance) =>
         {
             Vector3 side = Vector3.Cross(Vector3.up, direction).normalized;
+            bool sampled = course.TryGetSampleAtProgress(distance, out RaceCourse.CourseSample sample);
             for (int sign = -1; sign <= 1; sign += 2)
             {
                 CreateBox(
                     "RoadsideSpeedMarker",
-                    position + side * (roadsideOffset * sign) + Vector3.up * (markerHeight * 0.5f),
+                    (course.GeneratesRoad && sampled
+                        ? (sign < 0 ? sample.leftEdge : sample.rightEdge) + sample.right * (roadsideMargin * sign)
+                        : position + side * (roadsideOffset * sign)) + Vector3.up * (markerHeight * 0.5f),
                     direction,
                     new Vector3(0.18f, markerHeight, 0.18f),
                     roadsideMaterial);

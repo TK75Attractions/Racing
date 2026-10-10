@@ -20,6 +20,7 @@ public static class RaceCourseRoadValidation
             ValidatePaint(course);
             ValidateRebuildAndUndo(course);
             ValidateLoopAndSlope(course);
+            ValidateSmoothAlignment(course);
             ValidateEmptyAndToggles(course);
             ValidateVehicleSupport();
             RaceCourseValidation.Run();
@@ -173,6 +174,49 @@ public static class RaceCourseRoadValidation
         Require(Road(course) == null, "Zero-width course has no surface or collider.");
     }
 
+    private static void ValidateSmoothAlignment(RaceCourse course)
+    {
+        SetPath(course, new[] { Vector3.zero, new Vector3(0f, 0f, 100f), new Vector3(100f, 0f, 100f), new Vector3(100f, 0f, 0f) }, true, 18f, 18f);
+        SetSmoothing(course, 35f, 25f);
+        Mesh mesh = Surface(course);
+        int[] triangles = mesh.triangles;
+        Vector3[] vertices = mesh.vertices;
+        foreach (int index in new[] { 0, mesh.vertexCount - 2 }) Require(mesh.normals[index].y > 0.99f, "Rounded seam normal.");
+        for (int i = 0; i < triangles.Length; i += 3)
+            Require(Vector3.Cross(vertices[triangles[i + 1]] - vertices[triangles[i]], vertices[triangles[i + 2]] - vertices[triangles[i]]).y > 0f,
+                "Rounded corner has no folded or backwards road triangles.");
+        var path = new List<Vector3>();
+        course.CopyCenterPathWorld(path);
+        for (int i = 1; i < path.Count - 1; i++)
+        {
+            Require(Vector3.Distance(path[i], path[i - 1]) <= 1.51f, "Rounded road uses fine distance sampling.");
+            Require(Vector3.Angle(path[i] - path[i - 1], path[i + 1] - path[i]) < 5f, "Corner direction is continuous.");
+        }
+        Require(course.GetWaypointInsertionIndexWorld(new Vector3(50f, 0f, 100f)) == 2, "Smoothed insertion uses original waypoint segment.");
+
+        SetPath(course, new[] { Vector3.zero, new Vector3(0f, 18f, 90f), new Vector3(0f, 18f, 180f) }, false);
+        SetSmoothing(course, 0f, 25f);
+        course.CopyCenterPathWorld(path);
+        Near(path[0], Vector3.zero, "Open smoothing preserves start");
+        Near(path[path.Count - 1], new Vector3(0f, 18f, 180f), "Open smoothing preserves end");
+        for (int i = 1; i < path.Count - 1; i++)
+        {
+            Require(path[i].y >= path[i - 1].y - 0.001f && path[i].y <= 18.001f, "Crest height stays monotone without overshoot.");
+            float before = (path[i].y - path[i - 1].y) / (path[i].z - path[i - 1].z);
+            float after = (path[i + 1].y - path[i].y) / (path[i + 1].z - path[i].z);
+            Require(Mathf.Abs(after - before) < 0.015f, "Crest has no abrupt slope step.");
+        }
+    }
+
+    private static void SetSmoothing(RaceCourse course, float corners, float slopes)
+    {
+        SerializedObject serialized = new SerializedObject(course);
+        serialized.FindProperty("cornerRoundingDistance").floatValue = corners;
+        serialized.FindProperty("slopeBlendDistance").floatValue = slopes;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        course.RebuildCache(); course.RebuildRoad();
+    }
+
     private static void ValidateVehicleSupport()
     {
         Scene scene = EditorSceneManager.NewPreviewScene();
@@ -200,6 +244,8 @@ public static class RaceCourseRoadValidation
     {
         SerializedObject serialized = new SerializedObject(course);
         serialized.FindProperty("closedLoop").boolValue = loop;
+        serialized.FindProperty("cornerRoundingDistance").floatValue = 0f;
+        serialized.FindProperty("slopeBlendDistance").floatValue = 0f;
         SerializedProperty points = serialized.FindProperty("waypoints");
         points.arraySize = positions.Length;
         for (int i = 0; i < positions.Length; i++)
