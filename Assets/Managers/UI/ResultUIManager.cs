@@ -53,6 +53,7 @@ public class ResultUIManager
             RacingUITheme.Rule(row,"Divider",new Vector2(.015f,.01f),new Vector2(.985f,.016f),new Color(.23f,.37f,.70f,.5f));
         }
         winnerLabel=NeonUI.Text(card,"Winner","RACE COMPLETE",new Vector2(.052f,.32f),new Vector2(.60f,.38f),27f,italic:true,tint:NeonUI.Cyan);
+        winnerLabel.rectTransform.pivot=new Vector2(0f,.5f); // Keep the left edge inside the viewport during its celebration pulse.
         RectTransform summary=RacingUITheme.Rect(card,"RaceSummary",new Vector2(.053f,.20f),new Vector2(.602f,.315f));
         NeonUI.Text(summary,"BestLabel","ベストラップ / BEST LAP",new Vector2(.01f,.62f),new Vector2(.48f,.97f),18f,tint:new Color(.6f,.83f,1));
         bestLap=NeonUI.Text(summary,"Best","--'--.---",new Vector2(.01f,.05f),new Vector2(.46f,.62f),36f,italic:true);
