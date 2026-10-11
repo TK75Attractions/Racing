@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+[ExecuteAlways]
 public class RaceCourse : MonoBehaviour
 {
     [System.Serializable]
@@ -11,6 +12,8 @@ public class RaceCourse : MonoBehaviour
         public float height;
         public float curve;
         public float width = 10f;
+        public bool jumpToNext;
+        public bool preserveAlignment;
         public Vector3 LocalPosition => new Vector3(position.x, height, position.y);
     }
 
@@ -28,8 +31,18 @@ public class RaceCourse : MonoBehaviour
 
     [SerializeField] private Waypoint[] waypoints;
     [SerializeField] private bool closedLoop = true;
-    [Tooltip("コース面から上下に許容するワールド距離。車体の高さやジャンプを考慮して設定します。")]
-    [SerializeField, Min(0f)] private float verticalTolerance = 8f;
+
+    [Header("走行線形")]
+    [SerializeField, Min(0f), Tooltip("角を前後の距離で丸めます (World)。0で従来の中心線")]
+    private float cornerRoundingDistance = 20f;
+    [SerializeField, Min(0f), Tooltip("坂の入口・頂上の勾配を滑らかにつなぐ距離 (World)。0で従来の高さ")]
+    private float slopeBlendDistance = 20f;
+    [SerializeField, Min(0.25f), Tooltip("道路メッシュの最大サンプル間隔 (World)")]
+    private float maximumSampleSpacing = 1.5f;
+
+    [Header("道路生成")]
+    [SerializeField] private bool generateRoad = true;
+    [SerializeField] private RaceCourseRoad.Settings road = new RaceCourseRoad.Settings();
 
     [Header("Gizmo")]
     [SerializeField] private Color waypointColor = Color.cyan;
@@ -43,12 +56,17 @@ public class RaceCourse : MonoBehaviour
     private readonly List<Vector3> cachedInnerPath = new List<Vector3>();
     private readonly List<Vector3> cachedOuterPath = new List<Vector3>();
     private readonly List<float> cachedCumulativeDistances = new List<float>();
+    private readonly List<int> cachedSegmentIndices = new List<int>();
+    private readonly List<bool> cachedRoadSegments = new List<bool>();
     private bool cacheDirty = true;
+    private bool roadDirty = true;
+    private int cachedRoadLayer = -1;
     private Vector3 cachedPosition;
     private Quaternion cachedRotation;
     private Vector3 cachedScale;
 
     public bool ClosedLoop => closedLoop;
+    public bool GeneratesRoad => generateRoad;
     public bool HasValidPath => TotalLength > Mathf.Epsilon;
 
     /// <summary>高さを含む中心線の全長（ワールド単位）。</summary>
@@ -62,8 +80,54 @@ public class RaceCourse : MonoBehaviour
         }
     }
 
-    private void Awake() => RebuildCache();
-    private void OnValidate() => cacheDirty = true;
+    private void OnEnable() => RebuildRoad();
+    private void OnDisable()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.delayCall -= RefreshRoadInEditor;
+#endif
+        RaceCourseRoad.Clear(transform);
+    }
+
+    private void OnValidate()
+    {
+        cacheDirty = true;
+        roadDirty = true;
+        // OnValidate may run during deserialization. Create meshes on the editor main thread.
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.delayCall -= RefreshRoadInEditor;
+        UnityEditor.EditorApplication.delayCall += RefreshRoadInEditor;
+#endif
+    }
+
+#if UNITY_EDITOR
+    private void RefreshRoadInEditor()
+    {
+        if (this != null && isActiveAndEnabled && roadDirty) RebuildRoad();
+    }
+#endif
+
+    private void Update()
+    {
+        EnsureCache();
+        if (roadDirty || cachedRoadLayer != gameObject.layer) RebuildRoad();
+    }
+
+    /// <summary>コース境界と同じ形状の路面・模様・非凸MeshColliderを再生成します。</summary>
+    [ContextMenu("道路を再生成")]
+    public void RebuildRoad()
+    {
+        EnsureCache();
+        RaceCourseRoad.Clear(transform);
+        if (generateRoad && isActiveAndEnabled && HasValidPath)
+        {
+            if (road == null) road = new RaceCourseRoad.Settings();
+            RaceCourseRoad.Build(transform, cachedCenterPath, cachedInnerPath, cachedOuterPath,
+                cachedCumulativeDistances, closedLoop, road, cachedRoadSegments);
+        }
+        roadDirty = false;
+        cachedRoadLayer = gameObject.layer;
+    }
 
     private void OnDrawGizmos()
     {
@@ -80,28 +144,28 @@ public class RaceCourse : MonoBehaviour
         if (drawCenterLine) DrawPolyline(cachedCenterPath);
     }
 
-    /// <summary>高さを無視する旧API。3Dの逸脱判定には Vector3 の overload を使います。</summary>
-    public bool IsPointInsideCourse(Vector2 point) => IsInsideBand(point, null);
+    /// <summary>上から見たコース帯の範囲で判定します。</summary>
+    public bool IsPointInsideCourse(Vector2 point) => IsInsideBand(point);
 
-    /// <summary>Sceneに表示した帯の範囲と、その地点の路面からの高さで判定します。</summary>
+    /// <summary>高さを無視し、浮いていても上から見たコース帯の内側なら範囲内とします。</summary>
     public bool IsPointInsideCourse(Vector3 worldPosition) =>
-        IsInsideBand(ToXZ(worldPosition), worldPosition.y);
+        IsInsideBand(ToXZ(worldPosition));
 
-    private bool IsInsideBand(Vector2 point, float? worldHeight)
+    private bool IsInsideBand(Vector2 point)
     {
         EnsureCache();
         for (int i = 1; i < cachedInnerPath.Count; i++)
         {
-            // 描画に使う左右の縁と同じ三角形で判定。立体交差では全区間の高さを調べる。
-            if (IsInsideTriangle(point, worldHeight,
+            // 描画に使う左右の縁と同じ三角形をXZへ投影して判定する。
+            if (IsInsideTriangle(point,
                     cachedInnerPath[i - 1], cachedOuterPath[i - 1], cachedInnerPath[i]) ||
-                IsInsideTriangle(point, worldHeight,
+                IsInsideTriangle(point,
                     cachedOuterPath[i - 1], cachedOuterPath[i], cachedInnerPath[i])) return true;
         }
         return false;
     }
 
-    private bool IsInsideTriangle(Vector2 point, float? height, Vector3 a, Vector3 b, Vector3 c)
+    private static bool IsInsideTriangle(Vector2 point, Vector3 a, Vector3 b, Vector3 c)
     {
         Vector2 ab = ToXZ(b - a);
         Vector2 ac = ToXZ(c - a);
@@ -111,9 +175,7 @@ public class RaceCourse : MonoBehaviour
         float u = (ap.x * ac.y - ap.y * ac.x) / determinant;
         float v = (ab.x * ap.y - ab.y * ap.x) / determinant;
         const float tolerance = 0.00001f;
-        if (u < -tolerance || v < -tolerance || u + v > 1f + tolerance) return false;
-        float surfaceHeight = a.y + u * (b.y - a.y) + v * (c.y - a.y);
-        return !height.HasValue || Mathf.Abs(height.Value - surfaceHeight) <= Mathf.Max(0f, verticalTolerance);
+        return u >= -tolerance && v >= -tolerance && u + v <= 1f + tolerance;
     }
 
     public Vector2 GetNearestPointOnCenterLine(Vector2 point)
@@ -189,6 +251,22 @@ public class RaceCourse : MonoBehaviour
         return true;
     }
 
+    /// <summary>ジャンプ区間は進捗用の中心線だけを持ち、路面を生成しません。</summary>
+    public bool HasRoadAtProgress(float progressDistance)
+    {
+        EnsureCache();
+        if (cachedCenterPath.Count < 2 || TotalLength <= Mathf.Epsilon) return false;
+        float distance = closedLoop ? Mathf.Repeat(progressDistance, TotalLength) : Mathf.Clamp(progressDistance, 0f, TotalLength);
+        int low = 0, high = cachedCenterPath.Count - 2;
+        while (low < high)
+        {
+            int middle = (low + high) / 2;
+            if (cachedCumulativeDistances[middle + 1] <= distance) low = middle + 1;
+            else high = middle;
+        }
+        return cachedRoadSegments[low];
+    }
+
     public bool TryGetNearestCenterLineDirection(Vector3 worldPosition, out Vector3 direction)
     {
         direction = Vector3.zero;
@@ -236,6 +314,12 @@ public class RaceCourse : MonoBehaviour
         outerDestination.AddRange(cachedOuterPath);
     }
 
+    public int GetWaypointInsertionIndexWorld(Vector3 worldPosition)
+    {
+        return TryGetNearestSegment(worldPosition, out int index, out _)
+            ? Mathf.Min(waypoints.Length, cachedSegmentIndices[index - 1] + 1) : 0;
+    }
+
     public void RebuildCache()
     {
         cachedCenterPath.Clear();
@@ -243,9 +327,20 @@ public class RaceCourse : MonoBehaviour
         cachedInnerPath.Clear();
         cachedOuterPath.Clear();
         cachedCumulativeDistances.Clear();
+        cachedSegmentIndices.Clear();
+        cachedRoadSegments.Clear();
         if (waypoints != null && waypoints.Length >= 2)
         {
             BuildCenterPath();
+            bool[] jumps = new bool[waypoints.Length];
+            bool[] alignments = new bool[waypoints.Length];
+            for (int i = 0; i < waypoints.Length; i++) jumps[i] = waypoints[i].jumpToNext;
+            for (int i = 0; i < waypoints.Length; i++) alignments[i] = waypoints[i].preserveAlignment;
+            if (cornerRoundingDistance > 0f || slopeBlendDistance > 0f)
+                RaceCourseLineSmoothing.Apply(cachedCenterPath, cachedWidthPath, cachedSegmentIndices,
+                    closedLoop, cornerRoundingDistance, slopeBlendDistance, maximumSampleSpacing, jumps, alignments);
+            for (int i = 0; i < cachedCenterPath.Count; i++)
+                cachedRoadSegments.Add(!jumps[cachedSegmentIndices[i]]);
             float distance = 0f;
             cachedCumulativeDistances.Add(0f);
             for (int i = 1; i < cachedCenterPath.Count; i++)
@@ -256,6 +351,7 @@ public class RaceCourse : MonoBehaviour
             BuildOffsetPaths();
         }
         cacheDirty = false;
+        roadDirty = true;
         cachedPosition = transform.position;
         cachedRotation = transform.rotation;
         cachedScale = transform.lossyScale;
@@ -282,8 +378,12 @@ public class RaceCourse : MonoBehaviour
                 Vector3 local = EvaluateEllipticSegmentPoint(start.LocalPosition, end.LocalPosition, start.curve, t);
                 cachedCenterPath.Add(transform.TransformPoint(local));
                 cachedWidthPath.Add(Mathf.Max(0f, Mathf.Lerp(start.width, end.width, Mathf.SmoothStep(0f, 1f, t))));
+                cachedSegmentIndices.Add(i);
             }
         }
+        // Each entry owns the outgoing interval, including the interval after a waypoint.
+        for (int i = 0; i < cachedSegmentIndices.Count - 1; i++)
+            cachedSegmentIndices[i] = cachedSegmentIndices[i + 1];
     }
 
     private void BuildOffsetPaths()

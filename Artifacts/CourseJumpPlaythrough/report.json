@@ -1,0 +1,61 @@
+{
+    "trials": [
+        {
+            "player": "Player1_Car",
+            "distance": 1643.257080078125,
+            "maximumHeight": 18.37618637084961,
+            "maximumTilt": 17.422439575195314,
+            "airborneSeconds": 0.6599995493888855,
+            "tookOff": true,
+            "landed": true,
+            "takeoffPosition": {
+                "x": 607.330078125,
+                "y": 18.37156867980957,
+                "z": 599.9119262695313
+            },
+            "landingPosition": {
+                "x": 618.7774658203125,
+                "y": 16.44061851501465,
+                "z": 599.8998413085938
+            },
+            "wallContacts": 0,
+            "lastWall": "",
+            "finalPosition": {
+                "x": 431.83203125,
+                "y": 3.3479981422424318,
+                "z": 790.6996459960938
+            }
+        },
+        {
+            "player": "Player2_Car",
+            "distance": 1665.375732421875,
+            "maximumHeight": 18.38806915283203,
+            "maximumTilt": 56.960235595703128,
+            "airborneSeconds": 0.6799995303153992,
+            "tookOff": true,
+            "landed": true,
+            "takeoffPosition": {
+                "x": 607.3269653320313,
+                "y": 18.380739212036134,
+                "z": 595.9296264648438
+            },
+            "landingPosition": {
+                "x": 619.3231201171875,
+                "y": 16.37069320678711,
+                "z": 595.9151000976563
+            },
+            "wallContacts": 0,
+            "lastWall": "",
+            "finalPosition": {
+                "x": 453.76336669921877,
+                "y": 3.3480122089385988,
+                "z": 785.57470703125
+            }
+        }
+    ],
+    "courseLength": 1643.0128173828125,
+    "simulatedSeconds": 91.07672882080078,
+    "offCoursePositionPreserved": true,
+    "offCourseSeconds": 4.005922794342041,
+    "error": ""
+}

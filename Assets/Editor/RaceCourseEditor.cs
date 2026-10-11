@@ -49,6 +49,7 @@ public sealed class RaceCourseEditor : Editor
         if (target == null) return;
         serializedObject.Update();
         ((RaceCourse)target).RebuildCache();
+        ((RaceCourse)target).RebuildRoad();
         selected = Mathf.Min(selected, points.arraySize - 1);
         Repaint();
         SceneView.RepaintAll();
@@ -57,7 +58,7 @@ public sealed class RaceCourseEditor : Editor
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
-        EditorGUILayout.HelpBox("Scene上で中心線を描き、幅を持つコース範囲を定義します。位置はXYZで編集できます。", MessageType.Info);
+        EditorGUILayout.HelpBox("中心線と幅から道路・中央の白い破線・両端の赤白模様・MeshColliderを自動生成します。位置はXYZで編集できます。", MessageType.Info);
         DrawPropertiesExcluding(serializedObject, "m_Script", "waypoints");
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Sceneでコースを描く", EditorStyles.boldLabel);
@@ -108,6 +109,7 @@ public sealed class RaceCourseEditor : Editor
             }
         }
         ApplyChanges();
+        if (GUILayout.Button("道路を再生成")) ((RaceCourse)target).RebuildRoad();
         EditorGUILayout.LabelField("中心線の全長", $"{((RaceCourse)target).TotalLength:F1} m");
     }
 
@@ -129,6 +131,8 @@ public sealed class RaceCourseEditor : Editor
         SerializedProperty width = point.FindPropertyRelative("width");
         width.floatValue = Mathf.Max(0f, EditorGUILayout.FloatField("幅 (World)", width.floatValue));
         EditorGUILayout.PropertyField(point.FindPropertyRelative("curve"), new GUIContent("次の点への曲がり"));
+        EditorGUILayout.PropertyField(point.FindPropertyRelative("jumpToNext"), new GUIContent("次の点までジャンプ区間 (路面なし)"));
+        EditorGUILayout.PropertyField(point.FindPropertyRelative("preserveAlignment"), new GUIContent("次の区間の線形に沿う (トンネルなど)"));
     }
 
     private Vector3 WorldPosition(int index) => ((RaceCourse)target).transform.TransformPoint(LocalPosition(points.GetArrayElementAtIndex(index)));
@@ -137,6 +141,7 @@ public sealed class RaceCourseEditor : Editor
     {
         if (!serializedObject.ApplyModifiedProperties()) return;
         ((RaceCourse)target).RebuildCache();
+        ((RaceCourse)target).RebuildRoad();
         SceneView.RepaintAll();
     }
 
@@ -146,6 +151,8 @@ public sealed class RaceCourseEditor : Editor
         SerializedProperty point = points.GetArrayElementAtIndex(index);
         SetLocalPosition(point, ((RaceCourse)target).transform.InverseTransformPoint(world));
         point.FindPropertyRelative("curve").floatValue = 0f;
+        point.FindPropertyRelative("jumpToNext").boolValue = false;
+        point.FindPropertyRelative("preserveAlignment").boolValue = false;
         point.FindPropertyRelative("width").floatValue = defaultWidth;
         selected = index;
         ApplyChanges();
@@ -214,8 +221,8 @@ public sealed class RaceCourseEditor : Editor
             SetLocalPosition(selectedPoint, course.transform.InverseTransformPoint(moved));
             ApplyChanges();
         }
-        int sampleIndex = Mathf.Min(left.Count - 1, selected * Mathf.Clamp(serializedObject.FindProperty("curveSegments").intValue, 1, 100));
-        Vector3 lateral = sampleIndex >= 0 ? (right[sampleIndex] - left[sampleIndex]).normalized : Vector3.right;
+        course.TryGetNearestCenterLineDirection(position, out Vector3 direction);
+        Vector3 lateral = Vector3.Cross(Vector3.up, direction).normalized;
         if (lateral.sqrMagnitude < 0.001f) lateral = Vector3.right;
         SerializedProperty widthProperty = selectedPoint.FindPropertyRelative("width");
         Vector3 edge = moved + lateral * (widthProperty.floatValue * 0.5f);
@@ -305,19 +312,7 @@ public sealed class RaceCourseEditor : Editor
 
     private int FindInsertionIndex(Vector3 world)
     {
-        int best = 1;
-        float distance = float.PositiveInfinity;
-        int samples = Mathf.Clamp(serializedObject.FindProperty("curveSegments").intValue, 1, 100);
-        for (int i = 1; i < center.Count; i++)
-        {
-            Vector3 delta = center[i] - center[i - 1];
-            float t = delta.sqrMagnitude > Mathf.Epsilon ? Mathf.Clamp01(Vector3.Dot(world - center[i - 1], delta) / delta.sqrMagnitude) : 0f;
-            float candidate = (world - (center[i - 1] + delta * t)).sqrMagnitude;
-            if (candidate >= distance) continue;
-            distance = candidate;
-            best = (i - 1) / samples + 1;
-        }
-        return Mathf.Min(best, points.arraySize);
+        return ((RaceCourse)target).GetWaypointInsertionIndexWorld(world);
     }
 
     private void EndStroke()

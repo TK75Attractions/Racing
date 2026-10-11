@@ -43,6 +43,8 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
     [SerializeField, Min(0f)] private float boostPullback = 0.12f;
 
     [Header("Camera Shake")]
+    [Tooltip("走行・ブースト時のカメラ振動。標準では無効にして車体の小さな上下動で速度を表現します。") ]
+    [SerializeField] private bool enableDrivingCameraShake;
     [SerializeField, Min(0f)] private float highSpeedShakePosition = 0.015f;
     [SerializeField, Min(0f)] private float boostShakePosition = 0.012f;
     [SerializeField, Min(0f)] private float highSpeedShakeRotation = 0.12f;
@@ -262,7 +264,8 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
         if (visualEffectPivot == null) return;
 
         float pullback = highSpeedPullback * speed01 + boostPullback * boost01;
-        float shakeStrength = highSpeedShakePosition * speed01 + boostShakePosition * boost01;
+        float shakeStrength = enableDrivingCameraShake
+            ? highSpeedShakePosition * speed01 + boostShakePosition * boost01 : 0f;
         float frequency = Mathf.Lerp(minShakeFrequency, maxShakeFrequency, speed01);
         float time = Time.time * frequency;
         float noiseX = Mathf.PerlinNoise(time, 0.13f) * 2f - 1f;
@@ -273,7 +276,8 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
             + Vector3.back * pullback
             + new Vector3(noiseX, noiseY, 0f) * shakeStrength;
 
-        float rotationStrength = highSpeedShakeRotation * speed01 + boostShakeRotation * boost01;
+        float rotationStrength = enableDrivingCameraShake
+            ? highSpeedShakeRotation * speed01 + boostShakeRotation * boost01 : 0f;
         Vector3 rotationShake = new Vector3(noiseY, noiseX, noiseZ) * rotationStrength;
 
         // 衝突の揺れは強さの2乗で効かせ、軽い接触では控えめに、強い衝突ではしっかり揺らします。

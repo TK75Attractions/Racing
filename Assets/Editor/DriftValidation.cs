@@ -12,11 +12,42 @@ public static class DriftValidation
     public static void Run()
     {
         GameObject car = new GameObject("Drift validation");
+        GameObject road = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        road.transform.position = new Vector3(0f, -.5f, 0f);
+        road.transform.localScale = new Vector3(100f, 1f, 100f);
         try
         {
             DebugMover mover = car.AddComponent<DebugMover>();
             Rigidbody body = car.GetComponent<Rigidbody>();
             Set(mover, "rb", body);
+            body.useGravity = false;
+            for (int index = 0; index < 2; index++)
+            {
+                GameObject wheel = new GameObject("Validation wheel");
+                wheel.transform.SetParent(car.transform, false);
+                wheel.transform.localPosition = new Vector3(0f, .3f, index == 0 ? 1f : -1f);
+                wheel.AddComponent<SphereCollider>().radius = .3f;
+                TireForce tire = wheel.AddComponent<TireForce>();
+                typeof(TireForce).GetField("isFrontTire", PrivateInstance).SetValue(tire, index == 0);
+            }
+            Invoke(mover, "RefreshTires");
+            Physics.SyncTransforms();
+            body.linearVelocity = Vector3.zero;
+            Step(mover, 30f, 1f);
+            Require(!mover.IsDrifting, "Stationary steering must not start a drift.");
+            body.linearVelocity = Vector3.back * 15f;
+            Step(mover, -30f, 1f);
+            Require(!mover.IsDrifting, "Reversing must not start a drift.");
+            body.linearVelocity = Vector3.forward * 15f;
+            car.transform.position = Vector3.up * 2f;
+            Physics.SyncTransforms();
+            Step(mover, -30f, 1f);
+            Require(!mover.IsDrifting, "Airborne steering must not start a drift.");
+            car.transform.position = Vector3.zero;
+            Physics.SyncTransforms();
+            Step(mover, -30f, .1f);
+            Step(mover, 0f, .02f);
+            Require(!mover.IsDrifting, "A short steering spike must not start a drift.");
 
             Step(mover, 7.9f, 1f);
             Require(!mover.IsDrifting && mover.DriftCharge == 0f, "Small steering must not start a drift.");
@@ -26,9 +57,13 @@ public static class DriftValidation
             Step(mover, 0f, 1f);
             Require(mover.IsDrifting, "Neutral must retain the drift direction.");
             Near(mover.DriftCharge, smallCharge, "Neutral must not add charge.");
-            Near(Step(mover, -0.1f, 1f), smallCharge * 3f, "Countersteering must release proportional boost.");
+            Near(Step(mover, -.1f, .1f), 0f, "Small opposite noise must not release the drift.");
+            Require(mover.IsDrifting, "Noise near center must retain the drift.");
+            Near(Step(mover, -2f, .02f), 0f, "Brief countersteering must not release the drift.");
+            Step(mover, 0f, .02f);
+            Near(Step(mover, -2f, 1f), smallCharge * 3f, "Countersteering must release proportional boost.");
             Require(!mover.IsDrifting && mover.DriftCharge == 0f, "Release must clear the drift and charge.");
-            Near(Step(mover, -0.1f, 1f), 0f, "Charge must not release twice.");
+            Near(Step(mover, -2f, 1f), 0f, "Charge must not release twice.");
 
             Step(mover, -30f, 1f);
             Require(mover.DriftCharge > smallCharge, "Larger steering must charge faster in either direction.");
@@ -45,6 +80,7 @@ public static class DriftValidation
             Step(mover, 30f, 0.25f);
             Near(mover.DriftCharge, halfSecondCharge, "Charging must be independent of timestep subdivision.");
 
+            Step(mover, 30f, 1f);
             body.linearVelocity = Vector3.forward * 10f;
             Invoke(mover, "ApplyVelocityResistance");
             Near(Get(mover, "resistanceForce"), 7.5f, "Drift must increase resistance.");
@@ -59,13 +95,66 @@ public static class DriftValidation
             Step(mover, 30f, 1f);
             Invoke(mover, "OnDisable");
             Require(!mover.IsDrifting && mover.DriftCharge == 0f, "Disabling must discard charge.");
+            ValidateSpinProtection(mover, body);
+            ValidateAirResistance(mover, body);
             ValidateTimedBoost(mover);
             Debug.Log("Drift validation passed.");
         }
         finally
         {
             UnityEngine.Object.DestroyImmediate(car);
+            UnityEngine.Object.DestroyImmediate(road);
         }
+    }
+
+    private static void ValidateSpinProtection(DebugMover mover, Rigidbody body)
+    {
+        Set(mover, "inputSuppressedUntil", -1f);
+        Set(mover, "appliedSteeringAngle", 30f);
+        body.linearVelocity = Vector3.forward * 40f;
+        var steering = typeof(DebugMover).GetMethod("GetProtectedSteeringAngle", PrivateInstance);
+        float Evaluate(Vector3 velocity) => (float)steering.Invoke(mover, new object[] { Vector3.forward, velocity });
+        Near(Evaluate(body.linearVelocity), 30f, "Normal steering must be unchanged outside drift protection.");
+        Set(mover, "isDrifting", true);
+        float right = Evaluate(body.linearVelocity);
+        Require(right > 0f && right < 5f, "A fast drift must retain turning direction while limiting full lock.");
+        Set(mover, "appliedSteeringAngle", -30f);
+        Near(Evaluate(body.linearVelocity), -right, "Drift steering protection must be symmetric.");
+        Near(Evaluate(Vector3.back * 40f), -30f, "Protection must not affect reverse steering.");
+        body.transform.position = Vector3.up * 2f;
+        Physics.SyncTransforms();
+        Near(Evaluate(body.linearVelocity), -30f, "Protection must not steer an airborne car.");
+        body.transform.position = Vector3.zero;
+        Physics.SyncTransforms();
+        Set(mover, "enableDriftSpinProtection", false);
+        Near(Evaluate(body.linearVelocity), -30f, "Disabling the protection must restore the original steering.");
+        Set(mover, "enableDriftSpinProtection", true);
+        mover.CancelDrift();
+        body.linearVelocity = Vector3.forward * 10f;
+    }
+
+    private static void ValidateAirResistance(DebugMover mover, Rigidbody body)
+    {
+        body.linearVelocity = new Vector3(0f, 5f, 10f);
+        Invoke(mover, "ApplyVelocityResistance");
+        Near(Get(mover, "resistanceForce"), 6f, "Ground resistance must retain its existing strength.");
+        body.transform.position = Vector3.up * 2f;
+        Physics.SyncTransforms();
+        Invoke(mover, "ApplyVelocityResistance");
+        Near(Get(mover, "resistanceForce"), .3f, "Flight resistance must be five percent of road resistance.");
+        Set(mover, "driftGripBlend", 1f);
+        Invoke(mover, "ApplyVelocityResistance");
+        Near(Get(mover, "resistanceForce"), .3f, "Leaving a drift must not add road drag while airborne.");
+        Set(mover, "airborneResistanceMultiplier", 0f);
+        Invoke(mover, "ApplyVelocityResistance");
+        Near(Get(mover, "resistanceForce"), 0f, "Zero air resistance must permit frictionless flight.");
+        Set(mover, "airborneResistanceMultiplier", .05f);
+        body.transform.position = Vector3.zero;
+        Physics.SyncTransforms();
+        Invoke(mover, "ApplyVelocityResistance");
+        Near(Get(mover, "resistanceForce"), 7.5f, "Landing must restore ground drift resistance immediately.");
+        mover.CancelDrift();
+        body.linearVelocity = Vector3.forward * 10f;
     }
 
     private static void ValidateTimedBoost(DebugMover mover)
@@ -73,8 +162,10 @@ public static class DriftValidation
         Set(mover, "driftBoostDuration", 0.55f);
         Set(mover, "driftBoostAccelerationPerCharge", 4f);
         Step(mover, 30f, 1f);
-        float acceleration = Step(mover, -1f, 0.02f);
-        Near(acceleration, 4f, "Inspector acceleration must scale the released charge.");
+        float expectedCharge = mover.DriftCharge;
+        float acceleration = Step(mover, -2f, .1f);
+        Near(acceleration, expectedCharge * 4f, "Inspector acceleration must scale the released charge.");
+        acceleration = 4f;
         StartBoost(mover, acceleration);
         Near(ConsumeBoost(mover, 0.2f), 0.8f, "Boost must accelerate over elapsed time.");
         Near(Get(mover, "driftBoostTimeRemaining"), 0.35f, "Boost must retain remaining duration.");

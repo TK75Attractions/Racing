@@ -99,6 +99,10 @@ public static class VisualEffectsValidation
                 "Boost rotation shake must not use the boost position setting.");
 
             Set(controller, "boostShakeRotation", 20f);
+            ApplyCamera(controller, 1f, 1f, 0f);
+            Require(Quaternion.Angle(pivot.localRotation, Quaternion.identity) < .0001f,
+                "Driving and boost must leave camera shake disabled by default.");
+            Set(controller, "enableDrivingCameraShake", true);
             ApplyCamera(controller, 0f, 1f, 0f);
             Require(Quaternion.Angle(pivot.localRotation, Quaternion.identity) > 0.001f,
                 "Boost rotation shake must follow its own rotation setting.");

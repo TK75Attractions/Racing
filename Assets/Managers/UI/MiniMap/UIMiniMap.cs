@@ -31,6 +31,8 @@ public class UIMiniMap
     [SerializeField] private Color rivalMarkerColor = new Color(1f, 0.32f, 0.22f, 1f);
 
     private RectTransform rect;
+    private RectTransform content;
+    private Transform viewTransform;
     private Image background;
     private MiniMapTrackGraphic trackGraphic;
     private MiniMapTrackGraphic borderGraphic;
@@ -83,15 +85,30 @@ public class UIMiniMap
         LegendMarker(frame, "YouMarker", .045f, NeonUI.Pink);
         LegendMarker(frame, "RivalMarker", .515f, Color.white);
 
-        borderGraphic = EnsureGraphic<MiniMapTrackGraphic>(rect, "Border", trackBorderColor);
+        RectTransform viewport = (RectTransform)(rect.Find("Viewport") ?? CreateChild(rect, "Viewport", typeof(RectMask2D)).transform);
+        viewport.anchorMin = Vector2.zero;
+        viewport.anchorMax = Vector2.one;
+        viewport.offsetMin = viewport.offsetMax = Vector2.zero;
+        content = (RectTransform)(viewport.Find("Content") ?? CreateChild(viewport, "Content").transform);
+        content.anchorMin = content.anchorMax = new Vector2(.5f, .5f);
+        content.pivot = new Vector2(.5f, .5f);
+        content.sizeDelta = mapSize;
+        // Move any pre-existing graphics into the clipped, rotating map content.
+        foreach (string name in new[] { "Border", "Track", "Marker_P1", "Marker_P2" })
+        {
+            Transform oldGraphic = rect.Find(name);
+            if (oldGraphic != null) oldGraphic.SetParent(content, false);
+        }
+
+        borderGraphic = EnsureGraphic<MiniMapTrackGraphic>(content, "Border", trackBorderColor);
         borderGraphic.WidthScale = .22f * trackBorderScale;
-        trackGraphic = EnsureGraphic<MiniMapTrackGraphic>(rect, "Track", trackColor);
+        trackGraphic = EnsureGraphic<MiniMapTrackGraphic>(content, "Track", trackColor);
         trackGraphic.WidthScale = .22f;
 
         for (int index = 0; index < MarkerCount; index++)
         {
             Color markerColor = index == ownPlayerIndex ? NeonUI.Pink : Color.white;
-            markers[index] = EnsureGraphic<MiniMapMarkerGraphic>(rect, $"Marker_P{index + 1}", markerColor);
+            markers[index] = EnsureGraphic<MiniMapMarkerGraphic>(content, $"Marker_P{index + 1}", markerColor);
             RectTransform markerRect = markers[index].rectTransform;
             markerRect.anchorMin = new Vector2(0.5f, 0.5f);
             markerRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -118,10 +135,24 @@ public class UIMiniMap
         UpdateMarkers();
     }
 
-    /// <summary>車マーカーの位置と向きを更新します。</summary>
+    public void SetViewTransform(Transform view)
+    {
+        viewTransform = view;
+        UpdateMarkers();
+    }
+
+    /// <summary>自車中心で画面の向きに合わせ、コースとマーカーを一緒に移動・回転します。</summary>
     public void UpdateMarkers()
     {
         if (!initialized || !projector.IsValid) return;
+
+        Transform ownCar = cars[ownPlayerIndex];
+        Transform heading = viewTransform != null ? viewTransform : ownCar;
+        float yaw = heading != null ? Mathf.Atan2(heading.forward.x, heading.forward.z) * Mathf.Rad2Deg : 0f;
+        Quaternion rotation = Quaternion.Euler(0f, 0f, yaw + mapRotationDegrees);
+        content.localRotation = rotation;
+        content.anchoredPosition = ownCar != null
+            ? -(Vector2)(rotation * projector.ToLocal(ownCar.position)) : Vector2.zero;
 
         for (int index = 0; index < MarkerCount; index++)
         {
