@@ -1,0 +1,12 @@
+{
+  "courseLength": 1829.0640869140625,
+  "foldedRoadTriangles": 0,
+  "maximumHeadingChangeOver5Meters": 19.596174240112305,
+  "maximumGrade": 0.44623398780822754,
+  "maximumGradeChangeOver5Meters": 0.08389240503311157,
+  "retainedMainGroundFraction": 0.9976539611816406,
+  "originalTubeVertices": 4305,
+  "originalTubeMeshPreserved": true,
+  "floorIntersections": 0,
+  "tubeWallObstructions": 0
+}

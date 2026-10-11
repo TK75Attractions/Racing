@@ -1,0 +1,63 @@
+{
+    "trials": [
+        {
+            "player": "Player1_Car",
+            "distance": 1829.1494140625,
+            "maximumHeight": 18.375263214111329,
+            "maximumTilt": 24.090112686157228,
+            "airborneSeconds": 0.6599995493888855,
+            "maximumUnexpectedAirborneSeconds": 0.0,
+            "tookOff": true,
+            "landed": true,
+            "takeoffPosition": {
+                "x": 607.3173828125,
+                "y": 18.370704650878908,
+                "z": 599.9111938476563
+            },
+            "landingPosition": {
+                "x": 618.7647705078125,
+                "y": 16.438791275024415,
+                "z": 599.8991088867188
+            },
+            "wallContacts": 0,
+            "lastWall": "",
+            "finalPosition": {
+                "x": 431.7490539550781,
+                "y": 3.3479902744293215,
+                "z": 790.6319580078125
+            }
+        },
+        {
+            "player": "Player2_Car",
+            "distance": 1856.11865234375,
+            "maximumHeight": 18.379539489746095,
+            "maximumTilt": 24.090482711791993,
+            "airborneSeconds": 0.6999995112419128,
+            "maximumUnexpectedAirborneSeconds": 0.019999992102384568,
+            "tookOff": true,
+            "landed": true,
+            "takeoffPosition": {
+                "x": 607.1565551757813,
+                "y": 18.372220993041993,
+                "z": 595.9122924804688
+            },
+            "landingPosition": {
+                "x": 619.1488037109375,
+                "y": 16.36199951171875,
+                "z": 595.8956909179688
+            },
+            "wallContacts": 0,
+            "lastWall": "",
+            "finalPosition": {
+                "x": 458.3299560546875,
+                "y": 3.3479795455932619,
+                "z": 785.3203125
+            }
+        }
+    ],
+    "courseLength": 1829.0640869140625,
+    "simulatedSeconds": 101.77493286132813,
+    "offCoursePositionPreserved": true,
+    "offCourseSeconds": 4.004002571105957,
+    "error": ""
+}

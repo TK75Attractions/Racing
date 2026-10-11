@@ -1,0 +1,48 @@
+{
+    "frames": [
+        {
+            "file": "01-entry-descent.png",
+            "carPosition": {
+                "x": 673.9452514648438,
+                "y": -5.163589000701904,
+                "z": 514.9136352539063
+            },
+            "speed": 22.123611450195314,
+            "gameTime": 35.02350616455078,
+            "camera": "BackImageCamera"
+        },
+        {
+            "file": "02-deep-straight.png",
+            "carPosition": {
+                "x": 673.8646850585938,
+                "y": -24.652015686035158,
+                "z": 349.99957275390627
+            },
+            "speed": 20.02559471130371,
+            "gameTime": 43.234153747558597,
+            "camera": "BackImageCamera"
+        },
+        {
+            "file": "03-underground-curve.png",
+            "carPosition": {
+                "x": 594.5892333984375,
+                "y": -24.65207862854004,
+                "z": 175.9683074951172
+            },
+            "speed": 20.001001358032228,
+            "gameTime": 53.752166748046878,
+            "camera": "BackImageCamera"
+        },
+        {
+            "file": "04-west-exit.png",
+            "carPosition": {
+                "x": 279.89434814453127,
+                "y": -0.14951494336128236,
+                "z": 525.7236328125
+            },
+            "speed": 21.195716857910158,
+            "gameTime": 83.5697250366211,
+            "camera": "BackImageCamera"
+        }
+    ]
+}

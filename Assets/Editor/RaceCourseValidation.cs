@@ -13,6 +13,10 @@ public static class RaceCourseValidation
         try
         {
             RaceCourse course = root.AddComponent<RaceCourse>();
+            SerializedObject legacySettings = new SerializedObject(course);
+            legacySettings.FindProperty("cornerRoundingDistance").floatValue = 0f;
+            legacySettings.FindProperty("slopeBlendDistance").floatValue = 0f;
+            legacySettings.ApplyModifiedPropertiesWithoutUndo();
             ValidateLegacy(course);
             ValidateSlopesAndWidth(course);
             ValidateCrossing(course);
