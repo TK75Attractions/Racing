@@ -15,6 +15,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
     private Slider masterSlider;
     private Slider bgmSlider;
     private Slider engineSlider;
+    private Slider effectsSlider;
     private readonly TMP_Text[] deviceLabels = new TMP_Text[2];
     private Action interruptAction;
     private Action toggleDirectionAction;
@@ -64,11 +65,14 @@ public sealed class InterruptionMenuUI : MonoBehaviour
     {
         if (optionsPanel == null) return;
         optionsPanel.SetActive(visible);
+        foreach (string name in new[] { "Restart", "ToggleDirection", "Options", "Interrupt", "Subtitle" })
+            root.transform.Find("MenuCard/" + name)?.gameObject.SetActive(!visible);
         if (visible)
         {
             masterSlider.SetValueWithoutNotify(RaceAudioSettings.Master);
             bgmSlider.SetValueWithoutNotify(RaceAudioSettings.Bgm);
             engineSlider.SetValueWithoutNotify(RaceAudioSettings.Engine);
+            effectsSlider.SetValueWithoutNotify(RaceAudioSettings.Effects);
             RefreshDeviceLabels();
         }
         GameObject selected = visible ? masterSlider.gameObject : optionsButton.gameObject;
@@ -130,14 +134,15 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         optionsBackground.color = new Color(0.012f, 0.035f, 0.055f, 0.98f);
         optionsBackground.raycastTarget = true;
         masterSlider = CreateVolumeSlider(optionsPanel.transform, "Master", "Master", 0.82f, RaceAudioSettings.SetMaster);
-        bgmSlider = CreateVolumeSlider(optionsPanel.transform, "BGM", "BGM", 0.66f, RaceAudioSettings.SetBgm);
-        engineSlider = CreateVolumeSlider(optionsPanel.transform, "Engine", "エンジン音", 0.50f, RaceAudioSettings.SetEngine);
+        bgmSlider = CreateVolumeSlider(optionsPanel.transform, "BGM", "BGM", 0.68f, RaceAudioSettings.SetBgm);
+        engineSlider = CreateVolumeSlider(optionsPanel.transform, "Engine", "エンジン音", 0.54f, RaceAudioSettings.SetEngine);
+        effectsSlider = CreateVolumeSlider(optionsPanel.transform, "Effects", "効果音", 0.40f, RaceAudioSettings.SetEffects);
         for (int player = 0; player < 2; player++)
         {
             int capturedPlayer = player;
-            float bottom = player == 0 ? 0.33f : 0.18f;
+            float bottom = player == 0 ? 0.25f : 0.125f;
             RacingMenuButton deviceButton = CreateButton(optionsPanel.transform, $"P{player + 1}Output", "", "CLICK TO CHANGE OUTPUT", "",
-                new Vector2(0.08f, bottom), new Vector2(0.92f, bottom + 0.14f), () =>
+                new Vector2(0.08f, bottom), new Vector2(0.92f, bottom + 0.105f), () =>
                 {
                     RaceAudioOutput.Instance?.SelectNextDevice(capturedPlayer);
                     RefreshDeviceLabels();
@@ -145,13 +150,21 @@ public sealed class InterruptionMenuUI : MonoBehaviour
             deviceLabels[player] = deviceButton.transform.Find("Label").GetComponent<TMP_Text>();
             deviceLabels[player].fontSizeMax = 21f;
         }
-        CreateButton(optionsPanel.transform, "RefreshDevices", "再検出", "", "", new Vector2(0.08f, 0.02f), new Vector2(0.48f, 0.16f), () =>
+        RacingMenuButton refresh = CreateButton(optionsPanel.transform, "RefreshDevices", "再検出", "", "", new Vector2(0.08f, 0.02f), new Vector2(0.48f, 0.11f), () =>
         {
             RaceAudioOutput.Instance?.RefreshDevices();
             RefreshDeviceLabels();
         });
-        CreateButton(optionsPanel.transform, "Back", "戻る", "BACK", "", new Vector2(0.52f, 0.02f), new Vector2(0.92f, 0.16f),
+        RacingMenuButton back = CreateButton(optionsPanel.transform, "Back", "戻る", "BACK", "", new Vector2(0.52f, 0.02f), new Vector2(0.92f, 0.11f),
             () => ShowOptions(false));
+        foreach (RacingMenuButton button in new[] { refresh, back })
+        {
+            TMP_Text caption = button.transform.Find("Label").GetComponent<TMP_Text>();
+            caption.fontSizeMin = 14f; caption.fontSizeMax = 22f;
+            caption.rectTransform.anchorMin = new Vector2(.28f,.18f);
+            caption.rectTransform.anchorMax = new Vector2(.87f,.82f);
+            button.transform.Find("Caption").GetComponent<TMP_Text>().text = string.Empty;
+        }
         optionsPanel.SetActive(false);
     }
 
@@ -174,16 +187,22 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         label.alignment = TextAlignmentOptions.Left;
         GameObject sliderObject = GetOrCreate(name + "Slider", parent, typeof(Slider));
         Stretch(sliderObject.GetComponent<RectTransform>(), new Vector2(0.45f, top + 0.015f), new Vector2(0.92f, top + 0.125f));
+        Image hit = sliderObject.GetComponent<Image>() ?? sliderObject.AddComponent<Image>();
+        hit.color = Color.clear; hit.raycastTarget = true;
         GameObject track = GetOrCreate("Track", sliderObject.transform, typeof(Image));
-        Stretch(track.GetComponent<RectTransform>(), new Vector2(0f, 0.34f), new Vector2(1f, 0.66f));
+        Stretch(track.GetComponent<RectTransform>(), new Vector2(0f, 0.45f), new Vector2(1f, 0.55f));
         track.GetComponent<Image>().color = new Color(0.12f, 0.21f, 0.27f);
-        GameObject fill = GetOrCreate("Fill", sliderObject.transform, typeof(Image));
-        Stretch(fill.GetComponent<RectTransform>(), new Vector2(0f, 0.34f), new Vector2(1f, 0.66f));
+        GameObject fillArea = GetOrCreate("FillArea", sliderObject.transform);
+        Stretch(fillArea.GetComponent<RectTransform>(), new Vector2(0f, 0.45f), new Vector2(1f, 0.55f));
+        GameObject fill = GetOrCreate("Fill", fillArea.transform, typeof(Image));
+        Stretch(fill.GetComponent<RectTransform>(), Vector2.zero, Vector2.one);
         fill.GetComponent<Image>().color = RacingUITheme.Cyan;
-        GameObject handle = GetOrCreate("Handle", sliderObject.transform, typeof(Image));
+        GameObject handleArea = GetOrCreate("HandleArea", sliderObject.transform);
+        Stretch(handleArea.GetComponent<RectTransform>(), new Vector2(0f, 0.3f), new Vector2(1f, 0.7f));
+        GameObject handle = GetOrCreate("Handle", handleArea.transform, typeof(Image));
         RectTransform handleRect = handle.GetComponent<RectTransform>();
-        Stretch(handleRect, new Vector2(0f, 0.1f), new Vector2(0f, 0.9f));
-        handleRect.sizeDelta = new Vector2(16f, 0f);
+        Stretch(handleRect, Vector2.zero, new Vector2(0f, 1f));
+        handleRect.sizeDelta = new Vector2(10f, 0f);
         handle.GetComponent<Image>().color = Color.white;
         Slider slider = sliderObject.GetComponent<Slider>();
         slider.direction = Slider.Direction.LeftToRight;

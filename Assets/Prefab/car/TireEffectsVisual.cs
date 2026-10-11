@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 
 /// <summary>
 /// タイヤの滑りを、路面に残るタイヤ痕と白煙で示します。
-/// ドリフト中の後輪、急ブレーキ、大きな横滑りで発生し、車体の物理挙動は変更しません。
+/// 旋回や横滑り、急ブレーキによる実際の負担で発生し、車体の物理挙動は変更しません。
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(DebugMover))]
@@ -16,8 +16,6 @@ public sealed class TireEffectsVisual : MonoBehaviour
     [SerializeField, Min(0f)] private float lateralSlipStart = 3f;
     [Tooltip("タイヤの横滑りの速さ（m/s）。この値で滑りが最大になります。")]
     [SerializeField, Min(0f)] private float lateralSlipFull = 9f;
-    [Tooltip("ドリフト中の後輪に保証する最低の滑りの強さ。")]
-    [SerializeField, Range(0f, 1f)] private float driftRearSlip = 0.65f;
     [Tooltip("ブレーキと判定するペダル入力（負方向）のしきい値。")]
     [SerializeField, Range(0.01f, 1f)] private float brakePedalThreshold = 0.5f;
     [Tooltip("前進の速さ（m/s）がこの値以上のときだけ、ブレーキで痕を残します。")]
@@ -76,13 +74,12 @@ public sealed class TireEffectsVisual : MonoBehaviour
 
     /// <summary>タイヤ1本の滑りの強さ（0〜1）を求めます。検証からも呼び出します。</summary>
     public float EvaluateSlip(bool grounded, float planarSpeed, float lateralSlipSpeed,
-        bool isFrontWheel, bool drifting, float pedalInput, float forwardSpeed)
+        float pedalInput, float forwardSpeed)
     {
         if (!grounded || planarSpeed < minimumSpeed) return 0f;
 
         float slip = Mathf.InverseLerp(lateralSlipStart, Mathf.Max(lateralSlipStart + 0.01f, lateralSlipFull),
             lateralSlipSpeed);
-        if (drifting && !isFrontWheel) slip = Mathf.Max(slip, driftRearSlip);
 
         if (pedalInput < -brakePedalThreshold && forwardSpeed >= brakeMinimumSpeed)
         {
@@ -110,7 +107,7 @@ public sealed class TireEffectsVisual : MonoBehaviour
         {
             if (wheel.tire == null) continue;
             wheel.slip = EvaluateSlip(wheel.tire.IsGrounded, planarSpeed, wheel.tire.LateralSlipSpeed,
-                wheel.tire.IsFrontWheel, mover.IsDrifting, mover.PedalInput, forwardSpeed);
+                mover.PedalInput, forwardSpeed);
             UpdateMark(wheel, velocity);
             UpdateSmoke(wheel, velocity, deltaTime);
         }
@@ -118,7 +115,7 @@ public sealed class TireEffectsVisual : MonoBehaviour
 
     private void UpdateMark(WheelState wheel, Vector3 velocity)
     {
-        if (!tireMarksEnabled || wheel.slip < markThreshold || !wheel.tire.IsGrounded)
+        if (!tireMarksEnabled || wheel.slip <= 0f || wheel.slip < markThreshold || !wheel.tire.IsGrounded)
         {
             wheel.hasMark = false;
             return;
@@ -169,7 +166,7 @@ public sealed class TireEffectsVisual : MonoBehaviour
 
     private void UpdateSmoke(WheelState wheel, Vector3 velocity, float deltaTime)
     {
-        if (!smokeEnabled || wheel.slip < smokeThreshold)
+        if (!smokeEnabled || wheel.slip <= 0f || wheel.slip < smokeThreshold)
         {
             wheel.smokeAccumulator = 0f;
             return;

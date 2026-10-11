@@ -23,7 +23,7 @@ public sealed class UIValuePulse : MonoBehaviour
     public void Play(Color accentColor, float peakRotation)
     {
         CacheBaseState();
-        if (label == null)
+        if (label == null || !isActiveAndEnabled)
         {
             return;
         }

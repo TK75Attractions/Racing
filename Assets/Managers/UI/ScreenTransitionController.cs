@@ -515,6 +515,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         start.Configure(start.transform.Find("ButtonSurface").GetComponent<RacingPanelGraphic>());
         start.gameObject.SetActive(true);
         start.ConfigureHold(.65f, true);
+        start.PlayConfirmationSound = false; // Ready cue comes from the same gate as pedal input.
         start.transform.Find("Label").GetComponent<TMP_Text>().fontSizeMax=46f;
         start.transform.Find("Caption").GetComponent<TMP_Text>().fontSizeMax=18f;
         titleButtonFeedback[playerIndex] = feedback;

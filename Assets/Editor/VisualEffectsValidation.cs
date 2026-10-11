@@ -162,21 +162,20 @@ public static class VisualEffectsValidation
         try
         {
             TireEffectsVisual tires = car.AddComponent<TireEffectsVisual>();
-            // 引数: 接地, 水平速度, 横滑り, 前輪か, ドリフト中か, ペダル, 前進速度
-            Near(tires.EvaluateSlip(false, 30f, 20f, false, true, -1f, 30f), 0f, "Airborne tires must not leave marks.");
-            Near(tires.EvaluateSlip(true, 1f, 20f, false, true, -1f, 1f), 0f, "A crawling car must not leave marks.");
-            Near(tires.EvaluateSlip(true, 30f, 1f, false, false, 0f, 30f), 0f, "Normal grip must not leave marks.");
-            Near(tires.EvaluateSlip(true, 30f, 9f, true, false, 0f, 30f), 1f, "A full lateral slide must reach full slip.");
+            // 引数: 接地, 水平速度, 横滑り, ペダル, 前進速度
+            Near(tires.EvaluateSlip(false, 30f, 20f, -1f, 30f), 0f, "Airborne tires must not leave marks.");
+            Near(tires.EvaluateSlip(true, 1f, 20f, -1f, 1f), 0f, "A crawling car must not leave marks.");
+            Near(tires.EvaluateSlip(true, 30f, 1f, 0f, 30f), 0f, "Normal grip must not leave marks.");
+            Near(tires.EvaluateSlip(true, 30f, 9f, 0f, 30f), 1f, "A full lateral slide must reach full slip.");
 
-            float middle = tires.EvaluateSlip(true, 30f, 6f, true, false, 0f, 30f);
+            float middle = tires.EvaluateSlip(true, 30f, 6f, 0f, 30f);
             Require(middle > 0f && middle < 1f, "A partial slide must give a partial slip.");
 
-            Near(tires.EvaluateSlip(true, 30f, 0f, false, true, 0f, 30f), 0.65f, "Drifting rear tires must always slip.");
-            Near(tires.EvaluateSlip(true, 30f, 0f, true, true, 0f, 30f), 0f, "Drifting must not force front tire marks.");
+            Near(tires.EvaluateSlip(true, 30f, 0f, 0f, 30f), 0f, "Returning to straight driving must stop marks, even if drift charge is retained.");
 
-            Near(tires.EvaluateSlip(true, 30f, 0f, true, false, -1f, 30f), 0.8f, "Hard braking must leave marks.");
-            Near(tires.EvaluateSlip(true, 30f, 0f, true, false, -0.3f, 30f), 0f, "Light braking must not leave marks.");
-            Near(tires.EvaluateSlip(true, 5f, 0f, true, false, -1f, -5f), 0f, "Reversing must not count as braking.");
+            Near(tires.EvaluateSlip(true, 30f, 0f, -1f, 30f), 0.8f, "Hard braking must leave marks.");
+            Near(tires.EvaluateSlip(true, 30f, 0f, -0.3f, 30f), 0f, "Light braking must not leave marks.");
+            Near(tires.EvaluateSlip(true, 5f, 0f, -1f, -5f), 0f, "Reversing must not count as braking.");
         }
         finally
         {

@@ -1,6 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 /*
  * FreezeAspectRate
@@ -36,6 +35,25 @@ public class FreezeAspectRate : MonoBehaviour
     private int lastScreenHeight = -1;
     private Vector2Int lastAspect;
     private Color32 lastColorbase;
+    private Canvas uiCanvas;
+    private CanvasScaler uiScaler;
+
+    private void OnEnable() => Canvas.preWillRenderCanvases += RefreshViewport;
+    private void OnDisable() => Canvas.preWillRenderCanvases -= RefreshViewport;
+
+    /// <summary>UIの基準サイズを、余白を除いたカメラの描画領域へ収めます。</summary>
+    public void ConfigureCanvas(Canvas canvas)
+    {
+        uiCanvas = canvas;
+        uiScaler = canvas != null ? canvas.GetComponent<CanvasScaler>() : null;
+        if (uiScaler != null)
+        {
+            // The standard screen-size scaler uses the whole display, including letterboxing.
+            // Keep its reference resolution/pixel density; this controller supplies the scale.
+            uiScaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
+        }
+        RefreshViewport();
+    }
 
     public void Awake()
     {
@@ -62,9 +80,21 @@ public class FreezeAspectRate : MonoBehaviour
     private void Update()
     {
         ChangeSize();
+        RefreshViewport();
+    }
 
-        if (IsViewportCurrent()) return;
-        UpdateScreenRate();
+    private void RefreshViewport()
+    {
+        if (!IsViewportCurrent()) UpdateScreenRate();
+        if (uiCanvas == null || uiScaler == null || UICamera == null ||
+            uiCanvas.renderMode != RenderMode.ScreenSpaceCamera) return;
+
+        Vector2 reference = uiScaler.referenceResolution;
+        if (reference.x <= 0f || reference.y <= 0f || UICamera.pixelWidth <= 0 || UICamera.pixelHeight <= 0) return;
+        float scale = Mathf.Min(UICamera.pixelWidth / reference.x, UICamera.pixelHeight / reference.y);
+        uiScaler.scaleFactor = scale;
+        // Also update immediately: the scaler's pre-render callback may have already run.
+        uiCanvas.scaleFactor = scale;
     }
 
     private void CreateBackCamera()
@@ -260,6 +290,10 @@ public class FreezeAspectRate : MonoBehaviour
         main = GetComponent<Camera>();
 
         Transform cameraRoot = transform.parent;
+        // Runtime camera shake reparents MainCamera under VisualEffectPivot.
+        // UI/front/base cameras remain siblings under CManager, one level above it.
+        while (cameraRoot != null && cameraRoot.Find("UICamera") == null)
+            cameraRoot = cameraRoot.parent;
         if (cameraRoot != null)
         {
             UICamera = GetCamera(cameraRoot.Find("UICamera"));
@@ -276,6 +310,23 @@ public class FreezeAspectRate : MonoBehaviour
 
     private void GetDisplaySize(out int width, out int height)
     {
+        RenderTexture texture = backImageCamera != null ? backImageCamera.targetTexture : null;
+        if (texture == null && UICamera != null) texture = UICamera.targetTexture;
+        if (texture != null)
+        {
+            width = texture.width;
+            height = texture.height;
+            return;
+        }
+
+        // Display 0 reports desktop dimensions, which can differ from a resized window.
+        // In the Editor both player views use the current Game view's dimensions.
+        if (displayIndex == 0 || Application.isEditor)
+        {
+            width = Screen.width;
+            height = Screen.height;
+            return;
+        }
         if (Application.isPlaying && displayIndex >= 0 && displayIndex < Display.displays.Length)
         {
             Display display = Display.displays[displayIndex];

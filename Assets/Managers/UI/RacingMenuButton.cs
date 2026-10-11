@@ -12,6 +12,7 @@ public sealed class RacingMenuButton : Button
     private bool holding, keyboardHold, committing;
     private Coroutine commitRoutine;
     public float HoldSeconds=>holdSeconds;
+    public bool PlayConfirmationSound { get; set; } = true;
     public void Configure(RacingPanelGraphic value)
     {
         feedback=GetComponent<PedalButtonFeedback>() ?? gameObject.AddComponent<PedalButtonFeedback>();feedback.Bind(value);
@@ -32,6 +33,7 @@ public sealed class RacingMenuButton : Button
     {
         base.OnPointerDown(data);
         if(data.button!=PointerEventData.InputButton.Left || !IsActive() || !IsInteractable() || committing || feedback.IsRetained)return;
+        RaceSoundEffects.PlayForButton(RaceSoundCue.Press,transform);
         if(holdSeconds>0){holding=true;keyboardHold=false;heldTime=0;}
     }
     public override void OnPointerUp(PointerEventData data)
@@ -44,7 +46,8 @@ public sealed class RacingMenuButton : Button
     {if(data.button==PointerEventData.InputButton.Left && holdSeconds==0)Commit();}
     public override void OnSubmit(BaseEventData data)
     {
-        if(!IsActive() || !IsInteractable() || committing || feedback.IsRetained)return;
+        if(!IsActive() || !IsInteractable() || committing || holding || feedback.IsRetained)return;
+        RaceSoundEffects.PlayForButton(RaceSoundCue.Press,transform);
         if(holdSeconds>0 && Keyboard.current!=null){holding=keyboardHold=true;heldTime=0;}
         else Commit();
     }
@@ -64,6 +67,7 @@ public sealed class RacingMenuButton : Button
     {
         if(!IsActive() || !IsInteractable() || committing || feedback==null || feedback.IsRetained)return;
         committing=true;feedback.PlayConfirm();
+        if (PlayConfirmationSound) RaceSoundEffects.PlayForButton(RaceSoundCue.Confirm,transform);
         if(holdSeconds>0)feedback.SetPointerCharge(1f);
         commitRoutine=StartCoroutine(ConfirmThenInvoke());
     }
@@ -78,5 +82,15 @@ public sealed class RacingMenuButton : Button
     protected override void OnDisable()
     {
         if(commitRoutine!=null)StopCoroutine(commitRoutine);commitRoutine=null;committing=false;CancelHold();base.OnDisable();
+    }
+    public override void OnPointerEnter(PointerEventData data)
+    {
+        base.OnPointerEnter(data);
+        if (IsActive() && IsInteractable()) RaceSoundEffects.PlayForButton(RaceSoundCue.Select,transform);
+    }
+    public override void OnSelect(BaseEventData data)
+    {
+        base.OnSelect(data);
+        if (IsActive() && IsInteractable()) RaceSoundEffects.PlayForButton(RaceSoundCue.Select,transform);
     }
 }

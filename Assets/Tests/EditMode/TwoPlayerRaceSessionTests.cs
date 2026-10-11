@@ -67,6 +67,55 @@ public class TwoPlayerRaceSessionTests
         Assert.That(session.UnfinishedPlayerIndex, Is.EqualTo(1));
     }
 
+    [Test]
+    public void WithdrawalBeforeFirstFinish_RemainingPlayerWinsWithoutWaiting()
+    {
+        TwoPlayerRaceSession session = CreateSession();
+        RaceResultRecord withdrawn = new RaceResultRecord();
+        Assert.That(session.RegisterWithdrawal(0, withdrawn), Is.True);
+        Assert.That(session.IsComplete, Is.False);
+        Assert.That(session.WaitingForSecondPlace, Is.False);
+        Assert.That(session.RegisterFinish(0, new RaceResultRecord()), Is.EqualTo(RaceFinishRegistration.Ignored));
+        RaceResultRecord winner = new RaceResultRecord();
+        Assert.That(session.RegisterFinish(1, winner), Is.EqualTo(RaceFinishRegistration.RaceComplete));
+        Assert.That(session.IsComplete, Is.True);
+        Assert.That(winner.finishPosition, Is.EqualTo(1));
+        Assert.That(withdrawn.didFinish, Is.False);
+        Assert.That(withdrawn.finishPosition, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void BothWithdraw_EndWithTwoDistinctDnfRecords()
+    {
+        TwoPlayerRaceSession session = CreateSession();
+        Assert.That(session.RegisterWithdrawal(1, new RaceResultRecord()), Is.True);
+        Assert.That(session.RegisterWithdrawal(1, new RaceResultRecord()), Is.False);
+        Assert.That(session.RegisterWithdrawal(0, new RaceResultRecord()), Is.True);
+        Assert.That(session.IsComplete, Is.True);
+        Assert.That(session.Result.GetResultAtPosition(1).didFinish, Is.False);
+        Assert.That(session.Result.GetResultAtPosition(2).didFinish, Is.False);
+        Assert.That(session.WaitingForSecondPlace, Is.False);
+    }
+
+    [Test]
+    public void WithdrawalAfterFirstFinish_EndsWaitImmediately()
+    {
+        TwoPlayerRaceSession session = CreateSession();
+        session.RegisterFinish(0, new RaceResultRecord());
+        Assert.That(session.RegisterWithdrawal(0, new RaceResultRecord()), Is.False);
+        Assert.That(session.RegisterWithdrawal(1, new RaceResultRecord()), Is.True);
+        Assert.That(session.IsComplete, Is.True);
+        Assert.That(session.WaitingForSecondPlace, Is.False);
+        Assert.That(session.SecondPlaceTimeRemaining, Is.Zero);
+    }
+
+    [Test]
+    public void DnfWithoutTimeout_IsRejected()
+    {
+        TwoPlayerRaceSession session = CreateSession();
+        Assert.That(session.RegisterDnf(0, new RaceResultRecord()), Is.False);
+    }
+
     private static TwoPlayerRaceSession CreateSession()
     {
         TwoPlayerRaceSession session = new TwoPlayerRaceSession(40f);

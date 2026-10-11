@@ -27,6 +27,7 @@ public class Gmanager : MonoBehaviour
         public int resultSelection;
         public float resultConfirmTimer;
         public bool resultSteeringLatch;
+        public bool resultConfirmArmed;
         public bool returnedToTitle;
         public PlayerDriveInputGate inputGate;
         public InterruptionMenuUI interruptionMenu;
@@ -90,6 +91,8 @@ public class Gmanager : MonoBehaviour
     private RaceSessionResult latestSessionResult;
     private RaceLightningDirector raceLightning;
     private DrivingTutorialController drivingTutorial;
+    private RaceSoundEffects soundEffects;
+    private int lastCountdownSound = -1;
 
     public RaceResultRecord LatestResult => latestResult;
     public RaceSessionResult LatestSessionResult => latestSessionResult;
@@ -153,6 +156,7 @@ public class Gmanager : MonoBehaviour
         displayRigs = TwoPlayerDisplayFactory.Create(transform.parent, cameraBlendSeconds);
         InitializePlayerDisplays();
         if (GetComponent<RaceAudioOutput>() == null) gameObject.AddComponent<RaceAudioOutput>();
+        soundEffects = GetComponent<RaceSoundEffects>() ?? gameObject.AddComponent<RaceSoundEffects>();
         if (GetComponent<RaceBackgroundMusic>() == null) gameObject.AddComponent<RaceBackgroundMusic>();
         InitializeVolumes();
         InitializeRaceLightning();
@@ -197,6 +201,10 @@ public class Gmanager : MonoBehaviour
             UpdateRaceLightning();
             UpdateSecondPlaceTimeout(dt);
             UpdateGoMessage(dt);
+        }
+        else if (state == State.Goal && !IsScreenTransitioning())
+        {
+            ShowResultsAfterGoal();
         }
 
 #if UNITY_EDITOR
@@ -380,6 +388,7 @@ public class Gmanager : MonoBehaviour
     public void ConfirmTitleStart(int playerIndex)
     {
         if (state != State.Title || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount) return;
+        if (!players[playerIndex].isReady) soundEffects?.Play(RaceSoundCue.Ready, playerIndex);
         players[playerIndex].isReady = true;
         titleStartArmed = true;
         SetTitlePrompt(GetReadyPrompt());
@@ -442,20 +451,21 @@ public class Gmanager : MonoBehaviour
         if (state != State.Result || IsScreenTransitioning()) return;
         ScreenTransitionController primary = screenTransitions[0];
         for (int index = 1; index < screenTransitions.Length; index++)
-            screenTransitions[index]?.TryCloseResultAndTransition(State.Tutorial, null);
+            screenTransitions[index]?.TryCloseResultAndTransition(State.Countdown, null);
 
         Action covered = () =>
         {
             ClearCurrentRaceObjects();
-            BeginTutorialWhenScreenCovered();
+            StartGameWhenScreenCovered();
         };
         if (primary == null)
         {
             covered();
-            ApplyStateImmediate(State.Tutorial);
+            ApplyStateImmediate(State.Countdown);
+            CompleteGameStart();
             return;
         }
-        if (!primary.TryCloseResultAndTransition(State.Tutorial, covered))
+        if (!primary.TryCloseResultAndTransition(State.Countdown, covered, CompleteGameStart))
             Debug.LogWarning("Result close animation was ignored because another transition is active.");
     }
 
@@ -574,6 +584,7 @@ public class Gmanager : MonoBehaviour
         raceSession = new TwoPlayerRaceSession(secondPlaceTimeoutSeconds);
         raceSession.Start();
         countdownTimeRemaining = Mathf.Max(0f, raceCountdownSeconds);
+        lastCountdownSound = -1;
         goMessageTimeRemaining = 0f;
         latestResult = null;
         latestSessionResult = raceSession.Result;
@@ -675,6 +686,11 @@ public class Gmanager : MonoBehaviour
     private void UpdateCountdownDisplay()
     {
         int displayedSeconds = Mathf.Max(1, Mathf.CeilToInt(countdownTimeRemaining));
+        if (displayedSeconds != lastCountdownSound)
+        {
+            lastCountdownSound = displayedSeconds;
+            soundEffects?.PlayForAll(RaceSoundCue.Countdown);
+        }
         foreach (ScreenTransitionController transition in screenTransitions) transition?.ShowCountdown(displayedSeconds);
     }
 
@@ -688,6 +704,7 @@ public class Gmanager : MonoBehaviour
         countdownTimeRemaining = 0f;
         goMessageTimeRemaining = Mathf.Max(0f, goMessageSeconds);
         state = State.Game;
+        soundEffects?.PlayForAll(RaceSoundCue.Go);
         lapManager?.ResumeRace();
         foreach (ScreenTransitionController transition in screenTransitions) transition?.ShowGo();
     }
@@ -732,7 +749,7 @@ public class Gmanager : MonoBehaviour
     {
         if (state != State.Game || finishedRigidbody == null || result == null) return;
         PlayerRuntime player = FindPlayer(finishedRigidbody);
-        if (player == null || player.result != null) return;
+        if (player == null || player.result != null || player.withdrewFromRace) return;
 
         RaceFinishRegistration registration = raceSession.RegisterFinish(player.playerIndex, result);
         if (registration == RaceFinishRegistration.Ignored) return;
@@ -829,6 +846,7 @@ public class Gmanager : MonoBehaviour
             return;
         }
 
+        soundEffects?.Play(RaceSoundCue.Finish, player.playerIndex);
         string playerLabel = $"PLAYER {player.playerIndex + 1} FINISHED";
         string finishTime = player.result != null
             ? FormatRaceTime(player.result.totalRaceTime)
@@ -843,10 +861,13 @@ public class Gmanager : MonoBehaviour
 
     private void BeginSpectating(int finishedPlayerIndex)
     {
+        // A late goal callback must not replace a result screen after timeout/withdrawal.
+        if (state != State.Game) return;
         if (finishedPlayerIndex < 0 || finishedPlayerIndex >= players.Length) return;
         int watchedPlayerIndex = 1 - finishedPlayerIndex;
         PlayerRuntime finished = players[finishedPlayerIndex];
         PlayerRuntime watched = players[watchedPlayerIndex];
+        if (watched?.result != null || watched?.withdrewFromRace == true) return;
         if (finished?.displayRig?.RaceCamera == null || watched?.displayRig?.RaceCamera == null) return;
 
         finished.displayRig.RaceCamera.Follow = watched.displayRig.RaceCamera.Follow;
@@ -858,12 +879,13 @@ public class Gmanager : MonoBehaviour
 
     private void ShowResultsAfterGoal()
     {
-        if (state != State.Goal)
+        if (state != State.Goal || IsScreenTransitioning())
         {
             return;
         }
 
         state = State.Result;
+        soundEffects?.PlayForAll(RaceSoundCue.Results);
         ResetResultPlayerInputs();
         resultReturnInputDelayTimer = 0f;
         foreach (ResultUIManager manager in resultUIManagers) manager?.ShowResults(latestSessionResult);
@@ -988,7 +1010,11 @@ public class Gmanager : MonoBehaviour
 
         for (int index = 0; index < players.Length; index++)
         {
-            if (anyMenuOpen) CloseInterruptionMenu(index);
+            if (anyMenuOpen)
+            {
+                soundEffects?.Play(RaceSoundCue.Cancel, index);
+                CloseInterruptionMenu(index);
+            }
             else OpenInterruptionMenu(index);
         }
     }
@@ -998,6 +1024,7 @@ public class Gmanager : MonoBehaviour
         if (state != State.Game || playerIndex < 0 || playerIndex >= players.Length) return;
         PlayerRuntime player = players[playerIndex];
         if (player?.car == null || player.result != null || player.withdrewFromRace) return;
+        if (player.interruptionMenu?.IsOpen != true) soundEffects?.Play(RaceSoundCue.Press, playerIndex);
         player.inputGate?.SetBlocked(true);
         player.interruptionMenu?.Show(player.inputGate?.IsReverse == true);
     }
@@ -1013,11 +1040,17 @@ public class Gmanager : MonoBehaviour
     {
         if (state != State.Game || playerIndex < 0 || playerIndex >= players.Length) return;
         PlayerRuntime player = players[playerIndex];
-        if (player?.car == null) return;
+        if (player?.car == null || player.result != null || player.withdrewFromRace) return;
+        RaceResultRecord result = CreateFallbackResult(playerIndex, false, 2);
+        if (raceSession == null || !raceSession.RegisterWithdrawal(playerIndex, result)) return;
         player.withdrewFromRace = true;
+        player.result = result;
+        latestSessionResult = raceSession.Result;
         player.inputGate?.SetBlocked(true);
         player.interruptionMenu?.Hide();
-        FreezePlayer(player, disableCollisions: false);
+        FreezePlayer(player, disableCollisions: true);
+        if (raceSession.IsComplete) CompleteRace(latestSessionResult, null);
+        else BeginSpectating(playerIndex);
         Debug.Log($"P{playerIndex + 1} interrupted the race.");
     }
 
@@ -1201,6 +1234,7 @@ public class Gmanager : MonoBehaviour
     public void SelectResultOption(int playerIndex, int option)
     {
         if(option < 0 || option > 1 || state != State.Result || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount || players[playerIndex].returnedToTitle) return;
+        soundEffects?.Play(option == 0 ? RaceSoundCue.Confirm : RaceSoundCue.Cancel, playerIndex);
         resultUIManagers[playerIndex]?.PlayConfirm(option);
         if(option == 0) { RetryGame(); return; }
         ReturnPlayerToTitle(playerIndex);
@@ -1221,12 +1255,22 @@ public class Gmanager : MonoBehaviour
             if (!player.resultSteeringLatch && Mathf.Abs(input.steering) >= resultSteeringThreshold)
             {
                 player.resultSelection = 1 - player.resultSelection;
+                soundEffects?.Play(RaceSoundCue.Select, index);
                 player.resultSteeringLatch = true;
                 player.resultConfirmTimer = 0f;
             }
             else if (Mathf.Abs(input.steering) < resultSteeringThreshold * 0.45f)
             {
                 player.resultSteeringLatch = false;
+            }
+            // Finishing with the pedal down must never confirm the default retry option.
+            if (!player.resultConfirmArmed)
+            {
+                player.resultConfirmArmed = Mathf.Abs(input.pedal) <= 0.05f;
+                player.resultConfirmTimer = 0f;
+                resultUIManagers[index]?.SetMenuState(player.resultSelection, 0f);
+                resultUIManagers[index]?.SetPedalConfirmationReady(player.resultConfirmArmed);
+                continue;
             }
             player.resultConfirmTimer = input.pedal > resultReturnPedalThreshold ? player.resultConfirmTimer + dt : 0f;
             resultUIManagers[index]?.SetMenuState(player.resultSelection, Mathf.Clamp01(player.resultConfirmTimer / Mathf.Max(.01f,resultReturnHoldSeconds)));
@@ -1245,6 +1289,7 @@ public class Gmanager : MonoBehaviour
             player.resultSelection = 0;
             player.resultConfirmTimer = 0f;
             player.resultSteeringLatch = false;
+            player.resultConfirmArmed = false;
             player.returnedToTitle = false;
         }
     }
@@ -1324,6 +1369,7 @@ public class Gmanager : MonoBehaviour
                         ? player.readyHoldTimer + dt : 0f;
                     player.isReady = player.readyHoldTimer >= Mathf.Max(0.01f, titleStartHoldSeconds);
                 }
+                if (player.isReady) soundEffects?.Play(RaceSoundCue.Ready, playerIndex);
             }
             allReady &= player.isReady;
         }

@@ -95,6 +95,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
                 Mathf.DeltaAngle(player.startYaw, player.car.transform.eulerAngles.y));
             if (previous != player.lesson.CurrentStage)
             {
+                RaceSoundEffects.PlayForPlayer(player.lesson.IsComplete ? RaceSoundCue.Confirm : RaceSoundCue.Ready, player.input.PlayerIndex);
                 if (player.lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer)
                     Recover(player); // Start the corner exercise with enough road in front of the car.
                 if (player.lesson.IsComplete)
