@@ -3,12 +3,21 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class CarStabilityController : MonoBehaviour
 {
-    [SerializeField] private Vector3 centerOfMass = Vector3.zero;
-    [SerializeField] private float assistStartAngle = 35f;
+    [SerializeField] private Vector3 centerOfMass = new Vector3(0f, -.2f, 0f);
+    [SerializeField] private float assistStartAngle = 8f;
     [SerializeField] private float fullAssistAngle = 90f;
     [SerializeField] private float uprightStrength = 8f;
-    [SerializeField] private float angularDamping = 2f;
+    [SerializeField] private float angularDamping = 6f;
     [SerializeField] private float maxUprightTorque = 20f;
+
+    [Header("Road Contact")]
+    [Tooltip("タイヤが路面からこの距離以内にある時だけ接地を補助します。ジャンプ中には適用しません。")]
+    [SerializeField, Min(0f)] private float roadContactRange = .18f;
+    [SerializeField, Min(0f)] private float roadDownforce = 6f;
+    [SerializeField, Min(0f)] private float speedDownforce = .04f;
+    [SerializeField, Min(0f)] private float maximumDownforce = 32f;
+    [Tooltip("路面から離れる速度がこれ以上ならジャンプとして補助を止めます。")]
+    [SerializeField, Min(0f)] private float jumpReleaseSpeed = 2.5f;
 
     [Header("Airborne Stability")]
     [Tooltip("空中で車体の上方向を鉛直へ戻す強さ。進行方向や上下速度は変更しません。")]
@@ -41,6 +50,7 @@ public class CarStabilityController : MonoBehaviour
         if (!enableUprightAssist || rb.isKinematic) return;
 
         bool grounded = TryGetGroundNormal(out Vector3 targetUp);
+        ApplyRoadContact();
         if (!grounded) targetUp = Vector3.up;
 
         // 坂では路面の法線へ、空中では鉛直へ。回転を瞬間的に書き換えずトルクで戻します。
@@ -70,6 +80,29 @@ public class CarStabilityController : MonoBehaviour
         Vector3 rollPitchVelocity = Vector3.ProjectOnPlane(rb.angularVelocity, targetUp);
         Vector3 torque = correction - rollPitchVelocity * damping;
         rb.AddTorque(Vector3.ClampMagnitude(torque, Mathf.Max(0f, maxUprightTorque) * recovery), ForceMode.Acceleration);
+    }
+
+    private void ApplyRoadContact()
+    {
+        Vector3 normal = Vector3.zero;
+        int supportedWheels = 0;
+        foreach (GroundCheck wheel in tireGroundChecks)
+        {
+            if (wheel == null || !wheel.TryGetNearbyGround(roadContactRange, out RaycastHit hit)) continue;
+            Rigidbody support = hit.collider.attachedRigidbody;
+            if (support != null && !support.isKinematic) continue;
+            normal += hit.normal;
+            supportedWheels++;
+        }
+        // Two wheels and an upright body are needed: walls, another car and flight provide no adhesion.
+        if (supportedWheels < 2) return;
+        normal.Normalize();
+        if (Vector3.Dot(rb.rotation * Vector3.up, normal) < .7f) return;
+        float departingSpeed = Vector3.Dot(rb.linearVelocity, normal);
+        if (departingSpeed > jumpReleaseSpeed) return;
+        float speedSquared = Vector3.ProjectOnPlane(rb.linearVelocity, normal).sqrMagnitude;
+        float acceleration = roadDownforce + speedSquared * speedDownforce + Mathf.Max(0f, departingSpeed) * 12f;
+        rb.AddForce(-normal * Mathf.Min(maximumDownforce, acceleration), ForceMode.Acceleration);
     }
 
     private bool IsBodySupported()

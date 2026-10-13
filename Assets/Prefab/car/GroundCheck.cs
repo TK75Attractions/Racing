@@ -30,6 +30,16 @@ public class GroundCheck : MonoBehaviour
 
     public bool CheckNow()
     {
+        isGround = TryGetSurface(wheelContactTolerance, out RaycastHit hit);
+        GroundHit = hit;
+        return isGround;
+    }
+
+    /// <summary>接地判定を変えず、微小な浮き上がりを抑える補助用の路面を探します。</summary>
+    public bool TryGetNearbyGround(float surfaceGap, out RaycastHit hit) => TryGetSurface(surfaceGap, out hit);
+
+    private bool TryGetSurface(float surfaceGap, out RaycastHit surface)
+    {
         Vector3 wheelUp = ownerRigidbody != null ? ownerRigidbody.rotation * Vector3.up : Vector3.up;
         Vector3 origin = transform.position + rayOriginOffset;
         if (wheelCollider != null) origin = transform.TransformPoint(wheelCollider.center) + rayOriginOffset;
@@ -37,7 +47,7 @@ public class GroundCheck : MonoBehaviour
 
         bool foundGround = false;
         float nearestDistance = float.MaxValue;
-        GroundHit = default;
+        surface = default;
         foreach (RaycastHit hit in hits)
         {
             if (hit.collider == null ||
@@ -52,15 +62,14 @@ public class GroundCheck : MonoBehaviour
                 Vector3 scale = transform.lossyScale;
                 float radius = wheelCollider.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
                 // 斜面ではレイ距離より面までの垂直距離で判定します。
-                if (hit.distance * alignment > radius + wheelContactTolerance) continue;
+                if (hit.distance * alignment > radius + surfaceGap) continue;
             }
             if (hit.distance >= nearestDistance) continue;
 
             nearestDistance = hit.distance;
-            GroundHit = hit;
+            surface = hit;
             foundGround = true;
         }
-        isGround = foundGround;
-        return isGround;
+        return foundGround;
     }
 }
