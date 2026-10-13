@@ -1,9 +1,10 @@
 using System;
+using System.Collections.Generic;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>2人分の入力、車両、表示、レース進行を統括します。</summary>
+/// <summary>人間2人の入力・表示と、CPUを含むレース参加車両・進行を統括します。</summary>
 public class Gmanager : MonoBehaviour
 {
     private const int PlayerCount = 2;
@@ -57,6 +58,10 @@ public class Gmanager : MonoBehaviour
     [SerializeField] private LapManager lapManager;
     [SerializeField, Min(0f)] private float secondPlaceTimeoutSeconds = 40f;
 
+    [Header("CPU opponents (rehearsal)")]
+    [SerializeField, Range(0, 2)] private int npcCount = 2;
+    [SerializeField, Min(60f)] private float maximumRaceSeconds = 360f;
+
     [Header("UI")]
     [SerializeField] private OnPlayUIManager onPlayUIManager;
     [SerializeField] private ResultUIManager resultUIManager;
@@ -89,7 +94,12 @@ public class Gmanager : MonoBehaviour
     private bool finishingPreparation;
     private float countdownTimeRemaining;
     private float goMessageTimeRemaining;
-    private TwoPlayerRaceSession raceSession;
+    private RaceParticipantSession raceSession;
+    private readonly List<RaceParticipant> participants = new List<RaceParticipant>(4);
+    private readonly List<RaceParticipant> orderedParticipants = new List<RaceParticipant>(4);
+    public IReadOnlyList<RaceParticipant> Participants => participants;
+    public RaceParticipant GetParticipant(int index) => index >= 0 && index < participants.Count ? participants[index] : null;
+    public RaceParticipant FindParticipant(Rigidbody body) => participants.Find(entry => entry.Body == body);
     private RaceResultRecord latestResult;
     private RaceSessionResult latestSessionResult;
     private RaceLightningDirector raceLightning;
@@ -123,6 +133,8 @@ public class Gmanager : MonoBehaviour
         if (index < 0 || index >= displayRigs.Length) return null;
         return displayRigs[index]?.BackImageCamera ?? displayRigs[index]?.MainCamera;
     }
+
+    public Camera GetPlayerViewCamera(int index) => index >= 0 && index < displayRigs.Length ? displayRigs[index]?.MainCamera : null;
 
     public Transform GetPlayerCarTransform(int index) => index >= 0 && index < PlayerCount ? players[index]?.car?.transform : null;
     public int GetPlayerRacePosition(int index) => index >= 0 && index < PlayerCount ? GetRacePosition(index) : 0;
@@ -208,6 +220,7 @@ public class Gmanager : MonoBehaviour
         else if (state == State.Game && HasSpawnedCars())
         {
             time += dt;
+            UpdateParticipantOrder();
             UpdateOnPlayUI();
             UpdateRaceLightning();
             UpdateSecondPlaceTimeout(dt);
@@ -276,7 +289,7 @@ public class Gmanager : MonoBehaviour
             !playerOne.withdrewFromRace && !playerTwo.withdrewFromRace;
         int leaderIndex = -1;
         if (bothRacing && playerOne.displayedRacePosition != playerTwo.displayedRacePosition)
-            leaderIndex = playerOne.displayedRacePosition == 1 ? 0 : 1;
+            leaderIndex = GetPlayerProgressGap(0) > 0 ? 0 : 1;
         raceLightning.UpdateOvertake(time, leaderIndex);
 
         if (lapManager == null) return;
@@ -362,7 +375,7 @@ public class Gmanager : MonoBehaviour
     public void DebugPreviewResult()
     {
         ResetResultPlayerInputs();
-        RaceSessionResult preview = new RaceSessionResult();
+        RaceSessionResult preview = new RaceSessionResult(PlayerCount + Mathf.Clamp(npcCount,0,2));
         preview.SetPlayerResult(0, new RaceResultRecord
         {
             playerNumber = 1, finishPosition = 1, didFinish = true, totalRaceTime = 92.461f
@@ -371,6 +384,9 @@ public class Gmanager : MonoBehaviour
         {
             playerNumber = 2, finishPosition = 2, didFinish = true, totalRaceTime = 94.012f
         });
+        for(int cpu=0;cpu<Mathf.Clamp(npcCount,0,2);cpu++)
+            preview.SetPlayerResult(PlayerCount+cpu,new RaceResultRecord { playerNumber=3+cpu,isCpu=true,
+                finishPosition=3+cpu,didFinish=true,totalRaceTime=96+cpu*2,carName="SPORT CAR" });
         latestSessionResult = preview;
         latestResult = preview.GetResultAtPosition(1);
         state = State.Result;
@@ -453,13 +469,21 @@ public class Gmanager : MonoBehaviour
     /// <summary>既存コード向けの互換入口です。通常の完走は CarFinished から処理します。</summary>
     public void ShowResult(RaceResultRecord resultRecord)
     {
-        if (state != State.Game || IsScreenTransitioning()) return;
+        if (state != State.Game || IsScreenTransitioning() || (resultRecord != null && (resultRecord.isCpu || resultRecord.playerNumber > PlayerCount))) return;
 
         RaceResultRecord first = resultRecord ?? CreateFallbackResult(0, true, 1);
         first.playerNumber = first.playerNumber > 0 ? first.playerNumber : 1;
-        first.finishPosition = 1;
         first.didFinish = true;
-        raceSession = new TwoPlayerRaceSession(0f);
+        if (raceSession != null && participants.Count > 0)
+        {
+            int index = Mathf.Clamp(first.playerNumber-1,0,PlayerCount-1);
+            RaceParticipant entry = GetParticipant(index);
+            if (entry.Result == null && raceSession.RegisterFinish(index,first) != RaceFinishRegistration.Ignored)
+            { entry.Result=first; players[index].result=first; }
+            CompleteRace(raceSession.Result,null);
+            return;
+        }
+        raceSession = new RaceParticipantSession(PlayerCount, 0, 0f, maximumRaceSeconds);
         raceSession.Start();
         raceSession.RegisterFinish(0, first);
         raceSession.Tick(0f);
@@ -632,7 +656,8 @@ public class Gmanager : MonoBehaviour
         OilSlick.ClearAll();
         RaceItemPickup.ResetAll();
         raceLightning?.ResetRace();
-        raceSession = new TwoPlayerRaceSession(secondPlaceTimeoutSeconds);
+        participants.Clear(); orderedParticipants.Clear();
+        raceSession = new RaceParticipantSession(PlayerCount, Mathf.Clamp(npcCount, 0, 2), secondPlaceTimeoutSeconds, maximumRaceSeconds);
         raceSession.Start();
         countdownTimeRemaining = Mathf.Max(0f, raceCountdownSeconds);
         lastCountdownSound = -1;
@@ -696,6 +721,8 @@ public class Gmanager : MonoBehaviour
             player.displayedRacePosition = playerIndex + 1;
             AssignPlayerInput(player.car, playerIndex);
             lapManager?.RegisterCar(player.rigidbody, spawnPoint);
+            participants.Add(new RaceParticipant { Index = playerIndex, Car = player.car, Body = player.rigidbody,
+                Effects = player.itemEffects, Position = playerIndex + 1 });
 
             player.cameraController.SetCar(player.car.transform);
             player.displayRig.RaceCamera.Follow = player.cameraController.CameraTarget;
@@ -703,6 +730,8 @@ public class Gmanager : MonoBehaviour
             SnapRaceCameraToTarget(player);
         }
 
+        SpawnCpuCars(spawnPoint, basePosition, spawnRotation, gridRight);
+        UpdateParticipantOrder();
         lapManager?.PauseRace();
         car = players[0].car;
         BindMiniMapCars();
@@ -711,6 +740,80 @@ public class Gmanager : MonoBehaviour
         resultReturnInputDelayTimer = 0f;
         UpdateOnPlayUI();
         Debug.Log("Two-player game start");
+    }
+
+    private void SpawnCpuCars(Transform start, Vector3 position, Quaternion rotation, Vector3 right)
+    {
+        for (int cpu = 0; cpu < Mathf.Clamp(npcCount, 0, 2); cpu++)
+        {
+            int index = PlayerCount + cpu;
+            GameObject vehicle = Instantiate(carPrefab, position - rotation * Vector3.forward * 7f + right * startGridSpacing * (cpu == 0 ? -.5f : .5f), rotation);
+            vehicle.name = $"CPU{cpu + 1}_Car";
+            // CPUs borrow the vehicle physics/visuals, never a player display or input device.
+            foreach (Camera camera in vehicle.GetComponentsInChildren<Camera>(true)) camera.enabled = false;
+            foreach (AudioListener listener in vehicle.GetComponentsInChildren<AudioListener>(true)) listener.enabled = false;
+            CarItemEffects effects = vehicle.GetComponent<CarItemEffects>() ?? vehicle.AddComponent<CarItemEffects>();
+            effects.Configure(index);
+            RaceParticipant entry = new RaceParticipant { Index = index, IsCpu = true, Car = vehicle,
+                Body = vehicle.GetComponent<Rigidbody>(), Effects = effects, Position = index + 1 };
+            participants.Add(entry);
+            lapManager?.RegisterCar(entry.Body, start);
+            entry.Driver = vehicle.AddComponent<NpcRaceDriver>(); entry.Driver.Configure(this, lapManager, entry);
+            PlayerCarPaint paint = vehicle.GetComponent<PlayerCarPaint>() ?? vehicle.AddComponent<PlayerCarPaint>(); paint.SetColor(cpu == 0 ? new Color(1f,.65f,.025f) : new Color(.20f,.9f,.4f));
+            foreach (AudioSource source in vehicle.GetComponentsInChildren<AudioSource>(true))
+            {
+                PlayerAudioCapture capture = source.GetComponent<PlayerAudioCapture>() ?? source.gameObject.AddComponent<PlayerAudioCapture>();
+                capture.ConfigureEngine(GetComponent<RaceAudioOutput>(), this, vehicle.transform, index);
+            }
+            if (vehicle.GetComponent<CarWallCollisionResponse>() == null) vehicle.AddComponent<CarWallCollisionResponse>();
+            Transform label = new GameObject("CPU identity").transform; label.SetParent(vehicle.transform, false); label.localPosition = Vector3.up * 2.5f;
+            TMPro.TextMeshPro text = label.gameObject.AddComponent<TMPro.TextMeshPro>();
+            text.font = RacingUIFontCatalog.GetHUD(false);
+            text.text = entry.Label; text.fontSize = 5f; text.alignment = TMPro.TextAlignmentOptions.Center;
+            text.color = new Color(1f, .8f, .25f); text.rectTransform.sizeDelta = new Vector2(4f, 1f);
+        }
+    }
+
+    private void UpdateParticipantOrder()
+    {
+        orderedParticipants.Clear();
+        foreach (RaceParticipant entry in participants)
+        { entry.Progress = lapManager != null ? lapManager.GetRaceProgressDistance(entry.Body) : 0; orderedParticipants.Add(entry); }
+        // Begin in previous rank order, then move only past cars with a clear progress gap.
+        orderedParticipants.Sort((a, b) => a.Position.CompareTo(b.Position));
+        for (int i = 1; i < orderedParticipants.Count; i++)
+        {
+            RaceParticipant moving = orderedParticipants[i]; int j = i - 1;
+            while (j >= 0 && CompareParticipants(moving, orderedParticipants[j]) < 0)
+            { orderedParticipants[j + 1] = orderedParticipants[j]; j--; }
+            orderedParticipants[j + 1] = moving;
+        }
+        for (int i = 0; i < orderedParticipants.Count; i++)
+        {
+            RaceParticipant entry = orderedParticipants[i]; entry.Position = i + 1;
+            if (!entry.IsCpu) players[entry.Index].displayedRacePosition = entry.Position;
+        }
+    }
+
+    private int CompareParticipants(RaceParticipant a, RaceParticipant b)
+    {
+        bool aFinished = a.Result?.didFinish == true, bFinished = b.Result?.didFinish == true;
+        if (aFinished != bFinished) return aFinished ? -1 : 1;
+        if (aFinished) return a.Result.finishPosition.CompareTo(b.Result.finishPosition);
+        if ((a.Result != null) != (b.Result != null)) return a.Result != null ? 1 : -1;
+        if (Mathf.Abs(a.Progress - b.Progress) > racePositionTieDistance) return b.Progress.CompareTo(a.Progress);
+        return 0;
+    }
+
+    public bool IsNpcRecoveryVisible(Vector3 position)
+    {
+        for (int i = 0; i < PlayerCount; i++)
+        {
+            Camera camera = GetPlayerViewCamera(i); if (camera == null) return true;
+            Vector3 view = camera.WorldToViewportPoint(position);
+            if (view.z > 0 && view.z < camera.farClipPlane && view.x > -.15f && view.x < 1.15f && view.y > -.15f && view.y < 1.15f) return true;
+        }
+        return false;
     }
 
     private void CompleteGameStart()
@@ -759,6 +862,7 @@ public class Gmanager : MonoBehaviour
         state = State.Game;
         soundEffects?.PlayForAll(RaceSoundCue.Go);
         lapManager?.ResumeRace();
+        foreach (RaceParticipant entry in participants) entry.Driver?.SetDriving(true);
         foreach (ScreenTransitionController transition in screenTransitions) transition?.ShowGo();
     }
 
@@ -801,33 +905,27 @@ public class Gmanager : MonoBehaviour
     private void HandleCarFinished(Rigidbody finishedRigidbody, RaceResultRecord result)
     {
         if (state != State.Game || finishedRigidbody == null || result == null) return;
-        PlayerRuntime player = FindPlayer(finishedRigidbody);
-        if (player == null || player.result != null || player.withdrewFromRace) return;
-
-        result.carName = player.carSelection?.SelectedVehicleName ?? result.carName;
-        RaceFinishRegistration registration = raceSession.RegisterFinish(player.playerIndex, result);
+        RaceParticipant entry = FindParticipant(finishedRigidbody);
+        if (entry == null || entry.Result != null) return;
+        PlayerRuntime player = entry.IsCpu ? null : players[entry.Index];
+        result.carName = player?.carSelection?.SelectedVehicleName ?? result.carName;
+        RaceFinishRegistration registration = raceSession.RegisterFinish(entry.Index, result);
         if (registration == RaceFinishRegistration.Ignored) return;
-
-        player.result = result;
-        latestSessionResult = raceSession.Result;
-        FreezePlayer(player, disableCollisions: true);
-
-        if (registration == RaceFinishRegistration.FirstPlace)
+        entry.Result = result; latestSessionResult = raceSession.Result;
+        if (entry.IsCpu)
         {
-            latestResult = result;
-            PlayPlayerGoal(player, () => BeginSpectating(player.playerIndex));
-            UpdateSecondPlaceDisplay();
-            Debug.Log($"P{player.playerIndex + 1} finished first. Waiting {SecondPlaceTimeRemaining:F0} seconds for second place.");
-            if (SecondPlaceTimeRemaining <= 0f && raceSession.Tick(0f)) CompleteRaceAfterTimeout();
-            return;
+            FreezeCpu(entry); UpdateParticipantOrder(); return;
         }
-
-        CompleteRace(latestSessionResult, player);
+        player.result = result; FreezePlayer(player, disableCollisions: true);
+        if (registration == RaceFinishRegistration.RaceComplete) { CompleteRace(latestSessionResult, player); return; }
+        latestResult = latestSessionResult.GetResultAtPosition(1);
+        PlayPlayerGoal(player, () => BeginSpectating(player.playerIndex));
+        UpdateSecondPlaceDisplay();
     }
 
     private void UpdateSecondPlaceTimeout(float dt)
     {
-        if (raceSession == null || !raceSession.WaitingForSecondPlace) return;
+        if (raceSession == null) return;
         if (raceSession.Tick(dt)) CompleteRaceAfterTimeout();
         else UpdateSecondPlaceDisplay();
     }
@@ -854,22 +952,46 @@ public class Gmanager : MonoBehaviour
 
     private void CompleteRaceAfterTimeout()
     {
-        int unfinishedIndex = raceSession?.UnfinishedPlayerIndex ?? -1;
-        PlayerRuntime unfinished = unfinishedIndex >= 0 ? players[unfinishedIndex] : null;
-        if (unfinished != null)
-        {
-            RaceResultRecord dnfResult = CreateFallbackResult(unfinished.playerIndex, false, 2);
-            unfinished.result = dnfResult;
-            raceSession.RegisterDnf(unfinished.playerIndex, dnfResult);
-            latestSessionResult = raceSession.Result;
-            FreezePlayer(unfinished, disableCollisions: false);
-        }
-        CompleteRace(latestSessionResult, null);
+        CompleteRace(raceSession.Result, null);
+    }
+
+    private RaceResultRecord CreateParticipantDnf(RaceParticipant entry)
+    {
+        if (!entry.IsCpu) return CreateFallbackResult(entry.Index, false, entry.Position);
+        LapManager.CarTimeData data = lapManager?.GetCarData(entry.Body);
+        RaceResultRecord result = data != null ? lapManager.CreateResultRecord(data, data.currentLapTime) : new RaceResultRecord();
+        if (data != null) result.totalRaceTime += data.currentLapTime;
+        result.carName = entry.Label; result.isCpu = true; result.playerNumber = entry.Index + 1; result.didFinish = false;
+        return result;
+    }
+
+    private static void FreezeCpu(RaceParticipant entry)
+    {
+        entry.Driver?.SetDriving(false);
+        foreach (Collider collider in entry.Car.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
+        SetBehaviourEnabled<DebugMover>(entry.Car, false);
+        SetBehaviourEnabled<CarStabilityController>(entry.Car, false);
+        SetBehaviourEnabled<CarItemEffects>(entry.Car, false);
+        SetBehaviourEnabled<CarSoundController>(entry.Car, false);
+        foreach (AudioSource source in entry.Car.GetComponentsInChildren<AudioSource>(true)) source.Stop();
     }
 
     private void CompleteRace(RaceSessionResult sessionResult, PlayerRuntime finalFinisher)
     {
         if (state != State.Game) return;
+        UpdateParticipantOrder();
+        foreach (RaceParticipant entry in orderedParticipants)
+        {
+            if (entry.Result == null)
+            {
+                RaceResultRecord record = CreateParticipantDnf(entry);
+                raceSession.CloseParticipant(entry.Index, record); entry.Result = record;
+                if (!entry.IsCpu) players[entry.Index].result = record;
+            }
+            if (entry.IsCpu) FreezeCpu(entry);
+        }
+        for (int i = 0; i < orderedParticipants.Count; i++)
+            if (orderedParticipants[i].Result?.didFinish == false) orderedParticipants[i].Result.finishPosition = i + 1;
         latestSessionResult = sessionResult;
         latestResult = sessionResult?.GetResultAtPosition(1);
         state = State.Goal;
@@ -987,6 +1109,13 @@ public class Gmanager : MonoBehaviour
             player.itemEffects = null;
         }
 
+        foreach (RaceParticipant entry in participants)
+        {
+            if (!entry.IsCpu) continue;
+            lapManager?.UnregisterCar(entry.Body);
+            if (entry.Car != null) Destroy(entry.Car);
+        }
+        participants.Clear(); orderedParticipants.Clear();
         OilSlick.ClearAll();
         car = null;
         BindMiniMapCars();
@@ -1101,6 +1230,7 @@ public class Gmanager : MonoBehaviour
         if (raceSession == null || !raceSession.RegisterWithdrawal(playerIndex, result)) return;
         player.withdrewFromRace = true;
         player.result = result;
+        if (GetParticipant(playerIndex) != null) GetParticipant(playerIndex).Result = result;
         latestSessionResult = raceSession.Result;
         player.inputGate?.SetBlocked(true);
         player.interruptionMenu?.Hide();
@@ -1155,6 +1285,7 @@ public class Gmanager : MonoBehaviour
             ui.UpdateUI(viewedPosition, lapValue, totalSeconds, lapSeconds, speedValue,
                 mover != null ? mover.AccelerationPadBoostTimeRemaining : 0f,
                 mover != null ? mover.AccelerationPadBoostDuration : 0f, ownerPosition, playerIndex == 0 ? progressGap : -progressGap);
+            ui.UpdateParticipants(participants);
         }
     }
 
@@ -1169,6 +1300,7 @@ public class Gmanager : MonoBehaviour
             ui?.MiniMap.SetViewTransform(players[index]?.displayRig?.MainCamera != null
                 ? players[index].displayRig.MainCamera.transform : null);
             ui?.SetMiniMapCars(playerOneCar, playerTwoCar);
+            ui?.MiniMap.SetCpuCars(GetParticipant(2)?.Car?.transform, GetParticipant(3)?.Car?.transform);
         }
     }
 
@@ -1182,32 +1314,8 @@ public class Gmanager : MonoBehaviour
 
     private int GetRacePosition(int playerIndex, float? knownProgressDelta = null)
     {
-        PlayerRuntime current = players[playerIndex];
-        PlayerRuntime other = players[1 - playerIndex];
-        if (current?.result != null) return current.result.finishPosition;
-        if (other?.result != null) return 2;
-        LapManager.CarTimeData currentData = lapManager?.GetCarData(current?.rigidbody);
-        LapManager.CarTimeData otherData = lapManager?.GetCarData(other?.rigidbody);
-        if (currentData == null || otherData == null) return playerIndex == 0 ? playerPosition : 2;
-
-        float progressDelta = knownProgressDelta ?? (lapManager.GetRaceProgressDistance(current.rigidbody)
-            - lapManager.GetRaceProgressDistance(other.rigidbody));
-        int position;
-
-        if (Mathf.Abs(progressDelta) <= Mathf.Max(0f, racePositionTieDistance))
-        {
-            // 車体がほぼ並んでいる間は直前の順位を維持し、HUDのちらつきを抑えます。
-            position = current.displayedRacePosition > 0
-                ? current.displayedRacePosition
-                : playerIndex + 1;
-        }
-        else
-        {
-            position = progressDelta > 0f ? 1 : 2;
-        }
-
-        current.displayedRacePosition = position;
-        return position;
+        RaceParticipant entry = GetParticipant(playerIndex);
+        return entry != null ? entry.Position : playerIndex + 1;
     }
 
     private void TransitionTo(State targetState, Action onScreenCovered, Action onCompleted = null)
@@ -1468,24 +1576,19 @@ public class Gmanager : MonoBehaviour
     {
         racePosition = 1;
         opponentEffects = null;
-        PlayerRuntime player = FindPlayer(target);
-        if (player == null) return false;
-
-        racePosition = GetRacePosition(player.playerIndex);
-        PlayerRuntime opponent = players[1 - player.playerIndex];
-        if (opponent != null && opponent.result == null && !opponent.withdrewFromRace &&
-            opponent.itemEffects != null && opponent.itemEffects.isActiveAndEnabled)
+        RaceParticipant participant = FindParticipant(target);
+        if (participant == null || !participant.IsRacing) return false;
+        racePosition = participant.Position;
+        float nearest = float.MaxValue;
+        foreach (RaceParticipant candidate in participants)
         {
-            opponentEffects = opponent.itemEffects;
+            if (candidate == participant || !candidate.IsRacing || candidate.Effects == null || !candidate.Effects.isActiveAndEnabled) continue;
+            float distance = Mathf.Abs(candidate.Progress - participant.Progress);
+            // Prefer the closest car ahead; at the front, target the closest chasing car.
+            float score = candidate.Progress >= participant.Progress ? distance : distance + (course != null ? course.TotalLength : 10000f);
+            if (score < nearest) { nearest = score; opponentEffects = candidate.Effects; }
         }
         return true;
-    }
-
-    private PlayerRuntime FindPlayer(Rigidbody target)
-    {
-        foreach (PlayerRuntime player in players)
-            if (player != null && player.rigidbody == target) return player;
-        return null;
     }
 
     private bool HasSpawnedCars()

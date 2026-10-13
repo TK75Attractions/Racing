@@ -14,6 +14,8 @@ public class OnPlayUIManager
 
     private bool initialized = false;
     private RacingLeaderboardUI leaderboard;
+    private TMPro.TMP_Text fieldSize;
+    private int displayedFieldSize = -1;
 
     public UIPosition Position => position;
     public UILap Lap => lap;
@@ -37,6 +39,7 @@ public class OnPlayUIManager
         if (miniMap == null) miniMap = new UIMiniMap();
 
         Transform hud = RacingHUDBuilder.Build(parent, playerIndex, totalLaps);
+        fieldSize = hud.Find("Position/Field")?.GetComponent<TMPro.TMP_Text>();
         leaderboard = hud.Find("Leaderboard")?.GetComponent<RacingLeaderboardUI>();
         position.Init(hud.Find("Position"));
         lap.Init(hud.Find("Lap"));
@@ -51,12 +54,19 @@ public class OnPlayUIManager
         float padBoostRemainingSeconds, float padBoostDurationSeconds, int leaderboardPosition = 0, float progressGap = 0f)
     {
         SetPosition(positionValue);
-        leaderboard?.SetPosition(leaderboardPosition > 0 ? leaderboardPosition : positionValue, progressGap);
+
         SetLap(lapValue);
         SetTime(totalSeconds, lapSeconds);
         SetSpeed(speedValue);
         speed.UpdateBoostGauge(padBoostRemainingSeconds, padBoostDurationSeconds);
         miniMap.UpdateMarkers();
+    }
+
+    public void UpdateParticipants(System.Collections.Generic.IReadOnlyList<RaceParticipant> entries)
+    {
+        leaderboard?.SetParticipants(entries);
+        if (fieldSize != null && displayedFieldSize != entries.Count)
+        { fieldSize.text = "/ " + entries.Count; displayedFieldSize = entries.Count; }
     }
 
     public void SetMiniMapCars(Transform playerOneCar, Transform playerTwoCar)

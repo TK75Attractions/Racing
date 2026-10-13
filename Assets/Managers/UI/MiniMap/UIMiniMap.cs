@@ -11,7 +11,7 @@ using UnityEngine.UI;
 [Serializable]
 public class UIMiniMap
 {
-    private const int MarkerCount = 2;
+    private const int MarkerCount = 4;
 
     [SerializeField] private GameObject root;
 
@@ -84,6 +84,7 @@ public class UIMiniMap
         RacingHUDStyle.Label(frame, "Rival", "あいて / RIVAL", .59f, .03f, .97f, .14f, 15f, RacingHUDStyle.Text);
         LegendMarker(frame, "YouMarker", .045f, NeonUI.Pink);
         LegendMarker(frame, "RivalMarker", .515f, Color.white);
+        RacingHUDStyle.Label(frame, "CPU", "CPU", .59f, .14f, .97f, .24f, 13f, new Color(1f,.8f,.25f));
 
         RectTransform viewport = (RectTransform)(rect.Find("Viewport") ?? CreateChild(rect, "Viewport", typeof(RectMask2D)).transform);
         viewport.anchorMin = Vector2.zero;
@@ -107,7 +108,7 @@ public class UIMiniMap
 
         for (int index = 0; index < MarkerCount; index++)
         {
-            Color markerColor = index == ownPlayerIndex ? NeonUI.Pink : Color.white;
+            Color markerColor = index == ownPlayerIndex ? NeonUI.Pink : index >= 2 ? new Color(1f,.8f,.25f) : Color.white;
             markers[index] = EnsureGraphic<MiniMapMarkerGraphic>(content, $"Marker_P{index + 1}", markerColor);
             RectTransform markerRect = markers[index].rectTransform;
             markerRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -133,6 +134,11 @@ public class UIMiniMap
         cars[0] = playerOneCar;
         cars[1] = playerTwoCar;
         UpdateMarkers();
+    }
+
+    public void SetCpuCars(Transform first, Transform second)
+    {
+        cars[2] = first; cars[3] = second; UpdateMarkers();
     }
 
     public void SetViewTransform(Transform view)

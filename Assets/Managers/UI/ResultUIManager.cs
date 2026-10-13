@@ -9,9 +9,9 @@ public class ResultUIManager
     private RaceSessionResult currentSessionResult;
     private Transform card;
     private int localPlayerNumber=1;
-    private readonly TMP_Text[] ranks=new TMP_Text[2],drivers=new TMP_Text[2],cars=new TMP_Text[2],times=new TMP_Text[2],gaps=new TMP_Text[2];
-    private readonly RacingPanelGraphic[] rowSurfaces=new RacingPanelGraphic[2];
-    private readonly RacingIconGraphic[] carIcons=new RacingIconGraphic[2];
+    private readonly TMP_Text[] ranks=new TMP_Text[4],drivers=new TMP_Text[4],cars=new TMP_Text[4],times=new TMP_Text[4],gaps=new TMP_Text[4];
+    private readonly RacingPanelGraphic[] rowSurfaces=new RacingPanelGraphic[4];
+    private readonly RacingIconGraphic[] carIcons=new RacingIconGraphic[4];
     private TMP_Text winnerLabel,medalNumber,ordinal,bestLap,lastLap,completedLaps,menuHint;
     private RawImage medalImage;
     private ResultMenuAnimator menuAnimator;
@@ -39,22 +39,22 @@ public class ResultUIManager
         NeonUI.Text(tableHead,"Driver","ドライバー",new Vector2(.18f,0),new Vector2(.52f,1),24f);
         NeonUI.Text(tableHead,"Time","タイム",new Vector2(.60f,0),new Vector2(.79f,1),24f,TextAlignmentOptions.Center);
         NeonUI.Text(tableHead,"Gap","ギャップ",new Vector2(.80f,0),new Vector2(.98f,1),24f,TextAlignmentOptions.Center);
-        for(int i=0;i<2;i++)
+        for(int i=0;i<4;i++)
         {
-            float top=.72f-i*.164f;
-            RectTransform row=NeonUI.Panel(card,"ResultRow"+(i+1),new Vector2(.04f,top-.154f),new Vector2(.614f,top));
+            float top=.72f-i*.095f;
+            RectTransform row=NeonUI.Panel(card,"ResultRow"+(i+1),new Vector2(.04f,top-.088f),new Vector2(.614f,top));
             rowSurfaces[i]=row.Find("ModernSurface").GetComponent<RacingPanelGraphic>();
-            ranks[i]=NeonUI.Text(row,"Rank",(i+1).ToString(),new Vector2(.01f,.08f),new Vector2(.145f,.92f),77f,TextAlignmentOptions.Center,true);
-            drivers[i]=NeonUI.Text(row,"Player","プレイヤー "+(i+1),new Vector2(.18f,.43f),new Vector2(.53f,.89f),35f);
+            ranks[i]=NeonUI.Text(row,"Rank",(i+1).ToString(),new Vector2(.01f,.08f),new Vector2(.145f,.92f),48f,TextAlignmentOptions.Center,true);
+            drivers[i]=NeonUI.Text(row,"Player","プレイヤー "+(i+1),new Vector2(.18f,.43f),new Vector2(.53f,.89f),27f);
             cars[i]=NeonUI.Text(row,"CarName","SPORT CAR",new Vector2(.18f,.12f),new Vector2(.53f,.43f),21f,tint:new Color(.73f,.82f,.93f));
             carIcons[i]=NeonUI.Icon(row,"Car",RacingIconGraphic.Icon.Car,new Vector2(.47f,.25f),new Vector2(.60f,.76f));
-            times[i]=NeonUI.Text(row,"Time","--'--.---",new Vector2(.60f,.21f),new Vector2(.80f,.79f),42f,TextAlignmentOptions.Center,true);
-            gaps[i]=NeonUI.Text(row,"Gap","—",new Vector2(.81f,.21f),new Vector2(.98f,.79f),31f,TextAlignmentOptions.Center,true);
+            times[i]=NeonUI.Text(row,"Time","--'--.---",new Vector2(.60f,.21f),new Vector2(.80f,.79f),32f,TextAlignmentOptions.Center,true);
+            gaps[i]=NeonUI.Text(row,"Gap","—",new Vector2(.81f,.21f),new Vector2(.98f,.79f),24f,TextAlignmentOptions.Center,true);
             RacingUITheme.Rule(row,"Divider",new Vector2(.015f,.01f),new Vector2(.985f,.016f),new Color(.23f,.37f,.70f,.5f));
         }
-        winnerLabel=NeonUI.Text(card,"Winner","RACE COMPLETE",new Vector2(.052f,.32f),new Vector2(.60f,.38f),27f,italic:true,tint:NeonUI.Cyan);
+        winnerLabel=NeonUI.Text(card,"Winner","RACE COMPLETE",new Vector2(.052f,.295f),new Vector2(.60f,.34f),27f,italic:true,tint:NeonUI.Cyan);
         winnerLabel.rectTransform.pivot=new Vector2(0f,.5f); // Keep the left edge inside the viewport during its celebration pulse.
-        RectTransform summary=RacingUITheme.Rect(card,"RaceSummary",new Vector2(.053f,.20f),new Vector2(.602f,.315f));
+        RectTransform summary=RacingUITheme.Rect(card,"RaceSummary",new Vector2(.053f,.18f),new Vector2(.602f,.29f));
         NeonUI.Text(summary,"BestLabel","ベストラップ / BEST LAP",new Vector2(.01f,.62f),new Vector2(.48f,.97f),18f,tint:new Color(.6f,.83f,1));
         bestLap=NeonUI.Text(summary,"Best","--'--.---",new Vector2(.01f,.05f),new Vector2(.46f,.62f),36f,italic:true);
         NeonUI.Text(summary,"LastLabel","最終ラップ / LAST LAP",new Vector2(.50f,.62f),new Vector2(.98f,.97f),18f,tint:new Color(.6f,.83f,1));
@@ -121,13 +121,13 @@ public class ResultUIManager
     {
         currentSessionResult=session;currentResult=session?.GetResultAtPosition(1);
         float winnerTime=currentResult!=null&&currentResult.didFinish?currentResult.totalRaceTime:0f;
-        for(int i=0;i<2;i++)ApplyRow(i,session?.GetResultAtPosition(i+1),winnerTime);
-        winnerLabel.text=currentResult!=null&&currentResult.didFinish?$"PLAYER {currentResult.playerNumber}  WINNER / 優勝":"RACE COMPLETE / レース終了";
+        for(int i=0;i<4;i++)ApplyRow(i,session?.GetResultAtPosition(i+1),winnerTime);
+        winnerLabel.text=currentResult!=null&&currentResult.didFinish?$"{currentResult.DriverLabel}  WINNER / 優勝":"RACE COMPLETE / レース終了";
         RaceResultRecord local=session?.GetPlayerResult(localPlayerNumber-1);
-        int position=local!=null?Mathf.Clamp(local.finishPosition,1,2):localPlayerNumber;
+        int position=local!=null?Mathf.Clamp(local.finishPosition,1,4):localPlayerNumber;
         bool finished=local==null||local.didFinish;
         medalImage.texture=Resources.Load<Texture2D>(position==1?"UI/Neon/MedalGold":"UI/Neon/MedalSilver");
-        medalImage.gameObject.SetActive(finished);medalNumber.gameObject.SetActive(finished);
+        medalImage.gameObject.SetActive(finished && position <= 2);medalNumber.gameObject.SetActive(finished);
         medalNumber.text=position.ToString();medalNumber.color=Color.white;
         medalNumber.enableVertexGradient=true;
         Color highlight=position==1?new Color(1,.97f,.78f):new Color(.96f,.99f,1f);
@@ -139,7 +139,7 @@ public class ResultUIManager
         metal.EnableKeyword("UNDERLAY_ON");metal.SetColor("_UnderlayColor",new Color(.04f,.02f,.01f,.95f));
         metal.SetFloat("_UnderlayOffsetX",.75f);metal.SetFloat("_UnderlayOffsetY",-.75f);
         medalNumber.UpdateMeshPadding();
-        ordinal.text=finished?(position==1?"1ST":"2ND"):"DNF";
+        ordinal.text=finished?(position==1?"1ST":position==2?"2ND":position==3?"3RD":"4TH"):"DNF";
         completedLaps.text=finished?$"{position} 位 / FINISH": "未完走 / DID NOT FINISH";
         bestLap.text=local!=null&&local.bestLapTime>0?FormatTime(local.bestLapTime):"--'--.---";
         lastLap.text=local!=null&&local.didFinish&&local.finalLapTime>0?FormatTime(local.finalLapTime):"--'--.---";
@@ -151,10 +151,10 @@ public class ResultUIManager
         bool local=result!=null&&result.playerNumber==localPlayerNumber;
         rowSurfaces[index].Configure(local?RacingPanelGraphic.SurfaceStyle.Primary:RacingPanelGraphic.SurfaceStyle.Panel,local?NeonUI.Pink:NeonUI.Cyan);
         ranks[index].text=result!=null&&result.didFinish?(index+1).ToString():"—";
-        drivers[index].text=result!=null?"プレイヤー "+result.playerNumber:"—";
-        cars[index].text=result!=null?(string.IsNullOrEmpty(result.carName)||result.carName==$"Player{result.playerNumber}_Car"?"SPORT CAR":result.carName):"";
+        drivers[index].text=result!=null?(result.isCpu ? result.DriverLabel : "プレイヤー "+result.playerNumber):"—";
+        cars[index].text=result!=null?(result.isCpu||string.IsNullOrEmpty(result.carName)||result.carName==$"Player{result.playerNumber}_Car"?"SPORT CAR":result.carName):"";
         carIcons[index].gameObject.SetActive(result!=null);
-        if(result!=null)carIcons[index].color=Color.Lerp(PlayerCarPaint.GetPlayerColor(result.playerNumber-1),Color.white,.3f);
+        if(result!=null)carIcons[index].color=Color.Lerp(result.isCpu ? new Color(1f,.8f,.25f) : PlayerCarPaint.GetPlayerColor(result.playerNumber-1),Color.white,.3f);
         times[index].text=result==null?"—":result.didFinish?FormatTime(result.totalRaceTime):"DNF";
         gaps[index].text=result==null||index==0||!result.didFinish?"—":"+"+Mathf.Max(0,result.totalRaceTime-winnerTime).ToString("0.000");
         times[index].color=local?new Color(1,.62f,.78f):Color.white;

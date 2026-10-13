@@ -37,7 +37,7 @@ public static class RacingHUDBuilder
         RacingHUDStyle.Label(time,"Lap","00:00",.64f,.05f,.84f,.33f,17f,Color.white);
         RacingHUDStyle.Label(time,"LapFraction",".00",.84f,.05f,.97f,.33f,14f,RacingHUDStyle.Muted);
 
-        RectTransform board=RacingUITheme.Rect(root,"Leaderboard",new Vector2(.02f,.594f),new Vector2(.235f,.702f));
+        RectTransform board=RacingUITheme.Rect(root,"Leaderboard",new Vector2(.02f,.50f),new Vector2(.235f,.702f));
         RacingLeaderboardUI leaderboard=board.GetComponent<RacingLeaderboardUI>() ?? board.gameObject.AddComponent<RacingLeaderboardUI>();
         leaderboard.Configure(playerIndex);
         IsolateCanvas(board);
