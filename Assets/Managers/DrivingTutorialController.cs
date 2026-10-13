@@ -6,10 +6,12 @@ public sealed class DrivingTutorialController : MonoBehaviour
 {
     private sealed class Practice
     {
+        public int playerIndex;
         public GameObject world, car;
         public Rigidbody body;
         public DebugMover mover;
         public IDriveInputSource input;
+        public PlayerDriveInputGate driveGate;
         public RaceDirectionCameraController camera;
         public DrivingTutorialUI ui;
         public readonly DrivingTutorialProgress lesson = new DrivingTutorialProgress();
@@ -30,48 +32,59 @@ public sealed class DrivingTutorialController : MonoBehaviour
         }
     }
 
-    public void Begin(GameObject carPrefab, InputManager input, PlayerDisplayRig[] displays)
+    public void Begin(GameObject carPrefab, InputManager input, PlayerDisplayRig[] displays, System.Action<GameObject, int> customizeCar = null)
     {
         End();
+        for (int i = 0; i < displays.Length; i++) BeginPlayer(carPrefab, input, displays, i, customizeCar);
+    }
+
+    public bool HasAnyStarted => players.Count > 0;
+    public bool HasStarted(int index) => players.Exists(p => p.playerIndex == index);
+    public GameObject GetPlayerCar(int index) => players.Find(p => p.playerIndex == index)?.car;
+
+    public void BeginPlayer(GameObject carPrefab, InputManager input, PlayerDisplayRig[] displays, int i,
+        System.Action<GameObject, int> customizeCar = null)
+    {
+        if (i < 0 || i >= displays.Length || HasStarted(i)) return;
         Material asphalt = Resources.Load<Material>("RaceCourse/M_RoadAsphalt");
         if (asphalt == null) asphalt = Material("Practice asphalt", new Color(.12f, .12f, .12f), false);
         Material ground = Material("Practice surroundings", new Color(.012f, .022f, .04f), false);
         Material cyan = Material("Practice cyan", RacingUITheme.Cyan, true);
         Material pink = Material("Practice pink", new Color(1f, .08f, .3f), true);
         Material white = Material("Practice lane markings", new Color(.85f, .9f, 1f), true);
-        for (int i = 0; i < displays.Length; i++)
-        {
-            Practice player = new Practice();
-            players.Add(player);
-            player.world = new GameObject($"Player{i + 1}_PrivatePracticeCourse");
-            // More than a camera far plane apart; solid boundaries and recovery prevent escape.
-            // Kept well above the race scene, so its sensors/items cannot be triggered by practice cars.
-            player.world.transform.position = new Vector3(i * 5000f, 3000f, 0f);
-            BuildCourse(player.world.transform, asphalt, ground, cyan, pink, white);
-            Vector3 spawn = player.world.transform.position + new Vector3(0f, 1.3f, -48f);
-            player.car = Instantiate(carPrefab, spawn, Quaternion.identity, player.world.transform);
-            player.car.name = $"Player{i + 1}_TutorialCar";
-            PlayerCarPaint paint = player.car.GetComponent<PlayerCarPaint>() ?? player.car.AddComponent<PlayerCarPaint>();
-            paint.SetPlayerIndex(i);
-            player.body = player.car.GetComponent<Rigidbody>();
-            player.mover = player.car.GetComponent<DebugMover>();
-            player.input = input.GetPlayerInputSource(i);
-            player.mover.SetInputSource(player.input);
-            // Lesson recovery provides a safe spawn for the current step instead of the race start.
-            foreach (CarResetter resetter in player.car.GetComponentsInChildren<CarResetter>()) resetter.enabled = false;
-            foreach (CarItemEffects effects in player.car.GetComponentsInChildren<CarItemEffects>()) effects.enabled = false;
-            player.camera = player.world.AddComponent<RaceDirectionCameraController>();
-            player.camera.SetCamera(displays[i].RaceCamera);
-            player.camera.SetCar(player.car.transform);
-            player.camera.SetLookHeight(.6f);
-            displays[i].RaceCamera.Follow = player.camera.CameraTarget;
-            displays[i].RaceCamera.LookAt = player.camera.LookTarget;
-            Vector3 cameraPosition = player.camera.CameraTarget.position;
-            displays[i].RaceCamera.ForceCameraPosition(cameraPosition,
-                Quaternion.LookRotation(player.camera.LookTarget.position - cameraPosition));
-            player.ui = new DrivingTutorialUI(displays[i].CanvasRoot.transform, i);
-            player.ui.Update(player.lesson, player.input.CurrentState, 0f, player.input.IsConnected);
-        }
+        Practice player = new Practice { playerIndex = i };
+        players.Add(player);
+        player.world = new GameObject($"Player{i + 1}_PrivatePracticeCourse");
+        // More than a camera far plane apart; solid boundaries and recovery prevent escape.
+        // Kept well above the race scene, so its sensors/items cannot be triggered by practice cars.
+        player.world.transform.position = new Vector3(i * 5000f, 3000f, 0f);
+        BuildCourse(player.world.transform, asphalt, ground, cyan, pink, white);
+        Vector3 spawn = player.world.transform.position + new Vector3(0f, 1.3f, -48f);
+        player.car = Instantiate(carPrefab, spawn, Quaternion.identity, player.world.transform);
+        player.car.name = $"Player{i + 1}_TutorialCar";
+        PlayerCarPaint paint = player.car.GetComponent<PlayerCarPaint>() ?? player.car.AddComponent<PlayerCarPaint>();
+        if (customizeCar != null) customizeCar(player.car, i);
+        else paint.SetPlayerIndex(i);
+        player.body = player.car.GetComponent<Rigidbody>();
+        player.mover = player.car.GetComponent<DebugMover>();
+        player.input = input.GetPlayerInputSource(i);
+        player.driveGate = new PlayerDriveInputGate(player.input);
+        player.driveGate.SetBlocked(true);
+        player.mover.SetInputSource(player.driveGate);
+        // Lesson recovery provides a safe spawn for the current step instead of the race start.
+        foreach (CarResetter resetter in player.car.GetComponentsInChildren<CarResetter>()) resetter.enabled = false;
+        foreach (CarItemEffects effects in player.car.GetComponentsInChildren<CarItemEffects>()) effects.enabled = false;
+        player.camera = player.world.AddComponent<RaceDirectionCameraController>();
+        player.camera.SetCamera(displays[i].RaceCamera);
+        player.camera.SetCar(player.car.transform);
+        player.camera.SetLookHeight(.6f);
+        displays[i].RaceCamera.Follow = player.camera.CameraTarget;
+        displays[i].RaceCamera.LookAt = player.camera.LookTarget;
+        Vector3 cameraPosition = player.camera.CameraTarget.position;
+        displays[i].RaceCamera.ForceCameraPosition(cameraPosition,
+            Quaternion.LookRotation(player.camera.LookTarget.position - cameraPosition));
+        player.ui = new DrivingTutorialUI(displays[i].CanvasRoot.transform, i);
+        player.ui.Update(player.lesson, player.input.CurrentState, 0f, player.input.IsConnected);
         Physics.SyncTransforms();
     }
 
@@ -81,6 +94,9 @@ public sealed class DrivingTutorialController : MonoBehaviour
         foreach (Practice player in players)
         {
             DriveInputState input = player.input.CurrentState;
+            // The pedal held to confirm a car must be released before it can accelerate the practice car.
+            if (player.driveGate.IsBlocked && player.input.IsConnected && Mathf.Abs(input.pedal) <= .05f)
+                player.driveGate.SetBlocked(false);
             Vector3 local = player.car.transform.position - player.world.transform.position;
             float speed = Vector3.ProjectOnPlane(player.body.linearVelocity, Vector3.up).magnitude;
             bool escaped = local.y < -2f || Mathf.Abs(local.x - 38f) > 95f || Mathf.Abs(local.z) > 92f;

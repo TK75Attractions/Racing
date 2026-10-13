@@ -35,6 +35,10 @@ public class Gmanager : MonoBehaviour
         public bool isSpectating;
         public CarItemEffects itemEffects;
         public PlayerItemHUD itemHud;
+        public CarSelectionUI carSelection;
+        public State preparationState = State.Title;
+        public bool titleInputArmed;
+        public float titleReleaseTimer;
     }
 
     public static Gmanager Control = null;
@@ -82,8 +86,7 @@ public class Gmanager : MonoBehaviour
     private readonly ScreenTransitionController[] screenTransitions = new ScreenTransitionController[PlayerCount];
     private PlayerDisplayRig[] displayRigs = new PlayerDisplayRig[0];
     private float resultReturnInputDelayTimer;
-    private float titlePedalReleaseTimer;
-    private bool titleStartArmed;
+    private bool finishingPreparation;
     private float countdownTimeRemaining;
     private float goMessageTimeRemaining;
     private TwoPlayerRaceSession raceSession;
@@ -99,7 +102,10 @@ public class Gmanager : MonoBehaviour
     public float SecondPlaceTimeRemaining => raceSession?.SecondPlaceTimeRemaining ?? 0f;
     public bool WaitingForSecondPlace => raceSession != null && raceSession.WaitingForSecondPlace;
     public float CountdownTimeRemaining => countdownTimeRemaining;
-    public bool IsDrivingEnabled => state == State.Game || (state == State.Tutorial && !IsScreenTransitioning());
+    public bool IsPreparing => state == State.Title || state == State.CarSelection || state == State.Tutorial;
+    public State GetPlayerPreparationState(int index) => index >= 0 && index < PlayerCount ? players[index]?.preparationState ?? State.Title : state;
+    public bool IsDrivingEnabled => state == State.Game || ((state == State.CarSelection || state == State.Tutorial) &&
+        !finishingPreparation && drivingTutorial != null && drivingTutorial.HasAnyStarted);
     public bool CanUseDashboardControls => !IsScreenTransitioning();
     public int GoalLap => lapManager != null ? lapManager.GoalLap : 0;
     public int GetPlayerLap(int index)
@@ -130,7 +136,7 @@ public class Gmanager : MonoBehaviour
     public Transform test;
     public float time = 0f;
 
-    public enum State { Title, Countdown, Game, Goal, Result, Tutorial }
+    public enum State { Title, Countdown, Game, Goal, Result, Tutorial, CarSelection }
     public State state = State.Title;
     public Sprite[] NumberSprites;
 
@@ -174,20 +180,25 @@ public class Gmanager : MonoBehaviour
         {
             IManager.UpdateInput(dt);
             UpdateInterruptionMenuInput();
-            if (state == State.Title)
+            if (IsPreparing)
             {
+                for (int i = 0; i < PlayerCount; i++)
+                    if (players[i]?.preparationState == State.CarSelection && screenTransitions[i]?.IsTransitioning != true)
+                        players[i].carSelection?.TickInput(IManager.GetInputState(i), IManager.IsPlayerConnected(i), dt);
+                UpdateTitleStartInput(dt);
                 UpdateTitlePedalUI();
             }
-            bool canHandleStateInput = !IsScreenTransitioning();
-            if (canHandleStateInput && state == State.Title) UpdateTitleStartInput(dt);
-            else if (canHandleStateInput && state == State.Result) UpdateResultReturnInput(dt);
+            else if (!IsScreenTransitioning() && state == State.Result) UpdateResultReturnInput(dt);
         }
 
-        if (state == State.Tutorial && !IsScreenTransitioning())
+        if ((state == State.CarSelection || state == State.Tutorial) && !finishingPreparation)
         {
             drivingTutorial?.Tick(dt);
-            if (drivingTutorial != null && drivingTutorial.AllComplete)
+            if (drivingTutorial != null && drivingTutorial.AllComplete && !IsScreenTransitioning())
+            {
+                finishingPreparation = true;
                 TransitionTo(State.Countdown, FinishTutorialWhenScreenCovered, CompleteGameStart);
+            }
         }
         else if (state == State.Countdown && HasSpawnedCars())
         {
@@ -387,20 +398,54 @@ public class Gmanager : MonoBehaviour
 
     public void ConfirmTitleStart(int playerIndex)
     {
-        if (state != State.Title || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount) return;
-        if (!players[playerIndex].isReady) soundEffects?.Play(RaceSoundCue.Ready, playerIndex);
-        players[playerIndex].isReady = true;
-        titleStartArmed = true;
-        SetTitlePrompt(GetReadyPrompt());
-        foreach (PlayerRuntime participant in players) if (participant == null || !participant.isReady) return;
-        StartGame();
+        if (!IsPreparing || playerIndex < 0 || playerIndex >= PlayerCount) return;
+        PlayerRuntime player = players[playerIndex];
+        if (player.preparationState != State.Title || screenTransitions[playerIndex]?.IsTransitioning == true) return;
+        soundEffects?.Play(RaceSoundCue.Ready, playerIndex);
+        TransitionPlayer(playerIndex, State.CarSelection, () =>
+        {
+            player.preparationState = State.CarSelection;
+            if (state == State.Title) state = State.CarSelection;
+            player.carSelection.Open();
+        });
     }
 
+    // Dashboard/editor start enters selection for every player still at the title.
     public void StartGame()
     {
-        if (state != State.Title || IsScreenTransitioning()) return;
-        titlePedalReleaseTimer = 0f;
-        TransitionTo(State.Tutorial, BeginTutorialWhenScreenCovered);
+        if (!IsPreparing) return;
+        for (int i = 0; i < PlayerCount; i++) ConfirmTitleStart(i);
+    }
+
+    private void ConfirmCarSelection(int index)
+    {
+        PlayerRuntime player = players[index];
+        if (!IsPreparing || player.preparationState != State.CarSelection || screenTransitions[index]?.IsTransitioning == true) return;
+        TransitionPlayer(index, State.Tutorial, () => BeginPlayerTutorial(index));
+    }
+
+    private void CancelCarSelection(int index)
+    {
+        if (!IsPreparing || players[index].preparationState != State.CarSelection) return;
+        TransitionPlayer(index, State.Title, () =>
+        {
+            PlayerRuntime player = players[index];
+            player.preparationState = State.Title;
+            player.titleInputArmed = false; player.titleReleaseTimer = player.readyHoldTimer = 0f;
+            bool allTitle = true;
+            foreach (PlayerRuntime participant in players) allTitle &= participant.preparationState == State.Title;
+            if (allTitle) state = State.Title;
+        });
+    }
+
+    private void TransitionPlayer(int index, State target, Action covered)
+    {
+        ScreenTransitionController transition = screenTransitions[index];
+        if (transition == null)
+        {
+            covered(); screenTransitions[index]?.ApplyStateImmediate(target); return;
+        }
+        transition.TryTransitionTo(target, covered);
     }
 
     public void ShowResult() => ShowResult(null);
@@ -502,6 +547,10 @@ public class Gmanager : MonoBehaviour
                 titlePromptText,
                 playerIndex);
             screenTransitions[playerIndex] = transition;
+            player.carSelection = CarSelectionUI.Create(rig.CanvasRoot.transform.Find("Title"), playerIndex);
+            int selectionPlayer = playerIndex;
+            player.carSelection.Confirmed += () => ConfirmCarSelection(selectionPlayer);
+            player.carSelection.Cancelled += () => CancelCarSelection(selectionPlayer);
 
             OnPlayUIManager playUi = playerIndex == 0 && onPlayUIManager != null
                 ? onPlayUIManager : new OnPlayUIManager();
@@ -554,13 +603,15 @@ public class Gmanager : MonoBehaviour
         return titleCamera;
     }
 
-    private void BeginTutorialWhenScreenCovered()
+    private void BeginPlayerTutorial(int index)
     {
+        players[index].preparationState = State.Tutorial;
         state = State.Tutorial;
-        ClearRaceStatus();
+        screenTransitions[index]?.ClearRaceStatus();
         if (drivingTutorial == null) drivingTutorial = gameObject.AddComponent<DrivingTutorialController>();
-        drivingTutorial.Begin(carPrefab, IManager, displayRigs);
-        SwitchCameraForState(State.Tutorial);
+        drivingTutorial.BeginPlayer(carPrefab, IManager, displayRigs, index,
+            (vehicle, playerIndex) => players[playerIndex].carSelection?.ApplyToCar(vehicle));
+        SwitchPlayerCameraForState(players[index], State.Tutorial);
     }
 
     private void FinishTutorialWhenScreenCovered()
@@ -605,7 +656,8 @@ public class Gmanager : MonoBehaviour
             }
             PlayerCarPaint paint = player.car.GetComponent<PlayerCarPaint>();
             if (paint == null) paint = player.car.AddComponent<PlayerCarPaint>();
-            paint.SetPlayerIndex(playerIndex);
+            if (player.carSelection != null) player.carSelection.ApplyToCar(player.car);
+            else paint.SetPlayerIndex(playerIndex);
             player.rigidbody = player.car.GetComponent<Rigidbody>();
             player.mover = player.car.GetComponent<DebugMover>();
             player.displayRig.RaceVisuals?.Configure(
@@ -663,6 +715,7 @@ public class Gmanager : MonoBehaviour
 
     private void CompleteGameStart()
     {
+        finishingPreparation = false;
         state = State.Countdown;
         UpdateCountdownDisplay();
         if (countdownTimeRemaining <= 0f)
@@ -751,6 +804,7 @@ public class Gmanager : MonoBehaviour
         PlayerRuntime player = FindPlayer(finishedRigidbody);
         if (player == null || player.result != null || player.withdrewFromRace) return;
 
+        result.carName = player.carSelection?.SelectedVehicleName ?? result.carName;
         RaceFinishRegistration registration = raceSession.RegisterFinish(player.playerIndex, result);
         if (registration == RaceFinishRegistration.Ignored) return;
 
@@ -908,6 +962,7 @@ public class Gmanager : MonoBehaviour
     private void ClearCurrentRaceObjects()
     {
         drivingTutorial?.End();
+        finishingPreparation = false;
         ResetResultPlayerInputs();
         foreach (PlayerRuntime player in players)
         {
@@ -1184,13 +1239,15 @@ public class Gmanager : MonoBehaviour
 
     private void SwitchCameraForState(State targetState)
     {
-        bool useTitleCamera = targetState == State.Title;
-        foreach (PlayerRuntime player in players)
-        {
-            if (player?.displayRig?.RaceCamera == null || player.titleCamera == null) continue;
-            player.titleCamera.Priority = useTitleCamera ? 20 : 10;
-            player.displayRig.RaceCamera.Priority = useTitleCamera ? 10 : 20;
-        }
+        foreach (PlayerRuntime player in players) SwitchPlayerCameraForState(player, targetState);
+    }
+
+    private static void SwitchPlayerCameraForState(PlayerRuntime player, State targetState)
+    {
+        bool useTitleCamera = targetState == State.Title || targetState == State.CarSelection;
+        if (player?.displayRig?.RaceCamera == null || player.titleCamera == null) return;
+        player.titleCamera.Priority = useTitleCamera ? 20 : 10;
+        player.displayRig.RaceCamera.Priority = useTitleCamera ? 10 : 20;
     }
 
     private static void SnapRaceCameraToTarget(PlayerRuntime player)
@@ -1325,68 +1382,35 @@ public class Gmanager : MonoBehaviour
 
     private void ResetTitleStartInputGate()
     {
-        titlePedalReleaseTimer = 0f;
-        titleStartArmed = false;
         foreach (PlayerRuntime player in players)
         {
             if (player == null) continue;
+            player.preparationState = State.Title;
             player.isReady = false;
-            player.readyHoldTimer = 0f;
+            player.readyHoldTimer = player.titleReleaseTimer = 0f;
+            player.titleInputArmed = false;
         }
         SetTitlePrompt(titleReleasePromptText);
     }
 
     private void UpdateTitleStartInput(float dt)
     {
-        if (!titleStartArmed)
+        for (int index = 0; index < PlayerCount; index++)
         {
-            bool allReleased = true;
-            for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
-                if (IManager.GetInputState(playerIndex).pedal >= titleStartPedalThreshold) allReleased = false;
-            titlePedalReleaseTimer = allReleased ? titlePedalReleaseTimer + dt : 0f;
-            if (titlePedalReleaseTimer >= Mathf.Max(0f, titlePedalReleaseSeconds))
+            PlayerRuntime player = players[index];
+            if (player.preparationState != State.Title || screenTransitions[index]?.IsTransitioning == true) continue;
+            DriveInputState input = IManager.GetInputState(index);
+            if (!IManager.IsPlayerConnected(index))
+            { player.titleInputArmed = false; player.titleReleaseTimer = player.readyHoldTimer = 0f; continue; }
+            if (!player.titleInputArmed)
             {
-                titleStartArmed = true;
-                SetTitlePrompt(titlePromptText);
+                player.titleReleaseTimer = Mathf.Abs(input.pedal) < .2f ? player.titleReleaseTimer + dt : 0f;
+                if (player.titleReleaseTimer >= titlePedalReleaseSeconds) player.titleInputArmed = true;
+                continue;
             }
-            return;
+            player.readyHoldTimer = input.pedal >= titleStartPedalThreshold ? player.readyHoldTimer + dt : 0f;
+            if (input.readyPressed || player.readyHoldTimer >= Mathf.Max(.01f, titleStartHoldSeconds)) ConfirmTitleStart(index);
         }
-
-        bool allReady = true;
-        for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
-        {
-            PlayerRuntime player = players[playerIndex];
-            if (!player.isReady)
-            {
-                DriveInputState input = IManager.GetInputState(playerIndex);
-                if (input.readyPressed)
-                {
-                    // Ready is a one-frame press event; it cannot satisfy a hold timer.
-                    player.isReady = true;
-                }
-                else
-                {
-                    player.readyHoldTimer = input.pedal >= titleStartPedalThreshold
-                        ? player.readyHoldTimer + dt : 0f;
-                    player.isReady = player.readyHoldTimer >= Mathf.Max(0.01f, titleStartHoldSeconds);
-                }
-                if (player.isReady) soundEffects?.Play(RaceSoundCue.Ready, playerIndex);
-            }
-            allReady &= player.isReady;
-        }
-        if (!allReady)
-        {
-            SetTitlePrompt(GetReadyPrompt());
-            return;
-        }
-        StartGame();
-    }
-
-    private string GetReadyPrompt()
-    {
-        string p1 = players[0].isReady ? "P1  準備完了" : "P1  ペダルを踏んで準備";
-        string p2 = players[1].isReady ? "P2  準備完了" : "P2  ペダルを踏んで準備";
-        return $"{p1}     {p2}";
     }
 
     private void SetTitlePrompt(string prompt)
@@ -1396,15 +1420,12 @@ public class Gmanager : MonoBehaviour
 
     private void UpdateTitlePedalUI()
     {
-        float duration=Mathf.Max(.01f,titleStartHoldSeconds);
-        float playerOne=players[0]!=null ? (players[0].isReady?1f:Mathf.Clamp01(players[0].readyHoldTimer/duration)):0f;
-        float playerTwo=players[1]!=null ? (players[1].isReady?1f:Mathf.Clamp01(players[1].readyHoldTimer/duration)):0f;
-        bool playerOneReady = players[0] != null && players[0].isReady;
-        bool playerTwoReady = players[1] != null && players[1].isReady;
-        foreach (ScreenTransitionController transition in screenTransitions)
-        {
-            transition?.UpdateTitlePedals(playerOne, playerTwo, playerOneReady, playerTwoReady, titleStartArmed);
-        }
+        float duration = Mathf.Max(.01f, titleStartHoldSeconds);
+        float first = Mathf.Clamp01(players[0].readyHoldTimer / duration);
+        float second = Mathf.Clamp01(players[1].readyHoldTimer / duration);
+        for (int index = 0; index < PlayerCount; index++)
+            if (players[index].preparationState == State.Title)
+                screenTransitions[index]?.UpdateTitlePedals(first, second, false, false, players[index].titleInputArmed);
     }
 
     private void ClearRaceStatus()
@@ -1424,7 +1445,7 @@ public class Gmanager : MonoBehaviour
             playerNumber = playerIndex + 1,
             finishPosition = finishPosition,
             didFinish = didFinish,
-            carName = player?.car != null ? player.car.name : $"Player{playerIndex + 1}_Car",
+            carName = player?.carSelection?.SelectedVehicleName ?? (player?.car != null ? player.car.name : $"Player{playerIndex + 1}_Car"),
             completedLaps = data != null ? data.lapCount : 0,
             goalLap = lapManager != null ? lapManager.GoalLap : 0,
             totalRaceTime = totalRaceTime,

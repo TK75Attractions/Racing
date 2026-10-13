@@ -65,11 +65,7 @@ public static class ViewportAndTireValidation
                     if (!ResizeAndCheck()) break;
                     manager.StartGame(); step=2; break;
                 case 2:
-                    if (manager.state == Gmanager.State.Tutorial && !Transitioning())
-                    {
-                        Call("FinishTutorialWhenScreenCovered"); Call("CompleteGameStart");
-                        foreach (PlayerDisplayRig rig in rigs) rig.Transition.ApplyStateImmediate(Gmanager.State.Countdown);
-                    }
+                    CarSelectionValidation.ContinueToRaceForEditor(manager);
                     if (manager.state != Gmanager.State.Game || Transitioning()) break;
                     BeginResizes("Game"); step=3; break;
                 case 3:

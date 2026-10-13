@@ -43,6 +43,7 @@ public static class DrivingTutorialValidation
         input.isDebugMode = true; input.isP1SerialP2KeyboardDebugMode = false;
         RaceRemoteFirebasePublisher publisher = UnityEngine.Object.FindFirstObjectByType<RaceRemoteFirebasePublisher>();
         if (publisher != null) publisher.enabled = false;
+        SessionState.SetBool(PreviewKey + ".SelectDefaults", true);
         SessionState.SetBool(PreviewKey, true); SessionState.SetBool(ValidationKey, validate);
         Debug.Log("TUTORIAL_QA_START");
         EditorApplication.isPlaying = true;
@@ -60,11 +61,19 @@ public static class DrivingTutorialValidation
                 SessionState.SetBool(PreviewKey, false);
                 manager.StartGame(); return;
             }
+            if (SessionState.GetBool(PreviewKey + ".SelectDefaults", false))
+            {
+                foreach (CarSelectionUI selection in UnityEngine.Object.FindObjectsByType<CarSelectionUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                    if (selection.IsOpen && selection.GetComponent<ScreenTransitionController>().IsTransitioning == false) selection.Confirm();
+                if (manager.GetPlayerPreparationState(0) == Gmanager.State.Tutorial && manager.GetPlayerPreparationState(1) == Gmanager.State.Tutorial)
+                    SessionState.SetBool(PreviewKey + ".SelectDefaults", false);
+            }
             if (!SessionState.GetBool(ValidationKey, false)) return;
             if (!bound)
             {
                 if (manager.state != Gmanager.State.Tutorial || !manager.IsDrivingEnabled) return;
                 DrivingTutorialController tutorial = manager.GetComponent<DrivingTutorialController>();
+                if (!tutorial.HasStarted(0) || !tutorial.HasStarted(1)) return;
                 practices = (IList)typeof(DrivingTutorialController).GetField("players", Fields).GetValue(tutorial);
                 inputs = new StubInput[practices.Count];
                 for (int i = 0; i < practices.Count; i++)

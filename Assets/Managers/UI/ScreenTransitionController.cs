@@ -371,6 +371,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
             titleRoot.SetActive(state == Gmanager.State.Title);
         }
 
+        if (state != Gmanager.State.CarSelection) GetComponent<CarSelectionUI>()?.Cancel();
+
         if (onPlayRoot != null)
         {
             onPlayRoot.SetActive(state == Gmanager.State.Countdown || state == Gmanager.State.Game);
@@ -537,7 +539,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         {
             titlePrompt.text = !armed
                 ? "ペダルを離して準備してください"
-                : ready ? "準備完了  /  相手の準備を待っています" : "長押しでスタート / ペダルを踏み込む";
+                : ready ? "準備完了  /  相手の準備を待っています" : "長押しで車の選択へ / ペダルを踏み込む";
         }
     }
 

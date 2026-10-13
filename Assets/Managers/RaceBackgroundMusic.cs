@@ -52,7 +52,8 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
             AudioSource source = sources[player];
             mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm);
             int viewedPlayer = gameManager.GetAudioViewedPlayer(player);
-            bool menu = gameManager.state == Gmanager.State.Title || gameManager.state == Gmanager.State.Result;
+            bool menu = gameManager.state == Gmanager.State.Result ||
+                (gameManager.IsPreparing && gameManager.GetPlayerPreparationState(player) != Gmanager.State.Tutorial);
             AudioClip desired = (menu ? menuClip : gameManager.IsPlayerOnFinalLap(viewedPlayer) ? finalLapClip : raceClip) ?? silentClip;
             if (source.clip == desired && source.isPlaying) continue;
             source.Stop();

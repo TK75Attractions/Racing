@@ -71,6 +71,7 @@ public static class RacingUIPerformanceValidation
             if (manager == null) manager = UnityEngine.Object.FindFirstObjectByType<Gmanager>();
             if (manager == null || Time.frameCount < 5) return;
             if (!raceRequested) { raceRequested = true; manager.StartGame(); return; }
+            CarSelectionValidation.ContinueToRaceForEditor(manager);
             if (manager.state != Gmanager.State.Game) return;
             if (!outputsBound)
             {
