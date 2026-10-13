@@ -33,7 +33,8 @@ public sealed class DrivingTutorialController : MonoBehaviour
     public void Begin(GameObject carPrefab, InputManager input, PlayerDisplayRig[] displays)
     {
         End();
-        Material asphalt = Material("Practice asphalt", new Color(.035f, .045f, .075f), false);
+        Material asphalt = Resources.Load<Material>("RaceCourse/M_RoadAsphalt");
+        if (asphalt == null) asphalt = Material("Practice asphalt", new Color(.12f, .12f, .12f), false);
         Material ground = Material("Practice surroundings", new Color(.012f, .022f, .04f), false);
         Material cyan = Material("Practice cyan", RacingUITheme.Cyan, true);
         Material pink = Material("Practice pink", new Color(1f, .08f, .3f), true);

@@ -106,6 +106,7 @@ public static class RaceCourseRoad
             surface.normals = normals;
         }
         surface.RecalculateBounds();
+        surface.RecalculateTangents();
         GameObject asphalt = CreatePart(root.transform, "Road Surface", surface,
             new[] { settings.asphaltMaterial != null ? settings.asphaltMaterial : LoadMaterial("Asphalt") });
         if (settings.generateCollider)

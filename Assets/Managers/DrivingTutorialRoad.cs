@@ -65,10 +65,12 @@ public sealed class DrivingTutorialRoad : MonoBehaviour
     {
         var vertices = new Vector3[a.Count * 2]; var uv = new Vector2[vertices.Length];
         var triangles = new int[(a.Count - 1) * 6];
+        float distance = 0f;
         for (int i = 0; i < a.Count; i++)
         {
             vertices[i * 2] = a[i]; vertices[i * 2 + 1] = b[i];
-            uv[i * 2] = new Vector2(0f, i); uv[i * 2 + 1] = new Vector2(1f, i);
+            if (i > 0) distance += Vector3.Distance((a[i] + b[i]) * .5f, (a[i - 1] + b[i - 1]) * .5f);
+            uv[i * 2] = new Vector2(0f, distance); uv[i * 2 + 1] = new Vector2(Vector3.Distance(a[i], b[i]), distance);
             if (i == a.Count - 1) continue;
             int v = i * 2, t = i * 6;
             triangles[t] = v; triangles[t + 1] = v + 2; triangles[t + 2] = v + 1;
@@ -105,7 +107,7 @@ public sealed class DrivingTutorialRoad : MonoBehaviour
     private void CreateMesh(string name, Vector3[] vertices, Vector2[] uv, int[] triangles, Material material, bool solid)
     {
         Mesh mesh = new Mesh { name = name, vertices = vertices, uv = uv, triangles = triangles };
-        mesh.RecalculateNormals(); mesh.RecalculateBounds(); meshes.Add(mesh);
+        mesh.RecalculateNormals(); mesh.RecalculateTangents(); mesh.RecalculateBounds(); meshes.Add(mesh);
         GameObject part = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
         part.transform.SetParent(transform, false);
         part.GetComponent<MeshFilter>().sharedMesh = mesh;
