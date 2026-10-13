@@ -1,0 +1,7 @@
+Unity 6000.3.9f1 / Apple M1 / Apple M1
+Editor Play Mode; two 1920x1080 camera stacks; VSync off; fixed staged pose showing all cars; CPUs run physical drivers; 4s and 60 rendered frames warmup + 6s and at least 120 frames sampling. Render-texture capture in Batch Mode; verify HUD visibility in saved views. No serial or external audio hardware latency measured.
+2-cars: frames=379; median=15.87ms; p95=16.62ms; mean=15.89ms; max=18.61ms
+4-cars: frames=372; median=16.16ms; p95=16.91ms; mean=16.19ms; max=21.72ms
+MainCanvas_P2: active=True; HUD active=True; scale=(0.01, 0.01, 0.01)
+MainCanvas: active=True; HUD active=True; scale=(0.01, 0.01, 0.01)
+2-cars-repeat: frames=378; median=15.93ms; p95=16.66ms; mean=15.95ms; max=17.96ms

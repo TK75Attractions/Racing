@@ -1,0 +1,10 @@
+EditMode: 37 passed, 0 failed (including 5 RaceParticipantSession tests)
+Native audio mixer: passed, including both CPU engine streams in both outputs
+RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+UI_IDLE_VALIDATION_PASS: 120 unchanged frames produce zero ring/button/standings rebuilds; changed values still update.
+UI_HOT_PATH_VALIDATION_PASS: 3601 speed inputs -> 50 gauge rebuilds; changing charge -> zero static-ring rebuilds; 1000 time/speed/boost updates -> 0 managed bytes.
+BUTTON_STATE_VALIDATION_PASS: 50% hold, retained MAX after release, disabled state, settled 120 frames with zero rebuilds/allocations.
+MODERN_UI_VALIDATION_PASS: fonts, backgrounds, both player HUDs, live timing, lap counts, speed, spectator and ESC actions.
+MINI_MAP_VALIDATION_PASS: points=1266, scale=0.286px/m, projected=122.3x182.0px in 300x210px
+NPC_ITEM_TARGETS_PASS: four entries, nearest ahead CPU, finished/withdrawn exclusion, human chasing target
+NPC_CLASSIFICATION_RULES_PASS: course/UI/minimap regression and four-car CPU winner/fourth-place results
