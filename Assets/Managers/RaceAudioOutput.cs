@@ -59,6 +59,24 @@ public sealed class RaceAudioOutput : MonoBehaviour
     }
 
     public string GetDeviceLabel(int player) => player >= 0 && player < 2 ? status[player] : "未接続";
+    public int GetSelectedDevice(int player) => player >= 0 && player < 2 ? selected[player] : -1;
+    public bool CanSelectDevice(int player, int device) => available && player >= 0 && player < 2 &&
+        device >= -1 && device < DeviceNames.Length && (device < 0 || device != selected[1 - player]);
+
+    public bool SelectDevice(int player, int device)
+    {
+        if (!CanSelectDevice(player, device)) return false;
+        if (device >= 0) OpenDevice(player, device, persist: true);
+        else
+        {
+            ra_close(player);
+            selected[player] = -1;
+            status[player] = "出力なし";
+            PlayerPrefs.SetString(PreferencePrefix + player, "__disabled__");
+            PlayerPrefs.Save();
+        }
+        return device < 0 || selected[player] == device;
+    }
 
     public void RefreshDevices()
     {
@@ -99,15 +117,11 @@ public sealed class RaceAudioOutput : MonoBehaviour
             int device = (current + offset) % (DeviceNames.Length + 1);
             if (device == DeviceNames.Length)
             {
-                ra_close(player);
-                selected[player] = -1;
-                status[player] = "出力なし";
-                PlayerPrefs.SetString(PreferencePrefix + player, "__disabled__");
-                PlayerPrefs.Save();
+                SelectDevice(player, -1);
                 return;
             }
             if (device == selected[1 - player]) continue;
-            OpenDevice(player, device, persist: true);
+            SelectDevice(player, device);
             return;
         }
         status[player] = "別の出力機器を接続してください";

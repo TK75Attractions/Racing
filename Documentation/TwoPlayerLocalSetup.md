@@ -38,6 +38,8 @@ Unity Editorで `InputManager > Is Debug Mode` を有効にすると、ESP32な�
 - P1: WASD / Space / Enter
 - P2: 矢印キー / Right Ctrl / Right Shift
 
+P1はSpace、P2はRight Ctrlで、現在地から最寄りのコース路面へ復帰します。これらのリセットキーはESP32のシリアル操作時も使用できます。ジャンプ区間の空白を避け、路面の傾きとレースの進行方向に合わせて車を配置します。完了した周回・チェックポイントは維持します。中断メニューの `スタートから` は開始位置へ戻る操作です。
+
 シリアル仕様は [ESP32SerialProtocol.md](ESP32SerialProtocol.md) を参照してください。
 
 自動検証と実機チェックリストは [MultiplayerValidation.md](MultiplayerValidation.md) を参照してください。

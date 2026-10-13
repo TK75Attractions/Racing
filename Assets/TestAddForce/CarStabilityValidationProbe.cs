@@ -45,6 +45,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         public float maxYawRate;
         public float minimumSpeed = float.MaxValue;
         public float initialSpeed;
+        public float maximumRise;
         public bool enteredDrift;
         public bool releasedBoost;
         public float landingTilt;
@@ -79,6 +80,8 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         trace = new StreamWriter(Path.Combine(folder, "trace.csv"));
         trace.WriteLine("trial,time,x,y,z,vx,vy,vz,tilt,angularSpeed,groundedWheels,driveForce");
         Application.runInBackground = true;
+        yield return (IEnumerator)Type.GetType("RacingPolishValidation, Assembly-CSharp-Editor")
+            .GetMethod("ValidatePlayModeControls").Invoke(null, null);
         Time.timeScale = 3f;
         var manager = UnityEngine.Object.FindFirstObjectByType<Gmanager>();
         // Keep this physics validation local and advance past the practice lesson.
@@ -224,6 +227,26 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             End();
         }
 
+        // Small road jolts must settle promptly, while a real takeoff remains free to rise.
+        foreach (float speed in new[] { 6f, 20f, 40f })
+        {
+            yield return Place(floor, Quaternion.identity);
+            yield return new WaitForSeconds(.35f);
+            body.position += Vector3.up * .1f;
+            Physics.SyncTransforms();
+            body.linearVelocity = new Vector3(0f, 1f, speed);
+            input.CurrentState = new DriveInputState { pedal = 1f };
+            Begin("road-contact-" + speed);
+            yield return new WaitForSeconds(1.5f);
+            End();
+        }
+        yield return Place(floor, Quaternion.identity);
+        yield return new WaitForSeconds(.35f);
+        body.linearVelocity = new Vector3(0f, 5f, 15f);
+        Begin("road-takeoff");
+        yield return new WaitForSeconds(1.2f);
+        End();
+
         // yaw の角速度だけは補正で消さない（地面から十分離した状態）。
         yield return Place(floor + Vector3.up * 80f, Quaternion.identity);
         body.angularVelocity = Vector3.up;
@@ -272,6 +295,10 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         var failures = new List<string>();
         foreach (var result in report.trials)
         {
+            if (result.name.StartsWith("road-contact-") && (result.airSeconds > .2f || result.finalTilt > 8f || result.groundedWheels < 2))
+                failures.Add(result.name + ": road contact was not restored promptly");
+            if (result.name == "road-takeoff" && (result.maximumRise < .8f || result.airSeconds < .5f))
+                failures.Add(result.name + ": adhesion suppressed a real jump");
             if (result.name.StartsWith("jump-") && (!result.landed || result.finalTilt > 12f || result.landingTilt > 40f))
                 failures.Add(result.name + ": unstable landing");
             if (result.name.StartsWith("inverted-assist-off-") && (result.groundedWheels != 0 || result.maxDriveWhileAirborne > 0.001f || result.finalTilt < 175f))
@@ -369,6 +396,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         }
         trialTime += Time.fixedDeltaTime;
         trial.maxTilt = Mathf.Max(trial.maxTilt, tilt);
+        trial.maximumRise = Mathf.Max(trial.maximumRise, body.position.y - startingPosition.y);
         trial.maxAngularSpeed = Mathf.Max(trial.maxAngularSpeed, body.angularVelocity.magnitude);
         if (grounded == 0)
         {

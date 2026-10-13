@@ -990,6 +990,7 @@ public class Gmanager : MonoBehaviour
         players[playerIndex].inputGate = gate;
         playerCar.GetComponent<DebugMover>()?.SetInputSource(gate);
         playerCar.GetComponent<CarResetter>()?.SetInputSource(gate);
+        playerCar.GetComponent<CarResetter>()?.SetCourse(course, lapManager);
     }
 
     private void UpdateInterruptionMenuInput()
@@ -1068,7 +1069,7 @@ public class Gmanager : MonoBehaviour
     {
         if (playerIndex < 0 || playerIndex >= players.Length) return;
         PlayerRuntime player = players[playerIndex];
-        player?.car?.GetComponent<CarResetter>()?.ResetCar();
+        player?.car?.GetComponent<CarResetter>()?.ResetToStart();
         CloseInterruptionMenu(playerIndex);
     }
 

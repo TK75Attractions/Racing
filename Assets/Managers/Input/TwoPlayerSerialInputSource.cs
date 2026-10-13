@@ -203,7 +203,15 @@ public sealed class SharedPlayerDriveInputSource : IDriveInputSource
     public int PlayerIndex { get; }
     public string DeviceId => $"P{PlayerIndex + 1}";
     public bool IsConnected => sharedSource.IsConnected(PlayerIndex);
-    public DriveInputState CurrentState => sharedSource.GetInputState(PlayerIndex);
+    public DriveInputState CurrentState
+    {
+        get
+        {
+            DriveInputState state = sharedSource.GetInputState(PlayerIndex);
+            state.resetPressed |= KeyboardDriveInputSource.IsResetPressed(PlayerIndex);
+            return state;
+        }
+    }
 
     public SharedPlayerDriveInputSource(TwoPlayerSerialInputSource sharedSource, int playerIndex)
     {

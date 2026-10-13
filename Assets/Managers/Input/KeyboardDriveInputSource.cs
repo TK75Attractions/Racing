@@ -43,14 +43,15 @@ public sealed class KeyboardDriveInputSource : IDriveInputSource
             steering = steerRight
                 ? KeyboardSteeringValue
                 : steerLeft ? -KeyboardSteeringValue : 0f,
-            resetPressed = usePlayerOneLayout
-                ? keyboard.spaceKey.wasPressedThisFrame
-                : keyboard.rightCtrlKey.wasPressedThisFrame,
+            resetPressed = IsResetPressed(PlayerIndex),
             readyPressed = usePlayerOneLayout
                 ? keyboard.enterKey.wasPressedThisFrame
                 : keyboard.rightShiftKey.wasPressedThisFrame
         };
     }
+
+    public static bool IsResetPressed(int playerIndex) => Keyboard.current != null &&
+        (playerIndex == 0 ? Keyboard.current.spaceKey.wasPressedThisFrame : Keyboard.current.rightCtrlKey.wasPressedThisFrame);
 
     public void Dispose()
     {
