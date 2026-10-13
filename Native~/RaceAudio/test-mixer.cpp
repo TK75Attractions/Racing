@@ -29,6 +29,14 @@ int main() {
     for (int i = 4; i < 8; i++) { Near(p1[i], 0); Near(p2[i], 0); }
     Mix(outputs[0], p1, 4); // Drained rings never repeat audio.
     for (float sample : p1) Near(sample, 0);
+    // Each CPU has its own queue and is mixed into the same two human outputs.
+    ra_push(0, 3, engine, 2, 2, .5f, .25f);
+    ra_push(0, 4, engine, 2, 2, .25f, .5f);
+    ra_push(1, 3, engine, 2, 2, .1f, .1f);
+    ra_push(1, 4, engine, 2, 2, .2f, .2f);
+    Mix(outputs[0], p1, 2); Mix(outputs[1], p2, 2);
+    Near(p1[0], .15f); Near(p1[1], .15f); Near(p1[2], .3f); Near(p1[3], .3f);
+    Near(p2[0], .06f); Near(p2[1], .06f); Near(p2[2], .12f); Near(p2[3], .12f);
     float mono[] = { .75f, -.75f };
     ra_push(0, 0, mono, 2, 1, 2, 2);
     Mix(outputs[0], p1, 2);

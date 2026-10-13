@@ -29,13 +29,13 @@ Master/BGM/エンジン音/効果音のスライダーは両プレイヤー共�
 - 練習の課題達成、3・2・1の各数字、GO、本人のゴール、両画面のリザルト表示。
 - 共有イベントは各出力へ一度ずつ送り、本人の操作・ゴールは本人の出力だけへ送ります。
 
-`RaceSoundEffectsMixer` が各プレイヤーのBGM音声へ効果音を重ね、既存の `PlayerAudioCapture` がその後で独立機器へ送ります。BGMと効果音のゲインをこのフィルター内で別々に適用するため、ネイティブの3ストリーム構成やプラグインのバイナリは変更しません。音声スレッドではメモリ確保・ロック・UnityオブジェクトやPlayerPrefsへのアクセスを行いません。
+`RaceSoundEffectsMixer` が各プレイヤーのBGM音声へ効果音を重ね、既存の `PlayerAudioCapture` がその後で独立機器へ送ります。BGMと効果音のゲインをこのフィルター内で別々に適用するため、効果音専用のネイティブストリームは追加しません。CPU対応後はBGMと4台のエンジン音で5ストリームです。音声スレッドではメモリ確保・ロック・UnityオブジェクトやPlayerPrefsへのアクセスを行いません。
 
 `Racing > Validation > Sound Effects` または `-batchmode -executeMethod SoundEffectsValidation.Run -quit` でPCM、出力先、連打の重複抑止、独立ミュート、既存の音声出力とUIを検証します。試聴用WAVを `Logs/SoundEffects` に保存します。`Play Race Flow` は実際のボタン・ペダル・レース進行から効果音が一度ずつ発生することも検証します。
 
 ## ネイティブプラグイン
 
-macOS (Intel/Apple Silicon) とWindows x64用のプラグインを `Assets/Plugins/RaceAudio` に含めます。macOSはCore Audio、WindowsはWASAPIを使用します。音声のデコードはUnity、機器の列挙・独立出力はminiaudio 0.11.23です。固定版のソースとライセンスは `Native~/RaceAudio` にあります。Unityの音声スレッドから各機器のリングバッファへPCMを送信し、機器側でBGMと2台のエンジン音を混合します。機器のネイティブサンプルレートへの変換はminiaudioが行います。
+macOS (Intel/Apple Silicon) とWindows x64用のプラグインを `Assets/Plugins/RaceAudio` に含めます。macOSはCore Audio、WindowsはWASAPIを使用します。音声のデコードはUnity、機器の列挙・独立出力はminiaudio 0.11.23です。固定版のソースとライセンスは `Native~/RaceAudio` にあります。Unityの音声スレッドから各機器のリングバッファへPCMを送信し、機器側でBGMと4台のエンジン音を混合します。機器のネイティブサンプルレートへの変換はminiaudioが行います。
 
 再ビルド:
 

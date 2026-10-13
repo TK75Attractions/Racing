@@ -17,7 +17,7 @@
 
 // Each Unity source is a single producer. Each device callback is a single consumer.
 // Native callbacks allocate nothing and never take a lock.
-constexpr int StreamCount = 3; // BGM + P1 engine + P2 engine, per output device.
+constexpr int StreamCount = 5; // BGM + two human engines + two CPU engines, per output device.
 struct Output {
     std::mutex producerMutex;
     ma_device device{};
