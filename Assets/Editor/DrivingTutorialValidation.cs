@@ -41,6 +41,8 @@ public static class DrivingTutorialValidation
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
         InputManager input = UnityEngine.Object.FindFirstObjectByType<InputManager>();
         input.isDebugMode = true; input.isP1SerialP2KeyboardDebugMode = false;
+        RaceRemoteFirebasePublisher publisher = UnityEngine.Object.FindFirstObjectByType<RaceRemoteFirebasePublisher>();
+        if (publisher != null) publisher.enabled = false;
         SessionState.SetBool(PreviewKey, true); SessionState.SetBool(ValidationKey, validate);
         Debug.Log("TUTORIAL_QA_START");
         EditorApplication.isPlaying = true;

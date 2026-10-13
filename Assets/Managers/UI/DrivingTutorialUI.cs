@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Reference composition: live car between cyan/pink instrument glass, with three bright lessons below.</summary>
+/// <summary>Live instruments and one instruction card for the player's current action.</summary>
 public sealed class DrivingTutorialUI
 {
     public static readonly Color Cyan = new Color(.01f, .78f, 1f);
@@ -12,10 +12,10 @@ public sealed class DrivingTutorialUI
     private readonly TMP_Text angle, pedal, message, status;
     private readonly DrivingTutorialGaugeGraphic gauge;
     private readonly DrivingTutorialPedalMeterGraphic meter;
-    private readonly DrivingTutorialPanelGraphic[] steps = new DrivingTutorialPanelGraphic[3];
-    private readonly TMP_Text[] stepNumbers = new TMP_Text[3];
     private readonly DrivingTutorialControlGraphic wheel;
-    private readonly DrivingTutorialBadgeGraphic[] badges=new DrivingTutorialBadgeGraphic[3];
+    private readonly DrivingTutorialControlGraphic instructionIcon;
+    private readonly RectTransform instructionCard;
+    private float popupTime;
     private int shownAngle=int.MinValue,shownPedal=-1,shownStage=-1;
     private string shownMessage;
 
@@ -59,29 +59,13 @@ public sealed class DrivingTutorialUI
         Label(pedalGlass, "Full", "100%", new Vector2(.83f, .83f), new Vector2(.99f, .98f), 27f, Color.white);
         Label(pedalGlass, "Empty", "0%", new Vector2(.83f, .025f), new Vector2(.99f, .17f), 27f, Color.white);
 
-        RectTransform strip = RacingUITheme.Rect(rect, "Lessons", new Vector2(.028f, .065f), new Vector2(.975f, .267f));
-        string[] titles = { "ペダルを踏んで\n加速しよう", "ハンドルを回して\n角を曲がってみよう", "ペダルから足を離して\n停車しよう" };
-        DrivingTutorialControlGraphic.Kind[] icons = { DrivingTutorialControlGraphic.Kind.PressPedal, DrivingTutorialControlGraphic.Kind.TurnWheel, DrivingTutorialControlGraphic.Kind.ReleasePedal };
-        for (int i = 0; i < 3; i++)
-        {
-            float x = i / 3f;
-            RectTransform step = RacingUITheme.Rect(strip, $"Step{i + 1}", new Vector2(x+.004f, 0f), new Vector2(x + 1f / 3f-.008f, 1f));
-            steps[i] = step.gameObject.AddComponent<DrivingTutorialPanelGraphic>();
-            steps[i].Configure(Cyan, i == 0, false, true);
-            Icon(step, "Icon", new Vector2(.14f, .10f), new Vector2(.41f, .88f), icons[i]);
-            TMP_Text caption = Label(step, "Caption", titles[i], new Vector2(.45f, .13f), new Vector2(.98f, .84f), 29f, Color.white);
-            caption.lineSpacing = 10f;
-            RectTransform badge=RacingUITheme.Rect(step,"NumberBadge",new Vector2(.026f,.65f),new Vector2(.15f,.93f));
-            badges[i]=badge.gameObject.AddComponent<DrivingTutorialBadgeGraphic>();badges[i].SetState(i==0,false);
-            stepNumbers[i]=Label(badge,"Number",$"0{i+1}",Vector2.zero,Vector2.one,28f,Color.white,true);
-            stepNumbers[i].alignment=TextAlignmentOptions.Center;
-
-        }
-        message = Label(rect, "Message", "", new Vector2(.31f, .81f), new Vector2(.685f, .91f), 27f, Color.white);
+        instructionCard = Panel(rect, "CurrentInstruction", new Vector2(.34f, .65f), new Vector2(.675f, .88f), Cyan);
+        instructionIcon = Icon(instructionCard, "ActionIcon", new Vector2(.045f, .14f), new Vector2(.26f, .77f), DrivingTutorialControlGraphic.Kind.PressPedal);
+        status = Label(instructionCard, "Status", "STEP 1 / 3", new Vector2(.28f, .75f), new Vector2(.95f, .94f), 19f, Cyan);
+        status.alignment = TextAlignmentOptions.Center;
+        message = Label(instructionCard, "Message", "", new Vector2(.28f, .10f), new Vector2(.96f, .74f), 31f, Color.white);
         message.alignment = TextAlignmentOptions.Center;
         message.textWrappingMode = TextWrappingModes.Normal;
-        status = Label(rect, "Status", "", new Vector2(.73f, .86f), new Vector2(.965f, .895f), 19f, Cyan);
-        status.alignment = TextAlignmentOptions.Right;
     }
 
     public void Update(DrivingTutorialProgress lesson, DriveInputState input, float metersPerSecond, bool connected)
@@ -95,18 +79,21 @@ public sealed class DrivingTutorialUI
         if(shownPedal!=percent){pedal.SetText("{0}<size=58%>%</size>",percent);shownPedal=percent;}
         meter.Pressure = pressure;
         int stage = (int)lesson.CurrentStage;
-        string prompt=lesson.IsComplete ? "練習完了！\nもう一人のプレイヤーを待っています" : !connected ? "コントローラーの\n接続を確認してください" : !lesson.PedalReleased ? "まずペダルから\n足を離そう" : "";
-        if(shownMessage!=prompt){message.text=prompt;shownMessage=prompt;}
+        string prompt=lesson.IsComplete ? "練習完了！\nもう一人を待っています" : !connected ? "コントローラーの\n接続を確認してください" : !lesson.PedalReleased ? "まずペダルから\n足を離そう" : stage == 0 ? "ペダルを踏んで\n加速しよう" : stage == 1 ? "ハンドルを回して\n角を曲がってみよう" : "ペダルから足を離して\n停車しよう";
+        if(shownMessage!=prompt)
+        {
+            message.text=prompt;shownMessage=prompt;popupTime=0f;
+            instructionIcon.Configure(!lesson.PedalReleased || stage >= 2
+                ? DrivingTutorialControlGraphic.Kind.ReleasePedal : stage == 1
+                ? DrivingTutorialControlGraphic.Kind.TurnWheel : DrivingTutorialControlGraphic.Kind.PressPedal);
+            instructionIcon.gameObject.SetActive(connected && !lesson.IsComplete);
+            message.rectTransform.anchorMin = new Vector2(connected && !lesson.IsComplete ? .28f : .06f, .10f);
+        }
+        popupTime = Mathf.Min(1f, popupTime + Time.unscaledDeltaTime * 5f);
+        instructionCard.localScale = Vector3.one * Mathf.Lerp(.94f, 1f, Mathf.SmoothStep(0f, 1f, popupTime));
         if(shownStage==stage)return;
         shownStage=stage;
-        status.text = lesson.IsComplete ? "両プレイヤーの完了後にレース開始" : $"STEP {stage + 1} / 3";
-        for (int i = 0; i < 3; i++)
-        {
-            steps[i].SetSelected(stage == i);
-            badges[i].SetState(stage==i,i<stage);
-            stepNumbers[i].text = i < stage ? "OK" : $"0{i + 1}";
-            // The reference keeps every instruction white. Selection is expressed by the neon border.
-        }
+        status.text = lesson.IsComplete ? "PRACTICE COMPLETE" : $"STEP {stage + 1} / 3";
     }
 
     public void Dispose()
