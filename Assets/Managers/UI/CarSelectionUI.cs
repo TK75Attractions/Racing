@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -11,6 +10,7 @@ public sealed class CarSelectionUI : MonoBehaviour
 {
     private int player, draftVehicle, draftPaint, committedVehicle, committedPaint;
     private RectTransform sheet;
+    private Transform titleRoot;
     private CarSelectionCatalog catalog;
     private CarSelectionShowroom showroom;
     private TMP_Text modelName, grade, description, colorName, count, bodyType, titleSelection, pedalHint;
@@ -21,8 +21,19 @@ public sealed class CarSelectionUI : MonoBehaviour
     private CarPaintSwatchGraphic[] swatches;
     private readonly List<RenderTexture> thumbnails = new List<RenderTexture>();
     private readonly Dictionary<Selectable, bool> titleControls = new Dictionary<Selectable, bool>();
-    private bool steeringLatched, confirmArmed;
+    private enum Focus { Vehicle, Paint, Actions }
+    private Focus focus;
+    private bool backSelected, steeringLatched, confirmArmed, pedalPressed, selectionLocked;
     private float confirmHold;
+    private PedalButtonFeedback confirmFeedback, backFeedback;
+    private TMP_Text controls, focusHint;
+    public const float ConfirmSeconds = .65f;
+    public event Action Confirmed;
+    public event Action Cancelled;
+    public float ConfirmationProgress => Mathf.Clamp01(confirmHold / ConfirmSeconds);
+    public bool IsSelectionLocked => selectionLocked;
+    public bool IsChoosingPaint => focus == Focus.Paint;
+    public bool IsChoosingActions => focus == Focus.Actions;
     public int PlayerIndex => player;
     public bool IsOpen => sheet != null && sheet.gameObject.activeSelf;
     public int SelectedVehicle => committedVehicle;
@@ -34,7 +45,8 @@ public sealed class CarSelectionUI : MonoBehaviour
 
     public static CarSelectionUI Create(Transform title, int playerIndex)
     {
-        CarSelectionUI ui = title.gameObject.AddComponent<CarSelectionUI>();
+        CarSelectionUI ui = title.parent.gameObject.AddComponent<CarSelectionUI>();
+        ui.titleRoot = title;
         ui.Initialize(playerIndex);
         return ui;
     }
@@ -48,10 +60,7 @@ public sealed class CarSelectionUI : MonoBehaviour
         string selectedId = PlayerPrefs.GetString("Racing.Car.P" + player, catalog.vehicles[0].id);
         committedVehicle = Math.Max(0, Array.FindIndex(catalog.vehicles, v => v.id == selectedId));
         committedPaint = Mathf.Clamp(PlayerPrefs.GetInt("Racing.Paint.P" + player, player == 0 ? 2 : 3), 0, CarSelectionCatalog.Paints.Length - 1);
-        RacingMenuButton entry = NeonUI.Button(transform, "SelectCar", "車の選択", "CAR SELECT",
-            RacingIconGraphic.Icon.Car, new Vector2(.678f, .20f), new Vector2(.970f, .292f), false, Open);
-        entry.transform.Find("Label").GetComponent<TMP_Text>().fontSizeMax = 30f;
-        titleSelection = Text(transform, "SelectedCar", "", new Vector2(.685f, .153f), new Vector2(.965f, .194f),
+        titleSelection = Text(titleRoot, "SelectedCar", "", new Vector2(.685f, .153f), new Vector2(.965f, .194f),
             17f, TextAlignmentOptions.Center, tint: NeonUI.Cyan);
         UpdateTitleSelection();
         sheet = RacingUITheme.Rect(transform, "CarSelection", Vector2.zero, Vector2.one);
@@ -59,7 +68,7 @@ public sealed class CarSelectionUI : MonoBehaviour
         showroom = sheet.gameObject.AddComponent<CarSelectionShowroom>();
         showroom.Initialize(player);
         RectTransform imageRect = RacingUITheme.Rect(sheet, "Live3DPreview", Vector2.zero, Vector2.one);
-        RawImage image = imageRect.gameObject.AddComponent<RawImage>(); image.texture = showroom.Texture; image.raycastTarget = true;
+        RawImage image = imageRect.gameObject.AddComponent<RawImage>(); image.texture = showroom.Texture; image.raycastTarget = false;
         RectTransform heading = NeonUI.Panel(sheet, "Heading", new Vector2(.025f, .866f), new Vector2(.365f, .971f));
         Text(heading, "Japanese", "車 の 選 択", new Vector2(.075f, .33f), new Vector2(.93f, .98f), 53f, italic: true);
         Text(heading, "English", "C A R   S E L E C T", new Vector2(.085f, .06f), new Vector2(.94f, .35f), 17f, tint: new Color(.69f, .83f, 1));
@@ -72,16 +81,21 @@ public sealed class CarSelectionUI : MonoBehaviour
         Arrow("Next", new Vector2(.625f, .46f), new Vector2(.673f, .57f), false, () => SelectVehicle(draftVehicle + 1));
         BuildPerformance();
         BuildCards();
-        NeonUI.Button(sheet, "Back", "戻る", "BACK / CANCEL", RacingIconGraphic.Icon.Back,
-            new Vector2(.027f, .035f), new Vector2(.21f, .115f), false, Cancel);
-        NeonUI.Button(sheet, "Confirm", "この車で決定", "CONFIRM CAR", RacingIconGraphic.Icon.Flag,
-            new Vector2(.724f, .030f), new Vector2(.976f, .119f), true, Confirm);
-        pedalHint = Text(sheet, "PedalHint", "ペダル長押しでも決定できます", new Vector2(.724f, .122f), new Vector2(.976f, .146f),
+        RacingMenuButton back = NeonUI.Button(sheet, "Back", "戻る", "BACK / CANCEL", RacingIconGraphic.Icon.Back,
+            new Vector2(.027f, .027f), new Vector2(.21f, .130f), false, Back);
+        back.ConfigureHold(ConfirmSeconds, false);
+        backFeedback = back.GetComponent<PedalButtonFeedback>();
+        RacingMenuButton confirm = NeonUI.Button(sheet, "Confirm", "この車で決定", "ペダル長押しでチュートリアルへ", RacingIconGraphic.Icon.Flag,
+            new Vector2(.724f, .027f), new Vector2(.976f, .130f), true, Confirm);
+        confirm.ConfigureHold(ConfirmSeconds, false);
+        confirm.PlayConfirmationSound = false;
+        confirmFeedback = confirm.GetComponent<PedalButtonFeedback>();
+        pedalHint = Text(sheet, "PedalHint", "ペダルを離してから踏み込む", new Vector2(.724f, .132f), new Vector2(.976f, .154f),
             13f, TextAlignmentOptions.Center, tint: NeonUI.Cyan);
-        Text(sheet, "Controls", player == 0 ? "A / D  車種     C  カラー     Enter  決定" : "Left / Right  車種     M  カラー     Right Shift  決定",
-            new Vector2(.238f, .052f), new Vector2(.70f, .096f), 17f, TextAlignmentOptions.Center, tint: new Color(.63f, .73f, .89f));
-        Text(sheet, "OrbitHint", player == 0 ? "ドラッグで回転  /  Q・E  回転  /  R  視点リセット" : "ドラッグで回転  /  DRAG TO ROTATE", new Vector2(.10f, .385f), new Vector2(.62f, .415f), 15f,
-            TextAlignmentOptions.Center, tint: new Color(.63f, .73f, .89f));
+        controls = Text(sheet, "Controls", "ハンドルで切替 / ペダル短押しで項目切替 / 長押しで決定",
+            new Vector2(.238f, .043f), new Vector2(.70f, .109f), 17f, TextAlignmentOptions.Center, tint: new Color(.63f, .73f, .89f));
+        focusHint = Text(sheet, "FocusHint", "車種を選択 / ハンドルで切替", new Vector2(.10f, .385f), new Vector2(.62f, .415f), 17f,
+            TextAlignmentOptions.Center, tint: NeonUI.Cyan);
         foreach (TMP_Text label in sheet.GetComponentsInChildren<TMP_Text>(true)) ApplyFont(label);
         sheet.gameObject.SetActive(false); showroom.SetVisible(false);
     }
@@ -176,69 +190,122 @@ public sealed class CarSelectionUI : MonoBehaviour
 
     public void Open()
     {
-        if (IsOpen || sheet == null || Gmanager.Control != null && Gmanager.Control.state != Gmanager.State.Title) return;
-        Gmanager.Control?.CancelTitleReady(player);
+        if (IsOpen || sheet == null) return;
         draftVehicle = committedVehicle; draftPaint = committedPaint;
+        focus = Focus.Vehicle; backSelected = selectionLocked = pedalPressed = false;
         confirmArmed = false; confirmHold = 0f; steeringLatched = true;
-        foreach (Selectable control in GetComponentsInChildren<Selectable>(true))
+        confirmFeedback.SetConfirmed(false); backFeedback.SetConfirmed(false);
+        foreach (Selectable control in titleRoot.GetComponentsInChildren<Selectable>(true))
         {
-            if (control.transform.IsChildOf(sheet)) continue;
-            titleControls[control] = control.interactable;
-            control.interactable = false;
+            titleControls[control] = control.interactable; control.interactable = false;
         }
         EventSystem.current?.SetSelectedGameObject(null);
         sheet.gameObject.SetActive(true); showroom.SetVisible(true); sheet.SetAsLastSibling();
         pedalHint.text = "ペダルを離してから踏み込む";
-        Refresh(true);
+        Refresh(true); UpdateFeedback();
     }
     public void SelectVehicle(int index)
     {
+        if (selectionLocked) return;
         draftVehicle = (index % catalog.vehicles.Length + catalog.vehicles.Length) % catalog.vehicles.Length;
+        ResetHold();
         if (IsOpen) { Refresh(true); RaceSoundEffects.PlayForPlayer(RaceSoundCue.Select, player); }
     }
     public void SelectPaint(int index)
     {
+        if (selectionLocked) return;
         draftPaint = (index % CarSelectionCatalog.Paints.Length + CarSelectionCatalog.Paints.Length) % CarSelectionCatalog.Paints.Length;
+        ResetHold();
         if (IsOpen) { Refresh(false); RaceSoundEffects.PlayForPlayer(RaceSoundCue.Select, player); }
     }
     public void Confirm()
     {
-        if (!IsOpen) return;
+        if (!IsOpen || selectionLocked) return;
+        selectionLocked = true; confirmHold = ConfirmSeconds;
         committedVehicle = draftVehicle; committedPaint = draftPaint;
         PlayerPrefs.SetString("Racing.Car.P" + player, catalog.vehicles[committedVehicle].id);
         PlayerPrefs.SetInt("Racing.Paint.P" + player, committedPaint); PlayerPrefs.Save();
-        UpdateTitleSelection(); Cancel();
+        confirmFeedback.SetState(true, 1f, NeonUI.Pink); confirmFeedback.SetConfirmed(true);
+        RaceSoundEffects.PlayForPlayer(RaceSoundCue.Confirm, player);
+        UpdateTitleSelection();
+        if (Confirmed != null) Confirmed.Invoke(); else Cancel();
+    }
+    public void Back()
+    {
+        if (!IsOpen || selectionLocked) return;
+        selectionLocked = true; backFeedback.SetState(true, 1f, NeonUI.Cyan); backFeedback.SetConfirmed(true);
+        if (Cancelled != null) Cancelled.Invoke(); else Cancel();
     }
     public void Cancel()
     {
-        if (IsOpen) Gmanager.Control?.CancelTitleReady(player);
         if (sheet != null) sheet.gameObject.SetActive(false);
         showroom?.SetVisible(false);
         foreach (var entry in titleControls) if (entry.Key != null) entry.Key.interactable = entry.Value;
         titleControls.Clear();
         if (sheet != null && EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null &&
             EventSystem.current.currentSelectedGameObject.transform.IsChildOf(sheet)) EventSystem.current.SetSelectedGameObject(null);
-        confirmHold = 0f;
+        selectionLocked = pedalPressed = confirmArmed = false; confirmHold = 0f;
     }
     public void ApplyToCar(GameObject car) => catalog.Apply(car, committedVehicle, committedPaint);
 
+    // Short pedal taps cycle vehicle -> paint -> actions. A long hold commits the focused action.
     public void TickInput(DriveInputState input, bool connected, float dt)
     {
-        if (!IsOpen) return;
-        if (!connected) { confirmArmed = false; confirmHold = 0f; pedalHint.text = "ボタンで決定できます"; return; }
+        if (!IsOpen || selectionLocked) return;
+        if (!connected)
+        {
+            ResetHold(); steeringLatched = true; pedalHint.text = "コントローラーの接続を待っています"; return;
+        }
         float steering = Mathf.Abs(input.steering);
         if (steering < 2f) steeringLatched = false;
-        if (!steeringLatched && steering >= 5f) { SelectVehicle(draftVehicle + (input.steering > 0 ? 1 : -1)); steeringLatched = true; }
-        if (input.pedal < .2f) { confirmArmed = true; confirmHold = 0f; }
-        if (confirmArmed && input.readyPressed) { Confirm(); return; }
-        if (confirmArmed && input.pedal >= .8f)
+        if (!steeringLatched && steering >= 5f)
         {
-            confirmHold += dt;
-            if (confirmHold >= .65f) { Confirm(); Gmanager.Control?.CancelTitleReady(player); }
+            int direction = input.steering > 0 ? 1 : -1;
+            if (focus == Focus.Vehicle) SelectVehicle(draftVehicle + direction);
+            else if (focus == Focus.Paint) SelectPaint(draftPaint + direction);
+            else { backSelected = direction < 0; ResetHold(); }
+            steeringLatched = true; UpdateFocus();
+        }
+        if (Mathf.Abs(input.pedal) < .2f)
+        {
+            if (pedalPressed)
+            {
+                focus = (Focus)(((int)focus + 1) % 3); backSelected = false;
+                UpdateFocus(); RaceSoundEffects.PlayForPlayer(RaceSoundCue.Select, player);
+            }
+            confirmArmed = true; pedalPressed = false; confirmHold = 0f;
+        }
+        else if (confirmArmed && input.pedal >= .8f)
+        {
+            pedalPressed = true; confirmHold += Mathf.Max(0f, dt);
+            UpdateFeedback();
+            if (confirmHold >= ConfirmSeconds)
+            {
+                if (focus == Focus.Actions && backSelected) Back(); else Confirm();
+                return;
+            }
         }
         else confirmHold = 0f;
-        if (IsOpen) pedalHint.text = confirmHold > 0f ? $"ペダルで決定  {Mathf.Clamp01(confirmHold / .65f) * 100f:0}%" :
-            confirmArmed ? "ペダル長押しでも決定できます" : "ペダルを離してから踏み込む";
+        pedalHint.text = confirmArmed ? "踏み込んでゲージを満たす" : "ペダルを離してから踏み込む";
+        UpdateFeedback();
+    }
+    private void ResetHold()
+    {
+        confirmHold = 0f; pedalPressed = confirmArmed = false;
+        if (confirmFeedback != null) UpdateFeedback();
+    }
+    private void UpdateFeedback()
+    {
+        bool back = focus == Focus.Actions && backSelected;
+        confirmFeedback.SetState(!back, back ? 0f : ConfirmationProgress, NeonUI.Pink);
+        backFeedback.SetState(back, back ? ConfirmationProgress : 0f, NeonUI.Cyan);
+    }
+    private void UpdateFocus()
+    {
+        focusHint.text = focus == Focus.Vehicle ? "車種を選択 / ハンドルで切替" :
+            focus == Focus.Paint ? "カラーを選択 / ハンドルで切替" : backSelected ? "戻る / ペダル長押しでタイトルへ" : "決定 / ペダル長押しでチュートリアルへ";
+        colorName.color = focus == Focus.Paint ? NeonUI.Cyan : Color.white;
+        UpdateFeedback();
     }
 
     private void Refresh(bool changeModel)
@@ -263,21 +330,9 @@ public sealed class CarSelectionUI : MonoBehaviour
             swatches[i].color = CarSelectionCatalog.Paints[i];
         }
         if (changeModel) showroom.Show(vehicle, draftPaint); else showroom.SetPaint(draftPaint);
+        UpdateFocus();
     }
     private void UpdateTitleSelection() => titleSelection.text = catalog.vehicles[committedVehicle].displayName + "  /  " + CarSelectionCatalog.PaintNames[committedPaint];
-    private void Update()
-    {
-        if (!IsOpen || Keyboard.current == null) return;
-        Keyboard keyboard = Keyboard.current;
-        if (keyboard.escapeKey.wasPressedThisFrame) Cancel();
-        if ((player == 0 ? keyboard.cKey : keyboard.mKey).wasPressedThisFrame) SelectPaint(draftPaint + 1);
-        if (player == 0)
-        {
-            if (keyboard.qKey.isPressed) showroom.Rotate(60f * Time.unscaledDeltaTime);
-            if (keyboard.eKey.isPressed) showroom.Rotate(-60f * Time.unscaledDeltaTime);
-            if (keyboard.rKey.wasPressedThisFrame) showroom.ResetView();
-        }
-    }
     private void OnDisable() => Cancel();
     private void OnDestroy()
     {

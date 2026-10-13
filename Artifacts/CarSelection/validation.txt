@@ -12,9 +12,13 @@ CAR_SELECTION_CAPTURE: vehicle 0, 2560x1440
 CAR_SELECTION_CAPTURE: vehicle 1, 2560x1440
 CAR_SELECTION_CAPTURE: vehicle 2, 2560x1440
 CAR_SELECTION_VALIDATION_PASS: /Users/kenichirowada/.codex/worktrees/f8d7/Racing/Artifacts/CarSelection
-CAR_SELECTION_PLAY_MODE_PASS: two-player title, selected tutorial cars and selected race cars
+CAR_SELECTION_PLAY_MODE_PASS: independent P2-first start, pedal gauge, mixed selection/practice, confirmation release gate, synchronized race
+TUTORIAL_QA_PASSED: both private courses, actual accelerate/turn/stop, countdown. Maximum vertical speed after settling: 0.004 m/s
 
-Font coverage and untruncated text checked at 1920x1080, 1280x720, 2560x1440.
-Play Mode smoke test covers the production title gate and selected tutorial/race spawning.
-The lesson completion itself is skipped in the smoke test.
-Unity Editor Quick Search emitted an indexing exception; selection assertions and spawning passed.
+Font coverage and untruncated text: 1920x1080, 1280x720, 2560x1440.
+Pedal gauge, analog short tap, steering paint selection, Back, automatic rotation: passed.
+P2-first selection/tutorial, P1 selecting while P2 drives, pedal release gate: passed.
+The integration smoke test simulates lesson completion for its final race gate.
+The separate tutorial QA completes actual acceleration, turning and stopping with both production cars.
+Unity Editor Quick Search emitted an unrelated indexing exception.
+Final Unity batch compilation: passed.

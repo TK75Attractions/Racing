@@ -41,14 +41,15 @@ public static class CarSelectionValidation
             CanvasScaler scaler = root.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080); scaler.matchWidthOrHeight = .5f;
             RectTransform title = RacingUITheme.Rect(root.transform, "Title", Vector2.zero, Vector2.one);
+            NeonUI.Button(title, "Start", "はじめる", "START", RacingIconGraphic.Icon.Flag, Vector2.zero, Vector2.one, true, null);
             CarSelectionUI ui = CarSelectionUI.Create(title, 0);
             int initialVehicle = ui.SelectedVehicle, initialPaint = ui.SelectedPaint;
             ui.Open();
-            Require(!title.Find("SelectCar").GetComponent<Button>().interactable, "Underlying title controls are blocked");
+            Require(!title.Find("Start").GetComponent<Button>().interactable, "Underlying title controls are blocked");
             ui.SelectVehicle(1); ui.SelectPaint(0);
             Require(ui.SelectedVehicle == initialVehicle && ui.SelectedPaint == initialPaint, "Draft does not change committed selection");
             ui.Cancel();
-            Require(title.Find("SelectCar").GetComponent<Button>().interactable, "Closing restores title controls");
+            Require(title.Find("Start").GetComponent<Button>().interactable, "Closing restores title controls");
             ui.Open();
             Require(ui.DraftVehicle == initialVehicle && ui.DraftPaint == initialPaint, "Cancel restores committed selection");
             ui.SelectVehicle(-1); Require(ui.DraftVehicle == 2, "Previous wraps to last vehicle");
@@ -65,10 +66,11 @@ public static class CarSelectionValidation
             ui.TickInput(new DriveInputState { pedal = 1f }, true, .02f);
             Require(!ui.IsOpen, "Released then held pedal confirms once");
             Require(!ui.Showroom.Model.activeInHierarchy, "Closed showroom does not remain active");
-            RectTransform titleTwo = RacingUITheme.Rect(root.transform, "Title P2", Vector2.zero, Vector2.one);
+            RectTransform playerTwoRoot = RacingUITheme.Rect(root.transform, "P2Container", Vector2.zero, Vector2.one);
+            RectTransform titleTwo = RacingUITheme.Rect(playerTwoRoot, "Title P2", Vector2.zero, Vector2.one);
             CarSelectionUI second = CarSelectionUI.Create(titleTwo, 1);
             Require(second.SelectedVehicle == Array.FindIndex(catalog.vehicles, v => v.id == PlayerPrefs.GetString(keys[2], catalog.vehicles[0].id)), "Player selections are independent");
-            titleTwo.gameObject.SetActive(false);
+            playerTwoRoot.gameObject.SetActive(false);
             GameObject car = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/car/car2.prefab"));
             SceneManager.MoveGameObjectToScene(car, scene);
             ui.ApplyToCar(car);
@@ -80,6 +82,30 @@ public static class CarSelectionValidation
             Require(car.GetComponent<DebugMover>().VehicleMultipliers == Vector4.one, "Grade reset does not compound tuning");
             UnityEngine.Object.DestroyImmediate(car);
             Debug.Log("CAR_SELECTION_BEHAVIOR_PASS");
+            ui.Open(); ui.SelectVehicle(0); ui.SelectPaint(0);
+            Quaternion rotation = ui.Showroom.Model.transform.parent.localRotation;
+            ui.Showroom.TickRotation(1f);
+            Require(Quaternion.Angle(rotation, ui.Showroom.Model.transform.parent.localRotation) > 17f, "Preview rotates automatically");
+            ui.Showroom.ResetView();
+            Require(ui.Showroom.transform.Find("Confirm").GetComponent<PedalButtonFeedback>().HasGauge, "Confirm button has a gauge");
+            ui.TickInput(DriveInputState.Neutral, true, .1f);
+            ui.TickInput(new DriveInputState { pedal = 1f }, true, .2f);
+            Require(ui.ConfirmationProgress > .3f && ui.ConfirmationProgress < .32f, "Pedal hold updates the confirmation gauge");
+            ui.TickInput(new DriveInputState { pedal = .4f }, true, .05f);
+            ui.TickInput(DriveInputState.Neutral, true, .05f);
+            Require(ui.IsChoosingPaint, "A short pedal tap through the analog release band selects paint");
+            int originalPaint = ui.DraftPaint;
+            ui.TickInput(new DriveInputState { steering = 10f }, true, .05f);
+            Require(ui.DraftPaint == (originalPaint + 1) % 5, "Steering chooses paint without keyboard or pointer");
+            ui.TickInput(new DriveInputState { steering = 10f }, true, .05f);
+            Require(ui.DraftPaint == (originalPaint + 1) % 5, "Held steering does not repeat");
+            ui.TickInput(DriveInputState.Neutral, true, .05f);
+            ui.TickInput(new DriveInputState { pedal = 1f }, true, .2f);
+            ui.TickInput(DriveInputState.Neutral, true, .05f);
+            Require(ui.IsChoosingActions, "Another short pedal tap selects actions");
+            ui.TickInput(new DriveInputState { steering = -10f }, true, .05f);
+            ui.TickInput(new DriveInputState { pedal = 1f }, true, .7f);
+            Require(!ui.IsOpen, "Steering and pedal can return to title without committing");
             ui.Open(); ui.SelectVehicle(0); ui.SelectPaint(0);
             Require(ui.Showroom.Model.GetComponentsInChildren<Collider>().Length == 0, "Preview has no colliders");
             Require(ui.Showroom.Model.GetComponentsInChildren<DebugMover>().Length == 0, "Preview has no driving scripts");
@@ -93,7 +119,7 @@ public static class CarSelectionValidation
                 {
                     ui.SelectVehicle(vehicle); ui.SelectPaint(vehicle == 0 ? 0 : vehicle == 1 ? 2 : 3);
                     ui.Showroom.RenderNow(); Canvas.ForceUpdateCanvases();
-                    foreach (TMP_Text label in title.GetComponentsInChildren<TMP_Text>(false))
+                    foreach (TMP_Text label in ui.Showroom.GetComponentsInChildren<TMP_Text>(false))
                     {
                         label.ForceMeshUpdate();
                         Require(label.font.HasCharacters(label.text), "Font contains: " + label.text);
@@ -117,6 +143,20 @@ public static class CarSelectionValidation
                 }
                 output.Release(); UnityEngine.Object.DestroyImmediate(output); output = null;
             }
+            ui.SelectVehicle(0); ui.SelectPaint(0);
+            ui.TickInput(DriveInputState.Neutral, true, .01f);
+            ui.TickInput(new DriveInputState { pedal = 1f }, true, .4f);
+            ui.Showroom.transform.Find("Confirm").GetComponent<PedalButtonFeedback>().Preview(1f, .8f, ui.ConfirmationProgress, false, false, 0f);
+            output = new RenderTexture(1920, 1080, 24) { antiAliasing = 4 }; output.Create(); camera.targetTexture = output;
+            scaler.enabled = false; scaler.enabled = true;
+            ui.Showroom.RenderNow(); Canvas.ForceUpdateCanvases();
+            if (GraphicsSettings.currentRenderPipeline != null)
+                RenderPipeline.SubmitRenderRequest(camera, new RenderPipeline.StandardRequest { destination = output });
+            else camera.Render();
+            RenderTexture.active = output;
+            png = new Texture2D(1920, 1080, TextureFormat.RGB24, false);
+            png.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0); png.Apply();
+            File.WriteAllBytes(Path.Combine(directory, "car-select-pedal-1920x1080.png"), png.EncodeToPNG());
             Debug.Log("CAR_SELECTION_VALIDATION_PASS: " + directory);
         }
         finally
@@ -133,6 +173,22 @@ public static class CarSelectionValidation
             PlayerPrefs.Save();
         }
     }
+    // Other editor QA drivers can pass through the new selection step with their saved/default choices.
+    public static void ContinueToRaceForEditor(Gmanager manager)
+    {
+        if (manager == null || !manager.IsPreparing) return;
+        ScreenTransitionController[] transitions = UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None);
+        foreach (CarSelectionUI selection in UnityEngine.Object.FindObjectsByType<CarSelectionUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            if (selection.IsOpen && !selection.IsSelectionLocked && !selection.GetComponent<ScreenTransitionController>().IsTransitioning)
+                selection.Confirm();
+        foreach (ScreenTransitionController transition in transitions) if (transition.IsTransitioning) return;
+        if (manager.GetPlayerPreparationState(0) != Gmanager.State.Tutorial || manager.GetPlayerPreparationState(1) != Gmanager.State.Tutorial) return;
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        typeof(Gmanager).GetMethod("FinishTutorialWhenScreenCovered", flags).Invoke(manager, null);
+        typeof(Gmanager).GetMethod("CompleteGameStart", flags).Invoke(manager, null);
+        foreach (ScreenTransitionController transition in transitions) transition.ApplyStateImmediate(Gmanager.State.Countdown);
+    }
+
     private static void BuildFont()
     {
         const string path = "Assets/Resources/UI/CarSelectionFont.asset";

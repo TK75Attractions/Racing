@@ -306,7 +306,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         if (race == null || !race.CanUseDashboardControls) return false;
         switch (action)
         {
-            case "start": if (race.state != Gmanager.State.Title) return false; race.StartGame(); return true;
+            case "start": if (!race.IsPreparing) return false; race.StartGame(); return true;
             case "result": if (race.state != Gmanager.State.Game) return false; race.ShowResult(); return true;
             case "retry": if (race.state != Gmanager.State.Result) return false; race.RetryGame(); return true;
             case "title": if (race.state != Gmanager.State.Result) return false; race.ResetGame(); return true;

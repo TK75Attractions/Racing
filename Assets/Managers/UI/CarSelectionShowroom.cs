@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 /// <summary>A mesh-only garage, isolated by layer and distance, rendered only while the sheet is open.</summary>
-public sealed class CarSelectionShowroom : MonoBehaviour, IDragHandler
+public sealed class CarSelectionShowroom : MonoBehaviour
 {
     private const int PreviewLayer = 31;
     private readonly List<Material> materials = new List<Material>();
@@ -16,6 +15,8 @@ public sealed class CarSelectionShowroom : MonoBehaviour, IDragHandler
     private PlayerCarPaint paint;
     private RenderTexture target;
     private bool dirty;
+    private float lastRenderTime;
+    public const float RotationDegreesPerSecond = 18f;
     public RenderTexture Texture => target;
     public GameObject Model => model;
     public Camera PreviewCamera => previewCamera;
@@ -54,8 +55,8 @@ public sealed class CarSelectionShowroom : MonoBehaviour, IDragHandler
             for (int j = 1; j < 5; j++)
                 Cube("City window", new Vector3(-18f + i * 2.2f, height * j / 5f, -16.32f), new Vector3(.035f, .035f, .01f), cyan);
         }
-        Light("Softbox", LightType.Directional, Color.white, 1.4f, new Vector3(40, -30, 0), Vector3.zero);
-        Light("Blue rim", LightType.Directional, new Color(.35f, .55f, 1f), .7f, new Vector3(30, 140, 0), Vector3.zero);
+        Light("Softbox", LightType.Point, Color.white, 60f, Vector3.zero, new Vector3(-3, 4, 4));
+        Light("Blue rim", LightType.Point, new Color(.35f, .55f, 1f), 15f, Vector3.zero, new Vector3(3, 3, -3));
         Light("Pink bounce", LightType.Point, new Color(1, .035f, .3f), 8f, Vector3.zero, new Vector3(3, 2, -2));
         pivot = new GameObject("Vehicle rotation").transform;
         pivot.SetParent(world.transform, false);
@@ -104,7 +105,7 @@ public sealed class CarSelectionShowroom : MonoBehaviour, IDragHandler
 
     public void Rotate(float degrees) { pivot.Rotate(Vector3.up, degrees, Space.Self); dirty = true; }
     public void ResetView() { pivot.localRotation = Quaternion.identity; dirty = true; }
-    public void OnDrag(PointerEventData eventData) => Rotate(-eventData.delta.x * .25f);
+    public void TickRotation(float dt) { if (world != null && world.activeSelf && model != null) Rotate(RotationDegreesPerSecond * Mathf.Max(0f, dt)); }
 
     public RenderTexture Thumbnail(CarSelectionCatalog.Vehicle vehicle, int color)
     {
@@ -118,7 +119,12 @@ public sealed class CarSelectionShowroom : MonoBehaviour, IDragHandler
     }
 
     public void RenderNow() { RenderTo(target); dirty = false; }
-    private void LateUpdate() { if (dirty && model != null) RenderNow(); }
+    private void Update() => TickRotation(Time.unscaledDeltaTime);
+    private void LateUpdate()
+    {
+        if (dirty && model != null && Time.unscaledTime - lastRenderTime >= 1f / 30f)
+        { RenderNow(); lastRenderTime = Time.unscaledTime; }
+    }
 
     private void RenderTo(RenderTexture destination)
     {

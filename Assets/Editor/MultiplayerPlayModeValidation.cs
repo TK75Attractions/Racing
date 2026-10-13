@@ -118,15 +118,7 @@ public static class MultiplayerPlayModeValidation
 
             if (stage == 6 && manager?.state == Gmanager.State.Tutorial)
                 throw new InvalidOperationException("Retry must skip the already completed tutorial.");
-            if((stage==1 || stage==11) && manager?.state==Gmanager.State.Tutorial && !AnyTransitionActive())
-            {
-                // The dedicated DrivingTutorialValidation covers actual practice inputs.
-                // This smoke test continues from practice to exercise the race/result flow.
-                typeof(Gmanager).GetMethod("FinishTutorialWhenScreenCovered",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(manager,null);
-                typeof(Gmanager).GetMethod("CompleteGameStart",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(manager,null);
-                foreach(ScreenTransitionController transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
-                    transition.ApplyStateImmediate(Gmanager.State.Countdown);
-            }
+            if (stage == 1 || stage == 11) CarSelectionValidation.ContinueToRaceForEditor(manager);
             switch (stage)
             {
                 case 0 when frameCount > 5:
