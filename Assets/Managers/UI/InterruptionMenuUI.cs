@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,7 +17,11 @@ public sealed class InterruptionMenuUI : MonoBehaviour
     private Slider bgmSlider;
     private Slider engineSlider;
     private Slider effectsSlider;
-    private readonly TMP_Text[] deviceLabels = new TMP_Text[2];
+    private readonly TMP_Dropdown[] deviceDropdowns = new TMP_Dropdown[2];
+    private readonly List<int>[] deviceIndices = { new List<int>(), new List<int>() };
+    private string[] shownDevices;
+    private readonly string[] shownDeviceStatus = new string[2];
+    private readonly int[] shownSelectedDevices = { int.MinValue, int.MinValue };
     private Action interruptAction;
     private Action toggleDirectionAction;
     private Action restartAction;
@@ -141,14 +146,16 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         {
             int capturedPlayer = player;
             float bottom = player == 0 ? 0.25f : 0.125f;
-            RacingMenuButton deviceButton = CreateButton(optionsPanel.transform, $"P{player + 1}Output", "", "CLICK TO CHANGE OUTPUT", "",
-                new Vector2(0.08f, bottom), new Vector2(0.92f, bottom + 0.105f), () =>
+            CreateLabel(optionsPanel.transform, $"P{player + 1}OutputLabel", $"P{player + 1} 出力", new Vector2(.08f, bottom), new Vector2(.30f, bottom + .105f), 21f, FontRole.Japanese);
+            TMP_Dropdown dropdown = CreateDeviceDropdown(optionsPanel.transform, $"P{player + 1}Output", bottom);
+            deviceDropdowns[player] = dropdown;
+            dropdown.onValueChanged.AddListener(value =>
                 {
-                    RaceAudioOutput.Instance?.SelectNextDevice(capturedPlayer);
+                    if (value < 0 || value >= deviceIndices[capturedPlayer].Count) return;
+                    RaceAudioOutput.Instance?.SelectDevice(capturedPlayer, deviceIndices[capturedPlayer][value]);
+                    shownDevices = null;
                     RefreshDeviceLabels();
                 });
-            deviceLabels[player] = deviceButton.transform.Find("Label").GetComponent<TMP_Text>();
-            deviceLabels[player].fontSizeMax = 21f;
         }
         RacingMenuButton refresh = CreateButton(optionsPanel.transform, "RefreshDevices", "再検出", "", "", new Vector2(0.08f, 0.02f), new Vector2(0.48f, 0.11f), () =>
         {
@@ -170,9 +177,75 @@ public sealed class InterruptionMenuUI : MonoBehaviour
 
     private void RefreshDeviceLabels()
     {
+        RaceAudioOutput output = RaceAudioOutput.Instance;
+        string[] names = output != null ? output.DeviceNames : Array.Empty<string>();
+        bool changed = shownDevices != names;
         for (int player = 0; player < 2; player++)
-            if (deviceLabels[player] != null)
-                deviceLabels[player].text = $"P{player + 1} 出力: {RaceAudioOutput.Instance?.GetDeviceLabel(player) ?? "未接続"}";
+            changed |= shownSelectedDevices[player] != (output?.GetSelectedDevice(player) ?? -1) ||
+                shownDeviceStatus[player] != (output?.GetDeviceLabel(player) ?? "未接続");
+        if (!changed) return;
+        shownDevices = names;
+        for (int player = 0; player < 2; player++)
+        {
+            TMP_Dropdown dropdown = deviceDropdowns[player];
+            if (dropdown == null) continue;
+            dropdown.Hide();
+            var options = new List<TMP_Dropdown.OptionData> { new TMP_Dropdown.OptionData("出力なし") };
+            List<int> indices = deviceIndices[player];
+            indices.Clear(); indices.Add(-1);
+            int selected = output?.GetSelectedDevice(player) ?? -1;
+            for (int device = 0; device < names.Length; device++)
+                if (output.CanSelectDevice(player, device))
+                {
+                    options.Add(new TMP_Dropdown.OptionData(names[device]));
+                    indices.Add(device);
+                }
+            dropdown.ClearOptions(); dropdown.AddOptions(options);
+            dropdown.SetValueWithoutNotify(Mathf.Max(0, indices.IndexOf(selected)));
+            shownSelectedDevices[player] = selected;
+            shownDeviceStatus[player] = output?.GetDeviceLabel(player) ?? "未接続";
+            dropdown.captionText.text = shownDeviceStatus[player];
+            dropdown.interactable = output != null && output.CanSelectDevice(player, -1);
+        }
+    }
+
+    private static TMP_Dropdown CreateDeviceDropdown(Transform parent, string name, float bottom)
+    {
+        GameObject control = GetOrCreate(name, parent, typeof(Image), typeof(RaceAudioDeviceDropdown));
+        Stretch(control.GetComponent<RectTransform>(), new Vector2(.31f, bottom + .015f), new Vector2(.92f, bottom + .095f));
+        Image background = control.GetComponent<Image>(); background.color = new Color(.06f, .14f, .20f);
+        TMP_Dropdown dropdown = control.GetComponent<TMP_Dropdown>(); dropdown.targetGraphic = background;
+        TMP_Text caption = CreateLabel(control.transform, "Caption", "出力なし", new Vector2(.04f, .08f), new Vector2(.88f, .92f), 21f, FontRole.Japanese);
+        caption.alignment = TextAlignmentOptions.Left;
+        CreateLabel(control.transform, "Arrow", "▾", new Vector2(.88f, .05f), new Vector2(.98f, .95f), 24f, FontRole.English);
+        GameObject template = GetOrCreate("Template", control.transform, typeof(Image), typeof(ScrollRect));
+        RectTransform templateRect = template.GetComponent<RectTransform>();
+        Stretch(templateRect, Vector2.zero, new Vector2(1f, 0f));
+        templateRect.pivot = new Vector2(.5f, 1f); templateRect.sizeDelta = new Vector2(0f, 240f);
+        template.GetComponent<Image>().color = new Color(.025f, .06f, .10f, 1f);
+        GameObject viewport = GetOrCreate("Viewport", template.transform, typeof(RectMask2D));
+        Stretch(viewport.GetComponent<RectTransform>(), Vector2.zero, Vector2.one);
+        GameObject content = GetOrCreate("Content", viewport.transform);
+        RectTransform contentRect = content.GetComponent<RectTransform>();
+        Stretch(contentRect, new Vector2(0f, 1f), Vector2.one);
+        contentRect.pivot = new Vector2(.5f, 1f); contentRect.sizeDelta = new Vector2(0f, 44f);
+        GameObject item = GetOrCreate("Item", content.transform, typeof(Image), typeof(Toggle));
+        RectTransform itemRect = item.GetComponent<RectTransform>();
+        Stretch(itemRect, new Vector2(0f, .5f), new Vector2(1f, .5f)); itemRect.sizeDelta = new Vector2(0f, 44f);
+        Image itemBackground = item.GetComponent<Image>(); itemBackground.color = new Color(.08f, .18f, .24f);
+        Toggle toggle = item.GetComponent<Toggle>(); toggle.targetGraphic = itemBackground;
+        GameObject check = GetOrCreate("Check", item.transform, typeof(Image));
+        Stretch(check.GetComponent<RectTransform>(), new Vector2(.02f, .25f), new Vector2(.035f, .75f));
+        check.GetComponent<Image>().color = RacingUITheme.Cyan; toggle.graphic = check.GetComponent<Image>();
+        TMP_Text itemLabel = CreateLabel(item.transform, "Label", "", new Vector2(.055f, .08f), new Vector2(.96f, .92f), 21f, FontRole.Japanese);
+        itemLabel.alignment = TextAlignmentOptions.Left;
+        ScrollRect scroll = template.GetComponent<ScrollRect>();
+        scroll.content = contentRect; scroll.viewport = viewport.GetComponent<RectTransform>();
+        scroll.horizontal = false; scroll.vertical = true; scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 30f;
+        dropdown.template = templateRect; dropdown.captionText = caption; dropdown.itemText = itemLabel;
+        template.SetActive(false);
+        return dropdown;
     }
 
     private void Update()
