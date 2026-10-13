@@ -536,6 +536,17 @@ public class LapManager : MonoBehaviour
         return false;
     }
 
+    public void NotifyManualRespawn(Rigidbody body)
+    {
+        if (body == null || !carDataMap.TryGetValue(body, out CarTimeData data)) return;
+        data.isOffCourse = false;
+        data.offCourseTimer = 0f;
+        data.hasValidRacePosition = true;
+        data.lastValidPosition = body.position;
+        data.lastValidRotation = body.rotation;
+        UpdateRaceProgress(data);
+    }
+
     private void RespawnCar(CarTimeData data)
     {
         Vector3 targetPosition;

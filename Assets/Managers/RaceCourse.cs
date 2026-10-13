@@ -275,6 +275,41 @@ public class RaceCourse : MonoBehaviour
         return true;
     }
 
+    /// <summary>最寄りの実際の路面。ジャンプの空白とその縁はリスポーン先から除外します。</summary>
+    public bool TryGetNearestRoadSample(Vector3 worldPosition, out CourseSample sample, float edgeClearance = 3f)
+    {
+        EnsureCache();
+        sample = default;
+        float bestDistance = float.PositiveInfinity;
+        float bestProgress = 0f;
+        int segments = cachedCenterPath.Count - 1;
+        for (int start = 0; start < segments;)
+        {
+            if (!cachedRoadSegments[start]) { start++; continue; }
+            int end = start;
+            while (end + 1 < segments && cachedRoadSegments[end + 1]) end++;
+            bool followsGap = start > 0 ? !cachedRoadSegments[start - 1] : !closedLoop || !cachedRoadSegments[segments - 1];
+            bool precedesGap = end + 1 < segments ? !cachedRoadSegments[end + 1] : !closedLoop || !cachedRoadSegments[0];
+            float low = cachedCumulativeDistances[start] + (followsGap ? edgeClearance : 0f);
+            float high = cachedCumulativeDistances[end + 1] - (precedesGap ? edgeClearance : 0f);
+            if (high >= low)
+            for (int i = start; i <= end; i++)
+            {
+                float from = cachedCumulativeDistances[i], to = cachedCumulativeDistances[i + 1];
+                if (to <= from || to < low || from > high) continue;
+                Vector3 delta = cachedCenterPath[i + 1] - cachedCenterPath[i];
+                float t = Mathf.Clamp(Vector3.Dot(worldPosition - cachedCenterPath[i], delta) / delta.sqrMagnitude,
+                    Mathf.Clamp01((low - from) / (to - from)), Mathf.Clamp01((high - from) / (to - from)));
+                float distance = (worldPosition - (cachedCenterPath[i] + delta * t)).sqrMagnitude;
+                if (distance >= bestDistance) continue;
+                bestDistance = distance;
+                bestProgress = Mathf.Lerp(from, to, t);
+            }
+            start = end + 1;
+        }
+        return !float.IsPositiveInfinity(bestDistance) && TryGetSampleAtProgress(bestProgress, out sample);
+    }
+
     private bool TryGetNearestSegment(Vector3 point, out int index, out float t)
     {
         EnsureCache();
