@@ -1,0 +1,20 @@
+Unity 6000.3.9f1
+Validated on 2026-10-13 (Asia/Tokyo)
+
+CAR_SELECTION_BEHAVIOR_PASS
+CAR_SELECTION_CAPTURE: vehicle 0, 1920x1080
+CAR_SELECTION_CAPTURE: vehicle 1, 1920x1080
+CAR_SELECTION_CAPTURE: vehicle 2, 1920x1080
+CAR_SELECTION_CAPTURE: vehicle 0, 1280x720
+CAR_SELECTION_CAPTURE: vehicle 1, 1280x720
+CAR_SELECTION_CAPTURE: vehicle 2, 1280x720
+CAR_SELECTION_CAPTURE: vehicle 0, 2560x1440
+CAR_SELECTION_CAPTURE: vehicle 1, 2560x1440
+CAR_SELECTION_CAPTURE: vehicle 2, 2560x1440
+CAR_SELECTION_VALIDATION_PASS: /Users/kenichirowada/.codex/worktrees/f8d7/Racing/Artifacts/CarSelection
+CAR_SELECTION_PLAY_MODE_PASS: two-player title, selected tutorial cars and selected race cars
+
+Font coverage and untruncated text checked at 1920x1080, 1280x720, 2560x1440.
+Play Mode smoke test covers the production title gate and selected tutorial/race spawning.
+The lesson completion itself is skipped in the smoke test.
+Unity Editor Quick Search emitted an indexing exception; selection assertions and spawning passed.

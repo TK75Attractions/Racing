@@ -30,7 +30,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
         }
     }
 
-    public void Begin(GameObject carPrefab, InputManager input, PlayerDisplayRig[] displays)
+    public void Begin(GameObject carPrefab, InputManager input, PlayerDisplayRig[] displays, System.Action<GameObject, int> customizeCar = null)
     {
         End();
         Material asphalt = Material("Practice asphalt", new Color(.035f, .045f, .075f), false);
@@ -51,7 +51,8 @@ public sealed class DrivingTutorialController : MonoBehaviour
             player.car = Instantiate(carPrefab, spawn, Quaternion.identity, player.world.transform);
             player.car.name = $"Player{i + 1}_TutorialCar";
             PlayerCarPaint paint = player.car.GetComponent<PlayerCarPaint>() ?? player.car.AddComponent<PlayerCarPaint>();
-            paint.SetPlayerIndex(i);
+            if (customizeCar != null) customizeCar(player.car, i);
+            else paint.SetPlayerIndex(i);
             player.body = player.car.GetComponent<Rigidbody>();
             player.mover = player.car.GetComponent<DebugMover>();
             player.input = input.GetPlayerInputSource(i);

@@ -180,6 +180,27 @@ public class DebugMover : MonoBehaviour
     public float BoostVisualIntensity => Mathf.Max(DriftBoostVisualIntensity,
         IsAccelerationPadBoosting || IsRocketBoosting ? 1f : 0f);
 
+    private float[] vehicleDefaults;
+    public Vector4 VehicleMultipliers { get; private set; } = Vector4.one;
+
+    /// <summary>Applies a grade relative to the prefab's settings, without accumulating on repeated calls.</summary>
+    public void ConfigureVehicle(float acceleration, float topSpeed, float handling, float drift)
+    {
+        vehicleDefaults ??= new[] { driveForcePerFrontWheel, velocityResistance, frontCorneringStiffness,
+            rearCorneringStiffness, maxSteeringAngle, driftChargePerSecond };
+        acceleration = Mathf.Clamp(acceleration, .7f, 1.3f);
+        topSpeed = Mathf.Clamp(topSpeed, .7f, 1.3f);
+        handling = Mathf.Clamp(handling, .7f, 1.3f);
+        drift = Mathf.Clamp(drift, .7f, 1.3f);
+        VehicleMultipliers = new Vector4(acceleration, topSpeed, handling, drift);
+        driveForcePerFrontWheel = vehicleDefaults[0] * acceleration;
+        velocityResistance = vehicleDefaults[1] * acceleration / topSpeed;
+        frontCorneringStiffness = vehicleDefaults[2] * handling;
+        rearCorneringStiffness = vehicleDefaults[3] * handling;
+        maxSteeringAngle = Mathf.Min(60f, vehicleDefaults[4] * handling);
+        driftChargePerSecond = vehicleDefaults[5] * drift;
+    }
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();

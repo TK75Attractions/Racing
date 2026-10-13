@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86921f23752748fd948641c435db91a9, type: 3}
+  m_Name: CarSelectionCatalog
+  m_EditorClassIdentifier:
+  wheelModel: {fileID: 2369827267963454536, guid: 8224bcb1849c44b408eea55795d2c285, type: 3}
+  vehicles:
+  - id: sport-gt
+    displayName: SPORT GT
+    grade: GT / BALANCED
+    bodyType: クーペ
+    description: 加速とコーナリングのバランスに優れた、オールラウンドな一台。
+    model: {fileID: 5621057211259534690, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}
+    replaceRaceBody: 0
+    acceleration: 1
+    topSpeed: 1
+    handling: 1
+    drift: 1
+  - id: street-rs
+    displayName: STREET RS
+    grade: RS / HANDLING
+    bodyType: セダン
+    description: 軽快なハンドリングと鋭い加速。テクニカルなコースが得意。
+    model: {fileID: 9041432283490599144, guid: 834b316c2b5f2e146ae22f9c7e385366, type: 3}
+    replaceRaceBody: 1
+    acceleration: 1.1
+    topSpeed: 0.9
+    handling: 1.15
+    drift: 0.9
+  - id: sport-gt-r
+    displayName: SPORT GT-R
+    grade: GT-R / SPEED
+    bodyType: クーペ
+    description: ストレートで差をつける高速グレード。ドリフトチャージも素早い。
+    model: {fileID: 5621057211259534690, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}
+    replaceRaceBody: 0
+    acceleration: 0.95
+    topSpeed: 1.15
+    handling: 0.9
+    drift: 1.15

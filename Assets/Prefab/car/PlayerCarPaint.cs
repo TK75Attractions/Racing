@@ -16,7 +16,11 @@ public sealed class PlayerCarPaint : MonoBehaviour
 
     public void SetPlayerIndex(int playerIndex)
     {
-        Color color = GetPlayerColor(Mathf.Clamp(playerIndex, 0, 1));
+        SetColor(GetPlayerColor(Mathf.Clamp(playerIndex, 0, 1)));
+    }
+
+    public void SetColor(Color color)
+    {
         int paintedSlots = 0;
 
         foreach (Renderer renderer in GetComponentsInChildren<Renderer>(true))
@@ -31,8 +35,8 @@ public sealed class PlayerCarPaint : MonoBehaviour
                 Material source = materials[i];
                 if (source == null || !IsBodyPaint(source.name)) continue;
 
-                Material material = new Material(source);
-                material.name = source.name + (playerIndex == 1 ? " (Player 2 Pink)" : " (Player 1 Blue)");
+                Material material = ownedMaterials.Contains(source) ? source : new Material(source);
+                material.name = source.name.Replace(" (Selected Paint)", string.Empty) + " (Selected Paint)";
                 if (material.HasProperty(BaseColorId)) material.SetColor(BaseColorId, color);
                 if (material.HasProperty(ColorId)) material.SetColor(ColorId, color);
                 if (material.HasProperty(EmissionColorId))
@@ -41,7 +45,7 @@ public sealed class PlayerCarPaint : MonoBehaviour
                     material.EnableKeyword("_EMISSION");
                 }
 
-                ownedMaterials.Add(material);
+                if (!ownedMaterials.Contains(material)) ownedMaterials.Add(material);
                 materials[i] = material;
                 paintedSlots++;
                 changed = true;
@@ -58,6 +62,7 @@ public sealed class PlayerCarPaint : MonoBehaviour
     {
         string name = materialName.Replace(" (Instance)", string.Empty);
         return name.StartsWith("Body1", System.StringComparison.OrdinalIgnoreCase) ||
+               name.StartsWith("RMCar26_Paint", System.StringComparison.OrdinalIgnoreCase) ||
                name.IndexOf("CarPaint", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
                name.IndexOf("BodyPaint", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
@@ -65,7 +70,10 @@ public sealed class PlayerCarPaint : MonoBehaviour
     private void OnDestroy()
     {
         foreach (Material material in ownedMaterials)
-            if (material != null) Destroy(material);
+            if (material != null)
+            {
+                if (Application.isPlaying) Destroy(material); else DestroyImmediate(material);
+            }
         ownedMaterials.Clear();
     }
 }
