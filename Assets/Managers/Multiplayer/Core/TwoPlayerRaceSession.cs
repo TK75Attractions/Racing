@@ -3,6 +3,7 @@ using System;
 public enum RaceFinishRegistration
 {
     Ignored,
+    Recorded,
     FirstPlace,
     RaceComplete
 }

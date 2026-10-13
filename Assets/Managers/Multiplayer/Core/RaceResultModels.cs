@@ -4,6 +4,8 @@ using System;
 public class RaceResultRecord
 {
     public int playerNumber;
+    public bool isCpu;
+    public string DriverLabel => isCpu ? $"CPU {playerNumber - 2}" : $"P{playerNumber}";
     public int finishPosition;
     public bool didFinish = true;
     public string carName;
@@ -19,6 +21,10 @@ public class RaceSessionResult
 {
     public const int PlayerCount = 2;
     public RaceResultRecord[] playerResults = new RaceResultRecord[PlayerCount];
+
+    public RaceSessionResult() { }
+    public RaceSessionResult(int participantCount) { playerResults = new RaceResultRecord[Math.Max(PlayerCount, participantCount)]; }
+    public int ParticipantCount => playerResults?.Length ?? PlayerCount;
 
     public void SetPlayerResult(int playerIndex, RaceResultRecord result)
     {
@@ -53,7 +59,7 @@ public class RaceSessionResult
 
     private void EnsurePlayerArray()
     {
-        if (playerResults == null || playerResults.Length != PlayerCount)
+        if (playerResults == null || playerResults.Length < PlayerCount)
         {
             playerResults = new RaceResultRecord[PlayerCount];
         }
