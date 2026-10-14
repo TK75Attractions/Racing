@@ -90,11 +90,14 @@ public class FreezeAspectRate : MonoBehaviour
             uiCanvas.renderMode != RenderMode.ScreenSpaceCamera) return;
 
         Vector2 reference = uiScaler.referenceResolution;
-        if (reference.x <= 0f || reference.y <= 0f || UICamera.pixelWidth <= 0 || UICamera.pixelHeight <= 0) return;
-        float scale = Mathf.Min(UICamera.pixelWidth / reference.x, UICamera.pixelHeight / reference.y);
-        uiScaler.scaleFactor = scale;
+        if (reference.x <= 0f || reference.y <= 0f || lastScreenWidth <= 0 || lastScreenHeight <= 0) return;
+        // Overlay camera pixel dimensions can reflect the other display while URP
+        // switches camera stacks. Use the same per-output size as the viewport.
+        float scale = Mathf.Min(lastScreenWidth * currentRect.width / reference.x,
+            lastScreenHeight * currentRect.height / reference.y);
+        if (!Mathf.Approximately(uiScaler.scaleFactor, scale)) uiScaler.scaleFactor = scale;
         // Also update immediately: the scaler's pre-render callback may have already run.
-        uiCanvas.scaleFactor = scale;
+        if (!Mathf.Approximately(uiCanvas.scaleFactor, scale)) uiCanvas.scaleFactor = scale;
     }
 
     private void CreateBackCamera()
@@ -103,7 +106,6 @@ public class FreezeAspectRate : MonoBehaviour
         if (!UnityEditor.EditorApplication.isPlaying) return;
 
 #endif
-        Debug.Log("Set BackCamera");
         ConfigureBackCamera();
         SetLetterboxSpritesEnabled(false);
     }
