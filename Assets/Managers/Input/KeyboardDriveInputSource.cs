@@ -51,7 +51,7 @@ public sealed class KeyboardDriveInputSource : IDriveInputSource
     }
 
     public static bool IsResetPressed(int playerIndex) => Keyboard.current != null &&
-        (playerIndex == 0 ? Keyboard.current.spaceKey.wasPressedThisFrame : Keyboard.current.rightCtrlKey.wasPressedThisFrame);
+        (playerIndex == 0 ? Keyboard.current.spaceKey.wasPressedThisFrame : (Keyboard.current.slashKey.wasPressedThisFrame || Keyboard.current.rightCtrlKey.wasPressedThisFrame));
 
     public void Dispose()
     {

@@ -45,6 +45,12 @@ public sealed class CarItemEffects : MonoBehaviour
     [Tooltip("ロケット終了後、プレイヤー操作へ戻す前に入力を無効にする時間（秒）。急なハンドル操作での事故を防ぎます。")]
     [SerializeField, Min(0f)] private float rocketExitGraceSeconds = 0.15f;
 
+    [Tooltip("ジャンプ付近でロケットの水平速度を制限する値（m/s）。")]
+    [SerializeField, Min(1f)] private float rocketJumpSpeed = 22f;
+    [Tooltip("踏切へ向かう減速の強さ（m/s²）。")]
+    [SerializeField, Min(1f)] private float rocketJumpBraking = 65f;
+    private bool protectRocketJump;
+
     [Header("Oil")]
     [Tooltip("オイルを踏んだ後に滑る時間（秒）。")]
     [SerializeField, Min(0f)] private float oilDuration = 2.2f;
@@ -250,6 +256,7 @@ public sealed class CarItemEffects : MonoBehaviour
     {
         shieldTimeRemaining = 0f;
         rocketTimeRemaining = 0f;
+        protectRocketJump = false;
         rocketExitGraceRemaining = 0f;
         oilTimeRemaining = 0f;
         oilDropTimeRemaining = -1f;
@@ -262,6 +269,7 @@ public sealed class CarItemEffects : MonoBehaviour
     private void StartRocket()
     {
         rocketTimeRemaining = rocketDuration;
+        protectRocketJump = true;
         rocketExitGraceRemaining = 0f;
         float currentSpeed = body != null ? Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up).magnitude : 0f;
         rocketCurrentSpeed = Mathf.Max(currentSpeed, rocketStartSpeed);
@@ -280,7 +288,9 @@ public sealed class CarItemEffects : MonoBehaviour
         if (body == null || body.isKinematic || !IsRocketActive) return;
 
         float dt = Mathf.Max(0f, deltaTime);
-        rocketCurrentSpeed = Mathf.MoveTowards(rocketCurrentSpeed, rocketTopSpeed, rocketAcceleration * dt);
+        float safeSpeed = GetRocketJumpSpeedLimit();
+        rocketCurrentSpeed = Mathf.Min(safeSpeed,
+            Mathf.MoveTowards(rocketCurrentSpeed, rocketTopSpeed, rocketAcceleration * dt));
 
         Vector3 currentForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
         if (currentForward.sqrMagnitude < 0.0001f) currentForward = Vector3.forward;
@@ -293,6 +303,41 @@ public sealed class CarItemEffects : MonoBehaviour
         body.linearVelocity = newForward * rocketCurrentSpeed + vertical;
         // 自動操縦中はヨー回転を止め、ロール・ピッチは車体安定化に任せます。
         body.angularVelocity = Vector3.ProjectOnPlane(body.angularVelocity, Vector3.up);
+    }
+
+    // Preserve the approach/landing limit even if the Rocket expires during flight.
+    // Ordinary jumps still retain their momentum; only a Rocket arms this safeguard.
+    public void LimitRocketJumpMomentum()
+    {
+        if (!protectRocketJump || body == null || body.isKinematic) return;
+        float limit = GetRocketJumpSpeedLimit();
+        Vector3 velocity = body.linearVelocity;
+        float horizontal = Vector3.ProjectOnPlane(velocity, Vector3.up).magnitude;
+        if (horizontal <= limit) return;
+        float ratio = limit / horizontal;
+        velocity.x *= ratio;
+        velocity.z *= ratio;
+        // Ramp-induced upward momentum must slow with the car. Never slow its fall.
+        if (velocity.y > 0f) velocity.y *= ratio;
+        body.linearVelocity = velocity;
+    }
+
+    private float GetRocketJumpSpeedLimit()
+    {
+        RaceCourse course = Gmanager.Control != null ? Gmanager.Control.course : null;
+        if (course == null || !protectRocketJump) return float.PositiveInfinity;
+        float progress = course.GetProgressDistance(body.position);
+        float direction = Gmanager.Control.CourseProgressSign;
+        // The landing run-out stays capped so a late pickup cannot reaccelerate
+        // in midair or overshoot the first bend immediately after landing.
+        for (float offset = -60f; offset <= 90f; offset += 1f)
+        {
+            if (course.HasRoadAtProgress(progress + offset * direction)) continue;
+            float brakingDistance = Mathf.Max(0f, offset - 18f);
+            return Mathf.Sqrt(rocketJumpSpeed * rocketJumpSpeed + 2f * rocketJumpBraking * brakingDistance);
+        }
+        if (!IsRocketActive) protectRocketJump = false;
+        return float.PositiveInfinity;
     }
 
     private Vector3 GetRocketDirection(Vector3 fallback)

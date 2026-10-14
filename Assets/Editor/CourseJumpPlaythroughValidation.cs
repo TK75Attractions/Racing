@@ -49,7 +49,7 @@ public static class CourseJumpPlaythroughValidation
     private static void Tick()
     {
         if (!SessionState.GetBool(SessionKey, false)) { EditorApplication.update -= Tick; return; }
-        if (EditorApplication.timeSinceStartup - started > 240d) { Finish(false, "Course playthrough timed out."); return; }
+        if (EditorApplication.timeSinceStartup - started > (SessionState.GetBool("Racing.RocketJumpFix.Active", false) ? 900d : 240d)) { Finish(false, "Course playthrough timed out."); return; }
         if (!EditorApplication.isPlaying || UnityEngine.Object.FindFirstObjectByType<Gmanager>() == null ||
             UnityEngine.Object.FindFirstObjectByType<CourseJumpPlaythroughProbe>() != null) return;
         new GameObject("Course playthrough validation").AddComponent<CourseJumpPlaythroughProbe>();

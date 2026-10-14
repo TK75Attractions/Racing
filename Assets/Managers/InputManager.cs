@@ -70,7 +70,7 @@ public class InputManager : MonoBehaviour
             initialized = true;
             Debug.Log(
                 "InputManager is in P1 serial / P2 keyboard debug mode. " +
-                "Player 1 uses ESP32 USB serial and Player 2 uses arrow keys/Right Ctrl/Right Shift.");
+                "Player 1 uses ESP32 USB serial and Player 2 uses arrow keys / Slash (or Right Ctrl) / Right Shift.");
             return;
         }
 
@@ -84,7 +84,7 @@ public class InputManager : MonoBehaviour
             initialized = true;
             Debug.Log(
                 "InputManager is in debug mode. " +
-                "Player 1 uses WASD/Space/Enter and Player 2 uses arrow keys/Right Ctrl/Right Shift.");
+                "Player 1 uses WASD/Space/Enter and Player 2 uses arrow keys / Slash (or Right Ctrl) / Right Shift.");
             return;
         }
 

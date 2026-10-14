@@ -67,4 +67,4 @@ Unityの `Racing > Validation > Play Race Flow` からも進行検証を実行�
 
 実機試験では、`InputManager > Is Debug Mode`を無効にし、1台のマイコンが `<P1ペダル>,<P1ハンドル>,<P2ペダル>,<P2ハンドル>` を改行区切りで送る状態で実行します。
 
-P1の実機入力だけを使ってデバッグする場合は、`InputManager > Is P1 Serial P2 Keyboard Debug Mode` を有効にします。P1はシリアルの先頭2列、P2は矢印キー（アクセル／ブレーキ／ハンドル）、Right Ctrl（リセット）、Right Shift（Ready）で操作します。
+P1の実機入力だけを使ってデバッグする場合は、`InputManager > Is P1 Serial P2 Keyboard Debug Mode` を有効にします。P1はシリアルの先頭2列、P2は矢印キー（アクセル／ブレーキ／ハンドル）、/（スラッシュ、Right Ctrlも使用可）（リセット）、Right Shift（Ready）で操作します。

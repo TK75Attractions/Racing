@@ -21,6 +21,8 @@ public static class TubeCourseValidation
         public int floorIntersections;
         public int tubeWallObstructions;
         public Vector3[] center;
+        public int filledTubeShoulderRows;
+        public float maximumShoulderWallGap;
     }
 
     [MenuItem("Racing/Validate Tube Course Clearance")]
@@ -63,6 +65,32 @@ public static class TubeCourseValidation
             Mesh tubeCollision = tube.GetComponent<MeshCollider>().sharedMesh;
             Require(tubeCollision.vertexCount == original.vertexCount && tubeCollision.triangles.Length == original.triangles.Length * 2,
                 "Tube collider must retain the original shape with both face directions.");
+            Transform shoulders = course.transform.Find(RaceCourseRoad.RootName + "/Tube Road Shoulders");
+            Require(shoulders != null && shoulders.GetComponent<MeshCollider>() != null,
+                "Tube shoulders must have a visible surface and a solid collider.");
+            Vector3[] shoulderVertices = shoulders.GetComponent<MeshFilter>().sharedMesh.vertices;
+            MeshCollider innerWall = tube.GetComponent<MeshCollider>();
+            for (int i = 0; i < shoulderVertices.Length; i += 4)
+            {
+                Vector3 l = shoulders.TransformPoint(shoulderVertices[i + 1]);
+                Vector3 r = shoulders.TransformPoint(shoulderVertices[i + 2]);
+                Vector3 centerPoint = (l + r) * .5f;
+                Vector3 side = (r - l).normalized;
+                float half = Vector3.Distance(l, r) * .5f;
+                bool leftHit = innerWall.Raycast(new Ray(centerPoint, -side), out var lh, 25f);
+                bool rightHit = innerWall.Raycast(new Ray(centerPoint, side), out var rh, 25f);
+                if (!leftHit || !rightHit || lh.distance < half - .1f || rh.distance < half - .1f) continue;
+                report.filledTubeShoulderRows++;
+                Vector3 outerLeft = shoulders.TransformPoint(shoulderVertices[i]);
+                Vector3 outerRight = shoulders.TransformPoint(shoulderVertices[i + 3]);
+                report.maximumShoulderWallGap = Mathf.Max(report.maximumShoulderWallGap,
+                    Vector3.Distance(outerLeft, lh.point), Vector3.Distance(outerRight, rh.point));
+                Require(shoulders.GetComponent<MeshCollider>().Raycast(
+                    new Ray(Vector3.Lerp(l, outerLeft, .5f) + Vector3.up, Vector3.down), out _, 1.1f),
+                    "The filled shoulder must support a car.");
+            }
+            Require(report.filledTubeShoulderRows > 200 && report.maximumShoulderWallGap < .075f,
+                "Tube road still has a gap to the interior wall.");
             report.retainedMainGroundFraction = Area(ground.sharedMesh) /
                 Area(PrefabUtility.GetCorrespondingObjectFromSource(ground).sharedMesh);
 
