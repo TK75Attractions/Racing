@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-14",
+  "unity": "6000.3.9f1",
+  "urp": "17.3.0",
+  "gpu": "Apple M1 / Metal",
+  "renderGraphEnabled": true,
+  "compatibilityDefineRemoved": true,
+  "sampleSceneDevelopmentBuild": "Succeeded",
+  "editorValidation": "Display 1/3 routing, unequal output sizes, stable UI scale, shared color/depth target, resize/reuse/cleanup, supported presentation shader",
+  "outputSizes": [
+    [
+      2880,
+      1800
+    ],
+    [
+      1920,
+      1080
+    ],
+    [
+      1024,
+      768
+    ],
+    [
+      720,
+      1280
+    ]
+  ],
+  "standalone": {
+    "result": "PASS",
+    "physicalDisplayCount": 1,
+    "mainOutput": [
+      1280,
+      720
+    ],
+    "simulatedPlayerTwoTarget": [
+      1920,
+      1080
+    ],
+    "presentedFrames": 264,
+    "phases": [
+      "Title",
+      "CarSelection",
+      "Tutorial",
+      "Game"
+    ],
+    "managedExceptions": 0,
+    "renderPassErrors": 0,
+    "expectedMissingDisplayDiagnostic": "The temporary test scene requested Display 2 with only one connected display; the fixture remapped P2 to an offscreen target and presented through Display 1 for GPU checks.",
+    "physicalTwoDisplayTested": false
+  }
+}

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.Build;
@@ -13,30 +14,36 @@ public static class MultiDisplayValidation
 {
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
-    [MenuItem("Racing/Validation/Enable Desktop Display Compatibility")]
+    [MenuItem("Racing/Validation/Enable Desktop Render Graph")]
     public static void PrepareDesktop()
     {
         string defines = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone);
-        if (!defines.Contains("URP_COMPATIBILITY_MODE"))
+        string cleaned = string.Join(";", defines.Split(';').Where(value => value != "URP_COMPATIBILITY_MODE"));
+        if (cleaned != defines)
             PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone,
-                string.IsNullOrEmpty(defines) ? "URP_COMPATIBILITY_MODE" : defines + ";URP_COMPATIBILITY_MODE");
-        AssetDatabase.ImportAsset("Assets/Settings/UniversalRenderPipelineGlobalSettings.asset", ImportAssetOptions.ForceUpdate);
-        AssetDatabase.ImportAsset("Assets/Settings/PC_Renderer.asset", ImportAssetOptions.ForceUpdate);
-#if URP_COMPATIBILITY_MODE
-        GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode = true;
-#endif
+                cleaned);
+        var settings = new SerializedObject(AssetDatabase.LoadMainAssetAtPath(
+            "Assets/Settings/UniversalRenderPipelineGlobalSettings.asset"));
+        SerializedProperty list = settings.FindProperty("m_Settings.m_SettingsList.m_List");
+        for (int i = 0; i < list.arraySize; i++)
+        {
+            SerializedProperty item = list.GetArrayElementAtIndex(i);
+            if (item.managedReferenceValue is RenderGraphSettings)
+                item.FindPropertyRelative("m_EnableRenderCompatibilityMode").boolValue = false;
+        }
+        settings.ApplyModifiedPropertiesWithoutUndo();
         AssetDatabase.SaveAssets();
-        Debug.Log("Desktop multi-display compatibility settings loaded. Wait for script compilation, then run Display Outputs.");
+        Debug.Log("Desktop Render Graph enabled. Wait for script compilation, then run Display Outputs.");
     }
 
     [MenuItem("Racing/Validation/Display Outputs")]
     public static void Run()
     {
         Require(!EditorApplication.isPlaying, "Stop Play Mode before validating display outputs.");
-        Require(GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode,
-            "URP compatibility mode must bypass the Screen-sized multi-display backbuffer import.");
-        Require(PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone).Contains("URP_COMPATIBILITY_MODE"),
-            "Unity 6.3 needs URP_COMPATIBILITY_MODE for desktop builds.");
+        Require(!GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode,
+            "Desktop rendering must use Render Graph.");
+        Require(!PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone).Split(';').Contains("URP_COMPATIBILITY_MODE"),
+            "Remove URP_COMPATIBILITY_MODE and wait for script compilation before building.");
         GameObject source = GameObject.Find("GameManagers");
         Require(source != null, "Open SampleScene before validating display outputs.");
         GameObject fixture = Object.Instantiate(source);
@@ -90,7 +97,31 @@ public static class MultiDisplayValidation
                     }
                 }
             }
-            string result = "MULTI_DISPLAY_VALIDATION_PASS: Display 1/3 routing; four unequal-size output pairs; stable UI through repeated render callbacks and swapped overlay pixel sizes; desktop compatibility settings.";
+            var output = fixture.AddComponent<RenderGraphDisplayOutput>();
+            output.Configure(Cameras(rigs[1]), 2);
+            var resize = typeof(RenderGraphDisplayOutput).GetMethod("ResizeTarget", Private);
+            RenderTexture previous = null;
+            foreach (Vector2Int dimensions in sizes)
+            {
+                resize.Invoke(output, new object[] { dimensions.x, dimensions.y });
+                RenderTexture current = output.Target;
+                Require(current != null && current.IsCreated() && current.width == dimensions.x && current.height == dimensions.y && current.depth >= 24,
+                    "Additional display must have a correctly sized color/depth target.");
+                if (!ReferenceEquals(previous, null)) Require(previous == null, "Resize must destroy the previous target.");
+                foreach (Camera camera in Cameras(rigs[1])) Require(camera.targetTexture == current, "The whole display stack must share one target.");
+                Refresh(rigs[1]);
+                Require(Mathf.Approximately(rigs[1].Canvas.scaleFactor, Mathf.Min(dimensions.x / 1920f, dimensions.y / 1080f)),
+                    "UI scale must follow the explicit Render Graph target after resizing.");
+                resize.Invoke(output, new object[] { dimensions.x, dimensions.y });
+                Require(output.Target == current, "Unchanged output size must reuse its target.");
+                previous = current;
+            }
+            output.enabled = false;
+            Require(output.Target == null, "Disabling output must release its target.");
+            foreach (Camera camera in Cameras(rigs[1])) Require(camera.targetTexture == null, "Disabling output must detach owned targets.");
+            Require(Resources.Load<Shader>("DisplayOutput") != null && Resources.Load<Shader>("DisplayOutput").isSupported,
+                "Display presentation shader must be included and supported.");
+            string result = "MULTI_DISPLAY_VALIDATION_PASS: Render Graph enabled, no compatibility define; Display 1/3 routing; unequal-size output pairs; stable UI; explicit stack color/depth target resize, reuse and cleanup; presentation shader.";
             Directory.CreateDirectory("Logs/DisplayValidation");
             File.WriteAllText("Logs/DisplayValidation/validation.txt", result + Environment.NewLine);
             Debug.Log(result);

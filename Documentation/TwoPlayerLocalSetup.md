@@ -32,17 +32,17 @@ EditorではGameビューを2つ開き、P1をDisplay 1、P2を `Player Two Disp
 
 Macの実行ログで、1920×1080と2880×1800の描画先が混同されるMetalエラーを確認しました。URPの `UniversalRendererRenderGraph.ImportBackBuffers` が追加ディスプレイでも `Screen.width/height`（メイン画面のサイズ）を使うため、異なる解像度ではRenderPassの添付バッファサイズが一致しません。修正前のログにはRenderPass／SubPass関連エラーが計34,210行ありました。
 
-このプロジェクトでは以下の回避を適用しています。
+このプロジェクトではRender Graphを有効にし、Desktopの `Scripting Define Symbols` から `URP_COMPATIBILITY_MODE` を取り除いています。定義だけが残っていると、EditorとPlayerのURPリソース型（`Renderer2DResources`）のフィールドが食い違い、Build And Runでシリアライズエラーになる場合があります。
 
-- Desktopの `Scripting Define Symbols` に `URP_COMPATIBILITY_MODE` を設定し、URP Global Settingsの `Compatibility Mode (Render Graph Disabled)` を有効化。
-- `PC_Renderer` のネイティブレンダーパスを無効化して、互換モードでも画面ごとの描画先を扱える経路を使用。
-- UI倍率は各リグの出力サイズと16:9の描画領域から計算。別画面の描画中に変わりうるOverlayカメラのpixelWidth/Heightは参照せず、倍率が変わったときだけCanvasへ反映。
+追加画面は `RenderGraphDisplayOutput` がその画面の `renderingWidth/Height` に合った深度付きRenderTextureを作り、背景・レース・UIのカメラスタック全体をRender Graphで描画します。描画後に、その画面のネイティブcolorBufferへフルスクリーン描画で転送します。これによりURP 17.3のメイン画面サイズによるバックバッファimportを通らず、異なる解像度の出力を扱えます。画面サイズの変更時はターゲットを作り直し、停止時に解放します。メイン画面とEditorのGameビューは通常のURP出力を使います。
 
-Unityを開いたままファイルを更新した場合は、`Racing > Validation > Enable Desktop Display Compatibility` を実行し、コンパイル完了後に `Racing > Validation > Display Outputs` で設定・表示番号・解像度の異なる2出力の倍率安定性を検証できます。`Racing > Build > Mac Display Validation` は `Builds/DisplayValidation/Race.app` へ検証用Development Buildを作成します。
+UI倍率は各リグの出力サイズと16:9の描画領域から計算します。別画面の描画中に変わりうるOverlayカメラのpixelWidth/Heightは参照せず、倍率が変わったときだけCanvasへ反映します。
 
-互換モードはUnity 6.3で非推奨のため、この回避は現在のUnity版向けです。Unity/URP更新時は追加画面のバックバッファサイズ処理を確認し、異なる解像度の実機2画面で表示・ログを検証してから解除してください。既存の `build.app` には修正は反映されないため、再ビルドが必要です。
+Unityを開いたまま設定を更新する場合は `Racing > Validation > Enable Desktop Render Graph` を実行し、コンパイル完了後に `Racing > Validation > Display Outputs` でRender Graph設定・表示番号・異なる解像度の倍率・RenderTextureのリサイズと解放を検証します。`Racing > Build > Mac Display Validation` は `Builds/DisplayValidation/Race.app` へ検証用Development Buildを作成します。既存の `build.app` には修正は反映されないため、再ビルドが必要です。
 
-2026-10-13の検証では、Apple M1 / Metalで2880×1800と1920×1080へ同時出力するDevelopment Buildを起動し、タイトル・車種選択・練習への遷移を確認しました。RenderPassのサイズ不一致、無効なSubPass、managed例外はいずれも0件でした。4組の異なる出力サイズで倍率安定性を検証し、Display 1/3の割り当てもEditorで確認済みです。結果は `Logs/DisplayValidation/standalone.json` に保存しています。FPSの比較測定と外部2枚の物理接続による確認は未実施です。
+2026-10-13の互換モードによる実機検証記録は `Logs/DisplayValidation/standalone.json` にあります。現在のRender Graph経路とは区別してください。
+
+2026-10-14、Render Graphを有効にしたSampleSceneのMac Development Buildが成功し、Standaloneでタイトル・車種選択・練習・レースまでの描画を確認しました。検証環境は物理画面が1台のため、P2は1920×1080のRenderTextureを使った模擬出力で確認しています。物理2画面の同時出力は未検証です。条件・結果・P2画像は `Artifacts/RenderGraphBuild` に保存しています。
 
 ## レース進行
 
