@@ -1,0 +1,630 @@
+{
+    "unity": "6000.3.9f1",
+    "gpu": "Apple M1",
+    "device": "Apple M1",
+    "renderGraph": "True",
+    "outputMode": "Single physical display; P1 native window, P2 1920x1080 offscreen stack presented to Display 1",
+    "physicalDisplays": 1,
+    "windowWidth": 1920,
+    "windowHeight": 1080,
+    "meshLodThreshold": 1.0,
+    "drivenMetres": [
+        1201.76806640625,
+        1224.6444091796875
+    ],
+    "samples": [
+        {
+            "phase": "optimized",
+            "frames": 365,
+            "focusedFrames": 365,
+            "seconds": 4.005231857299805,
+            "metrics": [
+                {
+                    "name": "frame-ms",
+                    "median": 10.864746756851674,
+                    "p95": 11.98142021894455
+                },
+                {
+                    "name": "render-scale",
+                    "median": 0.800000011920929,
+                    "p95": 0.800000011920929
+                },
+                {
+                    "name": "Gfx.WaitForRenderThread",
+                    "median": 0.0,
+                    "p95": 0.0
+                },
+                {
+                    "name": "Gfx.WaitForPresentOnGfxThread",
+                    "median": 0.00025,
+                    "p95": 0.00075
+                },
+                {
+                    "name": "Main Thread",
+                    "median": 10.847042,
+                    "p95": 11.955959
+                },
+                {
+                    "name": "GC Allocated In Frame",
+                    "median": 15440.0,
+                    "p95": 15440.0
+                },
+                {
+                    "name": "Draw Calls Count",
+                    "median": 487.0,
+                    "p95": 974.0
+                },
+                {
+                    "name": "Triangles Count",
+                    "median": 1535035.0,
+                    "p95": 3070070.0
+                },
+                {
+                    "name": "CPU Main Thread Frame Time",
+                    "median": 10.856290999999999,
+                    "p95": 11.957291
+                },
+                {
+                    "name": "CPU Render Thread Frame Time",
+                    "median": 1.354458,
+                    "p95": 1.8251659999999999
+                },
+                {
+                    "name": "GPU Frame Time",
+                    "median": 15.593,
+                    "p95": 16.867373999999999
+                },
+                {
+                    "name": "Racing.Display.Present",
+                    "median": 0.018165999999999999,
+                    "p95": 0.027458
+                }
+            ]
+        },
+        {
+            "phase": "without-mesh-lods",
+            "frames": 240,
+            "focusedFrames": 240,
+            "seconds": 4.0027384757995609,
+            "metrics": [
+                {
+                    "name": "frame-ms",
+                    "median": 16.603294759988786,
+                    "p95": 18.306206911802293
+                },
+                {
+                    "name": "render-scale",
+                    "median": 0.800000011920929,
+                    "p95": 0.800000011920929
+                },
+                {
+                    "name": "Gfx.WaitForRenderThread",
+                    "median": 0.0,
+                    "p95": 0.0
+                },
+                {
+                    "name": "Gfx.WaitForPresentOnGfxThread",
+                    "median": 0.00045799999999999997,
+                    "p95": 0.001125
+                },
+                {
+                    "name": "Main Thread",
+                    "median": 16.579667,
+                    "p95": 18.250625
+                },
+                {
+                    "name": "GC Allocated In Frame",
+                    "median": 15440.0,
+                    "p95": 15440.0
+                },
+                {
+                    "name": "Draw Calls Count",
+                    "median": 489.0,
+                    "p95": 978.0
+                },
+                {
+                    "name": "Triangles Count",
+                    "median": 4380333.0,
+                    "p95": 8759786.0
+                },
+                {
+                    "name": "CPU Main Thread Frame Time",
+                    "median": 16.578875,
+                    "p95": 18.249166
+                },
+                {
+                    "name": "CPU Render Thread Frame Time",
+                    "median": 1.494041,
+                    "p95": 1.809501
+                },
+                {
+                    "name": "GPU Frame Time",
+                    "median": 22.551873999999999,
+                    "p95": 24.166249999999999
+                },
+                {
+                    "name": "Racing.Display.Present",
+                    "median": 0.021623999999999999,
+                    "p95": 0.026708
+                }
+            ]
+        },
+        {
+            "phase": "force-lod1",
+            "frames": 334,
+            "focusedFrames": 334,
+            "seconds": 4.00159215927124,
+            "metrics": [
+                {
+                    "name": "frame-ms",
+                    "median": 11.871414259076119,
+                    "p95": 12.856625951826573
+                },
+                {
+                    "name": "render-scale",
+                    "median": 0.800000011920929,
+                    "p95": 0.800000011920929
+                },
+                {
+                    "name": "Gfx.WaitForRenderThread",
+                    "median": 0.0,
+                    "p95": 0.0
+                },
+                {
+                    "name": "Gfx.WaitForPresentOnGfxThread",
+                    "median": 0.000292,
+                    "p95": 0.000917
+                },
+                {
+                    "name": "Main Thread",
+                    "median": 11.857083,
+                    "p95": 12.849833
+                },
+                {
+                    "name": "GC Allocated In Frame",
+                    "median": 15440.0,
+                    "p95": 15440.0
+                },
+                {
+                    "name": "Draw Calls Count",
+                    "median": 485.0,
+                    "p95": 970.0
+                },
+                {
+                    "name": "Triangles Count",
+                    "median": 2411297.0,
+                    "p95": 4822594.0
+                },
+                {
+                    "name": "CPU Main Thread Frame Time",
+                    "median": 11.85325,
+                    "p95": 12.795668
+                },
+                {
+                    "name": "CPU Render Thread Frame Time",
+                    "median": 1.335334,
+                    "p95": 1.588708
+                },
+                {
+                    "name": "GPU Frame Time",
+                    "median": 16.927374,
+                    "p95": 18.359666
+                },
+                {
+                    "name": "Racing.Display.Present",
+                    "median": 0.01975,
+                    "p95": 0.028666999999999999
+                }
+            ]
+        },
+        {
+            "phase": "tree-lod3",
+            "frames": 393,
+            "focusedFrames": 393,
+            "seconds": 4.008275508880615,
+            "metrics": [
+                {
+                    "name": "frame-ms",
+                    "median": 10.116206482052803,
+                    "p95": 10.844791308045388
+                },
+                {
+                    "name": "render-scale",
+                    "median": 0.800000011920929,
+                    "p95": 0.800000011920929
+                },
+                {
+                    "name": "Gfx.WaitForRenderThread",
+                    "median": 0.0,
+                    "p95": 0.0
+                },
+                {
+                    "name": "Gfx.WaitForPresentOnGfxThread",
+                    "median": 0.00020899999999999998,
+                    "p95": 0.000583
+                },
+                {
+                    "name": "Main Thread",
+                    "median": 10.098082999999999,
+                    "p95": 10.826792
+                },
+                {
+                    "name": "GC Allocated In Frame",
+                    "median": 15440.0,
+                    "p95": 15440.0
+                },
+                {
+                    "name": "Draw Calls Count",
+                    "median": 487.0,
+                    "p95": 974.0
+                },
+                {
+                    "name": "Triangles Count",
+                    "median": 1065871.0,
+                    "p95": 2131742.0
+                },
+                {
+                    "name": "CPU Main Thread Frame Time",
+                    "median": 10.097083999999999,
+                    "p95": 10.826167
+                },
+                {
+                    "name": "CPU Render Thread Frame Time",
+                    "median": 1.346625,
+                    "p95": 1.608666
+                },
+                {
+                    "name": "GPU Frame Time",
+                    "median": 14.493499,
+                    "p95": 15.507748999999999
+                },
+                {
+                    "name": "Racing.Display.Present",
+                    "median": 0.017041,
+                    "p95": 0.024543
+                }
+            ]
+        },
+        {
+            "phase": "scale80",
+            "frames": 371,
+            "focusedFrames": 371,
+            "seconds": 4.0073957443237309,
+            "metrics": [
+                {
+                    "name": "frame-ms",
+                    "median": 10.697746649384499,
+                    "p95": 11.479917913675309
+                },
+                {
+                    "name": "render-scale",
+                    "median": 0.800000011920929,
+                    "p95": 0.800000011920929
+                },
+                {
+                    "name": "Gfx.WaitForRenderThread",
+                    "median": 0.0,
+                    "p95": 0.0
+                },
+                {
+                    "name": "Gfx.WaitForPresentOnGfxThread",
+                    "median": 0.00025,
+                    "p95": 0.000834
+                },
+                {
+                    "name": "Main Thread",
+                    "median": 10.688457999999999,
+                    "p95": 11.460166
+                },
+                {
+                    "name": "GC Allocated In Frame",
+                    "median": 15440.0,
+                    "p95": 15440.0
+                },
+                {
+                    "name": "Draw Calls Count",
+                    "median": 487.0,
+                    "p95": 974.0
+                },
+                {
+                    "name": "Triangles Count",
+                    "median": 1517755.0,
+                    "p95": 3035510.0
+                },
+                {
+                    "name": "CPU Main Thread Frame Time",
+                    "median": 10.689499999999999,
+                    "p95": 11.452582999999999
+                },
+                {
+                    "name": "CPU Render Thread Frame Time",
+                    "median": 1.3043749999999999,
+                    "p95": 1.55625
+                },
+                {
+                    "name": "GPU Frame Time",
+                    "median": 15.337957999999999,
+                    "p95": 16.298624
+                },
+                {
+                    "name": "Racing.Display.Present",
+                    "median": 0.018542,
+                    "p95": 0.027375
+                }
+            ]
+        },
+        {
+            "phase": "scale65",
+            "frames": 473,
+            "focusedFrames": 473,
+            "seconds": 4.00576639175415,
+            "metrics": [
+                {
+                    "name": "frame-ms",
+                    "median": 8.386876434087754,
+                    "p95": 9.28262434899807
+                },
+                {
+                    "name": "render-scale",
+                    "median": 0.6499999761581421,
+                    "p95": 0.6499999761581421
+                },
+                {
+                    "name": "Gfx.WaitForRenderThread",
+                    "median": 0.0,
+                    "p95": 0.0
+                },
+                {
+                    "name": "Gfx.WaitForPresentOnGfxThread",
+                    "median": 0.000292,
+                    "p95": 0.0008749999999999999
+                },
+                {
+                    "name": "Main Thread",
+                    "median": 8.375625,
+                    "p95": 9.269625
+                },
+                {
+                    "name": "GC Allocated In Frame",
+                    "median": 5760.0,
+                    "p95": 15440.0
+                },
+                {
+                    "name": "Draw Calls Count",
+                    "median": 487.0,
+                    "p95": 974.0
+                },
+                {
+                    "name": "Triangles Count",
+                    "median": 1517755.0,
+                    "p95": 3035510.0
+                },
+                {
+                    "name": "CPU Main Thread Frame Time",
+                    "median": 8.375418,
+                    "p95": 9.2935
+                },
+                {
+                    "name": "CPU Render Thread Frame Time",
+                    "median": 1.451417,
+                    "p95": 1.716626
+                },
+                {
+                    "name": "GPU Frame Time",
+                    "median": 12.0795,
+                    "p95": 13.084875
+                },
+                {
+                    "name": "Racing.Display.Present",
+                    "median": 0.018459,
+                    "p95": 0.024582999999999998
+                }
+            ]
+        },
+        {
+            "phase": "optimized-repeat",
+            "frames": 374,
+            "focusedFrames": 374,
+            "seconds": 4.005414962768555,
+            "metrics": [
+                {
+                    "name": "frame-ms",
+                    "median": 10.653543286025525,
+                    "p95": 11.427204124629498
+                },
+                {
+                    "name": "render-scale",
+                    "median": 0.800000011920929,
+                    "p95": 0.800000011920929
+                },
+                {
+                    "name": "Gfx.WaitForRenderThread",
+                    "median": 0.0,
+                    "p95": 0.0
+                },
+                {
+                    "name": "Gfx.WaitForPresentOnGfxThread",
+                    "median": 0.00025,
+                    "p95": 0.00075
+                },
+                {
+                    "name": "Main Thread",
+                    "median": 10.629999999999999,
+                    "p95": 11.4
+                },
+                {
+                    "name": "GC Allocated In Frame",
+                    "median": 15440.0,
+                    "p95": 15440.0
+                },
+                {
+                    "name": "Draw Calls Count",
+                    "median": 487.0,
+                    "p95": 974.0
+                },
+                {
+                    "name": "Triangles Count",
+                    "median": 1517755.0,
+                    "p95": 3035510.0
+                },
+                {
+                    "name": "CPU Main Thread Frame Time",
+                    "median": 10.62875,
+                    "p95": 11.398709
+                },
+                {
+                    "name": "CPU Render Thread Frame Time",
+                    "median": 1.323416,
+                    "p95": 1.602042
+                },
+                {
+                    "name": "GPU Frame Time",
+                    "median": 15.192582999999999,
+                    "p95": 16.157374
+                },
+                {
+                    "name": "Racing.Display.Present",
+                    "median": 0.017667,
+                    "p95": 0.027458
+                }
+            ]
+        },
+        {
+            "phase": "adaptive-static",
+            "frames": 1078,
+            "focusedFrames": 1078,
+            "seconds": 12.010416030883789,
+            "metrics": [
+                {
+                    "name": "frame-ms",
+                    "median": 11.166837066411972,
+                    "p95": 12.031540274620057
+                },
+                {
+                    "name": "render-scale",
+                    "median": 0.800000011920929,
+                    "p95": 0.8500000238418579
+                },
+                {
+                    "name": "Gfx.WaitForRenderThread",
+                    "median": 0.0,
+                    "p95": 0.0
+                },
+                {
+                    "name": "Gfx.WaitForPresentOnGfxThread",
+                    "median": 0.00025,
+                    "p95": 0.000834
+                },
+                {
+                    "name": "Main Thread",
+                    "median": 11.153834,
+                    "p95": 12.019582999999999
+                },
+                {
+                    "name": "GC Allocated In Frame",
+                    "median": 15440.0,
+                    "p95": 15484.0
+                },
+                {
+                    "name": "Draw Calls Count",
+                    "median": 487.0,
+                    "p95": 974.0
+                },
+                {
+                    "name": "Triangles Count",
+                    "median": 1517755.0,
+                    "p95": 3035510.0
+                },
+                {
+                    "name": "CPU Main Thread Frame Time",
+                    "median": 11.151292,
+                    "p95": 12.019083
+                },
+                {
+                    "name": "CPU Render Thread Frame Time",
+                    "median": 1.325458,
+                    "p95": 1.576166
+                },
+                {
+                    "name": "GPU Frame Time",
+                    "median": 15.977583,
+                    "p95": 17.157249999999999
+                },
+                {
+                    "name": "Racing.Display.Present",
+                    "median": 0.018376,
+                    "p95": 0.028834
+                }
+            ]
+        },
+        {
+            "phase": "driving",
+            "frames": 4935,
+            "focusedFrames": 4935,
+            "seconds": 60.010231018066409,
+            "metrics": [
+                {
+                    "name": "frame-ms",
+                    "median": 12.312209233641625,
+                    "p95": 13.168707489967347
+                },
+                {
+                    "name": "render-scale",
+                    "median": 1.0,
+                    "p95": 1.0
+                },
+                {
+                    "name": "Gfx.WaitForRenderThread",
+                    "median": 0.0,
+                    "p95": 0.0
+                },
+                {
+                    "name": "Gfx.WaitForPresentOnGfxThread",
+                    "median": 0.00025,
+                    "p95": 0.000833
+                },
+                {
+                    "name": "Main Thread",
+                    "median": 12.296417,
+                    "p95": 13.158125
+                },
+                {
+                    "name": "GC Allocated In Frame",
+                    "median": 13298.0,
+                    "p95": 15916.0
+                },
+                {
+                    "name": "Draw Calls Count",
+                    "median": 289.0,
+                    "p95": 1552.0
+                },
+                {
+                    "name": "Triangles Count",
+                    "median": 288696.0,
+                    "p95": 785800.0
+                },
+                {
+                    "name": "CPU Main Thread Frame Time",
+                    "median": 12.294875,
+                    "p95": 13.157333
+                },
+                {
+                    "name": "CPU Render Thread Frame Time",
+                    "median": 1.3812499999999999,
+                    "p95": 2.3442499999999999
+                },
+                {
+                    "name": "GPU Frame Time",
+                    "median": 17.558374,
+                    "p95": 18.730833
+                },
+                {
+                    "name": "Racing.Display.Present",
+                    "median": 0.018167,
+                    "p95": 0.029915999999999999
+                }
+            ]
+        }
+    ],
+    "errors": []
+}
