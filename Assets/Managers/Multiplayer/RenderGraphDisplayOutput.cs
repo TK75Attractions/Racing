@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Unity.Profiling;
 
 /// <summary>
 /// Renders an additional display's camera stack into a correctly sized target.
@@ -16,6 +17,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
     private static readonly int TextureId = Shader.PropertyToID("_BlitTexture");
     private static readonly int ScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
     private static readonly int EncodeId = Shader.PropertyToID("_EncodeSRGB");
+    private static readonly ProfilerMarker PresentMarker = new ProfilerMarker("Racing.Display.Present");
 
     public RenderTexture Target => target;
     public int PresentedFrames { get; private set; }
@@ -73,6 +75,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
 
     private void Present(ScriptableRenderContext context, List<Camera> rendered)
     {
+        using var timing = PresentMarker.Auto();
         if (target == null || Application.isEditor || displayIndex >= Display.displays.Length) return;
         // Render requests for thumbnails/captures also raise this event. Only
         // present after this display's normal stack has been rendered.
