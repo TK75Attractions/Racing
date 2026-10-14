@@ -111,16 +111,19 @@ public static class RacingPolishValidation
             InputSystem.QueueStateEvent(keyboard, new KeyboardState());
             yield return null;
             keyboard.MakeCurrent();
-            _ = keyboard.spaceKey.wasPressedThisFrame; _ = keyboard.rightCtrlKey.wasPressedThisFrame;
+            _ = keyboard.spaceKey.wasPressedThisFrame; _ = keyboard.rightCtrlKey.wasPressedThisFrame; _ = keyboard.slashKey.wasPressedThisFrame;
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Space));
             yield return null;
             Require(p1.CurrentState.resetPressed && !p2.CurrentState.resetPressed, "Space resets only P1, including serial mode.");
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Slash));
+            yield return null;
+            Require(!p1.CurrentState.resetPressed && p2.CurrentState.resetPressed, "Slash resets only P2, including serial mode.");
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.RightCtrl));
             yield return null;
-            Require(!p1.CurrentState.resetPressed && p2.CurrentState.resetPressed, "Right Ctrl resets only P2, including serial mode.");
+            Require(!p1.CurrentState.resetPressed && p2.CurrentState.resetPressed, "Right Ctrl remains a P2 alias.");
             var gate = new PlayerDriveInputGate(p2); gate.SetBlocked(true);
             Require(!gate.CurrentState.resetPressed, "Pause/countdown still blocks reset input.");
-            Debug.Log("RESET_KEYS_PLAYMODE_PASS: independent Space/Right Ctrl resets through serial inputs, blocked while paused.");
+            Debug.Log("RESET_KEYS_PLAYMODE_PASS: independent Space/Slash resets through serial inputs, blocked while paused.");
         }
         finally
         {

@@ -67,7 +67,7 @@ pedal,handle,reset,ready
 - P1シリアル: 2列形式または4列形式の先頭2列
 - P2アクセル／ブレーキ: 上／下矢印
 - P2ハンドル: 左／右矢印
-- P2リセット: Right Ctrl
+- P2リセット: /（スラッシュ、Right Ctrlも使用可）
 - P2 Ready: Right Shift
 
 4列形式を送信した場合も、P2のシリアル列は車両入力には使用されません。
