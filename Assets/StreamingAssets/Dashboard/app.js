@@ -1,8 +1,8 @@
 const localMode = location.origin === 'http://127.0.0.1:8765';
 const API = localMode ? '' : 'http://127.0.0.1:8765';
 const $ = (id) => document.getElementById(id);
-const labels = { Title: 'タイトル', Countdown: 'カウントダウン', Game: 'レース中', Goal: 'ゴール処理中', Result: '結果表示' };
-const details = { Title: '開始操作を待っています', Countdown: 'スタートまでまもなく', Game: 'レース進行中', Goal: '完走処理中', Result: '次のレースを選択できます' };
+const labels = { Title: 'タイトル', CarSelection: '車選択', Tutorial: '練習', Countdown: 'カウントダウン', Game: 'レース中', Goal: 'ゴール処理中', Result: '結果表示' };
+const details = { Title: '開始操作を待っています', CarSelection: '参加者が車を選んでいます', Tutorial: '参加者が操作を練習しています', Countdown: 'スタートまでまもなく', Game: 'レース進行中', Goal: '完走処理中', Result: '次のレースを選択できます' };
 const actions = { start: 'Title', result: 'Game', retry: 'Result', title: 'Result' };
 let connected = false;
 let currentState = null;
@@ -32,6 +32,7 @@ function setConnection(isConnected) {
     $('input-mode').textContent = '—';
     $('last-result').textContent = '—';
     updateFlow(null);
+    renderParticipants(null);
     $('serial-log').innerHTML = '<div class="empty-log">シリアル入力を待っています。Unity の接続状態を確認してください。</div>';
     for (const button of document.querySelectorAll('[data-action]')) button.disabled = true;
     for (let i = 1; i <= 2; i++) {
@@ -63,7 +64,7 @@ function setGoalLap(value) {
 
 function updateFlow(state) {
   const order = ['Title', 'Countdown', 'Game', 'Goal', 'Result'];
-  const position = order.indexOf(state);
+  const position = order.indexOf(state === 'CarSelection' || state === 'Tutorial' ? 'Title' : state);
   document.querySelectorAll('[data-flow-state]').forEach((step, index) => {
     step.classList.toggle('current', position === index);
     step.classList.toggle('complete', position > index);
@@ -106,6 +107,43 @@ function render(snapshot, { canControl = localMode } = {}) {
   for (const button of document.querySelectorAll('[data-action]')) button.disabled = !canControl || actions[button.dataset.action] !== currentState;
   if (localMode) $('control-note').textContent = snapshot.state === 'Game' ? '「結果を表示」はレースを終了し、現在の記録で結果画面へ進みます。' : '現在のゲーム状態に応じて操作できます。';
   renderLog(snapshot.serial.lines || []);
+  renderParticipants(snapshot);
+}
+
+const drivingLabels = { Stopped: '停止', Driving: '走行中', Airborne: '空中',
+  Reversing: '後退復旧', Yielding: '接触後の譲り', Stalled: '停止・復旧待ち', Finished: '完走', DNF: '未完走' };
+const driverLabel = (number) => number >= 3 ? `CPU ${number - 2}` : `P${number}`;
+const metric = (value) => Number.isFinite(value) ? value : 0;
+
+function renderParticipants(snapshot) {
+  const entries = (snapshot?.participants || []).slice().sort((a, b) => a.position - b.position);
+  const count = snapshot?.participantCount ?? entries.length;
+  $('participant-count').textContent = snapshot ? `${count}台 / CPU ${entries.filter(entry => entry.isCpu).length}台` : '接続待機';
+  $('participant-empty').hidden = entries.length > 0;
+  $('participant-empty').textContent = !snapshot ? 'Unity の接続を待っています。' :
+    snapshot.participantCount == null && !snapshot.participants ? '参加車両のデータがありません。Unity を更新してください。' : '車両の生成を待っています。';
+  $('participant-rows').replaceChildren(...entries.map((entry) => {
+    const row = document.createElement('tr');
+    row.className = entry.isCpu ? 'cpu-row' : '';
+    const cell = (text, detail) => {
+      const td = document.createElement('td');
+      const value = document.createElement('strong'); value.textContent = text; td.append(value);
+      if (detail) { const small = document.createElement('small'); small.textContent = detail; td.append(small); }
+      row.append(td); return td;
+    };
+    cell(`${entry.position} / ${count}`);
+    cell(driverLabel(entry.number), entry.isCpu ? 'CPU' : '人間');
+    const status = cell(drivingLabels[entry.status] || '状態不明', entry.contactGrace ? '接触保護中' : null);
+    if (entry.status === 'Finished') status.className = 'participant-finished';
+    if (entry.status === 'Stalled' || entry.status === 'DNF') status.className = 'participant-warning';
+    cell(`${entry.lap} / ${snapshot.goalLap || '--'}`);
+    cell(`${metric(entry.speed).toFixed(0)} km/h`, entry.isCpu ? `目標 ${metric(entry.targetSpeed).toFixed(0)} km/h` : null);
+    cell(`${metric(entry.progress).toFixed(1)} m`);
+    const gap = metric(entry.gap);
+    cell(entry.rivalNumber ? driverLabel(entry.rivalNumber) : '—', entry.rivalNumber ? `${gap >= 0 ? '+' : ''}${gap.toFixed(1)} m` : null);
+    cell(entry.isCpu ? `${entry.recoveries || 0}回` : '—');
+    return row;
+  }));
 }
 
 function renderLog(lines) {

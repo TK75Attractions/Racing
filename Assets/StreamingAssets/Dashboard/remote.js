@@ -203,6 +203,7 @@ export async function startRemote({ render, setConnection }) {
       if (value.schemaVersion !== 1 || typeof value.sessionId !== 'string' ||
           !Number.isInteger(value.seq) || !Number.isFinite(value.updatedAt) ||
           !Array.isArray(value.players) || !value.serial ||
+          (value.participants != null && !Array.isArray(value.participants)) ||
           (value.serial.lines != null && !Array.isArray(value.serial.lines))) {
         setConnection(false);
         status.textContent = '受信データの形式が合いません。管理者に確認してください。';

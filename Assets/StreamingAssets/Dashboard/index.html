@@ -20,7 +20,7 @@
     <main>
       <section class="overview" aria-label="レース概要">
         <div class="eyebrow"><span class="eyebrow-line"></span> LIVE RACE OPERATIONS <span class="issue">01 / CONTROL DESK</span></div>
-        <div class="overview-row"><div><h1>レース管理<span class="accent">.</span></h1><p>2人の走行と入力を、ひとつの画面で。</p></div><div class="state-summary"><span>現在のゲーム状態</span><strong id="game-state">接続待機</strong><small id="state-detail">Unity を起動してください</small></div></div>
+        <div class="overview-row"><div><h1>レース管理<span class="accent">.</span></h1><p>人間2人とCPUの走行・入力を、ひとつの画面で。</p></div><div class="state-summary"><span>現在のゲーム状態</span><strong id="game-state">接続待機</strong><small id="state-detail">Unity を起動してください</small></div></div>
       </section>
 
       <section class="panel remote-login" id="remote-login" hidden aria-labelledby="remote-login-title">
@@ -52,7 +52,14 @@
 
         <section class="panel controls" aria-labelledby="controls-title"><div class="panel-heading"><div><span class="section-kicker">02 / RACE FLOW</span><h2 id="controls-title">進行コントロール</h2></div></div><div class="flow" aria-label="レース進行状況"><div class="flow-step" data-flow-state="Title"><span>01</span><strong>タイトル</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Countdown"><span>02</span><strong>カウントダウン</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Game"><span>03</span><strong>レース</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Goal"><span>04</span><strong>ゴール処理</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Result"><span>05</span><strong>結果</strong></div></div><p class="flow-state" id="flow-state" role="status">Unity の状態を待っています</p><div class="buttons"><button class="primary" data-action="start" disabled><span>▶</span> レース開始</button><button data-action="result" disabled>結果を表示</button><button data-action="retry" disabled>もう一度走る</button><button data-action="title" disabled>タイトルへ戻る</button></div><p class="control-note" id="control-note">Unity の接続後、現在の状態に応じて操作できます。</p></section>
 
-        <section class="panel serial" aria-labelledby="serial-title"><div class="panel-heading"><div><span class="section-kicker">03 / INPUT STREAM</span><h2 id="serial-title">シリアルモニター</h2></div><div class="serial-heading-right"><span class="serial-port" id="serial-port">PORT —</span><span class="mini-status" id="port-status">待機中</span></div></div><div class="serial-meta"><span>入力モード <strong id="input-mode">—</strong></span><span>最終解析 <strong id="last-result">—</strong></span></div><div class="log-head"><span>時刻</span><span>状態</span><span>受信データ</span></div><div class="log" id="serial-log" role="log" aria-live="off"><div class="empty-log">シリアル入力を待っています。Unity の接続状態を確認してください。</div></div></section>
+        <section class="panel participants" aria-labelledby="participants-title">
+          <div class="panel-heading"><div><span class="section-kicker">03 / RACE PARTICIPANTS</span><h2 id="participants-title">参加車両・CPU状態</h2></div><span class="muted-note" id="participant-count">接続待機</span></div>
+          <p class="participant-note">追走差は相手が前なら＋、後ろなら−。復帰回数は今回のレースでの安全復帰を示します。</p>
+          <div class="participant-scroll"><table class="participant-table"><thead><tr><th scope="col">順位</th><th scope="col">車両</th><th scope="col">走行状態</th><th scope="col">周回</th><th scope="col">速度 / 目標</th><th scope="col">進行距離</th><th scope="col">追走相手 / 差</th><th scope="col">復帰</th></tr></thead><tbody id="participant-rows"></tbody></table></div>
+          <p class="participant-empty" id="participant-empty" role="status">Unity の接続を待っています。</p>
+        </section>
+
+        <section class="panel serial" aria-labelledby="serial-title"><div class="panel-heading"><div><span class="section-kicker">04 / INPUT STREAM</span><h2 id="serial-title">シリアルモニター</h2></div><div class="serial-heading-right"><span class="serial-port" id="serial-port">PORT —</span><span class="mini-status" id="port-status">待機中</span></div></div><div class="serial-meta"><span>入力モード <strong id="input-mode">—</strong></span><span>最終解析 <strong id="last-result">—</strong></span></div><div class="log-head"><span>時刻</span><span>状態</span><span>受信データ</span></div><div class="log" id="serial-log" role="log" aria-live="off"><div class="empty-log">シリアル入力を待っています。Unity の接続状態を確認してください。</div></div></section>
       </div>
       <footer><span>RACING CONTROL / OPERATOR VIEW</span><span id="footer-status">Unity との接続を確認中</span></footer>
     </main>

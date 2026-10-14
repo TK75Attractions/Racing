@@ -26,7 +26,7 @@
         ".validate": "newData.hasChildren(['id','result','state','completedAt'])",
         "id": { ".validate": "newData.isString() && newData.val().length === 32" },
         "result": { ".validate": "newData.isString() && (newData.val() === 'applied' || newData.val() === 'rejected')" },
-        "state": { ".validate": "newData.isString() && (newData.val() === 'Title' || newData.val() === 'Countdown' || newData.val() === 'Game' || newData.val() === 'Goal' || newData.val() === 'Result')" },
+        "state": { ".validate": "newData.isString() && (newData.val() === 'Title' || newData.val() === 'CarSelection' || newData.val() === 'Tutorial' || newData.val() === 'Countdown' || newData.val() === 'Game' || newData.val() === 'Goal' || newData.val() === 'Result')" },
         "completedAt": { ".validate": "newData.isNumber() && newData.val() >= now - 1000 && newData.val() <= now + 1000" },
         "$other": { ".validate": false }
       }
@@ -39,7 +39,7 @@
       "sessionId": { ".validate": "newData.isString() && newData.val().length === 32" },
       "seq": { ".validate": "newData.isNumber() && newData.val() >= 0" },
       "updatedAt": { ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 1000" },
-      "state": { ".validate": "newData.isString() && (newData.val() === 'Title' || newData.val() === 'Countdown' || newData.val() === 'Game' || newData.val() === 'Goal' || newData.val() === 'Result')" },
+      "state": { ".validate": "newData.isString() && (newData.val() === 'Title' || newData.val() === 'CarSelection' || newData.val() === 'Tutorial' || newData.val() === 'Countdown' || newData.val() === 'Game' || newData.val() === 'Goal' || newData.val() === 'Result')" },
       "raceTime": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 86400" },
       "countdown": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3600" },
       "goalLap": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
@@ -67,6 +67,52 @@
           "$other": { ".validate": false }
         },
         "$other": { ".validate": false }
+      },
+      "participantCount": {".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 2 || newData.val() === 3 || newData.val() === 4) && ((newData.val() === 0 && !newData.parent().child('participants').exists()) || (newData.val() > 0 && newData.parent().child('participants').exists()))"},
+      "participants": {
+        ".validate": "newData.hasChildren(['0','1']) && newData.parent().child('participantCount').val() >= 2 && (newData.parent().child('participantCount').val() < 3 || newData.hasChild('2')) && (newData.parent().child('participantCount').val() < 4 || newData.hasChild('3'))",
+        "$index": {
+          ".validate": "newData.hasChildren([\"number\",\"isCpu\",\"position\",\"lap\",\"speed\",\"progress\",\"status\",\"rivalNumber\",\"gap\",\"targetSpeed\",\"recoveries\",\"contactGrace\"]) && (($index === '0' && newData.child('number').val() === 1) || ($index === '1' && newData.child('number').val() === 2) || ($index === '2' && newData.child('number').val() === 3) || ($index === '3' && newData.child('number').val() === 4)) && newData.child('number').val() <= newData.parent().parent().child('participantCount').val()",
+          "number": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 4"
+          },
+          "isCpu": {
+            ".validate": "newData.isBoolean() && newData.val() === (newData.parent().child('number').val() > 2)"
+          },
+          "position": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= newData.parent().parent().parent().child('participantCount').val() && newData.val() % 1 === 0"
+          },
+          "lap": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100 && newData.val() % 1 === 0"
+          },
+          "speed": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000"
+          },
+          "progress": {
+            ".validate": "newData.isNumber() && newData.val() >= -100000 && newData.val() <= 1000000"
+          },
+          "status": {
+            ".validate": "newData.isString() && (newData.val() === 'Stopped' || newData.val() === 'Driving' || newData.val() === 'Airborne' || newData.val() === 'Reversing' || newData.val() === 'Yielding' || newData.val() === 'Stalled' || newData.val() === 'Finished' || newData.val() === 'DNF')"
+          },
+          "rivalNumber": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 2 && newData.val() % 1 === 0 && (newData.parent().child('isCpu').val() === true || newData.val() === 0)"
+          },
+          "gap": {
+            ".validate": "newData.isNumber() && newData.val() >= -1000000 && newData.val() <= 1000000"
+          },
+          "targetSpeed": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000"
+          },
+          "recoveries": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000 && newData.val() % 1 === 0"
+          },
+          "contactGrace": {
+            ".validate": "newData.isBoolean()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
       },
       "serial": {
         ".validate": "newData.hasChildren(['portOpen','port','received','processed','errors','latestSerialId','lastResult'])",
