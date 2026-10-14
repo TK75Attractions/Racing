@@ -51,6 +51,22 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public SerialEntry[] lines;
     }
 
+    [Serializable] private sealed class ParticipantSnapshot
+    {
+        public int number;
+        public bool isCpu;
+        public int position;
+        public int lap;
+        public float speed;
+        public float progress;
+        public string status;
+        public int rivalNumber;
+        public float gap;
+        public float targetSpeed;
+        public int recoveries;
+        public bool contactGrace;
+    }
+
     [Serializable] private sealed class DashboardSnapshot
     {
         public string state;
@@ -59,6 +75,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public int goalLap;
         public string inputMode;
         public PlayerSnapshot[] players;
+        public int participantCount;
+        public ParticipantSnapshot[] participants;
         public SerialSnapshot serial;
     }
 
@@ -73,6 +91,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public int goalLap;
         public string inputMode;
         public PlayerSnapshot[] players;
+        public int participantCount;
+        public ParticipantSnapshot[] participants;
         public SerialSnapshot serial;
     }
 
@@ -223,6 +243,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
                 speed = race != null ? race.GetPlayerSpeed(i) : 0f
             };
         }
+        ParticipantSnapshot[] participants = BuildParticipants();
         return new DashboardSnapshot
         {
             state = race != null ? race.state.ToString() : "Unknown",
@@ -231,6 +252,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             goalLap = race != null ? race.GoalLap : 0,
             inputMode = input != null ? input.InputModeLabel : "Unavailable",
             players = players,
+            participantCount = participants.Length,
+            participants = participants,
             serial = new SerialSnapshot
             {
                 portOpen = serial != null && serial.IsPortOpen,
@@ -242,6 +265,37 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             }
         };
     }
+
+    private ParticipantSnapshot[] BuildParticipants()
+    {
+        int count = race != null ? Math.Min(4, race.Participants.Count) : 0;
+        ParticipantSnapshot[] snapshots = new ParticipantSnapshot[count];
+        for (int i = 0; i < count; i++)
+        {
+            RaceParticipant entry = race.Participants[i];
+            NpcRaceDriver driver = entry.Driver;
+            RaceParticipant rival = driver != null ? race.GetParticipant(driver.RivalIndex) : null;
+            bool activeRival = entry.IsRacing && rival?.IsRacing == true;
+            string status = entry.Result != null ? (entry.Result.didFinish ? "Finished" : "DNF") :
+                race.state != Gmanager.State.Game ? "Stopped" : driver != null ? driver.DrivingStatus :
+                entry.IsRacing ? "Driving" : "Stopped";
+            snapshots[i] = new ParticipantSnapshot
+            {
+                number = entry.Index + 1, isCpu = entry.IsCpu,
+                position = entry.Result?.finishPosition ?? entry.Position,
+                lap = race.GetParticipantLap(entry), speed = Metric(race.GetParticipantSpeed(entry), 0f, 1000f),
+                progress = Metric(entry.Progress, -100000f, 1000000f), status = status,
+                rivalNumber = activeRival ? rival.Index + 1 : 0,
+                gap = activeRival ? Metric(rival.Progress - entry.Progress, -1000000f, 1000000f) : 0f,
+                targetSpeed = entry.IsRacing && race.state == Gmanager.State.Game && driver != null ? Metric(driver.TargetSpeed, 0f, 1000f) : 0f,
+                recoveries = driver?.RecoveryCount ?? 0, contactGrace = driver?.HasContactGrace ?? false
+            };
+        }
+        return snapshots;
+    }
+
+    private static float Metric(float value, float minimum, float maximum) =>
+        float.IsNaN(value) || float.IsInfinity(value) ? 0f : Mathf.Round(Mathf.Clamp(value, minimum, maximum) * 10f) / 10f;
 
     /// <summary>Creates a bounded, image-free snapshot for the remote viewer.</summary>
     public string BuildRemoteSnapshotJson(string sessionId, int sequence)
@@ -259,6 +313,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             goalLap = source.goalLap,
             inputMode = Limit(source.inputMode, 64),
             players = source.players,
+            participantCount = source.participantCount,
+            participants = source.participants,
             serial = source.serial
         };
         foreach (PlayerSnapshot player in remote.players)

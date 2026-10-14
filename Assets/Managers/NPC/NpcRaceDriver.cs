@@ -19,6 +19,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     private float targetSpeed = 25f, lane, desiredLane, nextDecision, stuck, reverseUntil, yieldUntil;
     private int rivalIndex;
     private bool driving;
+    private int groundedTires;
     private float safeRawProgress, safeRaceProgress;
     private LapManager.NpcRecoveryState safeState;
     private bool hasSafeState;
@@ -32,6 +33,12 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     public DriveInputState CurrentState { get; private set; }
     public int RivalIndex => rivalIndex;
     public int RecoveryCount { get; private set; }
+    public float TargetSpeed => targetSpeed * 3.6f;
+    public bool HasContactGrace => contactGrace.Count > 0;
+    // Read-only diagnostics use the same decisions as the physical driver.
+    public string DrivingStatus => !driving ? "Stopped" :
+        groundedTires == 0 ? "Airborne" : Time.time < reverseUntil ? "Reversing" :
+        Time.time < yieldUntil ? "Yielding" : stuck > .5f ? "Stalled" : "Driving";
     public void UpdateInput(float dt) { }
     public void Dispose() { }
 
@@ -60,6 +67,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         float raw = course.GetProgressDistance(body.position);
         float speed = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up).magnitude;
         int grounded = 0; foreach (TireForce tire in tires) if (tire.IsGrounded) grounded++;
+        groundedTires = grounded;
         course.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample here);
         bool jumpAhead = false;
         float bendLimit = cruiseSpeed + maximumCatchup;

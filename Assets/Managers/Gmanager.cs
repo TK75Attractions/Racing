@@ -138,6 +138,10 @@ public class Gmanager : MonoBehaviour
 
     public Transform GetPlayerCarTransform(int index) => index >= 0 && index < PlayerCount ? players[index]?.car?.transform : null;
     public int GetPlayerRacePosition(int index) => index >= 0 && index < PlayerCount ? GetRacePosition(index) : 0;
+    public int GetParticipantLap(RaceParticipant entry) => entry == null ? 0 :
+        entry.Result?.completedLaps ?? lapManager?.GetCarData(entry.Body)?.lapCount ?? 0;
+    public float GetParticipantSpeed(RaceParticipant entry) => entry?.Body != null ?
+        entry.Body.linearVelocity.magnitude * speedUnitMultiplier : 0f;
     public float GetPlayerProgressGap(int index)
     {
         if (index < 0 || index >= PlayerCount || lapManager == null || players[index]?.rigidbody == null || players[1-index]?.rigidbody == null) return 0f;
