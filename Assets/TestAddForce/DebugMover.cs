@@ -220,6 +220,8 @@ public class DebugMover : MonoBehaviour
             return;
         }
 
+        itemEffects?.LimitRocketJumpMomentum();
+
         if (IsInputSuppressed)
         {
             ClearUserInput();
