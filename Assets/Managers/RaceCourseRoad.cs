@@ -24,6 +24,9 @@ public static class RaceCourseRoad
         public Material redMaterial;
         public bool generateCollider = true;
         public PhysicsMaterial colliderMaterial;
+        [Tooltip("チューブ内壁まで道路の両側を埋める対象。未指定のコースでは生成しません。")]
+        public MeshCollider tubeInterior;
+
     }
 
     public const string RootName = "Generated Race Course Road";
@@ -118,6 +121,8 @@ public static class RaceCourseRoad
             collider.sharedMesh = surface;
         }
 
+        BuildTubeShoulders(owner, root.transform, center, left, right, distances, roadSegments, settings);
+
         // Paint is clipped against each surface triangle, so it follows curves, width changes
         // and slopes without crossing below a twisted road quad. Only the road has a collider.
         float period = Mathf.Max(0.1f, settings.dashLength) + Mathf.Max(0.1f, settings.dashGap);
@@ -154,6 +159,52 @@ public static class RaceCourseRoad
             settings.redMaterial != null ? settings.redMaterial : LoadMaterial("Red")
         });
         markingObject.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
+    }
+
+    private static void BuildTubeShoulders(Transform owner, Transform root, List<Vector3> center,
+        List<Vector3> left, List<Vector3> right, List<float> distances, List<bool> segments, Settings settings)
+    {
+        MeshCollider wall = settings.tubeInterior;
+        if (wall == null || !wall.enabled) return;
+        var vertices = new Vector3[center.Count * 4];
+        var uv = new Vector2[vertices.Length];
+        var triangles = new List<int>();
+        bool previousFilled = false;
+        for (int i = 0; i < center.Count; i++)
+        {
+            Vector3 side = (right[i] - left[i]).normalized;
+            float halfWidth = Vector3.Distance(left[i], right[i]) * .5f;
+            bool hitLeft = wall.Raycast(new Ray(center[i], -side), out RaycastHit lh, 25f);
+            bool hitRight = wall.Raycast(new Ray(center[i], side), out RaycastHit rh, 25f);
+            bool filled = hitLeft && hitRight && lh.distance >= halfWidth - .1f && rh.distance >= halfWidth - .1f;
+            Vector3 outerLeft = filled ? lh.point - side * .05f : left[i];
+            Vector3 outerRight = filled ? rh.point + side * .05f : right[i];
+            Vector3[] row = { outerLeft, left[i], right[i], outerRight };
+            for (int j = 0; j < 4; j++)
+            {
+                vertices[i * 4 + j] = owner.InverseTransformPoint(row[j]);
+                uv[i * 4 + j] = new Vector2(Vector3.Dot(row[j] - center[i], side), distances[i]);
+            }
+            if (i > 0 && segments[i - 1] && (filled || previousFilled))
+            {
+                int a = (i - 1) * 4, b = i * 4;
+                triangles.AddRange(new[] { a, b, a + 1, a + 1, b, b + 1,
+                    a + 2, b + 2, a + 3, a + 3, b + 2, b + 3 });
+            }
+            previousFilled = filled;
+        }
+        if (triangles.Count == 0) return;
+        Mesh mesh = NewMesh("TubeRoadShoulders", vertices.Length);
+        mesh.vertices = vertices; mesh.uv = uv; mesh.SetTriangles(triangles, 0);
+        mesh.RecalculateNormals(); mesh.RecalculateBounds(); mesh.RecalculateTangents();
+        GameObject part = CreatePart(root, "Tube Road Shoulders", mesh,
+            new[] { settings.asphaltMaterial != null ? settings.asphaltMaterial : LoadMaterial("Asphalt") });
+        if (settings.generateCollider)
+        {
+            MeshCollider collider = part.AddComponent<MeshCollider>();
+            collider.sharedMaterial = settings.colliderMaterial;
+            collider.sharedMesh = mesh;
+        }
     }
 
     private static void AddTriangle(List<int> triangles, Vertex[] vertices, int a, int b, int c)

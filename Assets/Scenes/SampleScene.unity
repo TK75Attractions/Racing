@@ -19968,6 +19968,7 @@ MonoBehaviour:
     redMaterial: {fileID: 0}
     generateCollider: 1
     colliderMaterial: {fileID: 0}
+    tubeInterior: {fileID: 15590687}
   waypointColor: {r: 0, g: 1, b: 1, a: 1}
   pathColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   waypointRadius: 1
