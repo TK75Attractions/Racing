@@ -62,6 +62,11 @@ public class Gmanager : MonoBehaviour
     [SerializeField, Range(0, 2)] private int npcCount = 2;
     [SerializeField, Min(60f)] private float maximumRaceSeconds = 360f;
 
+    [Header("Displays")]
+    [Tooltip("P1 uses the main game window (Display 1). P2's output display number, as shown in the Game view. With an external main display, select the other external display here.")]
+    [SerializeField, Range(2, 8)] private int playerTwoDisplay = 2;
+    public int PlayerTwoDisplayIndex => playerTwoDisplay - 1;
+
     [Header("UI")]
     [SerializeField] private OnPlayUIManager onPlayUIManager;
     [SerializeField] private ResultUIManager resultUIManager;
@@ -175,7 +180,7 @@ public class Gmanager : MonoBehaviour
             lapManager.CarFinished += HandleCarFinished;
         }
 
-        displayRigs = TwoPlayerDisplayFactory.Create(transform.parent, cameraBlendSeconds);
+        displayRigs = TwoPlayerDisplayFactory.Create(transform.parent, cameraBlendSeconds, PlayerTwoDisplayIndex);
         InitializePlayerDisplays();
         if (GetComponent<RaceAudioOutput>() == null) gameObject.AddComponent<RaceAudioOutput>();
         soundEffects = GetComponent<RaceSoundEffects>() ?? gameObject.AddComponent<RaceSoundEffects>();

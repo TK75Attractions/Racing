@@ -30,10 +30,11 @@ public sealed class PlayerDisplayRig
         GameObject canvasRoot,
         GameObject backCameraRoot,
         CinemachineCamera raceCamera,
-        bool ownsRuntimeObjects)
+        bool ownsRuntimeObjects,
+        int displayIndex = -1)
     {
         PlayerIndex = playerIndex;
-        DisplayIndex = playerIndex;
+        DisplayIndex = displayIndex >= 0 ? displayIndex : playerIndex;
         CameraRoot = cameraRoot;
         CanvasRoot = canvasRoot;
         BackCameraRoot = backCameraRoot;
@@ -218,7 +219,7 @@ public static class TwoPlayerDisplayFactory
 {
     public const int PlayerCount = 2;
 
-    public static PlayerDisplayRig[] Create(Transform managerRoot, float cameraBlendSeconds)
+    public static PlayerDisplayRig[] Create(Transform managerRoot, float cameraBlendSeconds, int playerTwoDisplayIndex = 1)
     {
         if (managerRoot == null)
         {
@@ -237,15 +238,18 @@ public static class TwoPlayerDisplayFactory
             return new PlayerDisplayRig[0];
         }
 
-        if (Application.isPlaying)
+        playerTwoDisplayIndex = Mathf.Clamp(playerTwoDisplayIndex, 1, 7);
+        // Editor Game views preview virtual displays even with one physical monitor.
+        if (Application.isPlaying && !Application.isEditor)
         {
-            if (Display.displays.Length < PlayerCount)
+            if (Display.displays.Length <= playerTwoDisplayIndex)
             {
-                Debug.LogError("Two-player mode requires two connected displays.");
+                Debug.LogError($"P2 Display {playerTwoDisplayIndex + 1} is unavailable; {Display.displays.Length} displays connected. Check GManager > Displays > Player Two Display.");
             }
             else
             {
-                Display.displays[1].Activate();
+                Display.displays[playerTwoDisplayIndex].Activate();
+                Debug.Log($"Race display outputs: P1=Display 1 ({Screen.width}x{Screen.height}), P2=Display {playerTwoDisplayIndex + 1} ({Display.displays[playerTwoDisplayIndex].systemWidth}x{Display.displays[playerTwoDisplayIndex].systemHeight}).");
             }
         }
 
@@ -277,7 +281,8 @@ public static class TwoPlayerDisplayFactory
             canvasRootTwo,
             backCameraRootTwo,
             raceCameraTwo,
-            true);
+            true,
+            playerTwoDisplayIndex);
 
         PlayerDisplayRig[] rigs = { playerOne, playerTwo };
         foreach (PlayerDisplayRig rig in rigs)

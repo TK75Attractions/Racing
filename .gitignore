@@ -100,3 +100,6 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Unity recovery snapshots stay local; already tracked snapshots are preserved.
+/Assets/_Recovery/

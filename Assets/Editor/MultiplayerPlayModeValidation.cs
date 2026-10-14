@@ -357,11 +357,8 @@ public static class MultiplayerPlayModeValidation
         CinemachineCamera p2VirtualCamera = FindComponentIncludingInactive<CinemachineCamera>("GameManagers/VCamera_P2");
         Require(p2MainCamera != null, "P2 main camera is missing.");
         Require(p2Canvas != null && p2Canvas.worldCamera != null, "P2 UI camera is missing.");
-        if (Display.displays.Length >= 2)
-        {
-            Require(p2MainCamera.targetDisplay == 1, "P2 main camera is not assigned to Display 1.");
-            Require(p2Canvas.worldCamera.targetDisplay == 1, "P2 UI camera is not assigned to Display 1.");
-        }
+        Require(p2MainCamera.targetDisplay == manager.PlayerTwoDisplayIndex, "P2 main camera is not assigned to the configured display.");
+        Require(p2Canvas.worldCamera.targetDisplay == manager.PlayerTwoDisplayIndex, "P2 UI camera is not assigned to the configured display.");
         Require(p2VirtualCamera != null && p2VirtualCamera.OutputChannel == OutputChannels.Channel01,
             "P2 Cinemachine output channel is incorrect.");
 
