@@ -23,6 +23,11 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
     [Serializable] private sealed class Trial
     {
         public string player;
+        public bool rocketCollected;
+        public Vector3 rocketPickupPosition;
+        public float takeoffSpeed;
+        public bool rocketActiveAtTakeoff;
+        public bool rocketActiveAtLanding;
         public float distance;
         public float maximumHeight;
         public float maximumTilt;
@@ -45,6 +50,7 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
         public bool offCoursePositionPreserved;
         public float offCourseSeconds;
         public string error;
+        public bool slashResetPassed;
     }
 
     private sealed class Driver
@@ -69,22 +75,25 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
     private StreamWriter trace;
     private float directionSign;
     private float elapsed;
+    private bool rocketSuite;
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
     private IEnumerator Start()
     {
+        rocketSuite = UnityEditor.SessionState.GetBool("Racing.RocketJumpFix.Active", false);
         output = Environment.GetEnvironmentVariable("RACING_COURSE_PLAYTHROUGH_OUTPUT") ?? Path.Combine(Path.GetTempPath(), "racing-course-playthrough");
+        if (rocketSuite) output = Path.GetFullPath("Artifacts/RocketJumpFix");
         Directory.CreateDirectory(output);
         trace = new StreamWriter(Path.Combine(output, "trace.csv"));
         trace.WriteLine("player,time,x,y,z,speed,steering,pedal,grounded,distance,wall");
-        Time.timeScale = 3f;
+        Time.timeScale = rocketSuite ? 1f : 3f;
+        if (rocketSuite) Time.captureFramerate = 30;
         Application.runInBackground = true;
         Gmanager manager = UnityEngine.Object.FindFirstObjectByType<Gmanager>();
         RaceRemoteFirebasePublisher publisher = manager.GetComponent<RaceRemoteFirebasePublisher>();
         if (publisher != null) publisher.enabled = false;
-        manager.StartGame();
-        while (manager.state != Gmanager.State.Tutorial || TransitionActive()) yield return null;
-        typeof(Gmanager).GetMethod("FinishTutorialWhenScreenCovered", Private).Invoke(manager, null);
+        if (rocketSuite) yield return RacingPolishControls();
+        typeof(Gmanager).GetMethod("StartGameWhenScreenCovered", Private).Invoke(manager, null);
         typeof(Gmanager).GetMethod("CompleteGameStart", Private).Invoke(manager, null);
         foreach (ScreenTransitionController transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
             transition.ApplyStateImmediate(Gmanager.State.Countdown);
@@ -109,6 +118,35 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
             drivers.Add(driver); report.trials.Add(driver.trial);
             foreach (PlayerAudioCapture capture in car.GetComponentsInChildren<PlayerAudioCapture>()) capture.enabled = false;
         }
+        if (rocketSuite)
+        {
+            // Real ItemBox triggers, with only the test lottery fixed to Rocket.
+            foreach (RaceItemPickup pickup in UnityEngine.Object.FindObjectsByType<RaceItemPickup>(FindObjectsSortMode.None))
+                pickup.gameObject.SetActive(false);
+            for (int index = 0; index < 2; index++)
+            {
+                float x = index == 0 ? 505f : 604f;
+                float progress = course.GetProgressDistance(new Vector3(x, 16f, 598f));
+                course.TryGetSampleAtProgress(progress, out var sample);
+                var box = new GameObject("Rocket test pickup " + index).AddComponent<ItemBox>();
+                box.transform.position = sample.position + sample.right * (index == 0 ? 2f : -2f);
+                var table = new RaceItemTable();
+                typeof(RaceItemTable).GetField("entries", Private).SetValue(table, new[]
+                {
+                    new RaceItemTable.Entry { item = RaceItemType.Rocket, leaderWeight = 1f, trailerWeight = 1f }
+                });
+                typeof(ItemBox).GetField("itemTable", Private).SetValue(box, table);
+                typeof(RaceItemPickup).GetField("triggerRadius", Private).SetValue(box, .4f);
+                box.Refresh();
+                int player = index;
+                drivers[index].body.GetComponent<CarItemEffects>().ItemUsed += item =>
+                {
+                    if (item != RaceItemType.Rocket) return;
+                    drivers[player].trial.rocketCollected = true;
+                    drivers[player].trial.rocketPickupPosition = drivers[player].body.position;
+                };
+            }
+        }
         yield return new WaitForSeconds(0.5f);
         driving = true;
         while (!failed && elapsed < 180f && drivers.Exists(driver => driver.trial.distance < course.TotalLength)) yield return null;
@@ -120,6 +158,13 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
             driver.trial.finalPosition = driver.body.position;
             if (driver.trial.distance < course.TotalLength || !driver.trial.tookOff || !driver.trial.landed || driver.trial.wallContacts != 0)
                 Fail(driver.trial.player + " did not complete a clean lap with jump and landing.");
+        }
+        if (rocketSuite && !failed)
+        {
+            foreach (Driver driver in drivers)
+                if (!driver.trial.rocketCollected || driver.trial.takeoffSpeed > 22.5f)
+                    Fail("Rocket pickup or safe takeoff speed was not verified.");
+            yield return VerifySlashReset();
         }
         if (!failed)
         {
@@ -135,8 +180,53 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
         }
         File.WriteAllText(Path.Combine(output, "report.json"), JsonUtility.ToJson(report, true));
         trace.Dispose(); trace = null;
+        if (rocketSuite)
+        {
+            UnityEditor.SessionState.SetBool("Racing.RocketJumpFix.Active", false);
+            Time.captureFramerate = 0;
+        }
         Type editor = Type.GetType("CourseJumpPlaythroughValidation, Assembly-CSharp-Editor");
         editor.GetMethod("Finish").Invoke(null, new object[] { !failed, failed ? report.error : "COURSE_JUMP_PLAYTHROUGH_PASS: both actual cars complete a lap, jump/land, no wall contacts, no off-course respawn after 4 seconds." });
+    }
+
+    private IEnumerator RacingPolishControls()
+    {
+        Type editor = Type.GetType("RacingPolishValidation, Assembly-CSharp-Editor");
+        yield return (IEnumerator)editor.GetMethod("ValidatePlayModeControls").Invoke(null, null);
+    }
+
+    private IEnumerator VerifySlashReset()
+    {
+        UnityEditor.SessionState.SetBool("Racing.RocketJumpFix.Reset", true);
+        var body = drivers[1].body;
+        var resetter = body.GetComponent<CarResetter>();
+        var source = new KeyboardDriveInputSource(1);
+        var keyboard = UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
+        var background = UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior;
+        UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior = UnityEngine.InputSystem.InputSettings.BackgroundBehavior.IgnoreFocus;
+        resetter.SetInputSource(source);
+        body.GetComponent<CarItemEffects>().ClearAll();
+        body.position += Vector3.right * 25f;
+        body.linearVelocity = Vector3.zero;
+        Vector3 outside = body.position;
+        yield return new WaitForSeconds(.75f);
+        keyboard.MakeCurrent();
+        UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,
+            new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.Slash));
+        yield return null;
+        source.UpdateInput(Time.deltaTime);
+        yield return null;
+        report.slashResetPassed = Vector3.Distance(body.position, outside) > 10f &&
+            course.IsPointInsideCourse(body.position);
+        if (!report.slashResetPassed) Fail("Slash key failed to reset the actual P2 car.");
+        UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard, new UnityEngine.InputSystem.LowLevel.KeyboardState());
+        yield return null;
+        source.UpdateInput(Time.deltaTime);
+        yield return new WaitForSeconds(1.5f);
+        resetter.SetInputSource(drivers[1].input);
+        UnityEngine.InputSystem.InputSystem.RemoveDevice(keyboard);
+        UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior = background;
+        UnityEditor.SessionState.SetBool("Racing.RocketJumpFix.Reset", false);
     }
 
     private void FixedUpdate()
@@ -156,8 +246,8 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
             driver.trial.maximumHeight = Mathf.Max(driver.trial.maximumHeight, body.position.y);
             driver.trial.maximumTilt = Mathf.Max(driver.trial.maximumTilt, Vector3.Angle(body.rotation * Vector3.up, Vector3.up));
             if (driver.trial.maximumTilt > 80f) Fail(driver.trial.player + " overturned during the trial.");
-            int grounded = 0; foreach (TireForce tire in driver.tires) if (tire.IsGrounded) grounded++;
-            bool overJump = body.position.x > 605f && body.position.x < 623f &&
+            int grounded = 0; foreach (TireForce tire in driver.tires) if (tire.GetComponent<GroundCheck>().CheckNow()) grounded++;
+            bool overJump = body.position.x > 605f && body.position.x < 650f &&
                 body.position.z > 590f && body.position.z < 606f && body.position.y > 14f;
             driver.unexpectedAirborneSeconds = grounded == 0 && !overJump
                 ? driver.unexpectedAirborneSeconds + Time.fixedDeltaTime : 0f;
@@ -168,12 +258,18 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
             {
                 if (grounded == 0 && body.position.y > 10f)
                 {
-                    if (!driver.trial.tookOff) driver.trial.takeoffPosition = body.position;
+                    if (!driver.trial.tookOff)
+                    {
+                        driver.trial.takeoffPosition = body.position;
+                        driver.trial.takeoffSpeed = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up).magnitude;
+                        driver.trial.rocketActiveAtTakeoff = body.GetComponent<CarItemEffects>().IsRocketActive;
+                    }
                     driver.trial.tookOff = true; driver.trial.airborneSeconds += Time.fixedDeltaTime;
                 }
                 if (driver.trial.tookOff && !driver.trial.landed && grounded >= 2 && body.position.x > 566f && body.position.y < 18f)
                 {
                     driver.trial.landed = true; driver.trial.landingPosition = body.position;
+                    driver.trial.rocketActiveAtLanding = body.GetComponent<CarItemEffects>().IsRocketActive;
                 }
             }
             float speed = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up).magnitude;
