@@ -41,7 +41,14 @@ public sealed class RaceSoundEffects : MonoBehaviour
     public static void PlayForButton(RaceSoundCue cue,Transform button)
     {
         Canvas canvas=button.GetComponentInParent<Canvas>();
-        if (canvas!=null) PlayForPlayer(cue,canvas.rootCanvas.targetDisplay);
+        if (canvas!=null)
+        {
+            Canvas root=canvas.rootCanvas;
+            int display=root.renderMode==RenderMode.ScreenSpaceCamera && root.worldCamera!=null
+                ? root.worldCamera.targetDisplay : root.targetDisplay;
+            int player=Gmanager.Control!=null && display==Gmanager.Control.PlayerTwoDisplayIndex ? 1 : display;
+            PlayForPlayer(cue,player);
+        }
     }
     private void OnDestroy() { if (Instance==this) Instance=null; }
 }

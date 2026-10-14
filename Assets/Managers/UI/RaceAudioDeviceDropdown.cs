@@ -22,7 +22,9 @@ public sealed class RaceAudioDeviceDropdown : TMP_Dropdown
     {
         Canvas owner = GetComponentInParent<Canvas>();
         if (owner == null) return;
+        Canvas root = owner.rootCanvas;
         foreach (Canvas canvas in popup.GetComponentsInChildren<Canvas>(true))
-            canvas.targetDisplay = owner.rootCanvas.targetDisplay;
+            canvas.targetDisplay = root.renderMode == RenderMode.ScreenSpaceCamera && root.worldCamera != null
+                ? root.worldCamera.targetDisplay : root.targetDisplay;
     }
 }

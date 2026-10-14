@@ -5142,6 +5142,7 @@ MonoBehaviour:
   goMessageSeconds: 0.75
   lapManager: {fileID: 0}
   secondPlaceTimeoutSeconds: 40
+  playerTwoDisplay: 3
   onPlayUIManager:
     position:
       root: {fileID: 0}
