@@ -110,6 +110,17 @@ public sealed class PlayerDisplayRig
             aspectController?.ConfigureForDisplay(DisplayIndex, BackCamera);
             aspectController?.ConfigureCanvas(Canvas);
         }
+
+        // URP 17.3 imports every native backbuffer using Screen.width/height.
+        // Additional displays can have a different size, so render their whole
+        // stack to an explicit texture before presenting to the native buffers.
+        if (Application.isPlaying && !Application.isEditor && DisplayIndex > 0 &&
+            DisplayIndex < Display.displays.Length && CameraRoot != null)
+        {
+            var output = CameraRoot.GetComponent<RenderGraphDisplayOutput>() ??
+                CameraRoot.AddComponent<RenderGraphDisplayOutput>();
+            output.Configure(new[] { BackCamera, BackImageCamera, MainCamera, FrontCamera, UiCamera }, DisplayIndex);
+        }
     }
 
     public void Dispose()
