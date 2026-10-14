@@ -5568,6 +5568,8 @@ MonoBehaviour:
   cameraDistance: 5
   cameraHeight: 2
   rotationSmoothTime: 0.15
+  heightSmoothTime: 0.25
+  teleportDistance: 12
 --- !u!64 &218115899
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -7176,6 +7178,7 @@ MonoBehaviour:
   fovResponse: 7
   highSpeedPullback: 0.25
   boostPullback: 0.12
+  enableDrivingCameraShake: 0
   highSpeedShakePosition: 0.015
   boostShakePosition: 0.012
   highSpeedShakeRotation: 0.12
@@ -20007,6 +20010,7 @@ MonoBehaviour:
   dashWidth: 0.18
   markerSpacing: 28
   roadsideOffset: 33
+  roadsideMargin: 2.5
   markerHeight: 2.2
   surfaceOffset: 0.08
   roadMarkingColor: {r: 1, g: 0.72, b: 0.18, a: 0.95}
