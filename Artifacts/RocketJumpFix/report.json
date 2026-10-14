@@ -1,0 +1,82 @@
+{
+    "trials": [
+        {
+            "player": "Player1_Car",
+            "rocketCollected": true,
+            "rocketPickupPosition": {
+                "x": 517.633544921875,
+                "y": 6.765212535858154,
+                "z": 616.9662475585938
+            },
+            "takeoffSpeed": 22.0,
+            "rocketActiveAtTakeoff": true,
+            "rocketActiveAtLanding": true,
+            "distance": 1829.708984375,
+            "maximumHeight": 18.33502960205078,
+            "maximumTilt": 24.087696075439454,
+            "airborneSeconds": 0.6199995875358582,
+            "maximumUnexpectedAirborneSeconds": 0.0599999763071537,
+            "tookOff": true,
+            "landed": true,
+            "takeoffPosition": {
+                "x": 607.218017578125,
+                "y": 18.33502960205078,
+                "z": 598.0026245117188
+            },
+            "landingPosition": {
+                "x": 620.8679809570313,
+                "y": 16.45584487915039,
+                "z": 597.9837036132813
+            },
+            "wallContacts": 0,
+            "lastWall": "",
+            "finalPosition": {
+                "x": 432.3476257324219,
+                "y": 3.3479955196380617,
+                "z": 790.6243896484375
+            }
+        },
+        {
+            "player": "Player2_Car",
+            "rocketCollected": true,
+            "rocketPickupPosition": {
+                "x": 601.2372436523438,
+                "y": 18.110292434692384,
+                "z": 595.996826171875
+            },
+            "takeoffSpeed": 22.0,
+            "rocketActiveAtTakeoff": true,
+            "rocketActiveAtLanding": true,
+            "distance": 1869.708740234375,
+            "maximumHeight": 18.339937210083009,
+            "maximumTilt": 24.087085723876954,
+            "airborneSeconds": 0.7199994921684265,
+            "maximumUnexpectedAirborneSeconds": 0.09999996423721314,
+            "tookOff": true,
+            "landed": true,
+            "takeoffPosition": {
+                "x": 607.3164672851563,
+                "y": 18.339937210083009,
+                "z": 597.0380859375
+            },
+            "landingPosition": {
+                "x": 620.9339599609375,
+                "y": 16.475093841552736,
+                "z": 597.85107421875
+            },
+            "wallContacts": 0,
+            "lastWall": "",
+            "finalPosition": {
+                "x": 471.2892761230469,
+                "y": 3.3479959964752199,
+                "z": 783.3406982421875
+            }
+        }
+    ],
+    "courseLength": 1829.0640869140625,
+    "simulatedSeconds": 89.5369873046875,
+    "offCoursePositionPreserved": true,
+    "offCourseSeconds": 3.999997615814209,
+    "error": "",
+    "slashResetPassed": true
+}
