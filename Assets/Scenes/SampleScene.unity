@@ -371,6 +371,66 @@ PrefabInstance:
       propertyPath: m_Mesh
       value:
       objectReference: {fileID: 4300000, guid: 8aa170a99f4124bba86a5d55983c0b42, type: 2}
+    - target: {fileID: -5558379239448502065, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -5179909891240574774, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -3370987068758635104, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -2036472721373001367, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -1393781089802967949, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -968338129662020726, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 749727992793697501, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2116741621785716514, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2453736080540014317, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3724796516150971620, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3802489966895491949, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677869001304601685, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6500614012991000065, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6575180251691383495, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8265173612288410850, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_MeshLodSelectionBias
+      value: 2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
