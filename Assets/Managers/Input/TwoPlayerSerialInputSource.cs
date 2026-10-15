@@ -17,6 +17,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     private readonly float[] lastInputTimes = { -1f, -1f };
 
     private SerialPort serialPort;
+    private MacPseudoTerminalLineReader pseudoTerminal;
     private Thread readThread;
     private volatile bool stopRequested;
     private volatile bool portIsOpen;
@@ -118,6 +119,8 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         if (readThread != null && readThread.IsAlive)
             readThread.Join(Math.Max(250, configuration.ReadTimeoutMilliseconds * 2));
         serialPort?.Dispose();
+        pseudoTerminal?.Dispose();
+        pseudoTerminal = null;
         serialPort = null;
         readThread = null;
     }
@@ -149,12 +152,23 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 
         try
         {
-            serialPort = new SerialPort(portName, configuration.BaudRate)
+            if (configuration.UsePseudoTerminal)
             {
-                NewLine = "\n",
-                ReadTimeout = configuration.ReadTimeoutMilliseconds
-            };
-            serialPort.Open();
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+                pseudoTerminal = new MacPseudoTerminalLineReader(portName, configuration.ReadTimeoutMilliseconds);
+#else
+                throw new PlatformNotSupportedException("The serial simulator requires macOS.");
+#endif
+            }
+            else
+            {
+                serialPort = new SerialPort(portName, configuration.BaudRate)
+                {
+                    NewLine = "\n",
+                    ReadTimeout = configuration.ReadTimeoutMilliseconds
+                };
+                serialPort.Open();
+            }
             portIsOpen = true;
             readThread = new Thread(ReadLoop) { IsBackground = true, Name = $"ESP32-shared-{portName}" };
             readThread.Start();
@@ -162,17 +176,21 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         catch (Exception exception)
         {
             portIsOpen = false;
+            pseudoTerminal?.Dispose();
+            pseudoTerminal = null;
+            serialPort?.Dispose();
+            serialPort = null;
             Debug.LogError($"Failed to open shared serial controller on {portName}: {exception.Message}");
         }
     }
 
     private void ReadLoop()
     {
-        while (!stopRequested && serialPort != null && serialPort.IsOpen)
+        while (!stopRequested && portIsOpen)
         {
             try
             {
-                string line = serialPort.ReadLine();
+                string line = pseudoTerminal != null ? pseudoTerminal.ReadLine() : serialPort.ReadLine();
                 if (!string.IsNullOrWhiteSpace(line))
                 {
                     receivedLines.Enqueue(line.Trim());

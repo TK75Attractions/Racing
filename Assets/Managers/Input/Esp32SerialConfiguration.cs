@@ -17,4 +17,22 @@ public sealed class Esp32SerialConfiguration
     public float SteeringDivisor => steeringDivisor;
     public int ReadTimeoutMilliseconds => readTimeoutMilliseconds;
     public float InputTimeoutSeconds => inputTimeoutSeconds;
+    public bool UsePseudoTerminal { get; private set; }
+
+    public Esp32SerialConfiguration WithSimulatorPort(string path, float divisor)
+    {
+        if (!MacPseudoTerminalLineReader.IsSupportedPath(path))
+            throw new ArgumentException("Expected a macOS PTY path.", nameof(path));
+        if (float.IsNaN(divisor) || float.IsInfinity(divisor) || divisor < .0001f || divisor > 1000f)
+            throw new ArgumentOutOfRangeException(nameof(divisor));
+        return new Esp32SerialConfiguration
+        {
+            portName = path,
+            baudRate = baudRate,
+            steeringDivisor = divisor,
+            readTimeoutMilliseconds = readTimeoutMilliseconds,
+            inputTimeoutSeconds = inputTimeoutSeconds,
+            UsePseudoTerminal = true
+        };
+    }
 }

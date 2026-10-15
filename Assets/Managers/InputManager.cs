@@ -46,7 +46,7 @@ public class InputManager : MonoBehaviour
     }
 
     public bool IsSerialDebugDisplayVisible => serialDebugMode && serialDebugDisplayVisible;
-    public bool IsAnyDebugMode => isDebugMode || isP1SerialP2KeyboardDebugMode;
+    public bool IsAnyDebugMode => !backgroundBeforeSimulator.HasValue && (isDebugMode || isP1SerialP2KeyboardDebugMode);
     public TwoPlayerSerialInputSource SharedSerialInputSource => sharedSerialInputSource;
     public string InputModeLabel => GetInputModeLabel();
     public event Action<string, string> SerialLineProcessed;
@@ -55,11 +55,26 @@ public class InputManager : MonoBehaviour
         new IDriveInputSource[SupportedPlayerCount];
     private TwoPlayerSerialInputSource sharedSerialInputSource;
     private bool initialized;
+    private bool? backgroundBeforeSimulator;
 
     public void Init()
     {
         DisposeInputSources();
         esp32Serial ??= new Esp32SerialConfiguration();
+
+        if (SerialSimulatorSession.TryGetConfiguration(out string simulatorPort, out float simulatorDivisor))
+        {
+            backgroundBeforeSimulator = Application.runInBackground;
+            Application.runInBackground = true;
+            sharedSerialInputSource = new TwoPlayerSerialInputSource(
+                esp32Serial.WithSimulatorPort(simulatorPort, simulatorDivisor), simulatorPort);
+            sharedSerialInputSource.LineProcessed += OnSharedSerialLineProcessed;
+            for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
+                inputSources[playerIndex] = new SharedPlayerDriveInputSource(sharedSerialInputSource, playerIndex);
+            initialized = true;
+            Debug.Log($"ESP32 simulator: {simulatorPort}, steering divisor {simulatorDivisor}. Both players use the PTY stream.");
+            return;
+        }
 
         if (isP1SerialP2KeyboardDebugMode)
         {
@@ -217,7 +232,8 @@ public class InputManager : MonoBehaviour
     private void OnSharedSerialLineProcessed(string status, string line)
     {
         SerialLineProcessed?.Invoke(status, line);
-        string players = isP1SerialP2KeyboardDebugMode ? "P1" : "P1/P2";
+        string players = sharedSerialInputSource != null && backgroundBeforeSimulator.HasValue ? "P1/P2" :
+            isP1SerialP2KeyboardDebugMode ? "P1" : "P1/P2";
         AddSerialDebugLog($"{players} {status}", line);
     }
 
@@ -341,6 +357,7 @@ public class InputManager : MonoBehaviour
 
     private string GetInputModeLabel()
     {
+        if (backgroundBeforeSimulator.HasValue) return "Serial Simulator P1/P2 (macOS PTY)";
         if (isP1SerialP2KeyboardDebugMode) return "P1 Serial / P2 Keyboard (debug)";
         return isDebugMode ? "Keyboard P1/P2 (debug; serial disabled)" : "Serial P1/P2";
     }
@@ -361,6 +378,11 @@ public class InputManager : MonoBehaviour
         }
 
         initialized = false;
+        if (backgroundBeforeSimulator.HasValue)
+        {
+            Application.runInBackground = backgroundBeforeSimulator.Value;
+            backgroundBeforeSimulator = null;
+        }
         handle = 0f;
         peddale = 0f;
     }
