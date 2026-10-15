@@ -2,6 +2,8 @@
 
 Unity 側は 115200 bps、改行 `\n` で1台のマイコンから Player 1 / Player 2 の入力を読み取ります。
 
+ESP32なしでの通信確認には、Mac用の[ESP32 Serial Lab](ESP32Simulator.md)を使用できます。`Racing > ESP32 Simulator`から接続し、同じ4列入力を仮想ポート経由で送信します。
+
 ## USBポートの自動検出
 
 UnityはUSBシリアルのポートを1つ選んで開きます。この環境のESP32はCP2102を使用しているため、`SLAB_USBtoUART` ポートを優先します。起動時の入力行はポート検出条件に使いません。`DEVICE` 応答や `IDENTIFY` コマンドは不要です。
