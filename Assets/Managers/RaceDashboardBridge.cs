@@ -13,8 +13,10 @@ public sealed class RaceDashboardBridge : MonoBehaviour
 {
     private const string Prefix = "http://127.0.0.1:8765/";
     private const int MaxSerialLines = 80;
+    private const int MaxSerialAlerts = 8;
     private readonly ConcurrentQueue<HttpListenerContext> requests = new ConcurrentQueue<HttpListenerContext>();
     private readonly Queue<SerialEntry> serialLines = new Queue<SerialEntry>();
+    private readonly Queue<SerialEntry> serialAlerts = new Queue<SerialEntry>();
     private HttpListener listener;
     private Thread listenerThread;
     private InputManager input;
@@ -261,7 +263,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
                 processed = serial?.LinesProcessed ?? 0, errors = serial?.ParseErrorCount ?? 0,
                 latestSerialId = serialSequence,
                 lastResult = serial?.LastParseResult ?? "Waiting for input",
-                lines = serialLines.ToArray()
+                lines = SelectSerialLines(MaxSerialLines)
             }
         };
     }
@@ -301,8 +303,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     public string BuildRemoteSnapshotJson(string sessionId, int sequence)
     {
         DashboardSnapshot source = BuildSnapshot();
-        SerialEntry[] allLines = source.serial.lines;
-        int count = Math.Min(10, allLines.Length);
+        int count = Math.Min(10, source.serial.lines.Length);
         RemoteSnapshot remote = new RemoteSnapshot
         {
             sessionId = sessionId,
@@ -327,10 +328,11 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         remote.serial.lastResult = Limit(remote.serial.lastResult, 120);
         while (true)
         {
-            remote.serial.lines = new SerialEntry[count];
-            for (int i = 0; i < count; i++)
+            SerialEntry[] selected = SelectSerialLines(count);
+            remote.serial.lines = new SerialEntry[selected.Length];
+            for (int i = 0; i < selected.Length; i++)
             {
-                SerialEntry entry = allLines[allLines.Length - count + i];
+                SerialEntry entry = selected[i];
                 remote.serial.lines[i] = new SerialEntry
                 {
                     id = entry.id, time = entry.time, status = Limit(entry.status, 16),
@@ -349,12 +351,46 @@ public sealed class RaceDashboardBridge : MonoBehaviour
 
     private void RecordSerialLine(string status, string line)
     {
-        serialLines.Enqueue(new SerialEntry
+        var entry = new SerialEntry
         {
             id = ++serialSequence, time = DateTime.Now.ToString("HH:mm:ss.fff"),
             status = status, line = line.Length > 512 ? line.Substring(0, 512) : line
-        });
+        };
+        serialLines.Enqueue(entry);
+        if (IsSerialAlert(status, line))
+        {
+            serialAlerts.Enqueue(entry);
+            while (serialAlerts.Count > MaxSerialAlerts) serialAlerts.Dequeue();
+        }
         while (serialLines.Count > MaxSerialLines) serialLines.Dequeue();
+    }
+
+    private static bool IsSerialAlert(string status, string line)
+    {
+        switch (status)
+        {
+            case "WARN": case "ERROR": case "FATAL": case "INVALID": case "INCOMPATIBLE":
+            case "ACK_FAILED": case "TIMEOUT": case "STALE": return true;
+        }
+        return status == "EVENT" && SerialInputProtocol.TryParse(line + "\n", out RgpFrame frame) &&
+            frame.Type == "EVT" && frame.Data[0] == "STATE" &&
+            (frame.Data[1] == "RECOVERING" || frame.Data[1] == "FATAL");
+    }
+
+    // Reserve space for recent alerts before filling with high-rate telemetry, then restore time order.
+    // The same bounded wire schema works with existing Firebase rules (10 lines, 120 chars, 4 KiB).
+    private SerialEntry[] SelectSerialLines(int maximum)
+    {
+        var selected = new List<SerialEntry>();
+        var ids = new HashSet<int>();
+        SerialEntry[] alerts = serialAlerts.ToArray();
+        for (int i = alerts.Length - 1; i >= 0 && selected.Count < maximum; i--)
+            if (ids.Add(alerts[i].id)) selected.Add(alerts[i]);
+        SerialEntry[] recent = serialLines.ToArray();
+        for (int i = recent.Length - 1; i >= 0 && selected.Count < maximum; i--)
+            if (!IsSerialAlert(recent[i].status, recent[i].line) && ids.Add(recent[i].id)) selected.Add(recent[i]);
+        selected.Sort((a, b) => a.id.CompareTo(b.id));
+        return selected.ToArray();
     }
 
     private bool ApplyAction(string action)

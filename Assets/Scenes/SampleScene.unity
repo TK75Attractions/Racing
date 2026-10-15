@@ -5171,10 +5171,8 @@ MonoBehaviour:
   isP1SerialP2KeyboardDebugMode: 0
   esp32Serial:
     portName:
-    baudRate: 115200
     steeringDivisor: 6.5
     readTimeoutMilliseconds: 200
-    inputTimeoutSeconds: 2
   handle: 0
   peddale: 0
   serialDebugMode: 0

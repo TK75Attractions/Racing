@@ -64,3 +64,98 @@ test('Remote render uses the same CPU rows and does not enable viewer controls',
   ui.render({...base,state:'Tutorial',participantCount:0,participants:[]},{canControl:false});
   assert.equal(ui.elements.get('game-state').textContent,'練習');
 });
+
+function wire(body) {
+  // Independent expected CRC implementation for dashboard fixtures.
+  let crc = 65535;
+  for (const byte of Buffer.from(body, 'ascii')) {
+    crc ^= byte * 256;
+    for (let bit=0;bit<8;bit++) crc = crc >= 32768 ? ((crc*2)^0x1021)&65535 : (crc*2)&65535;
+  }
+  return '@'+body+'*'+crc.toString(16).toUpperCase().padStart(4,'0');
+}
+const entry = (status,body,id=1) => ({id,time:'12:34:56.789',status,line:wire(body)});
+test('TEL is explained in Japanese with both independent pedals and the exact raw frame',()=>{
+  const ui=fixture();const tel=entry('OK','TEL,13,8210,-12.50,0.750,0.000,25.00,0.000,0.400');
+  ui.render({...base,serial:{portOpen:true,lines:[tel]}});
+  const log=ui.elements.get('serial-log');
+  assert.match(log.textContent,/P1：左12.5°、アクセル75%、ブレーキ0%/);
+  assert.match(log.textContent,/P2：右25°、アクセル0%、ブレーキ40%/);
+  assert.ok(log.textContent.includes(tel.line));
+  assert.equal(ui.elements.get('serial-alerts').hidden,true);
+  assert.match(ui.context.explainSerialEntry(entry('OLD_TEL','TEL,1,0,0,0.7,0.3,0,0.25,0.8')).text,/重複または古い入力/);
+  assert.match(ui.context.explainSerialEntry(entry('NOT_READY','TEL,1,0,0,1,0,0,1,0')).text,/反映しません/);
+});
+test('SYS, state, calibration, configuration and ACK have meaningful labels',()=>{
+  const ui=fixture();const explain=(status,body)=>ui.context.explainSerialEntry(entry(status,body));
+  assert.match(explain('HELLO','SYS,0,0,HELLO,RGP,1.0,1.0.0').text,/RGP 1.0.*接続セッション/);
+  assert.match(explain('EVENT','EVT,1,0,STATE,READY').text,/2人分の入力が使用可能/);
+  assert.match(explain('EVENT','EVT,2,0,CAL_DONE,AUTO,ALL').text,/全センサーの校正を完了/);
+  assert.match(explain('EVENT','EVT,3,0,CONFIG_CHANGED,TEL_RATE,50').text,/50 Hz/);
+  assert.match(explain('ACK_OK','ACK,4,0,1,PING,OK,PONG').text,/応答確認.*成功/);
+  assert.match(explain('ACK_OK','ACK,5,0,2,GET_STATUS,OK,READY,1,1,1,1').text,/校正完了/);
+  const future=explain('ACK_FAILED','ACK,6,0,3,PING,FUTURE_STATUS');
+  assert.equal(future.level,'error');assert.match(future.text,/未知の応答/);
+  assert.equal(explain('SYS','SYS,7,0,FUTURE_KEY,X').level,'info');
+  assert.match(explain('UNMATCHED_ACK','ACK,8,0,99,PING,OK,PONG').text,/状態には反映しません/);
+});
+test('Errors, warnings, failed ACK and timeouts appear separately without losing raw logs',()=>{
+  const ui=fixture();const lines=[entry('ERROR','ERR,1,0,ERROR,I2C,CONNECTION_LOST,0x68'),
+    entry('WARN','ERR,2,0,WARN,HANDLE,ANGLE_REFERENCE_INVALID'),entry('ACK_FAILED','ACK,3,0,2,ANGLE_ZERO,FAILED,ANGLE_REFERENCE_INVALID'),
+    {id:4,time:'12:34:57',status:'TIMEOUT',line:'GET_STATUS'},entry('OK','TEL,4,0,0,1,0,0,1,0')];
+  ui.render({...base,serial:{portOpen:true,errors:0,lines}});
+  assert.equal(ui.elements.get('serial-alerts').hidden,false);
+  const text=ui.elements.get('serial-alert-list').textContent;
+  assert.match(text,/I2C通信で接続が失われました/);assert.match(text,/対象 0x68/);
+  assert.match(text,/ハンドル.*基準角度が無効/);assert.match(text,/状態照会.*応答がありません/);
+  assert.equal(ui.elements.get('serial-alert-list').children.length,4);
+  assert.ok(!text.includes('アクセル100%'));
+  // The same retained error survives a later normal snapshot; no repeated live-region replacement.
+  const oldList=ui.elements.get('serial-alert-list').children;
+  ui.render({...base,serial:{portOpen:true,errors:0,lines}});
+  assert.equal(ui.elements.get('serial-alert-list').children,oldList);
+  ui.context.setConnection(false);
+  assert.equal(ui.elements.get('serial-alerts').hidden,true);
+  assert.equal(ui.elements.get('serial-alert-list').children.length,0);
+});
+test('Invalid, truncated and unknown data never masquerade as valid telemetry',()=>{
+  const ui=fixture();
+  const bad=ui.context.explainSerialEntry({...entry('INVALID','TEL,1,0,0,1,0,0,1,0'),line:'@TEL,1,0,0,1,0,0,1,0*0000'});
+  assert.equal(bad.level,'error');assert.match(bad.text,/反映していません/);assert.ok(!bad.text.includes('アクセル100%'));
+  const text=encodeURIComponent('装置の文章です。'.repeat(10));
+  const full=entry('ERROR','ERR,1,0,ERROR,I2C,READ_FAILED,I2C_SCAN,TEXT,'+text);
+  const truncated=ui.context.explainSerialEntry({...full,line:full.line.slice(0,120)});
+  assert.equal(truncated.level,'error');assert.match(truncated.text,/読み取りに失敗/);assert.match(truncated.text,/末尾が省略/);
+  const unknown=ui.context.explainSerialEntry(entry('IGNORED','FUTURE,1,0'));
+  assert.match(unknown.text,/未対応/);assert.equal(unknown.level,'info');
+});
+test('Diagnostic text is decoded once and inserted as text, including HTML-like device text',()=>{
+  const ui=fixture();const text='%3Cimg%20src%3Dx%20onerror%3Dalert%281%29%3E';
+  ui.render({...base,serial:{portOpen:true,lines:[entry('DBG','DBG,1,0,SYSTEM,'+text)]}});
+  const payload=ui.elements.get('serial-log').children[0].children[2];
+  assert.match(payload.children[0].textContent,/<img src=x onerror=alert\(1\)>/);
+  assert.equal(payload.children[0].children.length,1); // One text node, not device-supplied elements.
+  assert.match(ui.context.explainSerialEntry(entry('DBG','DBG,2,0,SYSTEM,%2520')).text,/%20/);
+  assert.ok(!ui.context.explainSerialEntry(entry('DBG','DBG,3,0,SYSTEM,%FF')).text.includes('undefined'));
+});
+test('Remote rendering shows alerts, parse counts and port failures while keyboard mode stays quiet',()=>{
+  const ui=fixture();
+  ui.render({...base,inputMode:'Serial P1/P2',serial:{portOpen:false,errors:4,lines:[]}}, {canControl:false});
+  assert.match(ui.elements.get('serial-alert-list').textContent,/シリアルポートが未接続/);
+  assert.match(ui.elements.get('serial-alert-list').textContent,/解析エラーが4件/);
+  ui.render({...base,inputMode:'Keyboard P1/P2 (debug; serial disabled)',serial:{portOpen:false,errors:0,lines:[]}});
+  assert.equal(ui.elements.get('serial-alerts').hidden,true);
+});
+test('All supplied host acceptance vectors can be explained without exceptions',()=>{
+  const ui=fixture();
+  const vectors=readFileSync(resolve(__dirname,'../Rgp/Vectors/valid-frames.txt'),'utf8').split('\n');
+  let count=0;
+  for(const row of vectors){
+    if(!row||row.startsWith('#'))continue;
+    const [,direction,,escaped]=row.split('|');if(direction!=='ESP_TO_HOST')continue;
+    const line=escaped.replace(/\\r/g,'\r').replace(/\\n/g,'\n').trimEnd();
+    const result=ui.context.explainSerialEntry({status:line.startsWith('@ERR')?line.split(',')[3]:'OK',line});
+    assert.equal(typeof result.text,'string');assert.ok(result.text.length>0);assert.ok(!result.text.includes('undefined'),line);count++;
+  }
+  assert.equal(count,50);
+});

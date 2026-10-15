@@ -88,7 +88,7 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        // One microcontroller sends both players in a single four-column frame.
+        // One microcontroller sends both players in a single RGP/1 TEL frame.
         InitializeSharedSerialInput(playerOneOnly: false);
         for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
         {

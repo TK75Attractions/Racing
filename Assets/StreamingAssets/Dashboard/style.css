@@ -38,3 +38,23 @@ body.remote .controls{display:block}
 .participant-table .cpu-row td:nth-child(2){color:#e9f268}
 .participant-finished{color:#a9d78a}
 .participant-warning{color:#ffbd80}
+
+/* Keep protocol explanations readable while retaining the exact received text. */
+.log{height:320px}
+.log-row{align-items:start;padding-top:10px;padding-bottom:10px}
+.log-row>span{padding-top:2px}
+.serial-payload{min-width:0}
+.serial-explanation{font-family:system-ui,sans-serif;color:#e4e9e5;font-size:12px;line-height:1.7;margin:0 0 5px;overflow-wrap:anywhere}
+.log-row code{display:block;color:#8596a5;font-size:10px;line-height:1.6;white-space:pre-wrap}
+.serial-alerts{border:1px solid #895543;border-left:3px solid #eea47d;border-radius:5px;background:#2b211f;margin-bottom:18px;padding:14px 16px}
+.serial-alerts h3{font-size:14px;color:#ffd7ba;margin:0 0 5px}
+.serial-alerts>p{font-size:11px;line-height:1.6;color:#c5aaa0;margin:0 0 12px}
+#serial-alert-list{max-height:260px;overflow:auto}
+.serial-alert{display:grid;grid-template-columns:95px minmax(0,1fr);gap:12px;padding:9px 0;border-top:1px solid #68433a;font-size:12px;line-height:1.7}
+.serial-alert p{margin:0;overflow-wrap:anywhere}
+.serial-alert.error{color:#ffc1b5}
+.serial-alert.warning{color:#f2d49c}
+.alert-time{font-size:10px;color:#c2a89e;font-variant-numeric:tabular-nums}
+.error-count{color:#ffc1b5}
+@media(max-width:680px){.log{height:360px}.log-head,.log-row{grid-template-columns:78px minmax(0,1fr);gap:7px}.log-head>span:last-child,.serial-payload{grid-column:1/-1}.log-head>span:last-child{padding-top:3px}.serial-explanation{font-size:11px}.serial-alert{grid-template-columns:1fr;gap:2px}.serial-alerts{padding:12px}}
+@media(max-width:680px){.serial-meta>span{display:block}}

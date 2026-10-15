@@ -27,7 +27,7 @@ public static class NpcDashboardValidation
     }
     [Serializable] private sealed class Player { public int number; }
     [Serializable] private sealed class Serial { public Line[] lines; }
-    [Serializable] private sealed class Line { public string line; }
+    [Serializable] private sealed class Line { public int id; public string status, line; }
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
     private static void Set(object target, string field, object value) => target.GetType().GetField(field, Private).SetValue(target, value);
     private static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
@@ -87,11 +87,28 @@ public static class NpcDashboardValidation
             Require(bounded!=null && Encoding.UTF8.GetByteCount(bounded)<=4096 && JsonUtility.FromJson<Snapshot>(bounded).participants.Length==4,
                 "CPU diagnostics were lost when trimming oversized Unicode serial logs");
             File.WriteAllText("/tmp/racing-npc-dashboard.json",bounded);
+            // Alerts must survive more than the entire 80-line TEL window, including remote trimming.
+            MethodInfo record = typeof(RaceDashboardBridge).GetMethod("RecordSerialLine", Private);
+            record.Invoke(bridge, new object[] { "ERROR", SerialInputProtocol.Encode("ERR,100,0,ERROR,I2C,CONNECTION_LOST").TrimEnd('\n') });
+            for (int i=0;i<200;i++) record.Invoke(bridge, new object[] { "OK", SerialInputProtocol.Encode("TEL,"+(101+i)+",0,0,1,0,0,0,1").TrimEnd('\n') });
+            Snapshot retained = Read(bridge);
+            Require(Array.Exists(retained.serial.lines, line => line.status=="ERROR" && line.line.Contains("CONNECTION_LOST")),
+                "Remote high-rate telemetry erased the last error");
+            Require(Array.Exists(retained.serial.lines, line => line.status=="OK"), "Remote alert history displaced all current telemetry");
+            object local = typeof(RaceDashboardBridge).GetMethod("BuildSnapshot", Private).Invoke(bridge, null);
+            Snapshot localSnapshot = JsonUtility.FromJson<Snapshot>(JsonUtility.ToJson(local));
+            Require(localSnapshot.serial.lines.Length<=80 && Array.Exists(localSnapshot.serial.lines, line => line.status=="ERROR"),
+                "Local alert retention failed or exceeded 80 lines");
+            for (int i=0;i<12;i++) record.Invoke(bridge,new object[]{"WARN","retained warning "+i});
+            retained = Read(bridge);
+            Require(Array.FindAll(retained.serial.lines, line => line.status=="WARN").Length==8 &&
+                !Array.Exists(retained.serial.lines,line=>line.status=="ERROR"), "Alert history did not retain exactly the newest eight alerts");
+            File.WriteAllText("/tmp/racing-serial-dashboard-alerts.json",bridge.BuildRemoteSnapshotJson(new string('a',32),3));
             Set(driver,"stuck",0f); entries[2].Result=null; entries[3].Result=null;
             File.WriteAllText("/tmp/racing-npc-dashboard-driving.json",bridge.BuildRemoteSnapshotJson(new string('a',32),2));
             entries.Clear(); manager.state=Gmanager.State.Title;
             Require(Read(bridge).participantCount==0, "Previous round telemetry survived reset");
-            Debug.Log("NPC_DASHBOARD_PASS: four entries/two inputs, countdown, driving, air/reverse/yield/stall, finish/DNF, reset and Unicode 4 KiB limit");
+            Debug.Log("NPC_DASHBOARD_PASS: four entries/two inputs, countdown, driving, air/reverse/yield/stall, finish/DNF, reset, Unicode 4 KiB limit, local/remote serial alert retention");
         }
         finally { entries.Clear(); UnityEngine.Object.DestroyImmediate(root); }
     }

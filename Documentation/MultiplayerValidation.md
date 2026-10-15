@@ -19,8 +19,8 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Validate-Multiplayer.ps1 `
 
 1. 全スクリプトのコンパイル
 2. EditModeテスト
-   - 共有シリアルの4列入力とプレイヤー別の`nan`判定
-   - 旧2列入力と拡張4列入力
+   - RGP/1のCRC・6項目TELの一括更新・数値とフレームの検証
+   - セッション確立・ACK再送・HELLO再接続・SEQ周回・stale判定
    - 異常なシリアル行の拒否
    - 1位・2位の到着順
    - 1位後40秒の待機
@@ -53,7 +53,7 @@ Unityの `Racing > Validation > Play Race Flow` からも進行検証を実行�
 
 | 項目 | 合格条件 |
 |---|---|
-| USB検出 | 共有マイコンを接続したポートで4列入力を検出する |
+| USB検出 | 共有マイコンのポートでRGP/1のセッションを確立し、READY後の6項目TELを検出する |
 | 再接続 | レース開始前の抜き差し後、入力が復帰する |
 | 入力独立性 | P1の操作がP2車両へ、P2の操作がP1車両へ影響しない |
 | モニター割り当て | レース中はDisplay 0がP1、Display 1がP2を追従し、完走後は未完走側へ切り替わる |
@@ -65,6 +65,6 @@ Unityの `Racing > Validation > Play Race Flow` からも進行検証を実行�
 | タイムアウト | 1位から40秒後に未完走側がDNFとなる |
 | 長時間運転 | 連続10レースでシリアルスレッド、カメラ、車両が重複しない |
 
-実機試験では、`InputManager > Is Debug Mode`を無効にし、1台のマイコンが `<P1ペダル>,<P1ハンドル>,<P2ペダル>,<P2ハンドル>` を改行区切りで送る状態で実行します。
+実機試験では、`InputManager > Is Debug Mode`を無効にし、1台のマイコンがRGP/1のセッション確立後、READY状態で `P1_HANDLE,P1_ACCEL,P1_BRAKE,P2_HANDLE,P2_ACCEL,P2_BRAKE` を含むCRC付きTELを送る状態で実行します。
 
-P1の実機入力だけを使ってデバッグする場合は、`InputManager > Is P1 Serial P2 Keyboard Debug Mode` を有効にします。P1はシリアルの先頭2列、P2は矢印キー（アクセル／ブレーキ／ハンドル）、/（スラッシュ、Right Ctrlも使用可）（リセット）、Right Shift（Ready）で操作します。
+P1の実機入力だけを使ってデバッグする場合は、`InputManager > Is P1 Serial P2 Keyboard Debug Mode` を有効にします。P1はRGP/1 TELの先頭3項目（2人分6項目すべてが有効であることが必要）、P2は矢印キー（アクセル／ブレーキ／ハンドル）、/（スラッシュ、Right Ctrlも使用可）（リセット）、Right Shift（Ready）で操作します。

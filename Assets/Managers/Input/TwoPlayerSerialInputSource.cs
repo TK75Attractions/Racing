@@ -10,17 +10,23 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     private readonly Esp32SerialConfiguration configuration;
     private readonly string portName;
     private readonly bool playerOneOnly;
-    private readonly ConcurrentQueue<string> receivedLines = new ConcurrentQueue<string>();
+    private readonly struct ReceivedFrame
+    {
+        public readonly string Wire;
+        public readonly double ReceivedAt;
+        public ReceivedFrame(string wire, double receivedAt) { Wire = wire; ReceivedAt = receivedAt; }
+    }
+    private readonly ConcurrentQueue<ReceivedFrame> receivedLines = new ConcurrentQueue<ReceivedFrame>();
     private readonly ConcurrentQueue<string> diagnosticMessages = new ConcurrentQueue<string>();
-    private readonly DriveInputState[] currentStates = { DriveInputState.Neutral, DriveInputState.Neutral };
-    private readonly bool[] hasReceivedInput = new bool[2];
-    private readonly float[] lastInputTimes = { -1f, -1f };
+    private readonly System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
+    private readonly RgpHostSession session;
 
     private SerialPort serialPort;
     private Thread readThread;
     private volatile bool stopRequested;
     private volatile bool portIsOpen;
     private long linesReceived;
+    private bool inputWasFresh;
 
     public event Action<string, string> LineProcessed;
     public string PortName => portName;
@@ -41,67 +47,64 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         portName = resolvedPortName;
         this.playerOneOnly = playerOneOnly;
+        session = new RgpHostSession(Send);
+        session.CommandTimedOut += command => RecordParseResult("TIMEOUT", command);
         Open();
     }
 
     public DriveInputState GetInputState(int playerIndex)
     {
-        if (playerIndex < 0 || playerIndex >= currentStates.Length) return DriveInputState.Neutral;
-        return IsConnected(playerIndex) ? currentStates[playerIndex] : DriveInputState.Neutral;
+        if (!IsConnected(playerIndex)) return DriveInputState.Neutral;
+        RgpPlayerInput input = playerIndex == 0 ? session.PlayerOne : session.PlayerTwo;
+        // RGP keeps accel/brake independent. This game's signed pedal uses their difference.
+        return new DriveInputState { pedal = input.Accel - input.Brake,
+            steering = input.Handle / configuration.SteeringDivisor };
     }
 
     public bool IsConnected(int playerIndex)
     {
-        return playerIndex >= 0 && playerIndex < currentStates.Length && portIsOpen &&
-            hasReceivedInput[playerIndex] &&
-            Time.realtimeSinceStartup - lastInputTimes[playerIndex] <= configuration.InputTimeoutSeconds;
+        return playerIndex >= 0 && playerIndex < (playerOneOnly ? 1 : 2) && portIsOpen &&
+            session.IsFresh(clock.Elapsed.TotalMilliseconds);
     }
 
     public void UpdateInput(float deltaTime)
     {
         FlushDiagnostics();
-        while (receivedLines.TryDequeue(out string line))
+        if (!portIsOpen)
+        {
+            session.Disconnect();
+            inputWasFresh = false;
+            while (receivedLines.TryDequeue(out _)) { }
+            return;
+        }
+        while (receivedLines.TryDequeue(out ReceivedFrame received))
         {
             LinesProcessed++;
-            LastSerialLine = line;
+            LastSerialLine = received.Wire.TrimEnd('\r', '\n');
             LastSerialLineTime = Time.realtimeSinceStartup;
-            if (SerialInputProtocol.TryReadDeviceId(line, out _))
-            {
-                RecordParseResult("IDENTITY", line);
-                continue;
-            }
-
-            if (playerOneOnly)
-            {
-                if (!SerialInputProtocol.TryParsePartialInput(
-                        line, configuration.SteeringDivisor, out SerialInputFrame playerOneFrame,
-                        out bool pedalValid, out bool steeringValid))
-                {
-                    ParseErrorCount++;
-                    RecordParseResult("INVALID", line);
-                    continue;
-                }
-
-                RecordParseResult(pedalValid && steeringValid ? "OK" : "PARTIAL", line);
-                ApplyPlayerFrame(0, playerOneFrame, pedalValid, steeringValid);
-                continue;
-            }
-
-            if (!SerialInputProtocol.TryParseTwoPlayerInput(
-                    line, configuration.SteeringDivisor, out TwoPlayerSerialInputFrame frame))
+            if (!SerialInputProtocol.TryParse(received.Wire, out RgpFrame frame))
             {
                 ParseErrorCount++;
-                RecordParseResult("INVALID", line);
+                RecordParseResult("INVALID", LastSerialLine);
                 continue;
             }
+            RecordParseResult(session.Receive(frame, received.ReceivedAt), LastSerialLine);
+        }
+        session.Tick(clock.Elapsed.TotalMilliseconds);
+        bool fresh = session.IsFresh(clock.Elapsed.TotalMilliseconds);
+        if (inputWasFresh && !fresh && portIsOpen && session.State == "READY" && session.TelemetryEnabled)
+            RecordParseResult("STALE", "TEL");
+        inputWasFresh = fresh;
+    }
 
-            bool anyValid = frame.PlayerOneValid || frame.PlayerTwoValid;
-            bool allValid = frame.PlayerOnePedalValid && frame.PlayerOneSteeringValid &&
-                frame.PlayerTwoPedalValid && frame.PlayerTwoSteeringValid;
-            if (!anyValid) ParseErrorCount++;
-            RecordParseResult(!anyValid ? "IGNORED" : allValid ? "OK" : "PARTIAL", line);
-            ApplyPlayerFrame(0, frame.PlayerOne, frame.PlayerOnePedalValid, frame.PlayerOneSteeringValid);
-            ApplyPlayerFrame(1, frame.PlayerTwo, frame.PlayerTwoPedalValid, frame.PlayerTwoSteeringValid);
+    private void Send(string wire)
+    {
+        if (!portIsOpen) return;
+        try { serialPort.Write(wire); }
+        catch (Exception exception)
+        {
+            portIsOpen = false;
+            diagnosticMessages.Enqueue($"RGP command write failed: {exception.Message}");
         }
     }
 
@@ -109,6 +112,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     {
         stopRequested = true;
         portIsOpen = false;
+        session.Disconnect();
         try
         {
             if (serialPort != null && serialPort.IsOpen) serialPort.Close();
@@ -122,17 +126,6 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         readThread = null;
     }
 
-    private void ApplyPlayerFrame(int playerIndex, SerialInputFrame frame, bool pedalValid, bool steeringValid)
-    {
-        if (!pedalValid && !steeringValid) return;
-        DriveInputState state = currentStates[playerIndex];
-        state.pedal = pedalValid ? frame.Pedal : 0f;
-        state.steering = steeringValid ? frame.Steering : 0f;
-        currentStates[playerIndex] = state;
-        hasReceivedInput[playerIndex] = true;
-        lastInputTimes[playerIndex] = Time.realtimeSinceStartup;
-    }
-
     private void RecordParseResult(string status, string line)
     {
         LastParseResult = status;
@@ -143,43 +136,53 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     {
         if (string.IsNullOrWhiteSpace(portName))
         {
-            Debug.LogError("Shared serial port is not configured.");
+            diagnosticMessages.Enqueue("Shared serial port is not configured.");
             return;
         }
 
         try
         {
-            serialPort = new SerialPort(portName, configuration.BaudRate)
+            serialPort = new SerialPort(portName, configuration.BaudRate, Parity.None, 8, StopBits.One)
             {
-                NewLine = "\n",
-                ReadTimeout = configuration.ReadTimeoutMilliseconds
+                Handshake = Handshake.None,
+                ReadTimeout = configuration.ReadTimeoutMilliseconds,
+                WriteTimeout = configuration.ReadTimeoutMilliseconds
             };
             serialPort.Open();
             portIsOpen = true;
+            session.Start(clock.Elapsed.TotalMilliseconds);
             readThread = new Thread(ReadLoop) { IsBackground = true, Name = $"ESP32-shared-{portName}" };
             readThread.Start();
         }
         catch (Exception exception)
         {
             portIsOpen = false;
-            Debug.LogError($"Failed to open shared serial controller on {portName}: {exception.Message}");
+            session.Disconnect();
+            serialPort?.Dispose();
+            serialPort = null;
+            diagnosticMessages.Enqueue($"Failed to open shared serial controller on {portName}: {exception.Message}");
         }
     }
 
     private void ReadLoop()
     {
-        while (!stopRequested && serialPort != null && serialPort.IsOpen)
+        var decoder = new RgpStreamDecoder();
+        var bytes = new byte[256];
+        while (!stopRequested && portIsOpen && serialPort != null && serialPort.IsOpen)
         {
             try
             {
-                string line = serialPort.ReadLine();
-                if (!string.IsNullOrWhiteSpace(line))
+                int count = serialPort.Read(bytes, 0, bytes.Length);
+                double now = clock.Elapsed.TotalMilliseconds;
+                for (int i = 0; i < count; i++)
                 {
-                    receivedLines.Enqueue(line.Trim());
+                    string wire = decoder.Push(bytes[i], now);
+                    if (wire == null) continue;
+                    receivedLines.Enqueue(new ReceivedFrame(wire, now));
                     Interlocked.Increment(ref linesReceived);
                 }
             }
-            catch (TimeoutException) { }
+            catch (TimeoutException) { decoder.Expire(clock.Elapsed.TotalMilliseconds); }
             catch (Exception exception)
             {
                 if (!stopRequested) diagnosticMessages.Enqueue($"Shared serial read failed: {exception.Message}");
@@ -191,7 +194,11 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 
     private void FlushDiagnostics()
     {
-        while (diagnosticMessages.TryDequeue(out string message)) Debug.LogError(message);
+        while (diagnosticMessages.TryDequeue(out string message))
+        {
+            RecordParseResult("ERROR", message);
+            Debug.LogError(message);
+        }
     }
 }
 
