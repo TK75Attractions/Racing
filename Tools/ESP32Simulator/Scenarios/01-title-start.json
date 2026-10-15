@@ -1,0 +1,8 @@
+{
+  "name": "両者のタイトル開始入力",
+  "steps": [
+    { "duration": 1, "label": "両者ペダルを離す" },
+    { "duration": 0.5, "label": "両者の開始入力", "p1": { "pedal": 1 }, "p2": { "pedal": 1 } },
+    { "duration": 1, "label": "ペダルを離す" }
+  ]
+}

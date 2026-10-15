@@ -1,0 +1,12 @@
+{
+  "name": "軸・P1切断・無送信・復帰",
+  "steps": [
+    { "duration": 1, "label": "中立" },
+    { "duration": 2, "label": "P1 +30度 / P2 -15度", "p1": { "pedal": 0.75, "steering": 30 }, "p2": { "pedal": 0.5, "steering": -15 } },
+    { "duration": 1, "label": "P1ハンドルだけnan", "p1": { "pedal": 0.75, "steeringUnavailable": true }, "p2": { "pedal": 0.5 } },
+    { "duration": 3, "label": "P1だけタイムアウト", "p1": { "pedalUnavailable": true, "steeringUnavailable": true }, "p2": { "pedal": 0.5 } },
+    { "duration": 1, "label": "両者復帰" },
+    { "duration": 3, "label": "全体の無送信", "silence": true },
+    { "duration": 1, "label": "送信再開" }
+  ]
+}

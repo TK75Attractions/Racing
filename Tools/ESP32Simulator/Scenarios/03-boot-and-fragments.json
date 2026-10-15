@@ -1,0 +1,11 @@
+{
+  "name": "起動ログ・不正行・分割送信",
+  "steps": [
+    { "duration": 0.5, "label": "起動ログ", "raw": "ESP32 boot: initializing IMU..." },
+    { "duration": 0.5, "label": "キャリブレーション", "raw": "Calibrating sensors..." },
+    { "duration": 0.5, "label": "不正行", "raw": "invalid,serial,data" },
+    { "duration": 2, "label": "10ms分割送信", "p1": { "pedal": 0.75, "steering": 30 }, "p2": { "pedal": 0.5, "steering": -15 }, "fragmentDelayMilliseconds": 10 },
+    { "duration": 2, "label": "読取タイムアウトをまたぐ300ms分割", "p1": { "pedal": 0.25, "steering": -10 }, "p2": { "pedal": 0.6, "steering": 20 }, "fragmentDelayMilliseconds": 300 },
+    { "duration": 1, "label": "正常データへ復帰" }
+  ]
+}
