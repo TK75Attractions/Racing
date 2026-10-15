@@ -5200,6 +5200,8 @@ MonoBehaviour:
   goMessageSeconds: 0.75
   lapManager: {fileID: 0}
   secondPlaceTimeoutSeconds: 40
+  npcCount: 2
+  maximumRaceSeconds: 360
   playerTwoDisplay: 3
   onPlayUIManager:
     position:

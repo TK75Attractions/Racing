@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-15",
+  "nativeAppBuild": "passed",
+  "swiftCoreAssertions": 34,
+  "existingSerialProtocolNUnitCases": 18,
+  "editor": {
+    "mode": "Serial Simulator P1/P2 (macOS PTY)",
+    "state": "CarSelection",
+    "received": 35726,
+    "processed": 35726,
+    "errors": 0,
+    "playersConnected": [
+      true,
+      true
+    ]
+  },
+  "standalone": {
+    "connected": true,
+    "numeric": true,
+    "partial": true,
+    "playerOneTimeout": true,
+    "silence": true,
+    "recovered": true
+  },
+  "limits": [
+    "PTY uses a dedicated POSIX reader because Mono modem-control ioctl fails on macOS PTYs.",
+    "Physical ESP32 / USB / UART timing are not covered.",
+    "Standalone smoke test runs without graphics and does not validate rendering."
+  ]
+}

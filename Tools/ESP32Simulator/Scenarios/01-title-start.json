@@ -1,0 +1,8 @@
+{
+  "name": "RGP/1 両者のタイトル開始入力",
+  "steps": [
+    { "duration": 1, "label": "両ペダルを離す" },
+    { "duration": 0.5, "label": "両者のアクセル入力", "p1": { "accel": 1 }, "p2": { "accel": 1 } },
+    { "duration": 1, "label": "アクセルを離す" }
+  ]
+}

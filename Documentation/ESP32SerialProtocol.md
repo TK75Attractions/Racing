@@ -46,3 +46,7 @@ Unity Test RunnerのEditModeで実行するか、macOSではMonoとUnity付属NU
 このスクリプトは本番のCoreソースと既存のEditModeテストをコンパイルし、`Artifacts/Rgp/test-results.xml` を出力します。Unityの場所は `UNITY_EDITOR_ROOT`、NUnit DLLは `NUNIT_FRAMEWORK` で変更できます。vectorsの場所は `RGP_VECTOR_ROOT` で変更できます。
 
 追加検査には、セッション確立、ACK照合・再送上限、HELLOによる再接続、major不一致、P1/P2一括更新、独立ペダル、古いTEL・SEQ周回、受信時刻基準のstale判定、状態遷移・切断、再同期・途中フレーム破棄を含みます。実機の電圧校正やUSB接続での動作確認は別途行ってください。
+
+## macOSのテストアプリ
+
+[ESP32 Serial Lab](ESP32Simulator.md)も同じRGP/1へ対応しています。明示的なPTYセッションだけPOSIXの双方向byte通信を使い、それ以降はUSBと同じ受信デコーダー・セッション・stale判定を利用します。旧CSV用アプリ・シナリオは更新が必要です。

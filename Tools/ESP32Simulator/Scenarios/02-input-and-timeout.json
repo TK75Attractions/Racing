@@ -1,0 +1,12 @@
+{
+  "name": "RGP/1 独立ペダル・センサー異常・stale・復帰",
+  "steps": [
+    { "duration": 0.5, "label": "中立" },
+    { "duration": 1, "label": "実角度 P1 +30度 / P2 -15度", "p1": { "accel": 0.75, "steering": 30 }, "p2": { "accel": 0.5, "steering": -15 } },
+    { "duration": 1, "label": "アクセルとブレーキを同時に踏む", "p1": { "accel": 0.7, "brake": 0.3 }, "p2": { "accel": 0.25, "brake": 0.8 } },
+    { "duration": 1.3, "label": "P1ハンドル無効：TEL全体停止", "p1": { "steeringUnavailable": true }, "p2": { "accel": 0.5 } },
+    { "duration": 0.5, "label": "READY・両者復帰" },
+    { "duration": 0.5, "label": "TEL無送信：100ms超で両者stale", "silence": true },
+    { "duration": 0.5, "label": "送信再開" }
+  ]
+}

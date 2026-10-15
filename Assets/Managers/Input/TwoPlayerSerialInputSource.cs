@@ -22,6 +22,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     private readonly RgpHostSession session;
 
     private SerialPort serialPort;
+    private MacPseudoTerminalLineReader pseudoTerminal;
     private Thread readThread;
     private volatile bool stopRequested;
     private volatile bool portIsOpen;
@@ -100,7 +101,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     private void Send(string wire)
     {
         if (!portIsOpen) return;
-        try { serialPort.Write(wire); }
+        try { if (pseudoTerminal != null) pseudoTerminal.Write(wire); else serialPort.Write(wire); }
         catch (Exception exception)
         {
             portIsOpen = false;
@@ -121,6 +122,8 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 
         if (readThread != null && readThread.IsAlive)
             readThread.Join(Math.Max(250, configuration.ReadTimeoutMilliseconds * 2));
+        pseudoTerminal?.Dispose();
+        pseudoTerminal = null;
         serialPort?.Dispose();
         serialPort = null;
         readThread = null;
@@ -142,13 +145,21 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 
         try
         {
-            serialPort = new SerialPort(portName, configuration.BaudRate, Parity.None, 8, StopBits.One)
+            if (configuration.UsePseudoTerminal)
             {
-                Handshake = Handshake.None,
-                ReadTimeout = configuration.ReadTimeoutMilliseconds,
-                WriteTimeout = configuration.ReadTimeoutMilliseconds
-            };
-            serialPort.Open();
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+                pseudoTerminal = new MacPseudoTerminalLineReader(portName, configuration.ReadTimeoutMilliseconds);
+#else
+                throw new PlatformNotSupportedException("The serial simulator requires macOS.");
+#endif
+            }
+            else
+            {
+                serialPort = new SerialPort(portName, configuration.BaudRate, Parity.None, 8, StopBits.One)
+                { Handshake = Handshake.None, ReadTimeout = configuration.ReadTimeoutMilliseconds,
+                    WriteTimeout = configuration.ReadTimeoutMilliseconds };
+                serialPort.Open();
+            }
             portIsOpen = true;
             session.Start(clock.Elapsed.TotalMilliseconds);
             readThread = new Thread(ReadLoop) { IsBackground = true, Name = $"ESP32-shared-{portName}" };
@@ -158,6 +169,8 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         {
             portIsOpen = false;
             session.Disconnect();
+            pseudoTerminal?.Dispose();
+            pseudoTerminal = null;
             serialPort?.Dispose();
             serialPort = null;
             diagnosticMessages.Enqueue($"Failed to open shared serial controller on {portName}: {exception.Message}");
@@ -168,11 +181,11 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     {
         var decoder = new RgpStreamDecoder();
         var bytes = new byte[256];
-        while (!stopRequested && portIsOpen && serialPort != null && serialPort.IsOpen)
+        while (!stopRequested && portIsOpen)
         {
             try
             {
-                int count = serialPort.Read(bytes, 0, bytes.Length);
+                int count = pseudoTerminal != null ? pseudoTerminal.Read(bytes) : serialPort.Read(bytes, 0, bytes.Length);
                 double now = clock.Elapsed.TotalMilliseconds;
                 for (int i = 0; i < count; i++)
                 {

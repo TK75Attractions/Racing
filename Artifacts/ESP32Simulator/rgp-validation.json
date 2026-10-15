@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-15",
+  "appVersion": "2.0",
+  "protocol": "RGP/1 (two-player six-field TEL)",
+  "swiftAssertions": {
+    "passed": 103,
+    "failed": 0
+  },
+  "hostProtocolNUnit": {
+    "passed": 18,
+    "failed": 0
+  },
+  "unityEditMode": {
+    "passed": 37,
+    "failed": 0
+  },
+  "dashboardTests": {
+    "passed": 11,
+    "failed": 0
+  },
+  "cliStartGate": "passed: HELLO/CMD available before gate; six-field TEL after gate",
+  "realPtyProductionReceiver": {
+    "timeout": {
+      "session": true,
+      "numeric": true,
+      "independentPedals": true,
+      "atomicStop": true,
+      "resumed": true,
+      "stale": true,
+      "recovered": true,
+      "closeDetected": true
+    },
+    "fragments": {
+      "session": true,
+      "numeric": true,
+      "invalidCrcRejected": true,
+      "fragment300ms": true,
+      "closeDetected": true
+    }
+  },
+  "build": "SwiftUI app and CLI built and ad-hoc signed",
+  "physicalUsb": "not tested",
+  "unityStandalonePlayer": "smoke script updated; new Player build not produced in this run"
+}

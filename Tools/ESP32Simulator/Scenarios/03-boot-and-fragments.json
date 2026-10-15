@@ -1,0 +1,11 @@
+{
+  "name": "RGP/1 CRC不正・1秒以内の分割・正常復帰",
+  "steps": [
+    { "duration": 0.3, "label": "フレーム前の起動ログは無視", "raw": "ESP32 boot: initializing IMU..." },
+    { "duration": 0.3, "label": "CRC不一致", "raw": "@TEL,1,0,0,1,0,0,1,0*0000" },
+    { "duration": 1, "label": "正常入力", "p1": { "accel": 0.75, "steering": 30 }, "p2": { "accel": 0.5, "steering": -15 } },
+    { "duration": 1, "label": "10ms分割", "p1": { "accel": 0.75, "steering": 30 }, "p2": { "accel": 0.5, "steering": -15 }, "fragmentDelayMilliseconds": 10 },
+    { "duration": 2, "label": "300ms分割（byte待ち期限1秒以内）", "p1": { "accel": 0.25, "steering": -10 }, "p2": { "accel": 0.6, "steering": 20 }, "fragmentDelayMilliseconds": 300 },
+    { "duration": 1, "label": "正常復帰" }
+  ]
+}
