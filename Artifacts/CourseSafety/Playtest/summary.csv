@@ -1,0 +1,9 @@
+run,seed,items,termination,seconds,car,finished,rank,laps,progress_m,mean_speed_mps,max_stall_s,off_course_s,vehicle_contacts,environment_contacts,items_used,afflictions,manual_resets,cpu_recoveries
+equal-control-101,101,False,both-humans-finished,190.33,P1,True,2,2,3658.13,19.61,0.0,0.0,1,248,0,0,0,0
+equal-control-101,101,False,both-humans-finished,190.33,P2,True,1,2,3658.13,20.12,0.0,0.0,0,229,0,0,0,0
+equal-control-101,101,False,both-humans-finished,190.33,CPU 1,False,4,1,3589.57,19.37,0.0,0.0,10,246,0,0,0,0
+equal-control-101,101,False,both-humans-finished,190.33,CPU 2,False,3,1,3640.26,19.61,0.0,0.0,11,263,0,0,0,0
+items-402,402,True,both-humans-finished,193.0,P1,True,3,2,3658.13,19.47,0.04,1.46,1,261,2,1,0,0
+items-402,402,True,both-humans-finished,193.0,P2,True,1,2,3658.13,20.12,0.0,0.0,1,198,6,0,0,0
+items-402,402,True,both-humans-finished,193.0,CPU 1,False,4,1,3599.92,19.01,0.0,0.0,10,245,0,0,0,0
+items-402,402,True,both-humans-finished,193.0,CPU 2,True,2,2,3658.13,19.41,0.0,0.0,10,259,0,2,0,0

@@ -1,0 +1,7 @@
+2026-10-16 JST / Unity 6000.3.9f1
+Course edge coverage: 1638 exterior and 2021 tube samples, 0 missing side hits, 0 tube-interior wall nodes.
+Curved wall containment: 4/4 impact trials passed.
+Existing barrier, course, road, tube geometry and player audio validation passed.
+Play Mode: 2 complete two-lap races; both human substitutes finish in both runs; no manual resets; 0 captured gameplay errors.
+Telemetry integrity: 14349 rows, per-car time ordering, finite values and JSON/CSV/SVG consistency passed.
+Final camera capture and C# compilation: Unity exit 0.
