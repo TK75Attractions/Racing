@@ -1,0 +1,79 @@
+using System;
+using System.Collections.Generic;
+using NUnit.Framework;
+
+public sealed class RgpOperatorCommandTests
+{
+    private static RgpFrame Frame(string body)
+    {
+        Assert.That(SerialInputProtocol.TryParse(SerialInputProtocol.Encode(body), out RgpFrame frame), Is.True);
+        return frame;
+    }
+    private static RgpHostSession Ready(out List<string> sent)
+    {
+        var output = new List<string>(); sent = output;
+        var session = new RgpHostSession(output.Add); session.Start(0);
+        SerialInputProtocol.TryParse(output[0], out RgpFrame open);
+        session.Receive(Frame("ACK,1,0,0,OPEN_SESSION,OK,"+open.Data[1]),1);
+        session.Receive(Frame("ACK,2,0,1,PING,OK,PONG"),2);
+        session.Receive(Frame("ACK,3,0,2,GET_STATUS,OK,READY,1,1,1,1"),3);
+        session.Receive(Frame("ACK,4,0,3,GET_CONFIG,OK,TEL_RATE,100,IMU_RATE,20,TEL_STREAM,1,IMU_STREAM,0,DBG_STREAM,0,BETA,0.200"),4);
+        return session;
+    }
+    [Test] public void CommandsUseOneSequenceAndRetryExactWireUntilMatchedAck()
+    {
+        var session = Ready(out var sent);
+        Assert.That(session.TryCommand("ANGLE_ZERO",Array.Empty<string>(),10,out uint seq,out _),Is.True);
+        Assert.That(seq,Is.EqualTo(4)); string wire=sent[sent.Count-1];
+        Assert.That(wire,Does.StartWith("@CMD,4,0,ANGLE_ZERO*"));
+        session.Tick(1010);Assert.That(sent[sent.Count-1],Is.EqualTo(wire));
+        Assert.That(session.TryCommand("ANGLE_ZERO",Array.Empty<string>(),1020,out _,out string reason),Is.False);
+        Assert.That(reason,Is.EqualTo("command_pending"));
+        Assert.That(session.Receive(Frame("ACK,5,0,99,ANGLE_ZERO,OK"),1021),Is.EqualTo("UNMATCHED_ACK"));
+        Assert.That(session.PendingCommands,Is.EqualTo(1));
+        session.Receive(Frame("ACK,6,0,4,ANGLE_ZERO,OK"),1022);
+        Assert.That(session.PendingCommands,Is.Zero);
+    }
+    [Test] public void CommandsValidateArgumentCountRangeAndDirectionBeforeWriting()
+    {
+        var session = Ready(out var sent); int before=sent.Count;
+        string[][] invalid = {
+            new[]{"SET_RATE","TEL","101"},new[]{"SET_RATE","IMU","51"},new[]{"SET_RATE","DBG","1"},new[]{"SET_RATE","TEL","1.5"},
+            new[]{"SET_BETA","0.009"},new[]{"SET_BETA","1,0"},new[]{"SET_STREAM","TEL","2"},new[]{"CALIBRATE","PEDAL"},
+            new[]{"PING","extra"},new[]{"OPEN_SESSION","0123456789ABCDEF"},new[]{"TEL","0","1","0","0","1","0"},new[]{"ANGLE_ZERO","\\n"}};
+        foreach(var request in invalid)
+        {
+            var args=new string[request.Length-1];Array.Copy(request,1,args,0,args.Length);
+            Assert.That(session.TryCommand(request[0],args,10,out _,out _),Is.False,request[0]);
+        }
+        Assert.That(sent.Count,Is.EqualTo(before));
+        Assert.That(session.TryCommand("SET_RATE",new[]{"TEL","1"},10,out _,out _),Is.True);
+        Assert.That(session.TryCommand("SET_BETA",new[]{"0.010"},10,out _,out _),Is.True);
+        Assert.That(session.TryCommand("SET_STREAM",new[]{"DBG","1"},10,out _,out _),Is.True);
+        Assert.That(session.TryCommand("CALIBRATE",new[]{"GYRO"},10,out _,out _),Is.True);
+        session.Disconnect();Assert.That(session.TryCommand("PING",null,11,out _,out _),Is.False);
+    }
+    [Test] public void FailedOperatorQueriesDoNotDestroyTheEstablishedSession()
+    {
+        var session=Ready(out _);
+        session.TryCommand("GET_STATUS",null,10,out _,out _);
+        session.Tick(1010);session.Tick(2010);session.Tick(3010);
+        Assert.That(session.SessionOpen,Is.True);Assert.That(session.AdsStatus,Is.EqualTo("Unknown"));
+        Assert.That(session.TryCommand("GET_STATUS",null,3011,out _,out _),Is.True);
+    }
+    [Test] public void HardwareEvidenceResetsAndUnmatchedAcksCannotClaimConnections()
+    {
+        var session=Ready(out _);Assert.That(session.AdsStatus,Is.EqualTo("Ok"));Assert.That(session.AngleLocked,Is.True);
+        session.Receive(Frame("SYS,8,0,DEVICE,IMU,0x68,0x68"),10);
+        Assert.That(session.ImuIdentity,Is.EqualTo("0x68"));
+        session.Receive(Frame("EVT,9,0,I2C_LOST"),11);
+        Assert.That(session.AdsStatus,Is.EqualTo("Unknown"));Assert.That(session.ImuStatus,Is.EqualTo("Unknown"));
+        session.Receive(Frame("ACK,10,0,99,GET_STATUS,OK,READY,1,1,1,1"),12);
+        Assert.That(session.ImuStatus,Is.EqualTo("Unknown"));
+        session.TryCommand("GET_STATUS",null,13,out uint seq,out _);
+        session.Receive(Frame("ACK,11,0,"+seq+",GET_STATUS,OK,RECOVERING,1,0,0,0"),14);
+        Assert.That(session.AdsStatus,Is.EqualTo("Ok"));Assert.That(session.ImuStatus,Is.EqualTo("Fault"));
+        Assert.That(session.TryCommand("CALIBRATE",new[]{"ALL"},15,out _,out _),Is.False);
+        session.Disconnect();Assert.That(session.ImuStatus,Is.EqualTo("Unknown"));Assert.That(session.ImuAddress,Is.Empty);
+    }
+}

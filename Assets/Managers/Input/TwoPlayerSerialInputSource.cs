@@ -31,6 +31,18 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 
     public event Action<string, string> LineProcessed;
     public RgpSerialJournal Monitor { get; } = new RgpSerialJournal();
+    public RgpHostSession Session => session;
+    public bool HasRecentDeviceData => portIsOpen && clock.Elapsed.TotalMilliseconds - lastDeviceDataAt < 3000;
+    private double lastDeviceDataAt = double.NegativeInfinity;
+    private double nextStatusAt = 2000;
+    public bool TrySendCommand(string command, string[] args, out uint sequence, out string reason)
+    {
+        sequence = 0; reason = "serial_disconnected";
+        if (!portIsOpen || !HasRecentDeviceData) return false;
+        bool sent = session.TryCommand(command, args, clock.Elapsed.TotalMilliseconds, out sequence, out reason);
+        if (sent && !portIsOpen) { reason = "write_failed"; session.Disconnect(); return false; }
+        return sent;
+    }
     public string PortName => portName;
     public bool IsPortOpen => portIsOpen;
     public int PendingLineCount => receivedLines.Count;
@@ -90,9 +102,15 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
                 RecordParseResult("INVALID", LastSerialLine);
                 continue;
             }
+            lastDeviceDataAt = received.ReceivedAt;
             RecordParseResult(session.Receive(frame, received.ReceivedAt), LastSerialLine);
         }
         session.Tick(clock.Elapsed.TotalMilliseconds);
+        if (clock.Elapsed.TotalMilliseconds >= nextStatusAt)
+        {
+            nextStatusAt = clock.Elapsed.TotalMilliseconds + 2000;
+            session.TryCommand("GET_STATUS", Array.Empty<string>(), clock.Elapsed.TotalMilliseconds, out _, out _);
+        }
         bool fresh = session.IsFresh(clock.Elapsed.TotalMilliseconds);
         if (inputWasFresh && !fresh && portIsOpen && session.State == "READY" && session.TelemetryEnabled)
             RecordParseResult("STALE", "TEL");
