@@ -18,6 +18,7 @@ public static class StaticWallColliderVolume
         foreach (MeshCollider surface in root.GetComponentsInChildren<MeshCollider>(true))
         {
             if (!surface.enabled || surface.isTrigger || !surface.gameObject.activeInHierarchy ||
+                TubeDriveSurface.Contains(surface) ||
                 surface.attachedRigidbody != null || surface.GetComponentInParent<RaceBarrierPath>() != null ||
                 !TryGetWallBox(surface, out Bounds bounds)) continue;
 

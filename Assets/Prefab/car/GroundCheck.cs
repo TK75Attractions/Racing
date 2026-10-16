@@ -52,7 +52,7 @@ public class GroundCheck : MonoBehaviour
         {
             if (hit.collider == null ||
                 (ownerRigidbody != null && hit.collider.attachedRigidbody == ownerRigidbody) ||
-                hit.normal.y < minGroundNormalY) continue;
+                (hit.normal.y < minGroundNormalY && !TubeDriveSurface.Contains(hit.collider))) continue;
 
             float alignment = Vector3.Dot(wheelUp, hit.normal);
             if (alignment < minimumWheelUpDot) continue;

@@ -70,6 +70,7 @@ public static class TubeCourseValidation
                 "Tube shoulders must have a visible surface and a solid collider.");
             Vector3[] shoulderVertices = shoulders.GetComponent<MeshFilter>().sharedMesh.vertices;
             MeshCollider innerWall = tube.GetComponent<MeshCollider>();
+            Require(TubeDriveSurface.Contains(innerWall), "The configured tube interior must allow banked wheel contact.");
             for (int i = 0; i < shoulderVertices.Length; i += 4)
             {
                 Vector3 l = shoulders.TransformPoint(shoulderVertices[i + 1]);
