@@ -79,13 +79,16 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       assert.equal((await request('/api/connection',{...remote,host:'127.0.0.1:8766'})).json.canControl,false);
       assert.equal((await request('/api/connection',{...remote,user:'operator@example.com'})).json.canControl,true);
       assert.equal((await request('/api/action/start',{...remote,method:'POST',body:{}})).status,403);
+      assert.equal((await request('/api/action/serial',{...remote,method:'POST',body:{command:'CALIBRATE',args:['ALL']}})).status,403);
       assert.equal((await request('/api/action/start',{method:'POST',origin:'https://evil.example',body:{}})).status,403);
       await assert.rejects(connect('/api/events',{origin:'https://evil.example'}),/403/);
     });
     const first=await open('/api/events',remote);
     await waitFor(()=>first.packets.some(packet=>packet.snapshot));
     await t.test('TEL latest only, outbound command and all non-TEL history',async()=>{
-      send('tx:'+wire('CMD,1,0,PING'));send('rx:'+wire('ACK,2,0,1,PING,OK,PONG'));send('rx:'+wire('EVT,3,0,STATE,READY'));
+      send('tx:'+wire('CMD,1,0,PING'));
+      await waitFor(()=>first.packets.some(packet=>packet.rawLines?.some(line=>line.direction==='TX')));
+      send('rx:'+wire('ACK,2,0,1,PING,OK,PONG'));send('rx:'+wire('EVT,3,0,STATE,READY'));
       for(let i=0;i<1000;i++) send('rx:'+wire(`TEL,${i+4},0,-12.5,0.75,0,25,0,0.4`));
       send('rx:'+wire('ERR,1004,0,ERROR,I2C,CONNECTION_LOST,0x68'));
       send('rx:@TEL,1005,0,0,1,0,0,1,0*0000');
@@ -95,6 +98,10 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       assert.equal(lines.filter(line=>line.direction==='TX').length,1);
       assert.ok(first.packets.some(packet=>packet.telemetry?.line.startsWith('@TEL,')));
       assert.ok(lines.some(line=>line.status==='ERROR'));
+      await waitFor(()=>first.packets.some(packet=>packet.rawLines?.some(line=>line.line.startsWith('@TEL,'))));
+      assert.ok(first.packets.flatMap(packet=>packet.rawLines || []).some(line=>line.direction==='TX'&&line.line.endsWith('\n')));
+      await waitFor(()=>first.packets.some(packet=>packet.rawLines?.some(line=>line.status==='INVALID')));
+
     });
     await t.test('receive-thread log delivery continues while Unity frame loop is stalled',async()=>{
       send('freeze');await delay(100);const count=first.packets.length;
@@ -105,9 +112,10 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
     await t.test('reconnect replays only unseen logs and signals retained-history gaps',async()=>{
       const last=first.packets.at(-1);first.close();
       send('event:offline event');await delay(60);
-      const resumed=await open(`/api/events?serialSession=${last.serialSession}&after=${last.cursor}`);
+      const resumed=await open(`/api/events?serialSession=${last.serialSession}&after=${last.cursor}&rawAfter=${last.rawCursor}`);
       await waitFor(()=>resumed.packets.some(packet=>packet.lines.some(line=>line.line==='offline event')));
       const lines=resumed.packets.flatMap(packet=>packet.lines);assert.ok(lines.every(line=>line.id>last.cursor));
+      assert.ok(resumed.packets.flatMap(packet=>packet.rawLines || []).every(line=>line.id>last.rawCursor));
       for(let i=0;i<5200;i++)send('event:history '+i);
       await delay(300);
       const gap=await open(`/api/events?serialSession=${last.serialSession}&after=0`);
@@ -120,6 +128,8 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       const snapshot=(await request('/api/status')).json;
       const body={id:crypto.randomUUID(),targetSession:snapshot.sessionId,expectedState:snapshot.state,stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime};
       const options={method:'POST',origin:'http://127.0.0.1:8766',body};
+      const disconnected=await request('/api/action/serial',{...options,body:{...body,id:crypto.randomUUID(),command:'ANGLE_ZERO',args:[]}});
+      assert.equal(disconnected.status,409);assert.equal(disconnected.json.reason,'serial_disconnected');
       assert.equal((await request('/api/action/start',{...options,body:{...body,id:crypto.randomUUID(),targetSession:'old'}})).status,409);
       assert.equal((await request('/api/action/start',{...options,body:{...body,id:crypto.randomUUID(),observedAt:1}})).status,409);
       assert.equal((await request('/api/action/start',{...options,body:{...body,id:crypto.randomUUID(),stateRevision:-1}})).status,409);
@@ -151,6 +161,13 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         await page.locator('#latest-tel').filter({hasText:'ACCEL 75.0%'}).waitFor();
         await page.locator('#serial-log').filter({hasText:'2人分の入力が使用可能'}).waitFor();
         assert.ok(!(await page.locator('#serial-log').innerText()).includes('@TEL,'));
+        await page.locator('#raw-log').filter({hasText:'@TEL,'}).waitFor();
+        assert.equal(await page.locator('[data-flow-state]').count(),7);
+        assert.equal(await page.locator('#hardware-grid .hardware-card').count(),5);
+        assert.equal(await page.locator('#serial-send').isDisabled(),true);
+        await page.locator('#raw-pause').click();
+        assert.match(await page.locator('#raw-status').innerText(),/一時停止/);
+        await page.locator('#raw-pause').click();
         assert.match(await page.locator('#serial-alert-list').innerText(),/基準角度が無効/);
         await page.locator('[data-action="start"]:enabled').waitFor();
         fs.mkdirSync(path.join(root,'Artifacts/DashboardRealtime'),{recursive:true});
@@ -186,7 +203,7 @@ test('Serial Lab → real PTY receiver → production bridge → WebSocket, 100 
  {timeout:75000,skip:process.env.RACING_PTY_TEST!=='1'},async()=>{
   const portFile=path.join(root,'Temp/DashboardRelay/live.port');fs.rmSync(portFile,{force:true});
   const startFile=path.join(root,'Temp/DashboardRelay/live.start');fs.rmSync(startFile,{force:true});
-  const simulator=spawn(path.join(root,'Builds/ESP32Simulator/esp32-simulator-cli'),['--duration','30','--rate','100','--frame','30,0.7,0.3,-15,0.25,0.8','--port-file',portFile,'--start-file',startFile],{cwd:root});
+  const simulator=spawn(path.join(root,'Builds/ESP32Simulator/esp32-simulator-cli'),['--duration','60','--rate','100','--frame','30,0.7,0.3,-15,0.25,0.8','--port-file',portFile,'--start-file',startFile],{cwd:root});
   let simulatorOutput='';simulator.stdout.on('data',data=>simulatorOutput+=data);simulator.stderr.on('data',data=>simulatorOutput+=data);
   let bridge,relay,socket,output='';
   try{
@@ -201,7 +218,50 @@ test('Serial Lab → real PTY receiver → production bridge → WebSocket, 100 
     },20000);
     socket=await connect();fs.writeFileSync(startFile,'start');
     await waitFor(()=>socket.packets.some(packet=>packet.snapshot?.players.every(player=>player.connected)));
-    const delays=[];let processed=0;
+    const command = async (name,args=[]) => {
+      await waitFor(()=>socket.packets.filter(packet=>packet.snapshot).at(-1)?.snapshot.hardware.pending===0);
+      const snapshot=(await request('/api/status')).json;
+      const body={id:crypto.randomUUID(),targetSession:snapshot.sessionId,expectedState:snapshot.state,
+        stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime,command:name,args};
+      const options={method:'POST',origin:'http://127.0.0.1:8766',body};
+      const result=await request('/api/action/serial',options);assert.equal(result.status,200,JSON.stringify(result.json));
+      assert.deepEqual((await request('/api/action/serial',options)).json,result.json,'HTTP retry is deduplicated');
+      const seq=result.json.serialSequence;
+      await waitFor(()=>socket.packets.some(packet=>packet.lines.some(line=>line.line.includes(','+seq+','+name+','))));
+      assert.equal(socket.packets.flatMap(packet=>packet.lines).filter(line=>line.direction==='TX'&&line.line.includes(','+seq+',0,'+name)).length,1);
+      return seq;
+    };
+    await command('ANGLE_ZERO'); await command('SET_BETA',['0.150']);
+    await command('CALIBRATE',['GYRO']);
+    assert.ok(socket.packets.flatMap(p=>p.lines).some(line=>line.line.includes(',CALIBRATE,UNSUPPORTED')));
+    await command('SCAN_I2C');
+    await command('SET_STREAM',['TEL','0']);
+    await waitFor(()=>socket.packets.filter(p=>p.snapshot).at(-1)?.snapshot.players.every(player=>!player.connected));
+    await command('SET_STREAM',['TEL','1']);
+    await waitFor(()=>socket.packets.filter(p=>p.snapshot).at(-1)?.snapshot.players.every(player=>player.connected));
+    await command('SET_RATE',['TEL','50']); await command('SET_RATE',['TEL','100']);
+    await waitFor(()=>socket.packets.filter(p=>p.snapshot).at(-1)?.snapshot.hardware.pending===0);
+    if(process.env.RACING_BROWSER_TEST==='1') {
+      const {chromium}=require('playwright');const browser=await chromium.launch({headless:true,channel:'chrome'});
+      try {
+        const page=await browser.newPage({viewport:{width:1440,height:1100}});const errors=[];page.on('pageerror',error=>errors.push(error.message));
+        await page.goto('http://127.0.0.1:8766/');
+        await page.locator('#serial-send:enabled').waitFor();
+        assert.match(await page.locator('#hardware-grid').innerText(),/通信中/);
+        assert.match(await page.locator('#hardware-grid').innerText(),/動作確認済み/);
+        assert.match(await page.locator('#hardware-grid').innerText(),/物理接続：未確認/);
+        await page.selectOption('#serial-command','GET_CONFIG');await page.click('#serial-send');
+        await page.locator('#serial-command-status').filter({hasText:'を送信しました'}).waitFor();
+        await page.locator('#serial-log').filter({hasText:'入力の送信頻度'}).waitFor();
+        await page.locator('#raw-log').filter({hasText:'@TEL,'}).waitFor();
+        await page.screenshot({path:path.join(root,'Artifacts/DashboardRealtime/operator-desktop.png'),fullPage:true});
+        await page.setViewportSize({width:390,height:844});
+        await page.screenshot({path:path.join(root,'Artifacts/DashboardRealtime/operator-mobile.png'),fullPage:true});
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+        assert.deepEqual(errors,[]);
+      } finally {await browser.close();}
+    }
+    const delays=[];let processed=socket.packets.length;
     const start=Date.now();
     while(Date.now()-start<15000){
       for(const packet of socket.packets.slice(processed))if(packet.telemetry)delays.push(Date.now()-packet.telemetry.receivedAt);
