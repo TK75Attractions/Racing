@@ -94,7 +94,7 @@ public static class NpcDashboardValidation
             Snapshot retained = Read(bridge);
             Require(Array.Exists(retained.serial.lines, line => line.status=="ERROR" && line.line.Contains("CONNECTION_LOST")),
                 "Remote high-rate telemetry erased the last error");
-            Require(Array.Exists(retained.serial.lines, line => line.status=="OK"), "Remote alert history displaced all current telemetry");
+            Require(!Array.Exists(retained.serial.lines, line => line.line.StartsWith("@TEL,")), "TEL entered non-telemetry history");
             object local = typeof(RaceDashboardBridge).GetMethod("BuildSnapshot", Private).Invoke(bridge, null);
             Snapshot localSnapshot = JsonUtility.FromJson<Snapshot>(JsonUtility.ToJson(local));
             Require(localSnapshot.serial.lines.Length<=80 && Array.Exists(localSnapshot.serial.lines, line => line.status=="ERROR"),

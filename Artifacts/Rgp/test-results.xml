@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<test-run result="Passed" total="37" passed="37" failed="0">
+<test-run result="Passed" total="41" passed="41" failed="0">
   <test-case name="DrivingTutorialProgressTests.TitlePedalHoldCannotFinishAcceleration" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.SteeringRequiresRealHeadingChangeWhileMoving" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.StopRequiresReleasedPedalAndSustainedLowSpeed" result="Passed" />
@@ -11,6 +11,10 @@
   <test-case name="RaceParticipantSessionTests.OverallLimitAppliesWhenNobodyFinishes" result="Passed" />
   <test-case name="RaceParticipantSessionTests.WithdrawalCannotStealAFinishRank" result="Passed" />
   <test-case name="RaceParticipantSessionTests.GracePeriodRejectsLateFinishAndDuplicateWithdrawal" result="Passed" />
+  <test-case name="RgpSerialJournalTests.TelemetryDoesNotEvictHistoryAndCommandsAreIncluded" result="Passed" />
+  <test-case name="RgpSerialJournalTests.InvalidTelemetryIsRetainedAndReconnectHasNoDuplicates" result="Passed" />
+  <test-case name="RgpSerialJournalTests.BoundedReplayReportsGapsAndResetsOnDeviceChange" result="Passed" />
+  <test-case name="RgpSerialJournalTests.JsonEscapesDeviceTextAndConcurrentReadsRemainOrdered" result="Passed" />
   <test-case name="SerialInputProtocolTests.AllCrcVectors" result="Passed" />
   <test-case name="SerialInputProtocolTests.AllHostValidVectors" result="Passed" />
   <test-case name="SerialInputProtocolTests.AllHostInvalidVectors" result="Passed" />

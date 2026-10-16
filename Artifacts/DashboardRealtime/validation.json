@@ -1,0 +1,45 @@
+{
+  "implementation": "Tailscale Serve + .NET WebSocket relay + existing dashboard",
+  "unityCompileAndNpcValidation": "PASS",
+  "rgpTests": 41,
+  "suppliedVectors": 144,
+  "dashboardUiTests": 13,
+  "liveClientTests": 2,
+  "relayIntegrationCases": 8,
+  "swiftAssertions": 103,
+  "ptyReceiverScenarios": 2,
+  "ptyToWebSocket": {
+    "passed": true,
+    "transport": "Swift simulator → PTY → production receiver/bridge → relay → WebSocket",
+    "rateSettingHz": 100,
+    "durationSeconds": 15,
+    "serialReceived": 1476,
+    "latestSamples": 677,
+    "loopbackReceiveToClientMs": {
+      "median": 9,
+      "p95": 19,
+      "max": 103
+    },
+    "note": "TEL is intentionally coalesced into latest values. Same-PC UTC timestamps; no WAN latency claim."
+  },
+  "limitations": [
+    "Actual HTTPS and WebSocket loopback over Tailscale verified with live Unity; independent remote-device/WAN latency not measured",
+    "Actual live Unity returned both camera JPEGs successfully; integration harness also uses scene/graphics stubs",
+    "180000 TEL accelerated count test; not a 30-minute elapsed soak"
+  ],
+  "quickStart": {
+    "editorLifecycle": "PASS: actual build, start, ready, duplicate suppression, managed stop",
+    "tailscaleSetupTests": 8,
+    "actualTailscaleConfigured": true
+  },
+  "liveCheck": {
+    "https": 200,
+    "websocket": 101,
+    "continuousSnapshots": true,
+    "playerCameraHttp": [
+      200,
+      200
+    ],
+    "inputMode": "Keyboard debug (serial disabled)"
+  }
+}

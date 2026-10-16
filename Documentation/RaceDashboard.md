@@ -46,3 +46,7 @@ Unityは直近8件の通知を通常ログとは別に保持し、100 HzのTEL�
 画面テストは `node --test Tests~/Dashboard/dashboard-ui.test.cjs` で実行します。実ブラウザーのサンプルデータによるレイアウト検査は、PlaywrightとChromeが利用できる環境で `node Tests~/Dashboard/serial-preview.cjs` を実行すると、`Artifacts/DashboardSerial/` にPC・スマートフォンの画像を保存します。Unityの `Racing > Validate NPC Dashboard` は、200件の通常TEL後も通知が残ること、直近8件の保持、ローカル80行・遠隔4 KiBの上限を検査します。
 
 公開サイトには、Dashboardの更新をmainへ反映してGitHub Pagesを配信し、通知保持機能を含むUnityビルドを起動すると適用されます。
+
+## Tailscale・WebSocketによる統合画面
+
+別回線からレース管理・状況表示・シリアルを同じ画面で扱う構成を追加した。[設定と検証手順](RealtimeDashboard.md)を参照。通常TELは最新受信値欄へ表示し、TEL以外の通信と解析エラーを日本語説明付きの履歴へ残す。既存のGitHub PagesはFirebase方式で残り、新しい運営用URLはTailscale Serveが提供するHTTPSアドレスになる。

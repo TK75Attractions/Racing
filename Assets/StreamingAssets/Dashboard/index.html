@@ -18,6 +18,8 @@
     </header>
 
     <main>
+      <div class="transport-meta"><span id="transport-status">接続方式を確認中</span><span id="live-detail" role="status"></span></div>
+      <div class="share-dashboard" id="share-dashboard" hidden><label for="share-url">別端末で開くURL</label><input id="share-url" readonly><button id="share-copy" type="button">URLをコピー</button><span id="share-status" role="status"></span></div>
       <section class="overview" aria-label="レース概要">
         <div class="eyebrow"><span class="eyebrow-line"></span> LIVE RACE OPERATIONS <span class="issue">01 / CONTROL DESK</span></div>
         <div class="overview-row"><div><h1>レース管理<span class="accent">.</span></h1><p>人間2人とCPUの走行・入力を、ひとつの画面で。</p></div><div class="state-summary"><span>現在のゲーム状態</span><strong id="game-state">接続待機</strong><small id="state-detail">Unity を起動してください</small></div></div>
@@ -59,7 +61,7 @@
           <p class="participant-empty" id="participant-empty" role="status">Unity の接続を待っています。</p>
         </section>
 
-        <section class="panel serial" aria-labelledby="serial-title"><div class="panel-heading"><div><span class="section-kicker">04 / INPUT STREAM</span><h2 id="serial-title">シリアルモニター</h2></div><div class="serial-heading-right"><span class="serial-port" id="serial-port">PORT —</span><span class="mini-status" id="port-status">待機中</span></div></div><aside class="serial-alerts" id="serial-alerts" hidden aria-labelledby="serial-alert-title"><h3 id="serial-alert-title">エラー・警告の履歴</h3><p>復旧後も直近の通知を履歴として表示します。</p><div id="serial-alert-list" role="log" aria-live="polite" aria-relevant="additions text"></div></aside><div class="serial-meta"><span>入力モード <strong id="input-mode">—</strong></span><span>最終解析 <strong id="last-result">—</strong></span></div><div class="log-head"><span>時刻</span><span>状態</span><span>受信データ・日本語の補足</span></div><div class="log" id="serial-log" role="log" aria-live="off"><div class="empty-log">シリアル入力を待っています。Unity の接続状態を確認してください。</div></div></section>
+        <section class="panel serial" aria-labelledby="serial-title"><div class="panel-heading"><div><span class="section-kicker">04 / INPUT STREAM</span><h2 id="serial-title">シリアルモニター・通信履歴</h2></div><div class="serial-heading-right"><span class="serial-port" id="serial-port">PORT —</span><span class="mini-status" id="port-status">待機中</span></div></div><aside class="serial-alerts" id="serial-alerts" hidden aria-labelledby="serial-alert-title"><h3 id="serial-alert-title">エラー・警告の履歴</h3><p>復旧後も直近の通知を履歴として表示します。</p><div id="serial-alert-list" role="log" aria-live="polite" aria-relevant="additions text"></div></aside><div class="serial-meta"><span>入力モード <strong id="input-mode">—</strong></span><span>最終解析 <strong id="last-result">—</strong></span></div><pre class="latest-tel" id="latest-tel">TELの受信を待っています。</pre><p class="muted-note">履歴にはTEL以外の通信と解析エラーを表示します。TELは最新の受信値のみ表示します。</p><div class="log-head"><span>時刻</span><span>状態</span><span>受信データ・日本語の補足</span></div><div class="log" id="serial-log" role="log" aria-live="off"><div class="empty-log">シリアル入力を待っています。Unity の接続状態を確認してください。</div></div></section>
       </div>
       <footer><span>RACING CONTROL / OPERATOR VIEW</span><span id="footer-status">Unity との接続を確認中</span></footer>
     </main>

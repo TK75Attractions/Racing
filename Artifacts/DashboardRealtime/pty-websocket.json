@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "transport": "Swift simulator → PTY → production receiver/bridge → relay → WebSocket",
+  "rateSettingHz": 100,
+  "durationSeconds": 15,
+  "serialReceived": 1476,
+  "latestSamples": 677,
+  "loopbackReceiveToClientMs": {
+    "median": 9,
+    "p95": 19,
+    "max": 103
+  },
+  "note": "TEL is intentionally coalesced into latest values. Same-PC UTC timestamps; no WAN latency claim."
+}

@@ -103,3 +103,14 @@ InitTestScene*.unity*
 
 # Unity recovery snapshots stay local; already tracked snapshots are preserved.
 /Assets/_Recovery/
+
+# Realtime dashboard relay: keep the project definition, exclude generated output.
+!/Tools/DashboardRelay/DashboardRelay.csproj
+/Tools/DashboardRelay/bin/
+/Tools/DashboardRelay/obj/
+
+/Tools/DashboardRelay/relay.env
+/Tools/DashboardRelay/relay.env.ps1
+
+# Local live-check evidence contains this PC's tailnet hostname and account.
+/Artifacts/DashboardRealtime/live-startup.json

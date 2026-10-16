@@ -26,7 +26,8 @@ sources = [tool / "Tests/UnityStubs.cs", tool / "Tests/ReceiverProbe.cs",
            root / "Assets/Managers/Input/TwoPlayerSerialInputSource.cs",
            root / "Assets/Managers/Input/DriveInputState.cs",
            root / "Assets/Managers/Multiplayer/Core/SerialInputProtocol.cs",
-           root / "Assets/Managers/Multiplayer/Core/RgpHostSession.cs"]
+           root / "Assets/Managers/Multiplayer/Core/RgpHostSession.cs",
+           root / "Assets/Managers/Multiplayer/Core/RgpSerialJournal.cs"]
 env = dict(os.environ, DYLD_LIBRARY_PATH=str(contents / "Frameworks"), RGP_VECTOR_ROOT=str(root / "Tests~/Rgp/Vectors"))
 subprocess.run([str(mono), str(compiler), "-langversion:latest", "-define:UNITY_STANDALONE_OSX",
                 f"-out:{probe}", *map(str, sources)], check=True, env=env)

@@ -75,16 +75,29 @@ function wire(body) {
   return '@'+body+'*'+crc.toString(16).toUpperCase().padStart(4,'0');
 }
 const entry = (status,body,id=1) => ({id,time:'12:34:56.789',status,line:wire(body)});
-test('TEL is explained in Japanese with both independent pedals and the exact raw frame',()=>{
+test('TEL updates latest numeric values without entering natural-language history',()=>{
   const ui=fixture();const tel=entry('OK','TEL,13,8210,-12.50,0.750,0.000,25.00,0.000,0.400');
-  ui.render({...base,serial:{portOpen:true,lines:[tel]}});
+  const event=entry('EVENT','EVT,12,8200,STATE,READY',2);
+  ui.render({...base,telemetry:tel,serial:{portOpen:true,lines:[event,tel]}});
   const log=ui.elements.get('serial-log');
-  assert.match(log.textContent,/P1：左12.5°、アクセル75%、ブレーキ0%/);
-  assert.match(log.textContent,/P2：右25°、アクセル0%、ブレーキ40%/);
-  assert.ok(log.textContent.includes(tel.line));
-  assert.equal(ui.elements.get('serial-alerts').hidden,true);
-  assert.match(ui.context.explainSerialEntry(entry('OLD_TEL','TEL,1,0,0,0.7,0.3,0,0.25,0.8')).text,/重複または古い入力/);
-  assert.match(ui.context.explainSerialEntry(entry('NOT_READY','TEL,1,0,0,1,0,0,1,0')).text,/反映しません/);
+  assert.ok(!log.textContent.includes(tel.line));
+  assert.match(log.textContent,/2人分の入力が使用可能/);
+  assert.match(ui.elements.get('latest-tel').textContent,/P1  HANDLE -12.5° \/ ACCEL 75.0% \/ BRAKE 0.0%/);
+  assert.match(ui.elements.get('latest-tel').textContent,/P2  HANDLE 25° \/ ACCEL 0.0% \/ BRAKE 40.0%/);
+  assert.ok(ui.elements.get('latest-tel').textContent.includes(tel.line));
+  ui.render({...base,telemetry:{...tel,id:3},serial:{portOpen:true,lines:[event,tel]}});
+  assert.equal(log.children.length,1);
+  ui.context.setConnection(false);
+  assert.match(ui.elements.get('latest-tel').textContent,/待っています/);
+});
+test('Invalid TEL remains in error history and outbound commands are translated',()=>{
+  const ui=fixture();
+  const invalid={id:1,status:'INVALID',line:'@TEL,1,0,0,1,0,0,1,0*0000'};
+  const command=entry('SENT','CMD,1,0,PING',2);command.direction='TX';
+  ui.render({...base,serial:{portOpen:true,lines:[invalid,command]}});
+  assert.match(ui.elements.get('serial-log').textContent,/装置へ「応答確認」を送信/);
+  assert.match(ui.elements.get('serial-log').textContent,/TX SENT/);
+  assert.match(ui.elements.get('serial-alert-list').textContent,/CRC・形式/);
 });
 test('SYS, state, calibration, configuration and ACK have meaningful labels',()=>{
   const ui=fixture();const explain=(status,body)=>ui.context.explainSerialEntry(entry(status,body));
@@ -101,8 +114,8 @@ test('SYS, state, calibration, configuration and ACK have meaningful labels',()=
 });
 test('Errors, warnings, failed ACK and timeouts appear separately without losing raw logs',()=>{
   const ui=fixture();const lines=[entry('ERROR','ERR,1,0,ERROR,I2C,CONNECTION_LOST,0x68'),
-    entry('WARN','ERR,2,0,WARN,HANDLE,ANGLE_REFERENCE_INVALID'),entry('ACK_FAILED','ACK,3,0,2,ANGLE_ZERO,FAILED,ANGLE_REFERENCE_INVALID'),
-    {id:4,time:'12:34:57',status:'TIMEOUT',line:'GET_STATUS'},entry('OK','TEL,4,0,0,1,0,0,1,0')];
+    entry('WARN','ERR,2,0,WARN,HANDLE,ANGLE_REFERENCE_INVALID',2),entry('ACK_FAILED','ACK,3,0,2,ANGLE_ZERO,FAILED,ANGLE_REFERENCE_INVALID',3),
+    {id:4,time:'12:34:57',status:'TIMEOUT',line:'GET_STATUS'},entry('OK','TEL,4,0,0,1,0,0,1,0',5)];
   ui.render({...base,serial:{portOpen:true,errors:0,lines}});
   assert.equal(ui.elements.get('serial-alerts').hidden,false);
   const text=ui.elements.get('serial-alert-list').textContent;
@@ -158,4 +171,15 @@ test('All supplied host acceptance vectors can be explained without exceptions',
     assert.equal(typeof result.text,'string');assert.ok(result.text.length>0);assert.ok(!result.text.includes('undefined'),line);count++;
   }
   assert.equal(count,50);
+});
+
+test('Dedicated alerts survive history eviction, are deduplicated and ordered newest first',()=>{
+  const ui=fixture();
+  const old=entry('ERROR','ERR,1,0,ERROR,I2C,CONNECTION_LOST',1);
+  const recent=entry('WARN','ERR,2,0,WARN,HANDLE,ANGLE_REFERENCE_INVALID',2);
+  ui.render({...base,serial:{portOpen:true,lines:[recent],alerts:[old,recent]}});
+  const alerts=ui.elements.get('serial-alert-list').children;
+  assert.equal(alerts.length,2);
+  assert.match(alerts[0].textContent,/基準角度が無効/);
+  assert.match(alerts[1].textContent,/接続が失われました/);
 });

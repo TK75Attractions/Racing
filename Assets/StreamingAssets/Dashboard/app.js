@@ -1,5 +1,8 @@
-const localMode = location.origin === 'http://127.0.0.1:8765';
-const API = localMode ? '' : 'http://127.0.0.1:8765';
+const localMode = location.origin !== 'https://tk75attractions.github.io';
+const API = '';
+let liveController = null;
+let latestSnapshot = null;
+let logSignature = '';
 const $ = (id) => document.getElementById(id);
 const labels = { Title: 'タイトル', CarSelection: '車選択', Tutorial: '練習', Countdown: 'カウントダウン', Game: 'レース中', Goal: 'ゴール処理中', Result: '結果表示' };
 const details = { Title: '開始操作を待っています', CarSelection: '参加者が車を選んでいます', Tutorial: '参加者が操作を練習しています', Countdown: 'スタートまでまもなく', Game: 'レース進行中', Goal: '完走処理中', Result: '次のレースを選択できます' };
@@ -34,6 +37,8 @@ function setConnection(isConnected) {
     $('serial-alerts').hidden = true;
     $('serial-alert-list').replaceChildren();
     serialAlertSignature = '';
+    logSignature = '';
+    renderTelemetry(null);
     updateFlow(null);
     renderParticipants(null);
     $('serial-log').innerHTML = '<div class="empty-log">シリアル入力を待っています。Unity の接続状態を確認してください。</div>';
@@ -82,6 +87,7 @@ function updateFlow(state) {
 
 function render(snapshot, { canControl = localMode } = {}) {
   setConnection(true);
+  latestSnapshot = snapshot;
   currentState = snapshot.state;
   updateFlow(snapshot.state);
   $('game-state').textContent = labels[snapshot.state] || snapshot.state;
@@ -112,6 +118,7 @@ function render(snapshot, { canControl = localMode } = {}) {
   if (localMode) $('control-note').textContent = snapshot.state === 'Game' ? '「結果を表示」はレースを終了し、現在の記録で結果画面へ進みます。' : '現在のゲーム状態に応じて操作できます。';
   renderSerialAlerts(snapshot.serial, snapshot.inputMode);
   renderLog(snapshot.serial.lines || []);
+  if (snapshot.telemetry) renderTelemetry(snapshot.telemetry);
   renderParticipants(snapshot);
 }
 
@@ -228,21 +235,8 @@ function explainSerialEntry(entry) {
   const d = match[4]?.split(',') || [];
   let text;
   switch (match[1]) {
-    case 'TEL': {
-      if (d.length < 6 || d.slice(0, 6).some((v, i) => !/^-?\d+(?:\.\d+)?$/.test(v) || !Number.isFinite(Number(v)) ||
-          (i % 3 === 0 ? Math.abs(Number(v)) > 3600 : Number(v) < 0 || Number(v) > 1)))
-        return result('入力データの6項目を確認できないため、値を説明できません。', 'error');
-      const player = (index) => {
-        const [angle, accel, brake] = d.slice(index * 3, index * 3 + 3).map(Number);
-        const steering = angle === 0 ? 'ハンドル中央' : `${angle > 0 ? '右' : '左'}${Math.abs(angle).toLocaleString('ja-JP', { maximumFractionDigits: 6 })}°`;
-        const percent = (v) => (v * 100).toLocaleString('ja-JP', { maximumFractionDigits: 3 });
-        return `P${index + 1}：${steering}、アクセル${percent(accel)}%、ブレーキ${percent(brake)}%`;
-      };
-      text = `${player(0)} ／ ${player(1)}`;
-      if (status === 'OLD_TEL') text += '（重複または古い入力のため反映しません）';
-      if (status === 'NOT_READY') text += '（装置・セッションの準備が整っていないため反映しません）';
-      break;
-    }
+    case 'TEL': return result('TELの受信値は最新値欄に表示します。');
+    case 'CMD': text = `装置へ「${rgpName(rgpCommands, d[0])}」を送信しました。` + (d[0] === 'OPEN_SESSION' ? '' : d.length > 1 ? ` 引数：${d.slice(1).join('、')}` : ''); break;
     case 'ERR': return result(rgpErrorExplanation(d), d[0] === 'WARN' ? 'warning' : 'error');
     case 'EVT': {
       const events = { BOOT: '装置が起動しました', ADS_READY: 'ペダル用センサーの準備ができました', IMU_FOUND: '姿勢センサーを検出しました',
@@ -283,7 +277,8 @@ function explainSerialEntry(entry) {
 
 let serialAlertSignature = '';
 function renderSerialAlerts(serial, inputMode = '') {
-  const alerts = (serial.lines || []).map(entry => ({ entry, ...explainSerialEntry(entry) }))
+  const unique = new Map([...(serial.lines || []), ...(serial.alerts || [])].map(entry => [entry.id, entry]));
+  const alerts = [...unique.values()].sort((a, b) => a.id - b.id).map(entry => ({ entry, ...explainSerialEntry(entry) }))
     .filter(item => item.level !== 'info').reverse().slice(0, 8);
   if (serial.portOpen === false && /serial|シリアル/i.test(inputMode) && !/disabled/i.test(inputMode))
     alerts.unshift({ entry: { time: '現在' }, level: 'warning', text: 'シリアルポートが未接続です。USB接続とUnityのポート設定を確認してください。' });
@@ -301,10 +296,29 @@ function renderSerialAlerts(serial, inputMode = '') {
   }));
 }
 
+function isTelemetryEntry(entry) {
+  return entry.status !== 'INVALID' && /^@TEL,/.test(entry.line || '') &&
+    /\*[0-9A-F]{4}$/.test(entry.line) && rgpCrc(entry.line.slice(1, -5)) === entry.line.slice(-4);
+}
+function renderTelemetry(entry) {
+  const target = $('latest-tel');
+  if (!entry || !isTelemetryEntry(entry)) { target.textContent = 'TELの受信を待っています。'; return; }
+  const values = entry.line.slice(1, -5).split(',').slice(3);
+  if (values.length !== 6 || values.some((v, i) => !Number.isFinite(Number(v)) || (i % 3 === 0 ? Math.abs(Number(v)) > 3600 : Number(v) < 0 || Number(v) > 1))) { target.textContent = 'TELの受信値を確認できません。'; return; }
+  const rows = [0, 1].map(i => {
+    const [handle, accel, brake] = values.slice(i * 3, i * 3 + 3).map(Number);
+    return `P${i + 1}  HANDLE ${handle}° / ACCEL ${(accel * 100).toFixed(1)}% / BRAKE ${(brake * 100).toFixed(1)}%`;
+  });
+  target.textContent = `${entry.time || ''}  最新の受信値（ゲームへの適用状態は上の入力表示を参照）\n${rows.join('\n')}\n${entry.line}`;
+}
 function renderLog(lines) {
+  lines = lines.filter(entry => !isTelemetryEntry(entry));
+  const signature = JSON.stringify(lines);
+  if (signature === logSignature) return;
+  logSignature = signature;
   const log = $('serial-log');
   if (!lines.length) {
-    log.innerHTML = '<div class="empty-log">シリアル入力を待っています。</div>';
+    log.innerHTML = '<div class="empty-log">TEL以外の通信履歴を待っています。</div>';
     return;
   }
   const oldTop = log.scrollTop;
@@ -314,7 +328,7 @@ function renderLog(lines) {
     row.className = 'log-row';
     const time = document.createElement('span'); time.textContent = entry.time;
     const status = document.createElement('span');
-    status.textContent = entry.status;
+    status.textContent = (entry.direction ? entry.direction + ' ' : '') + entry.status;
     const explanation = explainSerialEntry(entry);
     status.className = explanation.level === 'error' ? 'bad' : explanation.level === 'warning' ? 'partial' : 'ok';
     const data = document.createElement('div'); data.className = 'serial-payload';
@@ -336,6 +350,7 @@ async function poll() {
     const response = await apiFetch('/api/status');
     if (!response.ok) throw new Error('HTTP ' + response.status);
     render(await response.json());
+    $('transport-status').textContent = 'ローカル / HTTP';
     if (Date.now() - lastFrameAt >= 2000 && !frameBusy) {
       lastFrameAt = Date.now();
       void refreshFrames();
@@ -371,10 +386,12 @@ async function refreshFrames() {
 document.querySelectorAll('[data-action]').forEach((button) => {
   button.addEventListener('click', async () => {
     if (!localMode || !connected || actions[button.dataset.action] !== currentState) return;
+    if (liveController) { await liveController.command(button.dataset.action); return; }
     button.disabled = true;
     $('control-note').textContent = 'Unity に操作を送信中…';
     try {
-      const response = await apiFetch('/api/action/' + button.dataset.action, { method: 'POST' });
+      const request = { id: crypto.randomUUID(), targetSession: latestSnapshot.sessionId, expectedState: latestSnapshot.state, stateRevision: latestSnapshot.stateRevision, observedAt: latestSnapshot.serverTime };
+      const response = await apiFetch('/api/action/' + button.dataset.action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request) });
       if (!response.ok) throw new Error('操作を受け付けられませんでした');
       await poll();
     } catch {
@@ -388,9 +405,14 @@ function updateClock() { $('clock').textContent = new Date().toLocaleTimeString(
 updateClock();
 setInterval(updateClock, 1000);
 if (localMode) {
-  poll();
-  setInterval(poll, 1000);
+  import('./live.js').then(({ startLive }) => startLive({ render, setConnection, renderTelemetry, refreshFrames, apiFetch }))
+    .then(controller => { liveController = controller; })
+    .catch(() => {
+      if (location.origin === 'http://127.0.0.1:8765') { poll(); setInterval(poll, 1000); }
+      else { setConnection(false); $('live-detail').textContent = '接続ブリッジに接続できません。Unityと補助ブリッジを確認してください。'; }
+    });
 } else {
+  $('transport-status').textContent = 'Firebase / 定期更新';
   document.body.classList.add('remote');
   import('./remote.js').then(({ startRemote }) => startRemote({ render, setConnection }))
     .catch(() => { $('remote-status').textContent = '遠隔監視の読み込みに失敗しました。ページを再読み込みしてください。'; });

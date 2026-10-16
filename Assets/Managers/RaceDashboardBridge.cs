@@ -22,6 +22,24 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     private InputManager input;
     private Gmanager race;
     private int serialSequence;
+    private readonly string liveSession = Guid.NewGuid().ToString("N");
+    private volatile string liveSnapshot;
+    private volatile RgpSerialJournal liveJournal = new RgpSerialJournal();
+    private long stateRevision;
+    private string observedState;
+    private float nextSnapshotAt;
+    private int streamClients;
+    private volatile bool stopping;
+    private readonly Dictionary<string, string> commandResults = new Dictionary<string, string>();
+    private readonly Dictionary<string, string> commandRequests = new Dictionary<string, string>();
+    private readonly Queue<string> commandOrder = new Queue<string>();
+    private SerialEntry latestTelemetry;
+
+    [Serializable] private sealed class ActionRequest
+    {
+        public string id, targetSession, expectedState;
+        public long stateRevision, observedAt;
+    }
 
     [Serializable] private sealed class SerialEntry
     {
@@ -71,6 +89,9 @@ public sealed class RaceDashboardBridge : MonoBehaviour
 
     [Serializable] private sealed class DashboardSnapshot
     {
+        public string sessionId;
+        public long stateRevision, serverTime;
+        public SerialEntry telemetry;
         public string state;
         public float raceTime;
         public float countdown;
@@ -100,6 +121,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
 
     private void Start()
     {
+        // HTTP actions and state snapshots must keep ticking while a browser has focus.
+        Application.runInBackground = true;
         race = GetComponent<Gmanager>();
         input = GetComponent<InputManager>();
         if (input != null) input.SerialLineProcessed += RecordSerialLine;
@@ -124,7 +147,14 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     {
         while (listener != null && listener.IsListening)
         {
-            try { requests.Enqueue(listener.GetContext()); }
+            try
+            {
+                HttpListenerContext context = listener.GetContext();
+                if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/api/events")
+                    StartStream(context);
+                else if (requests.Count < 64) requests.Enqueue(context);
+                else { context.Response.StatusCode = 503; context.Response.Close(); }
+            }
             catch (HttpListenerException) { break; }
             catch (ObjectDisposedException) { break; }
         }
@@ -132,6 +162,16 @@ public sealed class RaceDashboardBridge : MonoBehaviour
 
     private void Update()
     {
+        ObserveState();
+        RgpSerialJournal journal = input?.SharedSerialInputSource?.Monitor;
+        if (journal != null) liveJournal = journal;
+        if (Time.realtimeSinceStartup >= nextSnapshotAt)
+        {
+            DashboardSnapshot snapshot = BuildSnapshot();
+            snapshot.serial.lines = new SerialEntry[0];
+            liveSnapshot = JsonUtility.ToJson(snapshot);
+            nextSnapshotAt = Time.realtimeSinceStartup + .1f;
+        }
         // All Unity objects, including camera capture and commands, stay on the main thread.
         for (int i = 0; i < 4 && requests.TryDequeue(out HttpListenerContext context); i++)
             Handle(context);
@@ -156,7 +196,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             }
             // Browsers omit Origin on same-origin GET requests and address-bar navigation.
             bool readOnlyApi = isGet && (path == "/api/status" ||
-                path == "/api/player/1/frame" || path == "/api/player/2/frame");
+                path == "/api/player/1/frame" || path == "/api/player/2/frame" || path.StartsWith("/api/command/", StringComparison.Ordinal));
             if (!(readOnlyApi && string.IsNullOrEmpty(origin)) && !AllowedOrigin(origin))
             {
                 Respond(context, 403, "text/plain", Encoding.UTF8.GetBytes("Origin denied"), null);
@@ -175,9 +215,13 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             else if (context.Request.HttpMethod == "POST" && path.StartsWith("/api/action/", StringComparison.Ordinal))
             {
                 string action = path.Substring("/api/action/".Length);
-                bool accepted = ApplyAction(action);
-                Respond(context, accepted ? 200 : 409, "application/json",
-                    Encoding.UTF8.GetBytes(accepted ? "{\"ok\":true}" : "{\"ok\":false}"), origin);
+                HandleAction(context, action, origin);
+            }
+            else if (isGet && path.StartsWith("/api/command/", StringComparison.Ordinal))
+            {
+                string id = path.Substring("/api/command/".Length);
+                bool found = commandResults.TryGetValue(id, out string result);
+                Respond(context, found ? 200 : 404, "application/json", Encoding.UTF8.GetBytes(result ?? "{\"known\":false}"), origin);
             }
             else Respond(context, 404, "text/plain", Encoding.UTF8.GetBytes("Not found"), origin);
         }
@@ -194,6 +238,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         {
             case "/":
             case "/index.html": fileName = "index.html"; contentType = "text/html; charset=utf-8"; return true;
+            case "/live.js": fileName = "live.js"; contentType = "application/javascript; charset=utf-8"; return true;
             case "/app.js": fileName = "app.js"; contentType = "application/javascript; charset=utf-8"; return true;
             case "/style.css": fileName = "style.css"; contentType = "text/css; charset=utf-8"; return true;
             case "/favicon.svg": fileName = "favicon.svg"; contentType = "image/svg+xml"; return true;
@@ -206,9 +251,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     private static bool AllowedOrigin(string origin)
     {
         if (string.IsNullOrEmpty(origin) || !Uri.TryCreate(origin, UriKind.Absolute, out Uri uri)) return false;
-        bool local = uri.Scheme == "http" && (uri.Host == "localhost" || uri.Host == "127.0.0.1");
-        bool pages = uri.Scheme == "https" && uri.Host == "tk75attractions.github.io";
-        return local || pages;
+        return origin == "http://127.0.0.1:8765" || origin == "http://localhost:8765";
     }
 
     private static void Respond(HttpListenerContext context, int status, string type, byte[] bytes, string origin)
@@ -248,6 +291,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         ParticipantSnapshot[] participants = BuildParticipants();
         return new DashboardSnapshot
         {
+            sessionId = liveSession, stateRevision = stateRevision, serverTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            telemetry = latestTelemetry,
             state = race != null ? race.state.ToString() : "Unknown",
             raceTime = race != null ? race.time : 0f,
             countdown = race != null ? race.CountdownTimeRemaining : 0f,
@@ -356,6 +401,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             id = ++serialSequence, time = DateTime.Now.ToString("HH:mm:ss.fff"),
             status = status, line = line.Length > 512 ? line.Substring(0, 512) : line
         };
+        if (SerialInputProtocol.TryParse(line + "\n", out RgpFrame parsed) && parsed.Type == "TEL")
+        { latestTelemetry = entry; return; }
         serialLines.Enqueue(entry);
         if (IsSerialAlert(status, line))
         {
@@ -377,7 +424,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             (frame.Data[1] == "RECOVERING" || frame.Data[1] == "FATAL");
     }
 
-    // Reserve space for recent alerts before filling with high-rate telemetry, then restore time order.
+    // Reserve space for recent alerts before filling with other non-TEL history, then restore time order.
     // The same bounded wire schema works with existing Firebase rules (10 lines, 120 chars, 4 KiB).
     private SerialEntry[] SelectSerialLines(int maximum)
     {
@@ -412,6 +459,92 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         return race != null && race.state.ToString() == expectedState && ApplyAction(action);
     }
 
+    private void ObserveState()
+    {
+        string current = race != null ? race.state.ToString() : "Unknown";
+        if (current != observedState) { observedState = current; stateRevision++; }
+    }
+
+    private void HandleAction(HttpListenerContext context, string action, string origin)
+    {
+        if (context.Request.ContentLength64 < 0 || context.Request.ContentLength64 > 4096)
+        { Respond(context, 413, "application/json", Encoding.UTF8.GetBytes("{\"ok\":false}"), origin); return; }
+        string body;
+        using (var reader = new StreamReader(context.Request.InputStream)) body = reader.ReadToEnd();
+        ActionRequest request;
+        try { request = JsonUtility.FromJson<ActionRequest>(body); }
+        catch { request = null; }
+        if (request == null || string.IsNullOrEmpty(request.id) || request.id.Length > 80)
+        { Respond(context, 400, "application/json", Encoding.UTF8.GetBytes("{\"ok\":false}"), origin); return; }
+        string signature = action + "|" + body;
+        if (commandResults.TryGetValue(request.id, out string cached))
+        {
+            bool same = commandRequests[request.id] == signature;
+            Respond(context, same ? 200 : 409, "application/json", Encoding.UTF8.GetBytes(same ? cached : "{\"ok\":false,\"reason\":\"id_conflict\"}"), origin);
+            return;
+        }
+        ObserveState();
+        long age = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - request.observedAt;
+        bool accepted = request.targetSession == liveSession && request.stateRevision == stateRevision &&
+            age >= -1000 && age <= 15000 && TryApplyRemoteAction(action, request.expectedState);
+        ObserveState();
+        string result = "{\"id\":" + RgpSerialJournal.Quote(request.id) + ",\"ok\":" + (accepted ? "true" : "false") + "}";
+        commandResults.Add(request.id, result); commandRequests.Add(request.id, signature); commandOrder.Enqueue(request.id);
+        if (commandOrder.Count > 256) { string old = commandOrder.Dequeue(); commandResults.Remove(old); commandRequests.Remove(old); }
+        nextSnapshotAt = 0;
+        Respond(context, accepted ? 200 : 409, "application/json", Encoding.UTF8.GetBytes(result), origin);
+    }
+
+    private void StartStream(HttpListenerContext context)
+    {
+        string origin = context.Request.Headers["Origin"];
+        if (!string.IsNullOrEmpty(origin) && !AllowedOrigin(origin))
+        { context.Response.StatusCode = 403; context.Response.Close(); return; }
+        if (Interlocked.Increment(ref streamClients) > 8)
+        { Interlocked.Decrement(ref streamClients); context.Response.StatusCode = 429; context.Response.Close(); return; }
+        ThreadPool.QueueUserWorkItem(_ =>
+        {
+            try
+            {
+                context.Response.ContentType = "application/x-ndjson";
+                context.Response.SendChunked = true;
+                context.Response.Headers["Cache-Control"] = "no-store";
+                string session = context.Request.QueryString["serialSession"] ?? "";
+                long.TryParse(context.Request.QueryString["after"], out long cursor);
+                string lastSnapshot = null;
+                long lastTelemetry = -1;
+                DateTime heartbeat = DateTime.MinValue;
+                using (var writer = new StreamWriter(context.Response.OutputStream, new UTF8Encoding(false)))
+                {
+                    while (!stopping)
+                    {
+                        RgpSerialJournal.Batch batch = liveJournal.Read(session, cursor);
+                        string snapshot = liveSnapshot;
+                        bool changedSession = batch.Session != session;
+                        bool changedTelemetry = batch.Telemetry != null && (changedSession || batch.Telemetry.Id != lastTelemetry);
+                        bool changed = changedSession || batch.Cursor != cursor || snapshot != lastSnapshot || changedTelemetry;
+                        if (changed || DateTime.UtcNow >= heartbeat)
+                        {
+                            string json = "{\"sessionId\":" + RgpSerialJournal.Quote(liveSession) + ",\"serialSession\":" + RgpSerialJournal.Quote(batch.Session) +
+                                ",\"cursor\":" + batch.Cursor + ",\"gap\":" + (batch.Gap ? "true" : "false") +
+                                ",\"snapshot\":" + (snapshot != lastSnapshot ? snapshot ?? "null" : "null") +
+                                ",\"telemetry\":" + (changedTelemetry ? batch.Telemetry.Json : "null") +
+                                ",\"alerts\":[" + string.Join(",", Array.ConvertAll(batch.Alerts, entry => entry.Json)) + "]" +
+                                ",\"lines\":[" + string.Join(",", Array.ConvertAll(batch.Lines, entry => entry.Json)) + "]}";
+                            writer.WriteLine(json); writer.Flush();
+                            heartbeat = DateTime.UtcNow.AddSeconds(1);
+                            lastSnapshot = snapshot; session = batch.Session; cursor = batch.Cursor;
+                            if (batch.Telemetry != null) lastTelemetry = batch.Telemetry.Id;
+                        }
+                        Thread.Sleep(20);
+                    }
+                }
+            }
+            catch (Exception error) when (error is IOException || error is HttpListenerException || error is ObjectDisposedException) { }
+            finally { Interlocked.Decrement(ref streamClients); try { context.Response.Close(); } catch { } }
+        });
+    }
+
     private byte[] CapturePlayer(int index)
     {
         Camera camera = race?.GetPlayerCaptureCamera(index);
@@ -441,6 +574,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
 
     private void OnDestroy()
     {
+        stopping = true;
         if (input != null) input.SerialLineProcessed -= RecordSerialLine;
         listener?.Close();
         listener = null;

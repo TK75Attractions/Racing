@@ -30,6 +30,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     private bool inputWasFresh;
 
     public event Action<string, string> LineProcessed;
+    public RgpSerialJournal Monitor { get; } = new RgpSerialJournal();
     public string PortName => portName;
     public bool IsPortOpen => portIsOpen;
     public int PendingLineCount => receivedLines.Count;
@@ -101,11 +102,11 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     private void Send(string wire)
     {
         if (!portIsOpen) return;
-        try { if (pseudoTerminal != null) pseudoTerminal.Write(wire); else serialPort.Write(wire); }
+        try { if (pseudoTerminal != null) pseudoTerminal.Write(wire); else serialPort.Write(wire); Monitor.RecordWire("TX", wire); }
         catch (Exception exception)
         {
             portIsOpen = false;
-            diagnosticMessages.Enqueue($"RGP command write failed: {exception.Message}");
+            QueueDiagnostic($"RGP command write failed: {exception.Message}");
         }
     }
 
@@ -132,6 +133,8 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     private void RecordParseResult(string status, string line)
     {
         LastParseResult = status;
+        if (status == "STALE" || status == "TIMEOUT" || status == "INCOMPATIBLE")
+            Monitor.Diagnostic(status, line);
         LineProcessed?.Invoke(status, line);
     }
 
@@ -139,7 +142,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     {
         if (string.IsNullOrWhiteSpace(portName))
         {
-            diagnosticMessages.Enqueue("Shared serial port is not configured.");
+            QueueDiagnostic("Shared serial port is not configured.");
             return;
         }
 
@@ -173,7 +176,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
             pseudoTerminal = null;
             serialPort?.Dispose();
             serialPort = null;
-            diagnosticMessages.Enqueue($"Failed to open shared serial controller on {portName}: {exception.Message}");
+            QueueDiagnostic($"Failed to open shared serial controller on {portName}: {exception.Message}");
         }
     }
 
@@ -191,6 +194,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
                 {
                     string wire = decoder.Push(bytes[i], now);
                     if (wire == null) continue;
+                    Monitor.RecordWire("RX", wire);
                     receivedLines.Enqueue(new ReceivedFrame(wire, now));
                     Interlocked.Increment(ref linesReceived);
                 }
@@ -198,11 +202,17 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
             catch (TimeoutException) { decoder.Expire(clock.Elapsed.TotalMilliseconds); }
             catch (Exception exception)
             {
-                if (!stopRequested) diagnosticMessages.Enqueue($"Shared serial read failed: {exception.Message}");
+                if (!stopRequested) QueueDiagnostic($"Shared serial read failed: {exception.Message}");
                 break;
             }
         }
         portIsOpen = false;
+    }
+
+    private void QueueDiagnostic(string text)
+    {
+        Monitor.Diagnostic("ERROR", text);
+        diagnosticMessages.Enqueue(text);
     }
 
     private void FlushDiagnostics()

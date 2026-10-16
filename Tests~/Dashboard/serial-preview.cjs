@@ -19,6 +19,7 @@ const snapshot = {state:'Game',raceTime:42.6,goalLap:2,inputMode:'Serial P1/P2',
     {id:3,time:'12:34:52.330',status:'EVENT',line:wire('EVT,12,8210,I2C_RESTORED')},
     {id:4,time:'12:34:52.335',status:'EVENT',line:wire('EVT,13,8215,STATE,READY')},
     {id:5,time:'12:34:52.350',status:'OK',line:wire('TEL,14,8230,-12.50,0.750,0.000,25.00,0.000,0.400')} ]}};
+snapshot.telemetry=snapshot.serial.lines.at(-1);
 (async()=>{
   mkdirSync(output,{recursive:true});
   const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL || 'chrome'});
@@ -34,7 +35,7 @@ const snapshot = {state:'Game',raceTime:42.6,goalLap:2,inputMode:'Serial P1/P2',
       return route.fulfill({body:readFileSync(resolve(dashboard,name)),contentType:name.endsWith('.js')?'text/javascript':name.endsWith('.css')?'text/css':name.endsWith('.svg')?'image/svg+xml':'text/html'});
     });
     await page.goto('http://127.0.0.1:8765/');
-    await page.getByText('P1：左12.5°、アクセル75%、ブレーキ0%',{exact:false}).waitFor();
+    await page.locator('#latest-tel').filter({hasText:'ACCEL 75.0%'}).waitFor();
     assert.equal(await page.locator('#serial-alerts').isVisible(),true);
     assert.match(await page.locator('#serial-alert-list').innerText(),/I2C通信で接続が失われました/);
     await page.locator('.serial').screenshot({path:resolve(output,'desktop.png')});

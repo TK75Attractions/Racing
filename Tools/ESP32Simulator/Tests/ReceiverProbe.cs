@@ -39,6 +39,10 @@ internal static class ReceiverProbe
                     if (!source.IsPortOpen) { closed=true; break; }
                     Thread.Sleep(5);
                 }
+                var journal = source.Monitor.Read("", 0);
+                if (journal.Telemetry == null || Array.Exists(journal.Lines, line => line.Line.StartsWith("@TEL,") && line.Status != "INVALID") ||
+                    !Array.Exists(journal.Lines, line => line.Direction == "TX" && line.Line.Contains(",OPEN_SESSION,")))
+                    throw new Exception("Realtime journal lost telemetry/command or retained normal TEL history.");
                 Console.WriteLine($"session={session} numeric={numeric} independent={independent} atomicStop={atomicStop} resumed={resumed} stale={stale} recovered={recovered} invalid={invalid} slowFragment={slowFragment} closed={closed} lines={source.LinesReceived}");
                 if (!session || !numeric || !closed || source.PendingLineCount>8) throw new Exception("RGP session, numeric input, close detection or queue drain failed.");
                 if (args[1]=="timeout" && !(independent&&atomicStop&&resumed&&stale&&recovered)) throw new Exception("Atomic/stale scenario failed.");
