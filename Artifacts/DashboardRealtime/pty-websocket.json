@@ -3,12 +3,12 @@
   "transport": "Swift simulator → PTY → production receiver/bridge → relay → WebSocket",
   "rateSettingHz": 100,
   "durationSeconds": 15,
-  "serialReceived": 1544,
-  "latestSamples": 710,
+  "serialReceived": 2242,
+  "latestSamples": 711,
   "loopbackReceiveToClientMs": {
-    "median": 8,
-    "p95": 18,
-    "max": 59
+    "median": 7,
+    "p95": 17,
+    "max": 49
   },
   "note": "TEL is intentionally coalesced into latest values. Same-PC UTC timestamps; no WAN latency claim."
 }
