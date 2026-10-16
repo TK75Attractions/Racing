@@ -27,6 +27,10 @@ public static class RaceCourseRoad
         [Tooltip("チューブ内壁まで道路の両側を埋める対象。未指定のコースでは生成しません。")]
         public MeshCollider tubeInterior;
 
+        [Tooltip("チューブ内を除き、ジャンプの両脇を含めて道路境界へ青いバリアを生成します。")]
+        public bool generateBarriers;
+        public Material barrierMaterial;
+
     }
 
     public const string RootName = "Generated Race Course Road";
@@ -122,6 +126,7 @@ public static class RaceCourseRoad
         }
 
         BuildTubeShoulders(owner, root.transform, center, left, right, distances, roadSegments, settings);
+        RaceCourseBarriers.Build(root.transform, center, left, right, closedLoop, settings);
 
         // Paint is clipped against each surface triangle, so it follows curves, width changes
         // and slopes without crossing below a twisted road quad. Only the road has a collider.
@@ -243,6 +248,7 @@ public static class RaceCourseRoad
             root.SetActive(false);
             foreach (MeshFilter filter in root.GetComponentsInChildren<MeshFilter>(true))
             {
+                if (filter.GetComponentInParent<RaceBarrierPath>() != null) continue; // The path owns and releases both meshes.
                 Mesh mesh = filter.sharedMesh;
                 if (mesh != null && (mesh.hideFlags & HideFlags.DontSave) == HideFlags.DontSave) DestroyGenerated(mesh);
             }
