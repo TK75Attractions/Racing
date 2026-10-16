@@ -4,6 +4,14 @@ Each player's **はじめる / START** button (or pedal hold on the title) enter
 
 Each player's screen transition and camera switch are independent during preparation. Selection never creates the other player's practice car or resets an already-running practice area. Holding the start pedal cannot accidentally confirm a car, and holding the confirmation pedal cannot accelerate the practice car until it has been released.
 
+## Preparation time limits
+
+Each player receives a separate **30-second car selection** countdown and **60-second tutorial** countdown on entering those screens. Both show a `MM:SS` timer and remaining-time bar, turning pink for the last ten seconds. The timers use real elapsed time and continue when a controller disconnects.
+
+Selection timeout commits the currently displayed vehicle and paint through the normal confirmation path and opens that player's tutorial. Returning to the title discards the draft; reopening selection starts a fresh countdown. Tutorial timeout ends that player's practice, stops the car and shows `TIME UP` while waiting for the other player. Completing the lessons early stops the timer. The race countdown begins once both players have completed or timed out of practice, after the existing one-second ready delay. Players still at the title or choosing a car keep their own preparation flow.
+
+Change **Preparation Time Limits > Car Selection Time Limit Seconds / Tutorial Time Limit Seconds** on `Gmanager` in the Inspector to configure the two durations.
+
 ## Pedal and steering controls
 
 The screen needs only the steering wheel and pedal. The vehicle automatically rotates at 18 degrees per second; keyboard/mouse orbit controls are unnecessary.
@@ -46,4 +54,4 @@ Unity -batchmode -projectPath /path/to/Racing -executeMethod CarSelectionValidat
 
 1920×1080 screenshots go to `Artifacts/CarSelection`; other sizes go to the temporary `RacingCarSelectionCaptures` directory. The command updates the dedicated static M PLUS Bold atlas when new text is added.
 
-**Racing > UI > Validate Car Selection in Play Mode** tests P2-first start, a held start pedal, visible hold progress, independent tutorial entry, driving while P1 selects, confirmation pedal release, and synchronized race spawning. It simulates lesson completion for the final race gate; it is an integration smoke test, not a full driving playthrough. Use `-executeMethod CarSelectionPlayModeValidation.Run` without `-quit` in batch mode. **Racing > Tutorial > Validate and Capture** additionally exercises the real driving lessons; its editor driver chooses the saved/default cars automatically to reach practice.
+**Racing > UI > Validate Car Selection in Play Mode** tests P2-first start, a held start pedal, visible hold progress, independent tutorial entry, driving while P1 selects, confirmation pedal release, tutorial timeout stopping the car, and synchronized race spawning. It simulates one completed lesson and times out the other for the final race gate; it is an integration smoke test, not a full driving playthrough. Use `-executeMethod CarSelectionPlayModeValidation.Run` without `-quit` in batch mode. **Racing > Tutorial > Validate and Capture** additionally exercises the real driving lessons; its editor driver chooses the saved/default cars automatically to reach practice.

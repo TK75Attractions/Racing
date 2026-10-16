@@ -70,6 +70,24 @@ public static class CarSelectionValidation
             RectTransform titleTwo = RacingUITheme.Rect(playerTwoRoot, "Title P2", Vector2.zero, Vector2.one);
             CarSelectionUI second = CarSelectionUI.Create(titleTwo, 1);
             Require(second.SelectedVehicle == Array.FindIndex(catalog.vehicles, v => v.id == PlayerPrefs.GetString(keys[2], catalog.vehicles[0].id)), "Player selections are independent");
+            second.Open(12f);
+            ui.Open(5f);
+            ui.SelectVehicle(2); ui.SelectPaint(3);
+            ui.TickInput(DriveInputState.Neutral, false, 4f);
+            Require(ui.IsOpen && ui.TimeRemaining == 1f, "Countdown continues without a connected controller");
+            Require(second.TimeRemaining == 12f, "The other player's countdown is independent");
+            TMP_Text timerText = ui.Showroom.transform.Find("PreparationTimer/Time").GetComponent<TMP_Text>();
+            Require(timerText.text == "00:01" && timerText.color == NeonUI.Pink, "Last ten seconds display a pink MM:SS countdown");
+            ui.TickInput(DriveInputState.Neutral, false, 2f);
+            Require(!ui.IsOpen && ui.SelectedVehicle == 2 && ui.SelectedPaint == 3, "Timeout confirms the draft even while disconnected");
+            ui.Open(5f);
+            Require(ui.TimeRemaining == 5f, "Reopening selection resets its countdown");
+            ui.TickInput(DriveInputState.Neutral, true, 1f);
+            ui.Back();
+            Require(!ui.IsOpen, "Back still cancels an active countdown");
+            second.Cancel();
+            // Restore the sedan selection used by the body/handling checks below.
+            ui.Open(); ui.SelectVehicle(1); ui.SelectPaint(0); ui.Confirm();
             playerTwoRoot.gameObject.SetActive(false);
             GameObject car = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/car/car2.prefab"));
             SceneManager.MoveGameObjectToScene(car, scene);
