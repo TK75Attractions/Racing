@@ -2,39 +2,49 @@ using UnityEngine;
 
 public class CarSoundController : MonoBehaviour
 {
-    [Header("Dependencies")]
     public EngineAudioCore audioCore;
     public Rigidbody carRigidbody;
+    [Range(0, 1)] public float masterVolume = .55f;
+    [SerializeField] private int currentGear = 1;
+    [SerializeField] private float currentRpm = AutomaticGearbox.IdleRpm;
+    [SerializeField, Range(0, 1)] private float tunnelAmount;
+    private readonly AutomaticGearbox gearbox = new AutomaticGearbox();
+    private DebugMover mover;
+    private TireForce[] tires;
+    private float nextEnvironmentCheck;
 
-    [Header("Settings")]
-    public float maxSpeed = 30f;
-    public float minFreq = 50f;
-    public float maxFreq = 2000f;
-    [Range(0,1)] public float masterVolume = 0.2f;
+    public int CurrentGear => currentGear;
+    public float CurrentRpm => currentRpm;
+    public float TunnelAmount => tunnelAmount;
+    public bool IsShifting => gearbox.IsShifting;
+    public bool IsReverse => carRigidbody != null && Vector3.Dot(carRigidbody.linearVelocity, transform.forward) < -.8f;
 
-    [Header("Debug Info")]
-    [SerializeField] private float currentSpeed; //デバッグ用 速度表示
-    [SerializeField] private float currentFreq; //デバッグ用、周波数表示
+    private void Awake()
+    {
+        if (carRigidbody == null) carRigidbody = GetComponentInParent<Rigidbody>();
+        if (audioCore == null) audioCore = GetComponentInChildren<EngineAudioCore>();
+        mover = GetComponentInParent<DebugMover>();
+        tires = GetComponentsInChildren<TireForce>();
+    }
 
-    
+    private void OnEnable() { gearbox.Reset(); nextEnvironmentCheck = 0f; }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (carRigidbody == null || audioCore == null) return;
-
-        //速度割合
-        float speed = carRigidbody.linearVelocity.magnitude;
-        float ratio = Mathf.Clamp01(speed / maxSpeed);
-
-        //周波数
-        float freq = Mathf.Lerp(minFreq, maxFreq, ratio);
-
-        //デバッグ用のInspectorに表示
-        currentSpeed = speed;
-        currentFreq = freq;
-
-        audioCore.UpdateParameters(freq, Mathf.Clamp01(masterVolume) * RaceAudioSettings.Engine);
-
+        if (Time.time >= nextEnvironmentCheck)
+        {
+            nextEnvironmentCheck = Time.time + .1f;
+            tunnelAmount = TunnelAcoustics.EnclosureAt(carRigidbody.worldCenterOfMass);
+        }
+        bool grounded = tires.Length == 0;
+        foreach (TireForce tire in tires) grounded |= tire.IsGrounded;
+        float pedal = mover != null && mover.isActiveAndEnabled ? mover.PedalInput : 0f;
+        float throttle = Mathf.Clamp01(IsReverse ? -pedal : pedal);
+        float boost = mover != null ? mover.BoostVisualIntensity : 0f;
+        gearbox.Step(Time.deltaTime, Vector3.Dot(carRigidbody.linearVelocity, transform.forward), throttle, grounded, boost);
+        currentGear = gearbox.Gear; currentRpm = gearbox.Rpm;
+        audioCore.SetEngineState(currentRpm, gearbox.Load, Mathf.Clamp01(masterVolume) * RaceAudioSettings.Engine *
+            (Time.timeScale > 0f ? 1f : 0f), gearbox.Combustion, gearbox.ShiftSerial, boost, tunnelAmount);
     }
 }

@@ -5,6 +5,9 @@ using UnityEngine;
 [RequireComponent(typeof(MeshCollider))]
 public sealed class TubeDriveSurface : MonoBehaviour
 {
+    private void OnEnable() => TunnelAcoustics.Register(GetComponent<MeshCollider>());
+    private void OnDisable() => TunnelAcoustics.Unregister(GetComponent<MeshCollider>());
+
     public static bool Contains(Collider collider) => collider != null &&
         collider.TryGetComponent<TubeDriveSurface>(out var surface) && surface.isActiveAndEnabled;
 
@@ -12,5 +15,6 @@ public sealed class TubeDriveSurface : MonoBehaviour
     {
         if (collider != null && !collider.TryGetComponent<TubeDriveSurface>(out _))
             collider.gameObject.AddComponent<TubeDriveSurface>().hideFlags = HideFlags.DontSave;
+        if (collider != null && Contains(collider)) TunnelAcoustics.Register(collider);
     }
 }

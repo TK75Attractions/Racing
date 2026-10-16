@@ -10,15 +10,18 @@ public sealed class EngineSynth
     private readonly TunnelReverb reverb;
     private double firePhase, crankPhase;
     private float rpm = AutomaticGearbox.IdleRpm, load, gain, cut = 1f, room, boost;
-    private float pulse, pop, noiseLow, dcIn, dcOut, lastLoad;
+    private float pulse, pop, noiseLow, dcIn, dcOut, postDcIn, postDcOut, lastLoad;
     private int cylinder, lastShift;
     private uint random = 0x51f15e7u;
     private float popCooldown;
     public int SampleRate => sampleRate;
 
-    public EngineSynth(int rate)
+    public EngineSynth(int rate, uint seed = 0x51f15e7u)
     {
         sampleRate = Math.Max(8000, rate);
+        random = seed == 0 ? 1u : seed;
+        firePhase = (random & 0xffff) / 65536.0;
+        crankPhase = firePhase * .5;
         smooth = Coefficient(.035f); gainSmooth = Coefficient(.012f); roomSmooth = Coefficient(.24f);
         exhaustBody = new Biquad(sampleRate, 105, 1.1);
         exhaustBark = new Biquad(sampleRate, 420, .85);
@@ -39,7 +42,7 @@ public sealed class EngineSynth
             lastShift = shiftSerial;
             if (lastLoad > .25f) pop = .65f;
         }
-        if (lastLoad - targetLoad > .16f && rpm > 3600f && popCooldown <= 0f)
+        if ((lastLoad - targetLoad > .16f || (lastLoad > .35f && targetLoad <= .35f)) && rpm > 3600f && popCooldown <= 0f)
         { pop = .45f; popCooldown = .2f; }
         lastLoad = targetLoad;
         float pulseDecay = (float)Math.Exp(-1.0 / (sampleRate * .0028));
@@ -92,7 +95,9 @@ public sealed class EngineSynth
             float highpass = engine - dcIn + dcCoefficient * dcOut;
             dcIn = engine; dcOut = highpass;
             float dry = (float)Math.Tanh(highpass * 1.55f) * .62f;
-            reverb.Process(dry, room, out float left, out float right);
+            float centered = dry - postDcIn + dcCoefficient * postDcOut;
+            postDcIn = dry; postDcOut = centered;
+            reverb.Process(centered, room, out float left, out float right);
             // Gain is after the reverb so Engine=0 also silences the residual tail.
             if (channels == 1) data[i] = (left + right) * .5f * gain;
             else

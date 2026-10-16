@@ -58,7 +58,8 @@ public static class RacingHUDBuilder
             Number(speed,"Dial"+i,(i*2).ToString(),x-.055f,y-.04f,x+.055f,y+.05f,19f,Color.white,TextAlignmentOptions.Center);
         }
         RectTransform gear=NeonUI.Panel(speed,"Gear",new Vector2(.72f,.015f),new Vector2(.89f,.21f));
-        NeonUI.Text(gear,"Value","D",Vector2.zero,Vector2.one,29f,TextAlignmentOptions.Center,true,NeonUI.Cyan);
+        TMP_Text gearValue=NeonUI.Text(gear,"Value","1",Vector2.zero,Vector2.one,29f,TextAlignmentOptions.Center,true,NeonUI.Cyan);
+        (gear.GetComponent<RacingGearDisplay>() ?? gear.gameObject.AddComponent<RacingGearDisplay>()).Configure(playerIndex,gearValue);
 
         RectTransform boostBadge=RacingUITheme.Rect(root,"BoostBadge",new Vector2(.93f,.13f),new Vector2(.986f,.275f));
         IsolateCanvas(boostBadge);

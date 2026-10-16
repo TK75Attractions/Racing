@@ -7,7 +7,7 @@ public sealed class AutomaticGearbox
     public const float RedlineRpm = 7800f;
     // Short racing ratios: full-load shifts at roughly 32, 47, 65, 87 and 113 km/h.
     private static readonly float[] Ratios = { 3.60f, 2.48f, 1.80f, 1.35f, 1.04f, .82f };
-    private const float FinalDrive = 4.1f;
+    private const float FinalDrive = 7.4f;
     private const float WheelCircumference = 1.96f;
     private const float ShiftDuration = .22f;
     private float shiftRemaining, cooldown;

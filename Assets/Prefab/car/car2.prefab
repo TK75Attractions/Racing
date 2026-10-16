@@ -160,7 +160,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00ec916ee6e71a54f84eefc4e2790ec4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EngineAudioCore
-  targetFrequency: 0
 --- !u!82 &3222704929213065211
 AudioSource:
   m_ObjectHideFlags: 0
@@ -529,12 +528,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CarSoundController
   audioCore: {fileID: 6268100910431798603}
   carRigidbody: {fileID: 2334085153491683027}
-  maxSpeed: 30
-  minFreq: 50
-  maxFreq: 2000
-  masterVolume: 0.2
-  currentSpeed: 0
-  currentFreq: 0
+  masterVolume: 0.55
+  currentGear: 1
+  currentRpm: 950
+  tunnelAmount: 0
 --- !u!114 &6124809731544772365
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -26,25 +26,26 @@ public sealed class TunnelReverb
         float b = combs[1].Process(send + l * .18f);
         float c = combs[2].Process(send + r * .18f);
         float d = combs[3].Process(send + far * .18f);
-        left = dry + l * .22f + far * .11f + (a + c + d * .5f) * .16f;
-        right = dry + r * .22f + far * .11f + (b + d + c * .5f) * .16f;
+        left = dry * (1f + amount * .12f) + l * .22f + far * .11f + (a + c + d * .5f) * .16f;
+        right = dry * (1f + amount * .12f) + r * .22f + far * .11f + (b + d + c * .5f) * .16f;
     }
     private float Read(int distance) => early[(cursor - distance + early.Length) % early.Length];
     private sealed class Delay
     {
         private readonly float[] buffer;
-        private readonly float feedback;
+        private readonly float feedback, damping;
         private int cursor;
         private float damped;
         public Delay(int rate, float seconds)
         {
             buffer = new float[Math.Max(1, (int)(rate * seconds))];
+            damping = 1f - (float)Math.Exp(-2 * Math.PI * 2800 / rate);
             feedback = (float)Math.Pow(.001, seconds / 1.35); // RT60 ~= 1.35 seconds.
         }
         public float Process(float input)
         {
             float value = buffer[cursor];
-            damped += (value - damped) * .32f;
+            damped += (value - damped) * damping;
             buffer[cursor] = input + damped * feedback;
             cursor = (cursor + 1) % buffer.Length;
             return value;
