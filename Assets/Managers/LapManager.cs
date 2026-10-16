@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class LapManager : MonoBehaviour
 {
+    public const int DefaultGoalLaps = 2;
     [System.Serializable]
     public class CarTimeData
     {
@@ -41,7 +42,7 @@ public class LapManager : MonoBehaviour
     [SerializeField] private CheckpointSensor[] checkpoints = new CheckpointSensor[0];
     [SerializeField] private bool autoFindCheckpoints = true;
     [SerializeField] private bool allowLapWithoutCheckpoints = true;
-    [SerializeField] private int goalLap = 3;
+    [SerializeField] private int goalLap = DefaultGoalLaps;
 
     [Header("Off Course")]
     [SerializeField] private bool respawnWhenOffCourse = false;

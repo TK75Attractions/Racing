@@ -3,6 +3,37 @@ using NUnit.Framework;
 public class DrivingTutorialProgressTests
 {
     [Test]
+    public void TimeoutEndsPracticeEvenWhenDisconnectedWithoutCompletingLessons()
+    {
+        var lesson = new DrivingTutorialProgress(5f);
+        lesson.Tick(4f, false, 0f, 0f, 0f, 0f);
+        Assert.That(lesson.TimeRemaining, Is.EqualTo(1f));
+        Assert.That(lesson.IsFinished, Is.False);
+        lesson.Tick(1f, false, 0f, 0f, 0f, 0f);
+        Assert.That(lesson.HasTimedOut, Is.True);
+        Assert.That(lesson.IsFinished, Is.True);
+        Assert.That(lesson.IsComplete, Is.False);
+        lesson.Tick(10f, true, 1f, 10f, 10f, 90f);
+        Assert.That(lesson.CurrentStage, Is.EqualTo(DrivingTutorialProgress.Stage.Accelerate));
+        Assert.That(lesson.TimeRemaining, Is.Zero);
+    }
+
+    [Test]
+    public void EarlyCompletionStopsTimerAndRecoveryDoesNotResetDeadline()
+    {
+        var lesson = Turned();
+        float beforeRecovery = lesson.TimeRemaining;
+        lesson.ResetCurrentAttempt();
+        Assert.That(lesson.TimeRemaining, Is.EqualTo(beforeRecovery));
+        lesson.Tick(.7f, true, 0f, 0f, 0f, 35f);
+        float atCompletion = lesson.TimeRemaining;
+        lesson.Tick(100f, false, 0f, 0f, 0f, 0f);
+        Assert.That(lesson.IsComplete, Is.True);
+        Assert.That(lesson.HasTimedOut, Is.False);
+        Assert.That(lesson.TimeRemaining, Is.EqualTo(atCompletion));
+    }
+
+    [Test]
     public void TitlePedalHoldCannotFinishAcceleration()
     {
         var lesson = new DrivingTutorialProgress();

@@ -23,7 +23,7 @@ public class OnPlayUIManager
     public UISpeed Speed => speed;
     public UIMiniMap MiniMap => miniMap;
 
-    public void Init(Transform parent, RaceCourse course, int playerIndex, int totalLaps = 3)
+    public void Init(Transform parent, RaceCourse course, int playerIndex, int totalLaps = LapManager.DefaultGoalLaps)
     {
         trans = parent;
         if (parent == null)

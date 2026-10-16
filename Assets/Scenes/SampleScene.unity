@@ -16016,7 +16016,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1334065705
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20033,6 +20033,8 @@ MonoBehaviour:
     generateCollider: 1
     colliderMaterial: {fileID: 0}
     tubeInterior: {fileID: 15590687}
+    generateBarriers: 1
+    barrierMaterial: {fileID: 2100000, guid: 731b1674676b4884b0f6968126bc674f, type: 2}
   waypointColor: {r: 0, g: 1, b: 1, a: 1}
   pathColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   waypointRadius: 1
@@ -21436,7 +21438,7 @@ MonoBehaviour:
   - {fileID: 2059898390}
   autoFindCheckpoints: 1
   allowLapWithoutCheckpoints: 1
-  goalLap: 3
+  goalLap: 2
   respawnWhenOffCourse: 0
   offCourseRespawnDelay: 2
   respawnHeightOffset: 0.5

@@ -1,0 +1,7 @@
+2026-10-16 JST
+Artifacts/BalancePlaytest: 9 recorded trials; 100592 complete telemetry rows; 4 cars per trial; JSON/CSV/SVG integrity passed; 0 captured gameplay errors.
+Artifacts/BalancePlaytest/Realtime: 2 recorded trials; 6832 complete telemetry rows; 4 cars per trial; JSON/CSV/SVG integrity passed; 0 captured gameplay errors.
+Natural race endings: 9. Normal-speed observation windows: 2 x 90 seconds; no forced classification.
+These checks validate recording integrity, not game balance acceptance.
+Final Unity batch compilation: exit code 0; no C# compilation errors.
+Shell runner syntax: passed.

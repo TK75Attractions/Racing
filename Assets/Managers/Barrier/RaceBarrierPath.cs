@@ -79,6 +79,22 @@ public sealed class RaceBarrierPath : MonoBehaviour
     public int ControlPointCount => controlPoints != null ? controlPoints.Count : 0;
     public bool ClosedLoop => closedLoop;
 
+    /// <summary>道路境界など、既にサンプリングされた経路を補間せずに壁へ変換します。</summary>
+    public void SetWorldPath(IReadOnlyList<Vector3> points, int outside, bool loop,
+        Material material, PhysicsMaterial physicsMaterial, bool createCollider)
+    {
+        controlPoints.Clear();
+        for (int i = 0; i < points.Count; i++)
+            controlPoints.Add(new ControlPoint { localPosition = transform.InverseTransformPoint(points[i]) });
+        closedLoop = loop;
+        useCurves = false;
+        outwardSign = outside < 0 ? -1 : 1;
+        visualMaterial = material;
+        colliderMaterial = physicsMaterial;
+        generateCollider = createCollider;
+        Rebuild();
+    }
+
     private void OnEnable()
     {
         if (Application.isPlaying || generateInEditMode)
@@ -321,6 +337,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
         generatedMesh.RecalculateBounds();
 
         GameObject visual = new GameObject("WallVisual");
+        visual.layer = gameObject.layer;
         visual.transform.SetParent(visualRoot, false);
         MeshFilter filter = visual.AddComponent<MeshFilter>();
         MeshRenderer renderer = visual.AddComponent<MeshRenderer>();
@@ -398,6 +415,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
         generatedColliderMesh.RecalculateBounds();
 
         GameObject collision = new GameObject("WallCollider");
+        collision.layer = gameObject.layer;
         collision.transform.SetParent(colliderRoot, false);
         MeshCollider collider = collision.AddComponent<MeshCollider>();
         collider.convex = false;
@@ -511,13 +529,16 @@ public sealed class RaceBarrierPath : MonoBehaviour
     private void EnsureGeneratedRoots()
     {
         GameObject rootObject = new GameObject(GeneratedRootName);
+        rootObject.layer = gameObject.layer;
         rootObject.hideFlags = HideFlags.DontSave;
         generatedRoot = rootObject.transform;
         generatedRoot.SetParent(transform, false);
 
         visualRoot = new GameObject(VisualRootName).transform;
+        visualRoot.gameObject.layer = gameObject.layer;
         visualRoot.SetParent(generatedRoot, false);
         colliderRoot = new GameObject(ColliderRootName).transform;
+        colliderRoot.gameObject.layer = gameObject.layer;
         colliderRoot.SetParent(generatedRoot, false);
         colliderRoot.gameObject.isStatic = true;
     }

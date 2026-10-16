@@ -56,7 +56,7 @@ public sealed class NeonTitleMenu : MonoBehaviour
                 caption="この車で決定"; action.onClick.AddListener(Close); break;
             case Page.Course:
                 heading.text="コース選択 / COURSE";
-                body.text="つくこまサーキット\nTsukukoma Circuit\n\n" + (Gmanager.Control != null ? Gmanager.Control.GoalLap : 3) + " 周のレース";
+                body.text="つくこまサーキット\nTsukukoma Circuit\n\n" + (Gmanager.Control != null ? Gmanager.Control.GoalLap : LapManager.DefaultGoalLaps) + " 周のレース";
                 caption="このコースで決定"; action.onClick.AddListener(Close); break;
             case Page.Settings:
                 heading.text="設定 / SETTINGS";

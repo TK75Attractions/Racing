@@ -1,0 +1,9 @@
+run,seed,items,termination,seconds,car,finished,rank,laps,progress_m,mean_speed_mps,max_stall_s,off_course_s,vehicle_contacts,environment_contacts,items_used,afflictions,manual_resets,cpu_recoveries
+split-fast-p1,201,False,observation-window-ended,90.02,P1,False,1,0,1768.88,20.76,0.0,0.0,0,111,0,0,0,0
+split-fast-p1,201,False,observation-window-ended,90.02,P2,False,3,0,954.34,11.57,0.0,0.0,0,112,0,0,0,0
+split-fast-p1,201,False,observation-window-ended,90.02,CPU 1,False,4,0,486.12,7.23,0.14,0.42,11,55,0,0,0,0
+split-fast-p1,201,False,observation-window-ended,90.02,CPU 2,False,2,0,1584.12,18.87,0.0,0.0,11,131,0,0,0,0
+items-402,402,True,observation-window-ended,90.01,P1,False,4,0,241.86,7.05,0.02,67.84,1,45,0,1,0,0
+items-402,402,True,observation-window-ended,90.01,P2,False,1,0,1731.41,20.07,0.0,0.0,1,102,3,0,0,0
+items-402,402,True,observation-window-ended,90.01,CPU 1,False,3,0,433.42,5.92,21.3,0.0,17,122,0,1,0,0
+items-402,402,True,observation-window-ended,90.01,CPU 2,False,2,0,1611.55,19.17,0.0,0.0,17,145,0,1,0,0

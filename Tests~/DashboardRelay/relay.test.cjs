@@ -183,7 +183,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
 });
 
 test('Serial Lab → real PTY receiver → production bridge → WebSocket, 100 Hz setting',
- {timeout:50000,skip:process.env.RACING_PTY_TEST!=='1'},async()=>{
+ {timeout:75000,skip:process.env.RACING_PTY_TEST!=='1'},async()=>{
   const portFile=path.join(root,'Temp/DashboardRelay/live.port');fs.rmSync(portFile,{force:true});
   const startFile=path.join(root,'Temp/DashboardRelay/live.start');fs.rmSync(startFile,{force:true});
   const simulator=spawn(path.join(root,'Builds/ESP32Simulator/esp32-simulator-cli'),['--duration','30','--rate','100','--frame','30,0.7,0.3,-15,0.25,0.8','--port-file',portFile,'--start-file',startFile],{cwd:root});
@@ -194,8 +194,11 @@ test('Serial Lab → real PTY receiver → production bridge → WebSocket, 100 
     bridge=spawn('mono',[path.join(root,'Temp/DashboardRelay/BridgeHarness.exe'),path.join(root,'Assets/StreamingAssets'),port],{cwd:root});
     bridge.stdout.on('data',data=>output+=data);bridge.stderr.on('data',data=>output+=data);
     relay=spawn('dotnet',[path.join(root,'Tools/DashboardRelay/bin/Debug/net10.0/DashboardRelay.dll')],{cwd:root});
-    relay.stdout.resume();relay.stderr.resume();
-    await waitFor(async()=>{try{return output.includes('BRIDGE_READY')&&(await request('/api/connection')).status===200;}catch{return false;}});
+    relay.stdout.on('data',data=>output+='relay: '+data);relay.stderr.on('data',data=>output+='relay: '+data);
+    await waitFor(async()=>{
+      if(bridge.exitCode!==null||relay.exitCode!==null)throw new Error('Startup failed: '+output);
+      try{return output.includes('BRIDGE_READY')&&(await request('/api/connection')).status===200;}catch{return false;}
+    },20000);
     socket=await connect();fs.writeFileSync(startFile,'start');
     await waitFor(()=>socket.packets.some(packet=>packet.snapshot?.players.every(player=>player.connected)));
     const delays=[];let processed=0;

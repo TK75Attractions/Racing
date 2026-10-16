@@ -1,0 +1,335 @@
+[
+  {
+    "run": "equal-control-101",
+    "events": [
+      {
+        "car": "P1",
+        "event": "airborne",
+        "count": 3
+      },
+      {
+        "car": "P2",
+        "event": "airborne",
+        "count": 6
+      },
+      {
+        "car": "CPU 1",
+        "event": "airborne",
+        "count": 3
+      },
+      {
+        "car": "CPU 2",
+        "event": "airborne",
+        "count": 3
+      },
+      {
+        "car": "P1",
+        "event": "grounded",
+        "count": 3
+      },
+      {
+        "car": "P2",
+        "event": "grounded",
+        "count": 6
+      },
+      {
+        "car": "CPU 1",
+        "event": "grounded",
+        "count": 3
+      },
+      {
+        "car": "CPU 2",
+        "event": "grounded",
+        "count": 3
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "count": 263
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "count": 246
+      },
+      {
+        "car": "CPU 1",
+        "event": "vehicle-contact",
+        "count": 10
+      },
+      {
+        "car": "CPU 2",
+        "event": "vehicle-contact",
+        "count": 11
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "count": 229
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "count": 248
+      },
+      {
+        "car": "P1",
+        "event": "vehicle-contact",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "finished",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "finished",
+        "count": 1
+      },
+      {
+        "car": "CPU 1",
+        "event": "dnf",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "dnf",
+        "count": 1
+      }
+    ],
+    "details": [
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 263
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 246
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 229
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 248
+      }
+    ]
+  },
+  {
+    "run": "items-402",
+    "events": [
+      {
+        "car": "P1",
+        "event": "airborne",
+        "count": 4
+      },
+      {
+        "car": "P2",
+        "event": "airborne",
+        "count": 5
+      },
+      {
+        "car": "CPU 1",
+        "event": "airborne",
+        "count": 3
+      },
+      {
+        "car": "CPU 2",
+        "event": "airborne",
+        "count": 3
+      },
+      {
+        "car": "P1",
+        "event": "grounded",
+        "count": 4
+      },
+      {
+        "car": "P2",
+        "event": "grounded",
+        "count": 5
+      },
+      {
+        "car": "CPU 1",
+        "event": "grounded",
+        "count": 3
+      },
+      {
+        "car": "CPU 2",
+        "event": "grounded",
+        "count": 3
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "count": 245
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "count": 259
+      },
+      {
+        "car": "CPU 2",
+        "event": "vehicle-contact",
+        "count": 10
+      },
+      {
+        "car": "CPU 1",
+        "event": "vehicle-contact",
+        "count": 10
+      },
+      {
+        "car": "P2",
+        "event": "item",
+        "count": 6
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "count": 198
+      },
+      {
+        "car": "P2",
+        "event": "charge",
+        "count": 2
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "count": 261
+      },
+      {
+        "car": "P1",
+        "event": "afflicted",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "vehicle-contact",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "vehicle-contact",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "off-course",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "on-course",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "charge",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "afflicted",
+        "count": 2
+      },
+      {
+        "car": "P1",
+        "event": "item",
+        "count": 2
+      },
+      {
+        "car": "P1",
+        "event": "finished",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "finished",
+        "count": 1
+      },
+      {
+        "car": "CPU 1",
+        "event": "dnf",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "finished",
+        "count": 1
+      }
+    ],
+    "details": [
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 245
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 259
+      },
+      {
+        "car": "P2",
+        "event": "item",
+        "detail": "Shield",
+        "count": 5
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 198
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 256
+      },
+      {
+        "car": "P1",
+        "event": "afflicted",
+        "detail": "Shield",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "detail": "WallCollider",
+        "count": 5
+      },
+      {
+        "car": "P2",
+        "event": "item",
+        "detail": "Oil",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "afflicted",
+        "detail": "Oil",
+        "count": 2
+      },
+      {
+        "car": "P1",
+        "event": "item",
+        "detail": "Oil",
+        "count": 2
+      }
+    ]
+  }
+]

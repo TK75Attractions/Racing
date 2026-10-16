@@ -27,11 +27,16 @@ public sealed class CarSelectionUI : MonoBehaviour
     private float confirmHold;
     private PedalButtonFeedback confirmFeedback, backFeedback;
     private TMP_Text controls, focusHint;
+    private PreparationCountdown countdown;
+    private PreparationTimerUI timer;
+    private float timeLimitSeconds;
     public const float ConfirmSeconds = .65f;
+    public const float DefaultTimeLimitSeconds = 30f;
     public event Action Confirmed;
     public event Action Cancelled;
     public float ConfirmationProgress => Mathf.Clamp01(confirmHold / ConfirmSeconds);
     public bool IsSelectionLocked => selectionLocked;
+    public float TimeRemaining => countdown?.RemainingSeconds ?? 0f;
     public bool IsChoosingPaint => focus == Focus.Paint;
     public bool IsChoosingActions => focus == Focus.Actions;
     public int PlayerIndex => player;
@@ -74,6 +79,8 @@ public sealed class CarSelectionUI : MonoBehaviour
         Text(heading, "English", "C A R   S E L E C T", new Vector2(.085f, .06f), new Vector2(.94f, .35f), 17f, tint: new Color(.69f, .83f, 1));
         Text(sheet, "Player", $"PLAYER 0{player + 1}  /  YOUR GARAGE", new Vector2(.71f, .89f), new Vector2(.97f, .954f), 21f,
             TextAlignmentOptions.Right, tint: NeonUI.Cyan);
+        timer = new PreparationTimerUI(sheet, new Vector2(.48f, .855f), new Vector2(.66f, .975f));
+        timer.Update(DefaultTimeLimitSeconds, DefaultTimeLimitSeconds);
         Text(sheet, "GarageBrand", "TSUKUKOMA\nCIRCUIT", new Vector2(.045f, .64f), new Vector2(.34f, .815f), 58f, italic: true, tint: new Color(.39f, .44f, .71f, .45f));
         description = Text(sheet, "Description", "", new Vector2(.08f, .323f), new Vector2(.65f, .365f), 20f,
             TextAlignmentOptions.Center, tint: new Color(.76f, .84f, .96f));
@@ -188,9 +195,12 @@ public sealed class CarSelectionUI : MonoBehaviour
         NeonUI.Icon(rect, "Arrow", previous ? RacingIconGraphic.Icon.Back : RacingIconGraphic.Icon.Chevron, new Vector2(.12f, .20f), new Vector2(.88f, .80f));
     }
 
-    public void Open()
+    public void Open(float seconds = DefaultTimeLimitSeconds)
     {
         if (IsOpen || sheet == null) return;
+        timeLimitSeconds = Mathf.Max(0f, seconds);
+        countdown = new PreparationCountdown(timeLimitSeconds);
+        timer.Update(TimeRemaining, timeLimitSeconds);
         draftVehicle = committedVehicle; draftPaint = committedPaint;
         focus = Focus.Vehicle; backSelected = selectionLocked = pedalPressed = false;
         confirmArmed = false; confirmHold = 0f; steeringLatched = true;
@@ -222,6 +232,7 @@ public sealed class CarSelectionUI : MonoBehaviour
     {
         if (!IsOpen || selectionLocked) return;
         selectionLocked = true; confirmHold = ConfirmSeconds;
+        countdown?.Stop();
         committedVehicle = draftVehicle; committedPaint = draftPaint;
         PlayerPrefs.SetString("Racing.Car.P" + player, catalog.vehicles[committedVehicle].id);
         PlayerPrefs.SetInt("Racing.Paint.P" + player, committedPaint); PlayerPrefs.Save();
@@ -233,11 +244,13 @@ public sealed class CarSelectionUI : MonoBehaviour
     public void Back()
     {
         if (!IsOpen || selectionLocked) return;
+        countdown?.Stop();
         selectionLocked = true; backFeedback.SetState(true, 1f, NeonUI.Cyan); backFeedback.SetConfirmed(true);
         if (Cancelled != null) Cancelled.Invoke(); else Cancel();
     }
     public void Cancel()
     {
+        countdown?.Stop();
         if (sheet != null) sheet.gameObject.SetActive(false);
         showroom?.SetVisible(false);
         foreach (var entry in titleControls) if (entry.Key != null) entry.Key.interactable = entry.Value;
@@ -252,6 +265,9 @@ public sealed class CarSelectionUI : MonoBehaviour
     public void TickInput(DriveInputState input, bool connected, float dt)
     {
         if (!IsOpen || selectionLocked) return;
+        bool expired = countdown.Tick(dt);
+        timer.Update(TimeRemaining, timeLimitSeconds);
+        if (expired) { Confirm(); return; }
         if (!connected)
         {
             ResetHold(); steeringLatched = true; pedalHint.text = "コントローラーの接続を待っています"; return;

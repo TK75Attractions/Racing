@@ -1,7 +1,7 @@
 {
   "implementation": "Tailscale Serve + .NET WebSocket relay + existing dashboard",
   "unityCompileAndNpcValidation": "PASS",
-  "rgpTests": 41,
+  "rgpTests": 46,
   "suppliedVectors": 144,
   "dashboardUiTests": 13,
   "liveClientTests": 2,
@@ -13,12 +13,12 @@
     "transport": "Swift simulator → PTY → production receiver/bridge → relay → WebSocket",
     "rateSettingHz": 100,
     "durationSeconds": 15,
-    "serialReceived": 1476,
-    "latestSamples": 677,
+    "serialReceived": 1544,
+    "latestSamples": 710,
     "loopbackReceiveToClientMs": {
-      "median": 9,
-      "p95": 19,
-      "max": 103
+      "median": 8,
+      "p95": 18,
+      "max": 59
     },
     "note": "TEL is intentionally coalesced into latest values. Same-PC UTC timestamps; no WAN latency claim."
   },
@@ -41,5 +41,14 @@
       200
     ],
     "inputMode": "Keyboard debug (serial disabled)"
+  },
+  "mergedMain": "8ba6ad4",
+  "mergedValidation": {
+    "unityCompileAndNpcDashboard": "PASS",
+    "coreTests": 46,
+    "dashboardAndClientTests": 15,
+    "launcherCases": 8,
+    "websocketAndBrowserCases": 8,
+    "nativePtyToWebSocket": "PASS"
   }
 }
