@@ -120,7 +120,11 @@ public static class CarSelectionPlayModeValidation
                 inputs[0].CurrentState = DriveInputState.Neutral;
                 CompleteLesson(tutorial, 1);
                 Require(!tutorial.AllComplete && manager.state == Gmanager.State.Tutorial, "One completed lesson cannot start the race");
-                CompleteLesson(tutorial, 0); PhaseTo(7);
+                tutorial.Tick(DrivingTutorialProgress.DefaultTimeLimitSeconds + 1f);
+                Require(tutorial.GetPlayerCar(0).GetComponent<Rigidbody>().isKinematic, "Timeout stops the unfinished practice car");
+                Require(tutorial.AllComplete, "An early completion and a timeout allow the race to start together");
+                Require(!tutorial.GetPlayerCar(0).GetComponent<DebugMover>().enabled, "Timeout disables practice driving");
+                PhaseTo(7);
             }
             else if (phase == 7 && (manager.state == Gmanager.State.Countdown || manager.state == Gmanager.State.Game))
             {
@@ -128,7 +132,7 @@ public static class CarSelectionPlayModeValidation
                 VerifyCar(manager.GetPlayerCarTransform(1)?.gameObject, false);
                 foreach (CarSelectionUI screen in screens)
                     Require(!screen.IsOpen && !screen.Showroom.Model.activeInHierarchy, "Showroom is inactive during gameplay");
-                Debug.Log("CAR_SELECTION_PLAY_MODE_PASS: independent P2-first start, pedal gauge, mixed selection/practice, confirmation release gate, synchronized race");
+                Debug.Log("CAR_SELECTION_PLAY_MODE_PASS: independent P2-first start, pedal gauge, mixed selection/practice, confirmation release gate, tutorial timeout, synchronized race");
                 Finish(0);
             }
         }

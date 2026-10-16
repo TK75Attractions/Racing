@@ -15,6 +15,7 @@ public sealed class DrivingTutorialUI
     private readonly DrivingTutorialControlGraphic wheel;
     private readonly DrivingTutorialControlGraphic instructionIcon;
     private readonly RectTransform instructionCard;
+    private readonly PreparationTimerUI timer;
     private float popupTime;
     private int shownAngle=int.MinValue,shownPedal=-1,shownStage=-1;
     private string shownMessage;
@@ -28,6 +29,7 @@ public sealed class DrivingTutorialUI
         Label(rect, "Player", $"PLAYER {playerIndex + 1} / PRACTICE", new Vector2(.73f, .905f), new Vector2(.965f, .95f), 22f, Color.white).alignment = TextAlignmentOptions.Right;
 
         RacingUITheme.Rule(rect,"PlayerUnderline",new Vector2(.855f,.898f),new Vector2(.965f,.901f),Pink);
+        timer = new PreparationTimerUI(rect, new Vector2(.78f, .765f), new Vector2(.965f, .885f), true);
         RectTransform steering = Panel(rect, "Steering", new Vector2(.028f, .33f), new Vector2(.329f, .757f), Cyan);
         wheel = Icon(steering, "Wheel", new Vector2(.065f, .72f), new Vector2(.29f, .975f), DrivingTutorialControlGraphic.Kind.WheelHeader);
         Label(steering, "Title", "ハンドル", new Vector2(.347f, .815f), new Vector2(.97f, .98f), 43f, Color.white);
@@ -70,6 +72,7 @@ public sealed class DrivingTutorialUI
 
     public void Update(DrivingTutorialProgress lesson, DriveInputState input, float metersPerSecond, bool connected)
     {
+        timer.Update(lesson.TimeRemaining, lesson.TimeLimitSeconds);
         int degrees=Mathf.RoundToInt(input.steering);
         if(shownAngle!=degrees){angle.SetText("{0}°",degrees);shownAngle=degrees;}
         gauge.Angle = input.steering;
@@ -78,22 +81,22 @@ public sealed class DrivingTutorialUI
         int percent=Mathf.RoundToInt(pressure*100f);
         if(shownPedal!=percent){pedal.SetText("{0}<size=58%>%</size>",percent);shownPedal=percent;}
         meter.Pressure = pressure;
-        int stage = (int)lesson.CurrentStage;
-        string prompt=lesson.IsComplete ? "練習完了！\nもう一人を待っています" : !connected ? "コントローラーの\n接続を確認してください" : !lesson.PedalReleased ? "まずペダルから\n足を離そう" : stage == 0 ? "ペダルを踏んで\n加速しよう" : stage == 1 ? "ハンドルを回して\n角を曲がってみよう" : "ペダルから足を離して\n停車しよう";
+        int stage = lesson.HasTimedOut ? 4 : (int)lesson.CurrentStage;
+        string prompt=lesson.HasTimedOut ? "TIME UP\nもう一人を待っています" : lesson.IsComplete ? "練習完了！\nもう一人を待っています" : !connected ? "コントローラーの\n接続を確認してください" : !lesson.PedalReleased ? "まずペダルから\n足を離そう" : stage == 0 ? "ペダルを踏んで\n加速しよう" : stage == 1 ? "ハンドルを回して\n角を曲がってみよう" : "ペダルから足を離して\n停車しよう";
         if(shownMessage!=prompt)
         {
             message.text=prompt;shownMessage=prompt;popupTime=0f;
             instructionIcon.Configure(!lesson.PedalReleased || stage >= 2
                 ? DrivingTutorialControlGraphic.Kind.ReleasePedal : stage == 1
                 ? DrivingTutorialControlGraphic.Kind.TurnWheel : DrivingTutorialControlGraphic.Kind.PressPedal);
-            instructionIcon.gameObject.SetActive(connected && !lesson.IsComplete);
-            message.rectTransform.anchorMin = new Vector2(connected && !lesson.IsComplete ? .28f : .06f, .10f);
+            instructionIcon.gameObject.SetActive(connected && !lesson.IsFinished);
+            message.rectTransform.anchorMin = new Vector2(connected && !lesson.IsFinished ? .28f : .06f, .10f);
         }
         popupTime = Mathf.Min(1f, popupTime + Time.unscaledDeltaTime * 5f);
         instructionCard.localScale = Vector3.one * Mathf.Lerp(.94f, 1f, Mathf.SmoothStep(0f, 1f, popupTime));
         if(shownStage==stage)return;
         shownStage=stage;
-        status.text = lesson.IsComplete ? "PRACTICE COMPLETE" : $"STEP {stage + 1} / 3";
+        status.text = lesson.HasTimedOut ? "TIME UP" : lesson.IsComplete ? "PRACTICE COMPLETE" : $"STEP {stage + 1} / 3";
     }
 
     public void Dispose()

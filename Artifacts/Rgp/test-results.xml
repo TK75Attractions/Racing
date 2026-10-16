@@ -1,11 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<test-run result="Passed" total="37" passed="37" failed="0">
+<test-run result="Passed" total="42" passed="42" failed="0">
+  <test-case name="DrivingTutorialProgressTests.TimeoutEndsPracticeEvenWhenDisconnectedWithoutCompletingLessons" result="Passed" />
+  <test-case name="DrivingTutorialProgressTests.EarlyCompletionStopsTimerAndRecoveryDoesNotResetDeadline" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.TitlePedalHoldCannotFinishAcceleration" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.SteeringRequiresRealHeadingChangeWhileMoving" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.StopRequiresReleasedPedalAndSustainedLowSpeed" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.DisconnectionNeverCompletesStop" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.PlayersProgressIndependentlyAndCompletionIsStable" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.RecoveryKeepsCompletedLessonsButClearsPartialHold" result="Passed" />
+  <test-case name="PreparationCountdownTests.ExpiryOccursOnceAtTheBoundaryAndNeverGoesNegative" result="Passed" />
+  <test-case name="PreparationCountdownTests.StoppingPreservesTimeAndDoesNotExpire" result="Passed" />
+  <test-case name="PreparationCountdownTests.EachScreenHasItsOwnTimeAndNegativeDeltaCannotAddTime" result="Passed" />
   <test-case name="RaceParticipantSessionTests.CpuFinishesDoNotStartHumanTimeout" result="Passed" />
   <test-case name="RaceParticipantSessionTests.HumanCompletionDoesNotWaitForCpu" result="Passed" />
   <test-case name="RaceParticipantSessionTests.OverallLimitAppliesWhenNobodyFinishes" result="Passed" />
