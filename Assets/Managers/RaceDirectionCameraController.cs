@@ -14,6 +14,11 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
     [SerializeField, Min(0f)] private float cameraHeight = 2f;
     [SerializeField, Min(0f)] private float rotationSmoothTime = 0.15f;
 
+    [Header("Slope Following")]
+    [SerializeField, Min(0f)] private float pitchSmoothTime = .3f;
+    [SerializeField, Range(0f, 60f)] private float maximumSlopePitch = 30f;
+    [SerializeField, Min(0f)] private float lookAheadDistance = 3f;
+
     [SerializeField, Min(0f)] private float heightSmoothTime = .25f;
     [SerializeField, Min(1f)] private float teleportDistance = 12f;
 
@@ -27,6 +32,9 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
     private CinemachineFollow cinemachineFollow;
     private Vector3 lastCarDirection = Vector3.forward;
     private float yawVelocity;
+    private float smoothedPitch;
+    private float pitchVelocity;
+    private GroundCheck[] wheelGroundChecks = System.Array.Empty<GroundCheck>();
 
     public Transform CameraTarget => cameraTarget;
     public Transform LookTarget => cameraLookTarget;
@@ -42,6 +50,9 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
     public void SetCar(Transform targetCar)
     {
         car = targetCar;
+        TireForce[] tires = car != null ? car.GetComponentsInChildren<TireForce>() : System.Array.Empty<TireForce>();
+        wheelGroundChecks = new GroundCheck[tires.Length];
+        for (int i = 0; i < tires.Length; i++) wheelGroundChecks[i] = tires[i].GetComponent<GroundCheck>();
         if (car != null && car.TryGetComponent<Rigidbody>(out var body))
             body.interpolation = RigidbodyInterpolation.Interpolate;
         EnsureCameraTarget();
@@ -59,6 +70,8 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
     {
         car = null;
         yawVelocity = 0f;
+        pitchVelocity = smoothedPitch = 0f;
+        wheelGroundChecks = System.Array.Empty<GroundCheck>();
 
         if (cameraTarget != null)
         {
@@ -104,7 +117,30 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
         }
 
         immediately |= (car.position - lastCarPosition).sqrMagnitude > teleportDistance * teleportDistance;
+        Vector3 movement = car.position - lastCarPosition;
         lastCarPosition = car.position;
+        Vector3 carDirection = GetCarDirection();
+        bool supported = TryGetRoadNormal(out Vector3 roadNormal);
+        float targetPitch = immediately ? 0f : smoothedPitch;
+        if (supported)
+        {
+            Vector3 roadForward = Vector3.ProjectOnPlane(car.forward, roadNormal).normalized;
+            targetPitch = Mathf.Clamp(-Mathf.Atan2(roadForward.y,
+                new Vector2(roadForward.x, roadForward.z).magnitude) * Mathf.Rad2Deg,
+                -maximumSlopePitch, maximumSlopePitch);
+            // Follow sustained road elevation without the lag of the vibration filter.
+            // Normal-direction wheel/body bumps remain filtered; near-vertical banks are excluded.
+            if (!immediately && roadNormal.y > .2f)
+                smoothedHeight -= Vector3.Dot(new Vector3(movement.x, 0f, movement.z), roadNormal) / roadNormal.y;
+        }
+        if (immediately)
+        {
+            smoothedPitch = targetPitch;
+            pitchVelocity = 0f;
+        }
+        else
+            smoothedPitch = Mathf.SmoothDampAngle(smoothedPitch, targetPitch, ref pitchVelocity,
+                pitchSmoothTime, Mathf.Infinity, deltaTime);
         if (immediately)
         {
             smoothedHeight = car.position.y;
@@ -113,7 +149,6 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
         else
             smoothedHeight = Mathf.SmoothDamp(smoothedHeight, car.position.y, ref heightVelocity, heightSmoothTime, Mathf.Infinity, deltaTime);
         Vector3 anchorPosition = new Vector3(car.position.x, smoothedHeight, car.position.z);
-        Vector3 carDirection = GetCarDirection();
         float targetYaw = Mathf.Atan2(carDirection.x, carDirection.z) * Mathf.Rad2Deg;
         float yaw;
 
@@ -133,7 +168,8 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
                 deltaTime);
         }
 
-        Quaternion cameraRotation = Quaternion.Euler(0f, yaw, 0f);
+        // Road pitch only: banking and airborne body rotation must not roll or whip the view.
+        Quaternion cameraRotation = Quaternion.Euler(smoothedPitch, yaw, 0f);
         Vector3 cameraPosition = anchorPosition
             - cameraRotation * Vector3.forward * Mathf.Max(0.01f, cameraDistance)
             + Vector3.up * Mathf.Max(0f, cameraHeight);
@@ -141,8 +177,23 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
         cameraTarget.SetPositionAndRotation(cameraPosition, cameraRotation);
 
         cameraLookTarget.SetPositionAndRotation(
-            anchorPosition + Vector3.up * lookHeight,
+            anchorPosition + cameraRotation * Vector3.forward * lookAheadDistance + Vector3.up * lookHeight,
             cameraRotation);
+    }
+
+    private bool TryGetRoadNormal(out Vector3 normal)
+    {
+        normal = Vector3.zero;
+        int count = 0;
+        foreach (GroundCheck wheel in wheelGroundChecks)
+        {
+            if (wheel == null || !wheel.isGround) continue;
+            normal += wheel.GroundHit.normal;
+            count++;
+        }
+        if (count < 2 || normal.sqrMagnitude < .0001f) return false;
+        normal.Normalize();
+        return true;
     }
 
     private Vector3 GetCarDirection()

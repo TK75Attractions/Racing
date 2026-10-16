@@ -59,7 +59,7 @@ public static class DrivingFeelValidation
             Require(maxHeightDeviation < .03f, $"Camera must attenuate rapid vertical jitter: {maxHeightDeviation:F4}m.");
             car.transform.position = new Vector3(100f, 12f, 100f);
             tick.Invoke(controller, new object[] { false, 1f / 60f });
-            Require(Vector3.Distance(controller.LookTarget.position, car.transform.position) < .001f,
+            Require(Vector3.Distance(controller.LookTarget.position, car.transform.position + Vector3.forward * 3f) < .001f,
                 "Respawn must snap the camera to its new height.");
             Debug.Log($"CAMERA_STABILITY_PASS: rawJitter=0.12m filteredJitter={maxHeightDeviation:F4}m");
         }

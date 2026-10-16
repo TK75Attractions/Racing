@@ -50,6 +50,7 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
             Collider obstacle = overlapBuffer[index];
             if (obstacle == null || obstacle.attachedRigidbody == body ||
                 (obstacle.attachedRigidbody != null && !obstacle.attachedRigidbody.isKinematic) ||
+                TubeDriveSurface.Contains(obstacle) ||
                 obstacle.GetComponentInParent<RaceBarrierPath>() != null || obstacle.name == "WallCollider" ||
                 Physics.GetIgnoreLayerCollision(gameObject.layer, obstacle.gameObject.layer) ||
                 Physics.GetIgnoreCollision(chassis, obstacle)) continue;
@@ -162,7 +163,8 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
         }
 
         // レースバリアは曲面に沿って駆け上がれるため、反発の対象から除外します。
-        if (collision.collider.GetComponentInParent<RaceBarrierPath>() != null ||
+        if (TubeDriveSurface.Contains(collision.collider) ||
+            collision.collider.GetComponentInParent<RaceBarrierPath>() != null ||
             collision.collider.name == "WallCollider")
         {
             return false;

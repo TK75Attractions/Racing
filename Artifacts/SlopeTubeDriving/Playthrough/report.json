@@ -1,0 +1,82 @@
+{
+    "trials": [
+        {
+            "player": "Player1_Car",
+            "rocketCollected": false,
+            "rocketPickupPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "takeoffSpeed": 19.565452575683595,
+            "rocketActiveAtTakeoff": false,
+            "rocketActiveAtLanding": false,
+            "distance": 1829.3690185546875,
+            "maximumHeight": 18.319211959838868,
+            "maximumTilt": 24.087913513183595,
+            "airborneSeconds": 0.5999996066093445,
+            "maximumUnexpectedAirborneSeconds": 0.0,
+            "tookOff": true,
+            "landed": true,
+            "takeoffPosition": {
+                "x": 607.214599609375,
+                "y": 18.318567276000978,
+                "z": 599.9974365234375
+            },
+            "landingPosition": {
+                "x": 618.8541870117188,
+                "y": 16.468521118164064,
+                "z": 599.999267578125
+            },
+            "wallContacts": 0,
+            "lastWall": "",
+            "finalPosition": {
+                "x": 432.0057678222656,
+                "y": 3.3479955196380617,
+                "z": 790.6402587890625
+            }
+        },
+        {
+            "player": "Player2_Car",
+            "rocketCollected": false,
+            "rocketPickupPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "takeoffSpeed": 20.43648338317871,
+            "rocketActiveAtTakeoff": false,
+            "rocketActiveAtLanding": false,
+            "distance": 1880.628173828125,
+            "maximumHeight": 18.328771591186525,
+            "maximumTilt": 24.086206436157228,
+            "airborneSeconds": 0.6999995112419128,
+            "maximumUnexpectedAirborneSeconds": 0.0599999763071537,
+            "tookOff": true,
+            "landed": true,
+            "takeoffPosition": {
+                "x": 607.0435791015625,
+                "y": 18.328771591186525,
+                "z": 595.9976806640625
+            },
+            "landingPosition": {
+                "x": 619.6238403320313,
+                "y": 16.428430557250978,
+                "z": 595.9995727539063
+            },
+            "wallContacts": 0,
+            "lastWall": "",
+            "finalPosition": {
+                "x": 480.5102233886719,
+                "y": 3.3479959964752199,
+                "z": 779.2864990234375
+            }
+        }
+    ],
+    "courseLength": 1829.0640869140625,
+    "simulatedSeconds": 92.63646697998047,
+    "offCoursePositionPreserved": true,
+    "offCourseSeconds": 4.03609037399292,
+    "error": "",
+    "slashResetPassed": false
+}

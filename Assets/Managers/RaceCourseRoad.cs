@@ -59,6 +59,7 @@ public static class RaceCourseRoad
     public static void Build(Transform owner, List<Vector3> center, List<Vector3> left,
         List<Vector3> right, List<float> distances, bool closedLoop, Settings settings, List<bool> roadSegments)
     {
+        TubeDriveSurface.Ensure(settings.tubeInterior);
         int count = left.Count;
         if (count < 2) return;
         float total = distances[count - 1];

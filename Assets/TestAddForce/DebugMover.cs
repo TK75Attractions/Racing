@@ -146,6 +146,8 @@ public class DebugMover : MonoBehaviour
     private float driftRecoveryTimeRemaining;
     private float wheelbase = 2.6f;
     private CarItemEffects itemEffects;
+    private Vector3 drivingUp;
+    private bool useCachedDrivingUp;
 
     public IDriveInputSource InputSource => inputSource;
     /// <summary>実際に走行へ反映しているペダル入力（-1:ブレーキ 〜 1:アクセル）。</summary>
@@ -220,6 +222,14 @@ public class DebugMover : MonoBehaviour
             return;
         }
 
+        drivingUp = GetDrivingUp();
+        useCachedDrivingUp = true;
+        try { ApplyDriving(); }
+        finally { useCachedDrivingUp = false; }
+    }
+
+    private void ApplyDriving()
+    {
         itemEffects?.LimitRocketJumpMomentum();
 
         if (IsInputSuppressed)
@@ -255,7 +265,7 @@ public class DebugMover : MonoBehaviour
             float boostSpeedDelta = ConsumeDriftBoost(Time.fixedDeltaTime);
             if (boostSpeedDelta > 0f)
             {
-                Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+                Vector3 forward = Vector3.ProjectOnPlane(transform.forward, GetDrivingUp()).normalized;
                 // 加速度×経過時間を各物理フレームに加算し、質量に依存しない持続加速にする。
                 rb.AddForce(forward * boostSpeedDelta, ForceMode.VelocityChange);
             }
@@ -394,10 +404,11 @@ public class DebugMover : MonoBehaviour
 
     private Vector3 GetAccelerationPadBoostDirection()
     {
-        Vector3 travel = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
+        Vector3 up = GetDrivingUp();
+        Vector3 travel = Vector3.ProjectOnPlane(rb.linearVelocity, up);
         if (travel.sqrMagnitude > 1f) return travel.normalized;
 
-        Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+        Vector3 forward = Vector3.ProjectOnPlane(transform.forward, up);
         return forward.sqrMagnitude > 0.0001f ? forward.normalized : accelerationPadBoostDirection;
     }
 
@@ -432,7 +443,7 @@ public class DebugMover : MonoBehaviour
     {
         float elapsed = Mathf.Max(0f, deltaTime);
         float forwardSpeed = Vector3.Dot(rb.linearVelocity,
-            Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized);
+            Vector3.ProjectOnPlane(transform.forward, GetDrivingUp()).normalized);
         bool grounded = HasDriftGroundContact();
         float handleMagnitude = Mathf.Abs(rawSteeringInput);
         float startHandle = Mathf.Max(.01f, driftStartHandle);
@@ -542,7 +553,7 @@ public class DebugMover : MonoBehaviour
             rawSteeringInput = 0f;
         }
 
-        Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
+        Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp());
         speedMetersPerSecond = planarVelocity.magnitude;
 
         appliedSteeringMultiplier = GetSpeedSteeringMultiplier(speedMetersPerSecond);
@@ -602,8 +613,9 @@ public class DebugMover : MonoBehaviour
             driftRecoveryTimeRemaining = Mathf.Max(0f, driftRecoveryTimeRemaining - deltaTime);
         if (!ShouldProtectDrift || !HasDriftGroundContact()) return;
 
-        Vector3 forward = Vector3.ProjectOnPlane(rb.rotation * Vector3.forward, Vector3.up).normalized;
-        Vector3 velocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
+        Vector3 up = GetDrivingUp();
+        Vector3 forward = Vector3.ProjectOnPlane(rb.rotation * Vector3.forward, up).normalized;
+        Vector3 velocity = Vector3.ProjectOnPlane(rb.linearVelocity, up);
         float forwardSpeed = Vector3.Dot(velocity, forward);
         if (forwardSpeed < 3f) return;
 
@@ -611,28 +623,29 @@ public class DebugMover : MonoBehaviour
         float steeringAngle = GetProtectedSteeringAngle(forward, velocity);
         float desiredYaw = Mathf.Clamp(forwardSpeed * Mathf.Tan(steeringAngle * Mathf.Deg2Rad) / wheelbase,
             -yawLimit, yawLimit);
-        float slipAngle = Vector3.SignedAngle(velocity, forward, Vector3.up);
+        float slipAngle = Vector3.SignedAngle(velocity, forward, up);
         float excessSlip = slipAngle - Mathf.Clamp(slipAngle, -driftMaxSlipAngle, driftMaxSlipAngle);
         // Ease the body back toward its direction of travel rather than allowing rotation to run away.
         desiredYaw = Mathf.Clamp(desiredYaw - excessSlip * Mathf.Deg2Rad * driftYawResponse, -yawLimit, yawLimit);
-        float yawRate = Vector3.Dot(rb.angularVelocity, Vector3.up);
+        float yawRate = Vector3.Dot(rb.angularVelocity, up);
         float yawAcceleration = Mathf.Clamp((desiredYaw - yawRate) * driftYawResponse,
             -driftMaxYawAcceleration, driftMaxYawAcceleration);
-        rb.AddTorque(Vector3.up * yawAcceleration, ForceMode.Acceleration);
+        rb.AddTorque(up * yawAcceleration, ForceMode.Acceleration);
 
         if (Mathf.Abs(excessSlip) > .01f)
         {
             float correction = Mathf.Min(Mathf.Abs(excessSlip), driftSlipRecoveryDegreesPerSecond * deltaTime);
-            Vector3 correctedVelocity = Quaternion.AngleAxis(Mathf.Sign(excessSlip) * correction, Vector3.up) * velocity;
-            // Only redirect excess slip: preserve planar speed and all vertical/landing motion.
+            Vector3 correctedVelocity = Quaternion.AngleAxis(Mathf.Sign(excessSlip) * correction, up) * velocity;
+            // Only redirect excess slip within the road plane; preserve speed and separation/landing motion.
             rb.AddForce(correctedVelocity - velocity, ForceMode.VelocityChange);
         }
     }
 
     private void ApplyTireForces()
     {
-        Vector3 vehicleForward = Vector3.ProjectOnPlane(rb.rotation * Vector3.forward, Vector3.up).normalized;
-        Vector3 velocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
+        Vector3 up = GetDrivingUp();
+        Vector3 vehicleForward = Vector3.ProjectOnPlane(rb.rotation * Vector3.forward, up).normalized;
+        Vector3 velocity = Vector3.ProjectOnPlane(rb.linearVelocity, up);
         float tireSteeringAngle = GetProtectedSteeringAngle(vehicleForward, velocity);
 
         foreach (TireForce tire in tires)
@@ -654,7 +667,7 @@ public class DebugMover : MonoBehaviour
 
             tire.ApplyForces(
                 vehicleForward,
-                Vector3.up,
+                up,
                 tireSteeringAngle,
                 appliedPedalInput,
                 driveForcePerFrontWheel,
@@ -665,9 +678,23 @@ public class DebugMover : MonoBehaviour
         }
     }
 
+    // All driving forces share the contact plane, including on banked tube walls.
+    // With no wheel contact, retain world-horizontal airborne momentum handling.
+    private Vector3 GetDrivingUp()
+    {
+        if (useCachedDrivingUp) return drivingUp;
+        Vector3 normal = Vector3.zero;
+        foreach (TireForce tire in tires)
+        {
+            GroundCheck ground = tire.GetComponent<GroundCheck>();
+            if (ground.CheckNow()) normal += ground.GroundHit.normal;
+        }
+        return normal.sqrMagnitude > .0001f ? normal.normalized : Vector3.up;
+    }
+
     private void ApplyVelocityResistance()
     {
-        Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
+        Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp());
         bool grounded = false;
         foreach (TireForce tire in tires)
         {

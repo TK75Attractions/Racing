@@ -123,6 +123,7 @@ public sealed class CarCollisionSparks : MonoBehaviour
 
     private void EmitWallSparks(Collision collision)
     {
+        if (TubeDriveSurface.Contains(collision.collider)) return;
         if (Time.time < nextWallEmissionTime) return;
 
         // 壁との接触は相手が動かないため、自分の速さがそのままこする速さになります。
@@ -172,6 +173,7 @@ public sealed class CarCollisionSparks : MonoBehaviour
     private bool TryGetWallNormal(Collision collision, out Vector3 wallNormal)
     {
         wallNormal = Vector3.zero;
+        if (TubeDriveSurface.Contains(collision.collider)) return false;
         for (int index = 0; index < collision.contactCount; index++)
         {
             Vector3 normal = collision.GetContact(index).normal;
