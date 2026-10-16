@@ -123,6 +123,32 @@ public class Gmanager : MonoBehaviour
     public float CountdownTimeRemaining => countdownTimeRemaining;
     public bool IsPreparing => state == State.Title || state == State.CarSelection || state == State.Tutorial;
     public State GetPlayerPreparationState(int index) => index >= 0 && index < PlayerCount ? players[index]?.preparationState ?? State.Title : state;
+    public void GetPlayerDashboardProgress(int index, out string playerState, out string carName,
+        out string step, out float remaining, out float progress)
+    {
+        PlayerRuntime player = index >= 0 && index < PlayerCount ? players[index] : null;
+        State phase = IsPreparing ? GetPlayerPreparationState(index) : state;
+        playerState = phase.ToString(); carName = player?.carSelection?.DashboardVehicleName ?? "";
+        step = ""; remaining = progress = 0f;
+        if (!IsPreparing && player != null)
+        {
+            if (state == State.Game) step = player.withdrewFromRace ? "Withdrawn" : player.isSpectating ? "Spectating" :
+                player.result != null ? (player.result.didFinish ? "Finished" : "DNF") :
+                player.interruptionMenu?.IsOpen == true ? "Menu" : "Driving";
+            if (state == State.Result && player.returnedToTitle) { playerState = State.Title.ToString(); step = "Returned"; }
+        }
+        if (phase == State.CarSelection && player?.carSelection != null)
+        {
+            step = player.carSelection.DashboardSelectionStep;
+            remaining = player.carSelection.TimeRemaining; progress = player.carSelection.ConfirmationProgress;
+        }
+        if (phase == State.Tutorial)
+        {
+            DrivingTutorialProgress lesson = drivingTutorial?.GetPlayerProgress(index);
+            step = lesson == null ? "Waiting" : lesson.HasTimedOut ? "TimedOut" : lesson.CurrentStage.ToString();
+            remaining = lesson?.TimeRemaining ?? 0f; progress = lesson?.HoldProgress ?? 0f;
+        }
+    }
     public bool IsDrivingEnabled => state == State.Game || ((state == State.CarSelection || state == State.Tutorial) &&
         !finishingPreparation && drivingTutorial != null && drivingTutorial.HasAnyStarted);
     public bool CanUseDashboardControls => !IsScreenTransitioning();

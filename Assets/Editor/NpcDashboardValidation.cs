@@ -17,7 +17,9 @@ public static class NpcDashboardValidation
         public Participant[] participants;
         public Player[] players;
         public Serial serial;
+        public Preparation[] playerProgress;
     }
+    [Serializable] private sealed class Preparation { public int number; public string state, carName, step; public float remaining, progress; }
     [Serializable] private sealed class Participant
     {
         public int number, position, lap, rivalNumber, recoveries;
@@ -108,9 +110,54 @@ public static class NpcDashboardValidation
             File.WriteAllText("/tmp/racing-npc-dashboard-driving.json",bridge.BuildRemoteSnapshotJson(new string('a',32),2));
             entries.Clear(); manager.state=Gmanager.State.Title;
             Require(Read(bridge).participantCount==0, "Previous round telemetry survived reset");
+            ValidatePlayerProgress(manager, bridge, root);
             Debug.Log("NPC_DASHBOARD_PASS: four entries/two inputs, countdown, driving, air/reverse/yield/stall, finish/DNF, reset, Unicode 4 KiB limit, local/remote serial alert retention");
         }
         finally { entries.Clear(); UnityEngine.Object.DestroyImmediate(root); }
+    }
+    private static void ValidatePlayerProgress(Gmanager manager, RaceDashboardBridge bridge, GameObject root)
+    {
+        Array players = (Array)typeof(Gmanager).GetField("players", Private).GetValue(manager);
+        object[] previous = { players.GetValue(0), players.GetValue(1) };
+        Type runtime = players.GetType().GetElementType();
+        var tutorial = root.AddComponent<DrivingTutorialController>();
+        object oldTutorial = typeof(Gmanager).GetField("drivingTutorial", Private).GetValue(manager);
+        Gmanager.State oldState = manager.state;
+        try
+        {
+            for (int i = 0; i < 2; i++) players.SetValue(Activator.CreateInstance(runtime, true), i);
+            runtime.GetField("preparationState").SetValue(players.GetValue(0), Gmanager.State.Tutorial);
+            runtime.GetField("preparationState").SetValue(players.GetValue(1), Gmanager.State.CarSelection);
+            var selection = root.AddComponent<CarSelectionUI>();
+            Set(selection, "catalog", CarSelectionCatalog.Load());
+            Set(selection, "countdown", new PreparationCountdown(12.5f));
+            runtime.GetField("carSelection").SetValue(players.GetValue(1), selection);
+            var practices = (System.Collections.IList)typeof(DrivingTutorialController).GetField("players", Private).GetValue(tutorial);
+            object practice = Activator.CreateInstance(practices.GetType().GetGenericArguments()[0], true);
+            var lesson = new DrivingTutorialProgress(60f);
+            lesson.Tick(0f, true, 0f, 0f, 0f, 0f); lesson.Tick(.61f, true, .5f, 0f, 4f, 0f);
+            practice.GetType().GetField("playerIndex").SetValue(practice, 0);
+            practice.GetType().GetField("lesson").SetValue(practice, lesson); practices.Add(practice);
+            Set(manager, "drivingTutorial", tutorial); manager.state = Gmanager.State.Tutorial;
+            Func<Snapshot> local = () => JsonUtility.FromJson<Snapshot>(JsonUtility.ToJson(typeof(RaceDashboardBridge).GetMethod("BuildSnapshot", Private).Invoke(bridge,null)));
+            Snapshot snapshot = local();
+            Require(snapshot.playerProgress[0].state == "Tutorial" && snapshot.playerProgress[0].step == "Steer" &&
+                snapshot.playerProgress[1].state == "CarSelection" && snapshot.playerProgress[1].step == "Vehicle" &&
+                snapshot.playerProgress[1].remaining == 12.5f && snapshot.playerProgress[1].carName.Length > 0,
+                "Per-player tutorial and vehicle-selection progress did not remain independent");
+            lesson.Tick(60f, false, 0f, 0f, 0f, 0f);
+            Require(local().playerProgress[0].step == "TimedOut", "Tutorial timeout was reported as completion");
+            manager.state = Gmanager.State.Result;
+            runtime.GetField("returnedToTitle").SetValue(players.GetValue(0), true);
+            Require(local().playerProgress[0].step == "Returned" && local().playerProgress[1].state == "Result",
+                "Independent return-to-title status was lost");
+            Debug.Log("DASHBOARD_PLAYER_PROGRESS_PASS: mixed selection/tutorial, car name, time remaining, tutorial timeout and independent result return");
+        }
+        finally
+        {
+            players.SetValue(previous[0],0); players.SetValue(previous[1],1);
+            Set(manager,"drivingTutorial",oldTutorial); manager.state = oldState;
+        }
     }
     private static Snapshot Read(RaceDashboardBridge bridge) => JsonUtility.FromJson<Snapshot>(bridge.BuildRemoteSnapshotJson(new string('a',32),1));
 }

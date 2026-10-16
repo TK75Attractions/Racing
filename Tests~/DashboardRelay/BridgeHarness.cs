@@ -53,6 +53,8 @@ public class Gmanager
     public void ShowResult(){state=State.Result;Harness.Applied++;}
     public void RetryGame(){state=State.Title;Harness.Applied++;}
     public void ResetGame(){state=State.Title;Harness.Applied++;}
+    public void GetPlayerDashboardProgress(int i, out string phase, out string carName, out string step, out float remaining, out float progress)
+    { phase = state.ToString(); carName = "SPORT CAR"; step = ""; remaining = progress = 0; }
     public int GetPlayerLap(int i)=>0; public float GetPlayerSpeed(int i)=>0;
     public RaceParticipant GetParticipant(int i)=>null;
     public int GetParticipantLap(RaceParticipant p)=>0; public float GetParticipantSpeed(RaceParticipant p)=>0;

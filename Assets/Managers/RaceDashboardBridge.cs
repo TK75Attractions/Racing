@@ -61,6 +61,12 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public float speed;
     }
 
+    [Serializable] private sealed class PlayerProgressSnapshot
+    {
+        public int number;
+        public string state, carName, step;
+        public float remaining, progress;
+    }
     [Serializable] private sealed class HardwareSnapshot
     {
         public bool sessionOpen, recent, angleLocked, calibrated;
@@ -108,6 +114,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public SerialEntry telemetry;
         public RawEntry[] rawLines;
         public HardwareSnapshot hardware;
+        public PlayerProgressSnapshot[] playerProgress;
         public string state;
         public float raceTime;
         public float countdown;
@@ -321,6 +328,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
                 angleLocked = serial?.Session.AngleLocked ?? false, calibrated = serial?.Session.Calibrated ?? false,
                 pending = serial?.Session.PendingCommands ?? 0, lastCommand = serial?.Session.LastCommandResult ?? ""
             },
+            playerProgress = BuildPlayerProgress(),
             state = race != null ? race.state.ToString() : "Unknown",
             raceTime = race != null ? race.time : 0f,
             countdown = race != null ? race.CountdownTimeRemaining : 0f,
@@ -339,6 +347,19 @@ public sealed class RaceDashboardBridge : MonoBehaviour
                 lines = SelectSerialLines(MaxSerialLines)
             }
         };
+    }
+
+    private PlayerProgressSnapshot[] BuildPlayerProgress()
+    {
+        var result = new PlayerProgressSnapshot[2];
+        for (int i = 0; i < 2; i++)
+        {
+            var player = new PlayerProgressSnapshot { number = i + 1, state = "Unknown", carName = "", step = "" };
+            if (race != null) race.GetPlayerDashboardProgress(i, out player.state, out player.carName, out player.step,
+                out player.remaining, out player.progress);
+            result[i] = player;
+        }
+        return result;
     }
 
     private ParticipantSnapshot[] BuildParticipants()

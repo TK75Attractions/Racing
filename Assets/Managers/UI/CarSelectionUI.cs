@@ -44,6 +44,8 @@ public sealed class CarSelectionUI : MonoBehaviour
     public int SelectedVehicle => committedVehicle;
     public string SelectedVehicleName => catalog != null ? catalog.vehicles[committedVehicle].displayName : "SPORT CAR";
     public int SelectedPaint => committedPaint;
+    public string DashboardVehicleName => catalog != null ? catalog.vehicles[IsOpen ? draftVehicle : committedVehicle].displayName : "SPORT CAR";
+    public string DashboardSelectionStep => IsSelectionLocked ? "Confirmed" : IsChoosingPaint ? "Paint" : IsChoosingActions ? "Confirm" : "Vehicle";
     public int DraftVehicle => draftVehicle;
     public int DraftPaint => draftPaint;
     public CarSelectionShowroom Showroom => showroom;
