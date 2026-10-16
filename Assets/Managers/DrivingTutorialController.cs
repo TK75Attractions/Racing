@@ -14,7 +14,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
         public PlayerDriveInputGate driveGate;
         public RaceDirectionCameraController camera;
         public DrivingTutorialUI ui;
-        public readonly DrivingTutorialProgress lesson = new DrivingTutorialProgress();
+        public DrivingTutorialProgress lesson;
         public float startYaw;
         public float recoveryTimer;
     }
@@ -27,7 +27,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
         get
         {
             if (players.Count != 2) return false;
-            foreach (Practice player in players) if (!player.lesson.IsComplete) return false;
+            foreach (Practice player in players) if (!player.lesson.IsFinished) return false;
             return readyTimer >= 1f;
         }
     }
@@ -43,7 +43,8 @@ public sealed class DrivingTutorialController : MonoBehaviour
     public GameObject GetPlayerCar(int index) => players.Find(p => p.playerIndex == index)?.car;
 
     public void BeginPlayer(GameObject carPrefab, InputManager input, PlayerDisplayRig[] displays, int i,
-        System.Action<GameObject, int> customizeCar = null)
+        System.Action<GameObject, int> customizeCar = null,
+        float timeLimitSeconds = DrivingTutorialProgress.DefaultTimeLimitSeconds)
     {
         if (i < 0 || i >= displays.Length || HasStarted(i)) return;
         Material asphalt = Resources.Load<Material>("RaceCourse/M_RoadAsphalt");
@@ -52,7 +53,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
         Material cyan = Material("Practice cyan", RacingUITheme.Cyan, true);
         Material pink = Material("Practice pink", new Color(1f, .08f, .3f), true);
         Material white = Material("Practice lane markings", new Color(.85f, .9f, 1f), true);
-        Practice player = new Practice { playerIndex = i };
+        Practice player = new Practice { playerIndex = i, lesson = new DrivingTutorialProgress(timeLimitSeconds) };
         players.Add(player);
         player.world = new GameObject($"Player{i + 1}_PrivatePracticeCourse");
         // More than a camera far plane apart; solid boundaries and recovery prevent escape.
@@ -102,7 +103,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
             bool escaped = local.y < -2f || Mathf.Abs(local.x - 38f) > 95f || Mathf.Abs(local.z) > 92f;
             bool overturned = Vector3.Dot(player.car.transform.up, Vector3.up) < .3f;
             player.recoveryTimer = overturned ? player.recoveryTimer + dt : 0f;
-            if (!player.lesson.IsComplete && (escaped || player.recoveryTimer > 1.5f || input.resetPressed))
+            if (!player.lesson.IsFinished && (escaped || player.recoveryTimer > 1.5f || input.resetPressed))
             {
                 Recover(player);
                 speed = 0f;
@@ -115,19 +116,19 @@ public sealed class DrivingTutorialController : MonoBehaviour
                 RaceSoundEffects.PlayForPlayer(player.lesson.IsComplete ? RaceSoundCue.Confirm : RaceSoundCue.Ready, player.input.PlayerIndex);
                 if (player.lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer)
                     Recover(player); // Start the corner exercise with enough road in front of the car.
-                if (player.lesson.IsComplete)
-                {
-                    player.mover.enabled = false;
-                    foreach (CarStabilityController stability in player.car.GetComponentsInChildren<CarStabilityController>()) stability.enabled = false;
-                    foreach (CarSoundController sound in player.car.GetComponentsInChildren<CarSoundController>()) sound.enabled = false;
-                    foreach (AudioSource audio in player.car.GetComponentsInChildren<AudioSource>()) audio.Stop();
-                    player.body.linearVelocity = Vector3.zero;
-                    player.body.angularVelocity = Vector3.zero;
-                    player.body.isKinematic = true;
-                }
+            }
+            if (player.lesson.IsFinished && !player.body.isKinematic)
+            {
+                player.mover.enabled = false;
+                foreach (CarStabilityController stability in player.car.GetComponentsInChildren<CarStabilityController>()) stability.enabled = false;
+                foreach (CarSoundController sound in player.car.GetComponentsInChildren<CarSoundController>()) sound.enabled = false;
+                foreach (AudioSource audio in player.car.GetComponentsInChildren<AudioSource>()) audio.Stop();
+                player.body.linearVelocity = Vector3.zero;
+                player.body.angularVelocity = Vector3.zero;
+                player.body.isKinematic = true;
             }
             player.ui.Update(player.lesson, input, speed, player.input.IsConnected);
-            complete &= player.lesson.IsComplete;
+            complete &= player.lesson.IsFinished;
         }
         readyTimer = complete ? readyTimer + dt : 0f;
     }

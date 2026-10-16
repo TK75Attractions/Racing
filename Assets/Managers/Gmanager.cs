@@ -58,6 +58,10 @@ public class Gmanager : MonoBehaviour
     [SerializeField] private LapManager lapManager;
     [SerializeField, Min(0f)] private float secondPlaceTimeoutSeconds = 40f;
 
+    [Header("Preparation Time Limits")]
+    [SerializeField, Min(1f)] private float carSelectionTimeLimitSeconds = CarSelectionUI.DefaultTimeLimitSeconds;
+    [SerializeField, Min(1f)] private float tutorialTimeLimitSeconds = DrivingTutorialProgress.DefaultTimeLimitSeconds;
+
     [Header("CPU opponents (rehearsal)")]
     [SerializeField, Range(0, 2)] private int npcCount = 2;
     [SerializeField, Min(60f)] private float maximumRaceSeconds = 360f;
@@ -205,7 +209,7 @@ public class Gmanager : MonoBehaviour
             {
                 for (int i = 0; i < PlayerCount; i++)
                     if (players[i]?.preparationState == State.CarSelection && screenTransitions[i]?.IsTransitioning != true)
-                        players[i].carSelection?.TickInput(IManager.GetInputState(i), IManager.IsPlayerConnected(i), dt);
+                        players[i].carSelection?.TickInput(IManager.GetInputState(i), IManager.IsPlayerConnected(i), Time.unscaledDeltaTime);
                 UpdateTitleStartInput(dt);
                 UpdateTitlePedalUI();
             }
@@ -214,7 +218,7 @@ public class Gmanager : MonoBehaviour
 
         if ((state == State.CarSelection || state == State.Tutorial) && !finishingPreparation)
         {
-            drivingTutorial?.Tick(dt);
+            drivingTutorial?.Tick(Time.unscaledDeltaTime);
             if (drivingTutorial != null && drivingTutorial.AllComplete && !IsScreenTransitioning())
             {
                 finishingPreparation = true;
@@ -431,7 +435,7 @@ public class Gmanager : MonoBehaviour
         {
             player.preparationState = State.CarSelection;
             if (state == State.Title) state = State.CarSelection;
-            player.carSelection.Open();
+            player.carSelection.Open(carSelectionTimeLimitSeconds);
         });
     }
 
@@ -643,7 +647,7 @@ public class Gmanager : MonoBehaviour
         screenTransitions[index]?.ClearRaceStatus();
         if (drivingTutorial == null) drivingTutorial = gameObject.AddComponent<DrivingTutorialController>();
         drivingTutorial.BeginPlayer(carPrefab, IManager, displayRigs, index,
-            (vehicle, playerIndex) => players[playerIndex].carSelection?.ApplyToCar(vehicle));
+            (vehicle, playerIndex) => players[playerIndex].carSelection?.ApplyToCar(vehicle), tutorialTimeLimitSeconds);
         SwitchPlayerCameraForState(players[index], State.Tutorial);
     }
 
