@@ -1,0 +1,22 @@
+# 坂道のカメラとチューブ側面の走行
+
+`RaceDirectionCameraController` は、2本以上のタイヤが接地しているときに路面法線から進行方向の勾配を求め、カメラの上下角を滑らかに追従させます。標準の角度上限は30度、平滑化時間は0.3秒です。注視点は車両の3 m先に置きます。坂に沿った移動分はカメラの高さへ先に反映し、車体の上下振動だけを従来のフィルターで抑えます。ロールは追従せず、離陸後は路面の上下角を保ちます。リスポーン時は追従位置と平滑化状態を即座に更新します。
+
+チューブ内壁は、`RaceCourseRoad.Settings.tubeInterior` に設定された MeshCollider に道路生成時に `TubeDriveSurface` を付けて識別します。シーンやFBXの編集は不要です。この面では世界の上方向に対する角度だけで接地を切らず、タイヤまでの距離と車体上方向との一致を使います。建物の壁には従来の角度制限を適用します。チューブを壁反発・侵入復帰・壁の火花／衝突揺れの対象から除外します。
+
+`DebugMover` の駆動、操舵、速度抵抗、ドリフトのスピン抑制、ブーストは接地面を基準にします。これにより、バンクした路面で車体前方の上下成分を消して横グリップが前進を妨げることや、世界の鉛直軸でドリフト補正して路面に押し付ける／離れる動きを防ぎます。全輪が離れている間は従来の水平面を基準にします。
+
+## 回帰検証
+
+Unity 6000.3.9f1 で `Racing > Validate Slope Camera And Tube Driving`、または次を実行します。
+
+```sh
+/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity \
+  -batchmode -nographics -projectPath "$PWD" \
+  -executeMethod SlopeTubeDrivingValidation.Run -quit \
+  -logFile "$PWD/Artifacts/SlopeTubeDriving/unity.log"
+```
+
+検証用の平面を0度、左右60／80／90度に傾け、面の長手方向から25度向きを変えた4輪車で1秒間の駆動を比較します。重力を無効にし、加速比較中の姿勢を固定することで重力・遠心力と駆動の問題を区別します。ドリフトでは姿勢固定を解除し、速度維持、法線方向の速度、旋回軸を検証します。80／90度の面からマーカーを外すと、接地できないことも確認します。
+
+カメラは実際の路面へのレイ判定を使い、±20度の坂、平地、路面に沿った移動と振動、離陸中の車体回転、リスポーンを検証します。既存のカメラ振動・操舵・ドリフト・視覚効果の回帰検証も実行します。検証用オブジェクトは保存しません。実コースでの周回と描画は `TubeGameplayCapture.RunBatch` で別途確認しています。結果は [Artifacts/SlopeTubeDriving/README.md](../Artifacts/SlopeTubeDriving/README.md) を参照してください。
