@@ -7,12 +7,25 @@ public sealed class DrivingTutorialProgress
     public Stage CurrentStage { get; private set; }
     public bool PedalReleased { get; private set; }
     public bool IsComplete => CurrentStage == Stage.Complete;
+    public const float DefaultTimeLimitSeconds = 60f;
+    public bool HasTimedOut => countdown.HasExpired;
+    public bool IsFinished => IsComplete || HasTimedOut;
+    public float TimeRemaining => countdown.RemainingSeconds;
+    public float TimeLimitSeconds { get; }
     public float HoldProgress => Math.Min(1f, holdSeconds / 0.6f);
     private float holdSeconds;
+    private readonly PreparationCountdown countdown;
+
+    public DrivingTutorialProgress(float timeLimitSeconds = DefaultTimeLimitSeconds)
+    {
+        TimeLimitSeconds = Math.Max(0f, timeLimitSeconds);
+        countdown = new PreparationCountdown(TimeLimitSeconds);
+    }
 
     public void Tick(float deltaTime, bool connected, float pedal, float steering, float speed, float headingChange)
     {
-        if (IsComplete) return;
+        if (IsFinished) return;
+        if (countdown.Tick(deltaTime)) { holdSeconds = 0f; return; }
         if (!connected)
         {
             holdSeconds = 0f;
@@ -38,6 +51,7 @@ public sealed class DrivingTutorialProgress
         if (holdSeconds < 0.6f) return;
         CurrentStage++;
         holdSeconds = 0f;
+        if (IsComplete) countdown.Stop();
     }
 
     public void ResetCurrentAttempt()
