@@ -62,3 +62,29 @@ body.remote .controls{display:block}
 .transport-meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:#98a5ae;font-size:11px;padding-top:14px}.latest-tel{font:11px/1.8 "DM Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#111720;border:1px solid #303943;border-radius:4px;padding:12px;color:#dce985}
 
 .share-dashboard{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:#aeb9c8}.share-dashboard[hidden]{display:none}.share-dashboard input{flex:1;min-width:180px;border:1px solid #384657;background:#111923;color:#eff0ec;border-radius:5px;padding:8px;font-size:11px}.share-dashboard button{border:1px solid #486073;background:#172734;color:#fff;border-radius:5px;padding:8px 12px;cursor:pointer}.share-dashboard span{font-size:10px}
+
+/* Device diagnostics and operator tools share the existing live dashboard. */
+.controls .flow{display:flex;flex-wrap:wrap;gap:4px;max-width:none}
+.controls .flow-step{min-width:38px;flex:1 1 55px}
+.controls .flow-line{flex:0 0 5px}
+.controls .flow-step strong{white-space:normal;font-size:9px;line-height:1.5}
+.player-progress-grid{display:grid;gap:10px;margin:12px 0 18px;grid-column:1/-1}
+.progress-card{border:1px solid #384657;background:#111923;border-radius:5px;padding:12px;font-size:12px;line-height:1.7}
+.progress-card h3{margin:0 0 5px;font-size:13px;color:#e9f268}.progress-card p{margin:4px 0;color:#b1bfca;overflow-wrap:anywhere}
+.progress-card progress{width:100%;height:7px;accent-color:#e9f268}
+.hardware,.serial-controls{grid-column:1/-1}.hardware-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.hardware-card{background:#111923;border:1px solid #384657;border-radius:5px;padding:13px;min-width:0}
+.hardware-card h3{font-size:12px;margin:0 0 8px}.hardware-card strong{font-size:14px;color:#d9cd9c}.hardware-card.ok strong{color:#dce985}.hardware-card.fault strong{color:#ffc1b5}
+.hardware-card p{font-size:11px;line-height:1.7;color:#a0b0bf;margin:7px 0 0;overflow-wrap:anywhere}
+.serial-controls form{display:flex;gap:14px;align-items:end;flex-wrap:wrap}.serial-controls label{display:grid;gap:7px;font-size:11px;color:#aeb9c8}
+.serial-controls select,.serial-controls input{font:inherit;max-width:100%;min-width:120px;border:1px solid #486073;background:#111923;color:#eff0ec;border-radius:5px;padding:11px}
+.command-fields{display:flex;gap:12px;flex-wrap:wrap}.serial-controls .control-note{flex-basis:100%;margin:0}
+.command-send,.raw-serial button{border:1px solid #63723c;background:#e9f268;color:#111923;border-radius:5px;padding:11px 16px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.command-send:disabled,.serial-controls :disabled{opacity:.4;cursor:not-allowed}#serial-command-status,#raw-status{font-size:12px;color:#cbd4df;line-height:1.7}
+.raw-serial{grid-column:1/-1}.raw-serial .control-note{margin:0}.raw-serial button{background:#242d37;color:#eff0ec;border-color:#486073}
+.raw-log{height:300px;overflow:auto;border:1px solid #303943;background:#0d131b;border-radius:4px}
+.raw-row{display:grid;grid-template-columns:100px 30px minmax(0,1fr);gap:10px;padding:4px 12px;border-bottom:1px solid #252d35;font:10px/1.6 'DM Mono',monospace}
+.raw-row span{color:#8e9eaa}.raw-row code{white-space:pre-wrap;overflow-wrap:anywhere;color:#dce4e7;font:inherit;margin:0}.raw-row.tx code{color:#dce985}
+@media(min-width:1200px){.hardware{grid-column:1}.serial-controls{grid-column:2}.hardware-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1050px){.controls{display:block}}
+@media(max-width:680px){.hardware-grid{grid-template-columns:1fr 1fr}.hardware-card{padding:10px}.raw-row{grid-template-columns:80px 25px minmax(0,1fr);gap:5px;padding:6px;font-size:9px}.serial-controls form>label,.serial-controls form>button,.command-fields{width:100%}.serial-controls select{width:100%}.controls .flow-line{display:none}.controls .flow-step{flex-basis:24%}.serial-controls select,.serial-controls input{font-size:16px}}

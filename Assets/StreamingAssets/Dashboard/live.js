@@ -9,8 +9,9 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
   const infoResponse = await apiFetch('/api/connection', { signal: AbortSignal.timeout(4000) });
   if (!infoResponse.ok) throw new Error('Relay unavailable');
   const info = await infoResponse.json();
-  let socket, retry = 500, serialSession = '', session = '', cursor = 0;
+  let socket, retry = 500, serialSession = '', session = '', cursor = 0, rawCursor = 0;
   let alerts = [];
+  let rawHistory = [], rawGap = false;
   let history = [], snapshot = null, telemetry = null, lastMessageAt = 0, lastStateAt = 0;
   let dirty = false, busy = false, alive = false, gap = false;
   let lastFrames = 0, rtt = null;
@@ -29,7 +30,7 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
     dirty = false;
     if (snapshot && alive) {
       const current = Date.now() - lastStateAt < 3000;
-      render({ ...snapshot, serial: { ...snapshot.serial, lines: history, alerts } }, { canControl: info.canControl && current && !busy });
+      render({ ...snapshot, telemetry, rawLines: rawHistory, rawGap, serial: { ...snapshot.serial, lines: history, alerts } }, { canControl: info.canControl && current && !busy });
       renderTelemetry(telemetry);
       $('live-detail').textContent = `${current ? '状態更新中' : 'Unityの状態更新が停止しています'} / RTT ${rtt ?? '—'} ms${gap ? ' / 保持範囲外のログ欠落あり' : ''}`;
       if (!current) $('control-note').textContent = 'Unityの状態更新を待っています。操作は停止しています。';
@@ -48,7 +49,7 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
   function connect() {
     const endpoint = new URL('/api/events', location.href);
     endpoint.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    endpoint.search = new URLSearchParams({ serialSession, after: String(cursor) });
+    endpoint.search = new URLSearchParams({ serialSession, after: String(cursor), rawAfter: String(rawCursor) });
     socket = new WebSocket(endpoint);
     const attempt = socket;
     const connectDeadline = setTimeout(() => { if (!alive) disconnect(attempt); }, 8000);
@@ -58,11 +59,14 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
       try { packet = JSON.parse(event.data); } catch { disconnect(attempt); return; }
       if (!packet.sessionId || !packet.serialSession || !Array.isArray(packet.lines)) { disconnect(attempt); return; }
       if (session !== packet.sessionId || serialSession !== packet.serialSession) {
-        history = []; alerts = []; telemetry = null; gap = false;
+        history = []; rawHistory = []; rawGap = false; rawCursor = 0; alerts = []; telemetry = null; gap = false;
         if (session !== packet.sessionId) { snapshot = null; lastStateAt = 0; }
       }
       session = packet.sessionId; serialSession = packet.serialSession;
       cursor = packet.cursor;
+      rawCursor = packet.rawCursor ?? rawCursor;
+      rawHistory = mergeHistory(rawHistory, packet.rawLines || []);
+      rawGap ||= packet.rawGap;
       history = mergeHistory(history, packet.lines);
       alerts = packet.alerts || [];
       if (packet.snapshot) { snapshot = packet.snapshot; lastStateAt = Date.now(); }
@@ -94,12 +98,12 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
   }
   void measure(); setInterval(measure, 10000);
   return {
-    async command(action) {
+    async command(action, payload = {}) {
       if (!alive || !snapshot || busy || !info.canControl || Date.now() - lastStateAt > 3000) return;
       busy = true; dirty = true; draw();
-      const request = { id: crypto.randomUUID(), targetSession: snapshot.sessionId,
+      const request = { ...payload, id: crypto.randomUUID(), targetSession: snapshot.sessionId,
         expectedState: snapshot.state, stateRevision: snapshot.stateRevision, observedAt: snapshot.serverTime };
-      $('control-note').textContent = 'Unity に操作を送信中…';
+      if (action !== 'serial') $('control-note').textContent = 'Unity に操作を送信中…';
       let outcome;
       try {
         const response = await apiFetch('/api/action/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -111,9 +115,10 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
           if (response.ok) outcome = await response.json(); } catch { }
       }
       busy = false; dirty = true; draw();
-      $('control-note').textContent = outcome?.ok ? '操作を実行しました。' : outcome ?
+      if (action !== 'serial') $('control-note').textContent = outcome?.ok ? '操作を実行しました。' : outcome ?
         '状態が変わったため操作を受け付けられませんでした。最新の状態を確認してください。' :
         '実行結果を確認できません。操作は再送していません。レース状態を確認してください。';
+      return outcome;
     }
   };
 }

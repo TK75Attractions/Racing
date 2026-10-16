@@ -39,6 +39,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     {
         public string id, targetSession, expectedState;
         public long stateRevision, observedAt;
+        public string command;
+        public string[] args;
     }
 
     [Serializable] private sealed class SerialEntry
@@ -59,6 +61,24 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public float speed;
     }
 
+    [Serializable] private sealed class PlayerProgressSnapshot
+    {
+        public int number;
+        public string state, carName, step;
+        public float remaining, progress;
+    }
+    [Serializable] private sealed class HardwareSnapshot
+    {
+        public bool sessionOpen, recent, angleLocked, calibrated;
+        public string state, ads, imu, adsAddress, imuAddress, imuIdentity;
+        public int pending;
+        public string lastCommand;
+    }
+    [Serializable] private sealed class RawEntry
+    {
+        public long id;
+        public string time, direction, line;
+    }
     [Serializable] private sealed class SerialSnapshot
     {
         public bool portOpen;
@@ -92,6 +112,9 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public string sessionId;
         public long stateRevision, serverTime;
         public SerialEntry telemetry;
+        public RawEntry[] rawLines;
+        public HardwareSnapshot hardware;
+        public PlayerProgressSnapshot[] playerProgress;
         public string state;
         public float raceTime;
         public float countdown;
@@ -169,6 +192,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         {
             DashboardSnapshot snapshot = BuildSnapshot();
             snapshot.serial.lines = new SerialEntry[0];
+            snapshot.rawLines = new RawEntry[0];
             liveSnapshot = JsonUtility.ToJson(snapshot);
             nextSnapshotAt = Time.realtimeSinceStartup + .1f;
         }
@@ -293,6 +317,18 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         {
             sessionId = liveSession, stateRevision = stateRevision, serverTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             telemetry = latestTelemetry,
+            rawLines = Array.ConvertAll((serial?.Monitor ?? liveJournal).LatestRaw(), entry => new RawEntry
+                { id = entry.Id, time = entry.Time, direction = entry.Direction, line = entry.Line }),
+            hardware = new HardwareSnapshot
+            {
+                sessionOpen = serial?.Session.SessionOpen ?? false, recent = serial?.HasRecentDeviceData ?? false,
+                state = serial?.Session.State ?? "DISCONNECTED", ads = serial?.Session.AdsStatus ?? "Unknown",
+                imu = serial?.Session.ImuStatus ?? "Unknown", adsAddress = serial?.Session.AdsAddress ?? "",
+                imuAddress = serial?.Session.ImuAddress ?? "", imuIdentity = serial?.Session.ImuIdentity ?? "",
+                angleLocked = serial?.Session.AngleLocked ?? false, calibrated = serial?.Session.Calibrated ?? false,
+                pending = serial?.Session.PendingCommands ?? 0, lastCommand = serial?.Session.LastCommandResult ?? ""
+            },
+            playerProgress = BuildPlayerProgress(),
             state = race != null ? race.state.ToString() : "Unknown",
             raceTime = race != null ? race.time : 0f,
             countdown = race != null ? race.CountdownTimeRemaining : 0f,
@@ -311,6 +347,19 @@ public sealed class RaceDashboardBridge : MonoBehaviour
                 lines = SelectSerialLines(MaxSerialLines)
             }
         };
+    }
+
+    private PlayerProgressSnapshot[] BuildPlayerProgress()
+    {
+        var result = new PlayerProgressSnapshot[2];
+        for (int i = 0; i < 2; i++)
+        {
+            var player = new PlayerProgressSnapshot { number = i + 1, state = "Unknown", carName = "", step = "" };
+            if (race != null) race.GetPlayerDashboardProgress(i, out player.state, out player.carName, out player.step,
+                out player.remaining, out player.progress);
+            result[i] = player;
+        }
+        return result;
     }
 
     private ParticipantSnapshot[] BuildParticipants()
@@ -486,9 +535,22 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         ObserveState();
         long age = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - request.observedAt;
         bool accepted = request.targetSession == liveSession && request.stateRevision == stateRevision &&
-            age >= -1000 && age <= 15000 && TryApplyRemoteAction(action, request.expectedState);
+            age >= -1000 && age <= 15000 && race != null && race.state.ToString() == request.expectedState;
+        string reason = "state_changed"; uint serialSeq = 0;
+        if (accepted)
+        {
+            if (action == "serial")
+            {
+                TwoPlayerSerialInputSource source = input?.SharedSerialInputSource;
+                reason = "serial_disconnected";
+                accepted = source != null && source.TrySendCommand(request.command, request.args, out serialSeq, out reason);
+            }
+            else accepted = TryApplyRemoteAction(action, request.expectedState);
+        }
         ObserveState();
-        string result = "{\"id\":" + RgpSerialJournal.Quote(request.id) + ",\"ok\":" + (accepted ? "true" : "false") + "}";
+        string result = "{\"id\":" + RgpSerialJournal.Quote(request.id) + ",\"ok\":" + (accepted ? "true" : "false") +
+            ",\"reason\":" + RgpSerialJournal.Quote(accepted ? "" : reason) +
+            ",\"serialSequence\":" + serialSeq + "}";
         commandResults.Add(request.id, result); commandRequests.Add(request.id, signature); commandOrder.Enqueue(request.id);
         if (commandOrder.Count > 256) { string old = commandOrder.Dequeue(); commandResults.Remove(old); commandRequests.Remove(old); }
         nextSnapshotAt = 0;
@@ -511,6 +573,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
                 context.Response.Headers["Cache-Control"] = "no-store";
                 string session = context.Request.QueryString["serialSession"] ?? "";
                 long.TryParse(context.Request.QueryString["after"], out long cursor);
+                long.TryParse(context.Request.QueryString["rawAfter"], out long rawCursor);
                 string lastSnapshot = null;
                 long lastTelemetry = -1;
                 DateTime heartbeat = DateTime.MinValue;
@@ -518,22 +581,24 @@ public sealed class RaceDashboardBridge : MonoBehaviour
                 {
                     while (!stopping)
                     {
-                        RgpSerialJournal.Batch batch = liveJournal.Read(session, cursor);
+                        RgpSerialJournal.Batch batch = liveJournal.Read(session, cursor, rawAfter: rawCursor);
                         string snapshot = liveSnapshot;
                         bool changedSession = batch.Session != session;
                         bool changedTelemetry = batch.Telemetry != null && (changedSession || batch.Telemetry.Id != lastTelemetry);
-                        bool changed = changedSession || batch.Cursor != cursor || snapshot != lastSnapshot || changedTelemetry;
+                        bool changed = changedSession || batch.RawCursor != rawCursor || batch.Cursor != cursor || snapshot != lastSnapshot || changedTelemetry;
                         if (changed || DateTime.UtcNow >= heartbeat)
                         {
                             string json = "{\"sessionId\":" + RgpSerialJournal.Quote(liveSession) + ",\"serialSession\":" + RgpSerialJournal.Quote(batch.Session) +
                                 ",\"cursor\":" + batch.Cursor + ",\"gap\":" + (batch.Gap ? "true" : "false") +
+                                ",\"rawCursor\":" + batch.RawCursor + ",\"rawGap\":" + (batch.RawGap ? "true" : "false") +
+                                ",\"rawLines\":[" + string.Join(",", Array.ConvertAll(batch.RawLines, entry => entry.Json)) + "]" +
                                 ",\"snapshot\":" + (snapshot != lastSnapshot ? snapshot ?? "null" : "null") +
                                 ",\"telemetry\":" + (changedTelemetry ? batch.Telemetry.Json : "null") +
                                 ",\"alerts\":[" + string.Join(",", Array.ConvertAll(batch.Alerts, entry => entry.Json)) + "]" +
                                 ",\"lines\":[" + string.Join(",", Array.ConvertAll(batch.Lines, entry => entry.Json)) + "]}";
                             writer.WriteLine(json); writer.Flush();
                             heartbeat = DateTime.UtcNow.AddSeconds(1);
-                            lastSnapshot = snapshot; session = batch.Session; cursor = batch.Cursor;
+                            lastSnapshot = snapshot; session = batch.Session; cursor = batch.Cursor; rawCursor = batch.RawCursor;
                             if (batch.Telemetry != null) lastTelemetry = batch.Telemetry.Id;
                         }
                         Thread.Sleep(20);

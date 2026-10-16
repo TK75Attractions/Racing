@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "coreTests": 51,
+  "dashboardUiTests": 17,
+  "liveClientTests": 2,
+  "quickstartCases": 8,
+  "websocketBrowserCases": 8,
+  "unityCompilation": "PASS",
+  "unityActualPlayerProgress": "PASS: mixed selection/tutorial, selected vehicle, time remaining, tutorial timeout, independent return from results",
+  "nativePty": "PASS: ANGLE_ZERO, SET_BETA, SET_RATE, TEL stream off/on, optional CALIBRATE/SCAN_I2C unsupported ACK, HTTP request deduplication",
+  "browser": "PASS: actual serial command from form, hardware evidence, raw TEL, separate translations, desktop and 390px mobile without horizontal overflow",
+  "limitations": [
+    "No physical ESP32/I2C hardware test",
+    "Individual pedal presence is not reported by RGP/1; displayed as unconfirmed",
+    "Raw section covers decoded RGP frames including invalid frames, not arbitrary boot bytes",
+    "No cross-network latency measurement"
+  ],
+  "artifacts": [
+    "operator-desktop.png",
+    "operator-mobile.png",
+    "pty-websocket.json"
+  ]
+}

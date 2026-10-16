@@ -17,6 +17,26 @@ public sealed class RgpSerialJournalTests
         Assert.That(batch.Gap, Is.False);
         Assert.That(journal.Read(batch.Session, batch.Cursor).Lines, Is.Empty);
     }
+    [Test] public void RawReplayPreservesTelTransmitAndTerminatorsIndependently()
+    {
+        var journal = new RgpSerialJournal();
+        string wire = SerialInputProtocol.Encode("TEL,1,0,0,1,0,0,1,0").Replace("\n", "\r\n");
+        journal.RecordWire("RX", wire);
+        journal.RecordWire("TX", SerialInputProtocol.Encode("CMD,1,0,PING"));
+        var first = journal.Read("", 0);
+        Assert.That(first.RawLines.Length, Is.EqualTo(2));
+        Assert.That(first.RawLines[0].Line, Is.EqualTo(wire));
+        Assert.That(first.Lines.Length, Is.EqualTo(1));
+        Assert.That(first.RawLines[1].Direction, Is.EqualTo("TX"));
+        var next = journal.Read(first.Session, first.Cursor, rawAfter: first.RawCursor);
+        Assert.That(next.RawLines, Is.Empty);
+        for (int i = 0; i < 1100; i++) journal.RecordWire("RX", SerialInputProtocol.Encode("TEL,"+(i+2)+",0,0,1,0,0,1,0"));
+        var replay = journal.Read(first.Session, first.Cursor, rawAfter: first.RawCursor);
+        Assert.That(replay.RawGap, Is.True); Assert.That(replay.Gap, Is.False);
+        Assert.That(journal.LatestRaw(1000).Length, Is.EqualTo(1000));
+        Assert.That(journal.Read(first.Session, replay.Cursor, rawAfter: replay.RawCursor).RawLines[0].Id,
+            Is.GreaterThan(replay.RawLines[replay.RawLines.Length-1].Id));
+    }
     [Test] public void InvalidTelemetryIsRetainedAndReconnectHasNoDuplicates()
     {
         var journal = new RgpSerialJournal();

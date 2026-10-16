@@ -12,6 +12,7 @@ class Element {
   set textContent(value) { this.children = [String(value)]; }
   get textContent() { return this.children.map(child => typeof child === 'string' ? child : child.textContent).join(''); }
   set innerHTML(value) { this.children = [value]; }
+  setAttribute(name,value) { this[name] = value; }
   append(...children) { this.children.push(...children); }
   replaceChildren(...children) { this.children = children; }
   querySelector() { return this.span ||= new Element(); }
@@ -62,7 +63,7 @@ test('Remote render uses the same CPU rows and does not enable viewer controls',
   assert.equal(ui.elements.get('participant-rows').children.length,4);
   assert.ok(ui.buttons.every(button=>button.disabled));
   ui.render({...base,state:'Tutorial',participantCount:0,participants:[]},{canControl:false});
-  assert.equal(ui.elements.get('game-state').textContent,'練習');
+  assert.equal(ui.elements.get('game-state').textContent,'チュートリアル');
 });
 
 function wire(body) {
@@ -182,4 +183,58 @@ test('Dedicated alerts survive history eviction, are deduplicated and ordered ne
   assert.equal(alerts.length,2);
   assert.match(alerts[0].textContent,/基準角度が無効/);
   assert.match(alerts[1].textContent,/接続が失われました/);
+});
+
+test('Raw section preserves TEL, TX direction, CRLF and untrusted text without translating',()=>{
+  const ui=fixture();const tel=entry('OK','TEL,9,0,-30,0.7,0.1,45,0.2,0.3');
+  const raw=[{...tel,direction:'RX',line:tel.line+'\r\n'},{id:10,time:'12:00:01',direction:'TX',line:'<img src=x>\n'}];
+  ui.render({...base,rawLines:raw,rawGap:true,telemetry:tel});
+  const log=ui.elements.get('raw-log');
+  assert.equal(log.children.length,2);
+  assert.equal(log.children[0].children[2].textContent,tel.line+'\r\n');
+  assert.equal(log.children[1].children[1].textContent,'TX');
+  assert.equal(log.children[1].children[2].textContent,'<img src=x>\n');
+  assert.match(ui.elements.get('raw-status').textContent,/欠落あり/);
+  assert.match(ui.elements.get('latest-tel').textContent,/ハンドル 左 30°、アクセル 70.0%、ブレーキ 10.0%/);
+  ui.context.setConnection(false);assert.equal(log.children.length,0);
+});
+test('Hardware uses explicit evidence and never invents pedal connectivity from zero inputs',()=>{
+  const ui=fixture();const hardware={sessionOpen:true,recent:true,state:'READY',ads:'Ok',imu:'Fault',imuAddress:'0x68',imuIdentity:'0x68'};
+  ui.render({...base,serial:{portOpen:true,lines:[]},hardware});
+  const cards=ui.elements.get('hardware-grid').children;
+  assert.match(cards[0].textContent,/通信中/);assert.match(cards[1].textContent,/異常・接続要確認/);
+  assert.match(cards[2].textContent,/動作確認済み/);
+  assert.match(cards[3].textContent,/物理接続：未確認/);assert.match(cards[4].textContent,/物理接続：未確認/);
+  assert.equal(ui.elements.get('serial-send').disabled,false);
+  ui.render({...base,serial:{portOpen:true,lines:[]},hardware:{...hardware,recent:false}});
+  assert.ok(ui.elements.get('hardware-grid').children.slice(1).every(card=>!card.textContent.includes('動作確認済み')));
+  assert.equal(ui.elements.get('serial-send').disabled,true);
+  ui.render({...base,serial:{portOpen:true,lines:[]},hardware},{canControl:false});
+  assert.equal(ui.elements.get('serial-send').disabled,true);
+});
+test('Players can select cars and practice independently, including timeouts and waiting',()=>{
+  const ui=fixture();
+  ui.render({...base,state:'Tutorial',playerProgress:[
+    {number:1,state:'Tutorial',step:'Steer',carName:'ROADSTER',remaining:39.2,progress:.5},
+    {number:2,state:'CarSelection',step:'Paint',carName:'SPORT CAR',remaining:12.2,progress:0}]});
+  const cards=ui.elements.get('player-progress').children;
+  assert.match(cards[0].textContent,/P1 \/ チュートリアル.*旋回.*ROADSTER.*40 秒/);
+  assert.match(cards[1].textContent,/P2 \/ 車選択.*カラーを選択中.*13 秒/);
+  assert.equal(cards[0].children.at(-1).value,.5);
+  assert.match(ui.elements.get('flow-state').textContent,/3 \/ 7/);
+  ui.render({...base,state:'Tutorial',playerProgress:[{number:1,state:'Tutorial',step:'TimedOut'}]});
+  assert.match(ui.elements.get('player-progress').textContent,/制限時間終了・相手の完了を待機/);
+  ui.context.setConnection(false);assert.match(ui.elements.get('player-progress').textContent,/状態待機/);
+  assert.equal([...html.matchAll(/data-flow-state=/g)].length,7);
+});
+test('Raw display pauses rendering, bounds history, and resumes with fresh data',()=>{
+  const ui=fixture();const raws=Array.from({length:600},(_,id)=>({id,time:'',direction:'RX',line:'raw'+id+'\n'}));
+  ui.render({...base,rawLines:raws});assert.equal(ui.elements.get('raw-log').children.length,500);
+  vm.runInContext('rawPaused=true',ui.context);
+  ui.render({...base,rawLines:[{id:601,direction:'RX',line:'new\n'}]});
+  assert.equal(ui.elements.get('raw-log').children.length,500);
+  assert.match(ui.elements.get('raw-status').textContent,/一時停止中/);
+  vm.runInContext('rawPaused=false; renderRaw(rawPending,rawGap,true)',ui.context);
+  assert.equal(ui.elements.get('raw-log').children.length,1);
+  assert.match(ui.elements.get('raw-log').textContent,/new/);
 });

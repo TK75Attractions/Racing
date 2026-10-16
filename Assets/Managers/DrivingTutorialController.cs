@@ -38,6 +38,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
         for (int i = 0; i < displays.Length; i++) BeginPlayer(carPrefab, input, displays, i, customizeCar);
     }
 
+    public DrivingTutorialProgress GetPlayerProgress(int index) => players.Find(p => p.playerIndex == index)?.lesson;
     public bool HasAnyStarted => players.Count > 0;
     public bool HasStarted(int index) => players.Exists(p => p.playerIndex == index);
     public GameObject GetPlayerCar(int index) => players.Find(p => p.playerIndex == index)?.car;
