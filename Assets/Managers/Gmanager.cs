@@ -587,7 +587,7 @@ public class Gmanager : MonoBehaviour
 
             OnPlayUIManager playUi = playerIndex == 0 && onPlayUIManager != null
                 ? onPlayUIManager : new OnPlayUIManager();
-            playUi.Init(rig.CanvasRoot.transform.Find("OnPlay"), course, playerIndex, lapManager != null ? lapManager.GoalLap : 3);
+            playUi.Init(rig.CanvasRoot.transform.Find("OnPlay"), course, playerIndex, lapManager != null ? lapManager.GoalLap : LapManager.DefaultGoalLaps);
             onPlayUIManagers[playerIndex] = playUi;
 
             ResultUIManager resultsUi = playerIndex == 0 && resultUIManager != null

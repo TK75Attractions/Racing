@@ -49,14 +49,13 @@ public static class PlayerAudioValidation
             Call(music, "Update");
             Require(sources.All(s => s.clip.name == "racegame_v3"), "Countdown must use the new race track.");
             manager.state = Gmanager.State.Game;
+            Require(laps.GoalLap == 2, "The default race must be two laps.");
+            Call(music, "Update");
+            Require(sources[0].clip.name == "racegame_v3", "The first lap must use normal race music.");
             laps.DebugAdvanceLap(bodies[0], false);
             Call(music, "Update");
-            Require(sources[0].clip.name == "racegame_v3", "One completed lap is not final in a three-lap race.");
-            laps.DebugAdvanceLap(bodies[0], false);
-            Call(music, "Update");
-            Require(sources[0].clip.name == "racegame_v3_final lap", "P1 must switch on entering lap three.");
+            Require(sources[0].clip.name == "racegame_v3_final lap", "P1 must switch on entering lap two.");
             Require(sources[1].clip.name == "racegame_v3", "P1 final lap must not change P2 music.");
-            laps.DebugAdvanceLap(bodies[1], false);
             laps.DebugAdvanceLap(bodies[1], false);
             Call(music, "Update");
             Require(sources[1].clip.name == "racegame_v3_final lap", "P2 must switch independently.");

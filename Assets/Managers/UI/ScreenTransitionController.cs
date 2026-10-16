@@ -492,7 +492,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         RectTransform countdownLap=NeonUI.Panel(onPlay,"CountdownLap",new Vector2(.80f,.855f),new Vector2(.98f,.975f));
         NeonUI.Text(countdownLap,"Heading","LAP / 周",new Vector2(.10f,.68f),new Vector2(.88f,.93f),22f,italic:true);
         NeonUI.Text(countdownLap,"Current","1",new Vector2(.36f,.05f),new Vector2(.65f,.77f),97f,italic:true,tint:NeonUI.Pink);
-        NeonUI.Text(countdownLap,"Total","/ " + (Gmanager.Control != null ? Gmanager.Control.GoalLap : 3),new Vector2(.67f,.08f),new Vector2(.93f,.64f),44f,italic:true);
+        NeonUI.Text(countdownLap,"Total","/ " + (Gmanager.Control != null ? Gmanager.Control.GoalLap : LapManager.DefaultGoalLaps),new Vector2(.67f,.08f),new Vector2(.93f,.64f),44f,italic:true);
 
         finishWarningRoot = RacingHUDStyle.Plate(onPlay, "FinishWarningStatus",
             new Vector2(.34f, .815f), new Vector2(.66f, .95f),
