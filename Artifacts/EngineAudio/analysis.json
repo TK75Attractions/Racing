@@ -1,0 +1,124 @@
+{
+  "wav_metrics": {
+    "01-idle.wav": {
+      "seconds": 3.0,
+      "peak_dbfs": -22.22,
+      "rms_dbfs": -35.11,
+      "dc": 2.64e-05,
+      "clipped_samples": 0,
+      "max_sample_step": 0.00647,
+      "sub_40hz_percent": 38.07,
+      "over_8khz_percent": 0.05,
+      "centroid_hz": 104.4,
+      "stereo_difference_rms": 0.0
+    },
+    "02-acceleration-tunnel-braking.wav": {
+      "seconds": 30.0,
+      "peak_dbfs": -12.64,
+      "rms_dbfs": -25.19,
+      "dc": 5.2e-06,
+      "clipped_samples": 0,
+      "max_sample_step": 0.05481,
+      "sub_40hz_percent": 3.98,
+      "over_8khz_percent": 0.02,
+      "centroid_hz": 121.5,
+      "stereo_difference_rms": 0.01488
+    },
+    "03-open-road.wav": {
+      "seconds": 5.0,
+      "peak_dbfs": -17.9,
+      "rms_dbfs": -23.18,
+      "dc": -8.4e-06,
+      "clipped_samples": 0,
+      "max_sample_step": 0.02411,
+      "sub_40hz_percent": 0.0,
+      "over_8khz_percent": 0.02,
+      "centroid_hz": 231.9,
+      "stereo_difference_rms": 0.0
+    },
+    "04-tunnel.wav": {
+      "seconds": 5.0,
+      "peak_dbfs": -16.49,
+      "rms_dbfs": -22.66,
+      "dc": -7e-06,
+      "clipped_samples": 0,
+      "max_sample_step": 0.02866,
+      "sub_40hz_percent": 0.0,
+      "over_8khz_percent": 0.03,
+      "centroid_hz": 242.9,
+      "stereo_difference_rms": 0.02595
+    },
+    "05-gameplay-launch.wav": {
+      "seconds": 13.978,
+      "peak_dbfs": -14.18,
+      "rms_dbfs": -23.33,
+      "dc": -1.85e-05,
+      "clipped_samples": 0,
+      "max_sample_step": 0.07529,
+      "sub_40hz_percent": 0.02,
+      "over_8khz_percent": 0.13,
+      "centroid_hz": 338.4,
+      "stereo_difference_rms": 0.0
+    },
+    "06-gameplay-tunnel.wav": {
+      "seconds": 12.0,
+      "peak_dbfs": -11.54,
+      "rms_dbfs": -20.97,
+      "dc": -1.65e-05,
+      "clipped_samples": 0,
+      "max_sample_step": 0.02704,
+      "sub_40hz_percent": 0.0,
+      "over_8khz_percent": 0.01,
+      "centroid_hz": 238.1,
+      "stereo_difference_rms": 0.02697
+    },
+    "07-gameplay-exit.wav": {
+      "seconds": 4.0,
+      "peak_dbfs": -13.8,
+      "rms_dbfs": -22.18,
+      "dc": -2.28e-05,
+      "clipped_samples": 0,
+      "max_sample_step": 0.02277,
+      "sub_40hz_percent": 0.0,
+      "over_8khz_percent": 0.01,
+      "centroid_hz": 219.5,
+      "stereo_difference_rms": 0.00651
+    }
+  },
+  "upshifts": [
+    {
+      "seconds": 5.3,
+      "gear": 2,
+      "before_rpm": 7042.5,
+      "after_200ms_rpm": 5281.3
+    },
+    {
+      "seconds": 6.7833,
+      "gear": 3,
+      "before_rpm": 7106.4,
+      "after_200ms_rpm": 5472.9
+    },
+    {
+      "seconds": 8.5833,
+      "gear": 4,
+      "before_rpm": 7143.9,
+      "after_200ms_rpm": 5596.9
+    },
+    {
+      "seconds": 10.7667,
+      "gear": 5,
+      "before_rpm": 7164.6,
+      "after_200ms_rpm": 5705.8
+    },
+    {
+      "seconds": 13.3833,
+      "gear": 6,
+      "before_rpm": 7401.9,
+      "after_200ms_rpm": 6035.9
+    }
+  ],
+  "actual_exit_tail": {
+    "first_half_second_stereo_rms": 0.018148795005265075,
+    "last_half_second_stereo_rms": 3.5596425996081807e-07
+  }
+}

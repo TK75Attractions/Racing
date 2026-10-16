@@ -1,0 +1,9 @@
+ENGINE_TUNNEL_SAMPLE: (673.90, -24.00, 343.36) enclosure=0.77
+ENGINE_TUNNEL_SAMPLE: (577.20, -24.00, 173.96) enclosure=0.77
+PlayerAudioValidation PASSED: independent final laps, spectator, retry, single lap, menu tracks, stereo viewpoint and no default-output leakage.
+MODERN_UI_VALIDATION_PASS: fonts, backgrounds, both player HUDs, live timing, lap counts, speed, spectator and ESC actions.
+ENGINE_AUDIO_VALIDATION_PASS: six gears, hysteresis, kickdown, reverse, reset, PCM continuity, mute, sample rates, reverb tails, actual tube and prefab integration.
+ENGINE_GAMEPLAY_PCM: 05-gameplay-launch.wav, 13.98s, 44100Hz, peak=0.1955
+ENGINE_GAMEPLAY_PCM: 06-gameplay-tunnel.wav, 12.00s, 44100Hz, peak=0.2650
+ENGINE_GAMEPLAY_PCM: 07-gameplay-exit.wav, 4.00s, 44100Hz, peak=0.2042
+ENGINE_AUDIO_PLAYTHROUGH_PASS: actual shifts and real PCM captured on open road, inside tube and at exit.

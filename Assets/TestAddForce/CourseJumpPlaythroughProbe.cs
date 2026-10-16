@@ -86,7 +86,7 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
         Directory.CreateDirectory(output);
         trace = new StreamWriter(Path.Combine(output, "trace.csv"));
         trace.WriteLine("player,time,x,y,z,speed,steering,pedal,grounded,distance,wall");
-        Time.timeScale = rocketSuite ? 1f : 3f;
+        Time.timeScale = rocketSuite || UnityEditor.SessionState.GetBool("Racing.EngineAudioPlaythrough", false) ? 1f : 3f;
         if (rocketSuite) Time.captureFramerate = 30;
         Application.runInBackground = true;
         Gmanager manager = UnityEngine.Object.FindFirstObjectByType<Gmanager>();
@@ -116,7 +116,8 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
             driver.mover.SetInputSource(driver.input);
             car.AddComponent<CourseJumpContactRecorder>().Owner = this;
             drivers.Add(driver); report.trials.Add(driver.trial);
-            foreach (PlayerAudioCapture capture in car.GetComponentsInChildren<PlayerAudioCapture>()) capture.enabled = false;
+            if (!UnityEditor.SessionState.GetBool("Racing.EngineAudioPlaythrough", false))
+                foreach (PlayerAudioCapture capture in car.GetComponentsInChildren<PlayerAudioCapture>()) capture.enabled = false;
         }
         if (rocketSuite)
         {

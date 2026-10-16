@@ -1,0 +1,1 @@
+PASS: actual car driven by pedal/steering input, highest gear 5, peak tunnel enclosure 1.00, dry road, tube entry/interior/exit, real DSP callback PCM before per-player capture.
