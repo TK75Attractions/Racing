@@ -1,0 +1,1842 @@
+time,car,event,detail,x,y,z
+0.02,P1,airborne,"speed=0.00",431.261,3.348,790.675
+0.02,P2,airborne,"speed=0.00",431.075,3.348,786.679
+0.02,CPU 1,airborne,"speed=0.00",424.268,5.000,790.999
+0.02,CPU 2,airborne,"speed=0.00",424.083,5.000,787.003
+0.04,P1,grounded,"speed=0.00",431.261,3.348,790.675
+0.04,P2,grounded,"speed=0.00",431.075,3.348,786.679
+0.60,CPU 1,grounded,"speed=0.00",424.268,3.286,790.999
+0.60,CPU 2,grounded,"speed=0.00",424.083,3.286,787.003
+0.60,CPU 1,environment-contact,"Road Surface",424.278,3.336,790.993
+0.60,CPU 1,environment-contact,"Road Surface",424.278,3.336,790.993
+0.60,CPU 1,environment-contact,"Road Surface",424.278,3.336,790.993
+0.60,CPU 1,environment-contact,"Road Surface",424.278,3.336,790.993
+0.60,CPU 2,environment-contact,"Road Surface",424.094,3.336,787.009
+0.60,CPU 2,environment-contact,"Road Surface",424.094,3.336,787.009
+0.60,CPU 2,environment-contact,"Road Surface",424.094,3.336,787.009
+0.60,CPU 2,environment-contact,"Road Surface",424.094,3.336,787.009
+0.86,CPU 2,vehicle-contact,"CPU1_Car",425.232,3.348,787.295
+0.86,CPU 1,vehicle-contact,"CPU2_Car",425.387,3.348,790.603
+0.86,CPU 2,vehicle-contact,"CPU1_Car",425.232,3.348,787.295
+0.86,CPU 1,vehicle-contact,"CPU2_Car",425.387,3.348,790.603
+1.22,CPU 2,vehicle-contact,"CPU1_Car",427.468,3.348,787.363
+1.22,CPU 1,vehicle-contact,"CPU2_Car",428.053,3.348,790.371
+1.22,CPU 2,vehicle-contact,"CPU1_Car",427.468,3.348,787.363
+1.22,CPU 1,vehicle-contact,"CPU2_Car",428.053,3.348,790.371
+1.36,CPU 2,vehicle-contact,"CPU1_Car",428.319,3.348,787.299
+1.36,CPU 1,vehicle-contact,"CPU2_Car",429.142,3.348,790.151
+1.96,CPU 2,vehicle-contact,"CPU1_Car",432.957,3.348,786.297
+1.96,CPU 1,vehicle-contact,"CPU2_Car",435.126,3.348,788.337
+2.06,CPU 2,vehicle-contact,"CPU1_Car",433.925,3.348,786.091
+2.06,CPU 1,vehicle-contact,"CPU2_Car",436.662,3.348,788.023
+2.90,CPU 2,vehicle-contact,"CPU1_Car",447.385,3.348,783.439
+2.90,CPU 1,vehicle-contact,"CPU2_Car",451.269,3.348,784.765
+3.30,CPU 2,vehicle-contact,"CPU1_Car",452.787,3.348,781.647
+3.30,CPU 1,vehicle-contact,"CPU2_Car",457.705,3.351,781.332
+3.86,CPU 1,environment-contact,"Road Surface",465.722,3.350,777.735
+3.94,CPU 1,environment-contact,"Road Surface",466.849,3.348,777.708
+8.12,P2,item,"Oil",494.001,3.348,697.014
+9.80,CPU 1,afflicted,"Oil",493.580,3.348,694.062
+11.68,P2,environment-contact,"Road Surface",497.406,3.400,637.189
+12.04,P2,charge,"",499.884,3.509,631.843
+12.36,P2,environment-contact,"Road Surface",502.271,3.714,627.867
+12.52,P1,environment-contact,"Road Surface",503.410,3.516,633.516
+12.52,P1,environment-contact,"Road Surface",503.410,3.516,633.516
+12.58,P2,environment-contact,"Road Surface",503.858,3.938,625.560
+12.94,CPU 1,environment-contact,"Road Surface",499.426,3.500,632.271
+12.96,CPU 1,environment-contact,"Road Surface",499.601,3.504,631.935
+13.04,CPU 1,environment-contact,"Road Surface",500.284,3.551,630.682
+13.06,P1,environment-contact,"Road Surface",507.324,4.000,627.454
+13.06,CPU 1,environment-contact,"Road Surface",500.451,3.561,630.384
+13.08,P1,environment-contact,"Road Surface",507.466,4.020,627.260
+13.30,P2,environment-contact,"Road Surface",509.539,5.141,618.737
+13.34,CPU 1,environment-contact,"Road Surface",502.769,3.799,626.722
+13.46,P2,environment-contact,"Road Surface",511.432,5.647,616.933
+13.46,P1,environment-contact,"Road Surface",510.271,4.617,623.764
+13.48,P1,environment-contact,"Road Surface",510.425,4.652,623.589
+13.48,P1,environment-contact,"Road Surface",510.425,4.652,623.589
+13.48,P2,environment-contact,"Road Surface",511.694,5.729,616.697
+13.54,P2,environment-contact,"Road Surface",512.519,5.966,615.992
+13.54,P2,environment-contact,"Road Surface",512.519,5.966,615.992
+13.62,P2,environment-contact,"Road Surface",513.690,6.287,615.050
+13.62,P2,environment-contact,"Road Surface",513.690,6.287,615.050
+13.62,P2,environment-contact,"Road Surface",513.690,6.287,615.050
+13.66,P2,environment-contact,"Road Surface",514.296,6.469,614.587
+13.66,P2,environment-contact,"Road Surface",514.296,6.469,614.587
+13.74,P2,environment-contact,"Road Surface",515.547,6.862,613.697
+13.74,P2,environment-contact,"Road Surface",515.547,6.862,613.697
+13.74,P2,environment-contact,"Road Surface",515.547,6.862,613.697
+13.80,P2,airborne,"speed=19.18",516.180,7.096,613.271
+13.82,P2,grounded,"speed=19.13",516.494,7.193,613.055
+13.86,P1,environment-contact,"Road Surface",514.139,5.632,619.785
+13.88,P2,environment-contact,"Road Surface",517.782,7.497,612.216
+13.88,P2,environment-contact,"Road Surface",517.782,7.497,612.216
+13.92,P2,environment-contact,"Road Surface",518.411,7.711,611.818
+13.92,P2,environment-contact,"Road Surface",518.411,7.711,611.818
+13.94,P1,environment-contact,"Road Surface",515.205,5.972,618.863
+13.98,CPU 2,environment-contact,"Road Surface",500.945,3.438,636.157
+14.00,P1,environment-contact,"Road Surface",516.056,6.232,618.171
+14.00,CPU 2,environment-contact,"Road Surface",501.082,3.441,635.793
+14.02,P2,airborne,"speed=18.59",519.689,8.234,611.085
+14.02,P1,environment-contact,"Road Surface",516.343,6.342,617.943
+14.04,P2,grounded,"speed=18.54",520.010,8.335,610.897
+14.06,P2,airborne,"speed=18.67",520.333,8.421,610.708
+14.06,P1,environment-contact,"Road Surface",516.931,6.533,617.494
+14.06,CPU 1,environment-contact,"Road Surface",509.020,4.992,619.510
+14.06,CPU 1,environment-contact,"Road Surface",509.020,4.992,619.510
+14.08,P2,grounded,"speed=18.60",520.654,8.494,610.519
+14.08,P2,environment-contact,"Road Surface",520.972,8.572,610.334
+14.08,P1,environment-contact,"Road Surface",517.228,6.636,617.268
+14.12,P1,environment-contact,"Road Surface",517.831,6.826,616.830
+14.14,P1,environment-contact,"Road Surface",518.132,6.940,616.611
+14.14,P1,environment-contact,"Road Surface",518.132,6.940,616.611
+14.14,CPU 1,environment-contact,"Road Surface",509.782,5.160,618.815
+14.16,P2,environment-contact,"Road Surface",522.303,8.839,609.592
+14.16,P2,environment-contact,"Road Surface",522.303,8.839,609.592
+14.16,P2,environment-contact,"Road Surface",522.303,8.839,609.592
+14.18,P1,environment-contact,"Road Surface",518.748,7.147,616.188
+14.20,P2,environment-contact,"Road Surface",522.985,9.044,609.250
+14.20,P1,environment-contact,"Road Surface",519.060,7.254,615.975
+14.22,P1,environment-contact,"Road Surface",519.376,7.348,615.767
+14.24,P1,environment-contact,"Road Surface",519.691,7.455,615.564
+14.26,P1,environment-contact,"Road Surface",520.006,7.580,615.360
+14.26,CPU 2,environment-contact,"Road Surface",503.115,3.586,631.236
+14.28,CPU 2,environment-contact,"Road Surface",503.278,3.603,630.917
+14.30,P1,environment-contact,"Road Surface",520.648,7.802,614.964
+14.32,P2,environment-contact,"Road Surface",525.101,9.616,608.220
+14.32,P1,environment-contact,"Road Surface",520.972,7.914,614.763
+14.32,CPU 1,environment-contact,"Road Surface",511.531,5.596,617.352
+14.34,P2,environment-contact,"Road Surface",525.463,9.713,608.053
+14.34,P2,environment-contact,"Road Surface",525.463,9.713,608.053
+14.36,P1,environment-contact,"Road Surface",521.638,8.117,614.373
+14.38,P1,environment-contact,"Road Surface",521.969,8.246,614.183
+14.38,P1,environment-contact,"Road Surface",521.969,8.246,614.183
+14.40,CPU 2,environment-contact,"Road Surface",504.249,3.723,629.122
+14.42,P1,environment-contact,"Road Surface",522.648,8.470,613.807
+14.42,CPU 2,environment-contact,"Road Surface",504.410,3.747,628.839
+14.44,P1,environment-contact,"Road Surface",522.992,8.585,613.621
+14.46,CPU 1,environment-contact,"Road Surface",512.910,5.983,616.311
+14.48,P1,environment-contact,"Road Surface",523.692,8.791,613.254
+14.50,P1,environment-contact,"Road Surface",524.039,8.918,613.074
+14.50,P1,environment-contact,"Road Surface",524.039,8.918,613.074
+14.52,CPU 1,environment-contact,"Road Surface",513.509,6.130,615.884
+14.54,P1,environment-contact,"Road Surface",524.752,9.134,612.717
+14.54,CPU 1,environment-contact,"Road Surface",513.708,6.195,615.755
+14.58,P1,environment-contact,"Road Surface",525.478,9.321,612.357
+14.58,CPU 2,environment-contact,"Road Surface",505.696,3.964,626.683
+14.60,P1,environment-contact,"Road Surface",525.840,9.437,612.187
+14.60,P1,environment-contact,"Road Surface",525.840,9.437,612.187
+14.62,CPU 1,environment-contact,"Road Surface",514.503,6.385,615.219
+14.62,CPU 2,environment-contact,"Road Surface",506.020,4.019,626.167
+14.64,CPU 1,environment-contact,"Road Surface",514.708,6.439,615.097
+14.66,CPU 1,environment-contact,"Road Surface",514.902,6.512,614.977
+14.70,P1,environment-contact,"Road Surface",527.682,9.961,611.335
+14.70,P1,environment-contact,"Road Surface",527.682,9.961,611.335
+14.74,CPU 1,environment-contact,"Road Surface",515.698,6.725,614.482
+14.76,CPU 1,environment-contact,"Road Surface",515.893,6.804,614.376
+14.78,CPU 1,environment-contact,"Road Surface",516.089,6.869,614.261
+14.84,CPU 1,environment-contact,"Road Surface",516.692,7.002,613.920
+14.86,CPU 1,environment-contact,"Road Surface",516.885,7.080,613.817
+14.86,CPU 1,environment-contact,"Road Surface",516.885,7.080,613.817
+14.96,CPU 1,environment-contact,"Road Surface",517.865,7.366,613.301
+14.96,CPU 1,environment-contact,"Road Surface",517.865,7.366,613.301
+15.08,CPU 1,environment-contact,"Road Surface",519.031,7.707,612.731
+15.08,CPU 1,environment-contact,"Road Surface",519.031,7.707,612.731
+15.08,CPU 1,environment-contact,"Road Surface",519.031,7.707,612.731
+15.18,CPU 1,environment-contact,"Road Surface",520.022,7.987,612.275
+15.20,CPU 1,environment-contact,"Road Surface",520.218,8.064,612.196
+15.20,CPU 1,environment-contact,"Road Surface",520.218,8.064,612.196
+15.24,CPU 1,environment-contact,"Road Surface",520.618,8.192,612.023
+15.28,CPU 2,environment-contact,"Road Surface",511.666,5.458,618.580
+15.30,CPU 1,environment-contact,"Road Surface",521.243,8.345,611.762
+15.30,CPU 1,environment-contact,"Road Surface",521.243,8.345,611.762
+15.30,CPU 2,environment-contact,"Road Surface",511.849,5.509,618.380
+15.30,CPU 2,environment-contact,"Road Surface",511.849,5.509,618.380
+15.32,CPU 1,environment-contact,"Road Surface",521.445,8.427,611.683
+15.36,CPU 2,environment-contact,"Road Surface",512.385,5.677,617.788
+15.42,CPU 1,environment-contact,"Road Surface",522.501,8.721,611.265
+15.42,CPU 1,environment-contact,"Road Surface",522.501,8.721,611.265
+15.42,CPU 1,environment-contact,"Road Surface",522.501,8.721,611.265
+15.44,CPU 2,environment-contact,"Road Surface",513.113,5.889,617.025
+15.50,P1,environment-contact,"Road Surface",543.268,13.811,605.343
+15.52,CPU 1,environment-contact,"Road Surface",523.594,9.019,610.856
+15.52,CPU 1,environment-contact,"Road Surface",523.594,9.019,610.856
+15.54,CPU 2,environment-contact,"Road Surface",514.020,6.188,616.114
+15.54,CPU 2,environment-contact,"Road Surface",514.020,6.188,616.114
+15.54,CPU 2,environment-contact,"Road Surface",514.020,6.188,616.114
+15.56,P1,environment-contact,"Road Surface",544.473,14.040,604.952
+15.62,P1,environment-contact,"Road Surface",545.683,14.259,604.572
+15.62,CPU 2,environment-contact,"Road Surface",514.751,6.411,615.422
+15.62,CPU 2,environment-contact,"Road Surface",514.751,6.411,615.422
+15.62,CPU 1,environment-contact,"Road Surface",524.720,9.319,610.448
+15.64,CPU 1,environment-contact,"Road Surface",524.947,9.393,610.371
+15.64,CPU 1,environment-contact,"Road Surface",524.947,9.393,610.371
+15.64,CPU 2,environment-contact,"Road Surface",514.923,6.488,615.255
+15.68,P1,environment-contact,"Road Surface",546.897,14.466,604.203
+15.72,CPU 1,environment-contact,"Road Surface",525.876,9.645,610.052
+15.74,CPU 1,environment-contact,"Road Surface",526.113,9.700,609.970
+15.74,CPU 1,environment-contact,"Road Surface",526.113,9.700,609.970
+15.74,CPU 2,environment-contact,"Road Surface",515.820,6.759,614.448
+15.74,CPU 2,environment-contact,"Road Surface",515.820,6.759,614.448
+15.76,CPU 2,environment-contact,"Road Surface",515.991,6.834,614.291
+15.76,CPU 2,environment-contact,"Road Surface",515.991,6.834,614.291
+15.84,CPU 2,environment-contact,"Road Surface",516.697,7.065,613.679
+15.84,CPU 2,environment-contact,"Road Surface",516.697,7.065,613.679
+15.94,CPU 2,environment-contact,"Road Surface",517.601,7.336,612.948
+15.96,CPU 2,environment-contact,"Road Surface",517.771,7.422,612.809
+15.96,CPU 2,environment-contact,"Road Surface",517.771,7.422,612.809
+16.04,CPU 2,environment-contact,"Road Surface",518.499,7.637,612.254
+16.04,CPU 2,environment-contact,"Road Surface",518.499,7.637,612.254
+16.08,CPU 2,environment-contact,"Road Surface",518.860,7.775,611.984
+16.14,CPU 2,environment-contact,"Road Surface",519.419,7.936,611.579
+16.18,CPU 2,environment-contact,"Road Surface",519.781,8.073,611.316
+16.28,CPU 2,environment-contact,"Road Surface",520.735,8.361,610.685
+16.28,CPU 2,environment-contact,"Road Surface",520.735,8.361,610.685
+16.40,CPU 2,environment-contact,"Road Surface",521.909,8.718,609.947
+16.40,CPU 2,environment-contact,"Road Surface",521.909,8.718,609.947
+16.40,CPU 2,environment-contact,"Road Surface",521.909,8.718,609.947
+16.50,CPU 2,environment-contact,"Road Surface",522.928,9.003,609.345
+16.50,CPU 2,environment-contact,"Road Surface",522.928,9.003,609.345
+16.50,CPU 2,environment-contact,"Road Surface",522.928,9.003,609.345
+16.52,CPU 2,environment-contact,"Road Surface",523.129,9.082,609.225
+16.62,CPU 2,environment-contact,"Road Surface",524.189,9.374,608.643
+16.62,CPU 2,environment-contact,"Road Surface",524.189,9.374,608.643
+16.70,CPU 2,environment-contact,"Road Surface",525.062,9.614,608.184
+16.72,CPU 2,environment-contact,"Road Surface",525.285,9.671,608.069
+16.72,CPU 2,environment-contact,"Road Surface",525.285,9.671,608.069
+17.24,CPU 2,environment-contact,"Road Surface",531.552,11.432,605.176
+17.26,CPU 2,environment-contact,"Road Surface",531.811,11.501,605.067
+18.28,CPU 2,environment-contact,"Road Surface",546.769,14.660,599.644
+18.28,CPU 2,environment-contact,"Road Surface",546.769,14.660,599.644
+18.32,P2,airborne,"speed=19.41",607.647,18.319,597.911
+18.64,P1,airborne,"speed=18.77",607.755,18.329,598.079
+18.74,P2,item,"Shield",616.149,17.237,598.063
+18.90,P2,environment-contact,"Road Surface",619.197,16.410,598.117
+18.90,P2,environment-contact,"Road Surface",619.197,16.410,598.117
+18.92,P2,grounded,"speed=18.95",619.197,16.410,598.117
+18.94,P2,environment-contact,"Road Surface",619.954,16.350,598.089
+18.94,P2,environment-contact,"Road Surface",619.954,16.350,598.089
+19.24,P1,grounded,"speed=18.23",618.912,16.367,597.898
+19.24,P1,environment-contact,"Road Surface",619.266,16.320,597.904
+19.24,P1,environment-contact,"Road Surface",619.266,16.320,597.904
+19.26,P1,environment-contact,"Road Surface",619.638,16.342,597.924
+19.26,P1,environment-contact,"Road Surface",619.638,16.342,597.924
+19.74,P1,vehicle-contact,"Player2_Car",628.010,16.348,598.751
+19.74,P1,afflicted,"Shield",628.010,16.348,598.751
+19.74,P2,vehicle-contact,"Player1_Car",632.725,16.348,596.784
+20.42,CPU 1,airborne,"speed=19.32",607.455,18.332,596.820
+20.84,P1,charge,"",632.984,16.348,599.361
+21.02,P2,environment-contact,"Road Surface",648.398,16.307,594.623
+21.02,CPU 1,environment-contact,"Road Surface",619.296,16.369,597.436
+21.02,CPU 1,environment-contact,"Road Surface",619.296,16.369,597.436
+21.04,CPU 1,grounded,"speed=18.75",619.296,16.369,597.436
+21.06,CPU 1,environment-contact,"Road Surface",620.037,16.346,597.475
+21.06,CPU 1,environment-contact,"Road Surface",620.037,16.346,597.475
+21.10,P2,environment-contact,"Road Surface",649.335,16.282,594.334
+21.10,P2,environment-contact,"Road Surface",649.335,16.282,594.334
+21.12,CPU 1,environment-contact,"Road Surface",621.157,16.349,597.534
+21.12,CPU 1,environment-contact,"Road Surface",621.157,16.349,597.534
+21.20,P2,environment-contact,"Road Surface",650.490,16.221,593.942
+21.22,P2,environment-contact,"Road Surface",650.721,16.204,593.859
+21.36,P2,environment-contact,"Road Surface",652.328,16.111,593.238
+21.46,P2,environment-contact,"Road Surface",653.457,16.027,592.749
+21.50,CPU 2,airborne,"speed=18.55",607.661,18.324,596.728
+21.52,P2,environment-contact,"Road Surface",654.126,15.957,592.434
+21.60,P2,environment-contact,"Road Surface",655.006,15.854,591.992
+21.70,P2,environment-contact,"Road Surface",656.085,15.714,591.399
+21.80,P2,environment-contact,"Road Surface",657.131,15.543,590.762
+21.82,P2,environment-contact,"Road Surface",657.339,15.507,590.630
+21.84,P2,environment-contact,"Road Surface",657.545,15.481,590.494
+21.92,P2,environment-contact,"Road Surface",658.351,15.334,589.937
+21.92,P2,environment-contact,"Road Surface",658.351,15.334,589.937
+21.98,P2,environment-contact,"Road Surface",658.936,15.204,589.501
+21.98,P2,environment-contact,"Road Surface",658.936,15.204,589.501
+22.00,P2,environment-contact,"Road Surface",659.131,15.171,589.351
+22.06,P2,environment-contact,"Road Surface",659.698,15.021,588.896
+22.08,P2,environment-contact,"Road Surface",659.887,14.986,588.739
+22.08,P2,environment-contact,"Road Surface",659.887,14.986,588.739
+22.08,CPU 2,environment-contact,"Road Surface",618.662,16.410,597.355
+22.08,CPU 2,environment-contact,"Road Surface",618.662,16.410,597.355
+22.10,CPU 2,grounded,"speed=18.01",618.662,16.410,597.355
+22.12,CPU 2,environment-contact,"Road Surface",619.364,16.368,597.389
+22.12,CPU 2,environment-contact,"Road Surface",619.364,16.368,597.389
+22.14,P2,environment-contact,"Road Surface",660.438,14.843,588.264
+22.14,P2,environment-contact,"Road Surface",660.438,14.843,588.264
+22.18,P2,environment-contact,"Road Surface",660.800,14.748,587.936
+22.20,P1,off-course,"",629.857,16.291,608.049
+22.22,P2,environment-contact,"Road Surface",661.157,14.639,587.607
+22.24,P2,environment-contact,"Road Surface",661.334,14.588,587.440
+22.24,CPU 2,environment-contact,"Road Surface",621.476,16.350,597.509
+22.24,CPU 2,environment-contact,"Road Surface",621.476,16.350,597.509
+22.28,P2,environment-contact,"Road Surface",661.682,14.480,587.104
+22.32,P2,environment-contact,"Road Surface",662.029,14.370,586.763
+22.32,P2,environment-contact,"Road Surface",662.029,14.370,586.763
+22.36,P1,airborne,"speed=9.47",630.369,16.142,609.553
+22.36,P2,environment-contact,"Road Surface",662.365,14.262,586.418
+22.36,P2,environment-contact,"Road Surface",662.365,14.262,586.418
+22.42,P2,environment-contact,"Road Surface",662.858,14.094,585.898
+22.46,P2,environment-contact,"Road Surface",663.177,13.966,585.549
+22.46,P2,environment-contact,"Road Surface",663.177,13.966,585.549
+22.50,P2,environment-contact,"Road Surface",663.490,13.820,585.196
+22.52,P2,environment-contact,"Road Surface",663.653,13.772,585.014
+22.52,P2,environment-contact,"Road Surface",663.653,13.772,585.014
+22.58,P2,environment-contact,"Road Surface",664.118,13.573,584.464
+22.60,P2,environment-contact,"Road Surface",664.276,13.524,584.276
+22.62,P2,environment-contact,"Road Surface",664.429,13.471,584.084
+22.68,P2,environment-contact,"Road Surface",664.875,13.254,583.514
+22.70,P2,environment-contact,"Road Surface",665.026,13.191,583.309
+22.70,P2,environment-contact,"Road Surface",665.026,13.191,583.309
+22.76,P2,environment-contact,"Road Surface",665.502,12.958,582.650
+22.78,P2,environment-contact,"Road Surface",665.666,12.877,582.408
+22.80,CPU 1,environment-contact,"Road Surface",648.719,16.310,595.163
+22.88,CPU 1,environment-contact,"Road Surface",649.791,16.272,594.752
+22.88,CPU 1,environment-contact,"Road Surface",649.791,16.272,594.752
+22.94,P2,environment-contact,"Road Surface",666.970,12.127,580.124
+22.96,CPU 1,environment-contact,"Road Surface",650.832,16.215,594.315
+22.98,P2,environment-contact,"Road Surface",667.268,11.929,579.461
+22.98,CPU 1,environment-contact,"Road Surface",651.088,16.195,594.202
+22.98,CPU 1,environment-contact,"Road Surface",651.088,16.195,594.202
+23.04,P2,environment-contact,"Road Surface",667.680,11.605,578.431
+23.08,P2,environment-contact,"Road Surface",667.928,11.372,577.749
+23.14,P2,environment-contact,"Road Surface",668.246,10.974,576.732
+23.14,P2,environment-contact,"Road Surface",668.246,10.974,576.732
+23.20,P2,environment-contact,"Road Surface",668.533,10.702,575.683
+23.24,CPU 1,environment-contact,"Road Surface",654.255,15.952,592.581
+23.24,CPU 1,environment-contact,"Road Surface",654.255,15.952,592.581
+23.28,P2,airborne,"speed=17.69",668.775,10.386,574.650
+23.30,P2,grounded,"speed=17.39",668.844,10.260,574.312
+23.32,P2,environment-contact,"Road Surface",668.975,10.061,573.614
+23.32,P2,environment-contact,"Road Surface",668.975,10.061,573.614
+23.32,P2,environment-contact,"Road Surface",668.975,10.061,573.614
+23.34,CPU 1,environment-contact,"Road Surface",655.380,15.817,591.888
+23.38,P2,environment-contact,"Road Surface",669.149,9.837,572.512
+23.40,CPU 1,environment-contact,"Road Surface",656.029,15.728,591.455
+23.42,CPU 1,environment-contact,"Road Surface",656.239,15.686,591.307
+23.44,CPU 1,environment-contact,"Road Surface",656.449,15.652,591.159
+23.46,P2,environment-contact,"Road Surface",669.355,9.501,570.984
+23.46,P2,environment-contact,"Road Surface",669.355,9.501,570.984
+23.52,CPU 1,environment-contact,"Road Surface",657.261,15.513,590.553
+23.54,CPU 1,environment-contact,"Road Surface",657.460,15.488,590.399
+23.58,P2,environment-contact,"Road Surface",669.581,9.076,568.550
+23.58,P2,environment-contact,"Road Surface",669.581,9.076,568.550
+23.60,CPU 1,environment-contact,"Road Surface",658.033,15.364,589.928
+23.62,CPU 1,environment-contact,"Road Surface",658.222,15.336,589.769
+23.68,CPU 1,environment-contact,"Road Surface",658.767,15.203,589.286
+23.68,CPU 1,environment-contact,"Road Surface",658.767,15.203,589.286
+23.70,CPU 1,environment-contact,"Road Surface",658.946,15.172,589.123
+23.76,CPU 1,environment-contact,"Road Surface",659.462,15.031,588.632
+23.76,CPU 1,environment-contact,"Road Surface",659.462,15.031,588.632
+23.78,CPU 1,environment-contact,"Road Surface",659.633,14.997,588.466
+23.84,CPU 1,environment-contact,"Road Surface",660.124,14.849,587.971
+23.84,CPU 1,environment-contact,"Road Surface",660.124,14.849,587.971
+23.88,CPU 1,environment-contact,"Road Surface",660.443,14.756,587.638
+23.92,CPU 1,environment-contact,"Road Surface",660.756,14.653,587.305
+23.92,CPU 1,environment-contact,"Road Surface",660.756,14.653,587.305
+23.92,CPU 2,environment-contact,"Road Surface",648.244,16.335,596.486
+23.94,CPU 1,environment-contact,"Road Surface",660.913,14.617,587.137
+24.00,CPU 2,environment-contact,"Road Surface",649.309,16.308,596.195
+24.02,CPU 1,environment-contact,"Road Surface",661.513,14.412,586.472
+24.02,CPU 1,environment-contact,"Road Surface",661.513,14.412,586.472
+24.02,CPU 1,environment-contact,"Road Surface",661.513,14.412,586.472
+24.06,CPU 2,environment-contact,"Road Surface",650.090,16.275,595.960
+24.06,CPU 2,environment-contact,"Road Surface",650.090,16.275,595.960
+24.10,CPU 1,environment-contact,"Road Surface",662.092,14.193,585.807
+24.10,CPU 1,environment-contact,"Road Surface",662.092,14.193,585.807
+24.12,CPU 1,environment-contact,"Road Surface",662.233,14.147,585.637
+24.16,CPU 1,environment-contact,"Road Surface",662.516,14.023,585.303
+24.16,CPU 2,environment-contact,"Road Surface",651.361,16.209,595.546
+24.18,CPU 2,environment-contact,"Road Surface",651.612,16.192,595.461
+24.20,CPU 1,environment-contact,"Road Surface",662.800,13.911,584.964
+24.24,CPU 1,environment-contact,"Road Surface",663.081,13.781,584.627
+24.26,CPU 1,environment-contact,"Road Surface",663.221,13.727,584.453
+24.30,CPU 1,environment-contact,"Road Surface",663.499,13.601,584.110
+24.32,CPU 1,environment-contact,"Road Surface",663.639,13.549,583.937
+24.34,CPU 1,environment-contact,"Road Surface",663.777,13.492,583.763
+24.38,CPU 2,environment-contact,"Road Surface",654.047,16.031,594.537
+24.40,CPU 1,environment-contact,"Road Surface",664.185,13.297,583.246
+24.42,CPU 1,environment-contact,"Road Surface",664.319,13.242,583.068
+24.46,CPU 2,environment-contact,"Road Surface",654.982,15.948,594.137
+24.56,CPU 2,environment-contact,"Road Surface",656.114,15.816,593.616
+24.58,CPU 2,environment-contact,"Road Surface",656.336,15.803,593.509
+24.64,CPU 1,environment-contact,"Road Surface",665.740,12.575,581.087
+24.66,CPU 2,environment-contact,"Road Surface",657.204,15.692,593.071
+24.66,CPU 2,environment-contact,"Road Surface",657.204,15.692,593.071
+24.70,CPU 1,environment-contact,"Road Surface",666.093,12.381,580.532
+24.74,CPU 1,environment-contact,"Road Surface",666.318,12.253,580.156
+24.74,CPU 2,environment-contact,"Road Surface",658.045,15.565,592.622
+24.76,CPU 2,environment-contact,"Road Surface",658.252,15.543,592.506
+24.84,CPU 1,environment-contact,"Road Surface",666.834,11.923,579.208
+24.84,CPU 2,environment-contact,"Road Surface",659.060,15.413,592.036
+24.84,CPU 2,environment-contact,"Road Surface",659.060,15.413,592.036
+24.90,CPU 1,environment-contact,"Road Surface",667.113,11.726,578.648
+24.90,CPU 2,environment-contact,"Road Surface",659.650,15.321,591.677
+24.92,CPU 1,environment-contact,"Road Surface",667.192,11.664,578.461
+24.94,CPU 2,environment-contact,"Road Surface",660.034,15.242,591.432
+24.94,CPU 2,environment-contact,"Road Surface",660.034,15.242,591.432
+24.96,CPU 1,environment-contact,"Road Surface",667.350,11.514,578.099
+24.96,CPU 2,environment-contact,"Road Surface",660.226,15.208,591.309
+24.98,CPU 1,environment-contact,"Road Surface",667.427,11.462,577.910
+25.00,CPU 2,environment-contact,"Road Surface",660.604,15.130,591.058
+25.02,CPU 1,environment-contact,"Road Surface",667.565,11.336,577.544
+25.04,CPU 2,environment-contact,"Road Surface",660.975,15.059,590.803
+25.04,CPU 2,environment-contact,"Road Surface",660.975,15.059,590.803
+25.06,CPU 1,environment-contact,"Road Surface",667.698,11.205,577.186
+25.10,CPU 1,environment-contact,"Road Surface",667.821,11.088,576.829
+25.12,CPU 2,environment-contact,"Road Surface",661.704,14.898,590.286
+25.14,CPU 2,environment-contact,"Road Surface",661.885,14.869,590.154
+25.14,CPU 2,environment-contact,"Road Surface",661.885,14.869,590.154
+25.16,CPU 1,environment-contact,"Road Surface",667.988,10.901,576.311
+25.20,CPU 1,environment-contact,"Road Surface",668.088,10.788,575.966
+25.22,CPU 2,environment-contact,"Road Surface",662.593,14.702,589.621
+25.24,CPU 2,environment-contact,"Road Surface",662.769,14.666,589.485
+25.26,CPU 1,environment-contact,"Road Surface",668.221,10.608,575.463
+25.26,CPU 2,environment-contact,"Road Surface",662.942,14.619,589.349
+25.28,CPU 1,environment-contact,"Road Surface",668.262,10.562,575.289
+25.30,CPU 2,environment-contact,"Road Surface",663.287,14.524,589.079
+25.32,CPU 1,environment-contact,"Road Surface",668.343,10.449,574.954
+25.36,CPU 1,environment-contact,"Road Surface",668.423,10.344,574.616
+25.42,CPU 2,environment-contact,"Road Surface",664.302,14.266,588.244
+25.42,CPU 2,environment-contact,"Road Surface",664.302,14.266,588.244
+25.42,CPU 2,environment-contact,"Road Surface",664.302,14.266,588.244
+25.42,CPU 1,environment-contact,"Road Surface",668.535,10.191,574.098
+25.48,CPU 1,environment-contact,"Road Surface",668.635,10.020,573.571
+25.50,CPU 1,environment-contact,"Road Surface",668.663,9.991,573.385
+25.50,CPU 2,environment-contact,"Road Surface",664.967,14.072,587.665
+25.52,CPU 2,environment-contact,"Road Surface",665.134,14.034,587.516
+25.54,CPU 1,environment-contact,"Road Surface",668.729,9.913,573.012
+25.56,CPU 2,environment-contact,"Road Surface",665.463,13.928,587.218
+25.60,CPU 1,environment-contact,"Road Surface",668.815,9.777,572.439
+25.60,CPU 2,environment-contact,"Road Surface",665.792,13.822,586.917
+25.60,CPU 2,environment-contact,"Road Surface",665.792,13.822,586.917
+25.66,CPU 1,environment-contact,"Road Surface",668.896,9.651,571.851
+25.66,CPU 2,environment-contact,"Road Surface",666.278,13.674,586.455
+25.70,CPU 2,environment-contact,"Road Surface",666.596,13.552,586.145
+25.72,CPU 2,environment-contact,"Road Surface",666.756,13.504,585.986
+25.72,CPU 2,environment-contact,"Road Surface",666.756,13.504,585.986
+25.74,CPU 2,environment-contact,"Road Surface",666.911,13.452,585.827
+25.80,CPU 2,environment-contact,"Road Surface",667.370,13.268,585.348
+25.80,CPU 2,environment-contact,"Road Surface",667.370,13.268,585.348
+25.82,CPU 2,environment-contact,"Road Surface",667.520,13.210,585.186
+26.06,CPU 2,environment-contact,"Road Surface",669.207,12.502,583.134
+26.16,CPU 2,environment-contact,"Road Surface",669.821,12.192,582.228
+26.18,CPU 2,environment-contact,"Road Surface",669.937,12.138,582.041
+26.26,CPU 2,environment-contact,"Road Surface",670.375,11.890,581.296
+26.36,CPU 2,environment-contact,"Road Surface",670.865,11.606,580.354
+26.40,CPU 2,environment-contact,"Road Surface",671.046,11.505,579.977
+26.40,CPU 2,environment-contact,"Road Surface",671.046,11.505,579.977
+26.40,CPU 2,environment-contact,"Road Surface",671.046,11.505,579.977
+26.50,CPU 2,environment-contact,"Road Surface",671.449,11.226,579.053
+26.50,CPU 2,environment-contact,"Road Surface",671.449,11.226,579.053
+26.50,CPU 2,environment-contact,"Road Surface",671.449,11.226,579.053
+26.62,CPU 2,environment-contact,"Road Surface",671.862,10.918,577.961
+26.62,CPU 2,environment-contact,"Road Surface",671.862,10.918,577.961
+26.64,CPU 2,environment-contact,"Road Surface",671.930,10.903,577.775
+26.64,CPU 2,environment-contact,"Road Surface",671.930,10.903,577.775
+26.76,CPU 2,environment-contact,"Road Surface",672.281,10.639,576.712
+26.76,CPU 2,environment-contact,"Road Surface",672.281,10.639,576.712
+26.76,CPU 2,environment-contact,"Road Surface",672.281,10.639,576.712
+26.92,CPU 2,environment-contact,"Road Surface",672.682,10.327,575.283
+26.92,CPU 2,environment-contact,"Road Surface",672.682,10.327,575.283
+26.92,CPU 2,environment-contact,"Road Surface",672.682,10.327,575.283
+27.02,CPU 2,environment-contact,"Road Surface",672.895,10.116,574.365
+27.02,CPU 2,environment-contact,"Road Surface",672.895,10.116,574.365
+27.08,CPU 2,environment-contact,"Road Surface",673.018,10.023,573.792
+27.12,CPU 2,environment-contact,"Road Surface",673.093,9.935,573.408
+27.14,CPU 2,environment-contact,"Road Surface",673.131,9.892,573.213
+27.18,CPU 2,environment-contact,"Road Surface",673.205,9.825,572.816
+27.24,CPU 2,environment-contact,"Road Surface",673.306,9.718,572.206
+27.28,CPU 2,environment-contact,"Road Surface",673.370,9.640,571.796
+28.82,P2,environment-contact,"Road Surface",669.899,-24.063,450.290
+28.82,P2,environment-contact,"Road Surface",669.899,-24.063,450.290
+30.84,CPU 2,vehicle-contact,"CPU1_Car",674.346,-3.936,518.133
+30.84,CPU 1,vehicle-contact,"CPU2_Car",671.815,-4.884,515.631
+30.96,CPU 2,vehicle-contact,"CPU1_Car",674.433,-4.765,515.930
+30.96,CPU 1,vehicle-contact,"CPU2_Car",671.908,-5.246,514.719
+31.04,CPU 2,vehicle-contact,"CPU1_Car",674.533,-5.303,514.561
+31.04,CPU 1,vehicle-contact,"CPU2_Car",671.942,-5.507,514.066
+31.08,CPU 2,vehicle-contact,"CPU1_Car",674.584,-5.557,513.932
+31.08,CPU 1,vehicle-contact,"CPU2_Car",671.907,-5.655,513.701
+31.26,CPU 2,vehicle-contact,"CPU1_Car",674.616,-6.773,510.989
+31.26,CPU 1,vehicle-contact,"CPU2_Car",672.025,-6.253,512.240
+31.30,CPU 2,vehicle-contact,"CPU1_Car",674.617,-7.061,510.306
+31.30,CPU 1,vehicle-contact,"CPU2_Car",672.057,-6.377,511.940
+31.36,CPU 2,vehicle-contact,"CPU1_Car",674.679,-7.490,509.306
+31.36,CPU 1,vehicle-contact,"CPU2_Car",672.053,-6.570,511.477
+31.52,CPU 2,vehicle-contact,"CPU1_Car",674.629,-8.664,506.641
+31.52,CPU 1,vehicle-contact,"CPU2_Car",672.126,-7.063,510.313
+33.02,CPU 2,environment-contact,"Road Surface",674.294,-19.953,476.044
+33.02,CPU 2,environment-contact,"Road Surface",674.294,-19.953,476.044
+58.40,CPU 1,stalled-4-seconds,"",669.612,-24.238,447.862
+63.02,P1,position-discontinuity,"meters=8.00",708.073,-8148.442,817.942
+63.04,P1,position-discontinuity,"meters=8.01",708.093,-8156.449,817.994
+63.06,P1,position-discontinuity,"meters=8.01",708.112,-8164.459,818.046
+63.08,P1,position-discontinuity,"meters=8.01",708.132,-8172.474,818.099
+63.10,P1,position-discontinuity,"meters=8.02",708.151,-8180.493,818.151
+63.12,P1,position-discontinuity,"meters=8.02",708.171,-8188.515,818.203
+63.14,P1,position-discontinuity,"meters=8.03",708.190,-8196.541,818.255
+63.16,P1,position-discontinuity,"meters=8.03",708.210,-8204.571,818.308
+63.18,P1,position-discontinuity,"meters=8.03",708.229,-8212.605,818.360
+63.20,P1,position-discontinuity,"meters=8.04",708.249,-8220.644,818.412
+63.22,P1,position-discontinuity,"meters=8.04",708.268,-8228.686,818.464
+63.24,P1,position-discontinuity,"meters=8.05",708.287,-8236.731,818.516
+63.26,P1,position-discontinuity,"meters=8.05",708.307,-8244.781,818.568
+63.28,P1,position-discontinuity,"meters=8.05",708.326,-8252.835,818.620
+63.30,P1,position-discontinuity,"meters=8.06",708.346,-8260.893,818.672
+63.32,P1,position-discontinuity,"meters=8.06",708.365,-8268.954,818.724
+63.34,P1,position-discontinuity,"meters=8.07",708.384,-8277.020,818.776
+63.36,P1,position-discontinuity,"meters=8.07",708.404,-8285.089,818.828
+63.38,P1,position-discontinuity,"meters=8.07",708.423,-8293.162,818.880
+63.40,P1,position-discontinuity,"meters=8.08",708.442,-8301.239,818.931
+63.42,P1,position-discontinuity,"meters=8.08",708.462,-8309.320,818.983
+63.44,P1,position-discontinuity,"meters=8.09",708.481,-8317.405,819.035
+63.46,P1,position-discontinuity,"meters=8.09",708.500,-8325.494,819.087
+63.48,P1,position-discontinuity,"meters=8.09",708.519,-8333.587,819.138
+63.50,P1,position-discontinuity,"meters=8.10",708.539,-8341.684,819.190
+63.52,P1,position-discontinuity,"meters=8.10",708.558,-8349.784,819.242
+63.54,P1,position-discontinuity,"meters=8.10",708.577,-8357.889,819.293
+63.56,P1,position-discontinuity,"meters=8.11",708.596,-8365.997,819.345
+63.58,P1,position-discontinuity,"meters=8.11",708.616,-8374.109,819.396
+63.60,P1,position-discontinuity,"meters=8.12",708.635,-8382.226,819.448
+63.62,P1,position-discontinuity,"meters=8.12",708.654,-8390.346,819.499
+63.64,P1,position-discontinuity,"meters=8.12",708.673,-8398.470,819.551
+63.66,P1,position-discontinuity,"meters=8.13",708.692,-8406.598,819.602
+63.68,P1,position-discontinuity,"meters=8.13",708.711,-8414.729,819.653
+63.70,P1,position-discontinuity,"meters=8.14",708.731,-8422.865,819.705
+63.72,P1,position-discontinuity,"meters=8.14",708.750,-8431.005,819.756
+63.74,P1,position-discontinuity,"meters=8.14",708.769,-8439.148,819.807
+63.76,P1,position-discontinuity,"meters=8.15",708.788,-8447.296,819.859
+63.78,P1,position-discontinuity,"meters=8.15",708.807,-8455.448,819.910
+63.80,P1,position-discontinuity,"meters=8.16",708.826,-8463.604,819.961
+63.82,P1,position-discontinuity,"meters=8.16",708.845,-8471.765,820.012
+63.84,P1,position-discontinuity,"meters=8.16",708.864,-8479.929,820.063
+63.86,P1,position-discontinuity,"meters=8.17",708.883,-8488.097,820.114
+63.88,P1,position-discontinuity,"meters=8.17",708.902,-8496.269,820.165
+63.90,P1,position-discontinuity,"meters=8.18",708.921,-8504.444,820.216
+63.92,P1,position-discontinuity,"meters=8.18",708.940,-8512.624,820.268
+63.94,P1,position-discontinuity,"meters=8.18",708.959,-8520.808,820.318
+63.96,P1,position-discontinuity,"meters=8.19",708.978,-8528.995,820.369
+63.98,P1,position-discontinuity,"meters=8.19",708.997,-8537.187,820.420
+64.00,P1,position-discontinuity,"meters=8.20",709.016,-8545.382,820.471
+64.02,P1,position-discontinuity,"meters=8.20",709.035,-8553.581,820.522
+64.04,P1,position-discontinuity,"meters=8.20",709.054,-8561.784,820.573
+64.06,P1,position-discontinuity,"meters=8.21",709.073,-8569.991,820.624
+64.08,P1,position-discontinuity,"meters=8.21",709.092,-8578.202,820.674
+64.10,P1,position-discontinuity,"meters=8.22",709.111,-8586.417,820.725
+64.12,P1,position-discontinuity,"meters=8.22",709.130,-8594.636,820.776
+64.14,P1,position-discontinuity,"meters=8.22",709.149,-8602.858,820.827
+64.16,P1,position-discontinuity,"meters=8.23",709.168,-8611.085,820.877
+64.18,P1,position-discontinuity,"meters=8.23",709.187,-8619.315,820.928
+64.20,P1,position-discontinuity,"meters=8.23",709.205,-8627.550,820.978
+64.22,P1,position-discontinuity,"meters=8.24",709.224,-8635.788,821.029
+64.24,P1,position-discontinuity,"meters=8.24",709.243,-8644.030,821.080
+64.26,P1,position-discontinuity,"meters=8.25",709.262,-8652.276,821.130
+64.28,P1,position-discontinuity,"meters=8.25",709.281,-8660.526,821.180
+64.30,P1,position-discontinuity,"meters=8.25",709.300,-8668.780,821.231
+64.32,P1,position-discontinuity,"meters=8.26",709.318,-8677.038,821.281
+64.34,P1,position-discontinuity,"meters=8.26",709.337,-8685.300,821.332
+64.36,P1,position-discontinuity,"meters=8.27",709.356,-8693.565,821.382
+64.38,P1,position-discontinuity,"meters=8.27",709.375,-8701.835,821.432
+64.40,P1,position-discontinuity,"meters=8.27",709.393,-8710.108,821.483
+64.42,P1,position-discontinuity,"meters=8.28",709.412,-8718.386,821.533
+64.44,P1,position-discontinuity,"meters=8.28",709.431,-8726.667,821.583
+64.46,P1,position-discontinuity,"meters=8.29",709.450,-8734.952,821.633
+64.48,P1,position-discontinuity,"meters=8.29",709.468,-8743.241,821.683
+64.50,P1,position-discontinuity,"meters=8.29",709.487,-8751.534,821.734
+64.52,P1,position-discontinuity,"meters=8.30",709.506,-8759.831,821.784
+64.54,P1,position-discontinuity,"meters=8.30",709.524,-8768.132,821.834
+64.56,P1,position-discontinuity,"meters=8.30",709.543,-8776.437,821.884
+64.58,P1,position-discontinuity,"meters=8.31",709.562,-8784.745,821.934
+64.60,P1,position-discontinuity,"meters=8.31",709.580,-8793.058,821.984
+64.62,P1,position-discontinuity,"meters=8.32",709.599,-8801.374,822.034
+64.64,P1,position-discontinuity,"meters=8.32",709.618,-8809.694,822.084
+64.66,P1,position-discontinuity,"meters=8.32",709.636,-8818.019,822.133
+64.68,P1,position-discontinuity,"meters=8.33",709.655,-8826.347,822.183
+64.70,P1,position-discontinuity,"meters=8.33",709.673,-8834.679,822.233
+64.72,P1,position-discontinuity,"meters=8.34",709.692,-8843.015,822.283
+64.74,P1,position-discontinuity,"meters=8.34",709.710,-8851.354,822.333
+64.76,P1,position-discontinuity,"meters=8.34",709.729,-8859.698,822.382
+64.78,P1,position-discontinuity,"meters=8.35",709.748,-8868.046,822.432
+64.80,P1,position-discontinuity,"meters=8.35",709.766,-8876.397,822.482
+64.82,P1,position-discontinuity,"meters=8.36",709.785,-8884.753,822.531
+64.84,P1,position-discontinuity,"meters=8.36",709.803,-8893.112,822.581
+64.86,P1,position-discontinuity,"meters=8.36",709.822,-8901.476,822.631
+64.88,P1,position-discontinuity,"meters=8.37",709.840,-8909.844,822.680
+64.90,P1,position-discontinuity,"meters=8.37",709.859,-8918.216,822.730
+64.92,P1,position-discontinuity,"meters=8.38",709.877,-8926.592,822.779
+64.94,P1,position-discontinuity,"meters=8.38",709.895,-8934.972,822.829
+64.96,P1,position-discontinuity,"meters=8.38",709.914,-8943.355,822.878
+64.98,P1,position-discontinuity,"meters=8.39",709.932,-8951.743,822.927
+65.00,P1,position-discontinuity,"meters=8.39",709.951,-8960.135,822.977
+65.02,P1,position-discontinuity,"meters=8.40",709.969,-8968.530,823.026
+65.04,P1,position-discontinuity,"meters=8.40",709.987,-8976.930,823.076
+65.06,P1,position-discontinuity,"meters=8.40",710.006,-8985.333,823.125
+65.08,P1,position-discontinuity,"meters=8.41",710.024,-8993.740,823.174
+65.10,P1,position-discontinuity,"meters=8.41",710.043,-9002.151,823.223
+65.12,P1,position-discontinuity,"meters=8.42",710.061,-9010.566,823.273
+65.14,P1,position-discontinuity,"meters=8.42",710.079,-9018.985,823.322
+65.16,P1,position-discontinuity,"meters=8.42",710.098,-9027.408,823.371
+65.18,P1,position-discontinuity,"meters=8.43",710.116,-9035.835,823.420
+65.20,P1,position-discontinuity,"meters=8.43",710.134,-9044.266,823.469
+65.22,P1,position-discontinuity,"meters=8.43",710.152,-9052.700,823.518
+65.24,P1,position-discontinuity,"meters=8.44",710.171,-9061.139,823.567
+65.26,P1,position-discontinuity,"meters=8.44",710.189,-9069.581,823.616
+65.28,P1,position-discontinuity,"meters=8.45",710.207,-9078.027,823.665
+65.30,P1,position-discontinuity,"meters=8.45",710.225,-9086.478,823.714
+65.32,P1,position-discontinuity,"meters=8.45",710.244,-9094.932,823.763
+65.34,P1,position-discontinuity,"meters=8.46",710.262,-9103.390,823.812
+65.36,P1,position-discontinuity,"meters=8.46",710.280,-9111.852,823.861
+65.38,P1,position-discontinuity,"meters=8.47",710.298,-9120.317,823.910
+65.40,P1,position-discontinuity,"meters=8.47",710.317,-9128.787,823.958
+65.42,P1,position-discontinuity,"meters=8.47",710.335,-9137.261,824.007
+65.44,P1,position-discontinuity,"meters=8.48",710.353,-9145.738,824.056
+65.46,P1,position-discontinuity,"meters=8.48",710.371,-9154.220,824.104
+65.48,P1,position-discontinuity,"meters=8.49",710.389,-9162.705,824.153
+65.50,P1,position-discontinuity,"meters=8.49",710.407,-9171.194,824.202
+65.52,P1,position-discontinuity,"meters=8.49",710.425,-9179.688,824.250
+65.54,P1,position-discontinuity,"meters=8.50",710.444,-9188.185,824.299
+65.56,P1,position-discontinuity,"meters=8.50",710.462,-9196.686,824.348
+65.58,P1,position-discontinuity,"meters=8.51",710.480,-9205.190,824.396
+65.60,P1,position-discontinuity,"meters=8.51",710.498,-9213.699,824.445
+65.60,P2,environment-contact,"Road Surface",283.964,-21.161,459.035
+65.62,P1,position-discontinuity,"meters=8.51",710.516,-9222.212,824.493
+65.62,P2,environment-contact,"Road Surface",283.959,-21.087,459.463
+65.64,P1,position-discontinuity,"meters=8.52",710.534,-9230.729,824.542
+65.64,P2,environment-contact,"Road Surface",283.956,-21.007,459.888
+65.66,P1,position-discontinuity,"meters=8.52",710.552,-9239.249,824.590
+65.68,P1,position-discontinuity,"meters=8.52",710.570,-9247.773,824.638
+65.70,P1,position-discontinuity,"meters=8.53",710.588,-9256.302,824.687
+65.72,P1,position-discontinuity,"meters=8.53",710.606,-9264.834,824.735
+65.74,P1,position-discontinuity,"meters=8.54",710.624,-9273.370,824.783
+65.76,P1,position-discontinuity,"meters=8.54",710.642,-9281.910,824.832
+65.78,P1,position-discontinuity,"meters=8.54",710.660,-9290.454,824.880
+65.80,P1,position-discontinuity,"meters=8.55",710.678,-9299.002,824.928
+65.82,P1,position-discontinuity,"meters=8.55",710.696,-9307.554,824.976
+65.84,P1,position-discontinuity,"meters=8.56",710.714,-9316.109,825.024
+65.86,P1,position-discontinuity,"meters=8.56",710.732,-9324.669,825.072
+65.88,P1,position-discontinuity,"meters=8.56",710.750,-9333.232,825.121
+65.90,P1,position-discontinuity,"meters=8.57",710.768,-9341.800,825.169
+65.92,P1,position-discontinuity,"meters=8.57",710.786,-9350.371,825.217
+65.94,P1,position-discontinuity,"meters=8.58",710.804,-9358.946,825.265
+65.94,P2,environment-contact,"Road Surface",283.924,-19.615,466.243
+65.96,P1,position-discontinuity,"meters=8.58",710.822,-9367.525,825.313
+65.96,P2,environment-contact,"Road Surface",283.921,-19.522,466.669
+65.98,P1,position-discontinuity,"meters=8.58",710.839,-9376.109,825.361
+65.98,P2,environment-contact,"Road Surface",283.920,-19.423,467.092
+66.00,P1,position-discontinuity,"meters=8.59",710.857,-9384.697,825.409
+66.02,P1,position-discontinuity,"meters=8.59",710.875,-9393.289,825.456
+66.04,P1,position-discontinuity,"meters=8.60",710.893,-9401.885,825.504
+66.06,P1,position-discontinuity,"meters=8.60",710.911,-9410.484,825.552
+66.08,P1,position-discontinuity,"meters=8.60",710.929,-9419.088,825.600
+66.10,P1,position-discontinuity,"meters=8.61",710.946,-9427.695,825.648
+66.12,P1,position-discontinuity,"meters=8.61",710.964,-9436.307,825.695
+66.14,P1,position-discontinuity,"meters=8.62",710.982,-9444.922,825.743
+66.16,P1,position-discontinuity,"meters=8.62",711.000,-9453.541,825.791
+66.18,P1,position-discontinuity,"meters=8.62",711.018,-9462.164,825.839
+66.20,P1,position-discontinuity,"meters=8.63",711.035,-9470.791,825.886
+66.22,P1,position-discontinuity,"meters=8.63",711.053,-9479.422,825.934
+66.24,P1,position-discontinuity,"meters=8.63",711.071,-9488.057,825.981
+66.26,P1,position-discontinuity,"meters=8.64",711.089,-9496.695,826.029
+66.28,P1,position-discontinuity,"meters=8.64",711.106,-9505.338,826.076
+66.30,P1,position-discontinuity,"meters=8.65",711.124,-9513.984,826.124
+66.32,P1,position-discontinuity,"meters=8.65",711.142,-9522.635,826.171
+66.34,P1,position-discontinuity,"meters=8.65",711.159,-9531.289,826.219
+66.36,P1,position-discontinuity,"meters=8.66",711.177,-9539.947,826.266
+66.38,P1,position-discontinuity,"meters=8.66",711.195,-9548.609,826.314
+66.40,P1,position-discontinuity,"meters=8.67",711.212,-9557.275,826.361
+66.42,P1,position-discontinuity,"meters=8.67",711.230,-9565.945,826.408
+66.44,P1,position-discontinuity,"meters=8.67",711.248,-9574.619,826.456
+66.46,P1,position-discontinuity,"meters=8.68",711.265,-9583.297,826.503
+66.48,P1,position-discontinuity,"meters=8.68",711.283,-9591.979,826.550
+66.50,P1,position-discontinuity,"meters=8.69",711.301,-9600.664,826.597
+66.52,P1,position-discontinuity,"meters=8.69",711.318,-9609.354,826.644
+66.54,P1,position-discontinuity,"meters=8.69",711.336,-9618.047,826.692
+66.56,P1,position-discontinuity,"meters=8.70",711.353,-9626.744,826.739
+66.58,P1,position-discontinuity,"meters=8.70",711.371,-9635.445,826.786
+66.60,P1,position-discontinuity,"meters=8.71",711.388,-9644.150,826.833
+66.62,P1,position-discontinuity,"meters=8.71",711.406,-9652.859,826.880
+66.64,P1,position-discontinuity,"meters=8.71",711.423,-9661.572,826.927
+66.66,P1,position-discontinuity,"meters=8.72",711.441,-9670.289,826.974
+66.68,P1,position-discontinuity,"meters=8.72",711.458,-9679.010,827.021
+66.70,P1,position-discontinuity,"meters=8.72",711.476,-9687.734,827.068
+66.72,P1,position-discontinuity,"meters=8.73",711.493,-9696.463,827.115
+66.74,P1,position-discontinuity,"meters=8.73",711.511,-9705.195,827.162
+66.76,P1,position-discontinuity,"meters=8.74",711.528,-9713.932,827.208
+66.78,P1,position-discontinuity,"meters=8.74",711.546,-9722.672,827.255
+66.80,P1,position-discontinuity,"meters=8.74",711.563,-9731.416,827.302
+66.82,P1,position-discontinuity,"meters=8.75",711.581,-9740.164,827.349
+66.84,P1,position-discontinuity,"meters=8.75",711.598,-9748.916,827.396
+66.86,P1,position-discontinuity,"meters=8.76",711.616,-9757.672,827.442
+66.88,P1,position-discontinuity,"meters=8.76",711.633,-9766.432,827.489
+66.90,P1,position-discontinuity,"meters=8.76",711.650,-9775.195,827.536
+66.92,P1,position-discontinuity,"meters=8.77",711.668,-9783.963,827.582
+66.94,P1,position-discontinuity,"meters=8.77",711.685,-9792.734,827.629
+66.96,P1,position-discontinuity,"meters=8.78",711.702,-9801.510,827.675
+66.98,P1,position-discontinuity,"meters=8.78",711.720,-9810.289,827.722
+67.00,P1,position-discontinuity,"meters=8.78",711.737,-9819.072,827.768
+67.02,P1,position-discontinuity,"meters=8.79",711.754,-9827.859,827.815
+67.04,P1,position-discontinuity,"meters=8.79",711.772,-9836.650,827.861
+67.06,P1,position-discontinuity,"meters=8.80",711.789,-9845.445,827.908
+67.08,P1,position-discontinuity,"meters=8.80",711.806,-9854.245,827.954
+67.10,P1,position-discontinuity,"meters=8.80",711.824,-9863.049,828.000
+67.12,P1,position-discontinuity,"meters=8.81",711.841,-9871.856,828.047
+67.14,P1,position-discontinuity,"meters=8.81",711.858,-9880.668,828.093
+67.16,P1,position-discontinuity,"meters=8.82",711.875,-9889.483,828.139
+67.18,P1,position-discontinuity,"meters=8.82",711.893,-9898.303,828.186
+67.20,P1,position-discontinuity,"meters=8.82",711.910,-9907.126,828.232
+67.22,P1,position-discontinuity,"meters=8.83",711.927,-9915.953,828.278
+67.24,P1,position-discontinuity,"meters=8.83",711.944,-9924.784,828.324
+67.26,P1,position-discontinuity,"meters=8.84",711.962,-9933.619,828.370
+67.28,P1,position-discontinuity,"meters=8.84",711.979,-9942.458,828.416
+67.30,P1,position-discontinuity,"meters=8.84",711.996,-9951.301,828.463
+67.32,P1,position-discontinuity,"meters=8.85",712.013,-9960.147,828.509
+67.34,P1,position-discontinuity,"meters=8.85",712.030,-9968.998,828.555
+67.36,P1,position-discontinuity,"meters=8.85",712.047,-9977.853,828.601
+67.38,P1,position-discontinuity,"meters=8.86",712.065,-9986.711,828.647
+67.40,P1,position-discontinuity,"meters=8.86",712.082,-9995.573,828.693
+67.42,P1,position-discontinuity,"meters=8.87",712.099,-10004.440,828.739
+67.44,P1,position-discontinuity,"meters=8.87",712.116,-10013.310,828.784
+67.46,P1,position-discontinuity,"meters=8.87",712.133,-10022.180,828.830
+67.48,P1,position-discontinuity,"meters=8.88",712.150,-10031.060,828.876
+67.50,P1,position-discontinuity,"meters=8.88",712.167,-10039.940,828.922
+67.52,P1,position-discontinuity,"meters=8.89",712.184,-10048.830,828.968
+67.54,P1,position-discontinuity,"meters=8.89",712.201,-10057.720,829.013
+67.56,P1,position-discontinuity,"meters=8.89",712.218,-10066.610,829.059
+67.58,P1,position-discontinuity,"meters=8.90",712.236,-10075.510,829.105
+67.60,P1,position-discontinuity,"meters=8.90",712.253,-10084.410,829.151
+67.62,P1,position-discontinuity,"meters=8.91",712.270,-10093.320,829.196
+67.64,P1,position-discontinuity,"meters=8.91",712.287,-10102.230,829.242
+67.66,P1,position-discontinuity,"meters=8.91",712.304,-10111.140,829.287
+67.68,P1,position-discontinuity,"meters=8.92",712.321,-10120.060,829.333
+67.70,P1,position-discontinuity,"meters=8.92",712.338,-10128.980,829.379
+67.72,P1,position-discontinuity,"meters=8.92",712.355,-10137.900,829.424
+67.74,P1,position-discontinuity,"meters=8.93",712.372,-10146.830,829.470
+67.76,P1,position-discontinuity,"meters=8.93",712.388,-10155.760,829.515
+67.78,P1,position-discontinuity,"meters=8.94",712.405,-10164.700,829.560
+67.80,P1,position-discontinuity,"meters=8.94",712.422,-10173.640,829.606
+67.82,P1,position-discontinuity,"meters=8.94",712.439,-10182.580,829.651
+67.84,P1,position-discontinuity,"meters=8.95",712.456,-10191.530,829.697
+67.86,P1,position-discontinuity,"meters=8.95",712.473,-10200.480,829.742
+67.88,P1,position-discontinuity,"meters=8.96",712.490,-10209.440,829.787
+67.90,P1,position-discontinuity,"meters=8.96",712.507,-10218.400,829.832
+67.92,P1,position-discontinuity,"meters=8.96",712.524,-10227.360,829.878
+67.94,P1,position-discontinuity,"meters=8.97",712.541,-10236.330,829.923
+67.96,P1,position-discontinuity,"meters=8.97",712.557,-10245.300,829.968
+67.98,P1,position-discontinuity,"meters=8.98",712.574,-10254.280,830.013
+68.00,P1,position-discontinuity,"meters=8.98",712.591,-10263.260,830.058
+68.02,P1,position-discontinuity,"meters=8.98",712.608,-10272.240,830.103
+68.04,P1,position-discontinuity,"meters=8.99",712.625,-10281.230,830.149
+68.06,P1,position-discontinuity,"meters=8.99",712.642,-10290.220,830.194
+68.08,P1,position-discontinuity,"meters=9.00",712.658,-10299.220,830.239
+68.10,P1,position-discontinuity,"meters=9.00",712.675,-10308.210,830.284
+68.12,P1,position-discontinuity,"meters=9.00",712.692,-10317.220,830.329
+68.14,P1,position-discontinuity,"meters=9.01",712.709,-10326.220,830.374
+68.16,P1,position-discontinuity,"meters=9.01",712.725,-10335.240,830.418
+68.18,P1,position-discontinuity,"meters=9.02",712.742,-10344.250,830.463
+68.20,P1,position-discontinuity,"meters=9.02",712.759,-10353.270,830.508
+68.22,P1,position-discontinuity,"meters=9.02",712.776,-10362.290,830.553
+68.24,P1,position-discontinuity,"meters=9.03",712.792,-10371.320,830.598
+68.26,P1,position-discontinuity,"meters=9.03",712.809,-10380.350,830.643
+68.28,P1,position-discontinuity,"meters=9.04",712.826,-10389.390,830.687
+68.30,P1,position-discontinuity,"meters=9.04",712.842,-10398.430,830.732
+68.32,P1,position-discontinuity,"meters=9.04",712.859,-10407.470,830.777
+68.34,P1,position-discontinuity,"meters=9.05",712.876,-10416.520,830.821
+68.36,P1,position-discontinuity,"meters=9.05",712.892,-10425.570,830.866
+68.38,P1,position-discontinuity,"meters=9.05",712.909,-10434.620,830.911
+68.40,P1,position-discontinuity,"meters=9.06",712.926,-10443.680,830.955
+68.42,P1,position-discontinuity,"meters=9.06",712.942,-10452.740,831.000
+68.44,P1,position-discontinuity,"meters=9.07",712.959,-10461.810,831.044
+68.46,P1,position-discontinuity,"meters=9.07",712.975,-10470.880,831.089
+68.48,P1,position-discontinuity,"meters=9.07",712.992,-10479.950,831.133
+68.50,P1,position-discontinuity,"meters=9.08",713.009,-10489.030,831.178
+68.52,P1,position-discontinuity,"meters=9.08",713.025,-10498.110,831.222
+68.54,P1,position-discontinuity,"meters=9.09",713.042,-10507.200,831.267
+68.56,P1,position-discontinuity,"meters=9.09",713.058,-10516.290,831.311
+68.58,P1,position-discontinuity,"meters=9.09",713.075,-10525.380,831.355
+68.60,P1,position-discontinuity,"meters=9.10",713.091,-10534.480,831.400
+68.62,P1,position-discontinuity,"meters=9.10",713.108,-10543.580,831.444
+68.64,P1,position-discontinuity,"meters=9.11",713.124,-10552.690,831.488
+68.66,P1,position-discontinuity,"meters=9.11",713.141,-10561.800,831.533
+68.68,P1,position-discontinuity,"meters=9.11",713.157,-10570.910,831.577
+68.70,P1,position-discontinuity,"meters=9.12",713.174,-10580.030,831.621
+68.72,P1,position-discontinuity,"meters=9.12",713.190,-10589.150,831.665
+68.74,P1,position-discontinuity,"meters=9.13",713.207,-10598.270,831.709
+68.76,P1,position-discontinuity,"meters=9.13",713.223,-10607.400,831.753
+68.78,P1,position-discontinuity,"meters=9.13",713.240,-10616.540,831.797
+68.80,P1,position-discontinuity,"meters=9.14",713.256,-10625.670,831.842
+68.82,P1,position-discontinuity,"meters=9.14",713.272,-10634.810,831.886
+68.84,P1,position-discontinuity,"meters=9.14",713.289,-10643.960,831.930
+68.86,P1,position-discontinuity,"meters=9.15",713.305,-10653.110,831.974
+68.88,P1,position-discontinuity,"meters=9.15",713.322,-10662.260,832.018
+68.90,P1,position-discontinuity,"meters=9.16",713.338,-10671.420,832.061
+68.92,P1,position-discontinuity,"meters=9.16",713.354,-10680.580,832.105
+68.94,P1,position-discontinuity,"meters=9.16",713.371,-10689.740,832.149
+68.96,P1,position-discontinuity,"meters=9.17",713.387,-10698.910,832.193
+68.98,P1,position-discontinuity,"meters=9.17",713.403,-10708.080,832.237
+69.00,P1,position-discontinuity,"meters=9.18",713.420,-10717.250,832.281
+69.02,P1,position-discontinuity,"meters=9.18",713.436,-10726.430,832.324
+69.04,P1,position-discontinuity,"meters=9.18",713.452,-10735.620,832.368
+69.06,P1,position-discontinuity,"meters=9.19",713.469,-10744.810,832.412
+69.08,P1,position-discontinuity,"meters=9.19",713.485,-10754.000,832.456
+69.10,P1,position-discontinuity,"meters=9.20",713.501,-10763.190,832.499
+69.12,P1,position-discontinuity,"meters=9.20",713.518,-10772.390,832.543
+69.14,P1,position-discontinuity,"meters=9.20",713.534,-10781.590,832.587
+69.16,P1,position-discontinuity,"meters=9.21",713.550,-10790.800,832.630
+69.18,P1,position-discontinuity,"meters=9.21",713.566,-10800.010,832.674
+69.20,P1,position-discontinuity,"meters=9.21",713.583,-10809.230,832.717
+69.22,P1,position-discontinuity,"meters=9.22",713.599,-10818.450,832.761
+69.24,P1,position-discontinuity,"meters=9.22",713.615,-10827.670,832.804
+69.26,P1,position-discontinuity,"meters=9.23",713.631,-10836.900,832.848
+69.28,P1,position-discontinuity,"meters=9.23",713.647,-10846.130,832.891
+69.30,P1,position-discontinuity,"meters=9.24",713.664,-10855.360,832.934
+69.32,P1,position-discontinuity,"meters=9.24",713.680,-10864.600,832.978
+69.34,P1,position-discontinuity,"meters=9.24",713.696,-10873.840,833.021
+69.36,P1,position-discontinuity,"meters=9.25",713.712,-10883.090,833.065
+69.38,P1,position-discontinuity,"meters=9.25",713.728,-10892.340,833.108
+69.40,P1,position-discontinuity,"meters=9.25",713.744,-10901.600,833.151
+69.42,P1,position-discontinuity,"meters=9.26",713.760,-10910.860,833.194
+69.44,P1,position-discontinuity,"meters=9.26",713.777,-10920.120,833.238
+69.46,P1,position-discontinuity,"meters=9.27",713.793,-10929.390,833.281
+69.48,P1,position-discontinuity,"meters=9.27",713.809,-10938.660,833.324
+69.50,P1,position-discontinuity,"meters=9.27",713.825,-10947.930,833.367
+69.52,P1,position-discontinuity,"meters=9.28",713.841,-10957.210,833.410
+69.54,P1,position-discontinuity,"meters=9.28",713.857,-10966.490,833.453
+69.56,P1,position-discontinuity,"meters=9.29",713.873,-10975.780,833.496
+69.58,P1,position-discontinuity,"meters=9.29",713.889,-10985.070,833.539
+69.60,P1,position-discontinuity,"meters=9.29",713.905,-10994.360,833.582
+69.62,P1,position-discontinuity,"meters=9.30",713.921,-11003.660,833.625
+69.64,P1,position-discontinuity,"meters=9.30",713.937,-11012.960,833.668
+69.66,P1,position-discontinuity,"meters=9.31",713.953,-11022.270,833.711
+69.68,P1,position-discontinuity,"meters=9.31",713.969,-11031.580,833.754
+69.70,P1,position-discontinuity,"meters=9.31",713.985,-11040.890,833.797
+69.72,P1,position-discontinuity,"meters=9.32",714.001,-11050.210,833.840
+69.74,P1,position-discontinuity,"meters=9.32",714.017,-11059.530,833.883
+69.76,P1,position-discontinuity,"meters=9.33",714.033,-11068.850,833.926
+69.78,P1,position-discontinuity,"meters=9.33",714.049,-11078.180,833.968
+69.80,P1,position-discontinuity,"meters=9.33",714.065,-11087.520,834.011
+69.82,P1,position-discontinuity,"meters=9.34",714.081,-11096.850,834.054
+69.84,P1,position-discontinuity,"meters=9.34",714.097,-11106.190,834.097
+69.86,P1,position-discontinuity,"meters=9.34",714.113,-11115.540,834.139
+69.88,P1,position-discontinuity,"meters=9.35",714.129,-11124.890,834.182
+69.90,P1,position-discontinuity,"meters=9.35",714.145,-11134.240,834.225
+69.92,P1,position-discontinuity,"meters=9.36",714.160,-11143.600,834.267
+69.94,P1,position-discontinuity,"meters=9.36",714.176,-11152.960,834.310
+69.96,P1,position-discontinuity,"meters=9.36",714.192,-11162.320,834.352
+69.98,P1,position-discontinuity,"meters=9.37",714.208,-11171.690,834.395
+70.00,P1,position-discontinuity,"meters=9.37",714.224,-11181.060,834.437
+70.02,P1,position-discontinuity,"meters=9.38",714.240,-11190.440,834.480
+70.04,P1,position-discontinuity,"meters=9.38",714.256,-11199.820,834.522
+70.06,P1,position-discontinuity,"meters=9.38",714.271,-11209.200,834.565
+70.08,P1,position-discontinuity,"meters=9.39",714.287,-11218.590,834.607
+70.10,P1,position-discontinuity,"meters=9.39",714.303,-11227.980,834.649
+70.12,P1,position-discontinuity,"meters=9.40",714.319,-11237.380,834.692
+70.14,P1,position-discontinuity,"meters=9.40",714.335,-11246.770,834.734
+70.16,P1,position-discontinuity,"meters=9.40",714.350,-11256.180,834.776
+70.18,P1,position-discontinuity,"meters=9.41",714.366,-11265.580,834.819
+70.20,P1,position-discontinuity,"meters=9.41",714.382,-11275.000,834.861
+70.22,P1,position-discontinuity,"meters=9.42",714.398,-11284.410,834.903
+70.24,P1,position-discontinuity,"meters=9.42",714.413,-11293.830,834.945
+70.26,P1,position-discontinuity,"meters=9.42",714.429,-11303.250,834.987
+70.28,P1,position-discontinuity,"meters=9.43",714.445,-11312.680,835.030
+70.30,P1,position-discontinuity,"meters=9.43",714.460,-11322.110,835.072
+70.32,P1,position-discontinuity,"meters=9.43",714.476,-11331.540,835.114
+70.34,P1,position-discontinuity,"meters=9.44",714.492,-11340.980,835.156
+70.36,P1,position-discontinuity,"meters=9.44",714.507,-11350.430,835.198
+70.38,P1,position-discontinuity,"meters=9.45",714.523,-11359.870,835.240
+70.40,P1,position-discontinuity,"meters=9.45",714.539,-11369.320,835.282
+70.42,P1,position-discontinuity,"meters=9.46",714.554,-11378.780,835.324
+70.44,P1,position-discontinuity,"meters=9.46",714.570,-11388.240,835.366
+70.46,P1,position-discontinuity,"meters=9.46",714.586,-11397.700,835.408
+70.48,P1,position-discontinuity,"meters=9.47",714.601,-11407.170,835.450
+70.50,P1,position-discontinuity,"meters=9.47",714.617,-11416.640,835.492
+70.52,P1,position-discontinuity,"meters=9.47",714.633,-11426.110,835.533
+70.54,P1,position-discontinuity,"meters=9.48",714.648,-11435.590,835.575
+70.56,P1,position-discontinuity,"meters=9.48",714.664,-11445.070,835.617
+70.58,P1,position-discontinuity,"meters=9.49",714.679,-11454.560,835.659
+70.60,P1,position-discontinuity,"meters=9.49",714.695,-11464.050,835.701
+70.62,P1,position-discontinuity,"meters=9.49",714.710,-11473.540,835.742
+70.64,P1,position-discontinuity,"meters=9.50",714.726,-11483.040,835.784
+70.66,P1,position-discontinuity,"meters=9.50",714.742,-11492.540,835.826
+70.68,P1,position-discontinuity,"meters=9.51",714.757,-11502.050,835.867
+70.70,P1,position-discontinuity,"meters=9.51",714.773,-11511.560,835.909
+70.72,P1,position-discontinuity,"meters=9.51",714.788,-11521.070,835.950
+70.74,P1,position-discontinuity,"meters=9.52",714.804,-11530.590,835.992
+70.76,P1,position-discontinuity,"meters=9.52",714.819,-11540.110,836.034
+70.78,P1,position-discontinuity,"meters=9.53",714.835,-11549.640,836.075
+70.80,P1,position-discontinuity,"meters=9.53",714.850,-11559.170,836.117
+70.82,P1,position-discontinuity,"meters=9.53",714.865,-11568.700,836.158
+70.84,P1,position-discontinuity,"meters=9.54",714.881,-11578.240,836.199
+70.86,P1,position-discontinuity,"meters=9.54",714.896,-11587.780,836.241
+70.88,P1,position-discontinuity,"meters=9.55",714.912,-11597.320,836.282
+70.90,P1,position-discontinuity,"meters=9.55",714.927,-11606.870,836.324
+70.92,P1,position-discontinuity,"meters=9.55",714.943,-11616.420,836.365
+70.94,P1,position-discontinuity,"meters=9.56",714.958,-11625.980,836.406
+70.96,P1,position-discontinuity,"meters=9.56",714.973,-11635.540,836.448
+70.98,P1,position-discontinuity,"meters=9.56",714.989,-11645.110,836.489
+71.00,P1,position-discontinuity,"meters=9.57",715.004,-11654.670,836.530
+71.02,P1,position-discontinuity,"meters=9.57",715.020,-11664.250,836.571
+71.04,P1,position-discontinuity,"meters=9.58",715.035,-11673.820,836.613
+71.04,CPU 2,environment-contact,"Road Surface",280.758,-24.542,426.378
+71.06,P1,position-discontinuity,"meters=9.58",715.050,-11683.400,836.654
+71.06,CPU 2,environment-contact,"Road Surface",280.722,-24.529,426.835
+71.08,P1,position-discontinuity,"meters=9.58",715.066,-11692.990,836.695
+71.10,P1,position-discontinuity,"meters=9.59",715.081,-11702.580,836.736
+71.12,P1,position-discontinuity,"meters=9.59",715.096,-11712.170,836.777
+71.14,P1,position-discontinuity,"meters=9.60",715.112,-11721.760,836.818
+71.16,P1,position-discontinuity,"meters=9.60",715.127,-11731.360,836.859
+71.18,P1,position-discontinuity,"meters=9.60",715.142,-11740.970,836.900
+71.20,P1,position-discontinuity,"meters=9.61",715.158,-11750.570,836.941
+71.22,P1,position-discontinuity,"meters=9.61",715.173,-11760.180,836.982
+71.24,P1,position-discontinuity,"meters=9.62",715.188,-11769.800,837.023
+71.26,P1,position-discontinuity,"meters=9.62",715.203,-11779.420,837.064
+71.28,P1,position-discontinuity,"meters=9.62",715.219,-11789.040,837.105
+71.30,P1,position-discontinuity,"meters=9.63",715.234,-11798.670,837.146
+71.32,P1,position-discontinuity,"meters=9.63",715.249,-11808.300,837.187
+71.34,P1,position-discontinuity,"meters=9.63",715.264,-11817.930,837.228
+71.36,P1,position-discontinuity,"meters=9.64",715.279,-11827.570,837.268
+71.38,P1,position-discontinuity,"meters=9.64",715.295,-11837.220,837.309
+71.40,P1,position-discontinuity,"meters=9.65",715.310,-11846.860,837.350
+71.42,P1,position-discontinuity,"meters=9.65",715.325,-11856.510,837.391
+71.44,P1,position-discontinuity,"meters=9.65",715.340,-11866.170,837.431
+71.46,P1,position-discontinuity,"meters=9.66",715.355,-11875.830,837.472
+71.48,P1,position-discontinuity,"meters=9.66",715.371,-11885.490,837.513
+71.50,P1,position-discontinuity,"meters=9.67",715.386,-11895.150,837.553
+71.52,P1,position-discontinuity,"meters=9.67",715.401,-11904.830,837.594
+71.54,P1,position-discontinuity,"meters=9.67",715.416,-11914.500,837.634
+71.56,P1,position-discontinuity,"meters=9.68",715.431,-11924.180,837.675
+71.58,P1,position-discontinuity,"meters=9.68",715.446,-11933.860,837.716
+71.60,P1,position-discontinuity,"meters=9.69",715.461,-11943.550,837.756
+71.62,P1,position-discontinuity,"meters=9.69",715.476,-11953.240,837.796
+71.64,P1,position-discontinuity,"meters=9.69",715.492,-11962.930,837.837
+71.66,P1,position-discontinuity,"meters=9.70",715.507,-11972.630,837.877
+71.68,P1,position-discontinuity,"meters=9.70",715.522,-11982.330,837.918
+71.70,P1,position-discontinuity,"meters=9.71",715.537,-11992.040,837.958
+71.72,P1,position-discontinuity,"meters=9.71",715.552,-12001.750,837.999
+71.74,P1,position-discontinuity,"meters=9.71",715.567,-12011.460,838.039
+71.76,P1,position-discontinuity,"meters=9.72",715.582,-12021.180,838.079
+71.78,P1,position-discontinuity,"meters=9.72",715.597,-12030.900,838.119
+71.80,P1,position-discontinuity,"meters=9.73",715.612,-12040.630,838.160
+71.82,P1,position-discontinuity,"meters=9.73",715.627,-12050.360,838.200
+71.84,P1,position-discontinuity,"meters=9.73",715.642,-12060.090,838.240
+71.86,P1,position-discontinuity,"meters=9.74",715.657,-12069.830,838.280
+71.88,P1,position-discontinuity,"meters=9.74",715.672,-12079.570,838.321
+71.90,P1,position-discontinuity,"meters=9.75",715.687,-12089.310,838.361
+71.92,P1,position-discontinuity,"meters=9.75",715.702,-12099.060,838.401
+71.94,P1,position-discontinuity,"meters=9.75",715.717,-12108.820,838.441
+71.96,P1,position-discontinuity,"meters=9.76",715.732,-12118.570,838.481
+71.98,P1,position-discontinuity,"meters=9.76",715.747,-12128.330,838.521
+72.00,P1,position-discontinuity,"meters=9.76",715.762,-12138.100,838.561
+72.02,P1,position-discontinuity,"meters=9.77",715.776,-12147.870,838.601
+72.04,P1,position-discontinuity,"meters=9.77",715.791,-12157.640,838.641
+72.06,P1,position-discontinuity,"meters=9.78",715.806,-12167.420,838.681
+72.08,P1,position-discontinuity,"meters=9.78",715.821,-12177.200,838.721
+72.10,P1,position-discontinuity,"meters=9.78",715.836,-12186.980,838.761
+72.12,P1,position-discontinuity,"meters=9.79",715.851,-12196.770,838.801
+72.14,P1,position-discontinuity,"meters=9.79",715.866,-12206.560,838.841
+72.16,P1,position-discontinuity,"meters=9.80",715.881,-12216.360,838.880
+72.18,P1,position-discontinuity,"meters=9.80",715.895,-12226.160,838.920
+72.20,P1,position-discontinuity,"meters=9.80",715.910,-12235.960,838.960
+72.22,P1,position-discontinuity,"meters=9.81",715.925,-12245.770,839.000
+72.24,P1,position-discontinuity,"meters=9.81",715.940,-12255.580,839.040
+72.26,P1,position-discontinuity,"meters=9.82",715.955,-12265.390,839.079
+72.28,P1,position-discontinuity,"meters=9.82",715.970,-12275.210,839.119
+72.30,P1,position-discontinuity,"meters=9.82",715.984,-12285.040,839.159
+72.32,P1,position-discontinuity,"meters=9.83",715.999,-12294.860,839.198
+72.34,P1,position-discontinuity,"meters=9.83",716.014,-12304.700,839.238
+72.36,P1,position-discontinuity,"meters=9.84",716.029,-12314.530,839.278
+72.38,P1,position-discontinuity,"meters=9.84",716.043,-12324.370,839.317
+72.40,P1,position-discontinuity,"meters=9.84",716.058,-12334.210,839.357
+72.42,P1,position-discontinuity,"meters=9.85",716.073,-12344.060,839.396
+72.42,CPU 2,environment-contact,"Road Surface",279.624,-21.015,459.786
+72.44,P1,position-discontinuity,"meters=9.85",716.088,-12353.910,839.436
+72.44,CPU 2,environment-contact,"Road Surface",279.627,-20.924,460.284
+72.44,CPU 2,environment-contact,"Road Surface",279.627,-20.924,460.284
+72.46,P1,position-discontinuity,"meters=9.85",716.102,-12363.760,839.475
+72.48,P1,position-discontinuity,"meters=9.86",716.117,-12373.620,839.515
+72.50,P1,position-discontinuity,"meters=9.86",716.132,-12383.480,839.554
+72.52,P1,position-discontinuity,"meters=9.87",716.146,-12393.350,839.593
+72.54,P1,position-discontinuity,"meters=9.87",716.161,-12403.220,839.633
+72.56,P1,position-discontinuity,"meters=9.87",716.176,-12413.090,839.672
+72.58,P1,position-discontinuity,"meters=9.88",716.190,-12422.970,839.711
+72.60,P1,position-discontinuity,"meters=9.88",716.205,-12432.860,839.751
+72.62,P1,position-discontinuity,"meters=9.89",716.220,-12442.740,839.790
+72.64,P1,position-discontinuity,"meters=9.89",716.234,-12452.630,839.829
+72.66,P1,position-discontinuity,"meters=9.89",716.249,-12462.530,839.869
+72.68,P1,position-discontinuity,"meters=9.90",716.264,-12472.430,839.908
+72.70,P1,position-discontinuity,"meters=9.90",716.278,-12482.330,839.947
+72.72,P1,position-discontinuity,"meters=9.91",716.293,-12492.230,839.986
+72.74,P1,position-discontinuity,"meters=9.91",716.307,-12502.140,840.025
+72.76,P1,position-discontinuity,"meters=9.91",716.322,-12512.060,840.064
+72.78,P1,position-discontinuity,"meters=9.92",716.337,-12521.980,840.104
+72.80,P1,position-discontinuity,"meters=9.92",716.351,-12531.900,840.143
+72.82,P1,position-discontinuity,"meters=9.93",716.366,-12541.820,840.182
+72.84,P1,position-discontinuity,"meters=9.93",716.380,-12551.750,840.221
+72.86,P1,position-discontinuity,"meters=9.93",716.395,-12561.690,840.260
+72.88,P1,position-discontinuity,"meters=9.94",716.409,-12571.630,840.299
+72.90,P1,position-discontinuity,"meters=9.94",716.424,-12581.570,840.338
+72.92,P1,position-discontinuity,"meters=9.95",716.438,-12591.510,840.377
+72.94,P1,position-discontinuity,"meters=9.95",716.453,-12601.460,840.416
+72.96,P1,position-discontinuity,"meters=9.95",716.467,-12611.410,840.454
+72.98,P1,position-discontinuity,"meters=9.96",716.482,-12621.370,840.493
+73.00,P1,position-discontinuity,"meters=9.96",716.496,-12631.330,840.532
+73.02,P1,position-discontinuity,"meters=9.96",716.511,-12641.300,840.571
+73.04,P1,position-discontinuity,"meters=9.97",716.525,-12651.270,840.610
+73.06,P1,position-discontinuity,"meters=9.97",716.540,-12661.240,840.648
+73.08,P1,position-discontinuity,"meters=9.98",716.554,-12671.210,840.687
+73.10,P1,position-discontinuity,"meters=9.98",716.569,-12681.200,840.726
+73.12,P1,position-discontinuity,"meters=9.98",716.583,-12691.180,840.765
+73.14,P1,position-discontinuity,"meters=9.99",716.598,-12701.170,840.803
+73.16,P1,position-discontinuity,"meters=9.99",716.612,-12711.160,840.842
+73.18,P1,position-discontinuity,"meters=10.00",716.626,-12721.160,840.881
+73.20,P1,position-discontinuity,"meters=10.00",716.641,-12731.160,840.919
+73.22,P1,position-discontinuity,"meters=10.00",716.655,-12741.160,840.958
+73.24,P1,position-discontinuity,"meters=10.01",716.670,-12751.170,840.996
+73.26,P1,position-discontinuity,"meters=10.01",716.684,-12761.180,841.035
+73.28,P1,position-discontinuity,"meters=10.02",716.698,-12771.200,841.073
+73.30,P1,position-discontinuity,"meters=10.02",716.713,-12781.210,841.112
+73.32,P1,position-discontinuity,"meters=10.02",716.727,-12791.240,841.150
+73.34,P1,position-discontinuity,"meters=10.03",716.741,-12801.270,841.189
+73.36,P1,position-discontinuity,"meters=10.03",716.756,-12811.300,841.227
+73.38,P1,position-discontinuity,"meters=10.04",716.770,-12821.330,841.266
+73.40,P1,position-discontinuity,"meters=10.04",716.784,-12831.370,841.304
+73.42,P1,position-discontinuity,"meters=10.04",716.799,-12841.410,841.342
+73.44,P1,position-discontinuity,"meters=10.05",716.813,-12851.460,841.381
+73.46,P1,position-discontinuity,"meters=10.05",716.827,-12861.510,841.419
+73.48,P1,position-discontinuity,"meters=10.05",716.841,-12871.570,841.457
+73.50,P1,position-discontinuity,"meters=10.06",716.856,-12881.630,841.496
+73.52,P1,position-discontinuity,"meters=10.06",716.870,-12891.690,841.534
+73.54,P1,position-discontinuity,"meters=10.07",716.884,-12901.750,841.572
+73.56,P1,position-discontinuity,"meters=10.07",716.898,-12911.820,841.610
+73.58,P1,position-discontinuity,"meters=10.07",716.913,-12921.900,841.648
+73.60,P1,position-discontinuity,"meters=10.08",716.927,-12931.980,841.687
+73.62,P1,position-discontinuity,"meters=10.08",716.941,-12942.060,841.725
+73.64,P1,position-discontinuity,"meters=10.09",716.955,-12952.140,841.763
+73.66,P1,position-discontinuity,"meters=10.09",716.969,-12962.230,841.801
+73.68,P1,position-discontinuity,"meters=10.09",716.984,-12972.330,841.839
+73.70,P1,position-discontinuity,"meters=10.10",716.998,-12982.430,841.877
+73.72,P1,position-discontinuity,"meters=10.10",717.012,-12992.530,841.915
+73.74,P1,position-discontinuity,"meters=10.11",717.026,-13002.640,841.953
+73.76,P1,position-discontinuity,"meters=10.11",717.040,-13012.750,841.991
+73.78,P1,position-discontinuity,"meters=10.11",717.054,-13022.860,842.029
+73.80,P1,position-discontinuity,"meters=10.12",717.069,-13032.980,842.067
+73.82,P1,position-discontinuity,"meters=10.12",717.083,-13043.100,842.105
+73.84,P1,position-discontinuity,"meters=10.13",717.097,-13053.230,842.143
+73.86,P1,position-discontinuity,"meters=10.13",717.111,-13063.360,842.180
+73.88,P1,position-discontinuity,"meters=10.13",717.125,-13073.490,842.218
+73.90,P1,position-discontinuity,"meters=10.14",717.139,-13083.630,842.256
+73.92,P1,position-discontinuity,"meters=10.14",717.153,-13093.770,842.294
+73.92,P2,item,"Oil",275.934,4.677,637.668
+73.94,P1,position-discontinuity,"meters=10.15",717.167,-13103.920,842.332
+73.96,P1,position-discontinuity,"meters=10.15",717.181,-13114.060,842.369
+73.98,P1,position-discontinuity,"meters=10.15",717.195,-13124.220,842.407
+74.00,P1,position-discontinuity,"meters=10.16",717.210,-13134.380,842.445
+74.02,P1,position-discontinuity,"meters=10.16",717.224,-13144.540,842.482
+74.04,P1,position-discontinuity,"meters=10.17",717.238,-13154.700,842.520
+74.06,P1,position-discontinuity,"meters=10.17",717.252,-13164.870,842.558
+74.08,P1,position-discontinuity,"meters=10.17",717.266,-13175.040,842.595
+74.10,P1,position-discontinuity,"meters=10.18",717.280,-13185.220,842.633
+74.12,P1,position-discontinuity,"meters=10.18",717.294,-13195.400,842.670
+74.14,P1,position-discontinuity,"meters=10.18",717.308,-13205.580,842.708
+74.16,P1,position-discontinuity,"meters=10.19",717.322,-13215.770,842.746
+74.18,P1,position-discontinuity,"meters=10.19",717.336,-13225.970,842.783
+74.20,P1,position-discontinuity,"meters=10.20",717.350,-13236.160,842.820
+74.22,P1,position-discontinuity,"meters=10.20",717.364,-13246.360,842.858
+74.24,P1,position-discontinuity,"meters=10.20",717.378,-13256.570,842.895
+74.26,P1,position-discontinuity,"meters=10.21",717.391,-13266.770,842.933
+74.28,P1,position-discontinuity,"meters=10.21",717.405,-13276.990,842.970
+74.30,P1,position-discontinuity,"meters=10.22",717.419,-13287.200,843.007
+74.32,P1,position-discontinuity,"meters=10.22",717.433,-13297.420,843.045
+74.34,P1,position-discontinuity,"meters=10.22",717.447,-13307.650,843.082
+74.36,P1,position-discontinuity,"meters=10.23",717.461,-13317.870,843.119
+74.38,P1,position-discontinuity,"meters=10.23",717.475,-13328.100,843.157
+74.40,P1,position-discontinuity,"meters=10.24",717.489,-13338.340,843.194
+74.42,P1,position-discontinuity,"meters=10.24",717.503,-13348.580,843.231
+74.44,P1,position-discontinuity,"meters=10.24",717.517,-13358.820,843.268
+74.46,P1,position-discontinuity,"meters=10.25",717.530,-13369.070,843.306
+74.48,P1,position-discontinuity,"meters=10.25",717.544,-13379.320,843.343
+74.50,P1,position-discontinuity,"meters=10.25",717.558,-13389.580,843.380
+74.52,P1,position-discontinuity,"meters=10.26",717.572,-13399.830,843.417
+74.54,P1,position-discontinuity,"meters=10.26",717.586,-13410.100,843.454
+74.56,P1,position-discontinuity,"meters=10.27",717.600,-13420.360,843.491
+74.58,P1,position-discontinuity,"meters=10.27",717.613,-13430.630,843.528
+74.60,P1,position-discontinuity,"meters=10.27",717.627,-13440.910,843.565
+74.62,P1,position-discontinuity,"meters=10.28",717.641,-13451.190,843.602
+74.64,P1,position-discontinuity,"meters=10.28",717.655,-13461.470,843.639
+74.66,P1,position-discontinuity,"meters=10.29",717.669,-13471.750,843.676
+74.68,P1,position-discontinuity,"meters=10.29",717.682,-13482.040,843.713
+74.70,P1,position-discontinuity,"meters=10.29",717.696,-13492.340,843.750
+74.72,P1,position-discontinuity,"meters=10.30",717.710,-13502.640,843.787
+74.74,P1,position-discontinuity,"meters=10.30",717.724,-13512.940,843.824
+74.76,P1,position-discontinuity,"meters=10.31",717.737,-13523.240,843.861
+74.78,P1,position-discontinuity,"meters=10.31",717.751,-13533.550,843.897
+74.80,P1,position-discontinuity,"meters=10.31",717.765,-13543.870,843.934
+74.82,P1,position-discontinuity,"meters=10.32",717.778,-13554.190,843.971
+74.84,P1,position-discontinuity,"meters=10.32",717.792,-13564.510,844.008
+74.86,P1,position-discontinuity,"meters=10.33",717.806,-13574.830,844.044
+74.88,P1,position-discontinuity,"meters=10.33",717.820,-13585.170,844.081
+74.90,P1,position-discontinuity,"meters=10.33",717.833,-13595.500,844.118
+74.92,P1,position-discontinuity,"meters=10.34",717.847,-13605.840,844.154
+74.94,P1,position-discontinuity,"meters=10.34",717.861,-13616.180,844.191
+74.96,P1,position-discontinuity,"meters=10.35",717.874,-13626.520,844.228
+74.98,P1,position-discontinuity,"meters=10.35",717.888,-13636.870,844.264
+75.00,P1,position-discontinuity,"meters=10.35",717.902,-13647.230,844.301
+75.02,P1,position-discontinuity,"meters=10.36",717.915,-13657.580,844.337
+75.04,P1,position-discontinuity,"meters=10.36",717.929,-13667.950,844.374
+75.06,P1,position-discontinuity,"meters=10.37",717.942,-13678.310,844.411
+75.08,P1,position-discontinuity,"meters=10.37",717.956,-13688.680,844.447
+75.10,P1,position-discontinuity,"meters=10.37",717.970,-13699.050,844.484
+75.12,P1,position-discontinuity,"meters=10.38",717.983,-13709.430,844.520
+75.14,P1,position-discontinuity,"meters=10.38",717.997,-13719.810,844.556
+75.16,P1,position-discontinuity,"meters=10.38",718.010,-13730.200,844.593
+75.18,P1,position-discontinuity,"meters=10.39",718.024,-13740.580,844.629
+75.20,P1,position-discontinuity,"meters=10.39",718.037,-13750.980,844.666
+75.22,P1,position-discontinuity,"meters=10.40",718.051,-13761.370,844.702
+75.24,P1,position-discontinuity,"meters=10.40",718.065,-13771.770,844.738
+75.26,P1,position-discontinuity,"meters=10.40",718.078,-13782.180,844.774
+75.28,P1,position-discontinuity,"meters=10.41",718.092,-13792.590,844.811
+75.30,P1,position-discontinuity,"meters=10.41",718.105,-13803.000,844.847
+75.32,P1,position-discontinuity,"meters=10.42",718.119,-13813.420,844.883
+75.34,P1,position-discontinuity,"meters=10.42",718.132,-13823.830,844.919
+75.36,P1,position-discontinuity,"meters=10.42",718.146,-13834.260,844.956
+75.38,P1,position-discontinuity,"meters=10.43",718.159,-13844.690,844.992
+75.40,P1,position-discontinuity,"meters=10.43",718.173,-13855.120,845.028
+75.42,P1,position-discontinuity,"meters=10.44",718.186,-13865.550,845.064
+75.44,P1,position-discontinuity,"meters=10.44",718.200,-13875.990,845.100
+75.46,P1,position-discontinuity,"meters=10.44",718.213,-13886.440,845.136
+75.48,P1,position-discontinuity,"meters=10.45",718.226,-13896.880,845.172
+75.50,P1,position-discontinuity,"meters=10.45",718.240,-13907.330,845.208
+75.52,P1,position-discontinuity,"meters=10.46",718.253,-13917.790,845.244
+75.54,P1,position-discontinuity,"meters=10.46",718.267,-13928.250,845.280
+75.56,P1,position-discontinuity,"meters=10.46",718.280,-13938.710,845.316
+75.58,P1,position-discontinuity,"meters=10.47",718.294,-13949.180,845.352
+75.60,P1,position-discontinuity,"meters=10.47",718.307,-13959.650,845.388
+75.62,P1,position-discontinuity,"meters=10.47",718.320,-13970.120,845.424
+75.64,P1,position-discontinuity,"meters=10.48",718.334,-13980.600,845.460
+75.66,P1,position-discontinuity,"meters=10.48",718.347,-13991.080,845.496
+75.68,P1,position-discontinuity,"meters=10.49",718.360,-14001.570,845.532
+75.70,P1,position-discontinuity,"meters=10.49",718.374,-14012.060,845.567
+75.72,P1,position-discontinuity,"meters=10.49",718.387,-14022.560,845.603
+75.74,P1,position-discontinuity,"meters=10.50",718.401,-14033.050,845.639
+75.76,P1,position-discontinuity,"meters=10.50",718.414,-14043.560,845.675
+75.78,P1,position-discontinuity,"meters=10.51",718.427,-14054.060,845.711
+75.80,P1,position-discontinuity,"meters=10.51",718.440,-14064.570,845.746
+75.82,P1,position-discontinuity,"meters=10.51",718.454,-14075.080,845.782
+75.84,P1,position-discontinuity,"meters=10.52",718.467,-14085.600,845.818
+75.86,P1,position-discontinuity,"meters=10.52",718.480,-14096.130,845.853
+75.88,P1,position-discontinuity,"meters=10.53",718.494,-14106.650,845.889
+75.90,P1,position-discontinuity,"meters=10.53",718.507,-14117.180,845.924
+75.92,P1,position-discontinuity,"meters=10.53",718.520,-14127.720,845.960
+75.94,P1,position-discontinuity,"meters=10.54",718.533,-14138.250,845.996
+75.96,P1,position-discontinuity,"meters=10.54",718.547,-14148.800,846.031
+75.98,P1,position-discontinuity,"meters=10.55",718.560,-14159.340,846.067
+76.00,P1,position-discontinuity,"meters=10.55",718.573,-14169.890,846.102
+76.02,P1,position-discontinuity,"meters=10.55",718.586,-14180.450,846.138
+76.04,P1,position-discontinuity,"meters=10.56",718.600,-14191.000,846.173
+76.06,P1,position-discontinuity,"meters=10.56",718.613,-14201.560,846.209
+76.08,P1,position-discontinuity,"meters=10.57",718.626,-14212.130,846.244
+76.10,P1,position-discontinuity,"meters=10.57",718.639,-14222.700,846.279
+76.12,P1,position-discontinuity,"meters=10.57",718.652,-14233.270,846.315
+76.14,P1,position-discontinuity,"meters=10.58",718.666,-14243.850,846.350
+76.16,P1,position-discontinuity,"meters=10.58",718.679,-14254.430,846.385
+76.18,P1,position-discontinuity,"meters=10.59",718.692,-14265.020,846.421
+76.20,P1,position-discontinuity,"meters=10.59",718.705,-14275.600,846.456
+76.22,P1,position-discontinuity,"meters=10.59",718.718,-14286.200,846.491
+76.24,P1,position-discontinuity,"meters=10.60",718.731,-14296.790,846.527
+76.26,P1,position-discontinuity,"meters=10.60",718.744,-14307.390,846.562
+76.28,P1,position-discontinuity,"meters=10.60",718.758,-14318.000,846.597
+76.30,P1,position-discontinuity,"meters=10.61",718.771,-14328.610,846.632
+76.32,P1,position-discontinuity,"meters=10.61",718.784,-14339.220,846.667
+76.34,P1,position-discontinuity,"meters=10.62",718.797,-14349.840,846.702
+76.36,P1,position-discontinuity,"meters=10.62",718.810,-14360.460,846.738
+76.38,P1,position-discontinuity,"meters=10.62",718.823,-14371.080,846.773
+76.40,P1,position-discontinuity,"meters=10.63",718.836,-14381.710,846.808
+76.42,P1,position-discontinuity,"meters=10.63",718.849,-14392.340,846.843
+76.44,P1,position-discontinuity,"meters=10.64",718.862,-14402.980,846.878
+76.46,P1,position-discontinuity,"meters=10.64",718.875,-14413.620,846.913
+76.48,P1,position-discontinuity,"meters=10.64",718.888,-14424.260,846.948
+76.50,P1,position-discontinuity,"meters=10.65",718.902,-14434.910,846.983
+76.52,P1,position-discontinuity,"meters=10.65",718.915,-14445.560,847.018
+76.54,P1,position-discontinuity,"meters=10.66",718.928,-14456.210,847.053
+76.56,P1,position-discontinuity,"meters=10.66",718.941,-14466.870,847.088
+76.58,P1,position-discontinuity,"meters=10.66",718.954,-14477.540,847.122
+76.60,P1,position-discontinuity,"meters=10.67",718.967,-14488.200,847.157
+76.62,P1,position-discontinuity,"meters=10.67",718.980,-14498.870,847.192
+76.64,P1,position-discontinuity,"meters=10.67",718.993,-14509.550,847.227
+76.66,P1,position-discontinuity,"meters=10.68",719.006,-14520.230,847.262
+76.68,P1,position-discontinuity,"meters=10.68",719.018,-14530.910,847.297
+76.70,P1,position-discontinuity,"meters=10.69",719.031,-14541.600,847.331
+76.72,P1,position-discontinuity,"meters=10.69",719.044,-14552.290,847.366
+76.74,P1,position-discontinuity,"meters=10.69",719.057,-14562.980,847.401
+76.76,P1,position-discontinuity,"meters=10.70",719.070,-14573.680,847.436
+76.78,P1,position-discontinuity,"meters=10.70",719.083,-14584.380,847.470
+76.80,P1,position-discontinuity,"meters=10.71",719.096,-14595.090,847.505
+76.82,P1,position-discontinuity,"meters=10.71",719.109,-14605.800,847.539
+76.84,P1,position-discontinuity,"meters=10.71",719.122,-14616.510,847.574
+76.86,P1,position-discontinuity,"meters=10.72",719.135,-14627.230,847.609
+76.88,P1,position-discontinuity,"meters=10.72",719.148,-14637.950,847.643
+76.90,P1,position-discontinuity,"meters=10.73",719.161,-14648.680,847.678
+76.92,P1,position-discontinuity,"meters=10.73",719.173,-14659.410,847.712
+76.94,P1,position-discontinuity,"meters=10.73",719.186,-14670.140,847.747
+76.96,P1,position-discontinuity,"meters=10.74",719.199,-14680.880,847.781
+76.98,P1,position-discontinuity,"meters=10.74",719.212,-14691.620,847.816
+77.00,P1,position-discontinuity,"meters=10.75",719.225,-14702.370,847.850
+77.02,P1,position-discontinuity,"meters=10.75",719.238,-14713.120,847.885
+77.04,P1,position-discontinuity,"meters=10.75",719.251,-14723.870,847.919
+77.06,P1,position-discontinuity,"meters=10.76",719.263,-14734.630,847.953
+77.08,P1,position-discontinuity,"meters=10.76",719.276,-14745.390,847.988
+77.10,P1,position-discontinuity,"meters=10.77",719.289,-14756.160,848.022
+77.12,P1,position-discontinuity,"meters=10.77",719.302,-14766.930,848.056
+77.14,P1,position-discontinuity,"meters=10.77",719.315,-14777.700,848.091
+77.16,P1,position-discontinuity,"meters=10.78",719.327,-14788.480,848.125
+77.18,P1,position-discontinuity,"meters=10.78",719.340,-14799.260,848.159
+77.20,P1,position-discontinuity,"meters=10.79",719.353,-14810.040,848.194
+77.22,P1,position-discontinuity,"meters=10.79",719.366,-14820.830,848.228
+77.24,P1,position-discontinuity,"meters=10.79",719.378,-14831.630,848.262
+77.26,P1,position-discontinuity,"meters=10.80",719.391,-14842.420,848.296
+77.28,P1,position-discontinuity,"meters=10.80",719.404,-14853.220,848.330
+77.30,P1,position-discontinuity,"meters=10.80",719.417,-14864.030,848.364
+77.32,P1,position-discontinuity,"meters=10.81",719.429,-14874.840,848.399
+77.34,P1,position-discontinuity,"meters=10.81",719.442,-14885.650,848.433
+77.36,P1,position-discontinuity,"meters=10.82",719.455,-14896.460,848.467
+77.38,P1,position-discontinuity,"meters=10.82",719.467,-14907.290,848.501
+77.40,P1,position-discontinuity,"meters=10.82",719.480,-14918.110,848.535
+77.42,P1,position-discontinuity,"meters=10.83",719.493,-14928.940,848.569
+77.44,P1,position-discontinuity,"meters=10.83",719.506,-14939.770,848.603
+77.46,P1,position-discontinuity,"meters=10.84",719.518,-14950.610,848.637
+77.48,P1,position-discontinuity,"meters=10.84",719.531,-14961.450,848.671
+77.50,P1,position-discontinuity,"meters=10.84",719.544,-14972.290,848.705
+77.52,P1,position-discontinuity,"meters=10.85",719.556,-14983.140,848.739
+77.54,P1,position-discontinuity,"meters=10.85",719.569,-14993.990,848.773
+77.56,P1,position-discontinuity,"meters=10.86",719.581,-15004.840,848.806
+77.58,P1,position-discontinuity,"meters=10.86",719.594,-15015.700,848.840
+77.60,P1,position-discontinuity,"meters=10.86",719.607,-15026.570,848.874
+77.62,P1,position-discontinuity,"meters=10.87",719.619,-15037.430,848.908
+77.64,P1,position-discontinuity,"meters=10.87",719.632,-15048.300,848.942
+77.66,P1,position-discontinuity,"meters=10.88",719.644,-15059.180,848.975
+77.68,P1,position-discontinuity,"meters=10.88",719.657,-15070.060,849.009
+77.70,P1,position-discontinuity,"meters=10.88",719.670,-15080.940,849.043
+77.72,P1,position-discontinuity,"meters=10.89",719.682,-15091.830,849.077
+77.74,P1,position-discontinuity,"meters=10.89",719.695,-15102.720,849.110
+77.76,P1,position-discontinuity,"meters=10.89",719.707,-15113.610,849.144
+77.78,P1,position-discontinuity,"meters=10.90",719.720,-15124.510,849.178
+77.80,P1,position-discontinuity,"meters=10.90",719.732,-15135.410,849.211
+77.82,P1,position-discontinuity,"meters=10.91",719.745,-15146.320,849.245
+77.84,P1,position-discontinuity,"meters=10.91",719.757,-15157.230,849.278
+77.86,P1,position-discontinuity,"meters=10.91",719.770,-15168.140,849.312
+77.88,P1,position-discontinuity,"meters=10.92",719.782,-15179.060,849.346
+77.90,P1,position-discontinuity,"meters=10.92",719.795,-15189.980,849.379
+77.92,P1,position-discontinuity,"meters=10.93",719.807,-15200.910,849.413
+77.94,P1,position-discontinuity,"meters=10.93",719.820,-15211.840,849.446
+77.96,P1,position-discontinuity,"meters=10.93",719.832,-15222.770,849.480
+77.98,P1,position-discontinuity,"meters=10.94",719.845,-15233.710,849.513
+78.00,P1,position-discontinuity,"meters=10.94",719.857,-15244.650,849.546
+78.02,P1,position-discontinuity,"meters=10.95",719.870,-15255.600,849.580
+78.04,P1,position-discontinuity,"meters=10.95",719.882,-15266.550,849.613
+78.06,P1,position-discontinuity,"meters=10.95",719.895,-15277.500,849.647
+78.08,P1,position-discontinuity,"meters=10.96",719.907,-15288.460,849.680
+78.10,P1,position-discontinuity,"meters=10.96",719.920,-15299.420,849.713
+78.12,P1,position-discontinuity,"meters=10.97",719.932,-15310.390,849.747
+78.14,P1,position-discontinuity,"meters=10.97",719.944,-15321.360,849.780
+78.16,P1,position-discontinuity,"meters=10.97",719.957,-15332.330,849.813
+78.18,P1,position-discontinuity,"meters=10.98",719.969,-15343.310,849.846
+78.20,P1,position-discontinuity,"meters=10.98",719.982,-15354.290,849.880
+78.22,P1,position-discontinuity,"meters=10.99",719.994,-15365.280,849.913
+78.24,P1,position-discontinuity,"meters=10.99",720.006,-15376.270,849.946
+78.26,P1,position-discontinuity,"meters=10.99",720.019,-15387.260,849.979
+78.28,P1,position-discontinuity,"meters=11.00",720.031,-15398.260,850.012
+78.30,P1,position-discontinuity,"meters=11.00",720.043,-15409.260,850.045
+78.32,P1,position-discontinuity,"meters=11.00",720.056,-15420.260,850.079
+78.34,P1,position-discontinuity,"meters=11.01",720.068,-15431.270,850.112
+78.36,P1,position-discontinuity,"meters=11.01",720.080,-15442.280,850.145
+78.38,P1,position-discontinuity,"meters=11.02",720.093,-15453.300,850.178
+78.40,P1,position-discontinuity,"meters=11.02",720.105,-15464.320,850.211
+78.42,P1,position-discontinuity,"meters=11.02",720.117,-15475.350,850.244
+78.44,P1,position-discontinuity,"meters=11.03",720.130,-15486.370,850.277
+78.46,P1,position-discontinuity,"meters=11.03",720.142,-15497.410,850.310
+78.48,P1,position-discontinuity,"meters=11.04",720.154,-15508.440,850.343
+78.50,P1,position-discontinuity,"meters=11.04",720.167,-15519.480,850.376
+78.52,P1,position-discontinuity,"meters=11.04",720.179,-15530.530,850.409
+78.54,P1,position-discontinuity,"meters=11.05",720.191,-15541.570,850.442
+78.56,P1,position-discontinuity,"meters=11.05",720.203,-15552.630,850.474
+78.58,P1,position-discontinuity,"meters=11.06",720.216,-15563.680,850.507
+78.60,P1,position-discontinuity,"meters=11.06",720.228,-15574.740,850.540
+78.62,P1,position-discontinuity,"meters=11.06",720.240,-15585.800,850.573
+78.64,P1,position-discontinuity,"meters=11.07",720.252,-15596.870,850.606
+78.66,P1,position-discontinuity,"meters=11.07",720.265,-15607.940,850.638
+78.68,P1,position-discontinuity,"meters=11.08",720.277,-15619.020,850.671
+78.70,P1,position-discontinuity,"meters=11.08",720.289,-15630.100,850.704
+78.72,P1,position-discontinuity,"meters=11.08",720.301,-15641.180,850.737
+78.74,P1,position-discontinuity,"meters=11.09",720.313,-15652.270,850.769
+78.76,P1,position-discontinuity,"meters=11.09",720.326,-15663.360,850.802
+78.78,P1,position-discontinuity,"meters=11.09",720.338,-15674.450,850.835
+78.80,P1,position-discontinuity,"meters=11.10",720.350,-15685.550,850.867
+78.82,P1,position-discontinuity,"meters=11.10",720.362,-15696.650,850.900
+78.84,P1,position-discontinuity,"meters=11.11",720.374,-15707.760,850.933
+78.86,P1,position-discontinuity,"meters=11.11",720.386,-15718.870,850.965
+78.88,P1,position-discontinuity,"meters=11.11",720.398,-15729.990,850.998
+78.90,P1,position-discontinuity,"meters=11.12",720.411,-15741.100,851.030
+78.92,P1,position-discontinuity,"meters=11.12",720.423,-15752.230,851.063
+78.94,P1,position-discontinuity,"meters=11.13",720.435,-15763.350,851.095
+78.96,P1,position-discontinuity,"meters=11.13",720.447,-15774.480,851.128
+78.98,P1,position-discontinuity,"meters=11.13",720.459,-15785.620,851.160
+79.00,P1,position-discontinuity,"meters=11.14",720.471,-15796.750,851.193
+79.02,P1,position-discontinuity,"meters=11.14",720.483,-15807.890,851.225
+79.04,P1,position-discontinuity,"meters=11.15",720.495,-15819.040,851.257
+79.06,P1,position-discontinuity,"meters=11.15",720.507,-15830.190,851.290
+79.08,P1,position-discontinuity,"meters=11.15",720.519,-15841.340,851.322
+79.10,P1,position-discontinuity,"meters=11.16",720.532,-15852.500,851.355
+79.12,P1,position-discontinuity,"meters=11.16",720.544,-15863.670,851.387
+79.14,P1,position-discontinuity,"meters=11.17",720.556,-15874.830,851.419
+79.16,P1,position-discontinuity,"meters=11.17",720.568,-15886.000,851.451
+79.18,P1,position-discontinuity,"meters=11.17",720.580,-15897.170,851.484
+79.20,P1,position-discontinuity,"meters=11.18",720.592,-15908.350,851.516
+79.22,P1,position-discontinuity,"meters=11.18",720.604,-15919.530,851.548
+79.24,P1,position-discontinuity,"meters=11.19",720.616,-15930.720,851.580
+79.26,P1,position-discontinuity,"meters=11.19",720.628,-15941.910,851.613
+79.28,P1,position-discontinuity,"meters=11.19",720.640,-15953.100,851.645
+79.30,P1,position-discontinuity,"meters=11.20",720.652,-15964.300,851.677
+79.32,P1,position-discontinuity,"meters=11.20",720.664,-15975.500,851.709
+79.34,P1,position-discontinuity,"meters=11.21",720.676,-15986.710,851.741
+79.36,P1,position-discontinuity,"meters=11.21",720.688,-15997.920,851.773
+79.38,P1,position-discontinuity,"meters=11.21",720.700,-16009.130,851.805
+79.40,P1,position-discontinuity,"meters=11.22",720.712,-16020.340,851.837
+79.42,P1,position-discontinuity,"meters=11.22",720.723,-16031.570,851.869
+79.44,P1,position-discontinuity,"meters=11.22",720.735,-16042.790,851.901
+79.46,P1,position-discontinuity,"meters=11.23",720.747,-16054.020,851.933
+79.48,P1,position-discontinuity,"meters=11.23",720.759,-16065.250,851.965
+79.50,P1,position-discontinuity,"meters=11.24",720.771,-16076.490,851.997
+79.52,P1,position-discontinuity,"meters=11.24",720.783,-16087.730,852.029
+79.54,P1,position-discontinuity,"meters=11.24",720.795,-16098.970,852.061
+79.56,P1,position-discontinuity,"meters=11.25",720.807,-16110.220,852.093
+79.58,P1,position-discontinuity,"meters=11.25",720.819,-16121.470,852.125
+79.60,P1,position-discontinuity,"meters=11.26",720.831,-16132.730,852.157
+79.62,P1,position-discontinuity,"meters=11.26",720.843,-16143.990,852.189
+79.64,P1,position-discontinuity,"meters=11.26",720.854,-16155.250,852.221
+79.66,P1,position-discontinuity,"meters=11.27",720.866,-16166.520,852.252
+79.68,P1,position-discontinuity,"meters=11.27",720.878,-16177.790,852.284
+79.68,CPU 2,afflicted,"Oil",276.024,4.651,640.820
+79.70,P1,position-discontinuity,"meters=11.28",720.890,-16189.070,852.316
+79.72,P1,position-discontinuity,"meters=11.28",720.902,-16200.340,852.348
+79.74,P1,position-discontinuity,"meters=11.28",720.914,-16211.630,852.379
+79.76,P1,position-discontinuity,"meters=11.29",720.925,-16222.920,852.411
+79.78,P1,position-discontinuity,"meters=11.29",720.937,-16234.210,852.443
+79.80,P1,position-discontinuity,"meters=11.29",720.949,-16245.500,852.474
+79.82,P1,position-discontinuity,"meters=11.30",720.961,-16256.800,852.506
+79.84,P1,position-discontinuity,"meters=11.30",720.973,-16268.100,852.538
+79.86,P1,position-discontinuity,"meters=11.31",720.984,-16279.410,852.569
+79.88,P1,position-discontinuity,"meters=11.31",720.996,-16290.720,852.601
+79.90,P1,position-discontinuity,"meters=11.31",721.008,-16302.030,852.632
+79.92,P1,position-discontinuity,"meters=11.32",721.020,-16313.350,852.664
+79.94,P1,position-discontinuity,"meters=11.32",721.032,-16324.670,852.696
+79.96,P1,position-discontinuity,"meters=11.33",721.043,-16336.000,852.727
+79.98,P1,position-discontinuity,"meters=11.33",721.055,-16347.330,852.759
+80.00,P1,position-discontinuity,"meters=11.33",721.067,-16358.670,852.790
+80.02,P1,position-discontinuity,"meters=11.34",721.078,-16370.000,852.822
+80.04,P1,position-discontinuity,"meters=11.34",721.090,-16381.340,852.853
+80.06,P1,position-discontinuity,"meters=11.35",721.102,-16392.690,852.884
+80.08,P1,position-discontinuity,"meters=11.35",721.114,-16404.040,852.916
+80.10,P1,position-discontinuity,"meters=11.35",721.125,-16415.390,852.947
+80.12,P1,position-discontinuity,"meters=11.36",721.137,-16426.750,852.979
+80.14,P1,position-discontinuity,"meters=11.36",721.149,-16438.110,853.010
+80.16,P1,position-discontinuity,"meters=11.37",721.160,-16449.480,853.041
+80.18,P1,position-discontinuity,"meters=11.37",721.172,-16460.850,853.073
+80.20,P1,position-discontinuity,"meters=11.37",721.184,-16472.220,853.104
+80.22,P1,position-discontinuity,"meters=11.38",721.195,-16483.600,853.135
+80.24,P1,position-discontinuity,"meters=11.38",721.207,-16494.980,853.166
+80.26,P1,position-discontinuity,"meters=11.38",721.219,-16506.360,853.198
+80.28,P1,position-discontinuity,"meters=11.39",721.230,-16517.750,853.229
+80.30,P1,position-discontinuity,"meters=11.39",721.242,-16529.140,853.260
+80.32,P1,position-discontinuity,"meters=11.40",721.254,-16540.540,853.291
+80.34,P1,position-discontinuity,"meters=11.40",721.265,-16551.940,853.322
+80.36,P1,position-discontinuity,"meters=11.40",721.277,-16563.350,853.354
+80.38,P1,position-discontinuity,"meters=11.41",721.288,-16574.750,853.385
+80.40,P1,position-discontinuity,"meters=11.41",721.300,-16586.170,853.416
+80.42,P1,position-discontinuity,"meters=11.42",721.312,-16597.580,853.447
+80.44,P1,position-discontinuity,"meters=11.42",721.323,-16609.000,853.478
+80.46,P1,position-discontinuity,"meters=11.42",721.335,-16620.430,853.509
+80.46,P2,environment-contact,"Road Surface",263.854,3.566,769.954
+80.46,P2,environment-contact,"Road Surface",263.854,3.566,769.954
+80.48,P1,position-discontinuity,"meters=11.43",721.346,-16631.850,853.540
+80.50,P1,position-discontinuity,"meters=11.43",721.358,-16643.290,853.571
+80.52,P1,position-discontinuity,"meters=11.44",721.369,-16654.720,853.602
+80.54,P1,position-discontinuity,"meters=11.44",721.381,-16666.160,853.633
+80.56,P1,position-discontinuity,"meters=11.44",721.393,-16677.600,853.664
+80.58,P1,position-discontinuity,"meters=11.45",721.404,-16689.050,853.695
+80.60,P1,position-discontinuity,"meters=11.45",721.416,-16700.500,853.726
+80.62,P1,position-discontinuity,"meters=11.46",721.427,-16711.960,853.757
+80.64,P1,position-discontinuity,"meters=11.46",721.439,-16723.420,853.788
+80.66,P1,position-discontinuity,"meters=11.46",721.450,-16734.880,853.819
+80.68,P1,position-discontinuity,"meters=11.47",721.462,-16746.350,853.849
+80.70,P1,position-discontinuity,"meters=11.47",721.473,-16757.820,853.880
+80.72,P1,position-discontinuity,"meters=11.48",721.485,-16769.300,853.911
+80.74,P1,position-discontinuity,"meters=11.48",721.496,-16780.780,853.942
+80.76,P1,position-discontinuity,"meters=11.48",721.508,-16792.260,853.973
+80.78,P1,position-discontinuity,"meters=11.49",721.519,-16803.750,854.003
+80.80,P1,position-discontinuity,"meters=11.49",721.531,-16815.240,854.034
+80.82,P1,position-discontinuity,"meters=11.50",721.542,-16826.740,854.065
+80.84,P1,position-discontinuity,"meters=11.50",721.554,-16838.240,854.095
+80.86,P1,position-discontinuity,"meters=11.50",721.565,-16849.740,854.126
+80.88,P1,position-discontinuity,"meters=11.51",721.576,-16861.250,854.157
+80.90,P1,position-discontinuity,"meters=11.51",721.588,-16872.760,854.187
+80.92,P1,position-discontinuity,"meters=11.52",721.599,-16884.280,854.218
+80.94,P1,position-discontinuity,"meters=11.52",721.611,-16895.800,854.249
+80.96,P1,position-discontinuity,"meters=11.52",721.622,-16907.320,854.279
+80.98,P1,position-discontinuity,"meters=11.53",721.633,-16918.850,854.310
+81.00,P1,position-discontinuity,"meters=11.53",721.645,-16930.380,854.340
+81.02,P1,position-discontinuity,"meters=11.54",721.656,-16941.920,854.371
+81.04,P1,position-discontinuity,"meters=11.54",721.668,-16953.460,854.401
+81.06,P1,position-discontinuity,"meters=11.54",721.679,-16965.000,854.432
+81.08,P1,position-discontinuity,"meters=11.55",721.690,-16976.540,854.462
+81.10,P1,position-discontinuity,"meters=11.55",721.702,-16988.100,854.493
+81.12,P1,position-discontinuity,"meters=11.55",721.713,-16999.650,854.523
+81.14,P1,position-discontinuity,"meters=11.56",721.724,-17011.210,854.554
+81.16,P1,position-discontinuity,"meters=11.56",721.736,-17022.770,854.584
+81.18,P1,position-discontinuity,"meters=11.57",721.747,-17034.340,854.614
+81.20,P1,position-discontinuity,"meters=11.57",721.758,-17045.910,854.645
+81.22,P1,position-discontinuity,"meters=11.57",721.770,-17057.480,854.675
+81.24,P1,position-discontinuity,"meters=11.58",721.781,-17069.060,854.706
+81.26,P1,position-discontinuity,"meters=11.58",721.792,-17080.640,854.736
+81.28,P1,position-discontinuity,"meters=11.59",721.804,-17092.230,854.766
+81.30,P1,position-discontinuity,"meters=11.59",721.815,-17103.820,854.796
+81.32,P1,position-discontinuity,"meters=11.59",721.826,-17115.410,854.827
+81.34,P1,position-discontinuity,"meters=11.60",721.837,-17127.010,854.857
+81.36,P1,position-discontinuity,"meters=11.60",721.849,-17138.610,854.887
+81.38,P1,position-discontinuity,"meters=11.61",721.860,-17150.220,854.917
+81.40,P1,position-discontinuity,"meters=11.61",721.871,-17161.830,854.948
+81.42,P1,position-discontinuity,"meters=11.61",721.882,-17173.440,854.978
+81.44,P1,position-discontinuity,"meters=11.62",721.894,-17185.060,855.008
+81.46,P1,position-discontinuity,"meters=11.62",721.905,-17196.680,855.038
+81.48,P1,position-discontinuity,"meters=11.63",721.916,-17208.300,855.068
+81.50,P1,position-discontinuity,"meters=11.63",721.927,-17219.930,855.098
+81.52,P1,position-discontinuity,"meters=11.63",721.939,-17231.560,855.128
+81.54,P1,position-discontinuity,"meters=11.64",721.950,-17243.200,855.158
+81.56,P1,position-discontinuity,"meters=11.64",721.961,-17254.840,855.188
+81.58,P1,position-discontinuity,"meters=11.64",721.972,-17266.490,855.218
+81.60,P1,position-discontinuity,"meters=11.65",721.983,-17278.130,855.248
+81.62,P1,position-discontinuity,"meters=11.65",721.995,-17289.790,855.278
+81.64,P1,position-discontinuity,"meters=11.66",722.006,-17301.440,855.308
+81.66,P1,position-discontinuity,"meters=11.66",722.017,-17313.100,855.338
+81.68,P1,position-discontinuity,"meters=11.66",722.028,-17324.770,855.368
+81.70,P1,position-discontinuity,"meters=11.67",722.039,-17336.440,855.398
+81.72,P1,position-discontinuity,"meters=11.67",722.050,-17348.110,855.428
+81.74,P1,position-discontinuity,"meters=11.68",722.062,-17359.780,855.458
+81.76,P1,position-discontinuity,"meters=11.68",722.073,-17371.460,855.488
+81.78,P1,position-discontinuity,"meters=11.68",722.084,-17383.150,855.518
+81.80,P1,position-discontinuity,"meters=11.69",722.095,-17394.830,855.548
+81.82,P1,position-discontinuity,"meters=11.69",722.106,-17406.530,855.577
+81.84,P1,position-discontinuity,"meters=11.70",722.117,-17418.220,855.607
+81.86,P1,position-discontinuity,"meters=11.70",722.128,-17429.920,855.637
+81.88,P1,position-discontinuity,"meters=11.70",722.139,-17441.620,855.667
+81.90,P1,position-discontinuity,"meters=11.71",722.151,-17453.330,855.696
+81.92,P1,position-discontinuity,"meters=11.71",722.162,-17465.040,855.726
+81.94,P1,position-discontinuity,"meters=11.71",722.173,-17476.760,855.756
+81.96,P1,position-discontinuity,"meters=11.72",722.184,-17488.470,855.786
+81.98,P1,position-discontinuity,"meters=11.72",722.195,-17500.200,855.815
+82.00,P1,position-discontinuity,"meters=11.73",722.206,-17511.920,855.845
+82.02,P1,position-discontinuity,"meters=11.73",722.217,-17523.650,855.874
+82.04,P1,position-discontinuity,"meters=11.73",722.228,-17535.390,855.904
+82.06,P1,position-discontinuity,"meters=11.74",722.239,-17547.130,855.934
+82.08,P1,position-discontinuity,"meters=11.74",722.250,-17558.870,855.963
+82.10,P1,position-discontinuity,"meters=11.75",722.261,-17570.620,855.993
+82.12,P1,position-discontinuity,"meters=11.75",722.272,-17582.370,856.022
+82.14,P1,position-discontinuity,"meters=11.75",722.283,-17594.120,856.052
+82.16,P1,position-discontinuity,"meters=11.76",722.294,-17605.880,856.081
+82.18,P1,position-discontinuity,"meters=11.76",722.305,-17617.640,856.111
+82.20,P1,position-discontinuity,"meters=11.77",722.316,-17629.400,856.140
+82.22,P1,position-discontinuity,"meters=11.77",722.327,-17641.170,856.170
+82.24,P1,position-discontinuity,"meters=11.77",722.338,-17652.950,856.199
+82.26,P1,position-discontinuity,"meters=11.78",722.349,-17664.720,856.229
+82.28,P1,position-discontinuity,"meters=11.78",722.360,-17676.510,856.258
+82.30,P1,position-discontinuity,"meters=11.79",722.371,-17688.290,856.287
+82.32,P1,position-discontinuity,"meters=11.79",722.382,-17700.080,856.317
+82.34,P1,position-discontinuity,"meters=11.79",722.393,-17711.870,856.346
+82.36,P1,position-discontinuity,"meters=11.80",722.404,-17723.670,856.375
+82.38,P1,position-discontinuity,"meters=11.80",722.415,-17735.470,856.405
+82.40,P1,position-discontinuity,"meters=11.80",722.425,-17747.280,856.434
+82.42,P1,position-discontinuity,"meters=11.81",722.436,-17759.080,856.463
+82.44,P1,position-discontinuity,"meters=11.81",722.447,-17770.900,856.493
+82.46,P1,position-discontinuity,"meters=11.82",722.458,-17782.710,856.522
+82.48,P1,position-discontinuity,"meters=11.82",722.469,-17794.530,856.551
+82.50,P1,position-discontinuity,"meters=11.82",722.480,-17806.360,856.580
+82.52,P1,position-discontinuity,"meters=11.83",722.491,-17818.190,856.609
+82.54,P1,position-discontinuity,"meters=11.83",722.502,-17830.020,856.639
+82.56,P1,position-discontinuity,"meters=11.84",722.513,-17841.850,856.668
+82.58,P1,position-discontinuity,"meters=11.84",722.523,-17853.690,856.697
+82.60,P1,position-discontinuity,"meters=11.84",722.534,-17865.540,856.726
+82.62,P1,position-discontinuity,"meters=11.85",722.545,-17877.380,856.755
+82.64,P1,position-discontinuity,"meters=11.85",722.556,-17889.240,856.784
+82.66,P1,position-discontinuity,"meters=11.86",722.567,-17901.090,856.813
+82.68,P1,position-discontinuity,"meters=11.86",722.578,-17912.950,856.842
+82.70,P1,position-discontinuity,"meters=11.86",722.589,-17924.810,856.871
+82.72,P1,position-discontinuity,"meters=11.87",722.599,-17936.680,856.900
+82.74,P1,position-discontinuity,"meters=11.87",722.610,-17948.550,856.929
+82.76,P1,position-discontinuity,"meters=11.88",722.621,-17960.430,856.958
+82.78,P1,position-discontinuity,"meters=11.88",722.632,-17972.310,856.987
+82.80,P1,position-discontinuity,"meters=11.88",722.643,-17984.190,857.016
+82.82,P1,position-discontinuity,"meters=11.89",722.653,-17996.080,857.045
+82.84,P1,position-discontinuity,"meters=11.89",722.664,-18007.970,857.074
+82.86,P1,position-discontinuity,"meters=11.90",722.675,-18019.870,857.103
+82.88,P1,position-discontinuity,"meters=11.90",722.686,-18031.770,857.132
+82.90,P1,position-discontinuity,"meters=11.90",722.696,-18043.670,857.161
+82.92,P1,position-discontinuity,"meters=11.91",722.707,-18055.580,857.190
+82.94,P1,position-discontinuity,"meters=11.91",722.718,-18067.490,857.218
+82.96,P1,position-discontinuity,"meters=11.92",722.729,-18079.410,857.247
+82.98,P1,position-discontinuity,"meters=11.92",722.739,-18091.330,857.276
+83.00,P1,position-discontinuity,"meters=11.92",722.750,-18103.250,857.305
+83.02,P1,position-discontinuity,"meters=11.93",722.761,-18115.180,857.334
+83.04,P1,position-discontinuity,"meters=11.93",722.772,-18127.110,857.362
+83.06,P1,position-discontinuity,"meters=11.94",722.782,-18139.050,857.391
+83.08,P1,position-discontinuity,"meters=11.94",722.793,-18150.990,857.420
+83.10,P1,position-discontinuity,"meters=11.94",722.804,-18162.930,857.448
+83.12,P1,position-discontinuity,"meters=11.95",722.814,-18174.880,857.477
+83.14,P1,position-discontinuity,"meters=11.95",722.825,-18186.830,857.506
+83.16,P1,position-discontinuity,"meters=11.96",722.836,-18198.790,857.534
+83.18,P1,position-discontinuity,"meters=11.96",722.846,-18210.740,857.563
+83.20,P1,position-discontinuity,"meters=11.96",722.857,-18222.710,857.592
+83.22,P1,position-discontinuity,"meters=11.97",722.868,-18234.670,857.620
+83.24,P1,position-discontinuity,"meters=11.97",722.878,-18246.640,857.649
+83.26,P1,position-discontinuity,"meters=11.97",722.889,-18258.620,857.677
+83.28,P1,position-discontinuity,"meters=11.98",722.900,-18270.600,857.706
+83.30,P1,position-discontinuity,"meters=11.98",722.910,-18282.580,857.734
+83.32,P1,position-discontinuity,"meters=11.99",722.921,-18294.570,857.763
+83.34,P1,position-discontinuity,"meters=11.99",722.932,-18306.560,857.791
+83.36,P1,position-discontinuity,"meters=11.99",722.942,-18318.550,857.820
+83.38,P1,position-discontinuity,"meters=12.00",722.953,-18330.550,857.848
+83.40,P1,position-discontinuity,"meters=12.00",722.963,-18342.550,857.877
+83.42,P1,position-discontinuity,"meters=12.01",722.974,-18354.560,857.905
+83.44,P1,position-discontinuity,"meters=12.01",722.985,-18366.570,857.933
+83.46,P1,position-discontinuity,"meters=12.01",722.995,-18378.580,857.962
+83.48,P1,position-discontinuity,"meters=12.02",723.006,-18390.600,857.990
+83.50,P1,position-discontinuity,"meters=12.02",723.016,-18402.620,858.019
+83.52,P1,position-discontinuity,"meters=12.03",723.027,-18414.640,858.047
+83.54,P1,position-discontinuity,"meters=12.03",723.037,-18426.670,858.075
+83.56,P1,position-discontinuity,"meters=12.03",723.048,-18438.710,858.104
+83.58,P1,position-discontinuity,"meters=12.04",723.059,-18450.740,858.132
+83.60,P1,position-discontinuity,"meters=12.04",723.069,-18462.790,858.160
+83.62,P1,position-discontinuity,"meters=12.04",723.080,-18474.830,858.188
+83.64,P1,position-discontinuity,"meters=12.05",723.090,-18486.880,858.216
+83.66,P1,position-discontinuity,"meters=12.05",723.101,-18498.930,858.245
+83.68,P1,position-discontinuity,"meters=12.06",723.111,-18510.990,858.273
+83.70,P1,position-discontinuity,"meters=12.06",723.122,-18523.050,858.301
+83.72,P1,position-discontinuity,"meters=12.06",723.132,-18535.110,858.329
+83.74,P1,position-discontinuity,"meters=12.07",723.143,-18547.180,858.357
+83.76,P1,position-discontinuity,"meters=12.07",723.153,-18559.250,858.385
+83.78,P1,position-discontinuity,"meters=12.08",723.164,-18571.330,858.414
+83.80,P1,position-discontinuity,"meters=12.08",723.174,-18583.410,858.442
+83.82,P1,position-discontinuity,"meters=12.08",723.185,-18595.490,858.470
+83.82,CPU 1,stalled-4-seconds,"",669.556,-24.502,442.428
+83.84,P1,position-discontinuity,"meters=12.09",723.195,-18607.580,858.498
+83.86,P1,position-discontinuity,"meters=12.09",723.205,-18619.670,858.526
+83.88,P1,position-discontinuity,"meters=12.10",723.216,-18631.770,858.554
+83.90,P1,position-discontinuity,"meters=12.10",723.226,-18643.870,858.582
+83.92,P1,position-discontinuity,"meters=12.10",723.237,-18655.970,858.610
+83.94,P1,position-discontinuity,"meters=12.11",723.247,-18668.080,858.638
+83.96,P1,position-discontinuity,"meters=12.11",723.258,-18680.190,858.666
+83.98,P1,position-discontinuity,"meters=12.12",723.268,-18692.310,858.694
+84.00,P1,position-discontinuity,"meters=12.12",723.278,-18704.430,858.722
+84.02,P1,position-discontinuity,"meters=12.12",723.289,-18716.550,858.750
+84.04,P1,position-discontinuity,"meters=12.13",723.299,-18728.680,858.777
+84.06,P1,position-discontinuity,"meters=12.13",723.310,-18740.810,858.805
+84.08,P1,position-discontinuity,"meters=12.13",723.320,-18752.940,858.833
+84.10,P1,position-discontinuity,"meters=12.14",723.330,-18765.080,858.861
+84.12,P1,position-discontinuity,"meters=12.14",723.341,-18777.220,858.889
+84.14,P1,position-discontinuity,"meters=12.15",723.351,-18789.370,858.917
+84.16,P1,position-discontinuity,"meters=12.15",723.362,-18801.520,858.944
+84.18,P1,position-discontinuity,"meters=12.15",723.372,-18813.670,858.972
+84.20,P1,position-discontinuity,"meters=12.16",723.382,-18825.830,859.000
+84.22,P1,position-discontinuity,"meters=12.16",723.393,-18837.990,859.028
+84.24,P1,position-discontinuity,"meters=12.17",723.403,-18850.160,859.055
+84.26,P1,position-discontinuity,"meters=12.17",723.413,-18862.330,859.083
+84.28,P1,position-discontinuity,"meters=12.17",723.424,-18874.500,859.111
+84.30,P1,position-discontinuity,"meters=12.18",723.434,-18886.680,859.138
+84.32,P1,position-discontinuity,"meters=12.18",723.444,-18898.860,859.166
+84.34,P1,position-discontinuity,"meters=12.19",723.454,-18911.050,859.194
+84.36,P1,position-discontinuity,"meters=12.19",723.465,-18923.240,859.221
+84.38,P1,position-discontinuity,"meters=12.19",723.475,-18935.430,859.249
+84.40,P1,position-discontinuity,"meters=12.20",723.485,-18947.630,859.277
+84.42,P1,position-discontinuity,"meters=12.20",723.496,-18959.830,859.304
+84.44,P1,position-discontinuity,"meters=12.21",723.506,-18972.040,859.332
+84.46,P1,position-discontinuity,"meters=12.21",723.516,-18984.240,859.359
+84.48,P1,position-discontinuity,"meters=12.21",723.526,-18996.460,859.387
+84.50,P1,position-discontinuity,"meters=12.22",723.537,-19008.670,859.414
+84.52,P1,position-discontinuity,"meters=12.22",723.547,-19020.890,859.442
+84.54,P1,position-discontinuity,"meters=12.22",723.557,-19033.120,859.469
+84.56,P1,position-discontinuity,"meters=12.23",723.567,-19045.350,859.497
+84.58,P1,position-discontinuity,"meters=12.23",723.578,-19057.580,859.524
+84.60,P1,position-discontinuity,"meters=12.24",723.588,-19069.820,859.552
+84.62,P1,position-discontinuity,"meters=12.24",723.598,-19082.060,859.579
+84.64,P1,position-discontinuity,"meters=12.24",723.608,-19094.300,859.606
+84.66,P1,position-discontinuity,"meters=12.25",723.619,-19106.550,859.634
+84.68,P1,position-discontinuity,"meters=12.25",723.629,-19118.800,859.661
+84.70,P1,position-discontinuity,"meters=12.26",723.639,-19131.060,859.688
+84.72,P1,position-discontinuity,"meters=12.26",723.649,-19143.320,859.716
+84.74,P1,position-discontinuity,"meters=12.26",723.659,-19155.580,859.743
+84.76,P1,position-discontinuity,"meters=12.27",723.669,-19167.850,859.770
+84.78,P1,position-discontinuity,"meters=12.27",723.680,-19180.120,859.798
+84.80,P1,position-discontinuity,"meters=12.28",723.690,-19192.390,859.825
+84.82,P1,position-discontinuity,"meters=12.28",723.700,-19204.670,859.852
+84.84,P1,position-discontinuity,"meters=12.28",723.710,-19216.960,859.879
+84.86,P1,position-discontinuity,"meters=12.29",723.720,-19229.240,859.906
+84.88,P1,position-discontinuity,"meters=12.29",723.730,-19241.540,859.934
+84.90,P1,position-discontinuity,"meters=12.29",723.741,-19253.830,859.961
+84.92,P1,position-discontinuity,"meters=12.30",723.751,-19266.130,859.988
+84.94,P1,position-discontinuity,"meters=12.30",723.761,-19278.440,860.015
+84.96,P1,position-discontinuity,"meters=12.31",723.771,-19290.740,860.042
+84.98,P1,position-discontinuity,"meters=12.31",723.781,-19303.060,860.069
+85.00,P1,position-discontinuity,"meters=12.32",723.791,-19315.370,860.096
+85.02,P1,position-discontinuity,"meters=12.32",723.801,-19327.690,860.124
+85.04,P1,position-discontinuity,"meters=12.32",723.811,-19340.020,860.151
+85.06,P1,position-discontinuity,"meters=12.33",723.821,-19352.350,860.178
+85.08,P1,position-discontinuity,"meters=12.33",723.831,-19364.680,860.205
+85.10,P1,position-discontinuity,"meters=12.34",723.842,-19377.010,860.232
+85.12,P1,position-discontinuity,"meters=12.34",723.852,-19389.350,860.259
+85.14,P1,position-discontinuity,"meters=12.34",723.862,-19401.700,860.286
+85.16,P1,position-discontinuity,"meters=12.35",723.872,-19414.040,860.313
+85.18,P1,position-discontinuity,"meters=12.35",723.882,-19426.400,860.340
+85.20,P1,position-discontinuity,"meters=12.36",723.892,-19438.750,860.367
+85.22,P1,position-discontinuity,"meters=12.36",723.902,-19451.110,860.393
+85.24,P1,position-discontinuity,"meters=12.36",723.912,-19463.470,860.420
+85.26,P1,position-discontinuity,"meters=12.37",723.922,-19475.840,860.447
+85.28,P1,position-discontinuity,"meters=12.37",723.932,-19488.210,860.474
+85.30,P1,position-discontinuity,"meters=12.38",723.942,-19500.590,860.501
+85.32,P1,position-discontinuity,"meters=12.38",723.952,-19512.970,860.528
+85.34,P1,position-discontinuity,"meters=12.38",723.962,-19525.350,860.555
+85.36,P1,position-discontinuity,"meters=12.39",723.972,-19537.740,860.581
+85.38,P1,position-discontinuity,"meters=12.39",723.982,-19550.130,860.608
+85.40,P1,position-discontinuity,"meters=12.39",723.992,-19562.520,860.635
+85.42,P1,position-discontinuity,"meters=12.40",724.002,-19574.920,860.662
+85.44,P1,position-discontinuity,"meters=12.40",724.012,-19587.320,860.688
+85.46,P1,position-discontinuity,"meters=12.41",724.022,-19599.730,860.715
+85.48,P1,position-discontinuity,"meters=12.41",724.032,-19612.140,860.742
+85.50,P1,position-discontinuity,"meters=12.41",724.042,-19624.550,860.769
+85.52,P1,position-discontinuity,"meters=12.42",724.052,-19636.970,860.795
+85.54,P1,position-discontinuity,"meters=12.42",724.062,-19649.390,860.822
+85.56,P1,position-discontinuity,"meters=12.43",724.072,-19661.820,860.849
+85.58,P1,position-discontinuity,"meters=12.43",724.082,-19674.250,860.875
+85.60,P1,position-discontinuity,"meters=12.43",724.091,-19686.680,860.902
+85.62,P1,position-discontinuity,"meters=12.44",724.101,-19699.120,860.928
+85.64,P1,position-discontinuity,"meters=12.44",724.111,-19711.560,860.955
+85.66,P1,position-discontinuity,"meters=12.45",724.121,-19724.010,860.982
+85.68,P1,position-discontinuity,"meters=12.45",724.131,-19736.460,861.008
+85.70,P1,position-discontinuity,"meters=12.45",724.141,-19748.910,861.035
+85.72,P1,position-discontinuity,"meters=12.46",724.151,-19761.370,861.061
+85.74,P1,position-discontinuity,"meters=12.46",724.161,-19773.830,861.088
+85.76,P1,position-discontinuity,"meters=12.46",724.171,-19786.290,861.114
+85.78,P1,position-discontinuity,"meters=12.47",724.180,-19798.760,861.141
+85.80,P1,position-discontinuity,"meters=12.47",724.190,-19811.230,861.167
+85.82,P1,position-discontinuity,"meters=12.48",724.200,-19823.710,861.193
+85.84,P1,position-discontinuity,"meters=12.48",724.210,-19836.190,861.220
+85.86,P1,position-discontinuity,"meters=12.48",724.220,-19848.670,861.246
+85.88,P1,position-discontinuity,"meters=12.49",724.230,-19861.160,861.273
+85.90,P1,position-discontinuity,"meters=12.49",724.240,-19873.650,861.299
+85.92,P1,position-discontinuity,"meters=12.50",724.249,-19886.150,861.325
+85.94,P1,position-discontinuity,"meters=12.50",724.259,-19898.650,861.352
+85.96,P1,position-discontinuity,"meters=12.50",724.269,-19911.150,861.378
+85.98,P1,position-discontinuity,"meters=12.51",724.279,-19923.660,861.404
+86.00,P1,position-discontinuity,"meters=12.51",724.289,-19936.170,861.431
+86.02,P1,position-discontinuity,"meters=12.52",724.299,-19948.690,861.457
+86.04,P1,position-discontinuity,"meters=12.52",724.308,-19961.210,861.483
+86.06,P1,position-discontinuity,"meters=12.52",724.318,-19973.730,861.510
+86.08,P1,position-discontinuity,"meters=12.53",724.328,-19986.260,861.536
+86.10,P1,position-discontinuity,"meters=12.53",724.338,-19998.790,861.562
+86.12,P1,position-discontinuity,"meters=12.54",724.347,-20011.330,861.588
+86.14,P1,position-discontinuity,"meters=12.54",724.357,-20023.870,861.614
+86.16,P1,position-discontinuity,"meters=12.54",724.367,-20036.410,861.641
+86.18,P1,position-discontinuity,"meters=12.55",724.377,-20048.960,861.667
+86.20,P1,position-discontinuity,"meters=12.55",724.386,-20061.510,861.693
+86.22,P1,position-discontinuity,"meters=12.55",724.396,-20074.060,861.719
+86.24,P1,position-discontinuity,"meters=12.56",724.406,-20086.620,861.745
+86.26,P1,position-discontinuity,"meters=12.56",724.416,-20099.180,861.771
+86.28,P1,position-discontinuity,"meters=12.57",724.425,-20111.750,861.797
+86.30,P1,position-discontinuity,"meters=12.57",724.435,-20124.320,861.823
+86.32,P1,position-discontinuity,"meters=12.57",724.445,-20136.890,861.849
+86.32,CPU 2,environment-contact,"Road Surface",265.768,3.419,786.248
+86.32,CPU 2,environment-contact,"Road Surface",265.768,3.419,786.248
+86.34,P1,position-discontinuity,"meters=12.58",724.454,-20149.470,861.875
+86.36,P1,position-discontinuity,"meters=12.58",724.464,-20162.050,861.901
+86.38,P1,position-discontinuity,"meters=12.59",724.474,-20174.640,861.927
+86.40,P1,position-discontinuity,"meters=12.59",724.484,-20187.230,861.953
+86.42,P1,position-discontinuity,"meters=12.59",724.493,-20199.820,861.979
+86.44,P1,position-discontinuity,"meters=12.60",724.503,-20212.420,862.005
+86.46,P1,position-discontinuity,"meters=12.60",724.513,-20225.020,862.031
+86.48,P1,position-discontinuity,"meters=12.61",724.522,-20237.630,862.057
+86.50,P1,position-discontinuity,"meters=12.61",724.532,-20250.240,862.083
+86.52,P1,position-discontinuity,"meters=12.61",724.541,-20262.850,862.109
+86.54,P1,position-discontinuity,"meters=12.62",724.551,-20275.470,862.135
+86.56,P1,position-discontinuity,"meters=12.62",724.561,-20288.090,862.161
+86.58,P1,position-discontinuity,"meters=12.63",724.570,-20300.710,862.186
+86.60,P1,position-discontinuity,"meters=12.63",724.580,-20313.340,862.212
+86.62,P1,position-discontinuity,"meters=12.63",724.590,-20325.970,862.238
+86.64,P1,position-discontinuity,"meters=12.64",724.599,-20338.610,862.264
+86.66,P1,position-discontinuity,"meters=12.64",724.609,-20351.250,862.290
+86.68,P1,position-discontinuity,"meters=12.64",724.619,-20363.900,862.315
+86.70,P1,position-discontinuity,"meters=12.65",724.628,-20376.540,862.341
+86.72,P1,position-discontinuity,"meters=12.65",724.638,-20389.200,862.367
+86.74,P1,position-discontinuity,"meters=12.66",724.647,-20401.850,862.393
+86.76,P1,position-discontinuity,"meters=12.66",724.657,-20414.510,862.418
+86.78,P1,position-discontinuity,"meters=12.66",724.666,-20427.180,862.444
+86.80,P1,position-discontinuity,"meters=12.67",724.676,-20439.850,862.470
+86.82,P1,position-discontinuity,"meters=12.67",724.686,-20452.520,862.495
+86.84,P1,position-discontinuity,"meters=12.68",724.695,-20465.190,862.521
+86.86,P1,position-discontinuity,"meters=12.68",724.705,-20477.870,862.547
+86.88,P1,position-discontinuity,"meters=12.68",724.714,-20490.560,862.572
+86.90,P1,position-discontinuity,"meters=12.69",724.724,-20503.240,862.598
+86.92,P1,position-discontinuity,"meters=12.69",724.733,-20515.940,862.623
+86.94,P1,position-discontinuity,"meters=12.70",724.743,-20528.630,862.649
+86.96,P1,position-discontinuity,"meters=12.70",724.752,-20541.330,862.674
+86.98,P1,position-discontinuity,"meters=12.70",724.762,-20554.030,862.700
+87.00,P1,position-discontinuity,"meters=12.71",724.771,-20566.740,862.726
+87.02,P1,position-discontinuity,"meters=12.71",724.781,-20579.450,862.751
+87.04,P1,position-discontinuity,"meters=12.71",724.790,-20592.170,862.777
+87.06,P1,position-discontinuity,"meters=12.72",724.800,-20604.890,862.802
+87.08,P1,position-discontinuity,"meters=12.72",724.809,-20617.610,862.827
+87.10,P1,position-discontinuity,"meters=12.73",724.819,-20630.340,862.853
+87.12,P1,position-discontinuity,"meters=12.73",724.828,-20643.070,862.878
+87.14,P1,position-discontinuity,"meters=12.74",724.838,-20655.810,862.904
+87.16,P1,position-discontinuity,"meters=12.74",724.847,-20668.550,862.929
+87.18,P1,position-discontinuity,"meters=12.74",724.857,-20681.290,862.955
+87.20,P1,position-discontinuity,"meters=12.75",724.866,-20694.040,862.980
+87.22,P1,position-discontinuity,"meters=12.75",724.876,-20706.790,863.005
+87.24,P1,position-discontinuity,"meters=12.76",724.885,-20719.550,863.031
+87.26,P1,position-discontinuity,"meters=12.76",724.895,-20732.310,863.056
+87.28,P1,position-discontinuity,"meters=12.76",724.904,-20745.070,863.081
+87.30,P1,position-discontinuity,"meters=12.77",724.914,-20757.840,863.106
+87.32,P1,position-discontinuity,"meters=12.77",724.923,-20770.610,863.132
+87.34,P1,position-discontinuity,"meters=12.78",724.932,-20783.390,863.157
+87.36,P1,position-discontinuity,"meters=12.78",724.942,-20796.170,863.182
+87.38,P1,position-discontinuity,"meters=12.78",724.951,-20808.950,863.208
+87.40,P1,position-discontinuity,"meters=12.79",724.960,-20821.740,863.233
+87.42,P1,position-discontinuity,"meters=12.79",724.970,-20834.530,863.258
+87.44,P1,position-discontinuity,"meters=12.79",724.979,-20847.320,863.283
+87.46,P1,position-discontinuity,"meters=12.80",724.989,-20860.120,863.308
+87.48,P1,position-discontinuity,"meters=12.80",724.998,-20872.920,863.333
+87.50,P1,position-discontinuity,"meters=12.81",725.007,-20885.730,863.359
+87.52,P1,position-discontinuity,"meters=12.81",725.017,-20898.540,863.384
+87.54,P1,position-discontinuity,"meters=12.81",725.026,-20911.360,863.409
+87.56,P1,position-discontinuity,"meters=12.82",725.036,-20924.170,863.434
+87.58,P1,position-discontinuity,"meters=12.82",725.045,-20937.000,863.459
+87.60,P1,position-discontinuity,"meters=12.83",725.054,-20949.820,863.484
+87.62,P1,position-discontinuity,"meters=12.83",725.064,-20962.650,863.509
+87.64,P1,position-discontinuity,"meters=12.83",725.073,-20975.490,863.534
+87.66,P1,position-discontinuity,"meters=12.84",725.082,-20988.320,863.559
+87.68,P1,position-discontinuity,"meters=12.84",725.092,-21001.170,863.584
+87.70,P1,position-discontinuity,"meters=12.85",725.101,-21014.010,863.609
+87.72,P1,position-discontinuity,"meters=12.85",725.110,-21026.860,863.634
+87.74,P1,position-discontinuity,"meters=12.85",725.119,-21039.710,863.659
+87.76,P1,position-discontinuity,"meters=12.86",725.129,-21052.570,863.684
+87.78,P1,position-discontinuity,"meters=12.86",725.138,-21065.430,863.709
+87.80,P1,position-discontinuity,"meters=12.87",725.147,-21078.300,863.734
+87.82,P1,position-discontinuity,"meters=12.87",725.157,-21091.170,863.759
+87.84,P1,position-discontinuity,"meters=12.87",725.166,-21104.040,863.784
+87.86,P1,position-discontinuity,"meters=12.88",725.175,-21116.920,863.808
+87.88,P1,position-discontinuity,"meters=12.88",725.184,-21129.800,863.833
+87.90,P1,position-discontinuity,"meters=12.88",725.194,-21142.680,863.858
+87.92,P1,position-discontinuity,"meters=12.89",725.203,-21155.570,863.883
+87.94,P1,position-discontinuity,"meters=12.89",725.212,-21168.460,863.908
+87.96,P1,position-discontinuity,"meters=12.90",725.221,-21181.360,863.933
+87.98,P1,position-discontinuity,"meters=12.90",725.231,-21194.260,863.957
+88.00,P1,position-discontinuity,"meters=12.90",725.240,-21207.170,863.982
+88.02,P1,position-discontinuity,"meters=12.91",725.249,-21220.070,864.007
+88.04,P1,position-discontinuity,"meters=12.91",725.258,-21232.990,864.032
+88.06,P1,position-discontinuity,"meters=12.92",725.268,-21245.900,864.056
+88.08,P1,position-discontinuity,"meters=12.92",725.277,-21258.820,864.081
+88.10,P1,position-discontinuity,"meters=12.92",725.286,-21271.750,864.106
+88.12,P1,position-discontinuity,"meters=12.93",725.295,-21284.670,864.130
+88.14,P1,position-discontinuity,"meters=12.93",725.304,-21297.610,864.155
+88.16,P1,position-discontinuity,"meters=12.94",725.314,-21310.540,864.180
+88.18,P1,position-discontinuity,"meters=12.94",725.323,-21323.480,864.204
+88.20,P1,position-discontinuity,"meters=12.94",725.332,-21336.420,864.229
+88.22,P1,position-discontinuity,"meters=12.95",725.341,-21349.370,864.254
+88.24,P1,position-discontinuity,"meters=12.95",725.350,-21362.320,864.278
+88.26,P1,position-discontinuity,"meters=12.96",725.359,-21375.280,864.303
+88.28,P1,position-discontinuity,"meters=12.96",725.369,-21388.240,864.327
+88.30,P1,position-discontinuity,"meters=12.96",725.378,-21401.200,864.352
+88.32,P1,position-discontinuity,"meters=12.97",725.387,-21414.170,864.376
+88.34,P1,position-discontinuity,"meters=12.97",725.396,-21427.140,864.401
+88.36,P1,position-discontinuity,"meters=12.97",725.405,-21440.110,864.425
+88.38,P1,position-discontinuity,"meters=12.98",725.414,-21453.090,864.450
+88.40,P1,position-discontinuity,"meters=12.98",725.423,-21466.070,864.474
+88.42,P1,position-discontinuity,"meters=12.99",725.433,-21479.060,864.499
+88.44,P1,position-discontinuity,"meters=12.99",725.442,-21492.050,864.523
+88.46,P1,position-discontinuity,"meters=12.99",725.451,-21505.040,864.548
+88.48,P1,position-discontinuity,"meters=13.00",725.460,-21518.040,864.572
+88.50,P1,position-discontinuity,"meters=13.00",725.469,-21531.040,864.596
+88.52,P1,position-discontinuity,"meters=13.01",725.478,-21544.050,864.621
+88.54,P1,position-discontinuity,"meters=13.01",725.487,-21557.060,864.645
+88.56,P1,position-discontinuity,"meters=13.01",725.496,-21570.070,864.669
+88.58,P1,position-discontinuity,"meters=13.02",725.505,-21583.090,864.694
+88.60,P1,position-discontinuity,"meters=13.02",725.514,-21596.110,864.718
+88.62,P1,position-discontinuity,"meters=13.03",725.523,-21609.140,864.742
+88.64,P1,position-discontinuity,"meters=13.03",725.532,-21622.170,864.767
+88.66,P1,position-discontinuity,"meters=13.03",725.541,-21635.200,864.791
+88.68,P1,position-discontinuity,"meters=13.04",725.551,-21648.240,864.815
+88.70,P1,position-discontinuity,"meters=13.04",725.560,-21661.280,864.840
+88.72,P1,position-discontinuity,"meters=13.04",725.569,-21674.320,864.864
+88.74,P1,position-discontinuity,"meters=13.05",725.578,-21687.370,864.888
+88.76,P1,position-discontinuity,"meters=13.05",725.587,-21700.420,864.912
+88.78,P1,position-discontinuity,"meters=13.06",725.596,-21713.480,864.936
+88.80,P1,position-discontinuity,"meters=13.06",725.605,-21726.540,864.961
+88.82,P1,position-discontinuity,"meters=13.06",725.614,-21739.610,864.985
+88.84,P1,position-discontinuity,"meters=13.07",725.623,-21752.670,865.009
+88.86,P1,position-discontinuity,"meters=13.07",725.632,-21765.750,865.033
+88.88,P1,position-discontinuity,"meters=13.08",725.641,-21778.820,865.057
+88.90,P1,position-discontinuity,"meters=13.08",725.650,-21791.900,865.081
+88.92,P1,position-discontinuity,"meters=13.08",725.659,-21804.990,865.105
+88.94,P1,position-discontinuity,"meters=13.09",725.668,-21818.070,865.129
+88.96,P1,position-discontinuity,"meters=13.09",725.677,-21831.170,865.153
+88.98,P1,position-discontinuity,"meters=13.10",725.686,-21844.260,865.177
+89.00,P1,position-discontinuity,"meters=13.10",725.695,-21857.360,865.202
+89.02,P1,position-discontinuity,"meters=13.10",725.704,-21870.460,865.226
+89.04,P1,position-discontinuity,"meters=13.11",725.713,-21883.570,865.250
+89.06,P1,position-discontinuity,"meters=13.11",725.721,-21896.680,865.273
+89.08,P1,position-discontinuity,"meters=13.12",725.730,-21909.800,865.297
+89.10,P1,position-discontinuity,"meters=13.12",725.739,-21922.920,865.321
+89.12,P1,position-discontinuity,"meters=13.12",725.748,-21936.040,865.345
+89.14,P1,position-discontinuity,"meters=13.13",725.757,-21949.170,865.369
+89.16,P1,position-discontinuity,"meters=13.13",725.766,-21962.300,865.393
+89.18,P1,position-discontinuity,"meters=13.13",725.775,-21975.430,865.417
+89.20,P1,position-discontinuity,"meters=13.14",725.784,-21988.570,865.441
+89.22,P1,position-discontinuity,"meters=13.14",725.793,-22001.720,865.465
+89.24,P1,position-discontinuity,"meters=13.15",725.802,-22014.870,865.489
+89.26,P1,position-discontinuity,"meters=13.15",725.811,-22028.020,865.513
+89.28,P1,position-discontinuity,"meters=13.16",725.820,-22041.180,865.536
+89.30,P1,position-discontinuity,"meters=13.16",725.828,-22054.340,865.560
+89.32,P1,position-discontinuity,"meters=13.16",725.837,-22067.500,865.584
+89.34,P1,position-discontinuity,"meters=13.17",725.846,-22080.670,865.608
+89.36,P1,position-discontinuity,"meters=13.17",725.855,-22093.840,865.632
+89.38,P1,position-discontinuity,"meters=13.18",725.864,-22107.020,865.655
+89.40,P1,position-discontinuity,"meters=13.18",725.873,-22120.200,865.679
+89.42,P1,position-discontinuity,"meters=13.18",725.881,-22133.380,865.703
+89.44,P1,position-discontinuity,"meters=13.19",725.890,-22146.570,865.727
+89.46,P1,position-discontinuity,"meters=13.19",725.899,-22159.760,865.750
+89.48,P1,position-discontinuity,"meters=13.20",725.908,-22172.950,865.774
+89.50,P1,position-discontinuity,"meters=13.20",725.917,-22186.150,865.798
+89.52,P1,position-discontinuity,"meters=13.20",725.926,-22199.360,865.821
+89.54,P1,position-discontinuity,"meters=13.21",725.934,-22212.560,865.845
+89.56,P1,position-discontinuity,"meters=13.21",725.943,-22225.770,865.869
+89.58,P1,position-discontinuity,"meters=13.21",725.952,-22238.990,865.892
+89.60,P1,position-discontinuity,"meters=13.22",725.961,-22252.210,865.916
+89.62,P1,position-discontinuity,"meters=13.22",725.970,-22265.430,865.939
+89.64,P1,position-discontinuity,"meters=13.23",725.978,-22278.660,865.963
+89.66,P1,position-discontinuity,"meters=13.23",725.987,-22291.890,865.986
+89.68,P1,position-discontinuity,"meters=13.23",725.996,-22305.120,866.010
+89.70,P1,position-discontinuity,"meters=13.24",726.005,-22318.360,866.034
+89.72,P1,position-discontinuity,"meters=13.24",726.014,-22331.600,866.057
+89.74,P1,position-discontinuity,"meters=13.25",726.022,-22344.850,866.081
+89.76,P1,position-discontinuity,"meters=13.25",726.031,-22358.100,866.104
+89.78,P1,position-discontinuity,"meters=13.25",726.040,-22371.350,866.128
+89.80,P1,position-discontinuity,"meters=13.26",726.049,-22384.610,866.151
+89.82,P1,position-discontinuity,"meters=13.26",726.057,-22397.870,866.174
+89.84,P1,position-discontinuity,"meters=13.27",726.066,-22411.140,866.198
+89.86,P1,position-discontinuity,"meters=13.27",726.075,-22424.410,866.221
+89.88,P1,position-discontinuity,"meters=13.27",726.083,-22437.680,866.245
+89.90,P1,position-discontinuity,"meters=13.28",726.092,-22450.960,866.268
+89.92,P1,position-discontinuity,"meters=13.28",726.101,-22464.240,866.291
+89.94,P1,position-discontinuity,"meters=13.29",726.110,-22477.520,866.315
+89.96,P1,position-discontinuity,"meters=13.29",726.118,-22490.810,866.338
+89.98,P1,position-discontinuity,"meters=13.29",726.127,-22504.110,866.362
+90.00,P1,position-discontinuity,"meters=13.30",726.136,-22517.400,866.385
+90.02,P1,position-discontinuity,"meters=13.30",726.144,-22530.700,866.408
+90.02,P1,still-racing,"position=4;laps=0",726.153,-22544.010,866.431
+90.02,P2,still-racing,"position=1;laps=0",439.697,3.348,786.279
+90.02,CPU 1,still-racing,"position=3;laps=0",669.556,-24.514,442.052
+90.02,CPU 2,still-racing,"position=2;laps=0",320.175,3.348,796.225

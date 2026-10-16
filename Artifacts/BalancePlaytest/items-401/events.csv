@@ -1,0 +1,1539 @@
+time,car,event,detail,x,y,z
+0.02,P1,airborne,"speed=0.00",431.261,3.348,790.675
+0.02,P2,airborne,"speed=0.00",431.075,3.348,786.679
+0.02,CPU 1,airborne,"speed=0.00",424.268,5.000,790.999
+0.02,CPU 2,airborne,"speed=0.00",424.083,5.000,787.003
+0.04,P1,grounded,"speed=0.00",431.261,3.348,790.675
+0.04,P2,grounded,"speed=0.00",431.075,3.348,786.679
+0.60,CPU 1,grounded,"speed=0.00",424.268,3.286,790.999
+0.60,CPU 2,grounded,"speed=0.00",424.083,3.286,787.003
+0.60,CPU 1,environment-contact,"Road Surface",424.278,3.336,790.993
+0.60,CPU 1,environment-contact,"Road Surface",424.278,3.336,790.993
+0.60,CPU 1,environment-contact,"Road Surface",424.278,3.336,790.993
+0.60,CPU 1,environment-contact,"Road Surface",424.278,3.336,790.993
+0.60,CPU 2,environment-contact,"Road Surface",424.094,3.336,787.009
+0.60,CPU 2,environment-contact,"Road Surface",424.094,3.336,787.009
+0.60,CPU 2,environment-contact,"Road Surface",424.094,3.336,787.009
+0.60,CPU 2,environment-contact,"Road Surface",424.094,3.336,787.009
+0.86,CPU 2,vehicle-contact,"CPU1_Car",425.231,3.348,787.295
+0.86,CPU 1,vehicle-contact,"CPU2_Car",425.385,3.348,790.603
+0.86,CPU 2,vehicle-contact,"CPU1_Car",425.231,3.348,787.295
+0.86,CPU 1,vehicle-contact,"CPU2_Car",425.385,3.348,790.603
+1.48,CPU 2,vehicle-contact,"CPU1_Car",429.041,3.348,787.289
+1.48,CPU 1,vehicle-contact,"CPU2_Car",429.610,3.348,790.272
+1.62,CPU 2,vehicle-contact,"CPU1_Car",429.801,3.348,787.227
+1.62,CPU 1,vehicle-contact,"CPU2_Car",430.611,3.348,790.079
+2.26,CPU 2,vehicle-contact,"CPU1_Car",434.422,3.348,786.226
+2.26,CPU 1,vehicle-contact,"CPU2_Car",436.608,3.348,788.263
+2.36,CPU 2,vehicle-contact,"CPU1_Car",435.341,3.348,786.032
+2.36,CPU 1,vehicle-contact,"CPU2_Car",438.101,3.349,787.968
+2.68,CPU 2,vehicle-contact,"CPU1_Car",439.727,3.348,785.278
+2.68,CPU 1,vehicle-contact,"CPU2_Car",443.529,3.349,786.955
+2.90,CPU 2,vehicle-contact,"CPU1_Car",442.988,3.348,784.827
+2.90,CPU 1,vehicle-contact,"CPU2_Car",447.981,3.350,785.738
+8.12,P2,item,"Oil",494.001,3.348,697.014
+10.12,CPU 1,afflicted,"Oil",493.591,3.348,694.440
+11.68,P2,environment-contact,"Road Surface",497.406,3.400,637.189
+12.04,P2,charge,"",499.884,3.509,631.843
+12.36,P2,environment-contact,"Road Surface",502.271,3.714,627.867
+12.58,P2,environment-contact,"Road Surface",503.858,3.939,625.560
+13.30,P2,environment-contact,"Road Surface",509.538,5.141,618.737
+13.46,P2,environment-contact,"Road Surface",511.431,5.647,616.934
+13.48,P2,environment-contact,"Road Surface",511.693,5.729,616.697
+13.54,P2,environment-contact,"Road Surface",512.518,5.966,615.993
+13.54,P2,environment-contact,"Road Surface",512.518,5.966,615.993
+13.62,P2,environment-contact,"Road Surface",513.689,6.286,615.050
+13.62,P2,environment-contact,"Road Surface",513.689,6.286,615.050
+13.62,P2,environment-contact,"Road Surface",513.689,6.286,615.050
+13.66,P2,environment-contact,"Road Surface",514.295,6.469,614.588
+13.66,P2,environment-contact,"Road Surface",514.295,6.469,614.588
+13.74,P2,environment-contact,"Road Surface",515.546,6.862,613.697
+13.74,P2,environment-contact,"Road Surface",515.546,6.862,613.697
+13.74,P2,environment-contact,"Road Surface",515.546,6.862,613.697
+13.80,P2,airborne,"speed=19.18",516.179,7.096,613.272
+13.82,P2,grounded,"speed=19.13",516.493,7.193,613.056
+13.88,P2,environment-contact,"Road Surface",517.782,7.497,612.217
+13.88,P2,environment-contact,"Road Surface",517.782,7.497,612.217
+13.92,P2,environment-contact,"Road Surface",518.410,7.711,611.819
+13.92,P2,environment-contact,"Road Surface",518.410,7.711,611.819
+13.94,P1,environment-contact,"Road Surface",515.251,5.989,618.828
+14.00,P1,environment-contact,"Road Surface",516.108,6.249,618.136
+14.02,P2,airborne,"speed=18.60",519.689,8.233,611.085
+14.02,P1,environment-contact,"Road Surface",516.399,6.347,617.904
+14.04,P2,grounded,"speed=18.55",520.009,8.334,610.898
+14.06,P2,airborne,"speed=18.68",520.333,8.420,610.709
+14.06,P1,environment-contact,"Road Surface",516.987,6.562,617.451
+14.06,P1,environment-contact,"Road Surface",516.987,6.562,617.451
+14.08,P2,grounded,"speed=18.60",520.654,8.493,610.520
+14.08,P2,environment-contact,"Road Surface",520.972,8.570,610.335
+14.10,CPU 1,environment-contact,"Road Surface",498.476,3.457,633.807
+14.12,P1,environment-contact,"Road Surface",517.913,6.863,616.783
+14.14,P1,environment-contact,"Road Surface",518.229,6.950,616.555
+14.16,P2,environment-contact,"Road Surface",522.302,8.839,609.593
+14.16,P2,environment-contact,"Road Surface",522.302,8.839,609.593
+14.16,P2,environment-contact,"Road Surface",522.302,8.839,609.593
+14.16,P1,environment-contact,"Road Surface",518.553,7.039,616.341
+14.18,P1,environment-contact,"Road Surface",518.870,7.176,616.141
+14.18,P1,environment-contact,"Road Surface",518.870,7.176,616.141
+14.20,P2,environment-contact,"Road Surface",522.985,9.045,609.251
+14.26,P1,environment-contact,"Road Surface",520.178,7.618,615.316
+14.26,P1,environment-contact,"Road Surface",520.178,7.618,615.316
+14.30,P1,environment-contact,"Road Surface",520.837,7.858,614.917
+14.30,P1,environment-contact,"Road Surface",520.837,7.858,614.917
+14.30,P1,environment-contact,"Road Surface",520.837,7.858,614.917
+14.34,P2,environment-contact,"Road Surface",525.461,9.712,608.052
+14.34,P2,environment-contact,"Road Surface",525.461,9.712,608.052
+14.34,P2,environment-contact,"Road Surface",525.461,9.712,608.052
+14.38,P1,environment-contact,"Road Surface",522.212,8.276,614.136
+14.40,P1,environment-contact,"Road Surface",522.547,8.418,613.955
+14.40,P1,environment-contact,"Road Surface",522.547,8.418,613.955
+14.44,P1,environment-contact,"Road Surface",523.237,8.661,613.593
+14.48,P1,environment-contact,"Road Surface",523.930,8.877,613.233
+14.50,P1,environment-contact,"Road Surface",524.277,8.971,613.052
+14.54,P1,environment-contact,"Road Surface",524.980,9.181,612.701
+14.56,P1,environment-contact,"Road Surface",525.336,9.281,612.527
+14.58,P1,environment-contact,"Road Surface",525.689,9.386,612.351
+14.60,P1,environment-contact,"Road Surface",526.046,9.497,612.180
+14.62,P1,environment-contact,"Road Surface",526.407,9.596,612.009
+14.66,P1,environment-contact,"Road Surface",527.134,9.790,611.668
+14.72,CPU 1,environment-contact,"Road Surface",502.583,3.794,626.677
+14.80,CPU 1,environment-contact,"Road Surface",503.210,3.876,625.777
+14.98,P1,environment-contact,"Road Surface",533.150,11.457,609.083
+14.98,P1,environment-contact,"Road Surface",533.150,11.457,609.083
+15.08,CPU 2,environment-contact,"Road Surface",498.557,3.387,638.771
+15.10,CPU 2,environment-contact,"Road Surface",498.627,3.391,638.511
+15.22,CPU 1,environment-contact,"Road Surface",506.839,4.565,621.133
+15.34,CPU 1,environment-contact,"Road Surface",507.952,4.827,619.879
+15.34,CPU 1,environment-contact,"Road Surface",507.952,4.827,619.879
+15.34,CPU 2,environment-contact,"Road Surface",499.569,3.437,635.430
+15.56,CPU 1,environment-contact,"Road Surface",510.060,5.337,617.710
+15.66,CPU 1,environment-contact,"Road Surface",511.029,5.604,616.797
+15.70,P1,environment-contact,"Road Surface",547.403,14.554,604.052
+15.70,P1,environment-contact,"Road Surface",547.403,14.554,604.052
+15.78,CPU 1,environment-contact,"Road Surface",512.201,5.948,615.769
+15.80,CPU 2,environment-contact,"Road Surface",501.992,3.621,629.687
+15.80,CPU 2,environment-contact,"Road Surface",501.992,3.621,629.687
+15.84,CPU 1,environment-contact,"Road Surface",512.786,6.094,615.271
+15.86,P1,environment-contact,"Road Surface",550.657,15.047,603.147
+15.88,CPU 1,environment-contact,"Road Surface",513.178,6.227,614.964
+15.92,P1,environment-contact,"Road Surface",551.886,15.209,602.837
+15.98,P1,environment-contact,"Road Surface",553.121,15.360,602.543
+15.98,CPU 1,environment-contact,"Road Surface",514.135,6.501,614.208
+16.04,P1,environment-contact,"Road Surface",554.360,15.500,602.267
+16.06,CPU 1,environment-contact,"Road Surface",514.903,6.693,613.631
+16.08,CPU 1,environment-contact,"Road Surface",515.085,6.773,613.497
+16.08,CPU 1,environment-contact,"Road Surface",515.085,6.773,613.497
+16.18,CPU 1,environment-contact,"Road Surface",516.035,7.024,612.827
+16.20,CPU 1,environment-contact,"Road Surface",516.215,7.108,612.700
+16.20,CPU 1,environment-contact,"Road Surface",516.215,7.108,612.700
+16.28,CPU 1,environment-contact,"Road Surface",516.983,7.296,612.186
+16.30,CPU 1,environment-contact,"Road Surface",517.167,7.383,612.072
+16.30,CPU 1,environment-contact,"Road Surface",517.167,7.383,612.072
+16.42,CPU 1,environment-contact,"Road Surface",518.313,7.733,611.355
+16.42,CPU 1,environment-contact,"Road Surface",518.313,7.733,611.355
+16.42,CPU 1,environment-contact,"Road Surface",518.313,7.733,611.355
+16.42,CPU 1,environment-contact,"Road Surface",518.313,7.733,611.355
+16.42,CPU 2,environment-contact,"Road Surface",506.473,4.421,622.296
+16.44,CPU 2,environment-contact,"Road Surface",506.641,4.455,622.067
+16.46,CPU 2,environment-contact,"Road Surface",506.809,4.494,621.839
+16.52,CPU 1,environment-contact,"Road Surface",519.272,8.010,610.792
+16.52,CPU 1,environment-contact,"Road Surface",519.272,8.010,610.792
+16.62,CPU 1,environment-contact,"Road Surface",520.247,8.283,610.245
+16.64,CPU 1,environment-contact,"Road Surface",520.439,8.355,610.139
+16.64,CPU 1,environment-contact,"Road Surface",520.439,8.355,610.139
+16.74,CPU 1,environment-contact,"Road Surface",521.444,8.639,609.606
+16.76,CPU 1,environment-contact,"Road Surface",521.641,8.713,609.496
+16.80,CPU 1,environment-contact,"Road Surface",522.050,8.838,609.287
+16.88,CPU 1,environment-contact,"Road Surface",522.894,9.058,608.873
+16.88,CPU 1,environment-contact,"Road Surface",522.894,9.058,608.873
+16.94,CPU 2,environment-contact,"Road Surface",511.197,5.616,616.883
+16.96,CPU 1,environment-contact,"Road Surface",523.760,9.278,608.457
+17.00,CPU 1,environment-contact,"Road Surface",524.195,9.420,608.249
+17.06,CPU 2,environment-contact,"Road Surface",512.348,5.966,615.823
+17.10,CPU 1,environment-contact,"Road Surface",525.320,9.711,607.730
+17.10,CPU 1,environment-contact,"Road Surface",525.320,9.711,607.730
+17.10,CPU 2,environment-contact,"Road Surface",512.736,6.059,615.477
+17.20,CPU 2,environment-contact,"Road Surface",513.706,6.332,614.677
+17.24,CPU 2,environment-contact,"Road Surface",514.079,6.458,614.370
+17.26,CPU 2,environment-contact,"Road Surface",514.270,6.527,614.224
+17.34,CPU 2,environment-contact,"Road Surface",515.039,6.732,613.635
+17.34,CPU 2,environment-contact,"Road Surface",515.039,6.732,613.635
+17.36,CPU 2,environment-contact,"Road Surface",515.226,6.808,613.497
+17.42,CPU 2,environment-contact,"Road Surface",515.803,6.958,613.085
+17.44,CPU 2,environment-contact,"Road Surface",515.988,7.011,612.949
+17.46,CPU 2,environment-contact,"Road Surface",516.165,7.086,612.816
+17.52,CPU 2,environment-contact,"Road Surface",516.726,7.248,612.425
+17.56,CPU 2,environment-contact,"Road Surface",517.106,7.345,612.174
+17.58,CPU 2,environment-contact,"Road Surface",517.289,7.426,612.059
+17.60,CPU 2,environment-contact,"Road Surface",517.477,7.488,611.944
+17.70,CPU 2,environment-contact,"Road Surface",518.411,7.759,611.352
+17.76,CPU 2,environment-contact,"Road Surface",518.989,7.895,611.003
+17.76,CPU 2,environment-contact,"Road Surface",518.989,7.895,611.003
+17.80,CPU 2,environment-contact,"Road Surface",519.364,8.038,610.785
+17.88,CPU 2,environment-contact,"Road Surface",520.147,8.257,610.347
+17.92,CPU 2,environment-contact,"Road Surface",520.535,8.391,610.124
+17.92,CPU 2,environment-contact,"Road Surface",520.535,8.391,610.124
+18.02,CPU 2,environment-contact,"Road Surface",521.544,8.674,609.584
+18.02,CPU 2,environment-contact,"Road Surface",521.544,8.674,609.584
+18.02,CPU 2,environment-contact,"Road Surface",521.544,8.674,609.584
+18.14,CPU 2,environment-contact,"Road Surface",522.793,9.021,608.953
+18.14,CPU 2,environment-contact,"Road Surface",522.793,9.021,608.953
+18.24,CPU 2,environment-contact,"Road Surface",523.871,9.312,608.426
+18.26,CPU 2,environment-contact,"Road Surface",524.088,9.382,608.323
+18.26,CPU 2,environment-contact,"Road Surface",524.088,9.382,608.323
+18.32,P2,airborne,"speed=19.41",607.645,18.319,597.911
+18.56,CPU 1,environment-contact,"Road Surface",545.387,14.446,600.066
+18.58,CPU 1,environment-contact,"Road Surface",545.708,14.500,599.968
+18.64,P1,airborne,"speed=18.78",607.770,18.325,598.078
+18.74,P2,item,"Oil",616.147,17.237,598.063
+18.90,P2,environment-contact,"Road Surface",619.195,16.410,598.116
+18.90,P2,environment-contact,"Road Surface",619.195,16.410,598.116
+18.92,P2,grounded,"speed=18.95",619.195,16.410,598.116
+18.94,P2,environment-contact,"Road Surface",619.952,16.350,598.089
+18.94,P2,environment-contact,"Road Surface",619.952,16.350,598.089
+19.22,P1,environment-contact,"Road Surface",618.921,16.367,597.897
+19.22,P1,environment-contact,"Road Surface",618.921,16.367,597.897
+19.24,P1,grounded,"speed=18.23",618.921,16.367,597.897
+19.26,P1,afflicted,"Oil",619.655,16.346,597.927
+19.26,P1,environment-contact,"Road Surface",619.655,16.346,597.927
+19.26,P1,environment-contact,"Road Surface",619.655,16.346,597.927
+19.32,P1,environment-contact,"Road Surface",620.791,16.349,598.019
+19.32,P1,environment-contact,"Road Surface",620.791,16.349,598.019
+19.74,P2,vehicle-contact,"Player1_Car",632.725,16.348,596.784
+19.74,P1,vehicle-contact,"Player2_Car",628.005,16.348,598.690
+19.92,CPU 2,environment-contact,"Road Surface",546.692,14.648,599.664
+19.92,CPU 2,environment-contact,"Road Surface",546.692,14.648,599.664
+20.06,P1,charge,"",632.094,16.348,599.164
+20.66,CPU 2,environment-contact,"Road Surface",558.849,15.961,596.959
+20.68,CPU 2,environment-contact,"Road Surface",559.189,15.984,596.910
+20.92,P2,environment-contact,"Road Surface",647.257,16.338,594.939
+21.00,P2,environment-contact,"Road Surface",648.198,16.318,594.681
+21.10,P2,environment-contact,"Road Surface",649.363,16.277,594.325
+21.10,P2,environment-contact,"Road Surface",649.363,16.277,594.325
+21.20,P2,environment-contact,"Road Surface",650.515,16.221,593.933
+21.22,P2,environment-contact,"Road Surface",650.745,16.203,593.851
+21.44,P2,environment-contact,"Road Surface",653.252,16.039,592.842
+21.54,P2,environment-contact,"Road Surface",654.366,15.935,592.317
+21.56,P1,environment-contact,"Road Surface",650.007,16.308,598.119
+21.62,P2,environment-contact,"Road Surface",655.241,15.832,591.868
+21.64,P1,environment-contact,"Road Surface",650.923,16.271,597.837
+21.64,P1,environment-contact,"Road Surface",650.923,16.271,597.837
+21.70,P2,environment-contact,"Road Surface",656.099,15.709,591.390
+21.82,P2,environment-contact,"Road Surface",657.353,15.515,590.623
+21.84,P1,environment-contact,"Road Surface",653.174,16.150,597.044
+21.84,P1,environment-contact,"Road Surface",653.174,16.150,597.044
+21.88,P1,environment-contact,"Road Surface",653.619,16.125,596.867
+21.90,P2,environment-contact,"Road Surface",658.160,15.364,590.076
+21.90,P1,environment-contact,"Road Surface",653.841,16.105,596.776
+21.92,P2,environment-contact,"Road Surface",658.357,15.329,589.933
+21.96,P2,environment-contact,"Road Surface",658.746,15.245,589.646
+21.98,P2,environment-contact,"Road Surface",658.941,15.202,589.500
+22.00,P2,environment-contact,"Road Surface",659.134,15.171,589.350
+22.00,P1,environment-contact,"Road Surface",654.942,16.022,596.301
+22.06,P2,environment-contact,"Road Surface",659.698,15.027,588.896
+22.06,P2,environment-contact,"Road Surface",659.698,15.027,588.896
+22.08,P2,environment-contact,"Road Surface",659.886,14.994,588.740
+22.08,P1,environment-contact,"Road Surface",655.811,15.935,595.893
+22.10,P1,environment-contact,"Road Surface",656.027,15.921,595.786
+22.14,P2,environment-contact,"Road Surface",660.434,14.840,588.271
+22.16,P2,environment-contact,"Road Surface",660.614,14.795,588.107
+22.16,P2,environment-contact,"Road Surface",660.614,14.795,588.107
+22.18,P1,environment-contact,"Road Surface",656.883,15.819,595.345
+22.20,CPU 1,airborne,"speed=18.25",607.768,18.332,596.879
+22.20,P1,environment-contact,"Road Surface",657.096,15.806,595.231
+22.24,P2,environment-contact,"Road Surface",661.325,14.586,587.450
+22.24,P2,environment-contact,"Road Surface",661.325,14.586,587.450
+22.28,P1,environment-contact,"Road Surface",657.934,15.698,594.758
+22.28,P2,environment-contact,"Road Surface",661.673,14.481,587.113
+22.30,P1,environment-contact,"Road Surface",658.143,15.679,594.636
+22.32,P2,environment-contact,"Road Surface",662.019,14.371,586.772
+22.32,P2,environment-contact,"Road Surface",662.019,14.371,586.772
+22.36,P2,environment-contact,"Road Surface",662.355,14.265,586.427
+22.38,P1,environment-contact,"Road Surface",658.963,15.559,594.131
+22.40,P1,environment-contact,"Road Surface",659.166,15.537,594.001
+22.42,P2,environment-contact,"Road Surface",662.847,14.098,585.907
+22.46,P2,environment-contact,"Road Surface",663.168,13.977,585.559
+22.46,P2,environment-contact,"Road Surface",663.168,13.977,585.559
+22.48,P1,environment-contact,"Road Surface",659.966,15.408,593.464
+22.50,P1,environment-contact,"Road Surface",660.165,15.382,593.326
+22.50,P2,environment-contact,"Road Surface",663.480,13.845,585.208
+22.54,P2,environment-contact,"Road Surface",663.788,13.701,584.848
+22.54,P2,environment-contact,"Road Surface",663.788,13.701,584.848
+22.56,P2,environment-contact,"Road Surface",663.944,13.634,584.668
+22.56,P1,environment-contact,"Road Surface",660.748,15.269,592.902
+22.58,P1,environment-contact,"Road Surface",660.942,15.241,592.758
+22.62,P2,environment-contact,"Road Surface",664.410,13.478,584.105
+22.68,P1,environment-contact,"Road Surface",661.890,15.060,592.015
+22.68,P1,environment-contact,"Road Surface",661.890,15.060,592.015
+22.68,P1,environment-contact,"Road Surface",661.890,15.060,592.015
+22.68,P2,environment-contact,"Road Surface",664.856,13.262,583.537
+22.70,P2,environment-contact,"Road Surface",665.007,13.199,583.334
+22.70,P2,environment-contact,"Road Surface",665.007,13.199,583.334
+22.76,P2,environment-contact,"Road Surface",665.483,12.965,582.677
+22.76,P2,environment-contact,"Road Surface",665.483,12.965,582.677
+22.76,P1,environment-contact,"Road Surface",662.629,14.900,591.395
+22.78,P1,environment-contact,"Road Surface",662.811,14.865,591.236
+22.78,P1,environment-contact,"Road Surface",662.811,14.865,591.236
+22.80,CPU 1,grounded,"speed=17.72",618.603,16.383,597.470
+22.80,CPU 1,environment-contact,"Road Surface",618.944,16.333,597.488
+22.80,CPU 1,environment-contact,"Road Surface",618.944,16.333,597.488
+22.82,CPU 1,environment-contact,"Road Surface",619.270,16.389,597.497
+22.82,CPU 1,environment-contact,"Road Surface",619.270,16.389,597.497
+22.84,P1,environment-contact,"Road Surface",663.351,14.726,590.756
+22.86,P1,environment-contact,"Road Surface",663.530,14.688,590.593
+22.86,P1,environment-contact,"Road Surface",663.530,14.688,590.593
+22.88,P2,environment-contact,"Road Surface",666.471,12.466,581.090
+22.94,P2,environment-contact,"Road Surface",666.949,12.161,580.166
+22.96,P1,environment-contact,"Road Surface",664.407,14.474,589.764
+22.96,P1,environment-contact,"Road Surface",664.407,14.474,589.764
+22.96,P1,environment-contact,"Road Surface",664.407,14.474,589.764
+23.02,P2,environment-contact,"Road Surface",667.527,11.736,578.858
+23.02,P2,environment-contact,"Road Surface",667.527,11.736,578.858
+23.04,P1,environment-contact,"Road Surface",665.083,14.280,589.092
+23.04,P1,environment-contact,"Road Surface",665.083,14.280,589.092
+23.04,P1,environment-contact,"Road Surface",665.083,14.280,589.092
+23.08,P2,environment-contact,"Road Surface",667.886,11.373,577.855
+23.08,CPU 1,environment-contact,"Road Surface",623.453,16.344,597.718
+23.08,CPU 1,environment-contact,"Road Surface",623.453,16.344,597.718
+23.10,P2,environment-contact,"Road Surface",667.997,11.259,577.519
+23.14,P1,environment-contact,"Road Surface",665.900,14.029,588.231
+23.14,P1,environment-contact,"Road Surface",665.900,14.029,588.231
+23.16,P1,environment-contact,"Road Surface",666.064,13.993,588.054
+23.20,P2,environment-contact,"Road Surface",668.560,10.766,575.814
+23.22,CPU 2,airborne,"speed=18.74",607.609,18.321,596.730
+23.22,P1,environment-contact,"Road Surface",666.536,13.817,587.524
+23.24,P1,environment-contact,"Road Surface",666.696,13.776,587.343
+23.26,P1,environment-contact,"Road Surface",666.854,13.726,587.163
+23.28,P2,environment-contact,"Road Surface",668.976,10.270,574.465
+23.30,P2,environment-contact,"Road Surface",669.056,10.190,574.112
+23.32,P1,environment-contact,"Road Surface",667.313,13.537,586.614
+23.32,P1,environment-contact,"Road Surface",667.313,13.537,586.614
+23.34,P2,environment-contact,"Road Surface",669.219,9.988,573.395
+23.38,P2,environment-contact,"Road Surface",669.325,9.817,572.643
+23.38,P2,environment-contact,"Road Surface",669.325,9.817,572.643
+23.40,P1,environment-contact,"Road Surface",667.911,13.290,585.859
+23.42,P1,environment-contact,"Road Surface",668.064,13.231,585.659
+23.42,P1,environment-contact,"Road Surface",668.064,13.231,585.659
+23.46,P2,environment-contact,"Road Surface",669.476,9.514,571.065
+23.46,P2,environment-contact,"Road Surface",669.476,9.514,571.065
+23.62,P1,environment-contact,"Road Surface",669.680,12.434,583.126
+23.68,P1,environment-contact,"Road Surface",670.155,12.133,582.178
+23.68,P1,environment-contact,"Road Surface",670.155,12.133,582.178
+23.74,P1,environment-contact,"Road Surface",670.600,11.832,581.163
+23.76,P1,environment-contact,"Road Surface",670.746,11.747,580.807
+23.80,CPU 2,environment-contact,"Road Surface",618.723,16.408,597.359
+23.80,CPU 2,environment-contact,"Road Surface",618.723,16.408,597.359
+23.82,CPU 2,grounded,"speed=18.19",618.723,16.408,597.359
+23.82,P1,environment-contact,"Road Surface",671.148,11.450,579.725
+23.82,P1,environment-contact,"Road Surface",671.148,11.450,579.725
+23.82,P1,environment-contact,"Road Surface",671.148,11.450,579.725
+23.84,CPU 2,environment-contact,"Road Surface",619.441,16.349,597.399
+23.84,CPU 2,environment-contact,"Road Surface",619.441,16.349,597.399
+23.88,P1,environment-contact,"Road Surface",671.511,11.135,578.620
+23.90,P1,environment-contact,"Road Surface",671.626,11.028,578.245
+23.94,P1,environment-contact,"Road Surface",671.849,10.849,577.483
+23.94,P1,environment-contact,"Road Surface",671.849,10.849,577.483
+23.94,P1,environment-contact,"Road Surface",671.849,10.849,577.483
+24.00,P1,environment-contact,"Road Surface",672.150,10.595,576.327
+24.02,P1,environment-contact,"Road Surface",672.242,10.506,575.943
+24.06,P1,environment-contact,"Road Surface",672.418,10.312,575.175
+24.08,P1,environment-contact,"Road Surface",672.492,10.242,574.785
+24.08,P1,environment-contact,"Road Surface",672.492,10.242,574.785
+24.14,P1,environment-contact,"Road Surface",672.715,9.995,573.611
+24.14,P1,environment-contact,"Road Surface",672.715,9.995,573.611
+24.14,P1,environment-contact,"Road Surface",672.715,9.995,573.611
+24.20,P1,environment-contact,"Road Surface",672.919,9.760,572.410
+24.20,P1,environment-contact,"Road Surface",672.919,9.760,572.410
+24.24,P1,environment-contact,"Road Surface",673.037,9.604,571.592
+24.26,P1,environment-contact,"Road Surface",673.094,9.532,571.179
+24.26,P1,environment-contact,"Road Surface",673.094,9.532,571.179
+24.76,CPU 1,environment-contact,"Road Surface",649.393,16.308,596.464
+24.84,CPU 1,environment-contact,"Road Surface",650.440,16.270,596.205
+24.84,CPU 1,environment-contact,"Road Surface",650.440,16.270,596.205
+24.92,CPU 1,environment-contact,"Road Surface",651.463,16.211,595.926
+25.02,CPU 1,environment-contact,"Road Surface",652.710,16.144,595.553
+25.02,CPU 1,environment-contact,"Road Surface",652.710,16.144,595.553
+25.10,CPU 1,environment-contact,"Road Surface",653.682,16.082,595.232
+25.16,CPU 1,environment-contact,"Road Surface",654.399,16.024,594.978
+25.24,CPU 1,environment-contact,"Road Surface",655.334,15.941,594.624
+25.34,CPU 1,environment-contact,"Road Surface",656.463,15.819,594.151
+25.34,CPU 1,environment-contact,"Road Surface",656.463,15.819,594.151
+25.42,CPU 1,environment-contact,"Road Surface",657.340,15.709,593.752
+25.44,CPU 1,environment-contact,"Road Surface",657.556,15.688,593.651
+25.52,CPU 1,environment-contact,"Road Surface",658.399,15.564,593.234
+25.54,CPU 1,environment-contact,"Road Surface",658.607,15.543,593.125
+25.64,CPU 1,environment-contact,"Road Surface",659.621,15.389,592.571
+25.72,CPU 1,environment-contact,"Road Surface",660.404,15.251,592.106
+25.72,CPU 1,environment-contact,"Road Surface",660.404,15.251,592.106
+25.74,CPU 1,environment-contact,"Road Surface",660.598,15.223,591.988
+25.78,CPU 2,environment-contact,"Road Surface",650.811,16.268,597.021
+25.78,CPU 2,environment-contact,"Road Surface",650.811,16.268,597.021
+25.80,CPU 1,environment-contact,"Road Surface",661.170,15.114,591.625
+25.82,CPU 1,environment-contact,"Road Surface",661.357,15.077,591.502
+25.84,CPU 2,environment-contact,"Road Surface",651.609,16.238,596.820
+25.86,CPU 2,environment-contact,"Road Surface",651.872,16.215,596.750
+25.88,CPU 2,environment-contact,"Road Surface",652.134,16.194,596.681
+25.88,CPU 2,environment-contact,"Road Surface",652.134,16.194,596.681
+25.88,CPU 1,environment-contact,"Road Surface",661.917,14.977,591.128
+25.90,CPU 1,environment-contact,"Road Surface",662.100,14.933,591.001
+25.94,CPU 1,environment-contact,"Road Surface",662.464,14.860,590.744
+25.96,CPU 1,environment-contact,"Road Surface",662.644,14.819,590.616
+26.00,CPU 2,environment-contact,"Road Surface",653.674,16.105,596.224
+26.02,CPU 1,environment-contact,"Road Surface",663.181,14.696,590.225
+26.02,CPU 1,environment-contact,"Road Surface",663.181,14.696,590.225
+26.02,CPU 2,environment-contact,"Road Surface",653.925,16.087,596.142
+26.10,CPU 2,environment-contact,"Road Surface",654.915,16.013,595.798
+26.12,CPU 1,environment-contact,"Road Surface",664.050,14.489,589.557
+26.12,CPU 1,environment-contact,"Road Surface",664.050,14.489,589.557
+26.12,CPU 1,environment-contact,"Road Surface",664.050,14.489,589.557
+26.18,CPU 2,environment-contact,"Road Surface",655.877,15.923,595.426
+26.18,CPU 2,environment-contact,"Road Surface",655.877,15.923,595.426
+26.22,CPU 1,environment-contact,"Road Surface",664.890,14.276,588.867
+26.22,CPU 1,environment-contact,"Road Surface",664.890,14.276,588.867
+26.22,CPU 1,environment-contact,"Road Surface",664.890,14.276,588.867
+26.26,CPU 2,environment-contact,"Road Surface",656.810,15.826,595.028
+26.28,CPU 2,environment-contact,"Road Surface",657.038,15.805,594.924
+26.32,CPU 1,environment-contact,"Road Surface",665.702,14.051,588.154
+26.32,CPU 1,environment-contact,"Road Surface",665.702,14.051,588.154
+26.32,CPU 1,environment-contact,"Road Surface",665.702,14.051,588.154
+26.36,CPU 2,environment-contact,"Road Surface",657.932,15.691,594.498
+26.36,CPU 2,environment-contact,"Road Surface",657.932,15.691,594.498
+26.42,CPU 1,environment-contact,"Road Surface",666.489,13.805,587.412
+26.44,CPU 1,environment-contact,"Road Surface",666.645,13.769,587.257
+26.44,CPU 1,environment-contact,"Road Surface",666.645,13.769,587.257
+26.46,CPU 2,environment-contact,"Road Surface",659.010,15.550,593.933
+26.52,CPU 1,environment-contact,"Road Surface",667.247,13.553,586.637
+26.54,CPU 2,environment-contact,"Road Surface",659.840,15.422,593.461
+26.54,CPU 1,environment-contact,"Road Surface",667.397,13.508,586.477
+26.56,CPU 2,environment-contact,"Road Surface",660.043,15.395,593.341
+26.56,CPU 1,environment-contact,"Road Surface",667.544,13.456,586.317
+26.60,CPU 1,environment-contact,"Road Surface",667.831,13.337,585.994
+26.62,CPU 1,environment-contact,"Road Surface",667.975,13.278,585.832
+26.64,CPU 2,environment-contact,"Road Surface",660.838,15.260,592.850
+26.66,CPU 2,environment-contact,"Road Surface",661.033,15.231,592.725
+26.66,CPU 1,environment-contact,"Road Surface",668.257,13.171,585.500
+26.76,CPU 2,environment-contact,"Road Surface",661.980,15.058,592.092
+26.76,CPU 2,environment-contact,"Road Surface",661.980,15.058,592.092
+26.84,CPU 2,environment-contact,"Road Surface",662.708,14.906,591.577
+26.86,CPU 2,environment-contact,"Road Surface",662.887,14.877,591.448
+26.86,CPU 2,environment-contact,"Road Surface",662.887,14.877,591.448
+26.88,CPU 1,environment-contact,"Road Surface",669.679,12.523,583.565
+26.94,CPU 2,environment-contact,"Road Surface",663.579,14.718,590.927
+26.94,P2,environment-contact,"Road Surface",669.899,-14.543,492.901
+26.94,P2,environment-contact,"Road Surface",669.899,-14.543,492.901
+26.96,CPU 2,environment-contact,"Road Surface",663.749,14.689,590.796
+26.96,CPU 2,environment-contact,"Road Surface",663.749,14.689,590.796
+26.98,CPU 1,environment-contact,"Road Surface",670.239,12.219,582.629
+27.00,CPU 1,environment-contact,"Road Surface",670.346,12.166,582.437
+27.04,CPU 2,environment-contact,"Road Surface",664.407,14.527,590.270
+27.06,CPU 2,environment-contact,"Road Surface",664.569,14.494,590.137
+27.06,CPU 2,environment-contact,"Road Surface",664.569,14.494,590.137
+27.08,CPU 1,environment-contact,"Road Surface",670.739,11.918,581.674
+27.10,CPU 1,environment-contact,"Road Surface",670.835,11.867,581.481
+27.16,CPU 2,environment-contact,"Road Surface",665.353,14.290,589.467
+27.18,CPU 2,environment-contact,"Road Surface",665.507,14.263,589.330
+27.18,CPU 2,environment-contact,"Road Surface",665.507,14.263,589.330
+27.20,CPU 1,environment-contact,"Road Surface",671.262,11.586,580.520
+27.22,CPU 1,environment-contact,"Road Surface",671.343,11.538,580.329
+27.24,CPU 2,environment-contact,"Road Surface",665.963,14.136,588.918
+27.26,CPU 2,environment-contact,"Road Surface",666.112,14.078,588.779
+27.28,CPU 2,environment-contact,"Road Surface",666.265,14.045,588.637
+27.28,CPU 2,environment-contact,"Road Surface",666.265,14.045,588.637
+27.32,CPU 1,environment-contact,"Road Surface",671.705,11.263,579.383
+27.34,CPU 1,environment-contact,"Road Surface",671.774,11.225,579.193
+27.34,CPU 1,environment-contact,"Road Surface",671.774,11.225,579.193
+27.36,CPU 2,environment-contact,"Road Surface",666.857,13.876,588.059
+27.40,CPU 2,environment-contact,"Road Surface",667.153,13.786,587.764
+27.40,CPU 2,environment-contact,"Road Surface",667.153,13.786,587.764
+27.46,CPU 1,environment-contact,"Road Surface",672.143,10.932,578.084
+27.46,CPU 1,environment-contact,"Road Surface",672.143,10.932,578.084
+27.46,CPU 1,environment-contact,"Road Surface",672.143,10.932,578.084
+27.50,CPU 2,environment-contact,"Road Surface",667.875,13.532,587.001
+27.50,CPU 2,environment-contact,"Road Surface",667.875,13.532,587.001
+27.50,CPU 2,environment-contact,"Road Surface",667.875,13.532,587.001
+27.60,CPU 2,environment-contact,"Road Surface",668.576,13.263,586.198
+27.60,CPU 2,environment-contact,"Road Surface",668.576,13.263,586.198
+27.60,CPU 2,environment-contact,"Road Surface",668.576,13.263,586.198
+27.60,CPU 1,environment-contact,"Road Surface",672.512,10.637,576.798
+27.62,CPU 1,environment-contact,"Road Surface",672.562,10.604,576.613
+27.62,CPU 1,environment-contact,"Road Surface",672.562,10.604,576.613
+27.74,CPU 1,environment-contact,"Road Surface",672.830,10.354,575.512
+27.76,CPU 1,environment-contact,"Road Surface",672.871,10.326,575.324
+27.76,CPU 1,environment-contact,"Road Surface",672.871,10.326,575.324
+27.80,CPU 2,environment-contact,"Road Surface",669.877,12.692,584.475
+27.82,CPU 2,environment-contact,"Road Surface",669.997,12.623,584.296
+27.86,CPU 1,environment-contact,"Road Surface",673.063,10.118,574.382
+27.90,CPU 1,environment-contact,"Road Surface",673.137,10.058,573.995
+27.96,CPU 1,environment-contact,"Road Surface",673.238,9.935,573.409
+27.98,CPU 2,environment-contact,"Road Surface",670.888,12.161,582.791
+27.98,CPU 1,environment-contact,"Road Surface",673.271,9.890,573.213
+28.02,CPU 1,environment-contact,"Road Surface",673.337,9.823,572.811
+28.06,CPU 2,environment-contact,"Road Surface",671.273,11.918,582.021
+28.08,CPU 1,environment-contact,"Road Surface",673.424,9.716,572.197
+28.12,CPU 2,environment-contact,"Road Surface",671.546,11.775,581.433
+28.12,CPU 1,environment-contact,"Road Surface",673.479,9.633,571.784
+28.18,CPU 2,environment-contact,"Road Surface",671.789,11.594,580.854
+28.20,CPU 2,environment-contact,"Road Surface",671.868,11.545,580.661
+28.20,CPU 2,environment-contact,"Road Surface",671.868,11.545,580.661
+28.32,CPU 2,environment-contact,"Road Surface",672.302,11.254,579.508
+28.34,CPU 2,environment-contact,"Road Surface",672.365,11.196,579.319
+28.36,CPU 2,environment-contact,"Road Surface",672.431,11.160,579.126
+28.46,CPU 2,environment-contact,"Road Surface",672.725,10.912,578.202
+28.46,CPU 2,environment-contact,"Road Surface",672.725,10.912,578.202
+28.46,CPU 2,environment-contact,"Road Surface",672.725,10.912,578.202
+28.60,CPU 2,environment-contact,"Road Surface",673.086,10.620,576.914
+28.60,CPU 2,environment-contact,"Road Surface",673.086,10.620,576.914
+28.62,CPU 2,environment-contact,"Road Surface",673.133,10.595,576.729
+28.74,CPU 2,environment-contact,"Road Surface",673.396,10.353,575.629
+28.76,CPU 2,environment-contact,"Road Surface",673.436,10.327,575.444
+28.76,CPU 2,environment-contact,"Road Surface",673.436,10.327,575.444
+28.86,CPU 2,environment-contact,"Road Surface",673.614,10.136,574.513
+28.90,CPU 2,environment-contact,"Road Surface",673.682,10.070,574.132
+28.98,CPU 2,environment-contact,"Road Surface",673.796,9.920,573.358
+29.00,CPU 2,environment-contact,"Road Surface",673.823,9.878,573.163
+29.04,CPU 2,environment-contact,"Road Surface",673.876,9.813,572.766
+29.10,CPU 2,environment-contact,"Road Surface",673.942,9.707,572.159
+30.50,P1,environment-contact,"Road Surface",673.900,-24.648,433.479
+30.50,P1,environment-contact,"Road Surface",673.900,-24.648,433.479
+34.60,CPU 2,environment-contact,"Road Surface",673.420,-19.339,478.385
+34.62,CPU 2,environment-contact,"Road Surface",673.443,-19.477,477.904
+34.62,CPU 2,environment-contact,"Road Surface",673.443,-19.477,477.904
+66.12,P1,environment-contact,"Road Surface",281.298,-24.576,424.696
+66.16,P1,environment-contact,"Road Surface",281.226,-24.569,425.548
+66.16,P1,environment-contact,"Road Surface",281.226,-24.569,425.548
+67.32,P1,environment-contact,"Road Surface",280.096,-22.628,450.176
+67.34,P1,environment-contact,"Road Surface",280.087,-22.576,450.600
+67.36,P1,environment-contact,"Road Surface",280.079,-22.518,451.021
+72.66,CPU 1,environment-contact,"Road Surface",279.883,-23.553,442.494
+72.66,CPU 1,environment-contact,"Road Surface",279.883,-23.553,442.494
+72.90,CPU 1,environment-contact,"Road Surface",279.723,-22.869,448.387
+72.94,CPU 1,environment-contact,"Road Surface",279.702,-22.749,449.382
+72.94,CPU 1,environment-contact,"Road Surface",279.702,-22.749,449.382
+73.46,CPU 2,environment-contact,"Road Surface",279.908,-23.648,441.571
+73.48,CPU 2,environment-contact,"Road Surface",279.890,-23.604,442.059
+73.90,P2,item,"Shield",275.955,4.678,637.457
+74.60,CPU 2,environment-contact,"Road Surface",279.530,-18.724,469.860
+74.62,CPU 2,environment-contact,"Road Surface",279.527,-18.602,470.352
+74.62,CPU 2,environment-contact,"Road Surface",279.527,-18.602,470.352
+75.48,CPU 2,environment-contact,"Road Surface",279.492,-11.863,491.059
+75.48,CPU 2,environment-contact,"Road Surface",279.492,-11.863,491.059
+80.80,P2,environment-contact,"Road Surface",264.415,3.526,774.123
+83.00,P1,environment-contact,"Road Surface",259.989,3.560,771.059
+83.00,P1,environment-contact,"Road Surface",259.989,3.560,771.059
+84.02,P1,environment-contact,"Road Surface",263.411,3.451,782.733
+84.02,P1,environment-contact,"Road Surface",263.411,3.451,782.733
+84.54,P1,environment-contact,"Road Surface",267.072,3.406,787.758
+84.54,P1,environment-contact,"Road Surface",267.072,3.406,787.758
+97.32,P2,item,"Shield",494.001,3.348,697.116
+100.70,P2,charge,"",500.098,3.515,631.635
+101.16,P2,environment-contact,"Road Surface",506.099,4.348,622.678
+101.18,P2,environment-contact,"Road Surface",506.309,4.381,622.424
+101.20,P2,environment-contact,"Road Surface",506.512,4.424,622.178
+101.64,P2,environment-contact,"Road Surface",511.674,5.713,616.831
+101.71,P2,environment-contact,"Road Surface",512.872,6.033,615.825
+101.71,P2,environment-contact,"Road Surface",512.872,6.033,615.825
+101.75,P2,environment-contact,"Road Surface",513.475,6.238,615.334
+101.75,P2,environment-contact,"Road Surface",513.475,6.238,615.334
+101.83,P2,environment-contact,"Road Surface",514.742,6.588,614.372
+101.87,P2,environment-contact,"Road Surface",515.393,6.738,613.902
+101.89,P2,environment-contact,"Road Surface",515.711,6.871,613.678
+101.89,P2,environment-contact,"Road Surface",515.711,6.871,613.678
+101.99,P2,environment-contact,"Road Surface",517.359,7.379,612.595
+102.03,P2,environment-contact,"Road Surface",518.017,7.544,612.175
+102.05,P2,environment-contact,"Road Surface",518.354,7.629,611.972
+102.09,P2,environment-contact,"Road Surface",519.022,7.871,611.576
+102.15,P2,environment-contact,"Road Surface",520.041,8.173,610.968
+102.15,P2,environment-contact,"Road Surface",520.041,8.173,610.968
+102.21,P2,environment-contact,"Road Surface",521.089,8.498,610.401
+102.21,P2,environment-contact,"Road Surface",521.089,8.498,610.401
+102.27,P2,environment-contact,"Road Surface",522.151,8.810,609.838
+102.27,P2,environment-contact,"Road Surface",522.151,8.810,609.838
+102.29,P2,environment-contact,"Road Surface",522.510,8.916,609.655
+102.35,P2,environment-contact,"Road Surface",523.597,9.199,609.096
+102.35,P2,environment-contact,"Road Surface",523.597,9.199,609.096
+102.39,P2,environment-contact,"Road Surface",524.331,9.403,608.740
+102.47,P2,environment-contact,"Road Surface",525.814,9.803,608.032
+102.47,P2,environment-contact,"Road Surface",525.814,9.803,608.032
+105.27,P1,environment-contact,"Road Surface",507.638,4.055,627.030
+105.61,P1,environment-contact,"Road Surface",510.148,4.583,623.908
+105.63,P1,environment-contact,"Road Surface",510.299,4.619,623.732
+106.03,P1,environment-contact,"Road Surface",514.164,5.646,619.759
+106.11,P1,environment-contact,"Road Surface",515.229,5.982,618.841
+106.17,P1,environment-contact,"Road Surface",516.083,6.239,618.149
+106.19,P1,environment-contact,"Road Surface",516.372,6.345,617.920
+106.25,P1,environment-contact,"Road Surface",517.265,6.649,617.239
+106.29,P1,environment-contact,"Road Surface",517.887,6.848,616.798
+106.29,P1,environment-contact,"Road Surface",517.887,6.848,616.798
+106.31,P1,environment-contact,"Road Surface",518.203,6.939,616.575
+106.33,P1,environment-contact,"Road Surface",518.528,7.021,616.356
+106.35,P1,environment-contact,"Road Surface",518.843,7.165,616.152
+106.35,P1,environment-contact,"Road Surface",518.843,7.165,616.152
+106.41,P1,environment-contact,"Road Surface",519.820,7.504,615.528
+106.43,P2,airborne,"speed=19.41",607.708,18.322,597.917
+106.43,P1,environment-contact,"Road Surface",520.154,7.598,615.316
+106.47,P1,environment-contact,"Road Surface",520.821,7.842,614.923
+106.47,P1,environment-contact,"Road Surface",520.821,7.842,614.923
+106.47,P1,environment-contact,"Road Surface",520.821,7.842,614.923
+106.55,P1,environment-contact,"Road Surface",522.176,8.290,614.155
+106.59,P1,environment-contact,"Road Surface",522.849,8.521,613.791
+106.59,P1,environment-contact,"Road Surface",522.849,8.521,613.791
+106.65,P1,environment-contact,"Road Surface",523.869,8.854,613.254
+106.67,P1,environment-contact,"Road Surface",524.214,8.950,613.071
+106.71,P1,environment-contact,"Road Surface",524.910,9.161,612.720
+106.71,P1,environment-contact,"Road Surface",524.910,9.161,612.720
+106.77,P1,environment-contact,"Road Surface",525.971,9.473,612.200
+106.77,P1,environment-contact,"Road Surface",525.971,9.473,612.200
+106.77,P1,environment-contact,"Road Surface",525.971,9.473,612.200
+106.85,P2,item,"Shield",616.210,17.241,598.061
+106.87,P1,environment-contact,"Road Surface",527.785,9.982,611.352
+106.87,P1,environment-contact,"Road Surface",527.785,9.982,611.352
+107.01,P2,environment-contact,"Road Surface",619.258,16.412,598.112
+107.01,P2,environment-contact,"Road Surface",619.258,16.412,598.112
+107.03,P2,grounded,"speed=18.95",619.258,16.412,598.112
+107.05,P2,environment-contact,"Road Surface",620.015,16.350,598.084
+107.05,P2,environment-contact,"Road Surface",620.015,16.350,598.084
+107.05,CPU 2,environment-contact,"Road Surface",503.942,3.762,628.257
+107.11,CPU 2,environment-contact,"Road Surface",504.398,3.831,627.457
+107.13,CPU 2,environment-contact,"Road Surface",504.555,3.860,627.191
+107.65,CPU 2,environment-contact,"Road Surface",508.884,4.824,620.764
+107.67,P1,environment-contact,"Road Surface",543.307,13.819,605.336
+107.79,P1,environment-contact,"Road Surface",545.716,14.267,604.568
+107.81,P1,environment-contact,"Road Surface",546.118,14.341,604.443
+107.85,P1,environment-contact,"Road Surface",546.927,14.471,604.199
+107.99,CPU 2,environment-contact,"Road Surface",511.924,5.698,617.176
+107.99,CPU 2,environment-contact,"Road Surface",511.924,5.698,617.176
+108.07,CPU 2,environment-contact,"Road Surface",512.655,5.917,616.421
+108.17,CPU 2,environment-contact,"Road Surface",513.573,6.203,615.521
+108.27,CPU 2,environment-contact,"Road Surface",514.495,6.494,614.675
+108.27,CPU 2,environment-contact,"Road Surface",514.495,6.494,614.675
+108.27,CPU 2,environment-contact,"Road Surface",514.495,6.494,614.675
+108.27,CPU 2,environment-contact,"Road Surface",514.495,6.494,614.675
+108.35,CPU 2,environment-contact,"Road Surface",515.243,6.700,614.037
+108.35,CPU 2,environment-contact,"Road Surface",515.243,6.700,614.037
+108.37,CPU 2,environment-contact,"Road Surface",515.419,6.783,613.884
+108.47,CPU 2,environment-contact,"Road Surface",516.355,7.065,613.142
+108.47,CPU 2,environment-contact,"Road Surface",516.355,7.065,613.142
+108.47,CPU 2,environment-contact,"Road Surface",516.355,7.065,613.142
+108.57,CPU 2,environment-contact,"Road Surface",517.298,7.354,612.442
+108.57,CPU 2,environment-contact,"Road Surface",517.298,7.354,612.442
+108.57,CPU 2,environment-contact,"Road Surface",517.298,7.354,612.442
+108.69,CPU 2,environment-contact,"Road Surface",518.438,7.720,611.655
+108.69,CPU 2,environment-contact,"Road Surface",518.438,7.720,611.655
+108.69,CPU 2,environment-contact,"Road Surface",518.438,7.720,611.655
+108.79,CPU 2,environment-contact,"Road Surface",519.408,7.992,611.028
+108.79,CPU 2,environment-contact,"Road Surface",519.408,7.992,611.028
+108.81,CPU 2,environment-contact,"Road Surface",519.593,8.081,610.909
+108.81,CPU 2,environment-contact,"Road Surface",519.593,8.081,610.909
+108.91,CPU 2,environment-contact,"Road Surface",520.577,8.370,610.323
+108.91,CPU 2,environment-contact,"Road Surface",520.577,8.370,610.323
+109.03,CPU 2,environment-contact,"Road Surface",521.783,8.731,609.642
+109.03,CPU 2,environment-contact,"Road Surface",521.783,8.731,609.642
+109.03,CPU 2,environment-contact,"Road Surface",521.783,8.731,609.642
+109.11,CPU 2,environment-contact,"Road Surface",522.615,8.944,609.194
+109.13,P2,environment-contact,"Road Surface",648.396,16.307,594.626
+109.13,CPU 2,environment-contact,"Road Surface",522.823,9.013,609.085
+109.13,CPU 2,environment-contact,"Road Surface",522.823,9.013,609.085
+109.21,P2,environment-contact,"Road Surface",649.332,16.282,594.337
+109.21,P2,environment-contact,"Road Surface",649.332,16.282,594.337
+109.21,CPU 2,environment-contact,"Road Surface",523.675,9.259,608.645
+109.25,CPU 2,environment-contact,"Road Surface",524.111,9.377,608.429
+109.25,CPU 2,environment-contact,"Road Surface",524.111,9.377,608.429
+109.31,P2,environment-contact,"Road Surface",650.488,16.222,593.944
+109.33,P2,environment-contact,"Road Surface",650.718,16.204,593.862
+109.37,CPU 2,environment-contact,"Road Surface",525.450,9.739,607.782
+109.37,CPU 2,environment-contact,"Road Surface",525.450,9.739,607.782
+109.47,P2,environment-contact,"Road Surface",652.325,16.111,593.241
+109.55,P2,environment-contact,"Road Surface",653.232,16.041,592.851
+109.65,P2,environment-contact,"Road Surface",654.347,15.937,592.326
+109.73,P2,environment-contact,"Road Surface",655.223,15.835,591.877
+109.77,P2,environment-contact,"Road Surface",655.655,15.772,591.642
+109.81,P2,environment-contact,"Road Surface",656.083,15.718,591.398
+109.85,P2,environment-contact,"Road Surface",656.507,15.658,591.152
+109.93,P2,environment-contact,"Road Surface",657.337,15.509,590.630
+109.97,P2,environment-contact,"Road Surface",657.745,15.445,590.356
+110.03,P2,environment-contact,"Road Surface",658.349,15.334,589.936
+110.03,P2,environment-contact,"Road Surface",658.349,15.334,589.936
+110.09,P2,environment-contact,"Road Surface",658.935,15.205,589.500
+110.09,P2,environment-contact,"Road Surface",658.935,15.205,589.500
+110.13,P2,environment-contact,"Road Surface",659.320,15.126,589.196
+110.17,P2,environment-contact,"Road Surface",659.698,15.025,588.891
+110.19,P2,environment-contact,"Road Surface",659.887,14.986,588.735
+110.19,P2,environment-contact,"Road Surface",659.887,14.986,588.735
+110.25,P2,environment-contact,"Road Surface",660.440,14.836,588.260
+110.27,P2,environment-contact,"Road Surface",660.623,14.793,588.095
+110.27,P2,environment-contact,"Road Surface",660.623,14.793,588.095
+110.33,P2,environment-contact,"Road Surface",661.162,14.634,587.600
+110.35,P2,environment-contact,"Road Surface",661.338,14.581,587.432
+110.35,P2,environment-contact,"Road Surface",661.338,14.581,587.432
+110.35,CPU 2,environment-contact,"Road Surface",538.130,13.066,602.522
+110.35,CPU 2,environment-contact,"Road Surface",538.130,13.066,602.522
+110.39,P2,environment-contact,"Road Surface",661.686,14.472,587.097
+110.41,P2,environment-contact,"Road Surface",661.860,14.432,586.924
+110.45,P2,environment-contact,"Road Surface",662.195,14.319,586.583
+110.49,P2,environment-contact,"Road Surface",662.528,14.204,586.242
+110.51,P2,environment-contact,"Road Surface",662.691,14.147,586.069
+110.51,P2,environment-contact,"Road Surface",662.691,14.147,586.069
+110.55,P2,environment-contact,"Road Surface",663.013,14.025,585.724
+110.57,P2,environment-contact,"Road Surface",663.172,13.974,585.546
+110.63,P2,environment-contact,"Road Surface",663.643,13.775,585.018
+110.63,P2,environment-contact,"Road Surface",663.643,13.775,585.018
+110.65,P2,environment-contact,"Road Surface",663.799,13.716,584.835
+110.69,P2,environment-contact,"Road Surface",664.106,13.581,584.470
+110.71,P2,environment-contact,"Road Surface",664.262,13.529,584.284
+110.73,P2,environment-contact,"Road Surface",664.414,13.473,584.095
+110.77,P2,environment-contact,"Road Surface",664.712,13.329,583.718
+110.77,CPU 2,environment-contact,"Road Surface",544.512,14.303,600.330
+110.79,CPU 2,environment-contact,"Road Surface",544.832,14.354,600.230
+110.81,P1,airborne,"speed=18.78",607.777,18.325,598.078
+110.81,P2,environment-contact,"Road Surface",665.011,13.195,583.324
+110.81,P2,environment-contact,"Road Surface",665.011,13.195,583.324
+110.87,P2,environment-contact,"Road Surface",665.486,12.959,582.668
+110.87,CPU 2,environment-contact,"Road Surface",546.120,14.561,599.837
+110.89,P2,environment-contact,"Road Surface",665.650,12.882,582.427
+110.99,P2,environment-contact,"Road Surface",666.477,12.462,581.075
+111.05,P2,environment-contact,"Road Surface",666.956,12.145,580.150
+111.11,P2,environment-contact,"Road Surface",667.398,11.808,579.168
+111.13,P2,environment-contact,"Road Surface",667.537,11.693,578.831
+111.13,P2,environment-contact,"Road Surface",667.537,11.693,578.831
+111.15,P2,environment-contact,"Road Surface",667.658,11.601,578.485
+111.19,P2,environment-contact,"Road Surface",667.909,11.398,577.794
+111.25,P2,airborne,"speed=18.07",668.145,11.155,577.107
+111.25,P2,environment-contact,"Road Surface",668.252,11.044,576.770
+111.27,P2,grounded,"speed=17.84",668.252,11.044,576.770
+111.29,P2,environment-contact,"Road Surface",668.461,10.811,576.098
+111.31,P2,environment-contact,"Road Surface",668.553,10.723,575.759
+111.35,CPU 1,environment-contact,"Road Surface",510.043,5.334,617.762
+111.37,CPU 1,environment-contact,"Road Surface",510.236,5.386,617.573
+111.39,P1,environment-contact,"Road Surface",618.929,16.368,597.897
+111.39,P1,environment-contact,"Road Surface",618.929,16.368,597.897
+111.41,P1,grounded,"speed=18.23",618.929,16.368,597.897
+111.43,P2,environment-contact,"Road Surface",669.024,10.081,573.706
+111.43,P2,environment-contact,"Road Surface",669.024,10.081,573.706
+111.43,P2,environment-contact,"Road Surface",669.024,10.081,573.706
+111.43,P1,environment-contact,"Road Surface",619.662,16.346,597.927
+111.43,P1,environment-contact,"Road Surface",619.662,16.346,597.927
+111.45,CPU 1,environment-contact,"Road Surface",511.016,5.602,616.837
+111.47,CPU 2,environment-contact,"Road Surface",556.333,15.777,597.378
+111.47,CPU 2,environment-contact,"Road Surface",556.333,15.777,597.378
+111.49,CPU 1,environment-contact,"Road Surface",511.406,5.719,616.485
+111.49,P1,environment-contact,"Road Surface",620.807,16.349,597.997
+111.49,P1,environment-contact,"Road Surface",620.807,16.349,597.997
+111.51,P2,environment-contact,"Road Surface",669.266,9.778,572.221
+111.53,P2,environment-contact,"Road Surface",669.324,9.689,571.842
+111.57,CPU 1,environment-contact,"Road Surface",512.188,5.941,615.797
+111.57,P2,environment-contact,"Road Surface",669.423,9.517,571.065
+111.57,P2,environment-contact,"Road Surface",669.423,9.517,571.065
+111.67,CPU 1,environment-contact,"Road Surface",513.173,6.221,614.986
+111.75,CPU 1,environment-contact,"Road Surface",513.949,6.420,614.367
+111.77,CPU 1,environment-contact,"Road Surface",514.134,6.498,614.222
+111.87,CPU 1,environment-contact,"Road Surface",515.090,6.766,613.511
+111.87,CPU 1,environment-contact,"Road Surface",515.090,6.766,613.511
+111.87,CPU 1,environment-contact,"Road Surface",515.090,6.766,613.511
+111.97,CPU 1,environment-contact,"Road Surface",516.042,7.046,612.831
+111.97,CPU 1,environment-contact,"Road Surface",516.042,7.046,612.831
+112.07,CPU 1,environment-contact,"Road Surface",517.011,7.297,612.187
+112.09,CPU 1,environment-contact,"Road Surface",517.195,7.391,612.070
+112.09,CPU 1,environment-contact,"Road Surface",517.195,7.391,612.070
+112.19,CPU 1,environment-contact,"Road Surface",518.167,7.664,611.462
+112.21,CPU 1,environment-contact,"Road Surface",518.353,7.749,611.355
+112.21,CPU 1,environment-contact,"Road Surface",518.353,7.749,611.355
+112.33,CPU 1,environment-contact,"Road Surface",519.495,8.090,610.680
+112.41,CPU 1,environment-contact,"Road Surface",520.276,8.288,610.240
+112.43,CPU 1,environment-contact,"Road Surface",520.467,8.368,610.139
+112.53,CPU 1,environment-contact,"Road Surface",521.476,8.631,609.604
+112.53,CPU 1,environment-contact,"Road Surface",521.476,8.631,609.604
+112.53,CPU 1,environment-contact,"Road Surface",521.476,8.631,609.604
+112.55,CPU 1,environment-contact,"Road Surface",521.670,8.717,609.499
+112.63,CPU 1,environment-contact,"Road Surface",522.500,8.940,609.075
+112.65,CPU 1,environment-contact,"Road Surface",522.715,8.990,608.972
+112.67,CPU 1,environment-contact,"Road Surface",522.923,9.067,608.875
+112.67,CPU 1,environment-contact,"Road Surface",522.923,9.067,608.875
+112.77,CPU 1,environment-contact,"Road Surface",524.002,9.354,608.352
+112.79,CPU 1,environment-contact,"Road Surface",524.219,9.426,608.250
+112.89,CPU 1,environment-contact,"Road Surface",525.343,9.717,607.731
+112.89,CPU 1,environment-contact,"Road Surface",525.343,9.717,607.731
+113.59,CPU 1,environment-contact,"Road Surface",534.108,12.118,604.055
+113.61,CPU 1,environment-contact,"Road Surface",534.380,12.187,603.948
+113.69,P1,environment-contact,"Road Surface",649.702,16.315,598.143
+113.71,P1,environment-contact,"Road Surface",649.933,16.310,598.080
+113.71,P1,environment-contact,"Road Surface",649.933,16.310,598.080
+113.79,P1,environment-contact,"Road Surface",650.851,16.273,597.810
+113.79,P1,environment-contact,"Road Surface",650.851,16.273,597.810
+113.99,P1,environment-contact,"Road Surface",653.114,16.152,597.035
+114.05,CPU 2,airborne,"speed=20.87",607.710,18.338,597.324
+114.05,P1,environment-contact,"Road Surface",653.784,16.108,596.772
+114.11,CPU 1,environment-contact,"Road Surface",541.588,13.792,601.292
+114.15,CPU 1,environment-contact,"Road Surface",542.202,13.896,601.083
+114.15,P1,environment-contact,"Road Surface",654.889,16.025,596.303
+114.25,CPU 1,environment-contact,"Road Surface",543.758,14.172,600.572
+114.25,P1,environment-contact,"Road Surface",655.978,15.926,595.793
+114.35,P1,environment-contact,"Road Surface",657.048,15.811,595.242
+114.35,P1,environment-contact,"Road Surface",657.048,15.811,595.242
+114.41,CPU 1,environment-contact,"Road Surface",546.318,14.591,599.778
+114.43,P1,environment-contact,"Road Surface",657.889,15.701,594.772
+114.45,P1,environment-contact,"Road Surface",658.097,15.683,594.651
+114.49,CPU 1,environment-contact,"Road Surface",547.632,14.787,599.397
+114.53,P1,environment-contact,"Road Surface",658.919,15.564,594.149
+114.55,P1,environment-contact,"Road Surface",659.123,15.542,594.019
+114.57,CPU 1,environment-contact,"Road Surface",548.966,14.973,599.030
+114.63,P1,environment-contact,"Road Surface",659.925,15.413,593.484
+114.65,CPU 1,environment-contact,"Road Surface",550.319,15.149,598.677
+114.65,P1,environment-contact,"Road Surface",660.124,15.387,593.347
+114.65,P1,environment-contact,"Road Surface",660.124,15.387,593.347
+114.65,CPU 2,environment-contact,"Road Surface",620.499,16.376,598.016
+114.65,CPU 2,environment-contact,"Road Surface",620.499,16.376,598.016
+114.67,CPU 2,grounded,"speed=20.25",620.499,16.376,598.016
+114.69,CPU 2,environment-contact,"Road Surface",621.302,16.346,598.044
+114.69,CPU 2,environment-contact,"Road Surface",621.302,16.346,598.044
+114.71,P1,environment-contact,"Road Surface",660.712,15.287,592.923
+114.75,P1,environment-contact,"Road Surface",661.097,15.216,592.632
+114.75,P1,environment-contact,"Road Surface",661.097,15.216,592.632
+114.75,P1,environment-contact,"Road Surface",661.097,15.216,592.632
+114.75,CPU 2,environment-contact,"Road Surface",622.519,16.349,598.081
+114.75,CPU 2,environment-contact,"Road Surface",622.519,16.349,598.081
+114.81,P1,environment-contact,"Road Surface",661.667,15.093,592.188
+114.83,P1,environment-contact,"Road Surface",661.856,15.065,592.036
+114.93,P1,environment-contact,"Road Surface",662.782,14.871,591.259
+114.93,P1,environment-contact,"Road Surface",662.782,14.871,591.259
+114.93,P1,environment-contact,"Road Surface",662.782,14.871,591.259
+115.01,P1,environment-contact,"Road Surface",663.499,14.698,590.620
+115.01,P1,environment-contact,"Road Surface",663.499,14.698,590.620
+115.01,P1,environment-contact,"Road Surface",663.499,14.698,590.620
+115.11,P1,environment-contact,"Road Surface",664.368,14.482,589.801
+115.11,P1,environment-contact,"Road Surface",664.368,14.482,589.801
+115.11,P1,environment-contact,"Road Surface",664.368,14.482,589.801
+115.19,P1,environment-contact,"Road Surface",665.038,14.282,589.133
+115.21,P1,environment-contact,"Road Surface",665.207,14.248,588.962
+115.21,P1,environment-contact,"Road Surface",665.207,14.248,588.962
+115.27,P1,environment-contact,"Road Surface",665.700,14.092,588.446
+115.29,P1,environment-contact,"Road Surface",665.863,14.044,588.270
+115.29,P1,environment-contact,"Road Surface",665.863,14.044,588.270
+115.37,P1,environment-contact,"Road Surface",666.501,13.835,587.568
+115.39,P1,environment-contact,"Road Surface",666.659,13.787,587.389
+115.39,P1,environment-contact,"Road Surface",666.659,13.787,587.389
+115.49,P1,environment-contact,"Road Surface",667.428,13.501,586.472
+115.49,P1,environment-contact,"Road Surface",667.428,13.501,586.472
+115.51,P1,environment-contact,"Road Surface",667.578,13.443,586.285
+115.55,P1,environment-contact,"Road Surface",667.872,13.296,585.912
+115.57,P1,environment-contact,"Road Surface",668.021,13.245,585.718
+115.57,P1,environment-contact,"Road Surface",668.021,13.245,585.718
+115.69,P1,environment-contact,"Road Surface",668.958,12.811,584.371
+115.69,P1,environment-contact,"Road Surface",668.958,12.811,584.371
+115.77,P1,environment-contact,"Road Surface",669.604,12.468,583.274
+115.83,P1,environment-contact,"Road Surface",670.078,12.182,582.346
+115.85,P1,environment-contact,"Road Surface",670.235,12.092,582.018
+115.89,P1,environment-contact,"Road Surface",670.532,11.891,581.341
+115.91,P1,environment-contact,"Road Surface",670.679,11.807,580.990
+115.99,P1,environment-contact,"Road Surface",671.206,11.378,579.560
+115.99,P1,environment-contact,"Road Surface",671.206,11.378,579.560
+116.01,P1,environment-contact,"Road Surface",671.326,11.264,579.197
+116.03,P1,environment-contact,"Road Surface",671.451,11.194,578.822
+116.15,P1,environment-contact,"Road Surface",672.084,10.573,576.582
+116.15,P1,environment-contact,"Road Surface",672.084,10.573,576.582
+116.17,P1,environment-contact,"Road Surface",672.187,10.550,576.187
+116.17,P1,environment-contact,"Road Surface",672.187,10.550,576.187
+116.19,CPU 2,environment-contact,"Road Surface",649.397,16.307,596.112
+116.25,CPU 2,environment-contact,"Road Surface",650.371,16.269,595.819
+116.25,CPU 2,environment-contact,"Road Surface",650.371,16.269,595.819
+116.31,P1,environment-contact,"Road Surface",672.764,9.938,573.473
+116.31,P1,environment-contact,"Road Surface",672.764,9.938,573.473
+116.31,P1,environment-contact,"Road Surface",672.764,9.938,573.473
+116.33,CPU 2,environment-contact,"Road Surface",651.641,16.195,595.400
+116.33,P1,environment-contact,"Road Surface",672.841,9.881,573.075
+116.35,CPU 2,environment-contact,"Road Surface",651.955,16.176,595.291
+116.35,CPU 2,environment-contact,"Road Surface",651.955,16.176,595.291
+116.37,P1,environment-contact,"Road Surface",672.969,9.740,572.269
+116.41,P1,environment-contact,"Road Surface",673.081,9.579,571.455
+116.41,P1,environment-contact,"Road Surface",673.081,9.579,571.455
+116.49,CPU 2,environment-contact,"Road Surface",654.106,16.029,594.467
+116.57,CPU 2,environment-contact,"Road Surface",655.291,15.921,593.949
+116.63,CPU 2,environment-contact,"Road Surface",656.155,15.811,593.538
+116.65,CPU 2,environment-contact,"Road Surface",656.440,15.794,593.397
+116.71,CPU 2,environment-contact,"Road Surface",657.277,15.683,592.966
+116.79,CPU 2,environment-contact,"Road Surface",658.360,15.529,592.358
+116.79,CPU 2,environment-contact,"Road Surface",658.360,15.529,592.358
+116.85,CPU 2,environment-contact,"Road Surface",659.146,15.393,591.885
+116.87,CPU 2,environment-contact,"Road Surface",659.405,15.355,591.723
+116.91,CPU 2,environment-contact,"Road Surface",659.912,15.253,591.394
+116.93,CPU 2,environment-contact,"Road Surface",660.163,15.215,591.226
+116.93,CPU 2,environment-contact,"Road Surface",660.163,15.215,591.226
+116.99,CPU 2,environment-contact,"Road Surface",660.900,15.063,590.720
+117.01,CPU 2,environment-contact,"Road Surface",661.142,15.020,590.548
+117.01,CPU 2,environment-contact,"Road Surface",661.142,15.020,590.548
+117.07,CPU 2,environment-contact,"Road Surface",661.851,14.870,590.024
+117.07,CPU 2,environment-contact,"Road Surface",661.851,14.870,590.024
+117.13,CPU 2,environment-contact,"Road Surface",662.539,14.690,589.498
+117.15,CPU 2,environment-contact,"Road Surface",662.767,14.632,589.319
+117.15,CPU 2,environment-contact,"Road Surface",662.767,14.632,589.319
+117.19,CPU 2,environment-contact,"Road Surface",663.208,14.517,588.956
+117.21,CPU 2,environment-contact,"Road Surface",663.430,14.476,588.773
+117.27,CPU 2,environment-contact,"Road Surface",664.077,14.298,588.227
+117.29,CPU 2,environment-contact,"Road Surface",664.288,14.246,588.044
+117.31,CPU 2,environment-contact,"Road Surface",664.495,14.188,587.859
+117.35,CPU 2,environment-contact,"Road Surface",664.906,14.053,587.494
+117.37,CPU 2,environment-contact,"Road Surface",665.108,14.012,587.307
+117.37,CPU 2,environment-contact,"Road Surface",665.108,14.012,587.307
+117.45,CPU 2,environment-contact,"Road Surface",665.885,13.763,586.567
+117.45,CPU 2,environment-contact,"Road Surface",665.885,13.763,586.567
+117.51,CPU 2,environment-contact,"Road Surface",666.440,13.547,586.008
+117.53,CPU 2,environment-contact,"Road Surface",666.624,13.496,585.817
+117.53,CPU 2,environment-contact,"Road Surface",666.624,13.496,585.817
+117.59,CPU 2,environment-contact,"Road Surface",667.155,13.278,585.247
+117.61,CPU 1,airborne,"speed=20.48",607.691,18.339,596.788
+117.61,CPU 2,environment-contact,"Road Surface",667.330,13.210,585.054
+117.61,CPU 2,environment-contact,"Road Surface",667.330,13.210,585.054
+117.83,CPU 2,environment-contact,"Road Surface",669.080,12.452,582.826
+117.91,CPU 2,environment-contact,"Road Surface",669.631,12.165,581.977
+117.91,CPU 2,environment-contact,"Road Surface",669.631,12.165,581.977
+117.99,CPU 2,environment-contact,"Road Surface",670.133,11.880,581.117
+118.01,CPU 2,environment-contact,"Road Surface",670.255,11.825,580.899
+118.01,CPU 2,environment-contact,"Road Surface",670.255,11.825,580.899
+118.09,CPU 2,environment-contact,"Road Surface",670.692,11.537,580.038
+118.09,CPU 2,environment-contact,"Road Surface",670.692,11.537,580.038
+118.11,CPU 2,environment-contact,"Road Surface",670.803,11.499,579.817
+118.11,CPU 2,environment-contact,"Road Surface",670.803,11.499,579.817
+118.21,CPU 1,environment-contact,"Road Surface",620.243,16.376,597.400
+118.21,CPU 1,environment-contact,"Road Surface",620.243,16.376,597.400
+118.21,CPU 2,environment-contact,"Road Surface",671.283,11.191,578.750
+118.21,CPU 2,environment-contact,"Road Surface",671.283,11.191,578.750
+118.21,CPU 2,environment-contact,"Road Surface",671.283,11.191,578.750
+118.23,CPU 1,grounded,"speed=19.87",620.243,16.376,597.400
+118.25,CPU 1,environment-contact,"Road Surface",621.031,16.346,597.434
+118.25,CPU 1,environment-contact,"Road Surface",621.031,16.346,597.434
+118.31,CPU 1,environment-contact,"Road Surface",622.228,16.349,597.484
+118.31,CPU 1,environment-contact,"Road Surface",622.228,16.349,597.484
+118.31,CPU 2,environment-contact,"Road Surface",671.702,10.915,577.689
+118.33,CPU 2,environment-contact,"Road Surface",671.776,10.851,577.477
+118.35,CPU 2,environment-contact,"Road Surface",671.849,10.786,577.270
+118.39,CPU 2,environment-contact,"Road Surface",671.999,10.663,576.854
+118.39,CPU 2,environment-contact,"Road Surface",671.999,10.663,576.854
+118.41,CPU 2,environment-contact,"Road Surface",672.070,10.631,576.641
+118.51,CPU 2,environment-contact,"Road Surface",672.388,10.384,575.604
+118.53,CPU 2,environment-contact,"Road Surface",672.446,10.349,575.393
+118.53,CPU 2,environment-contact,"Road Surface",672.446,10.349,575.393
+118.63,CPU 2,environment-contact,"Road Surface",672.715,10.124,574.344
+118.67,CPU 2,environment-contact,"Road Surface",672.816,10.053,573.915
+118.75,CPU 2,environment-contact,"Road Surface",672.999,9.867,573.049
+118.75,CPU 2,environment-contact,"Road Surface",672.999,9.867,573.049
+118.81,CPU 2,environment-contact,"Road Surface",673.128,9.760,572.384
+118.85,CPU 2,environment-contact,"Road Surface",673.207,9.666,571.936
+118.85,CPU 2,environment-contact,"Road Surface",673.207,9.666,571.936
+118.87,CPU 2,environment-contact,"Road Surface",673.247,9.623,571.710
+119.79,CPU 1,environment-contact,"Road Surface",649.353,16.307,596.083
+119.83,CPU 1,environment-contact,"Road Surface",649.986,16.280,595.891
+119.85,CPU 1,environment-contact,"Road Surface",650.300,16.271,595.792
+119.93,CPU 1,environment-contact,"Road Surface",651.533,16.199,595.373
+119.95,CPU 1,environment-contact,"Road Surface",651.838,16.181,595.263
+119.95,CPU 1,environment-contact,"Road Surface",651.838,16.181,595.263
+120.05,CPU 1,environment-contact,"Road Surface",653.332,16.091,594.674
+120.19,CPU 1,environment-contact,"Road Surface",655.342,15.909,593.766
+120.25,CPU 1,environment-contact,"Road Surface",656.171,15.808,593.346
+120.33,CPU 1,environment-contact,"Road Surface",657.247,15.674,592.761
+120.35,CPU 1,environment-contact,"Road Surface",657.512,15.637,592.611
+120.37,CPU 1,environment-contact,"Road Surface",657.772,15.593,592.460
+120.45,CPU 1,environment-contact,"Road Surface",658.794,15.436,591.832
+120.49,CPU 1,environment-contact,"Road Surface",659.291,15.347,591.509
+120.51,CPU 1,environment-contact,"Road Surface",659.535,15.298,591.346
+120.51,CPU 1,environment-contact,"Road Surface",659.535,15.298,591.346
+120.55,CPU 1,environment-contact,"Road Surface",660.016,15.205,591.015
+120.55,CPU 1,environment-contact,"Road Surface",660.016,15.205,591.015
+120.59,CPU 1,environment-contact,"Road Surface",660.492,15.118,590.677
+120.63,CPU 1,environment-contact,"Road Surface",660.956,15.020,590.336
+120.65,CPU 1,environment-contact,"Road Surface",661.187,14.966,590.164
+120.67,CPU 1,environment-contact,"Road Surface",661.411,14.911,589.991
+120.69,CPU 1,environment-contact,"Road Surface",661.636,14.868,589.816
+120.75,CPU 1,environment-contact,"Road Surface",662.299,14.705,589.295
+120.77,CPU 1,environment-contact,"Road Surface",662.516,14.657,589.118
+120.77,CPU 1,environment-contact,"Road Surface",662.516,14.657,589.118
+120.83,CPU 1,environment-contact,"Road Surface",663.150,14.487,588.587
+120.83,CPU 1,environment-contact,"Road Surface",663.150,14.487,588.587
+120.87,CPU 1,environment-contact,"Road Surface",663.567,14.380,588.231
+120.89,CPU 1,environment-contact,"Road Surface",663.770,14.320,588.051
+120.93,CPU 1,environment-contact,"Road Surface",664.173,14.199,587.691
+120.95,CPU 1,environment-contact,"Road Surface",664.372,14.129,587.511
+120.97,CPU 1,environment-contact,"Road Surface",664.566,14.063,587.330
+120.99,CPU 1,environment-contact,"Road Surface",664.765,14.024,587.146
+121.01,CPU 1,environment-contact,"Road Surface",664.959,13.969,586.963
+121.05,CPU 1,environment-contact,"Road Surface",665.337,13.834,586.605
+121.07,CPU 1,environment-contact,"Road Surface",665.524,13.780,586.421
+121.07,CPU 1,environment-contact,"Road Surface",665.524,13.780,586.421
+121.13,CPU 1,environment-contact,"Road Surface",666.064,13.567,585.877
+121.15,CPU 1,environment-contact,"Road Surface",666.244,13.520,585.692
+121.15,CPU 1,environment-contact,"Road Surface",666.244,13.520,585.692
+121.17,CPU 1,environment-contact,"Road Surface",666.419,13.459,585.507
+121.23,CPU 1,environment-contact,"Road Surface",666.932,13.250,584.951
+121.23,CPU 1,environment-contact,"Road Surface",666.932,13.250,584.951
+121.23,CPU 1,environment-contact,"Road Surface",666.932,13.250,584.951
+121.29,CPU 1,environment-contact,"Road Surface",667.426,13.045,584.381
+121.45,CPU 1,environment-contact,"Road Surface",668.646,12.514,582.801
+121.53,CPU 1,environment-contact,"Road Surface",669.186,12.233,581.991
+121.55,CPU 1,environment-contact,"Road Surface",669.317,12.171,581.786
+121.63,CPU 1,environment-contact,"Road Surface",669.801,11.894,580.966
+121.65,CPU 1,environment-contact,"Road Surface",669.918,11.838,580.758
+121.75,CPU 1,environment-contact,"Road Surface",670.454,11.521,579.725
+121.75,CPU 1,environment-contact,"Road Surface",670.454,11.521,579.725
+121.75,CPU 1,environment-contact,"Road Surface",670.454,11.521,579.725
+121.75,CPU 1,environment-contact,"Road Surface",670.454,11.521,579.725
+121.85,CPU 1,environment-contact,"Road Surface",670.927,11.213,578.711
+121.85,CPU 1,environment-contact,"Road Surface",670.927,11.213,578.711
+121.85,CPU 1,environment-contact,"Road Surface",670.927,11.213,578.711
+121.95,CPU 1,environment-contact,"Road Surface",671.343,10.912,577.719
+121.97,CPU 1,environment-contact,"Road Surface",671.426,10.894,577.518
+121.97,CPU 1,environment-contact,"Road Surface",671.426,10.894,577.518
+122.07,CPU 1,environment-contact,"Road Surface",671.791,10.637,576.549
+122.07,CPU 1,environment-contact,"Road Surface",671.791,10.637,576.549
+122.07,CPU 1,environment-contact,"Road Surface",671.791,10.637,576.549
+122.19,CPU 1,environment-contact,"Road Surface",672.179,10.349,575.394
+122.21,CPU 1,environment-contact,"Road Surface",672.241,10.326,575.196
+122.21,CPU 1,environment-contact,"Road Surface",672.241,10.326,575.196
+122.31,CPU 1,environment-contact,"Road Surface",672.521,10.105,574.203
+122.33,CPU 1,environment-contact,"Road Surface",672.575,10.077,573.999
+122.33,CPU 1,environment-contact,"Road Surface",672.575,10.077,573.999
+122.37,CPU 1,environment-contact,"Road Surface",672.678,9.993,573.592
+122.41,CPU 1,environment-contact,"Road Surface",672.776,9.888,573.182
+122.43,CPU 1,environment-contact,"Road Surface",672.826,9.852,572.971
+122.45,CPU 1,environment-contact,"Road Surface",672.874,9.819,572.758
+122.51,CPU 1,environment-contact,"Road Surface",673.006,9.702,572.109
+152.94,P2,environment-contact,"Road Surface",284.284,-23.583,442.333
+152.94,P2,environment-contact,"Road Surface",284.284,-23.583,442.333
+160.06,P1,environment-contact,"Road Surface",279.947,-20.566,461.992
+160.06,P1,environment-contact,"Road Surface",279.947,-20.566,461.992
+162.04,P2,item,"Oil",275.918,4.675,637.827
+162.22,CPU 2,environment-contact,"Road Surface",280.605,-24.490,428.370
+162.22,CPU 2,environment-contact,"Road Surface",280.605,-24.490,428.370
+162.84,CPU 2,environment-contact,"Road Surface",279.857,-23.465,443.124
+162.84,CPU 2,environment-contact,"Road Surface",279.857,-23.465,443.124
+162.90,CPU 2,environment-contact,"Road Surface",279.822,-23.330,444.591
+162.90,CPU 2,environment-contact,"Road Surface",279.822,-23.330,444.591
+163.30,CPU 2,environment-contact,"Road Surface",279.616,-21.970,454.490
+163.30,CPU 2,environment-contact,"Road Surface",279.616,-21.970,454.490
+164.26,CPU 2,environment-contact,"Road Surface",279.535,-16.381,478.039
+164.28,CPU 2,environment-contact,"Road Surface",279.541,-16.232,478.520
+168.36,P1,item,"Oil",271.952,4.676,637.291
+170.74,CPU 2,afflicted,"Oil",273.505,4.656,639.915
+170.76,CPU 2,afflicted,"Oil",273.435,4.652,640.424
+176.64,CPU 2,environment-contact,"Road Surface",262.331,3.465,780.762
+176.64,CPU 2,environment-contact,"Road Surface",262.331,3.465,780.762
+177.16,CPU 2,vehicle-contact,"Player1_Car",267.359,3.398,788.454
+177.16,P1,vehicle-contact,"CPU2_Car",271.322,3.375,791.301
+180.86,CPU 1,environment-contact,"Road Surface",265.133,3.424,785.122
+180.86,CPU 1,environment-contact,"Road Surface",265.133,3.424,785.122
+185.46,P2,item,"Shield",494.001,3.348,696.969
+188.84,P2,charge,"",500.075,3.514,631.677
+189.08,P2,environment-contact,"Road Surface",503.466,3.875,626.148
+189.08,P2,environment-contact,"Road Surface",503.466,3.875,626.148
+189.08,P2,environment-contact,"Road Surface",503.466,3.875,626.148
+189.42,P2,environment-contact,"Road Surface",507.252,4.587,621.296
+189.50,P2,environment-contact,"Road Surface",508.027,4.764,620.420
+189.58,P2,environment-contact,"Road Surface",508.894,4.971,619.486
+189.66,P2,environment-contact,"Road Surface",509.858,5.226,618.501
+189.68,P2,environment-contact,"Road Surface",510.118,5.280,618.250
+189.68,P2,environment-contact,"Road Surface",510.118,5.280,618.250
+189.80,P2,environment-contact,"Road Surface",511.756,5.734,616.733
+189.86,P2,environment-contact,"Road Surface",512.634,5.992,615.986
+189.94,P2,environment-contact,"Road Surface",513.858,6.308,615.010
+189.94,P2,environment-contact,"Road Surface",513.858,6.308,615.010
+189.98,P2,environment-contact,"Road Surface",514.481,6.513,614.543
+189.98,P2,environment-contact,"Road Surface",514.481,6.513,614.543
+190.10,P2,environment-contact,"Road Surface",516.397,7.075,613.196
+190.10,P2,environment-contact,"Road Surface",516.397,7.075,613.196
+190.14,P2,environment-contact,"Road Surface",517.026,7.267,612.753
+190.18,P2,environment-contact,"Road Surface",517.678,7.465,612.340
+190.20,P2,environment-contact,"Road Surface",518.011,7.566,612.144
+190.24,P2,environment-contact,"Road Surface",518.668,7.766,611.733
+190.26,P2,environment-contact,"Road Surface",519.000,7.860,611.523
+190.32,P2,environment-contact,"Road Surface",520.032,8.165,610.940
+190.32,P2,environment-contact,"Road Surface",520.032,8.165,610.940
+190.32,P2,environment-contact,"Road Surface",520.032,8.165,610.940
+190.38,P2,environment-contact,"Road Surface",521.062,8.487,610.351
+190.38,P2,environment-contact,"Road Surface",521.062,8.487,610.351
+190.48,P2,environment-contact,"Road Surface",522.839,8.989,609.429
+190.48,P2,environment-contact,"Road Surface",522.839,8.989,609.429
+190.52,P2,environment-contact,"Road Surface",523.553,9.193,609.054
+190.52,P2,environment-contact,"Road Surface",523.553,9.193,609.054
+190.58,P2,environment-contact,"Road Surface",524.649,9.497,608.526
+190.60,P2,environment-contact,"Road Surface",525.015,9.594,608.347
+190.64,P2,environment-contact,"Road Surface",525.756,9.793,607.997
+192.44,P2,environment-contact,"Road Surface",562.512,16.170,596.959
+192.44,P2,environment-contact,"Road Surface",562.512,16.170,596.959
+192.96,P1,item,"Oil",498.001,3.348,696.942
+194.56,CPU 2,afflicted,"Oil",496.051,3.348,694.469
+194.60,P2,airborne,"speed=19.41",607.629,18.319,597.911
+195.02,P2,item,"Shield",616.131,17.237,598.064
+195.18,P2,environment-contact,"Road Surface",619.179,16.410,598.117
+195.18,P2,environment-contact,"Road Surface",619.179,16.410,598.117
+195.20,P2,grounded,"speed=18.95",619.179,16.410,598.117
+195.22,P2,environment-contact,"Road Surface",619.936,16.350,598.089
+195.22,P2,environment-contact,"Road Surface",619.936,16.350,598.089
+197.25,P1,environment-contact,"Road Surface",506.447,3.852,628.660
+197.25,P1,environment-contact,"Road Surface",506.447,3.852,628.660
+197.31,P2,environment-contact,"Road Surface",648.320,16.309,594.648
+197.41,P2,environment-contact,"Road Surface",649.488,16.276,594.286
+197.41,P2,environment-contact,"Road Surface",649.488,16.276,594.286
+197.49,P2,environment-contact,"Road Surface",650.412,16.225,593.972
+197.65,P2,environment-contact,"Road Surface",652.239,16.126,593.277
+197.65,P2,environment-contact,"Road Surface",652.239,16.126,593.277
+197.83,P2,environment-contact,"Road Surface",654.250,15.941,592.377
+197.85,CPU 2,environment-contact,"Road Surface",500.322,3.554,630.583
+197.87,CPU 2,environment-contact,"Road Surface",500.476,3.564,630.313
+197.93,P2,environment-contact,"Road Surface",655.340,15.813,591.817
+198.01,P2,environment-contact,"Road Surface",656.195,15.698,591.335
+198.05,P2,environment-contact,"Road Surface",656.618,15.634,591.086
+198.07,P2,environment-contact,"Road Surface",656.826,15.602,590.956
+198.07,P2,environment-contact,"Road Surface",656.826,15.602,590.956
+198.13,P2,environment-contact,"Road Surface",657.446,15.497,590.561
+198.15,P2,environment-contact,"Road Surface",657.649,15.461,590.424
+198.19,P1,environment-contact,"Road Surface",514.356,5.716,619.584
+198.19,P1,environment-contact,"Road Surface",514.356,5.716,619.584
+198.21,P2,environment-contact,"Road Surface",658.254,15.347,590.006
+198.21,P1,environment-contact,"Road Surface",514.621,5.792,619.355
+198.23,P2,environment-contact,"Road Surface",658.452,15.309,589.862
+198.25,P1,environment-contact,"Road Surface",515.162,5.960,618.893
+198.29,P2,environment-contact,"Road Surface",659.039,15.183,589.421
+198.31,P2,environment-contact,"Road Surface",659.232,15.142,589.269
+198.31,P1,environment-contact,"Road Surface",516.011,6.223,618.197
+198.31,P1,environment-contact,"Road Surface",516.011,6.223,618.197
+198.33,P1,environment-contact,"Road Surface",516.304,6.324,617.973
+198.35,P2,environment-contact,"Road Surface",659.612,15.051,588.963
+198.35,P1,environment-contact,"Road Surface",516.601,6.409,617.748
+198.37,P2,environment-contact,"Road Surface",659.803,15.009,588.807
+198.37,P1,environment-contact,"Road Surface",516.895,6.505,617.526
+198.39,P1,environment-contact,"Road Surface",517.186,6.626,617.309
+198.39,P2,environment-contact,"Road Surface",659.989,14.962,588.649
+198.43,P2,environment-contact,"Road Surface",660.357,14.852,588.333
+198.43,P2,environment-contact,"Road Surface",660.357,14.852,588.333
+198.45,P1,environment-contact,"Road Surface",518.093,6.907,616.666
+198.45,P1,environment-contact,"Road Surface",518.093,6.907,616.666
+198.45,P2,environment-contact,"Road Surface",660.542,14.819,588.170
+198.49,P1,environment-contact,"Road Surface",518.700,7.123,616.241
+198.49,P1,environment-contact,"Road Surface",518.700,7.123,616.241
+198.51,P2,environment-contact,"Road Surface",661.075,14.653,587.686
+198.53,P2,environment-contact,"Road Surface",661.253,14.619,587.519
+198.53,P2,environment-contact,"Road Surface",661.253,14.619,587.519
+198.55,P1,environment-contact,"Road Surface",519.653,7.451,615.628
+198.57,P1,environment-contact,"Road Surface",519.975,7.563,615.423
+198.57,P1,environment-contact,"Road Surface",519.975,7.563,615.423
+198.59,P2,environment-contact,"Road Surface",661.767,14.448,587.023
+198.61,P2,environment-contact,"Road Surface",661.935,14.398,586.852
+198.61,P2,environment-contact,"Road Surface",661.935,14.398,586.852
+198.61,P1,environment-contact,"Road Surface",520.633,7.769,615.021
+198.63,P1,environment-contact,"Road Surface",520.965,7.888,614.825
+198.65,P1,environment-contact,"Road Surface",521.301,8.001,614.635
+198.69,P1,environment-contact,"Road Surface",521.966,8.242,614.252
+198.69,P2,environment-contact,"Road Surface",662.602,14.173,586.166
+198.69,P2,environment-contact,"Road Surface",662.602,14.173,586.166
+198.73,P2,environment-contact,"Road Surface",662.929,14.052,585.818
+198.73,P1,environment-contact,"Road Surface",522.645,8.465,613.879
+198.77,P1,environment-contact,"Road Surface",523.342,8.649,613.502
+198.77,P2,environment-contact,"Road Surface",663.256,13.940,585.461
+198.77,P2,environment-contact,"Road Surface",663.256,13.940,585.461
+198.79,P1,environment-contact,"Road Surface",523.680,8.784,613.323
+198.79,P1,environment-contact,"Road Surface",523.680,8.784,613.323
+198.79,P1,environment-contact,"Road Surface",523.680,8.784,613.323
+198.83,P2,environment-contact,"Road Surface",663.734,13.749,584.916
+198.85,P2,environment-contact,"Road Surface",663.892,13.687,584.731
+198.87,P1,environment-contact,"Road Surface",525.083,9.237,612.621
+198.89,P2,environment-contact,"Road Surface",664.201,13.546,584.360
+198.91,P2,environment-contact,"Road Surface",664.358,13.487,584.170
+198.93,P1,environment-contact,"Road Surface",526.154,9.532,612.094
+198.93,P1,environment-contact,"Road Surface",526.154,9.532,612.094
+198.93,P1,environment-contact,"Road Surface",526.154,9.532,612.094
+198.93,P1,environment-contact,"Road Surface",526.154,9.532,612.094
+198.93,P2,environment-contact,"Road Surface",664.510,13.418,583.979
+198.97,P2,environment-contact,"Road Surface",664.813,13.279,583.593
+198.97,P2,environment-contact,"Road Surface",664.813,13.279,583.593
+198.97,P2,environment-contact,"Road Surface",664.813,13.279,583.593
+199.01,P1,environment-contact,"Road Surface",527.607,9.932,611.419
+199.01,P1,environment-contact,"Road Surface",527.607,9.932,611.419
+199.05,P2,environment-contact,"Road Surface",665.447,12.972,582.725
+199.05,CPU 2,environment-contact,"Road Surface",511.105,5.617,616.779
+199.17,P2,environment-contact,"Road Surface",666.454,12.474,581.118
+199.17,CPU 2,environment-contact,"Road Surface",512.287,5.971,615.731
+199.23,P2,environment-contact,"Road Surface",666.940,12.170,580.184
+199.23,CPU 2,environment-contact,"Road Surface",512.880,6.114,615.224
+199.25,CPU 2,environment-contact,"Road Surface",513.069,6.191,615.067
+199.27,CPU 2,environment-contact,"Road Surface",513.267,6.249,614.914
+199.31,P2,environment-contact,"Road Surface",667.521,11.731,578.867
+199.31,P2,environment-contact,"Road Surface",667.521,11.731,578.867
+199.33,P2,environment-contact,"Road Surface",667.648,11.634,578.528
+199.35,CPU 2,environment-contact,"Road Surface",514.036,6.461,614.296
+199.35,CPU 2,environment-contact,"Road Surface",514.036,6.461,614.296
+199.37,CPU 2,environment-contact,"Road Surface",514.231,6.523,614.155
+199.41,CPU 2,environment-contact,"Road Surface",514.624,6.613,613.861
+199.43,P2,environment-contact,"Road Surface",668.236,10.999,576.849
+199.45,CPU 2,environment-contact,"Road Surface",515.005,6.735,613.576
+199.45,P2,environment-contact,"Road Surface",668.337,10.845,576.508
+199.47,P2,environment-contact,"Road Surface",668.442,10.816,576.147
+199.47,P2,environment-contact,"Road Surface",668.442,10.816,576.147
+199.55,P2,airborne,"speed=18.62",668.734,10.600,575.071
+199.57,CPU 2,environment-contact,"Road Surface",516.166,7.086,612.757
+199.57,CPU 2,environment-contact,"Road Surface",516.166,7.086,612.757
+199.57,CPU 2,environment-contact,"Road Surface",516.166,7.086,612.757
+199.67,P2,grounded,"speed=18.25",669.311,10.008,572.936
+199.67,CPU 2,environment-contact,"Road Surface",517.140,7.351,612.110
+199.67,CPU 2,environment-contact,"Road Surface",517.140,7.351,612.110
+199.69,CPU 2,environment-contact,"Road Surface",517.325,7.428,611.983
+199.69,CPU 2,environment-contact,"Road Surface",517.325,7.428,611.983
+199.69,P2,environment-contact,"Road Surface",669.482,9.754,572.228
+199.71,P2,environment-contact,"Road Surface",669.546,9.634,571.864
+199.73,P2,environment-contact,"Road Surface",669.594,9.582,571.475
+199.73,P2,environment-contact,"Road Surface",669.594,9.582,571.475
+199.79,CPU 2,environment-contact,"Road Surface",518.303,7.730,611.386
+199.79,CPU 2,environment-contact,"Road Surface",518.303,7.730,611.386
+199.87,CPU 2,environment-contact,"Road Surface",519.091,7.943,610.926
+199.87,P1,environment-contact,"Road Surface",544.314,14.009,605.002
+199.91,CPU 2,environment-contact,"Road Surface",519.467,8.086,610.698
+199.93,P1,environment-contact,"Road Surface",545.524,14.229,604.619
+200.01,CPU 2,environment-contact,"Road Surface",520.452,8.364,610.149
+200.01,CPU 2,environment-contact,"Road Surface",520.452,8.364,610.149
+200.05,CPU 2,environment-contact,"Road Surface",520.852,8.485,609.938
+200.11,CPU 2,environment-contact,"Road Surface",521.469,8.629,609.611
+200.13,CPU 2,environment-contact,"Road Surface",521.665,8.711,609.502
+200.23,CPU 2,environment-contact,"Road Surface",522.709,9.006,608.975
+200.27,CPU 2,environment-contact,"Road Surface",523.135,9.132,608.773
+200.33,CPU 2,environment-contact,"Road Surface",523.790,9.285,608.455
+200.37,CPU 2,environment-contact,"Road Surface",524.226,9.429,608.247
+200.47,CPU 2,environment-contact,"Road Surface",525.354,9.720,607.725
+200.47,CPU 2,environment-contact,"Road Surface",525.354,9.720,607.725
+201.09,CPU 2,environment-contact,"Road Surface",533.044,11.839,604.476
+201.09,CPU 2,environment-contact,"Road Surface",533.044,11.839,604.476
+201.75,CPU 2,environment-contact,"Road Surface",542.553,13.967,600.966
+201.79,CPU 2,environment-contact,"Road Surface",543.177,14.073,600.760
+201.89,CPU 2,environment-contact,"Road Surface",544.757,14.342,600.256
+201.95,CPU 1,environment-contact,"Road Surface",499.745,3.512,631.632
+201.95,CPU 1,environment-contact,"Road Surface",499.745,3.512,631.632
+202.25,CPU 1,environment-contact,"Road Surface",502.097,3.724,627.632
+202.27,CPU 1,environment-contact,"Road Surface",502.261,3.744,627.377
+202.29,CPU 1,environment-contact,"Road Surface",502.428,3.767,627.124
+202.41,CPU 2,environment-contact,"Road Surface",553.475,15.527,597.937
+202.41,CPU 2,environment-contact,"Road Surface",553.475,15.527,597.937
+202.47,CPU 2,environment-contact,"Road Surface",554.519,15.617,597.726
+202.47,CPU 2,environment-contact,"Road Surface",554.519,15.617,597.726
+202.65,CPU 1,environment-contact,"Road Surface",505.601,4.294,622.750
+202.65,CPU 1,environment-contact,"Road Surface",505.601,4.294,622.750
+202.79,CPU 1,environment-contact,"Road Surface",506.901,4.575,621.172
+202.81,CPU 1,environment-contact,"Road Surface",507.088,4.621,620.952
+202.87,CPU 1,environment-contact,"Road Surface",507.651,4.745,620.302
+202.95,P1,airborne,"speed=18.77",607.591,18.320,598.079
+203.23,CPU 1,environment-contact,"Road Surface",511.124,5.623,616.761
+203.35,CPU 1,environment-contact,"Road Surface",512.300,5.968,615.727
+203.39,P1,item,"Oil",616.174,17.141,597.939
+203.43,CPU 1,environment-contact,"Road Surface",513.085,6.184,615.071
+203.53,CPU 1,environment-contact,"Road Surface",514.056,6.469,614.296
+203.53,CPU 1,environment-contact,"Road Surface",514.056,6.469,614.296
+203.53,CPU 1,environment-contact,"Road Surface",514.056,6.469,614.296
+203.53,P1,environment-contact,"Road Surface",618.742,16.408,597.899
+203.53,P1,environment-contact,"Road Surface",618.742,16.408,597.899
+203.55,P1,grounded,"speed=18.23",618.742,16.408,597.899
+203.57,P1,environment-contact,"Road Surface",619.473,16.349,597.929
+203.57,P1,environment-contact,"Road Surface",619.473,16.349,597.929
+203.63,CPU 1,environment-contact,"Road Surface",515.027,6.724,613.567
+203.63,CPU 1,environment-contact,"Road Surface",515.027,6.724,613.567
+203.65,CPU 1,environment-contact,"Road Surface",515.213,6.801,613.423
+203.65,CPU 1,environment-contact,"Road Surface",515.213,6.801,613.423
+203.73,CPU 1,environment-contact,"Road Surface",515.998,7.017,612.871
+203.75,CPU 1,environment-contact,"Road Surface",516.188,7.100,612.748
+203.83,CPU 1,environment-contact,"Road Surface",516.972,7.307,612.232
+203.85,CPU 1,environment-contact,"Road Surface",517.159,7.381,612.106
+203.93,CPU 1,environment-contact,"Road Surface",517.941,7.597,611.606
+203.97,CPU 1,environment-contact,"Road Surface",518.330,7.738,611.382
+203.97,CPU 1,environment-contact,"Road Surface",518.330,7.738,611.382
+204.05,CPU 1,environment-contact,"Road Surface",519.113,7.950,610.925
+204.05,CPU 1,environment-contact,"Road Surface",519.113,7.950,610.925
+204.09,CPU 1,environment-contact,"Road Surface",519.485,8.087,610.700
+204.19,CPU 1,environment-contact,"Road Surface",520.463,8.360,610.154
+204.19,CPU 1,environment-contact,"Road Surface",520.463,8.360,610.154
+204.19,CPU 1,environment-contact,"Road Surface",520.463,8.360,610.154
+204.19,CPU 1,environment-contact,"Road Surface",520.463,8.360,610.154
+204.27,CPU 1,environment-contact,"Road Surface",521.266,8.590,609.731
+204.29,CPU 1,environment-contact,"Road Surface",521.469,8.642,609.621
+204.31,CPU 1,environment-contact,"Road Surface",521.666,8.717,609.512
+204.39,CPU 1,environment-contact,"Road Surface",522.498,8.934,609.087
+204.39,CPU 1,environment-contact,"Road Surface",522.498,8.934,609.087
+204.41,CPU 1,environment-contact,"Road Surface",522.702,9.008,608.987
+204.45,CPU 1,environment-contact,"Road Surface",523.123,9.132,608.784
+204.47,CPU 1,environment-contact,"Road Surface",523.339,9.181,608.680
+204.51,CPU 1,environment-contact,"Road Surface",523.776,9.275,608.469
+204.53,CPU 1,environment-contact,"Road Surface",523.991,9.349,608.365
+204.65,CPU 1,environment-contact,"Road Surface",525.331,9.713,607.742
+204.65,CPU 1,environment-contact,"Road Surface",525.331,9.713,607.742
+205.13,CPU 2,airborne,"speed=21.03",607.531,18.328,596.639
+205.15,CPU 1,environment-contact,"Road Surface",531.437,11.409,605.134
+205.15,CPU 1,environment-contact,"Road Surface",531.437,11.409,605.134
+205.59,CPU 2,afflicted,"Oil",617.547,17.104,597.151
+205.65,P1,environment-contact,"Road Surface",647.419,16.345,598.712
+205.73,CPU 2,environment-contact,"Road Surface",620.418,16.371,597.289
+205.73,CPU 2,environment-contact,"Road Surface",620.418,16.371,597.289
+205.75,CPU 2,grounded,"speed=20.32",620.418,16.371,597.289
+205.77,CPU 2,environment-contact,"Road Surface",621.227,16.346,597.288
+205.77,CPU 2,environment-contact,"Road Surface",621.227,16.346,597.288
+205.83,CPU 2,environment-contact,"Road Surface",622.447,16.349,597.161
+205.83,CPU 2,environment-contact,"Road Surface",622.447,16.349,597.161
+205.87,P1,environment-contact,"Road Surface",649.984,16.308,598.068
+205.95,P1,environment-contact,"Road Surface",650.906,16.272,597.795
+205.95,P1,environment-contact,"Road Surface",650.906,16.272,597.795
+206.15,P1,environment-contact,"Road Surface",653.169,16.150,597.015
+206.15,P1,environment-contact,"Road Surface",653.169,16.150,597.015
+206.19,P1,environment-contact,"Road Surface",653.616,16.125,596.840
+206.21,P1,environment-contact,"Road Surface",653.838,16.105,596.751
+206.31,P1,environment-contact,"Road Surface",654.942,16.021,596.279
+206.39,P1,environment-contact,"Road Surface",655.813,15.934,595.874
+206.41,P1,environment-contact,"Road Surface",656.030,15.920,595.768
+206.49,P1,environment-contact,"Road Surface",656.887,15.824,595.328
+206.51,P1,environment-contact,"Road Surface",657.100,15.807,595.214
+206.59,P1,environment-contact,"Road Surface",657.939,15.696,594.743
+206.59,CPU 1,environment-contact,"Road Surface",553.492,15.511,597.946
+206.61,P1,environment-contact,"Road Surface",658.148,15.678,594.621
+206.61,CPU 1,environment-contact,"Road Surface",553.842,15.541,597.873
+206.69,P1,environment-contact,"Road Surface",658.970,15.563,594.118
+206.71,P1,environment-contact,"Road Surface",659.173,15.537,593.988
+206.79,P1,environment-contact,"Road Surface",659.973,15.407,593.452
+206.81,P1,environment-contact,"Road Surface",660.171,15.381,593.313
+206.87,P1,environment-contact,"Road Surface",660.755,15.268,592.890
+206.89,P1,environment-contact,"Road Surface",660.949,15.239,592.747
+206.93,CPU 1,environment-contact,"Road Surface",559.475,16.004,596.887
+206.93,CPU 1,environment-contact,"Road Surface",559.475,16.004,596.887
+206.99,P1,environment-contact,"Road Surface",661.898,15.059,592.004
+206.99,P1,environment-contact,"Road Surface",661.898,15.059,592.004
+206.99,P1,environment-contact,"Road Surface",661.898,15.059,592.004
+207.07,CPU 1,environment-contact,"Road Surface",561.957,16.149,596.573
+207.07,CPU 1,environment-contact,"Road Surface",561.957,16.149,596.573
+207.07,P1,environment-contact,"Road Surface",662.636,14.899,591.384
+207.09,P1,environment-contact,"Road Surface",662.819,14.863,591.225
+207.09,P1,environment-contact,"Road Surface",662.819,14.863,591.225
+207.15,P1,environment-contact,"Road Surface",663.359,14.725,590.746
+207.17,P1,environment-contact,"Road Surface",663.538,14.686,590.583
+207.17,P1,environment-contact,"Road Surface",663.538,14.686,590.583
+207.25,CPU 2,environment-contact,"Road Surface",649.488,16.316,595.708
+207.25,P1,environment-contact,"Road Surface",664.242,14.506,589.918
+207.27,P1,environment-contact,"Road Surface",664.416,14.468,589.749
+207.27,P1,environment-contact,"Road Surface",664.416,14.468,589.749
+207.29,CPU 2,environment-contact,"Road Surface",650.217,16.275,595.526
+207.31,CPU 2,environment-contact,"Road Surface",650.577,16.254,595.430
+207.31,CPU 2,environment-contact,"Road Surface",650.577,16.254,595.430
+207.33,P1,environment-contact,"Road Surface",664.931,14.316,589.240
+207.35,P1,environment-contact,"Road Surface",665.101,14.271,589.066
+207.35,P1,environment-contact,"Road Surface",665.101,14.271,589.066
+207.39,CPU 2,environment-contact,"Road Surface",651.997,16.172,595.009
+207.41,CPU 2,environment-contact,"Road Surface",652.346,16.155,594.893
+207.41,CPU 2,environment-contact,"Road Surface",652.346,16.155,594.893
+207.43,P1,environment-contact,"Road Surface",665.769,14.069,588.368
+207.45,P1,environment-contact,"Road Surface",665.935,14.031,588.191
+207.45,P1,environment-contact,"Road Surface",665.935,14.031,588.191
+207.47,CPU 2,environment-contact,"Road Surface",653.383,16.087,594.518
+207.51,CPU 2,environment-contact,"Road Surface",654.062,16.026,594.248
+207.51,CPU 2,environment-contact,"Road Surface",654.062,16.026,594.248
+207.55,P1,environment-contact,"Road Surface",666.735,13.764,587.299
+207.55,P1,environment-contact,"Road Surface",666.735,13.764,587.299
+207.55,P1,environment-contact,"Road Surface",666.735,13.764,587.299
+207.59,CPU 2,environment-contact,"Road Surface",655.388,15.907,593.660
+207.63,P1,environment-contact,"Road Surface",667.353,13.521,586.566
+207.63,P1,environment-contact,"Road Surface",667.353,13.521,586.566
+207.63,P1,environment-contact,"Road Surface",667.353,13.521,586.566
+207.65,CPU 2,environment-contact,"Road Surface",656.352,15.795,593.179
+207.71,CPU 2,environment-contact,"Road Surface",657.272,15.671,592.675
+207.71,CPU 2,environment-contact,"Road Surface",657.272,15.671,592.675
+207.71,P1,environment-contact,"Road Surface",667.952,13.280,585.806
+207.73,P1,environment-contact,"Road Surface",668.104,13.217,585.605
+207.75,P1,environment-contact,"Road Surface",668.257,13.151,585.394
+207.77,CPU 2,environment-contact,"Road Surface",658.145,15.531,592.151
+207.79,CPU 2,environment-contact,"Road Surface",658.430,15.493,591.972
+207.83,CPU 2,environment-contact,"Road Surface",658.974,15.388,591.603
+207.85,CPU 2,environment-contact,"Road Surface",659.241,15.348,591.414
+207.89,CPU 2,environment-contact,"Road Surface",659.756,15.237,591.030
+207.91,P1,environment-contact,"Road Surface",669.553,12.495,583.364
+207.91,CPU 2,environment-contact,"Road Surface",660.011,15.197,590.835
+207.93,P1,environment-contact,"Road Surface",669.715,12.405,583.063
+207.95,CPU 2,environment-contact,"Road Surface",660.505,15.080,590.444
+207.97,CPU 2,environment-contact,"Road Surface",660.749,15.033,590.246
+207.97,CPU 2,environment-contact,"Road Surface",660.749,15.033,590.246
+207.99,P1,environment-contact,"Road Surface",670.191,12.117,582.106
+208.01,CPU 2,environment-contact,"Road Surface",661.228,14.932,589.846
+208.05,CPU 2,environment-contact,"Road Surface",661.694,14.806,589.446
+208.07,P1,environment-contact,"Road Surface",670.780,11.717,580.723
+208.07,CPU 2,environment-contact,"Road Surface",661.920,14.752,589.243
+208.07,CPU 2,environment-contact,"Road Surface",661.920,14.752,589.243
+208.11,P1,environment-contact,"Road Surface",671.043,11.500,580.006
+208.11,P1,environment-contact,"Road Surface",671.043,11.500,580.006
+208.11,CPU 2,environment-contact,"Road Surface",662.370,14.637,588.839
+208.13,P1,environment-contact,"Road Surface",671.176,11.429,579.635
+208.13,CPU 2,environment-contact,"Road Surface",662.591,14.569,588.638
+208.15,CPU 2,environment-contact,"Road Surface",662.807,14.506,588.435
+208.17,CPU 2,environment-contact,"Road Surface",663.025,14.456,588.230
+208.17,CPU 2,environment-contact,"Road Surface",663.025,14.456,588.230
+208.19,P1,environment-contact,"Road Surface",671.534,11.122,578.526
+208.19,P1,environment-contact,"Road Surface",671.534,11.122,578.526
+208.21,P1,environment-contact,"Road Surface",671.642,11.005,578.160
+208.23,CPU 2,environment-contact,"Road Surface",663.652,14.254,587.619
+208.25,P1,environment-contact,"Road Surface",671.864,10.840,577.403
+208.25,P1,environment-contact,"Road Surface",671.864,10.840,577.403
+208.25,CPU 2,environment-contact,"Road Surface",663.864,14.200,587.416
+208.27,CPU 2,environment-contact,"Road Surface",664.066,14.135,587.211
+208.27,CPU 2,environment-contact,"Road Surface",664.066,14.135,587.211
+208.31,P1,environment-contact,"Road Surface",672.159,10.591,576.258
+208.31,CPU 2,environment-contact,"Road Surface",664.468,14.003,586.804
+208.33,CPU 2,environment-contact,"Road Surface",664.665,13.946,586.595
+208.37,CPU 2,environment-contact,"Road Surface",665.048,13.796,586.186
+208.39,P1,environment-contact,"Road Surface",672.489,10.194,574.733
+208.39,P1,environment-contact,"Road Surface",672.489,10.194,574.733
+208.39,CPU 2,environment-contact,"Road Surface",665.243,13.732,585.981
+208.41,CPU 2,environment-contact,"Road Surface",665.431,13.662,585.773
+208.41,CPU 2,environment-contact,"Road Surface",665.431,13.662,585.773
+208.41,P1,environment-contact,"Road Surface",672.574,10.127,574.341
+208.43,P1,environment-contact,"Road Surface",672.651,10.070,573.946
+208.47,CPU 2,environment-contact,"Road Surface",665.979,13.430,585.146
+208.47,CPU 2,environment-contact,"Road Surface",665.979,13.430,585.146
+208.49,CPU 2,environment-contact,"Road Surface",666.164,13.366,584.939
+208.51,P1,environment-contact,"Road Surface",672.915,9.738,572.356
+208.51,P1,environment-contact,"Road Surface",672.915,9.738,572.356
+208.51,P1,environment-contact,"Road Surface",672.915,9.738,572.356
+208.57,P1,environment-contact,"Road Surface",673.092,9.531,571.125
+208.59,CPU 2,environment-contact,"Road Surface",667.026,12.993,583.881
+208.59,CPU 2,environment-contact,"Road Surface",667.026,12.993,583.881
+208.59,P1,environment-contact,"Road Surface",673.144,9.449,570.711
+208.73,CPU 2,environment-contact,"Road Surface",668.126,12.485,582.329
+208.73,CPU 2,environment-contact,"Road Surface",668.126,12.485,582.329
+208.81,CPU 2,environment-contact,"Road Surface",668.685,12.182,581.422
+208.81,CPU 2,environment-contact,"Road Surface",668.685,12.182,581.422
+208.89,CPU 2,environment-contact,"Road Surface",669.190,11.885,580.507
+208.91,CPU 2,environment-contact,"Road Surface",669.311,11.830,580.276
+208.91,CPU 2,environment-contact,"Road Surface",669.311,11.830,580.276
+208.99,CPU 2,environment-contact,"Road Surface",669.746,11.515,579.375
+208.99,CPU 2,environment-contact,"Road Surface",669.746,11.515,579.375
+209.01,CPU 2,environment-contact,"Road Surface",669.854,11.461,579.146
+209.05,CPU 2,environment-contact,"Road Surface",670.049,11.313,578.698
+209.09,CPU 2,environment-contact,"Road Surface",670.237,11.196,578.247
+209.17,CPU 2,environment-contact,"Road Surface",670.586,10.927,577.365
+209.19,CPU 2,environment-contact,"Road Surface",670.670,10.887,577.144
+209.19,CPU 2,environment-contact,"Road Surface",670.670,10.887,577.144
+209.27,CPU 2,environment-contact,"Road Surface",670.972,10.621,576.294
+209.29,CPU 2,environment-contact,"Road Surface",671.047,10.597,576.079
+209.29,CPU 2,environment-contact,"Road Surface",671.047,10.597,576.079
+209.33,CPU 1,airborne,"speed=20.87",607.675,18.336,596.661
+209.39,CPU 2,environment-contact,"Road Surface",671.383,10.332,575.039
+209.39,CPU 2,environment-contact,"Road Surface",671.383,10.332,575.039
+209.41,CPU 2,environment-contact,"Road Surface",671.444,10.289,574.830
+209.49,CPU 2,environment-contact,"Road Surface",671.687,10.082,573.991
+209.49,CPU 2,environment-contact,"Road Surface",671.687,10.082,573.991
+209.49,CPU 2,environment-contact,"Road Surface",671.687,10.082,573.991
+209.51,CPU 2,environment-contact,"Road Surface",671.745,10.036,573.776
+209.55,CPU 2,environment-contact,"Road Surface",671.859,9.941,573.343
+209.59,CPU 2,environment-contact,"Road Surface",671.975,9.847,572.905
+209.61,CPU 2,environment-contact,"Road Surface",672.029,9.803,572.681
+209.93,CPU 1,environment-contact,"Road Surface",620.466,16.375,597.321
+209.93,CPU 1,environment-contact,"Road Surface",620.466,16.375,597.321
+209.95,CPU 1,grounded,"speed=20.25",620.466,16.375,597.321
+209.97,CPU 1,environment-contact,"Road Surface",621.268,16.346,597.363
+209.97,CPU 1,environment-contact,"Road Surface",621.268,16.346,597.363
+210.03,CPU 1,environment-contact,"Road Surface",622.486,16.349,597.426
+210.03,CPU 1,environment-contact,"Road Surface",622.486,16.349,597.426
+211.47,CPU 1,environment-contact,"Road Surface",649.374,16.307,596.064
+211.53,CPU 1,environment-contact,"Road Surface",650.346,16.269,595.765
+211.53,CPU 1,environment-contact,"Road Surface",650.346,16.269,595.765
+211.61,CPU 1,environment-contact,"Road Surface",651.611,16.195,595.331
+211.63,CPU 1,environment-contact,"Road Surface",651.922,16.176,595.217
+211.63,CPU 1,environment-contact,"Road Surface",651.922,16.176,595.217
+211.77,CPU 1,environment-contact,"Road Surface",654.052,16.029,594.346
+211.79,CPU 1,environment-contact,"Road Surface",654.348,16.010,594.211
+211.85,CPU 1,environment-contact,"Road Surface",655.219,15.921,593.793
+211.91,CPU 1,environment-contact,"Road Surface",656.067,15.813,593.351
+211.93,CPU 1,environment-contact,"Road Surface",656.345,15.797,593.197
+211.99,CPU 1,environment-contact,"Road Surface",657.162,15.684,592.734
+212.01,CPU 1,environment-contact,"Road Surface",657.430,15.638,592.576
+212.03,CPU 1,environment-contact,"Road Surface",657.693,15.592,592.415
+212.03,CPU 1,environment-contact,"Road Surface",657.693,15.592,592.415
+212.05,CPU 1,environment-contact,"Road Surface",657.953,15.546,592.250
+212.11,CPU 1,environment-contact,"Road Surface",658.729,15.437,591.744
+212.15,CPU 1,environment-contact,"Road Surface",659.231,15.345,591.398
+212.17,CPU 1,environment-contact,"Road Surface",659.478,15.295,591.224
+212.17,CPU 1,environment-contact,"Road Surface",659.478,15.295,591.224
+212.21,CPU 1,environment-contact,"Road Surface",659.965,15.200,590.869
+212.21,CPU 1,environment-contact,"Road Surface",659.965,15.200,590.869
+212.25,CPU 1,environment-contact,"Road Surface",660.445,15.111,590.507
+212.29,CPU 1,environment-contact,"Road Surface",660.914,15.006,590.142
+212.33,CPU 1,environment-contact,"Road Surface",661.371,14.891,589.774
+212.35,CPU 1,environment-contact,"Road Surface",661.600,14.839,589.590
+212.37,CPU 1,environment-contact,"Road Surface",661.825,14.791,589.402
+212.39,CPU 1,environment-contact,"Road Surface",662.046,14.732,589.214
+212.41,CPU 1,environment-contact,"Road Surface",662.265,14.676,589.025
+212.47,CPU 1,environment-contact,"Road Surface",662.915,14.501,588.460
+212.49,CPU 1,environment-contact,"Road Surface",663.128,14.444,588.272
+212.51,CPU 1,environment-contact,"Road Surface",663.339,14.388,588.079
+212.53,CPU 1,environment-contact,"Road Surface",663.545,14.322,587.889
+212.55,CPU 1,environment-contact,"Road Surface",663.751,14.268,587.696
+212.61,CPU 1,environment-contact,"Road Surface",664.359,14.080,587.122
+212.63,CPU 1,environment-contact,"Road Surface",664.556,14.018,586.930
+212.65,CPU 1,environment-contact,"Road Surface",664.750,13.953,586.737
+212.69,CPU 1,environment-contact,"Road Surface",665.137,13.810,586.357
+212.71,CPU 1,environment-contact,"Road Surface",665.329,13.751,586.162
+212.71,CPU 1,environment-contact,"Road Surface",665.329,13.751,586.162
+212.77,CPU 1,environment-contact,"Road Surface",665.884,13.546,585.575
+212.79,CPU 1,environment-contact,"Road Surface",666.067,13.486,585.377
+212.81,CPU 1,environment-contact,"Road Surface",666.246,13.422,585.177
+212.85,CPU 1,environment-contact,"Road Surface",666.596,13.269,584.782
+212.87,CPU 1,environment-contact,"Road Surface",666.768,13.194,584.583
+212.89,CPU 1,environment-contact,"Road Surface",666.938,13.122,584.381
+213.07,CPU 1,environment-contact,"Road Surface",668.360,12.487,582.501
+213.07,CPU 1,environment-contact,"Road Surface",668.360,12.487,582.501
+213.15,CPU 1,environment-contact,"Road Surface",668.913,12.194,581.639
+213.15,CPU 1,environment-contact,"Road Surface",668.913,12.194,581.639
+213.23,CPU 1,environment-contact,"Road Surface",669.416,11.905,580.769
+213.25,CPU 1,environment-contact,"Road Surface",669.538,11.844,580.550
+213.35,CPU 1,environment-contact,"Road Surface",670.089,11.511,579.458
+213.35,CPU 1,environment-contact,"Road Surface",670.089,11.511,579.458
+213.35,CPU 1,environment-contact,"Road Surface",670.089,11.511,579.458
+213.43,CPU 1,environment-contact,"Road Surface",670.477,11.231,578.597
+213.43,CPU 1,environment-contact,"Road Surface",670.477,11.231,578.597
+213.45,CPU 1,environment-contact,"Road Surface",670.572,11.187,578.380
+213.53,CPU 1,environment-contact,"Road Surface",670.918,10.938,577.534
+213.55,CPU 1,environment-contact,"Road Surface",671.000,10.895,577.323
+213.55,CPU 1,environment-contact,"Road Surface",671.000,10.895,577.323
+213.63,CPU 1,airborne,"speed=11.10",671.235,10.737,576.698
+213.65,CPU 1,grounded,"speed=10.93",671.312,10.669,576.494
+213.65,CPU 1,environment-contact,"Road Surface",671.387,10.604,576.288
+213.67,CPU 1,environment-contact,"Road Surface",671.453,10.558,576.081
+213.67,CPU 1,environment-contact,"Road Surface",671.453,10.558,576.081
+213.73,CPU 1,environment-contact,"Road Surface",671.665,10.389,575.475
+213.75,CPU 1,environment-contact,"Road Surface",671.732,10.355,575.268
+213.75,CPU 1,environment-contact,"Road Surface",671.732,10.355,575.268
+213.79,CPU 1,environment-contact,"Road Surface",671.861,10.279,574.853
+213.85,CPU 1,environment-contact,"Road Surface",672.046,10.118,574.237
+213.87,CPU 1,environment-contact,"Road Surface",672.106,10.086,574.026
+213.87,CPU 1,environment-contact,"Road Surface",672.106,10.086,574.026
+213.95,CPU 1,environment-contact,"Road Surface",672.335,9.898,573.179
+213.97,CPU 1,environment-contact,"Road Surface",672.392,9.856,572.964
+214.01,CPU 1,environment-contact,"Road Surface",672.501,9.777,572.528
+214.07,CPU 1,environment-contact,"Road Surface",672.657,9.656,571.862
+214.11,CPU 1,environment-contact,"Road Surface",672.759,9.572,571.412
+220.77,CPU 1,environment-contact,"Road Surface",669.587,-24.557,440.043
+220.81,CPU 1,environment-contact,"Road Surface",669.575,-24.597,439.013
+220.81,CPU 1,environment-contact,"Road Surface",669.575,-24.597,439.013
+240.15,P2,environment-contact,"Road Surface",285.597,-24.635,421.500
+240.15,P2,environment-contact,"Road Surface",285.597,-24.635,421.500
+250.22,P2,item,"Shield",275.923,4.676,637.780
+250.30,P1,environment-contact,"Road Surface",281.524,-24.626,422.196
+250.30,P1,environment-contact,"Road Surface",281.524,-24.626,422.196
+250.70,P1,environment-contact,"Road Surface",280.844,-24.389,430.706
+250.72,P1,environment-contact,"Road Surface",280.817,-24.378,431.133
+250.72,P1,environment-contact,"Road Surface",280.817,-24.378,431.133
+253.40,P1,environment-contact,"Road Surface",279.916,-13.242,487.317
+253.40,P1,environment-contact,"Road Surface",279.916,-13.242,487.317
+256.66,P2,environment-contact,"Road Surface",263.767,3.579,768.648
+256.66,P2,environment-contact,"Road Surface",263.767,3.579,768.648
+257.62,P2,environment-contact,"Road Surface",266.298,3.461,780.054
+257.62,P2,environment-contact,"Road Surface",266.298,3.461,780.054
+258.04,CPU 1,environment-contact,"Road Surface",279.819,-23.372,444.280
+258.06,CPU 1,environment-contact,"Road Surface",279.805,-23.320,444.773
+259.30,CPU 1,environment-contact,"Road Surface",279.521,-17.154,475.515
+259.32,CPU 1,environment-contact,"Road Surface",279.522,-17.015,476.002
+259.32,CPU 1,environment-contact,"Road Surface",279.522,-17.015,476.002
+260.48,P1,item,"Oil",271.945,4.676,637.363
+261.85,CPU 2,afflicted,"Oil",274.566,4.652,640.495
+266.55,CPU 2,vehicle-contact,"Player1_Car",260.445,3.679,757.651
+266.55,P1,vehicle-contact,"CPU2_Car",259.796,3.640,762.320
+270.89,CPU 2,vehicle-contact,"Player1_Car",309.285,3.349,796.132
+270.89,P1,vehicle-contact,"CPU2_Car",304.532,3.350,796.499
+283.28,P1,finished,"position=2;laps=3",497.989,3.348,734.297
+283.28,P2,finished,"position=1;laps=3",494.024,3.348,734.580
+283.28,CPU 1,dnf,"position=4;laps=2",457.867,3.348,788.102
+283.28,CPU 2,dnf,"position=3;laps=2",489.518,3.348,773.879
