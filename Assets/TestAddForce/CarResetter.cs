@@ -93,6 +93,8 @@ public class CarResetter : MonoBehaviour
             int grounded=0; foreach (TireForce tire in tires) if (tire.IsGrounded) grounded++;
             if (grounded < 2 || !course.IsPointInsideCourse(rb.position) || Mathf.Abs(rb.position.y-sample.position.y)>3f ||
                 Vector3.Dot(transform.up,sample.up)<.7f) return;
+            // A reset at the lip cannot build launch speed. Keep the last road with a run-up.
+            if (course.IsJumpAhead(rb.position,laps != null && laps.IsProgressReversed ? -1f : 1f,35f)) return;
         }
         if (!course.HasRoadAtProgress(course.GetProgressDistance(sample.position))) return;
         safeSample = sample; safeLap = lap; hasSafeSample = true;

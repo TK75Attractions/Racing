@@ -18,6 +18,7 @@ public static class SkillGameplayValidation
         ValidateRecoveryProtection();
         ValidateRecoveryInsideGoal();
         ValidateDriverNotice();
+        ValidateJumpAdvice();
         Debug.Log("SKILL_GAMEPLAY_RULES_PASS");
     }
     public static void RunAll()
@@ -42,6 +43,24 @@ public static class SkillGameplayValidation
             Require(label.text=="ペダルを離して再開","Reconnection must explain the pedal release latch.");
             ui.UpdateDriverNotice(gate,null,false);
             Require(!notice.gameObject.activeSelf,"Finished drivers must not see stale control notices.");
+            ui.UpdateDriverNotice(null,null,true,true);
+            Require(notice.gameObject.activeSelf&&label.text.Contains("ジャンプ"),"A gap needs an advance driving cue.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+    private static void ValidateJumpAdvice()
+    {
+        GameObject root=new GameObject("Jump advice QA");
+        try
+        {
+            RaceCourse course=MakeCourse(root);
+            Require(!course.IsJumpAhead(new Vector3(0,0,70),1),"Solid roads must not show a jump warning.");
+            var settings=new SerializedObject(course);
+            settings.FindProperty("waypoints").GetArrayElementAtIndex(1).FindPropertyRelative("jumpToNext").boolValue=true;
+            settings.ApplyModifiedPropertiesWithoutUndo(); course.RebuildCache();
+            Require(course.IsJumpAhead(new Vector3(0,0,70),1),"A gap 30m ahead needs a warning.");
+            Require(!course.IsJumpAhead(new Vector3(0,0,70),-1),"Warnings must follow the race direction.");
+            Require(!course.IsJumpAhead(new Vector3(0,0,40),1,35),"Recovery needs at least 35m of solid run-up.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }
