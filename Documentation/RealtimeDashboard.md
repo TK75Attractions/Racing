@@ -49,7 +49,7 @@ UnityのPlayまたはゲームの起動後に、次のファイルをダブル�
 
 `Tools/DashboardRelay/Install Dashboard Service.command`を一度実行すると、ログイン時に中継を自動起動する。起動が失敗した場合もlaunchdが再起動し、ログイン直後にTailscaleの起動が遅れた場合は接続を待って再試行する。Macを起動・ログインしてインターネットとTailscaleを接続しておけば、UnityをPlayする前にスマホで管理画面を開ける。Macがスリープ・電源オフの間は接続できない。
 
-常駐アプリと予備の画面は`~/Library/Application Support/RacingDashboard`へコピーし、`~/Library/LaunchAgents/com.racing.dashboard.plist`へ登録する。プロジェクトが残っていればその画面ファイルを読み、削除・移動された場合は同梱の画面を使う。中継コードを更新した場合は同じインストーラーを再実行する。操作担当者を追加する場合は`RACING_DASHBOARD_OPERATORS`を指定して再インストールする。既存の中継が起動済みの場合、Unityはそれを再利用する。
+常駐アプリと予備の画面は`~/Library/Application Support/RacingDashboard`へコピーし、`~/Library/LaunchAgents/com.racing.dashboard.plist`へ登録する。プロジェクトが残っていればその画面ファイルを読み、削除・移動された場合は同梱の画面を使う。中継コードを更新した場合は同じインストーラーを再実行する。macOSのTailscale呼出しは`TAILSCALE_BE_CLI=1`を指定し、ターミナルのない常駐環境でもCLIとして実行する（[公式仕様](https://tailscale.com/docs/reference/tailscale-cli?tab=macos)）。操作担当者を追加する場合は`RACING_DASHBOARD_OPERATORS`を指定して再インストールする。既存の中継が起動済みの場合、Unityはそれを再利用する。
 
 解除は`Tools/DashboardRelay/Uninstall Dashboard Service.command`。ログは`~/Library/Logs/RacingDashboard/relay.log`と`relay-error.log`。Tailscale Serveは引き続き同じVPN内だけに公開し、Funnelは使わない。
 
