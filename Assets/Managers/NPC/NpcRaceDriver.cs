@@ -172,7 +172,9 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         CarResetter resetter=GetComponent<CarResetter>();
         if (resetter==null || !resetter.TryResetToRoadSample(sample)) { RecoveryBlockedReason="occupied-road"; return; }
         laps.RestoreNpcRecovery(body,safeState);
-        targetSpeed=0; reverseUntil=Time.time; stuck=unrecoveredSeconds=0; RecoveryBlockedReason=""; RecoveryCount++;
+        // As on the starting grid, ask the physical drivetrain to accelerate immediately.
+        // Slewing the requested speed from zero here consumes the entire jump run-up.
+        targetSpeed=Mathf.Min(cruiseSpeed,24f); reverseUntil=Time.time; stuck=unrecoveredSeconds=0; RecoveryBlockedReason=""; RecoveryCount++;
     }
     private void OnCollisionEnter(Collision collision)
     {
