@@ -17,7 +17,33 @@ public static class SkillGameplayValidation
         ValidateRecoveryOccupancy();
         ValidateRecoveryProtection();
         ValidateRecoveryInsideGoal();
+        ValidateDriverNotice();
         Debug.Log("SKILL_GAMEPLAY_RULES_PASS");
+    }
+    public static void RunAll()
+    {
+        Run();
+        ModernUIValidation.Run();
+        RoadSeamValidation.RunAllFixes();
+        Debug.Log("SKILL_GAMEPLAY_ALL_PASS");
+    }
+    private static void ValidateDriverNotice()
+    {
+        GameObject root=new GameObject("Notice QA",typeof(RectTransform),typeof(Canvas));
+        try
+        {
+            var ui=new OnPlayUIManager(); ui.Init(root.transform,null,0);
+            var source=new Input { IsConnected=false }; var gate=new PlayerDriveInputGate(source);
+            ui.UpdateDriverNotice(gate,null,true);
+            var notice=root.transform.Find("ModernHUD/DriverNotice");
+            var label=notice.Find("Text").GetComponent<TMPro.TMP_Text>();
+            Require(notice.gameObject.activeSelf&&label.text=="接続を確認してください","Lost input needs an actionable notice.");
+            _=gate.CurrentState; source.IsConnected=true; ui.UpdateDriverNotice(gate,null,true);
+            Require(label.text=="ペダルを離して再開","Reconnection must explain the pedal release latch.");
+            ui.UpdateDriverNotice(gate,null,false);
+            Require(!notice.gameObject.activeSelf,"Finished drivers must not see stale control notices.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
     }
     private static void ValidateStartingLine()
     {

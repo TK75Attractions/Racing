@@ -16,6 +16,9 @@ public class OnPlayUIManager
     private RacingLeaderboardUI leaderboard;
     private TMPro.TMP_Text fieldSize;
     private int displayedFieldSize = -1;
+    private RectTransform driverNotice;
+    private TMPro.TMP_Text driverNoticeText;
+    private string displayedNotice;
 
     public UIPosition Position => position;
     public UILap Lap => lap;
@@ -39,6 +42,11 @@ public class OnPlayUIManager
         if (miniMap == null) miniMap = new UIMiniMap();
 
         Transform hud = RacingHUDBuilder.Build(parent, playerIndex, totalLaps);
+        driverNotice = NeonUI.Panel(hud, "DriverNotice", new Vector2(.29f,.84f), new Vector2(.71f,.94f));
+        driverNoticeText = NeonUI.Text(driverNotice, "Text", "", new Vector2(.04f,.08f), new Vector2(.96f,.92f),
+            32f, TMPro.TextAlignmentOptions.Center, true, RacingUITheme.Gold);
+        driverNotice.gameObject.SetActive(false);
+        displayedNotice = null;
         fieldSize = hud.Find("Position/Field")?.GetComponent<TMPro.TMP_Text>();
         leaderboard = hud.Find("Leaderboard")?.GetComponent<RacingLeaderboardUI>();
         position.Init(hud.Find("Position"));
@@ -67,6 +75,18 @@ public class OnPlayUIManager
         leaderboard?.SetParticipants(entries);
         if (fieldSize != null && displayedFieldSize != entries.Count)
         { fieldSize.text = "/ " + entries.Count; displayedFieldSize = entries.Count; }
+    }
+
+    public void UpdateDriverNotice(PlayerDriveInputGate gate, CarResetter resetter, bool racing)
+    {
+        string text = !racing ? "" : gate != null && !gate.IsConnected ? "接続を確認してください" :
+            resetter != null && resetter.IsRecoveryPending ? "コース復帰待ち" :
+            gate != null && gate.NeedsPedalRelease ? "ペダルを離して再開" :
+            resetter != null && UnityEngine.Time.time - resetter.LastRecoveryTime < 1.5f ? "コースへ復帰しました" : "";
+        if (text == displayedNotice || driverNotice == null) return;
+        displayedNotice = text;
+        driverNoticeText.text = text;
+        driverNotice.gameObject.SetActive(text.Length > 0);
     }
 
     public void SetMiniMapCars(Transform playerOneCar, Transform playerTwoCar)

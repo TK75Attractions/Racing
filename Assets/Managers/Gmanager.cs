@@ -1358,6 +1358,8 @@ public class Gmanager : MonoBehaviour
                 mover != null ? mover.AccelerationPadBoostTimeRemaining : 0f,
                 mover != null ? mover.AccelerationPadBoostDuration : 0f, ownerPosition, playerIndex == 0 ? progressGap : -progressGap);
             ui.UpdateParticipants(participants);
+            ui.UpdateDriverNotice(player.inputGate, player.car.GetComponent<CarResetter>(),
+                state == State.Game && player.result == null && !player.withdrewFromRace);
         }
     }
 
