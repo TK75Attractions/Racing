@@ -56,6 +56,55 @@ function connect(route='/api/events', {host='127.0.0.1:8766',origin='http://127.
   });
 }
 
+test('dashboard remains an HTML page when Unity is stopped and reconnects after Play', {timeout:45000}, async()=>{
+  const dll=path.join(root,'Tools/DashboardRelay/bin/Debug/net10.0/DashboardRelay.dll');
+  const relay=spawn('dotnet',[dll],{cwd:require('node:os').tmpdir(),env:{...process.env,RACING_DASHBOARD_ASSETS:'',RACING_DASHBOARD_ORIGIN:'https://race.test.ts.net'}});
+  let output='',bridge,browser;
+  relay.stdout.on('data',data=>output+=data);relay.stderr.on('data',data=>output+=data);
+  try {
+    await waitFor(async()=>{if(relay.exitCode!==null)throw new Error(output);try{return(await request('/api/connection')).status===200;}catch{return false;}});
+    for(const headers of [{},{host:'race.test.ts.net',user:'viewer@example.com'}]) {
+      for(const route of ['/','/index.html']) {
+        const page=await request(route,headers);
+        assert.equal(page.status,200);assert.match(page.headers['content-type'],/^text\/html;.*utf-8/i);
+        assert.equal(page.headers['content-disposition'],undefined);assert.match(page.text,/RACING CONTROL/);
+        assert.equal(page.headers['cache-control'],'no-store');
+      }
+      for(const [route,mime] of [['/app.js','application/javascript'],['/live.js','application/javascript'],['/style.css','text/css']]) {
+        const asset=await request(route,headers);assert.equal(asset.status,200);assert.ok(asset.headers['content-type'].startsWith(mime));
+      }
+      const unavailable=await request('/api/status',headers);
+      assert.equal(unavailable.status,503);assert.match(unavailable.headers['content-type'],/^application\/json/);
+      assert.equal(unavailable.json.reason,'unity_unavailable');
+      const head=await request('/',{...headers,method:'HEAD'});assert.equal(head.status,200);assert.equal(head.text,'');
+    }
+    assert.equal((await request('/Program.cs')).status,404);
+    assert.equal((await request('/Dashboard/index.html.meta')).status,404);
+    const unauthenticated=await request('/',{host:'race.test.ts.net'});
+    assert.equal(unauthenticated.status,403);assert.match(unauthenticated.headers['content-type'],/^text\/plain/);
+    if(process.env.RACING_BROWSER_TEST==='1') {
+      const {chromium}=require('playwright');browser=await chromium.launch({headless:true,channel:'chrome'});
+      const page=await browser.newPage({viewport:{width:390,height:844}});const errors=[],downloads=[];
+      page.on('pageerror',error=>errors.push(error.message));page.on('download',download=>downloads.push(download.suggestedFilename()));
+      await page.goto('http://127.0.0.1:8766/');
+      await page.locator('#live-detail').filter({hasText:'UnityがPlay中か確認'}).waitFor();
+      assert.equal(await page.locator('h1').innerText(),'レース管理.');
+      assert.equal(await page.locator('#connection.offline').count(),1);
+      await page.screenshot({path:path.join(root,'Artifacts/DashboardRealtime/availability-mobile.png')});
+      bridge=spawn('mono',[path.join(root,'Temp/DashboardRelay/BridgeHarness.exe'),path.join(root,'Assets/StreamingAssets')],{cwd:root});
+      bridge.stdout.resume();bridge.stderr.resume();
+      await page.locator('#connection.online').waitFor();
+      bridge.stdin.write('quit\n');await waitFor(()=>bridge.exitCode!==null);
+      await page.locator('#connection.offline').waitFor();
+      assert.equal(await page.locator('h1').innerText(),'レース管理.');
+      assert.deepEqual(downloads,[]);assert.deepEqual(errors,[]);
+    }
+  } finally {
+    await browser?.close();relay.kill('SIGTERM');if(bridge?.exitCode===null)bridge.kill('SIGTERM');
+    await waitFor(()=>relay.exitCode!==null);if(bridge?.exitCode===null)bridge.kill('SIGKILL');
+  }
+});
+
 test('production bridge → relay → WebSocket integration', {timeout:90000}, async t=>{
   const bridge=spawn('mono',[path.join(root,'Temp/DashboardRelay/BridgeHarness.exe'),path.join(root,'Assets/StreamingAssets')],{cwd:root,stdio:['pipe','pipe','pipe']});
   let relay=spawn('dotnet',[path.join(root,'Tools/DashboardRelay/bin/Debug/net10.0/DashboardRelay.dll')],{cwd:root,env:{...process.env,RACING_DASHBOARD_ORIGIN:'https://race.test.ts.net',RACING_DASHBOARD_OPERATORS:'operator@example.com'},stdio:['ignore','pipe','pipe']});

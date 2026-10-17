@@ -56,6 +56,7 @@ Console.WriteLine("Dashboard relay: http://127.0.0.1:8766 (Tailscale Serve targe
 if (allowedOrigin == null) Console.WriteLine("Local-only mode. Set RACING_DASHBOARD_ORIGIN to the exact Serve HTTPS origin to allow remote access.");
 app.Run(async context =>
 {
+    context.Response.ContentType = "text/plain; charset=utf-8";
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["Content-Security-Policy"] = "frame-ancestors 'none'";
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";
@@ -71,7 +72,7 @@ app.Run(async context =>
     remote = !local;
     string expectedOrigin = remote ? allowedOrigin! : "http://" + context.Request.Host.Value;
     string origin = context.Request.Headers.Origin.ToString();
-    bool mutation = context.Request.Method != "GET";
+    bool mutation = context.Request.Method != "GET" && context.Request.Method != "HEAD";
     if ((mutation || context.WebSockets.IsWebSocketRequest || origin.Length > 0) && origin != expectedOrigin)
     { context.Response.StatusCode = 403; return; }
     bool canControl = local || operators.Contains(identity);
@@ -114,10 +115,11 @@ app.Run(async context =>
     bool command = path.StartsWith("/api/action/", StringComparison.Ordinal);
     if (mutation && (!command || context.Request.Method != "POST" || !canControl)) { context.Response.StatusCode = 403; return; }
     // Explicit routes prevent using the relay as a general HTTP proxy.
-    bool asset = new[] { "/", "/index.html", "/app.js", "/live.js", "/remote.js", "/style.css", "/favicon.svg", "/firebase-config.json" }.Contains(path);
+    bool asset = DashboardAssets.IsAsset(path);
     bool read = path == "/api/status" || path == "/api/player/1/frame" || path == "/api/player/2/frame" || path.StartsWith("/api/command/", StringComparison.Ordinal);
     if (!command && !asset && !read) { context.Response.StatusCode = 404; return; }
     if (command && !mutation) { context.Response.StatusCode = 405; return; }
+    if (asset) { await DashboardAssets.Serve(context, path); return; }
     try
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted, app.Lifetime.ApplicationStopping);
@@ -140,7 +142,15 @@ app.Run(async context =>
     }
     catch (BadHttpRequestException error) { if (!context.Response.HasStarted) context.Response.StatusCode = error.StatusCode; }
     catch (Exception error) when (error is HttpRequestException or IOException or OperationCanceledException)
-    { if (!context.Response.HasStarted) context.Response.StatusCode = 503; }
+    {
+        if (!context.Response.HasStarted)
+        {
+            context.Response.StatusCode = 503;
+            context.Response.Headers.CacheControl = "no-store";
+            await context.Response.WriteAsJsonAsync(new { ok = false, reason = "unity_unavailable",
+                message = "Unityに接続できません。ゲームPCでUnityをPlayしてください。" });
+        }
+    }
 });
 using var managedRegistration = managedStop.Token.Register(app.Lifetime.StopApplication);
 await app.StartAsync();
