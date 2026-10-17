@@ -29,7 +29,8 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         public bool finished;
         public int position, laps, vehicleContacts, environmentContacts, itemsUsed, afflictions, charges, manualResets, cpuRecoveries;
         public float finishTime, progress, distanceDriven, meanSpeed, maxSpeed, maxStall, offCourseSeconds, maxTilt, nearbyHumanSeconds, racingSeconds;
-        public int takeoffs, landings;
+        public int takeoffs, landings, humanRecoveries, automaticRecoveries;
+        public string recoveryBlockedReason;
         [NonSerialized] public TireForce[] tires;
         [NonSerialized] public DebugMover mover;
         [NonSerialized] public Vector3 previousPosition;
@@ -43,7 +44,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         public string p1Profile, p2Profile;
         public int seed, goalLaps, npcCount;
         public bool itemsEnabled, resetAssistance, completed, raceEnded;
-        public float p1TargetSpeed, p2TargetSpeed, seconds, physicsSeconds, startGlobalTime, firstHumanFinish, humanFinishGap, humanSeparationSeconds, cpuNearRearHumanSeconds;
+        public float p1TargetSpeed, p2TargetSpeed, seconds, physicsSeconds, startGlobalTime, firstHumanFinish, humanFinishGap, humanSeparationSeconds, cpuNearRearHumanSeconds, grantedHumanGrace;
         public string termination;
         public List<CarRecord> cars = new List<CarRecord>();
     }
@@ -73,6 +74,8 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     private bool skillSuite;
     private readonly float[] nextDecisionAt = new float[2];
     private readonly DriveInputState[] heldDecision = new DriveInputState[2];
+    private readonly float[] releaseRequestedAt = {-1,-1};
+    private readonly float[] releaseUntil = {-1,-1};
 
     private IEnumerator Start()
     {
@@ -114,7 +117,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 SkillPlan("skill-disconnect-rejoin", 6105, 22, 22, false, "intermediate", "intermediate"),
                 SkillPlan("skill-operator-stop", 6106, 18, 18, false, "cautious", "cautious")
             };
-            suite.methodology = "Actual SampleScene and production cars/CPUs/items. Course-following input agents approximate novice, cautious, intermediate, expert and aggressive control using distinct speed, reaction intervals, steering noise and jump anticipation; they are not human usability subjects. Includes a 12-second stop, 5-second input disconnection and operator result action. Drivers use InputManager and production input gates; never force vehicle pose, velocity, laps or outcomes. Preparation is bypassed. Random seeds do not guarantee deterministic physics. Official and physics clocks are recorded separately.";
+            suite.methodology = "Actual SampleScene and production cars/CPUs/items. Course-following input agents approximate novice, cautious, intermediate, expert and aggressive control using distinct speed, reaction intervals, steering noise and jump anticipation; they are not human usability subjects. Includes a 12-second stop, 5-second input disconnection and operator result action. Drivers use InputManager and production input gates; never force vehicle pose, velocity, laps or outcomes. An agent responds to the public pedal-release notice after 0.35 seconds with 0.3 seconds of neutral input. Preparation is bypassed. Random seeds do not guarantee deterministic physics. Official and physics clocks are recorded separately.";
             var sources = (IDriveInputSource[])typeof(InputManager).GetField("inputSources", Private).GetValue(manager.IManager);
             for (int i = 0; i < 2; i++) sources[i] = inputs[i];
         }
@@ -150,10 +153,10 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         suite.runs.Add(run);
         string folder = Path.Combine(output, run.name); Directory.CreateDirectory(folder);
         trace = new StreamWriter(Path.Combine(folder, "trace.csv"));
-        trace.WriteLine("time,car,x,y,z,speed,progress,lap,checkpoint,position,pedal,steering,grounded,offCourse,rocket,confuse,oil,spin,cpuTargetSpeed,cpuRival");
+        trace.WriteLine("time,car,x,y,z,speed,progress,lap,checkpoint,position,pedal,steering,grounded,offCourse,rocket,confuse,oil,spin,cpuTargetSpeed,cpuRival,connected,needsRelease,recoveries,recoveryBlocked");
         events = new StreamWriter(Path.Combine(folder, "events.csv")); events.WriteLine("time,car,event,detail,x,y,z");
         inputs[0].CurrentState = inputs[1].CurrentState = DriveInputState.Neutral;
-        for (int i = 0; i < 2; i++) { inputs[i].IsConnected = true; nextDecisionAt[i] = 0; heldDecision[i] = DriveInputState.Neutral; }
+        for (int i = 0; i < 2; i++) { inputs[i].IsConnected = true; nextDecisionAt[i] = 0; heldDecision[i] = DriveInputState.Neutral; releaseRequestedAt[i]=releaseUntil[i]=-1; }
         Invoke("StartGameWhenScreenCovered"); Invoke("CompleteGameStart");
         foreach (ScreenTransitionController transition in FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
             transition.ApplyStateImmediate(Gmanager.State.Countdown);
@@ -178,10 +181,15 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         nextTrace = 0; run.startGlobalTime = Time.time; driving = true;
         Debug.Log("BALANCE_RUN_STARTED: " + run.name);
         Save();
+        bool capturedDisconnect=false, capturedRelease=false;
         while (manager.state == Gmanager.State.Game && manager.time < 365 &&
             (suite.observationWindowSeconds <= 0 || run.physicsSeconds < suite.observationWindowSeconds))
         {
             if (run.name == "skill-operator-stop" && run.physicsSeconds >= 20f) manager.ShowResult();
+            if (run.name == "skill-disconnect-rejoin" && !capturedDisconnect && run.physicsSeconds>=46f)
+            { Capture(folder,"disconnected-p2",1); capturedDisconnect=true; }
+            if (run.name == "skill-disconnect-rejoin" && !capturedRelease && run.physicsSeconds>=50.1f)
+            { Capture(folder,"reconnected-p2",1); capturedRelease=true; }
             yield return null;
         }
         driving = false;
@@ -197,12 +205,15 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             record.finishTime = record.finished ? entry.Result.totalRaceTime : -1;
             record.laps = laps.GetCarData(entry.Body).lapCount; record.progress = laps.GetRaceProgressDistance(entry.Body);
             record.cpuRecoveries = entry.Driver?.RecoveryCount ?? 0;
+            record.recoveryBlockedReason=entry.Driver?.RecoveryBlockedReason ?? "";
+            CarResetter resetter=entry.Car.GetComponent<CarResetter>();
+            if(!entry.IsCpu) {record.humanRecoveries=resetter?.RecoveryCount??0; record.automaticRecoveries=resetter?.AutomaticRecoveryCount??0;}
             record.meanSpeed = record.samples > 0 ? record.speedSum / record.samples : 0;
             if (entry.Index < 2 && record.finished) finishedHumans++;
             Event(entry.Index, entry.Result == null ? "still-racing" : record.finished ? "finished" : "dnf", "position=" + record.position + ";laps=" + record.laps);
         }
         run.termination = !run.completed ? "agent-safety-timeout" : !run.raceEnded ? "observation-window-ended" :
-            finishedHumans == 2 ? "both-humans-finished" : run.seconds >= 359 ? "360-second-limit" : "40-second-human-grace";
+            run.name=="skill-operator-stop" ? "operator-stop" : finishedHumans == 2 ? "both-humans-finished" : run.seconds >= 359 ? "360-second-limit" : "human-grace-timeout";
         if (finishedHumans == 2) run.humanFinishGap = Mathf.Abs(run.cars[0].finishTime - run.cars[1].finishTime);
         trace.Dispose(); events.Dispose(); trace = events = null;
         File.WriteAllText(Path.Combine(folder, "summary.json"), JsonUtility.ToJson(run, true)); Save();
@@ -217,7 +228,14 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             { suite.error = "Result transition failed to settle after " + run.name; break; }
             yield return null;
         }
+        if(skillSuite) {Capture(folder,"result-p1",0); Capture(folder,"result-p2",1);}
         yield return null;
+    }
+
+    private void Capture(string folder,string name,int index)
+    {
+        byte[] bytes=manager.CapturePlayerFrame(index);
+        if(bytes!=null)File.WriteAllBytes(Path.Combine(folder,name+".jpg"),bytes);
     }
 
     private void FixedUpdate()
@@ -225,6 +243,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         if (!driving || manager.state != Gmanager.State.Game) return;
         float dt = Time.fixedDeltaTime;
         run.physicsSeconds += dt;
+        run.grantedHumanGrace=Mathf.Max(run.grantedHumanGrace,manager.SecondPlaceTimeRemaining);
         float now = run.physicsSeconds;
         bool write = now >= nextTrace; if (write) nextTrace = now + .1f;
         foreach (RaceParticipant entry in manager.Participants)
@@ -279,12 +298,22 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 if (inputs[entry.Index].IsConnected != connected) Event(entry.Index, connected ? "input-reconnected" : "input-disconnected", "");
                 inputs[entry.Index].IsConnected = connected;
                 inputs[entry.Index].CurrentState = Drive(entry, grounded, speed, raw, reset);
+                if(skillSuite && record.mover.InputSource is PlayerDriveInputGate gate && connected)
+                {
+                    int i=entry.Index;
+                    if(gate.NeedsPedalRelease && releaseRequestedAt[i]<0) releaseRequestedAt[i]=now;
+                    if(releaseRequestedAt[i]>=0 && now-releaseRequestedAt[i]>=.35f)
+                    { releaseUntil[i]=now+.3f; releaseRequestedAt[i]=-1; Event(i,"release-pedal-response",""); }
+                    if(now<releaseUntil[i]) inputs[i].CurrentState=DriveInputState.Neutral;
+                    if(!gate.NeedsPedalRelease) releaseRequestedAt[i]=-1;
+                }
             }
             if (write)
             {
                 var data = laps.GetCarData(body); var effects = entry.Effects;
                 var input = entry.IsCpu ? entry.Driver.CurrentState : inputs[entry.Index].CurrentState;
-                trace.WriteLine(FormattableString.Invariant($"{now:F2},{entry.Label},{body.position.x:F3},{body.position.y:F3},{body.position.z:F3},{speed:F3},{laps.GetRaceProgressDistance(body):F3},{data.lapCount},{data.lastCheckpointIndex},{entry.Position},{input.pedal:F3},{input.steering:F3},{grounded},{offCourse},{effects.IsRocketActive},{effects.IsConfused},{effects.IsOiled},{effects.IsSpinning},{(entry.Driver?.TargetSpeed ?? 0):F3},{(entry.Driver?.RivalIndex ?? -1)}"));
+                var gate=record.mover.InputSource as PlayerDriveInputGate;
+                trace.WriteLine(FormattableString.Invariant($"{now:F2},{entry.Label},{body.position.x:F3},{body.position.y:F3},{body.position.z:F3},{speed:F3},{laps.GetRaceProgressDistance(body):F3},{data.lapCount},{data.lastCheckpointIndex},{entry.Position},{input.pedal:F3},{input.steering:F3},{grounded},{offCourse},{effects.IsRocketActive},{effects.IsConfused},{effects.IsOiled},{effects.IsSpinning},{(entry.Driver?.TargetSpeed ?? 0):F3},{(entry.Driver?.RivalIndex ?? -1)},{inputs[Mathf.Min(entry.Index,1)].IsConnected},{gate?.NeedsPedalRelease??false},{(entry.IsCpu?entry.Driver.RecoveryCount:entry.Car.GetComponent<CarResetter>().RecoveryCount)},{entry.Driver?.RecoveryBlockedReason??""}"));
             }
         }
         if (manager.GetParticipant(0).IsRacing && manager.GetParticipant(1).IsRacing &&
