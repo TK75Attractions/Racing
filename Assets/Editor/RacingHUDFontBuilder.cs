@@ -65,6 +65,8 @@ public static class RacingHUDFontBuilder
                 atlas.name = font.name + " Atlas";
                 AssetDatabase.AddObjectToAsset(atlas, font);
             }
+            // CopySerialized replaces tables but not TMP's cached character lookup in this editor session.
+            font.ReadFontAssetDefinition();
             EditorUtility.SetDirty(font);
         }
         AssetDatabase.SaveAssets();
