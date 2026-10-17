@@ -12,7 +12,7 @@ public static class SteeringValidation
     {
         public int PlayerIndex => 0;
         public string DeviceId => "VALIDATION";
-        public bool IsConnected => true;
+        public bool IsConnected { get; set; } = true;
         public DriveInputState CurrentState { get; set; }
         public void UpdateInput(float deltaTime) { }
         public void Dispose() { }
@@ -30,6 +30,8 @@ public static class SteeringValidation
 
             StubInput input = new StubInput();
             mover.SetInputSource(input);
+            Set(mover, "steeringDeadzone", 0f);
+            Set(mover, "steeringResponseSeconds", 0f);
 
             // 初期設定：10 m/s から効き始め、30 m/s で 35% になる直線的な変化。
             Near(Steer(mover, body, input, 10f, 0f), 10f, "Standing still must use the full steering angle.");
@@ -37,7 +39,7 @@ public static class SteeringValidation
             Near(Steer(mover, body, input, 10f, 10f), 10f, "Fade must not start below the fade start speed.");
             Near(Steer(mover, body, input, 10f, 20f), 6.75f, "Half of the fade range must apply half of the reduction.");
             Near(Steer(mover, body, input, 10f, 30f), 3.5f, "Full speed must apply the high speed multiplier.");
-            Near(Steer(mover, body, input, 10f, 60f), 3.5f, "Beyond full speed must hold the high speed multiplier.");
+            Near(Steer(mover, body, input, 10f, 60f), .875f, "Beyond full speed must keep reducing steering with squared speed.");
             Require(Steer(mover, body, input, -10f, 30f) < 0f, "Fading must keep the steering direction.");
 
             float previous = float.MaxValue;
@@ -53,17 +55,17 @@ public static class SteeringValidation
 
             // 鋭さ：1 より大きいと低速側の効きを保ち、1 より小さいと早い段階から曲がりにくくする。
             Set(mover, "steeringFadeSharpness", 2f);
-            Near(Steer(mover, body, input, 10f, 20f), 8.375f, "A sharper curve must keep more steering at mid speed.");
-            Near(Steer(mover, body, input, 10f, 30f), 3.5f, "A sharper curve must still reach the high speed multiplier.");
+            Near(Steer(mover, body, input, 5f, 20f), 4.1875f, "A sharper curve must keep more steering at mid speed below the safety cap.");
+            Near(Steer(mover, body, input, 5f, 30f), 1.75f, "A sharper curve must still reach the high speed multiplier.");
             Set(mover, "steeringFadeSharpness", 0.5f);
-            Near(Steer(mover, body, input, 10f, 20f), Mathf.Lerp(1f, 0.35f, Mathf.Sqrt(0.5f)) * 10f,
+            Near(Steer(mover, body, input, 5f, 20f), Mathf.Lerp(1f, 0.35f, Mathf.Sqrt(0.5f)) * 5f,
                 "A softer curve must reduce steering earlier.");
             Set(mover, "steeringFadeSharpness", 1f);
 
             // しきい値の逆転や同値を設定しても、開始速度を超えた時点で高速側の倍率になる。
             Set(mover, "steeringFadeFullSpeed", 5f);
             Near(Steer(mover, body, input, 10f, 10f), 10f, "An inverted range must not fade below the start speed.");
-            Near(Steer(mover, body, input, 10f, 11f), 3.5f, "An inverted range must fade immediately above it.");
+            Near(Steer(mover, body, input, 10f, 11f), 3.5f * Mathf.Pow(10.01f / 11f, 2f), "An inverted range must fade immediately and keep reducing above it.");
             Set(mover, "steeringFadeFullSpeed", 30f);
 
             Set(mover, "enableSpeedSensitiveSteering", false);
@@ -76,12 +78,99 @@ public static class SteeringValidation
             Near(Get(mover, "appliedSteeringAngle"), 0f, "Respawn must clear the steering angle.");
             Near(mover.SteeringSpeedMultiplier, 1f, "Respawn must reset the steering multiplier.");
 
+            ValidateComfort(mover, body, input);
+
             Debug.Log("Steering validation passed.");
         }
         finally
         {
             UnityEngine.Object.DestroyImmediate(car);
         }
+    }
+
+    private static void ValidateComfort(DebugMover mover, Rigidbody body, StubInput input)
+    {
+        float previousAngle = float.MaxValue, previousYaw = float.MaxValue;
+        foreach (float speed in new[] { 10f, 20f, 30f, 40f, 50f, 60f, 90f, 120f })
+        {
+            float right = Steer(mover, body, input, 3600f, speed);
+            float left = Steer(mover, body, input, -3600f, speed);
+            Near(right, -left, "Limits must be symmetric for both directions.");
+            Require(right <= previousAngle, "Full lock must keep decreasing through boost speeds.");
+            Require(right <= mover.SteeringAngleLimit + .0001f, "No request may exceed the speed limit.");
+            float acceleration = speed * speed * Mathf.Tan(right * Mathf.Deg2Rad) / 2.6f;
+            Require(acceleration <= 22.001f, "Requested lateral acceleration must stay inside the safety envelope.");
+            if (speed >= 30f)
+            {
+                float small = Steer(mover, body, input, 3f, speed);
+                float yaw = speed * Mathf.Tan(small * Mathf.Deg2Rad) / 2.6f;
+                Require(yaw <= previousYaw, "Small corrections must get gentler as boost speed rises.");
+                previousYaw = yaw;
+            }
+            previousAngle = right;
+            Debug.Log($"STEERING_ENVELOPE speed={speed:F0} limit={right:F3} gain={mover.SteeringSpeedMultiplier:F4} lateralRequest={acceleration:F2}");
+        }
+        Near(Steer(mover, body, input, 5f, -40f), Steer(mover, body, input, 5f, 40f), "Reverse travel must use the same speed envelope.");
+
+        Set(mover, "steeringDeadzone", .08f);
+        Set(mover, "steeringResponseSeconds", .045f);
+        mover.SetInputSource(input);
+        for (int i = 0; i < 100; i++)
+            Near(Steer(mover, body, input, Mathf.Sin(i * 2.3f) * .07f, 40f), 0f, "IMU center noise must not steer the car.");
+
+        mover.SetInputSource(input);
+        float inputNoiseEnergy = 0f, outputNoiseEnergy = 0f;
+        float gain = .35f * Mathf.Pow(30f / 40f, 2f);
+        for (int i = 0; i < 250; i++)
+        {
+            float noise = .3f * Mathf.Sin(i * 2.1f);
+            float angle = Steer(mover, body, input, 3f + noise, 40f);
+            if (i < 50) continue;
+            inputNoiseEnergy += noise * noise;
+            float residual = angle / gain - (3f - .08f);
+            outputNoiseEnergy += residual * residual;
+        }
+        float noiseRatio = Mathf.Sqrt(outputNoiseEnergy / inputNoiseEnergy);
+        Require(noiseRatio < .4f, "Moving-handle IMU noise must lose at least 60% of its amplitude.");
+
+        mover.SetInputSource(input);
+        float elapsed = 0f, response90 = -1f;
+        float target = (5f - .08f) * .35f;
+        for (int i = 0; i < 50; i++)
+        {
+            float angle = Steer(mover, body, input, 5f, 30f);
+            elapsed += Time.fixedDeltaTime;
+            if (response90 < 0f && angle >= target * .9f) response90 = elapsed;
+            Require(angle <= target + .0001f, "Filtering must never overshoot.");
+        }
+        Require(response90 > 0f && response90 <= .13f, "90% response must remain below 130ms.");
+        float crossing = -1f;
+        for (int i = 0; i < 50; i++)
+        {
+            float angle = Steer(mover, body, input, -5f, 30f);
+            if (crossing < 0f && angle < 0f) crossing = (i + 1) * Time.fixedDeltaTime;
+        }
+        Require(crossing > 0f && crossing <= .06f, "Countersteer must cross neutral within 60ms.");
+
+        // Excess IMU rotation may not add filter wind-up or delay the opposite direction.
+        mover.SetInputSource(input);
+        for (int i = 0; i < 100; i++) Steer(mover, body, input, 3600f, 60f);
+        float bounded = Steer(mover, body, input, -5f, 60f);
+        mover.SetInputSource(input);
+        for (int i = 0; i < 100; i++) Steer(mover, body, input, 60f, 60f);
+        Near(Steer(mover, body, input, -5f, 60f), bounded, "Excess handle travel must not delay countersteer.");
+        Steer(mover, body, input, 30f, 10f);
+        Require(Mathf.Abs(Steer(mover, body, input, 30f, 90f)) <= mover.SteeringAngleLimit + .0001f,
+            "Abrupt acceleration must clamp even the previous filtered state.");
+        mover.SuppressInputAfterRespawn();
+        Near(mover.AppliedSteeringAngle, 0f, "Respawn clears filter history immediately.");
+        Near(Steer(mover, body, input, 0f, 30f), 0f, "No stale steering may return after reset.");
+        Steer(mover, body, input, 5f, 30f);
+        input.IsConnected = false;
+        Near(Steer(mover, body, input, 5f, 30f), 0f, "A disconnected IMU must stop steering immediately.");
+        input.IsConnected = true;
+        Near(Steer(mover, body, input, 0f, 30f), 0f, "Reconnecting at center must not restore stale input.");
+        Debug.Log($"STEERING_COMFORT_PASS response90={response90:F3}s countersteer={crossing:F3}s centerNoise=0 movingNoiseRatio={noiseRatio:F3}");
     }
 
     private static float Steer(DebugMover mover, Rigidbody body, StubInput input, float handle, float speed)
