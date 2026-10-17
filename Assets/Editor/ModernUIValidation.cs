@@ -176,6 +176,22 @@ public static class ModernUIValidation
         RectTransform result=RacingUITheme.Rect(host,"Result",Vector2.zero,Vector2.one);
         ScreenTransitionController transition=host.gameObject.AddComponent<ScreenTransitionController>();
         transition.Initialize(title,play,result,"","準備",1);
+        for (int seconds = 3; seconds >= 1; seconds--)
+        {
+            transition.ShowCountdown(seconds);
+            for (int lamp = 0; lamp < 3; lamp++)
+                Require(play.Find("CountdownStatus/Lamp" + lamp + "/Signal").GetComponent<NeonRingGraphic>().amount ==
+                    (lamp < 4 - seconds ? 1f : 0f), "Countdown must light one additional signal per count.");
+        }
+        transition.ShowGo();
+        for (int lamp = 0; lamp < 3; lamp++)
+        {
+            NeonRingGraphic signal = play.Find("CountdownStatus/Lamp" + lamp + "/Signal").GetComponent<NeonRingGraphic>();
+            Require(signal.amount == 1f && signal.color.g > signal.color.r, "GO must turn all signals green.");
+        }
+        transition.ShowCountdown(3);
+        Require(play.Find("CountdownStatus/Lamp1/Signal").GetComponent<NeonRingGraphic>().amount == 0f,
+            "Retry must reset the start lights.");
         RacingMenuButton start=title.Find("Player2Pedal").GetComponent<RacingMenuButton>();
         Require(start.IsActive() && start.targetGraphic.enabled && start.targetGraphic.raycastTarget,"Title start has no active pointer hit target.");
         foreach(RacingMenuButton button in title.GetComponentsInChildren<RacingMenuButton>(true))

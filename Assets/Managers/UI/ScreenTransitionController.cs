@@ -41,7 +41,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
     private TMP_Text finishWarningText;
     private int lastWarningSecond = -1;
     private UIValuePulse raceStatusPulse;
-    private readonly NeonRingGraphic[] countdownSignals = new NeonRingGraphic[5];
+    private readonly NeonRingGraphic[] countdownSignals = new NeonRingGraphic[3];
     private Material titleLogoMaterial;
 
     public bool IsTransitioning { get; private set; }
@@ -476,11 +476,12 @@ public sealed class ScreenTransitionController : MonoBehaviour
         NeonUI.GlowText(raceStatus, NeonUI.Pink);
         for(int i=0;i<countdownSignals.Length;i++)
         {
-            float left=-.02f+i*.21f;
-            RectTransform lamp = NeonUI.Panel(countdownStatusRoot.transform,"Lamp"+i,new Vector2(left,1.06f),new Vector2(left+.18f,1.29f));
+            float left=.08f+i*.30f;
+            RectTransform lamp = NeonUI.Panel(countdownStatusRoot.transform,"Lamp"+i,new Vector2(left,1.06f),new Vector2(left+.24f,1.29f));
             RectTransform dot=RacingUITheme.Rect(lamp,"Signal",new Vector2(.06f,.05f),new Vector2(.94f,.95f));
             countdownSignals[i]=dot.GetComponent<NeonRingGraphic>() ?? dot.gameObject.AddComponent<NeonRingGraphic>();
             countdownSignals[i].display=NeonRingGraphic.Display.Light;
+            countdownSignals[i].SetAmount(0f);
         }
         raceStatusPulse = raceStatus.GetComponent<UIValuePulse>() ?? raceStatus.gameObject.AddComponent<UIValuePulse>();
         RectTransform courseCard = NeonUI.Panel(onPlay,"CountdownCourse",new Vector2(.02f,.855f),new Vector2(.335f,.975f));
@@ -553,10 +554,14 @@ public sealed class ScreenTransitionController : MonoBehaviour
         raceStatus.text = value;
         bool go = value == "GO!";
         int.TryParse(value, out int seconds);
-        Color accent = go ? NeonUI.Cyan : NeonUI.Pink;
+        Color accent = go ? new Color(.1f, 1f, .3f) : NeonUI.Red;
+        int illuminated = go ? countdownSignals.Length : Mathf.Clamp(countdownSignals.Length - seconds + 1, 0, countdownSignals.Length);
         for (int i = 0; i < countdownSignals.Length; i++)
             if (countdownSignals[i] != null)
+            {
                 countdownSignals[i].color = accent;
+                countdownSignals[i].SetAmount(i < illuminated ? 1f : 0f);
+            }
         if (raceStatusCaption != null)
         {
             raceStatusCaption.text = go ? "スタート!" : "スタートまで";
