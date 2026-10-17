@@ -16,6 +16,7 @@ public static class SkillGameplayValidation
         ValidateReconnectGate();
         ValidateRecoveryOccupancy();
         ValidateRecoveryProtection();
+        ValidateRecoveryInsideGoal();
         Debug.Log("SKILL_GAMEPLAY_RULES_PASS");
     }
     private static void ValidateStartingLine()
@@ -106,6 +107,22 @@ public static class SkillGameplayValidation
                 "Recovered drivers need a short grace period against chained items.");
             Set(effects,"recoveryProtectionRemaining",0f);
             Require(effects.ApplyConfuse(),"Recovery protection must not be permanent.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+    private static void ValidateRecoveryInsideGoal()
+    {
+        GameObject root=new GameObject("Goal recovery QA",typeof(LapManager),typeof(GoalSensor),typeof(BoxCollider));
+        try
+        {
+            root.GetComponent<BoxCollider>().isTrigger=true; root.GetComponent<BoxCollider>().size=new Vector3(20,4,1);
+            LapManager laps=root.GetComponent<LapManager>(); GoalSensor goal=root.GetComponent<GoalSensor>(); Call(goal,"Awake");
+            GameObject car=new GameObject("Car",typeof(Rigidbody),typeof(BoxCollider)); car.transform.SetParent(root.transform);
+            car.tag="Player"; car.layer=LayerMask.NameToLayer("CarBody"); Rigidbody body=car.GetComponent<Rigidbody>(); body.isKinematic=true;
+            laps.RegisterCar(body); laps.NotifyManualRespawn(body); goal.OnTriggerEnter(car.GetComponent<BoxCollider>());
+            Require(laps.GetCarData(body).lapCount==0,"Respawning inside a goal must not award a lap.");
+            goal.OnTriggerExit(car.GetComponent<BoxCollider>()); goal.OnTriggerEnter(car.GetComponent<BoxCollider>());
+            Require(laps.GetCarData(body).lapCount==1,"A genuine later passage must still count.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }

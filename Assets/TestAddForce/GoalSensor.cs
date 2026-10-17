@@ -12,6 +12,7 @@ public class GoalSensor : MonoBehaviour
 
     private int targetLayer = -1;
     private readonly Dictionary<Rigidbody, HashSet<Collider>> overlaps = new Dictionary<Rigidbody, HashSet<Collider>>();
+    private readonly HashSet<Rigidbody> respawningInside = new HashSet<Rigidbody>();
 
     private void Awake()
     {
@@ -40,6 +41,7 @@ public class GoalSensor : MonoBehaviour
         colliders.RemoveWhere(collider => collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy);
         bool entering = colliders.Count == 0;
         if (!colliders.Add(other) || !entering) return;
+        if (respawningInside.Contains(rb)) return;
 
         if (lapManager.OnCarPassGoal(rb, transform))
         {
@@ -52,6 +54,18 @@ public class GoalSensor : MonoBehaviour
     {
         lapCount = 0;
         overlaps.Clear();
+        respawningInside.Clear();
+    }
+
+    public void IgnoreRespawnInsideGoal(Rigidbody body)
+    {
+        Collider sensor = GetComponent<Collider>();
+        if (sensor == null || body == null) return;
+        foreach (Collider collider in body.GetComponentsInChildren<Collider>())
+            if (collider.enabled && !collider.isTrigger && collider.attachedRigidbody == body &&
+                Physics.ComputePenetration(sensor, sensor.transform.position, sensor.transform.rotation,
+                    collider, collider.transform.position, collider.transform.rotation, out _, out _))
+            { respawningInside.Add(body); return; }
     }
 
     public void OnTriggerExit(Collider other)
@@ -59,10 +73,10 @@ public class GoalSensor : MonoBehaviour
         Rigidbody body = other.attachedRigidbody;
         if (body == null || !overlaps.TryGetValue(body, out HashSet<Collider> colliders)) return;
         colliders.Remove(other);
-        if (colliders.Count == 0) overlaps.Remove(body);
+        if (colliders.Count == 0) { overlaps.Remove(body); respawningInside.Remove(body); }
     }
 
-    private void OnDisable() => overlaps.Clear();
+    private void OnDisable() { overlaps.Clear(); respawningInside.Clear(); }
 
     private bool TryGetTargetRigidbody(Collider other, out Rigidbody rb)
     {

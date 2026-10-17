@@ -540,6 +540,8 @@ public class LapManager : MonoBehaviour
     public void NotifyManualRespawn(Rigidbody body)
     {
         if (body == null || !carDataMap.TryGetValue(body, out CarTimeData data)) return;
+        Physics.SyncTransforms();
+        foreach (GoalSensor goal in FindObjectsByType<GoalSensor>(FindObjectsSortMode.None)) goal.IgnoreRespawnInsideGoal(body);
         data.isOffCourse = false;
         data.offCourseTimer = 0f;
         data.hasValidRacePosition = true;
