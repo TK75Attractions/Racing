@@ -1,1 +1,1 @@
-Four cars / 10.667 seconds each: 1819.6 ms offline, allocation delta (excluding Stopwatch): 0 bytes
+Four cars / 10.667 seconds each: 1244.7 ms offline, allocation delta (excluding Stopwatch): 0 bytes

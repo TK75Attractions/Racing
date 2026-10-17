@@ -14,15 +14,15 @@
     },
     "02-acceleration-tunnel-braking.wav": {
       "seconds": 30.0,
-      "peak_dbfs": -12.64,
-      "rms_dbfs": -25.19,
-      "dc": 5.2e-06,
+      "peak_dbfs": -12.51,
+      "rms_dbfs": -24.95,
+      "dc": 5e-07,
       "clipped_samples": 0,
-      "max_sample_step": 0.05481,
+      "max_sample_step": 0.07578,
       "sub_40hz_percent": 3.98,
       "over_8khz_percent": 0.02,
       "centroid_hz": 121.5,
-      "stereo_difference_rms": 0.01488
+      "stereo_difference_rms": 0.01503
     },
     "03-open-road.wav": {
       "seconds": 5.0,
@@ -50,75 +50,69 @@
     },
     "05-gameplay-launch.wav": {
       "seconds": 13.978,
-      "peak_dbfs": -14.18,
-      "rms_dbfs": -23.33,
-      "dc": -1.85e-05,
+      "peak_dbfs": -13.98,
+      "rms_dbfs": -23.21,
+      "dc": -7.8e-06,
       "clipped_samples": 0,
-      "max_sample_step": 0.07529,
-      "sub_40hz_percent": 0.02,
-      "over_8khz_percent": 0.13,
-      "centroid_hz": 338.4,
+      "max_sample_step": 0.07489,
+      "sub_40hz_percent": 0.0,
+      "over_8khz_percent": 0.03,
+      "centroid_hz": 268.7,
       "stereo_difference_rms": 0.0
     },
     "06-gameplay-tunnel.wav": {
       "seconds": 12.0,
-      "peak_dbfs": -11.54,
-      "rms_dbfs": -20.97,
-      "dc": -1.65e-05,
+      "peak_dbfs": -13.55,
+      "rms_dbfs": -22.25,
+      "dc": 1.44e-05,
       "clipped_samples": 0,
-      "max_sample_step": 0.02704,
+      "max_sample_step": 0.02823,
       "sub_40hz_percent": 0.0,
-      "over_8khz_percent": 0.01,
-      "centroid_hz": 238.1,
-      "stereo_difference_rms": 0.02697
+      "over_8khz_percent": 0.02,
+      "centroid_hz": 316.6,
+      "stereo_difference_rms": 0.02426
     },
     "07-gameplay-exit.wav": {
       "seconds": 4.0,
-      "peak_dbfs": -13.8,
-      "rms_dbfs": -22.18,
-      "dc": -2.28e-05,
+      "peak_dbfs": -16.3,
+      "rms_dbfs": -22.92,
+      "dc": 1.15e-05,
       "clipped_samples": 0,
-      "max_sample_step": 0.02277,
+      "max_sample_step": 0.0235,
       "sub_40hz_percent": 0.0,
-      "over_8khz_percent": 0.01,
-      "centroid_hz": 219.5,
-      "stereo_difference_rms": 0.00651
+      "over_8khz_percent": 0.02,
+      "centroid_hz": 290.5,
+      "stereo_difference_rms": 0.0039
     }
   },
   "upshifts": [
     {
-      "seconds": 5.3,
+      "seconds": 8.2167,
       "gear": 2,
-      "before_rpm": 7042.5,
-      "after_200ms_rpm": 5281.3
+      "before_rpm": 7467.9,
+      "after_200ms_rpm": 5392.1
     },
     {
-      "seconds": 6.7833,
+      "seconds": 11.0333,
       "gear": 3,
-      "before_rpm": 7106.4,
-      "after_200ms_rpm": 5472.9
+      "before_rpm": 7516.9,
+      "after_200ms_rpm": 5638.7
     },
     {
-      "seconds": 8.5833,
+      "seconds": 14.4333,
       "gear": 4,
-      "before_rpm": 7143.9,
-      "after_200ms_rpm": 5596.9
+      "before_rpm": 7752.6,
+      "after_200ms_rpm": 6010.7
     },
     {
-      "seconds": 10.7667,
+      "seconds": 18.5833,
       "gear": 5,
-      "before_rpm": 7164.6,
-      "after_200ms_rpm": 5705.8
-    },
-    {
-      "seconds": 13.3833,
-      "gear": 6,
-      "before_rpm": 7401.9,
-      "after_200ms_rpm": 6035.9
+      "before_rpm": 7553.4,
+      "after_200ms_rpm": 5929.2
     }
   ],
   "actual_exit_tail": {
-    "first_half_second_stereo_rms": 0.018148795005265075,
-    "last_half_second_stereo_rms": 3.5596425996081807e-07
+    "first_half_second_stereo_rms": 0.01088384684677007,
+    "last_half_second_stereo_rms": 4.595478835577653e-07
   }
 }

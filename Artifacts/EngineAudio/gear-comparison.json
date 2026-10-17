@@ -1,0 +1,19 @@
+{
+  "speed_range_kph": [
+    73.8,
+    79.2
+  ],
+  "previous_commit": "22a0c2e",
+  "previous": {
+    "frames": 2471,
+    "median_gear": 5,
+    "median_rpm": 5048.1,
+    "gear_2_fraction": 0.0
+  },
+  "racing": {
+    "frames": 5219,
+    "median_gear": 2,
+    "median_rpm": 6669.4,
+    "gear_2_fraction": 0.9961678482467906
+  }
+}
