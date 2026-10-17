@@ -184,11 +184,13 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         nextTrace = 0; run.startGlobalTime = Time.time; driving = true;
         Debug.Log("BALANCE_RUN_STARTED: " + run.name);
         Save();
-        bool capturedDisconnect=false, capturedRelease=false;
+        bool capturedDisconnect=false, capturedRelease=false, capturedDriving=false;
         while (manager.state == Gmanager.State.Game && manager.time < 365 &&
             (suite.observationWindowSeconds <= 0 || run.physicsSeconds < suite.observationWindowSeconds))
         {
             if (run.name == "skill-operator-stop" && run.physicsSeconds >= 20f) manager.ShowResult();
+            if(skillSuite && !capturedDriving && run.physicsSeconds>=30f)
+            { Capture(folder,"driving-p1",0); capturedDriving=true; }
             if (run.name == "skill-disconnect-rejoin" && !capturedDisconnect && run.physicsSeconds>=46f)
             { Capture(folder,"disconnected-p2",1); capturedDisconnect=true; }
             if (run.name == "skill-disconnect-rejoin" && !capturedRelease && run.physicsSeconds>=50.1f)
@@ -239,6 +241,15 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     {
         byte[] bytes=manager.CapturePlayerFrame(index);
         if(bytes!=null)File.WriteAllBytes(Path.Combine(folder,name+".jpg"),bytes);
+        var rigs=(PlayerDisplayRig[])typeof(Gmanager).GetField("displayRigs",Private).GetValue(manager);
+        PlayerDisplayRig rig=rigs[index];
+        var description=new System.Text.StringBuilder();
+        description.AppendLine("State="+manager.state+"; Notice="+driverUis[index]?.DriverNotice);
+        description.AppendLine("Canvas="+rig.Canvas.renderMode+"; Scale="+rig.Canvas.transform.lossyScale+"; Size="+((RectTransform)rig.Canvas.transform).rect+"; Enabled="+rig.Canvas.enabled);
+        description.AppendLine("UI camera="+rig.UiCamera.enabled+"; Mask="+rig.UiCamera.cullingMask+"; Rect="+rig.UiCamera.rect+"; Position="+rig.UiCamera.transform.position);
+        foreach(CanvasGroup group in rig.Canvas.GetComponentsInChildren<CanvasGroup>(true))
+            description.AppendLine(group.name+" active="+group.gameObject.activeInHierarchy+" alpha="+group.alpha+" scale="+group.transform.lossyScale);
+        File.WriteAllText(Path.Combine(folder,name+".txt"),description.ToString());
     }
 
     private void FixedUpdate()
