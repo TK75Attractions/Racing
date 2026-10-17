@@ -20,7 +20,7 @@ UnityのMono環境では標準のHttpListener.AcceptWebSocketAsyncが未実装�
 - 補助ブリッジ: `http://127.0.0.1:8766/`
 - 別端末: Serveが表示する `https://<PC>.<tailnet>.ts.net/`
 
-HTTPの画面・API・JPEGとWebSocketを同じURLにまとめる。HTTPS画面からループバックHTTPへ接続しない。GitHub Pagesの既存画面はFirebase方式のまま利用でき、自動で操作先を切り替えない。
+HTTPの画面・API・JPEGとWebSocketを同じURLにまとめる。中継アプリは管理画面一式を同梱し、Unityが停止していてもHTMLとして配信する。状態・映像・操作はUnity起動後に接続する。HTTPS画面からループバックHTTPへ接続しない。GitHub Pagesの既存画面はFirebase方式のまま利用でき、自動で操作先を切り替えない。
 
 ## かんたんな開始方法
 
@@ -45,13 +45,25 @@ UnityのPlayまたはゲームの起動後に、次のファイルをダブル�
 
 補助ブリッジをビルド・起動し、ブラウザーを開く。ターミナルを閉じるとブリッジを停止する。ゲームPC内だけで使う場合はTailscale不要でWebSocketを利用できる。
 
+### Macで常時開けるようにする
+
+`Tools/DashboardRelay/Install Dashboard Service.command`を一度実行すると、ログイン時に中継を自動起動する。起動が失敗した場合もlaunchdが再起動し、ログイン直後にTailscaleの起動が遅れた場合は接続を待って再試行する。Macを起動・ログインしてインターネットとTailscaleを接続しておけば、UnityをPlayする前にスマホで管理画面を開ける。Macがスリープ・電源オフの間は接続できない。
+
+常駐アプリと予備の画面は`~/Library/Application Support/RacingDashboard`へコピーし、`~/Library/LaunchAgents/com.racing.dashboard.plist`へ登録する。プロジェクトが残っていればその画面ファイルを読み、削除・移動された場合は同梱の画面を使う。中継コードを更新した場合は同じインストーラーを再実行する。操作担当者を追加する場合は`RACING_DASHBOARD_OPERATORS`を指定して再インストールする。既存の中継が起動済みの場合、Unityはそれを再利用する。
+
+解除は`Tools/DashboardRelay/Uninstall Dashboard Service.command`。ログは`~/Library/Logs/RacingDashboard/relay.log`と`relay-error.log`。Tailscale Serveは引き続き同じVPN内だけに公開し、Funnelは使わない。
+
+### URLを開くとファイル扱いになる場合
+
+中継が停止するとTailscale Serveが本文・Content-Typeのない502を返し、スマホではホスト名のファイルとして扱われる場合がある。保存したファイルではなく、Tailscale接続後に`https://<PC>.<tailnet>.ts.net/`をブラウザーのアドレスバーから開き直す。上記の常駐設定で中継の停止を防ぐ。中継が動いていてUnityだけが停止している場合は、管理画面に接続待ちを表示する。Play開始後は再読み込みなしで接続する。
+
 ### 初回のTailscale設定
 
 Tailscaleが利用可能なら、PCのHTTPSアドレスとログイン名を取得し、`tailscale serve --bg --yes --https=443 http://127.0.0.1:8766`で遠隔接続を準備する。既存の接続先が同じならそのまま再利用する。ログイン前や未導入の場合はローカルで起動し、必要な操作を表示する。
 
 初回のHTTPS有効化には本人の承認が必要な場合がある。Unityの「Tailscaleの初回HTTPS設定を開く」、または起動時に表示されたTailscaleのURLから完了し、もう一度起動する。インストール・ログイン・Tailscaleのアクセス許可設定は自動で代行しない。
 
-既存の443番ポートやHTTPSのルートを別サービスが使用している場合、設定を上書きせずローカル起動に切り替える。Funnelの公開設定がある場合も自動設定を止める。Serve設定はPCのTailscaleへ保存されるが、実際の配信にはゲームと補助ブリッジの両方が必要。[Serveの公式仕様](https://tailscale.com/docs/reference/tailscale-cli/serve)
+既存の443番ポートやHTTPSのルートを別サービスが使用している場合、設定を上書きせずローカル起動に切り替える。Funnelの公開設定がある場合も自動設定を止める。Serve設定はPCのTailscaleへ保存されるが、ゲームの状態・映像・操作にはゲームと補助ブリッジの両方が必要。管理画面自体は補助ブリッジだけで開ける。[Serveの公式仕様](https://tailscale.com/docs/reference/tailscale-cli/serve)
 
 ### 従来の設定を指定する場合
 

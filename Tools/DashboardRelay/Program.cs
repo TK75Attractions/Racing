@@ -3,7 +3,14 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 
-bool automatic = args.Contains("--auto");
+if (args.Contains("--install-service") || args.Contains("--uninstall-service"))
+{
+    await MacDashboardService.Configure(args.Contains("--install-service"));
+    return;
+}
+
+bool serviceMode = args.Contains("--service");
+bool automatic = args.Contains("--auto") || serviceMode;
 bool openBrowser = automatic && !args.Contains("--no-browser");
 bool managed = args.Contains("--managed");
 using var managedStop = new CancellationTokenSource();
@@ -38,7 +45,14 @@ if (automatic)
     }
 }
 if (managedStop.IsCancellationRequested) return;
-args = args.Where(arg => arg != "--auto" && arg != "--no-browser" && arg != "--managed").ToArray();
+// At login Tailscale may start after the agent. launchd retries until the private route is ready.
+if (serviceMode && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RACING_DASHBOARD_ORIGIN")))
+{
+    Console.WriteLine(startNotice ?? "Tailscaleの接続を待っています。");
+    await Task.Delay(5000);
+    return;
+}
+args = args.Where(arg => arg != "--auto" && arg != "--no-browser" && arg != "--managed" && arg != "--service").ToArray();
 
 // Only Serve may expose this loopback service. Do not bind to 0.0.0.0.
 var builder = WebApplication.CreateBuilder(args);
