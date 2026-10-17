@@ -13,6 +13,25 @@ using UnityEngine.UI;
 /// <summary>Exports the real HUD builders on a reference racing background, without saving the scene.</summary>
 public static class RacingHUDDesignPreview
 {
+    public static void CaptureSteeringComfort()
+    {
+        RaceCourse course = UnityEngine.Object.FindFirstObjectByType<RaceCourse>();
+        if (course == null) throw new InvalidOperationException("Open the race scene first.");
+        string output = Path.GetFullPath("Artifacts/SteeringComfort");
+        Directory.CreateDirectory(output);
+        string[] settings = { "ProjectSettings/GraphicsSettings.asset", "ProjectSettings/QualitySettings.asset" };
+        byte[][] originals = Array.ConvertAll(settings, File.ReadAllBytes);
+        try
+        {
+            foreach (int width in new[] { 1280, 1920 })
+            foreach (string state in new[] { "steering-low", "steering-high" })
+                CaptureView(course, output, width, width * 9 / 16, 0, state);
+        }
+        finally
+        {
+            for (int i = 0; i < settings.Length; i++) File.WriteAllBytes(settings[i], originals[i]);
+        }
+    }
     [MenuItem("Racing/UI/Capture Bilingual HUD Design")]
     public static void Capture()
     {
@@ -183,6 +202,12 @@ public static class RacingHUDDesignPreview
             else if (state == "finish-warning") transition.ShowFinishWarning("P1", 8.4f);
             else if (state == "spectator") transition.ShowSpectator(1);
             else transition.ClearRaceStatus();
+            if (state.StartsWith("steering-", StringComparison.Ordinal))
+            {
+                bool high = state == "steering-high";
+                hud.Find("SteeringIndicator").GetComponent<RacingSteeringIndicator>().SetState(high ? .65f : -.35f, high ? .30f : -.35f, high ? .34f : 1f);
+                speed.UpdateSpeedMeter(high ? 180f : 18f, 0f);
+            }
             if (state == "boost")
             {
                 speed.UpdateBoostGauge(2.4f, 3f);
