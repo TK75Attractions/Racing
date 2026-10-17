@@ -57,6 +57,7 @@ public class Gmanager : MonoBehaviour
     [SerializeField, Min(0f)] private float goMessageSeconds = 0.75f;
     [SerializeField] private LapManager lapManager;
     [SerializeField, Min(0f)] private float secondPlaceTimeoutSeconds = 40f;
+    [SerializeField, Min(0f)] private float maximumHumanFinishGraceSeconds = 180f;
 
     [Header("Preparation Time Limits")]
     [SerializeField, Min(1f)] private float carSelectionTimeLimitSeconds = CarSelectionUI.DefaultTimeLimitSeconds;
@@ -971,6 +972,18 @@ public class Gmanager : MonoBehaviour
         RaceFinishRegistration registration = raceSession.RegisterFinish(entry.Index, result);
         if (registration == RaceFinishRegistration.Ignored) return;
         entry.Result = result; latestSessionResult = raceSession.Result;
+        if (registration == RaceFinishRegistration.FirstPlace && lapManager != null && course != null)
+        {
+            RaceParticipant remaining = GetParticipant(raceSession.UnfinishedPlayerIndex);
+            if (remaining?.IsRacing == true && lapManager.GoalLap > 0)
+            {
+                float progress = lapManager.GetRaceProgressDistance(remaining.Body);
+                float pace = Mathf.Max(0f, progress) / Mathf.Max(1f, time);
+                raceSession.ExtendHumanGrace(HumanFinishGrace.Estimate(
+                    lapManager.GoalLap * course.TotalLength - progress, pace,
+                    secondPlaceTimeoutSeconds, maximumHumanFinishGraceSeconds));
+            }
+        }
         if (entry.IsCpu)
         {
             FreezeCpu(entry); UpdateParticipantOrder(); return;

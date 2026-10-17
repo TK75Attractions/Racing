@@ -47,6 +47,11 @@ public sealed class RaceParticipantSession
         HasTimedOut = true; WaitingForSecondPlace = false; return true;
     }
     public bool RegisterDnf(int index, RaceResultRecord record) => HasTimedOut && RecordDnf(index, record);
+    public void ExtendHumanGrace(float seconds)
+    {
+        if (!WaitingForSecondPlace || IsComplete || HasTimedOut || float.IsNaN(seconds) || float.IsInfinity(seconds)) return;
+        SecondPlaceTimeRemaining = Math.Min(Math.Max(0, maximumSeconds - elapsed), Math.Max(SecondPlaceTimeRemaining, seconds));
+    }
     public bool RegisterWithdrawal(int index, RaceResultRecord record) => RecordDnf(index, record);
     // Called in progress order at human completion or timeout to classify remaining CPUs/DNFs.
     public bool CloseParticipant(int index, RaceResultRecord record) => RecordDnf(index, record, true);
@@ -70,5 +75,15 @@ public sealed class RaceParticipantSession
         }
         for (int i = 0; i < participantCount; i++)
         { RaceResultRecord r = Result.GetPlayerResult(i); if (r != null && r.finishPosition < 0) r.finishPosition = -r.finishPosition; }
+    }
+}
+
+public static class HumanFinishGrace
+{
+    public static float Estimate(float remainingMeters, float paceMetersPerSecond, float minimum, float maximum)
+    {
+        if (float.IsNaN(remainingMeters) || float.IsInfinity(remainingMeters)) return minimum;
+        float pace = float.IsNaN(paceMetersPerSecond) || float.IsInfinity(paceMetersPerSecond) ? 6f : Math.Max(6f, paceMetersPerSecond);
+        return Math.Min(Math.Max(minimum, maximum), Math.Max(minimum, Math.Max(0, remainingMeters) / pace + 8f));
     }
 }
