@@ -23,6 +23,8 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     private float safeRawProgress, safeRaceProgress;
     private LapManager.NpcRecoveryState safeState;
     private bool hasSafeState;
+    private float unrecoveredSeconds;
+    public string RecoveryBlockedReason { get; private set; } = "";
     private sealed class ContactGrace { public Rigidbody Other; public Collider[] Colliders; public float Until; }
     private Collider[] ownColliders;
     private readonly List<ContactGrace> contactGrace = new List<ContactGrace>(2);
@@ -48,7 +50,13 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         body = GetComponent<Rigidbody>(); body.interpolation = RigidbodyInterpolation.Interpolate; ownColliders = GetComponentsInChildren<Collider>(); tires = GetComponentsInChildren<TireForce>();
         rivalIndex = entry.Index % 2; lane = desiredLane = entry.Index % 2 == 0 ? -2f : 2f;
         GetComponent<DebugMover>().SetInputSource(this);
-        CarResetter resetter = GetComponent<CarResetter>(); if (resetter != null) resetter.enabled = false;
+        CarResetter resetter = GetComponent<CarResetter>();
+        if (resetter != null) { resetter.SetCourse(course, laps); resetter.enabled = false; }
+        if (course.TryGetNearestRoadSample(body.position, out RaceCourse.CourseSample initial))
+        {
+            safeRawProgress = course.GetProgressDistance(initial.position); safeRaceProgress = laps.GetRaceProgressDistance(body);
+            safeState = laps.CaptureNpcRecovery(body); hasSafeState = true;
+        }
         SetDriving(false);
     }
     public void SetDriving(bool value)
@@ -105,7 +113,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         float contest = Mathf.Sin(Time.time * .22f + entry.Index * 2f) * (finalLap ? 8f : 16f);
         float partnerSpeed = opponent?.IsRacing == true ? opponent.Body.linearVelocity.magnitude : cruiseSpeed;
         float adjusted = Mathf.Clamp(Mathf.Clamp(partnerSpeed + (finalLap ? 5f : 3f), 5f, cruiseSpeed) + (gap - contest) * .14f,
-            Mathf.Max(0, cruiseSpeed - maximumSlowdown), cruiseSpeed + maximumCatchup);
+            Mathf.Max(7f, cruiseSpeed - maximumSlowdown), cruiseSpeed + maximumCatchup);
         float requested = Mathf.Min(adjusted, bendLimit);
         if (jumpAhead) { requested = Mathf.Min(bendLimit, Mathf.Max(24f, requested)); desiredLane = 0; }
         float safeLane = Mathf.Min(3f, Mathf.Max(0, here.width * .5f - 3.5f));
@@ -131,6 +139,8 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         targetSpeed = Mathf.MoveTowards(targetSpeed, requested, dt * accelerationSlew);
         float signedSpeed = Vector3.Dot(body.linearVelocity, transform.forward);
         float pedal = Mathf.Clamp((targetSpeed - signedSpeed) * .12f, -1f, 1f);
+        bool stranded = !course.IsPointInsideCourse(body.position) || Mathf.Abs(body.position.y-here.position.y)>6f || Vector3.Dot(transform.up,Vector3.up)<.3f;
+        unrecoveredSeconds = stranded ? unrecoveredSeconds + dt : 0f;
         stuck = ((speed < 1f && requested > 3f) || Vector3.Dot(transform.up, Vector3.up) < .3f || Mathf.Abs(body.position.y - here.position.y) > 6f || !course.IsPointInsideCourse(body.position)) ? stuck + dt : 0;
         if (stuck > 2f && reverseUntil <= Time.time) { reverseUntil = Time.time + 1.2f; stuck = 0; TryRecover(); }
         if (Time.time < reverseUntil && grounded >= 2 && !jumpAhead) { pedal = Mathf.Clamp((-3f - signedSpeed) * .12f, -.4f, .4f); steering = -steering; }
@@ -146,20 +156,23 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     }
     private void TryRecover()
     {
-        if (!hasSafeState || manager.IsNpcRecoveryVisible(body.position)) return;
-        if (!course.TryGetSampleAtProgress(safeRawProgress, out RaceCourse.CourseSample sample) || !course.HasRoadAtProgress(safeRawProgress)) return;
-        Vector3 position = sample.position + sample.up * 1.2f;
-        if (manager.IsNpcRecoveryVisible(position) || !laps.CanRestoreNpcRecovery(body, safeState)) return;
-        foreach (RaceParticipant other in manager.Participants)
-            if (other != entry && other.Body != null && Vector3.Distance(position, other.Body.position) < 15f) return;
-        int count = Physics.OverlapBoxNonAlloc(position, new Vector3(1.4f,.5f,2.5f), overlaps, Quaternion.LookRotation(sample.forward, sample.up), Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
-        if (count == overlaps.Length) return;
-        for (int i = 0; i < count; i++) if (overlaps[i].attachedRigidbody != body) return;
-        if (!Physics.Raycast(sample.position + sample.up * 2f, -sample.up, out RaycastHit hit, 3f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) || Vector3.Distance(hit.point,sample.position) > .5f) return;
-        body.position = position; body.rotation = Quaternion.LookRotation(sample.forward * manager.CourseProgressSign, sample.up);
-        body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero;
-        laps.RestoreNpcRecovery(body, safeState); GetComponent<DebugMover>().SuppressInputAfterRespawn();
-        targetSpeed = 0; RecoveryCount++;
+        bool overdue = unrecoveredSeconds >= 6f;
+        if (!hasSafeState) { RecoveryBlockedReason="no-safe-road"; return; }
+        if (!overdue && manager.IsNpcRecoveryVisible(body.position)) { RecoveryBlockedReason="visible-car"; return; }
+        if (!course.TryGetSampleAtProgress(safeRawProgress, out RaceCourse.CourseSample sample) || !course.HasRoadAtProgress(safeRawProgress))
+        { RecoveryBlockedReason="missing-road"; return; }
+        if (!overdue && manager.IsNpcRecoveryVisible(sample.position)) { RecoveryBlockedReason="visible-target"; return; }
+        if (!laps.CanRestoreNpcRecovery(body,safeState)) { RecoveryBlockedReason="forward-progress"; return; }
+        bool roadSupported=false;
+        foreach (RaycastHit hit in Physics.RaycastAll(sample.position+sample.up*2f,-sample.up,3f,
+                     Physics.DefaultRaycastLayers,QueryTriggerInteraction.Ignore))
+            if (hit.collider.attachedRigidbody==null && Vector3.Dot(hit.normal,sample.up)>.5f && Vector3.Distance(hit.point,sample.position)<.5f)
+                roadSupported=true;
+        if (!roadSupported) { RecoveryBlockedReason="unsupported-road"; return; }
+        CarResetter resetter=GetComponent<CarResetter>();
+        if (resetter==null || !resetter.TryResetToRoadSample(sample)) { RecoveryBlockedReason="occupied-road"; return; }
+        laps.RestoreNpcRecovery(body,safeState);
+        targetSpeed=0; reverseUntil=Time.time; stuck=unrecoveredSeconds=0; RecoveryBlockedReason=""; RecoveryCount++;
     }
     private void OnCollisionEnter(Collision collision)
     {

@@ -108,6 +108,11 @@ public class CarResetter : MonoBehaviour
         sample = safeSample;
         if (!found && course != null) found = course.TryGetNearestRoadSample(transform.position, out sample);
         if (!found) { if (course != null) return false; ResetToStart(); return true; }
+        return TryResetToRoadSample(sample);
+    }
+
+    public bool TryResetToRoadSample(RaceCourse.CourseSample sample)
+    {
         Vector3 forward = laps != null && laps.IsProgressReversed ? -sample.forward : sample.forward;
         Quaternion rotation = Quaternion.LookRotation(forward, sample.up);
         float clearance = GetGroundClearance(rotation, sample.up);
