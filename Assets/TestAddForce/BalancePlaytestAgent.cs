@@ -76,6 +76,8 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     private readonly DriveInputState[] heldDecision = new DriveInputState[2];
     private readonly float[] releaseRequestedAt = {-1,-1};
     private readonly float[] releaseUntil = {-1,-1};
+    private readonly float[] jumpNoticedAt = {-1,-1};
+    private OnPlayUIManager[] driverUis;
 
     private IEnumerator Start()
     {
@@ -93,6 +95,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         previousRunInBackground = Application.runInBackground; Application.runInBackground = true;
         Application.logMessageReceived += LogError;
         manager = Gmanager.Control; laps = FindFirstObjectByType<LapManager>();
+        driverUis=(OnPlayUIManager[])typeof(Gmanager).GetField("onPlayUIManagers",Private).GetValue(manager);
         pickups.AddRange(FindObjectsByType<RaceItemPickup>(FindObjectsSortMode.None));
         suite.courseLength = manager.course.TotalLength; suite.fixedDeltaTime = Time.fixedDeltaTime; suite.timeScale = Time.timeScale;
         if (float.TryParse(Environment.GetEnvironmentVariable("RACING_BALANCE_WINDOW_SECONDS"),
@@ -117,7 +120,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 SkillPlan("skill-disconnect-rejoin", 6105, 22, 22, false, "intermediate", "intermediate"),
                 SkillPlan("skill-operator-stop", 6106, 18, 18, false, "cautious", "cautious")
             };
-            suite.methodology = "Actual SampleScene and production cars/CPUs/items. Course-following input agents approximate novice, cautious, intermediate, expert and aggressive control using distinct speed, reaction intervals, steering noise and jump anticipation; they are not human usability subjects. Includes a 12-second stop, 5-second input disconnection and operator result action. Drivers use InputManager and production input gates; never force vehicle pose, velocity, laps or outcomes. An agent responds to the public pedal-release notice after 0.35 seconds with 0.3 seconds of neutral input. Preparation is bypassed. Random seeds do not guarantee deterministic physics. Official and physics clocks are recorded separately.";
+            suite.methodology = "Actual SampleScene and production cars/CPUs/items. Course-following input agents approximate novice, cautious, intermediate, expert and aggressive control using distinct speed, reaction intervals, steering noise and jump anticipation; they are not human usability subjects. Includes a 12-second stop, 5-second input disconnection and operator result action. Drivers use InputManager and production input gates; never force vehicle pose, velocity, laps or outcomes. An agent responds to the public pedal-release notice after 0.35 seconds with 0.3 seconds of neutral input. Novice/cautious agents respond to a visible jump notice after 0.35 seconds by targeting 24m/s; understanding that cue is an assumed response, not a human-study result. Preparation is bypassed. Random seeds do not guarantee deterministic physics. Official and physics clocks are recorded separately.";
             var sources = (IDriveInputSource[])typeof(InputManager).GetField("inputSources", Private).GetValue(manager.IManager);
             for (int i = 0; i < 2; i++) sources[i] = inputs[i];
         }
@@ -156,7 +159,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         trace.WriteLine("time,car,x,y,z,speed,progress,lap,checkpoint,position,pedal,steering,grounded,offCourse,rocket,confuse,oil,spin,cpuTargetSpeed,cpuRival,connected,needsRelease,recoveries,recoveryBlocked");
         events = new StreamWriter(Path.Combine(folder, "events.csv")); events.WriteLine("time,car,event,detail,x,y,z");
         inputs[0].CurrentState = inputs[1].CurrentState = DriveInputState.Neutral;
-        for (int i = 0; i < 2; i++) { inputs[i].IsConnected = true; nextDecisionAt[i] = 0; heldDecision[i] = DriveInputState.Neutral; releaseRequestedAt[i]=releaseUntil[i]=-1; }
+        for (int i = 0; i < 2; i++) { inputs[i].IsConnected = true; nextDecisionAt[i] = 0; heldDecision[i] = DriveInputState.Neutral; releaseRequestedAt[i]=releaseUntil[i]=jumpNoticedAt[i]=-1; }
         Invoke("StartGameWhenScreenCovered"); Invoke("CompleteGameStart");
         foreach (ScreenTransitionController transition in FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
             transition.ApplyStateImmediate(Gmanager.State.Countdown);
@@ -340,6 +343,14 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         string profile = entry.Index == 0 ? run.p1Profile : run.p2Profile;
         bool anticipatesJump = !skillSuite || profile == "expert" || profile == "intermediate";
         if (jumpAhead && anticipatesJump) requested = 24;
+        if (skillSuite && (profile=="novice" || profile=="cautious"))
+        {
+            bool warning=driverUis[entry.Index]?.DriverNotice.Contains("ジャンプ")==true;
+            if(warning && jumpNoticedAt[entry.Index]<0)
+            { jumpNoticedAt[entry.Index]=run.physicsSeconds; Event(entry.Index,"jump-notice-seen",""); }
+            if(!warning)jumpNoticedAt[entry.Index]=-1;
+            if(warning && run.physicsSeconds-jumpNoticedAt[entry.Index]>=.35f)requested=24;
+        }
         if (run.name == "skill-stop-rejoin" && entry.Index == 1 && run.physicsSeconds >= 45 && run.physicsSeconds < 57) requested = 0;
         if (run.name == "temporary-stop-p2" && entry.Index == 1 && manager.time >= 45 && manager.time < 60) requested = 0;
         float lane = jumpAhead ? 0 : entry.Index == 0 ? 2 : -2;

@@ -25,6 +25,7 @@ public class OnPlayUIManager
     public UITime TimeView => time;
     public UISpeed Speed => speed;
     public UIMiniMap MiniMap => miniMap;
+    public string DriverNotice => displayedNotice ?? "";
 
     public void Init(Transform parent, RaceCourse course, int playerIndex, int totalLaps = LapManager.DefaultGoalLaps)
     {
