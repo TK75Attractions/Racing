@@ -114,3 +114,7 @@ InitTestScene*.unity*
 
 # Local live-check evidence contains this PC's tailnet hostname and account.
 /Artifacts/DashboardRealtime/live-startup.json
+
+# Locally exported manuals include this PC's private VPN URL.
+/output/pdf/
+/tmp/pdfs/
