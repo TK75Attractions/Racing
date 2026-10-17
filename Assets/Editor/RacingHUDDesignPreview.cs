@@ -13,6 +13,25 @@ using UnityEngine.UI;
 /// <summary>Exports the real HUD builders on a reference racing background, without saving the scene.</summary>
 public static class RacingHUDDesignPreview
 {
+    public static void CaptureHudIndicators()
+    {
+        RaceCourse course = UnityEngine.Object.FindFirstObjectByType<RaceCourse>();
+        if (course == null) throw new InvalidOperationException("Open the race scene first.");
+        string output = Path.GetFullPath("Artifacts/HudIndicators");
+        Directory.CreateDirectory(output);
+        string[] settings = { "ProjectSettings/GraphicsSettings.asset", "ProjectSettings/QualitySettings.asset" };
+        byte[][] originals = Array.ConvertAll(settings, File.ReadAllBytes);
+        try
+        {
+            foreach (int width in new[] { 1280, 1920 })
+            foreach (string state in new[] { "indicator-acceleration", "indicator-deceleration", "indicator-neutral" })
+                CaptureView(course, output, width, width * 9 / 16, 0, state);
+        }
+        finally
+        {
+            for (int i = 0; i < settings.Length; i++) File.WriteAllBytes(settings[i], originals[i]);
+        }
+    }
     public static void CaptureSteeringComfort()
     {
         RaceCourse course = UnityEngine.Object.FindFirstObjectByType<RaceCourse>();
@@ -207,6 +226,14 @@ public static class RacingHUDDesignPreview
                 bool high = state == "steering-high";
                 hud.Find("SteeringIndicator").GetComponent<RacingSteeringIndicator>().SetState(high ? .65f : -.35f, high ? .30f : -.35f, high ? .34f : 1f);
                 speed.UpdateSpeedMeter(high ? 180f : 18f, 0f);
+            }
+            if (state.StartsWith("indicator-", StringComparison.Ordinal))
+            {
+                bool braking = state == "indicator-deceleration";
+                float acceleration = state == "indicator-neutral" ? 0f : braking ? -14f : 14f;
+                hud.Find("Speed/Acceleration").GetComponent<RacingAccelerationGauge>().SetAcceleration(acceleration);
+                hud.Find("SteeringIndicator").GetComponent<RacingSteeringIndicator>().SetState(.65f, .30f, .34f);
+                speed.UpdateSpeedMeter(96f, 0f);
             }
             if (state == "boost")
             {
