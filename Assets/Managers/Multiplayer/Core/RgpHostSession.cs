@@ -64,6 +64,8 @@ public sealed class RgpHostSession
             if (active.Command == command) { reason = "command_pending"; return false; }
         if ((command == "ANGLE_ZERO" || command == "CALIBRATE" || command == "SET_BETA") && State != "READY" && State != "WAIT_ANGLE")
         { reason = "device_not_ready"; return false; }
+        if (command == "CALIBRATE") automaticCalibrationAttempted = true;
+        if (command == "ANGLE_ZERO") automaticAngleZeroAttempted = true;
         sequence = nextSequence;
         SendCommand(command, now, false, args); reason = null; return true;
     }

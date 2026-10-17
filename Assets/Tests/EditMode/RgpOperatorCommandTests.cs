@@ -112,4 +112,15 @@ public sealed class RgpOperatorCommandTests
         Assert.That(sent.FindAll(s => s.Contains(",CALIBRATE,")).Count, Is.EqualTo(3));
         Assert.That(sent[sent.Count-1], Is.EqualTo(wire));
     }
+
+    [Test] public void ManualStartupCalibrationDoesNotTriggerAnAdditionalAutomaticRequest()
+    {
+        var session = Ready(out var sent);
+        session.TryCommand("GET_STATUS", null, 10, out uint status, out _);
+        session.Receive(Frame("ACK,10,0,"+status+",GET_STATUS,OK,WAIT_ANGLE,1,1,0,0"), 11);
+        session.TryCommand("CALIBRATE", new[] { "ALL" }, 12, out uint sequence, out _);
+        session.Receive(Frame("ACK,11,0,"+sequence+",CALIBRATE,ACCEPTED,ALL"), 13);
+        int count = sent.Count; session.Tick(14);
+        Assert.That(sent.Count, Is.EqualTo(count));
+    }
 }
