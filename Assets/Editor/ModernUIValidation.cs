@@ -28,6 +28,10 @@ public static class ModernUIValidation
                 RectTransform display = RacingUITheme.Rect(root.transform, $"Player{player}", Vector2.zero, Vector2.one);
                 Transform hud = RacingHUDBuilder.Build(display, player, 5);
                 ValidateSteeringIndicator(hud);
+                Require(hud.Find("Telemetry") == null || !hud.Find("Telemetry").gameObject.activeSelf,
+                    "The old pedal/steering panel beneath the speedometer must be retired.");
+                Require(hud.Find("Speed/Acceleration").GetComponent<RacingAccelerationGauge>() != null,
+                    "Both speedometers must include the measured acceleration arc.");
                 Require(hud.Find("RearView") == null, "Rear-view UI/camera must not be created.");
                 foreach(string island in new[]{"BoostBadge","Speed","Leaderboard"})
                     Require(hud.Find(island).GetComponent<Canvas>()!=null,"Heavy HUD geometry is not isolated from timer rebuilds: "+island);
