@@ -149,6 +149,8 @@ public static class ModernUIValidation
         feedback.SetState(true,.5f,NeonUI.Pink);
         for(int frame=0;frame<60;frame++)feedback.Tick(1f/60f);
         Require(Text(button.transform,"HoldPercent")=="50%","Hold percentage does not match actual progress.");
+        Require(button.transform.Find("HoldPercent").GetComponent<TMP_Text>().color.r<.1f,
+            "A selected bright button needs a dark, readable hold percentage.");
         feedback.SetConfirmed(true);feedback.SetState(false,0,NeonUI.Pink);
         for(int frame=0;frame<60;frame++)feedback.Tick(1f/60f);
         Require(feedback.IsRetained && Text(button.transform,"HoldPercent")=="100%","Start must remain selected after releasing the hold.");

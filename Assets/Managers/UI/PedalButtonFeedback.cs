@@ -141,7 +141,7 @@ public sealed class PedalButtonFeedback : MonoBehaviour
             gauge.SetVisual(shownProgress,tint,flash,!available);
             int percent=Mathf.RoundToInt(shownProgress*100f);
             if(displayedPercent!=percent){percentage.SetText("{0}%",percent);displayedPercent=percent;}
-            Color c=available?(retained?RacingUITheme.Gold:Color.white):new Color(.55f,.59f,.67f,.72f);
+            Color c=available?(retained?RacingUITheme.Gold:Color.Lerp(Color.white,new Color(.015f,.025f,.05f,1f),focus)):new Color(.55f,.59f,.67f,.72f);
             if(percentage.color!=c)percentage.color=c;
         }
         float sweep=available && highlightAge<.44f?Mathf.Clamp01(highlightAge/.44f):0;
