@@ -520,7 +520,17 @@ public class Gmanager : MonoBehaviour
     {
         if (state != State.Game || IsScreenTransitioning() || (resultRecord != null && (resultRecord.isCpu || resultRecord.playerNumber > PlayerCount))) return;
 
-        RaceResultRecord first = resultRecord ?? CreateFallbackResult(0, true, 1);
+        if (resultRecord == null)
+        {
+            // Operator stop classifies the current standings; it does not award P1 a finish.
+            if (raceSession == null) raceSession = new RaceParticipantSession(PlayerCount, 0, 0f, maximumRaceSeconds);
+            if (participants.Count == 0)
+                for (int i = 0; i < PlayerCount; i++) raceSession.CloseParticipant(i, CreateFallbackResult(i, false, i + 1));
+            CompleteRace(raceSession.Result, null);
+            return;
+        }
+
+        RaceResultRecord first = resultRecord;
         first.playerNumber = first.playerNumber > 0 ? first.playerNumber : 1;
         first.didFinish = true;
         if (raceSession != null && participants.Count > 0)

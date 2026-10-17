@@ -12,6 +12,7 @@ public static class SkillGameplayValidation
         if (!Application.isBatchMode) throw new InvalidOperationException("Run in an isolated batch editor.");
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         ValidateStartingLine();
+        ValidateOperatorStop();
         Debug.Log("SKILL_GAMEPLAY_RULES_PASS");
     }
     private static void ValidateStartingLine()
@@ -47,6 +48,19 @@ public static class SkillGameplayValidation
             point.FindPropertyRelative("curve").floatValue=0; point.FindPropertyRelative("jumpToNext").boolValue=false;
         }
         settings.ApplyModifiedPropertiesWithoutUndo(); course.RebuildCache(); return course;
+    }
+    private static void ValidateOperatorStop()
+    {
+        GameObject root=new GameObject("Operator stop QA"); root.SetActive(false);
+        try
+        {
+            Gmanager manager=root.AddComponent<Gmanager>(); manager.state=Gmanager.State.Game;
+            manager.ShowResult();
+            Require(manager.state==Gmanager.State.Result,"An operator stop must reach results.");
+            for(int i=0;i<2;i++)Require(manager.LatestSessionResult.GetPlayerResult(i)?.didFinish==false,
+                "Stopping an unfinished race must not manufacture a winner.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
     }
     private static void Set(object target,string name,object value)=>target.GetType().GetField(name,Private).SetValue(target,value);
     private static object Get(object target,string name)=>target.GetType().GetField(name,Private).GetValue(target);
