@@ -152,6 +152,13 @@ public class Gmanager : MonoBehaviour
     public bool IsDrivingEnabled => state == State.Game || ((state == State.CarSelection || state == State.Tutorial) &&
         !finishingPreparation && drivingTutorial != null && drivingTutorial.HasAnyStarted);
     public bool CanUseDashboardControls => !IsScreenTransitioning();
+    public bool IsEngineAudioActive(Rigidbody body)
+    {
+        if (state != State.Countdown && state != State.Game && state != State.Tutorial && state != State.CarSelection)
+            return false;
+        RaceParticipant participant = FindParticipant(body);
+        return participant == null || participant.Result == null;
+    }
     public int GoalLap => lapManager != null ? lapManager.GoalLap : 0;
     public int GetPlayerLap(int index)
     {
