@@ -176,6 +176,9 @@ public class Gmanager : MonoBehaviour
         return displayRigs[index]?.BackImageCamera ?? displayRigs[index]?.MainCamera;
     }
 
+    public byte[] CapturePlayerFrame(int index) => index >= 0 && index < displayRigs.Length
+        ? displayRigs[index]?.CaptureJpeg(640, 360) : null;
+
     public Camera GetPlayerViewCamera(int index) => index >= 0 && index < displayRigs.Length ? displayRigs[index]?.MainCamera : null;
 
     public Transform GetPlayerCarTransform(int index) => index >= 0 && index < PlayerCount ? players[index]?.car?.transform : null;

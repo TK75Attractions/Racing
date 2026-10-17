@@ -612,29 +612,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
 
     private byte[] CapturePlayer(int index)
     {
-        Camera camera = race?.GetPlayerCaptureCamera(index);
-        if (camera == null) return null;
-        const int width = 640, height = 360;
-        RenderTexture target = RenderTexture.GetTemporary(width, height, 24);
-        RenderTexture previousActive = RenderTexture.active;
-        Texture2D pixels = new Texture2D(width, height, TextureFormat.RGB24, false);
-        try
-        {
-            // URP StandardRequest captures the base camera together with its overlay stack.
-            var request = new RenderPipeline.StandardRequest { destination = target };
-            if (!RenderPipeline.SupportsRenderRequest(camera, request)) return null;
-            RenderPipeline.SubmitRenderRequest(camera, request);
-            RenderTexture.active = target;
-            pixels.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-            pixels.Apply();
-            return pixels.EncodeToJPG(65);
-        }
-        finally
-        {
-            RenderTexture.active = previousActive;
-            RenderTexture.ReleaseTemporary(target);
-            Destroy(pixels);
-        }
+        return race != null ? race.CapturePlayerFrame(index) : null;
     }
 
     private void OnDestroy()

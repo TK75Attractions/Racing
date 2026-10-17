@@ -238,3 +238,43 @@ test('Raw display pauses rendering, bounds history, and resumes with fresh data'
   assert.equal(ui.elements.get('raw-log').children.length,1);
   assert.match(ui.elements.get('raw-log').textContent,/new/);
 });
+
+
+test('Preview retries preserve good frames, decode before display, and release every replaced URL', async () => {
+  const ui = fixture(); ui.render(base);
+  const revoked = []; let next = 0; let fail = false;
+  ui.context.AbortSignal = AbortSignal;
+  ui.context.URL = {createObjectURL: () => 'blob:'+(++next), revokeObjectURL: url => revoked.push(url)};
+  ui.context.Image = class { async decode() { if (fail) throw new Error('bad JPEG'); } };
+  ui.context.fetch = async (_, options) => { assert.ok(options.signal); return {ok:true,blob:async()=>({})}; };
+  await ui.context.refreshFrames();
+  const first = ui.elements.get('feed-1').src;
+  assert.equal(ui.elements.get('feed-1').hidden, false);
+  fail = true; await ui.context.refreshFrames();
+  assert.equal(ui.elements.get('feed-1').src, first);
+  assert.equal(ui.elements.get('feed-1').hidden, false);
+  assert.equal(revoked.length, 2);
+  fail = false; await ui.context.refreshFrames();
+  assert.notEqual(ui.elements.get('feed-1').src, first);
+  assert.ok(revoked.includes(first));
+  ui.context.setConnection(false);
+  assert.equal(ui.elements.get('feed-1').hidden, true);
+  assert.equal(revoked.length, 6);
+});
+
+test('Preview fetches cannot overlap or restore stale images after a disconnect', async () => {
+  const ui = fixture(); ui.render(base);
+  const revoked = []; const pending = []; let calls = 0;
+  ui.context.AbortSignal = AbortSignal;
+  ui.context.URL = {createObjectURL: () => 'blob:'+calls, revokeObjectURL: url => revoked.push(url)};
+  ui.context.Image = class { async decode() {} };
+  ui.context.fetch = () => { calls++; return new Promise(resolve => pending.push(resolve)); };
+  const refresh = ui.context.refreshFrames();
+  await ui.context.refreshFrames();
+  assert.equal(calls, 2);
+  ui.context.setConnection(false);
+  for (const resolve of pending) resolve({ok:true,blob:async()=>({})});
+  await refresh;
+  assert.equal(ui.elements.get('feed-1').hidden, true);
+  assert.equal(revoked.length, 2);
+});

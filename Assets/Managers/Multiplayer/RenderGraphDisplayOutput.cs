@@ -21,6 +21,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
 
     public RenderTexture Target => target;
     public int PresentedFrames { get; private set; }
+    public bool CapturingPreview { get; set; }
 
     public void Configure(Camera[] outputCameras, int outputDisplay)
     {
@@ -47,7 +48,10 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
     }
 
     private void LateUpdate() => RefreshTarget();
-    private void BeginRendering(ScriptableRenderContext context, List<Camera> rendered) => RefreshTarget();
+    private void BeginRendering(ScriptableRenderContext context, List<Camera> rendered)
+    {
+        if (!CapturingPreview) RefreshTarget();
+    }
 
     private void RefreshTarget()
     {
@@ -76,7 +80,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
     private void Present(ScriptableRenderContext context, List<Camera> rendered)
     {
         using var timing = PresentMarker.Auto();
-        if (target == null || Application.isEditor || displayIndex >= Display.displays.Length) return;
+        if (CapturingPreview || target == null || Application.isEditor || displayIndex >= Display.displays.Length) return;
         // Render requests for thumbnails/captures also raise this event. Only
         // present after this display's normal stack has been rendered.
         bool hasOutput = false;

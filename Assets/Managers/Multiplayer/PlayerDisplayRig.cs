@@ -1,5 +1,6 @@
 using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 /// <summary>
@@ -120,6 +121,46 @@ public sealed class PlayerDisplayRig
             var output = CameraRoot.GetComponent<RenderGraphDisplayOutput>() ??
                 CameraRoot.AddComponent<RenderGraphDisplayOutput>();
             output.Configure(new[] { BackCamera, BackImageCamera, MainCamera, FrontCamera, UiCamera }, DisplayIndex);
+        }
+    }
+
+    public byte[] CaptureJpeg(int width, int height)
+    {
+        Camera camera = BackImageCamera ?? MainCamera;
+        if (camera == null || !camera.isActiveAndEnabled) return null;
+        Camera[] stack = { BackCamera, BackImageCamera, MainCamera, FrontCamera, UiCamera };
+        RenderTexture[] previous = new RenderTexture[stack.Length];
+        RenderTexture active = RenderTexture.active;
+        RenderTexture thumbnail = RenderTexture.GetTemporary(width, height, 24);
+        Texture2D pixels = new Texture2D(width, height, TextureFormat.RGB24, false);
+        RenderGraphDisplayOutput output = CameraRoot != null ? CameraRoot.GetComponent<RenderGraphDisplayOutput>() : null;
+        bool wasCapturing = output != null && output.CapturingPreview;
+        for (int i = 0; i < stack.Length; i++) previous[i] = stack[i] != null ? stack[i].targetTexture : null;
+        try
+        {
+            // Keep the base, overlays and CanvasScaler on the same output size. Render requests
+            // raise normal pipeline callbacks too; they must never present a thumbnail on P2.
+            if (output != null) output.CapturingPreview = true;
+            for (int i = 0; i < stack.Length; i++) if (stack[i] != null) stack[i].targetTexture = thumbnail;
+            RenderTexture.active = thumbnail;
+            GL.Clear(true, true, Color.black);
+            UnityEngine.Canvas.ForceUpdateCanvases();
+            var request = new RenderPipeline.StandardRequest { destination = thumbnail };
+            if (!RenderPipeline.SupportsRenderRequest(camera, request)) return null;
+            RenderPipeline.SubmitRenderRequest(camera, request);
+            RenderTexture.active = thumbnail;
+            pixels.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+            pixels.Apply();
+            return pixels.EncodeToJPG(65);
+        }
+        finally
+        {
+            for (int i = 0; i < stack.Length; i++) if (stack[i] != null) stack[i].targetTexture = previous[i];
+            if (output != null) output.CapturingPreview = wasCapturing;
+            UnityEngine.Canvas.ForceUpdateCanvases();
+            RenderTexture.active = active;
+            RenderTexture.ReleaseTemporary(thumbnail);
+            if (Application.isPlaying) Object.Destroy(pixels); else Object.DestroyImmediate(pixels);
         }
     }
 
