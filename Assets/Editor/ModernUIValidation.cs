@@ -190,6 +190,15 @@ public static class ModernUIValidation
         Require(Text(card,"ResultRow2/Gap")=="+2.125" && Text(card,"PlacementRibbon/Ordinal")=="2ND","Result times and local medal do not match real data.");
         Require(card.Find("ResultMenu").GetComponentsInChildren<RacingMenuButton>(false).Length==2,"Result must have two actions.");
         Require(Text(card,"ResultMenu/Option1/Label")=="もう一度" && Text(card,"ResultMenu/Option2/Label")=="メインメニュー","Result action labels are wrong.");
+        PedalButtonFeedback retry = card.Find("ResultMenu/Option1").GetComponent<PedalButtonFeedback>();
+        PedalButtonFeedback mainMenu = card.Find("ResultMenu/Option2").GetComponent<PedalButtonFeedback>();
+        results.SetMenuState(1, 0f);
+        retry.SetPointerState(true, false, true); // A parked mouse must not create a second selected option.
+        for (int i = 0; i < 60; i++) { retry.Tick(1f / 60f); mainMenu.Tick(1f / 60f); }
+        Require(mainMenu.transform.localScale.x > retry.transform.localScale.x + .03f,
+            "Steering selection must visibly enlarge exactly one option even with pointer hover elsewhere.");
+        Color selectedText = card.Find("ResultMenu/Option2/Label").GetComponent<TMP_Text>().color;
+        Require(selectedText.maxColorComponent < .1f, "Selected button must use dark text on its bright surface.");
         foreach(RacingMenuButton button in card.Find("ResultMenu").GetComponentsInChildren<RacingMenuButton>(true))
             Require(button.targetGraphic.enabled && button.targetGraphic.raycastTarget,"Result action has no pointer hit target.");
         session.GetPlayerResult(1).didFinish=false;
