@@ -33,7 +33,7 @@ public static class RaceCourseValidation
         }
     }
 
-    private static void ValidateGoalOnlyLaps()
+    public static void ValidateGoalOnlyLaps()
     {
         GameObject root = new GameObject("Goal-only lap validation");
         try
@@ -67,6 +67,10 @@ public static class RaceCourseValidation
 
             laps.ResetRace();
             RaceCourse course = root.AddComponent<RaceCourse>();
+            SerializedObject straightCourse = new SerializedObject(course);
+            straightCourse.FindProperty("cornerRoundingDistance").floatValue = 0f;
+            straightCourse.FindProperty("slopeBlendDistance").floatValue = 0f;
+            straightCourse.ApplyModifiedPropertiesWithoutUndo();
             SetPoints(course, new[] { Vector3.zero, Vector3.forward * 100f, new Vector3(100f, 0, 100f), Vector3.right * 100f }, true);
             typeof(LapManager).GetField("raceCourse", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(laps, course);
             laps.RegisterCar(body, goal.transform);
@@ -76,7 +80,7 @@ public static class RaceCourseValidation
             laps.OnCarPassGoal(body, goal.transform);
             float progress = laps.GetRaceProgressDistance(body);
             Require(progress > course.TotalLength - 1f && progress < course.TotalLength + 1f,
-                "Counting a leading collider must not make race progress jump forward an extra lap.");
+                $"Counting a leading collider must not make race progress jump forward an extra lap: progress={progress}, length={course.TotalLength}, raw={course.GetProgressDistance(body.position)}, lap={laps.GetCarData(body).lapCount}, reversed={laps.IsProgressReversed}, departed={laps.GetCarData(body).hasLeftStartArea}.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }

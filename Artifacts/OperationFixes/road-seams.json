@@ -1,0 +1,65 @@
+[
+  {
+    "stepHeightMeters": 0.03,
+    "speedMetersPerSecond": 15.0,
+    "maximumRiseMeters": 0.072,
+    "maximumUpwardSpeed": 1.377,
+    "finalForwardPosition": 15.34
+  },
+  {
+    "stepHeightMeters": 0.03,
+    "speedMetersPerSecond": 30.0,
+    "maximumRiseMeters": 0.03,
+    "maximumUpwardSpeed": 0.044,
+    "finalForwardPosition": 40.0
+  },
+  {
+    "stepHeightMeters": 0.03,
+    "speedMetersPerSecond": 45.0,
+    "maximumRiseMeters": 0.241,
+    "maximumUpwardSpeed": 4.105,
+    "finalForwardPosition": 62.34
+  },
+  {
+    "stepHeightMeters": 0.08,
+    "speedMetersPerSecond": 15.0,
+    "maximumRiseMeters": 0.152,
+    "maximumUpwardSpeed": 0.226,
+    "finalForwardPosition": 15.17
+  },
+  {
+    "stepHeightMeters": 0.08,
+    "speedMetersPerSecond": 30.0,
+    "maximumRiseMeters": 0.08,
+    "maximumUpwardSpeed": 0.0,
+    "finalForwardPosition": 40.0
+  },
+  {
+    "stepHeightMeters": 0.08,
+    "speedMetersPerSecond": 45.0,
+    "maximumRiseMeters": 0.306,
+    "maximumUpwardSpeed": 5.676,
+    "finalForwardPosition": 61.71
+  },
+  {
+    "stepHeightMeters": 0.15,
+    "speedMetersPerSecond": 15.0,
+    "maximumRiseMeters": 0.223,
+    "maximumUpwardSpeed": 0.979,
+    "finalForwardPosition": 14.88
+  },
+  {
+    "stepHeightMeters": 0.15,
+    "speedMetersPerSecond": 30.0,
+    "maximumRiseMeters": 0.15,
+    "maximumUpwardSpeed": 0.0,
+    "finalForwardPosition": 40.0
+  },
+  {
+    "stepHeightMeters": 0.15,
+    "speedMetersPerSecond": 45.0,
+    "maximumRiseMeters": 0.374,
+    "maximumUpwardSpeed": 5.642,
+    "finalForwardPosition": 61.73
+  }
+]
