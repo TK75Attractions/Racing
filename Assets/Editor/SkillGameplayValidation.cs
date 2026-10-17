@@ -14,6 +14,7 @@ public static class SkillGameplayValidation
         ValidateStartingLine();
         ValidateOperatorStop();
         ValidateReconnectGate();
+        ValidateRecoveryOccupancy();
         Debug.Log("SKILL_GAMEPLAY_RULES_PASS");
     }
     private static void ValidateStartingLine()
@@ -69,6 +70,27 @@ public static class SkillGameplayValidation
         public bool IsConnected { get; set; }=true;
         public DriveInputState CurrentState { get; set; }
         public void UpdateInput(float dt){} public void Dispose(){}
+    }
+    private static void ValidateRecoveryOccupancy()
+    {
+        GameObject root=new GameObject("Recovery QA");
+        try
+        {
+            RaceCourse course=MakeCourse(root); LapManager laps=root.AddComponent<LapManager>(); Set(laps,"raceCourse",course);
+            GameObject car=new GameObject("Car",typeof(Rigidbody),typeof(BoxCollider),typeof(CarResetter)); car.transform.SetParent(root.transform);
+            Rigidbody body=car.GetComponent<Rigidbody>(); body.isKinematic=true; body.position=Vector3.back*20+Vector3.up;
+            CarResetter resetter=car.GetComponent<CarResetter>(); Call(resetter,"Awake"); laps.RegisterCar(body);
+            laps.GetCarData(body).lapCount=1; resetter.SetCourse(course,laps);
+            GameObject blocker=new GameObject("Occupied road",typeof(Rigidbody),typeof(BoxCollider)); blocker.transform.SetParent(root.transform);
+            blocker.GetComponent<Rigidbody>().isKinematic=true; blocker.transform.position=Vector3.back*20+Vector3.up;
+            blocker.GetComponent<BoxCollider>().size=new Vector3(40,4,20); Physics.SyncTransforms();
+            body.position=new Vector3(20,-10,0);
+            Require(!resetter.TryResetCar(true),"Recovery must wait when other cars occupy every candidate.");
+            UnityEngine.Object.DestroyImmediate(blocker); Physics.SyncTransforms();
+            Require(resetter.TryResetCar(true)&&body.position.z< -19,"A clear recovery must return to the last safe road.");
+            Require(laps.GetCarData(body).lapCount==1&&resetter.RecoveryCount==1,"Recovery must preserve laps and count only successful moves.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
     }
     private static void ValidateReconnectGate()
     {
