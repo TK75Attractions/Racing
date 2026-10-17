@@ -13,6 +13,7 @@ public static class SkillGameplayValidation
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         ValidateStartingLine();
         ValidateOperatorStop();
+        ValidateReconnectGate();
         Debug.Log("SKILL_GAMEPLAY_RULES_PASS");
     }
     private static void ValidateStartingLine()
@@ -61,6 +62,26 @@ public static class SkillGameplayValidation
                 "Stopping an unfinished race must not manufacture a winner.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+    private sealed class Input : IDriveInputSource
+    {
+        public int PlayerIndex=>0; public string DeviceId=>"SKILL_QA";
+        public bool IsConnected { get; set; }=true;
+        public DriveInputState CurrentState { get; set; }
+        public void UpdateInput(float dt){} public void Dispose(){}
+    }
+    private static void ValidateReconnectGate()
+    {
+        var source=new Input {CurrentState=new DriveInputState {pedal=1,steering=20,resetPressed=true}};
+        var gate=new PlayerDriveInputGate(source);
+        Require(gate.CurrentState.pedal==1,"Initial connected input must remain available.");
+        source.IsConnected=false;
+        Require(gate.CurrentState.pedal==0&&!gate.CurrentState.resetPressed,"Disconnected stale input must be neutral.");
+        source.IsConnected=true;
+        Require(gate.CurrentState.pedal==0&&gate.NeedsPedalRelease,"Reconnection with a held pedal must not accelerate.");
+        source.CurrentState=DriveInputState.Neutral; _=gate.CurrentState;
+        source.CurrentState=new DriveInputState {pedal=1};
+        Require(gate.CurrentState.pedal==1&&!gate.NeedsPedalRelease,"Release then press must resume driving.");
     }
     private static void Set(object target,string name,object value)=>target.GetType().GetField(name,Private).SetValue(target,value);
     private static object Get(object target,string name)=>target.GetType().GetField(name,Private).GetValue(target);

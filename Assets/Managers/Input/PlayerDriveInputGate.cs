@@ -11,14 +11,22 @@ public sealed class PlayerDriveInputGate : IDriveInputSource
     public bool IsConnected => source != null && source.IsConnected;
     public bool IsBlocked { get; private set; }
     public bool IsReverse { get; private set; }
+    public bool NeedsPedalRelease { get; private set; }
 
     public DriveInputState CurrentState
     {
         get
         {
-            if (IsBlocked || source == null) return DriveInputState.Neutral;
+            if (source == null) return DriveInputState.Neutral;
+            if (!source.IsConnected) { NeedsPedalRelease = true; return DriveInputState.Neutral; }
+            if (IsBlocked) return DriveInputState.Neutral;
 
             DriveInputState state = source.CurrentState;
+            if (NeedsPedalRelease)
+            {
+                if (System.Math.Abs(state.pedal) <= .05f) NeedsPedalRelease = false;
+                return DriveInputState.Neutral;
+            }
             if (IsReverse) state.pedal = -state.pedal;
             return state;
         }
@@ -44,6 +52,7 @@ public sealed class PlayerDriveInputGate : IDriveInputSource
     {
         IsBlocked = false;
         IsReverse = false;
+        NeedsPedalRelease = false;
     }
 
     public void UpdateInput(float deltaTime)

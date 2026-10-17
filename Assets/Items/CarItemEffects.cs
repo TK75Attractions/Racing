@@ -266,6 +266,12 @@ public sealed class CarItemEffects : MonoBehaviour
         UpdateShieldVisual();
     }
 
+    public void StopRocketAutopilot()
+    {
+        rocketTimeRemaining = rocketExitGraceRemaining = 0f;
+        protectRocketJump = false;
+    }
+
     private void StartRocket()
     {
         rocketTimeRemaining = rocketDuration;
