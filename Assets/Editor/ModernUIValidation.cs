@@ -14,6 +14,9 @@ public static class ModernUIValidation
         foreach (FontRole role in Enum.GetValues(typeof(FontRole)))
             Require(RacingUIFontCatalog.Get(role) != null, $"Missing UI font: {role}");
         Require(RacingUIFontCatalog.GetHUD(false) != null && RacingUIFontCatalog.GetHUD(true) != null, "Missing medium/bold HUD fonts.");
+        foreach(bool bold in new[]{false,true})
+            Require(RacingUIFontCatalog.GetHUD(bold).HasCharacters("接続を確認してくださいコース復帰待ちペダルを離して再開しましたこの先ジャンプ：まっすぐ加速"),
+                "The static HUD atlas is missing driver assistance characters. Rebuild HUD fonts.");
         TMP_FontAsset japanese = RacingUIFontCatalog.Get(FontRole.Japanese);
         Require(japanese.HasCharacters("スタートリトライタイトルへハンドルで操作ペダルを踏み込んで決定準備完了相手待っています観戦中済終了前進後退走行方向切替操作一時停止あなた順位いまの周位人走行タイムこのスピードコースあいてプレイヤー加速秒もうすぐレース終了効果音", out uint[] missing),
             "Japanese UI font is missing required characters.");
