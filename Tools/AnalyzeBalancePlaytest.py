@@ -13,7 +13,7 @@ def analyze(root):
     runs = report["runs"]
     fields = ["run", "seed", "items", "termination", "seconds", "car", "finished", "rank",
               "laps", "progress_m", "mean_speed_mps", "max_stall_s", "off_course_s",
-              "vehicle_contacts", "environment_contacts", "items_used", "afflictions", "manual_resets", "cpu_recoveries"]
+              "vehicle_contacts", "environment_contacts", "items_used", "afflictions", "manual_resets", "cpu_recoveries", "human_recoveries", "automatic_recoveries", "recovery_blocked", "granted_human_grace_s"]
     with (root / "summary.csv").open("w", newline="") as stream:
         writer = csv.writer(stream, lineterminator="\n")
         writer.writerow(fields)
@@ -23,7 +23,9 @@ def analyze(root):
                                  round(run["seconds"], 2), car["label"], car["finished"], car["position"], car["laps"],
                                  round(car["progress"], 2), round(car["meanSpeed"], 2), round(car["maxStall"], 2),
                                  round(car["offCourseSeconds"], 2), car["vehicleContacts"], car["environmentContacts"],
-                                 car["itemsUsed"], car["afflictions"], car["manualResets"], car["cpuRecoveries"]])
+                                 car["itemsUsed"], car["afflictions"], car["manualResets"], car["cpuRecoveries"],
+                                 car.get("humanRecoveries", ""), car.get("automaticRecoveries", ""),
+                                 car.get("recoveryBlockedReason", ""), run.get("grantedHumanGrace", "")])
     colors = {"P1": "#2563eb", "P2": "#db2777", "CPU 1": "#d97706", "CPU 2": "#059669"}
     width, panel_height = 1100, 230
     svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{80 + panel_height * len(runs)}" viewBox="0 0 {width} {80 + panel_height * len(runs)}">',
