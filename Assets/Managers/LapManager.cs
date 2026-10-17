@@ -133,6 +133,7 @@ public class LapManager : MonoBehaviour
         }
 
         // OnCarPassGoal の通常の周回完了処理を再利用する。
+        data.hasCrossedGoal = true;
         if (finish && goalLap > 0)
         {
             data.lapCount = Mathf.Max(data.lapCount, goalLap - 1);
@@ -149,7 +150,6 @@ public class LapManager : MonoBehaviour
         }
 
         CarTimeData data = GetOrCreateCarData(rb);
-        data.hasCrossedGoal = true;
         data.lapCount = 0;
         data.currentLapTime = 0f;
         data.totalRaceTime = 0f;
@@ -163,6 +163,10 @@ public class LapManager : MonoBehaviour
         {
             InitializeProgressReference(startTransform);
         }
+        // A grid behind the finish crosses it once to start the circuit. That short run-up
+        // is not a completed lap; keep timing from GO and require no intermediate sensors.
+        data.hasCrossedGoal = startTransform == null || raceCourse == null || !hasProgressReference ||
+            GetLapProgressDistance(rb.position, raceCourse.TotalLength) <= raceCourse.TotalLength * .5f;
         raceActive = true;
     }
 
@@ -182,8 +186,7 @@ public class LapManager : MonoBehaviour
         if (!data.hasCrossedGoal)
         {
             data.hasCrossedGoal = true;
-            data.currentLapTime = 0f;
-            data.totalRaceTime = 0f;
+            data.hasLeftStartArea = false;
             ResetCheckpointProgress(data);
             SetRespawnPoint(data, goalTransform);
             Debug.Log($"{data.carName} joined race");
