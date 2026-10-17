@@ -1,0 +1,52 @@
+{
+  "unityVersion": "6000.3.9f1",
+  "physicsTrials": 58,
+  "physicsPassed": true,
+  "response90Seconds": 0.12,
+  "countersteerNeutralCrossingSeconds": 0.02,
+  "movingNoiseRmsRatio": 0.25,
+  "centerNoiseAppliedAngle": 0.0,
+  "maxSteeringLimitExcess": 0.0,
+  "inputTimingScope": "Synthetic input at 50 Hz; excludes hardware, IMU calibration and USB latency.",
+  "sourceSha256": {
+    "Assets/TestAddForce/DebugMover.cs": "baa4b7f40da1f57ce715ecd8cb330d935a17152ff11ed8eac1a8160bab05e62b",
+    "Assets/Managers/UI/RacingHUDBuilder.cs": "e66a4078fd61467a3e57bd308c3990f35377274a9223fe475ac11e6d899b4833",
+    "Assets/Managers/UI/RacingSteeringIndicator.cs": "cc0836f38251e05669fb7bb97ede2a3527a00ae7d64607c1cfe51c5c97821f51",
+    "Assets/Managers/UI/RacingTelemetryUI.cs": "250293b8ab33d843f5ef6f9ce806d7893bd041ab8d6fdbd9f1022c74a2e33e50"
+  },
+  "courseRuns": [
+    {
+      "name": "equal-control-101",
+      "completed": true,
+      "humanFinishTimes": [
+        189.3612518310547,
+        181.8612518310547
+      ],
+      "humanOffCourseSeconds": [
+        0.0,
+        0.0
+      ],
+      "humanManualResets": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "equal-control-102",
+      "completed": true,
+      "humanFinishTimes": [
+        190.2034454345703,
+        181.2034454345703
+      ],
+      "humanOffCourseSeconds": [
+        0.0,
+        0.0
+      ],
+      "humanManualResets": [
+        0,
+        0
+      ]
+    }
+  ],
+  "finalUiChecksPassed": true
+}
