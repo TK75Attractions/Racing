@@ -85,7 +85,11 @@ public static class RacingHUDBuilder
         RectTransform telemetry=NeonUI.Panel(root,"Telemetry",new Vector2(.71f,.045f),new Vector2(.98f,.115f));
         IsolateCanvas(telemetry);
         RacingTelemetryUI controls=telemetry.GetComponent<RacingTelemetryUI>() ?? telemetry.gameObject.AddComponent<RacingTelemetryUI>();controls.Configure(playerIndex);
-        RacingHUDStyle.Label(root,"Player",$"プレイヤー {playerIndex+1} / PLAYER {playerIndex+1}",.022f,.003f,.32f,.029f,17f,Color.white);
+        RacingHUDStyle.Label(root,"Player",$"プレイヤー {playerIndex+1} / PLAYER {playerIndex+1}",.25f,.041f,.40f,.067f,17f,Color.white);
+        RectTransform steering=RacingUITheme.Rect(root,"SteeringIndicator",Vector2.zero,new Vector2(1f,.04f));
+        IsolateCanvas(steering);
+        TMP_Text steeringCaption=RacingHUDStyle.Label(root,"SteeringCaption","",.405f,.041f,.70f,.065f,16f,RacingHUDStyle.Muted,TextAlignmentOptions.Center);
+        (steering.GetComponent<RacingSteeringIndicator>() ?? steering.gameObject.AddComponent<RacingSteeringIndicator>()).Configure(playerIndex,steeringCaption);
         return root;
     }
     private static void IsolateCanvas(RectTransform instrument)

@@ -6,6 +6,8 @@ public sealed class RacingTelemetryUI : MonoBehaviour
 {
     private int player;
     private RectTransform pedal,steering;
+    private Transform viewedCar;
+    private DebugMover mover;
     public void Configure(int index)
     {
         player=index;
@@ -24,9 +26,15 @@ public sealed class RacingTelemetryUI : MonoBehaviour
     private void LateUpdate()
     {
         if(Gmanager.Control?.IManager==null || pedal==null)return;
-        DriveInputState input=Gmanager.Control.IManager.GetInputState(player);
-        SetInput(input.pedal, input.steering);
+        Gmanager manager=Gmanager.Control;
+        Transform car=manager.GetPlayerCarTransform(manager.GetAudioViewedPlayer(player));
+        if(car!=viewedCar) { viewedCar=car; mover=car!=null?car.GetComponent<DebugMover>():null; }
+        DriveInputState input=manager.IManager.GetInputState(player);
+        float range=mover!=null?mover.SteeringInputRange:30f;
+        SetInput(mover!=null?mover.PedalInput:input.pedal,
+            (mover!=null?mover.RawSteeringInput:input.steering)/Mathf.Max(.0001f,range));
     }
+    // steeringAmount is normalized to the same full handle range as the bottom indicator.
     public void SetInput(float pedalAmount, float steeringAmount)
     {
         if(pedal==null || steering==null)return;

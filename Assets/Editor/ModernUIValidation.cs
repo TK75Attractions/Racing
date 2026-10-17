@@ -27,6 +27,7 @@ public static class ModernUIValidation
             {
                 RectTransform display = RacingUITheme.Rect(root.transform, $"Player{player}", Vector2.zero, Vector2.one);
                 Transform hud = RacingHUDBuilder.Build(display, player, 5);
+                ValidateSteeringIndicator(hud);
                 Require(hud.Find("RearView") == null, "Rear-view UI/camera must not be created.");
                 foreach(string island in new[]{"BoostBadge","Speed","Leaderboard"})
                     Require(hud.Find(island).GetComponent<Canvas>()!=null,"Heavy HUD geometry is not isolated from timer rebuilds: "+island);
@@ -62,6 +63,26 @@ public static class ModernUIValidation
             Debug.Log("MODERN_UI_VALIDATION_PASS: fonts, backgrounds, both player HUDs, live timing, lap counts, speed, spectator and ESC actions.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+
+    private static void ValidateSteeringIndicator(Transform hud)
+    {
+        var indicator = hud.Find("SteeringIndicator").GetComponent<RacingSteeringIndicator>();
+        Require(indicator != null && !indicator.raycastTarget, "Both HUDs must show a nonblocking steering indicator.");
+        Require(indicator.rectTransform.anchorMin == Vector2.zero && indicator.rectTransform.anchorMax.x == 1f,
+            "Steering indicator must span the entire bottom edge.");
+        indicator.SetState(.9f, .8f, .35f);
+        Require(Mathf.Abs(indicator.AppliedFraction - .35f) < .0001f && indicator.RequestedFraction == .9f && indicator.AllowedFraction == .35f,
+            "Input cursor and limited actual steering must remain distinct.");
+        Require(Text(hud, "SteeringCaption").Contains("上限外"), "Dimmed ends must be explained.");
+        indicator.SetState(-.9f, -.8f, .35f);
+        Require(Mathf.Abs(indicator.AppliedFraction + .35f) < .0001f, "Left and right UI limits must match.");
+        indicator.SetState(0f, 0f, 1f);
+        Require(Text(hud, "SteeringCaption").Contains("直進"), "Low speed caption must describe neutral.");
+        int dirty = 0;
+        indicator.RegisterDirtyVerticesCallback(() => dirty++);
+        for (int i = 0; i < 120; i++) indicator.SetState(0f, 0f, 1f);
+        Require(dirty == 0, "An unchanged steering indicator must not rebuild each frame.");
     }
 
     private static void ValidateIdleGraphics(Transform parent)
