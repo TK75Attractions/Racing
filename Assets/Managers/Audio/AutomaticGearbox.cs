@@ -5,9 +5,9 @@ public sealed class AutomaticGearbox
 {
     public const float IdleRpm = 950f;
     public const float RedlineRpm = 7800f;
-    // Short racing ratios: full-load shifts at roughly 32, 47, 65, 87 and 113 km/h.
+    // Long racing gears: full-load shifts at roughly 61, 88, 121, 161 and 210 km/h.
     private static readonly float[] Ratios = { 3.60f, 2.48f, 1.80f, 1.35f, 1.04f, .82f };
-    private const float FinalDrive = 7.4f;
+    private const float FinalDrive = 4.1f;
     private const float WheelCircumference = 1.96f;
     private const float ShiftDuration = .22f;
     private float shiftRemaining, cooldown;
@@ -44,12 +44,15 @@ public sealed class AutomaticGearbox
         cooldown = Math.Max(0f, cooldown - dt);
         float wheelRpm = speed * 60f / WheelCircumference * FinalDrive;
         float coupled = wheelRpm * Ratios[Gear - 1];
-        float upshift = 5700f + throttle * 1550f;
+        // Stay near redline even at part throttle; lifting for a corner must not
+        // select a taller gear merely because the old economy threshold fell.
+        float upshift = 7500f + throttle * 100f;
+        bool allowUpshift = throttle > .1f || coupled > RedlineRpm + 150f;
         if (grounded && !reverse && !IsShifting && cooldown <= 0f)
         {
-            if (coupled > upshift && Gear < Ratios.Length) Shift(1);
-            else if (Gear > 1 && (coupled < 2650f ||
-                (throttle > .85f && coupled < 3900f && wheelRpm * Ratios[Gear - 2] < 6400f))) Shift(-1);
+            if (allowUpshift && coupled > upshift && Gear < Ratios.Length) Shift(1);
+            else if (Gear > 1 && (coupled < 3600f ||
+                (throttle > .55f && coupled < 4800f && wheelRpm * Ratios[Gear - 2] < 7000f))) Shift(-1);
             coupled = wheelRpm * Ratios[Gear - 1];
         }
         // Torque-converter slip on launch; free-rev only when airborne.

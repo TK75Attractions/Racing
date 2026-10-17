@@ -46,7 +46,8 @@ for index in range(1, len(rows) - 15):
         assert after < before - 400, 'Upshift must produce a clear RPM drop'
         shifts.append({'seconds': float(rows[index]['seconds']), 'gear': int(rows[index]['gear']),
                        'before_rpm': before, 'after_200ms_rpm': after})
-assert len(shifts) == 5, 'Expected five upshifts into sixth'
+assert len(shifts) == 4, 'The 166 km/h sample should use five longer gears'
+assert shifts[0]['seconds'] > 8, 'First gear must carry the car past 60 km/h before shifting'
 result = {'wav_metrics': report, 'upshifts': shifts}
 exit_path = folder / '07-gameplay-exit.wav'
 if exit_path.exists():

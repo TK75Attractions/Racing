@@ -26,17 +26,32 @@ public static class EngineAudioValidation
 
     private static void ValidateGearbox()
     {
+        // Regression for premature economy-style changes: use the low gears up to racing speeds.
+        AutomaticGearbox racing = new AutomaticGearbox();
+        float previousSpeed = 0;
+        foreach (var checkpoint in new[] { (Kph: 55f, Gear: 1), (Kph: 80f, Gear: 2), (Kph: 110f, Gear: 3) })
+        {
+            float speed = checkpoint.Kph / 3.6f;
+            for (int i = 0; i < 240; i++) racing.Step(1f / 60, Mathf.Lerp(previousSpeed, speed, i / 239f), 1, true, 0);
+            Require(racing.Gear == checkpoint.Gear, $"Must retain gear {checkpoint.Gear} at {checkpoint.Kph} km/h.");
+            previousSpeed = speed;
+        }
+        racing.Reset();
+        for (int i = 0; i < 240; i++) racing.Step(1f / 60, i / 239f * 16, .4f, true, 0);
+        Require(racing.Gear == 1, "Part throttle must still hold first near 58 km/h.");
+        for (int i = 0; i < 120; i++) racing.Step(1f / 60, 16, 0, true, 0);
+        Require(racing.Gear == 1, "Lifting before a corner must not trigger an early upshift.");
         AutomaticGearbox box = new AutomaticGearbox();
         int highest = 1, previous = 1;
         for (int i = 0; i < 1200; i++)
         {
-            box.Step(1f / 60, i / 1200f * 47, 1f, true, 0);
+            box.Step(1f / 60, i / 1200f * 70, 1f, true, 0);
             Require(box.Rpm >= 950 && box.Rpm <= 7800 && Math.Abs(box.Gear - previous) <= 1, "Invalid RPM or skipped gear.");
             highest = Math.Max(highest, box.Gear); previous = box.Gear;
         }
         Require(highest == 6, "A full acceleration must reach sixth.");
         int serial = box.ShiftSerial;
-        for (int i = 0; i < 240; i++) box.Step(1f / 60, 45 + Mathf.Sin(i) * .1f, 1, true, 0);
+        for (int i = 0; i < 240; i++) box.Step(1f / 60, 68 + Mathf.Sin(i) * .1f, 1, true, 0);
         Require(box.ShiftSerial == serial, "Steady speed must not hunt between gears.");
         for (int i = 0; i < 180; i++) box.Step(1f / 60, 18, 0, true, 0);
         int coastGear = box.Gear;
