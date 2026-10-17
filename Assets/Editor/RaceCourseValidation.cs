@@ -64,6 +64,19 @@ public static class RaceCourseValidation
             Require(laps.GetCarData(body).lapCount == 0, "Countdown and paused races cannot count goals");
             goal.OnTriggerExit(first); laps.ResumeRace(); goal.OnTriggerEnter(first);
             Require(laps.GetCarData(body).lapCount == 1, "Retry restores independent lap counting");
+
+            laps.ResetRace();
+            RaceCourse course = root.AddComponent<RaceCourse>();
+            SetPoints(course, new[] { Vector3.zero, Vector3.forward * 100f, new Vector3(100f, 0, 100f), Vector3.right * 100f }, true);
+            typeof(LapManager).GetField("raceCourse", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(laps, course);
+            laps.RegisterCar(body, goal.transform);
+            body.position = Vector3.forward * 20f;
+            laps.GetRaceProgressDistance(body);
+            body.position = Vector3.right * .1f; // Front collider enters while the car center is still before the line.
+            laps.OnCarPassGoal(body, goal.transform);
+            float progress = laps.GetRaceProgressDistance(body);
+            Require(progress > course.TotalLength - 1f && progress < course.TotalLength + 1f,
+                "Counting a leading collider must not make race progress jump forward an extra lap.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }

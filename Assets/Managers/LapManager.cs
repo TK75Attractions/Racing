@@ -191,6 +191,7 @@ public class LapManager : MonoBehaviour
         }
 
         data.lapCount++;
+        data.hasLeftStartArea = false;
         if (data.currentLapTime < data.bestLapTime)
         {
             data.bestLapTime = data.currentLapTime;
@@ -414,7 +415,7 @@ public class LapManager : MonoBehaviour
         float progress = hasProgressReference ? Mathf.Repeat(directed-progressStartDistance,lapLength) : directed;
         // Rear grid slots and recovery behind the start must not appear almost a lap ahead.
         if (progress > 10f && progress < lapLength * .5f) data.hasLeftStartArea = true;
-        if (data.lapCount == 0 && !data.hasLeftStartArea && progress > lapLength * .5f)
+        if (!data.hasLeftStartArea && progress > lapLength * .5f)
             progress -= lapLength;
         float total = data.lapCount * lapLength + progress;
         raceCourse.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample sample);
