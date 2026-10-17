@@ -17,8 +17,9 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     {
         public int PlayerIndex { get; set; }
         public string DeviceId => "balance-playtest-agent";
-        public bool IsConnected => true;
-        public DriveInputState CurrentState { get; set; }
+        public bool IsConnected { get; set; } = true;
+        private DriveInputState state;
+        public DriveInputState CurrentState { get => IsConnected ? state : DriveInputState.Neutral; set => state = value; }
         public void UpdateInput(float dt) { }
         public void Dispose() { }
     }
@@ -39,6 +40,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     [Serializable] public sealed class RunRecord
     {
         public string name;
+        public string p1Profile, p2Profile;
         public int seed, goalLaps, npcCount;
         public bool itemsEnabled, resetAssistance, completed, raceEnded;
         public float p1TargetSpeed, p2TargetSpeed, seconds, physicsSeconds, startGlobalTime, firstHumanFinish, humanFinishGap, humanSeparationSeconds, cpuNearRearHumanSeconds;
@@ -68,6 +70,9 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     private bool previousRunInBackground;
     private string output;
     private StreamWriter trace, events;
+    private bool skillSuite;
+    private readonly float[] nextDecisionAt = new float[2];
+    private readonly DriveInputState[] heldDecision = new DriveInputState[2];
 
     private IEnumerator Start()
     {
@@ -98,6 +103,21 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             Plan("items-401", 401, 25, 25, true), Plan("items-402", 402, 25, 25, true),
             Plan("items-reset-assisted", 401, 25, 25, true, true), Plan("temporary-stop-p2", 501, 25, 25, false)
         };
+        skillSuite = Environment.GetEnvironmentVariable("RACING_BALANCE_SKILL_SUITE") == "1";
+        if (skillSuite)
+        {
+            plans = new[] {
+                SkillPlan("skill-novice-expert", 6101, 12, 27, false, "novice", "expert"),
+                SkillPlan("skill-club-expert", 6102, 20, 28, true, "intermediate", "expert"),
+                SkillPlan("skill-aggressive-items", 6103, 32, 22, true, "aggressive", "intermediate"),
+                SkillPlan("skill-stop-rejoin", 6104, 24, 16, false, "intermediate", "cautious"),
+                SkillPlan("skill-disconnect-rejoin", 6105, 22, 22, false, "intermediate", "intermediate"),
+                SkillPlan("skill-operator-stop", 6106, 18, 18, false, "cautious", "cautious")
+            };
+            suite.methodology = "Actual SampleScene and production cars/CPUs/items. Course-following input agents approximate novice, cautious, intermediate, expert and aggressive control using distinct speed, reaction intervals, steering noise and jump anticipation; they are not human usability subjects. Includes a 12-second stop, 5-second input disconnection and operator result action. Drivers use InputManager and production input gates; never force vehicle pose, velocity, laps or outcomes. Preparation is bypassed. Random seeds do not guarantee deterministic physics. Official and physics clocks are recorded separately.";
+            var sources = (IDriveInputSource[])typeof(InputManager).GetField("inputSources", Private).GetValue(manager.IManager);
+            for (int i = 0; i < 2; i++) sources[i] = inputs[i];
+        }
         string filter = Environment.GetEnvironmentVariable("RACING_BALANCE_RUN");
         foreach (RunRecord plan in plans)
         {
@@ -112,6 +132,11 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     }
     private static RunRecord Plan(string name, int seed, float p1, float p2, bool items, bool resets = false) =>
         new RunRecord { name = name, seed = seed, p1TargetSpeed = p1, p2TargetSpeed = p2, itemsEnabled = items, resetAssistance = resets, firstHumanFinish = -1, humanFinishGap = -1 };
+    private static RunRecord SkillPlan(string name, int seed, float p1, float p2, bool items, string first, string second)
+    {
+        RunRecord plan = Plan(name, seed, p1, p2, items);
+        plan.p1Profile = first; plan.p2Profile = second; return plan;
+    }
     private void Invoke(string method) => typeof(Gmanager).GetMethod(method, Private).Invoke(manager, null);
 
     private IEnumerator Execute(RunRecord plan)
@@ -128,6 +153,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         trace.WriteLine("time,car,x,y,z,speed,progress,lap,checkpoint,position,pedal,steering,grounded,offCourse,rocket,confuse,oil,spin,cpuTargetSpeed,cpuRival");
         events = new StreamWriter(Path.Combine(folder, "events.csv")); events.WriteLine("time,car,event,detail,x,y,z");
         inputs[0].CurrentState = inputs[1].CurrentState = DriveInputState.Neutral;
+        for (int i = 0; i < 2; i++) { inputs[i].IsConnected = true; nextDecisionAt[i] = 0; heldDecision[i] = DriveInputState.Neutral; }
         Invoke("StartGameWhenScreenCovered"); Invoke("CompleteGameStart");
         foreach (ScreenTransitionController transition in FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
             transition.ApplyStateImmediate(Gmanager.State.Countdown);
@@ -138,7 +164,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             var record = new CarRecord { label = entry.Label, tires = entry.Car.GetComponentsInChildren<TireForce>(),
                 mover = entry.Car.GetComponent<DebugMover>(), previousPosition = entry.Body.position };
             run.cars.Add(record);
-            if (!entry.IsCpu)
+            if (!entry.IsCpu && !skillSuite)
             {
                 record.mover.SetInputSource(inputs[entry.Index]);
                 entry.Car.GetComponent<CarResetter>()?.SetInputSource(inputs[entry.Index]);
@@ -153,7 +179,11 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         Debug.Log("BALANCE_RUN_STARTED: " + run.name);
         Save();
         while (manager.state == Gmanager.State.Game && manager.time < 365 &&
-            (suite.observationWindowSeconds <= 0 || run.physicsSeconds < suite.observationWindowSeconds)) yield return null;
+            (suite.observationWindowSeconds <= 0 || run.physicsSeconds < suite.observationWindowSeconds))
+        {
+            if (run.name == "skill-operator-stop" && run.physicsSeconds >= 20f) manager.ShowResult();
+            yield return null;
+        }
         driving = false;
         run.seconds = manager.time;
         run.raceEnded = manager.state != Gmanager.State.Game;
@@ -245,6 +275,9 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 // Latch until the render-frame CarResetter.Update consumes the input, even
                 // when accelerated time executes several physics steps before one Update.
                 reset |= inputs[entry.Index].CurrentState.resetPressed && !record.mover.IsInputSuppressed;
+                bool connected = run.name != "skill-disconnect-rejoin" || entry.Index != 1 || now < 45f || now >= 50f;
+                if (inputs[entry.Index].IsConnected != connected) Event(entry.Index, connected ? "input-reconnected" : "input-disconnected", "");
+                inputs[entry.Index].IsConnected = connected;
                 inputs[entry.Index].CurrentState = Drive(entry, grounded, speed, raw, reset);
             }
             if (write)
@@ -275,12 +308,29 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         if (Vector3.Angle(target.forward, far.forward) > 15) requested = Mathf.Min(requested, 14);
         bool jumpAhead = false;
         for (int d = 0; d <= 30; d += 5) if (!manager.course.HasRoadAtProgress(raw + sign * d)) jumpAhead = true;
-        // All profiles know the jump: isolate pace from deliberately insufficient launch speed.
-        if (jumpAhead) requested = 24;
+        string profile = entry.Index == 0 ? run.p1Profile : run.p2Profile;
+        bool anticipatesJump = !skillSuite || profile == "expert" || profile == "intermediate";
+        if (jumpAhead && anticipatesJump) requested = 24;
+        if (run.name == "skill-stop-rejoin" && entry.Index == 1 && run.physicsSeconds >= 45 && run.physicsSeconds < 57) requested = 0;
         if (run.name == "temporary-stop-p2" && entry.Index == 1 && manager.time >= 45 && manager.time < 60) requested = 0;
         float lane = jumpAhead ? 0 : entry.Index == 0 ? 2 : -2;
         Vector3 aim = Quaternion.Inverse(entry.Body.rotation) * (target.position + target.right * lane - entry.Body.position);
         float steering = Mathf.Clamp(Mathf.Atan2(aim.x, aim.z) * Mathf.Rad2Deg * 1.5f - entry.Body.angularVelocity.y * 8, -30, 30);
+        if (skillSuite)
+        {
+            float reaction = profile == "expert" ? .06f : profile == "intermediate" ? .14f : profile == "aggressive" ? .18f : .35f;
+            if (run.physicsSeconds >= nextDecisionAt[entry.Index])
+            {
+                nextDecisionAt[entry.Index] = run.physicsSeconds + reaction;
+                float noise = profile == "novice" ? 3f : profile == "aggressive" ? 4f : profile == "cautious" ? 1.5f : .3f;
+                if (profile == "aggressive") steering *= 1.25f;
+                steering += Mathf.Sin(run.physicsSeconds * 2.7f + entry.Index) * noise;
+                heldDecision[entry.Index] = new DriveInputState {
+                    pedal = grounded == 0 ? 0 : Mathf.Clamp((requested - speed) * .12f, -1, 1),
+                    steering = grounded == 0 ? 0 : Mathf.Clamp(steering, -30, 30) };
+            }
+            DriveInputState decision = heldDecision[entry.Index]; decision.resetPressed = reset; return decision;
+        }
         return new DriveInputState { pedal = grounded == 0 ? 0 : Mathf.Clamp((requested - speed) * .12f, -1, 1),
             steering = grounded == 0 ? 0 : steering, resetPressed = reset };
     }

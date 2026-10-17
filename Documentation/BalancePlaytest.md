@@ -52,3 +52,14 @@ RACING_BALANCE_RUN=equal-control-101,items-402 Tools/RunBalancePlaytest.sh
 | `RACING_BALANCE_WINDOW_SECONDS` | 最大360物理秒の観測窓。省略時は自然なレース終了まで |
 
 観測窓で終えた記録は `raceEnded=false` とし、未完走車をDNFとして数えません。加速実行には描画更新と物理更新のタイミング差があります。固定レーンの既知コース運転なので、アイテムを狙う判断、初心者の迷い、実機のハンドル・ペダル、入力遅延や音の分かりやすさは別途人による確認が必要です。
+
+## レベル別の追加試走
+
+`RACING_BALANCE_SKILL_SUITE=1` を指定すると、初心者（反応0.35秒・操舵の揺れ・ジャンプ先読みなし）、慎重（低速・反応0.35秒）、中級（反応0.14秒）、上級（反応0.06秒）、攻める運転（高速・操舵過多）の入力を組み合わせた6条件を実行する。初心者対上級、中級対上級、アイテムありの攻める運転、12秒の途中停止、5秒の接続断、運営による20秒時点の結果表示を含む。
+
+人間役の入力をInputManagerへ接続するため、車両・復帰操作には製品の入力ゲートを使う。コース中心線を知る入力エージェントであり、初見の人の認知や実機操作の評価とは区別する。準備画面は省略する。車両位置・速度・周回・結果は強制設定しない。運営終了条件だけは管理画面と同じShowResult操作を実行する。
+
+```sh
+RACING_BALANCE_SKILL_SUITE=1 RACING_BALANCE_TIME_SCALE=6 \
+RACING_BALANCE_OUTPUT="$PWD/Artifacts/SkillPlaytest/Before" Tools/RunBalancePlaytest.sh
+```
