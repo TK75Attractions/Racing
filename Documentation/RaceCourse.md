@@ -131,3 +131,7 @@ for (float distance = 0f; distance < course.TotalLength; distance += 10f)
 `Racing > Validate Tube Course Clearance` はSampleSceneをプレビューで開き、道路の折り返した面、道路端を含む地形の重なり、地下の管壁の障害、元チューブの保持、主地面の残存面積を確認します。5mの区間同士で水平の方向変化20°未満、絶対勾配0.5未満、勾配の差0.2未満を条件にしています。意図したジャンプの前後8mは勾配・方向の比較から除外します。
 
 チューブ検証のバッチ実行: `-batchmode -nographics -executeMethod TubeCourseValidation.Run -quit`。レポート出力先は環境変数 `RACING_TUBE_VALIDATION_OUTPUT` で指定できます。
+
+## ゴール通過による周回
+
+周回はゴールセンサーを通過するたびに加算します。チェックポイントの順序・通過数は周回条件に使用しません。旧CheckpointSensorのTransformはスタートグリッドの基準として残し、トリガーは無効化します。順位の進捗もチェックポイント位置で制限しません。車体とタイヤが重複してゴールに触れても一度だけ加算し、すべてのColliderが離れた後の再通過を次の周回として扱います。カウントダウン中、停止中、完走後は加算しません。

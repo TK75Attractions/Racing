@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GoalSensor : MonoBehaviour
@@ -10,6 +11,7 @@ public class GoalSensor : MonoBehaviour
     public int lapCount = 0;
 
     private int targetLayer = -1;
+    private readonly Dictionary<Rigidbody, HashSet<Collider>> overlaps = new Dictionary<Rigidbody, HashSet<Collider>>();
 
     private void Awake()
     {
@@ -33,6 +35,12 @@ public class GoalSensor : MonoBehaviour
             return;
         }
 
+        if (!overlaps.TryGetValue(rb, out HashSet<Collider> colliders))
+            overlaps[rb] = colliders = new HashSet<Collider>();
+        colliders.RemoveWhere(collider => collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy);
+        bool entering = colliders.Count == 0;
+        if (!colliders.Add(other) || !entering) return;
+
         if (lapManager.OnCarPassGoal(rb, transform))
         {
             lapCount++;
@@ -43,7 +51,18 @@ public class GoalSensor : MonoBehaviour
     public void ResetCounter()
     {
         lapCount = 0;
+        overlaps.Clear();
     }
+
+    public void OnTriggerExit(Collider other)
+    {
+        Rigidbody body = other.attachedRigidbody;
+        if (body == null || !overlaps.TryGetValue(body, out HashSet<Collider> colliders)) return;
+        colliders.Remove(other);
+        if (colliders.Count == 0) overlaps.Remove(body);
+    }
+
+    private void OnDisable() => overlaps.Clear();
 
     private bool TryGetTargetRigidbody(Collider other, out Rigidbody rb)
     {

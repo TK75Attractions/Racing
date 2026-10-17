@@ -24,12 +24,48 @@ public static class RaceCourseValidation
             ValidateEmpty(course);
             ValidateEditorOperations(course);
             ValidateOffCourseState(course);
+            ValidateGoalOnlyLaps();
             Debug.Log("RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.");
         }
         finally
         {
             UnityEngine.Object.DestroyImmediate(root);
         }
+    }
+
+    private static void ValidateGoalOnlyLaps()
+    {
+        GameObject root = new GameObject("Goal-only lap validation");
+        try
+        {
+            LapManager laps = root.AddComponent<LapManager>();
+            GoalSensor goal = root.AddComponent<GoalSensor>();
+            typeof(GoalSensor).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(goal, null);
+            GameObject car = new GameObject("Multiple collider car");
+            car.transform.SetParent(root.transform);
+            car.tag = "Player"; car.layer = LayerMask.NameToLayer("CarBody");
+            Rigidbody body = car.AddComponent<Rigidbody>(); body.isKinematic = true;
+            Collider first = car.AddComponent<BoxCollider>();
+            GameObject wheel = new GameObject("Wheel"); wheel.transform.SetParent(car.transform);
+            Collider second = wheel.AddComponent<SphereCollider>();
+            laps.RegisterCar(body);
+            int finishes = 0; laps.CarFinished += (_, result) => { finishes++; Require(result.completedLaps == 2, "Finish lap count"); };
+            goal.OnTriggerEnter(first); goal.OnTriggerEnter(second); goal.OnTriggerEnter(first);
+            Require(laps.GetCarData(body).lapCount == 1, "Goal passage counts without any checkpoints, once per car");
+            goal.OnTriggerExit(first); goal.OnTriggerEnter(first);
+            Require(laps.GetCarData(body).lapCount == 1, "One wheel remaining in the goal must prevent duplicate counting");
+            goal.OnTriggerExit(first); goal.OnTriggerExit(second);
+            goal.OnTriggerEnter(first);
+            Require(laps.GetCarData(body).lapCount == 2 && finishes == 1, "Re-entering the goal completes the second lap");
+            goal.OnTriggerExit(first); goal.OnTriggerEnter(first);
+            Require(finishes == 1 && laps.GetCarData(body).lapCount == 2, "Finished cars cannot add laps");
+            laps.ResetRace(); laps.RegisterCar(body); laps.PauseRace();
+            goal.OnTriggerEnter(first);
+            Require(laps.GetCarData(body).lapCount == 0, "Countdown and paused races cannot count goals");
+            goal.OnTriggerExit(first); laps.ResumeRace(); goal.OnTriggerEnter(first);
+            Require(laps.GetCarData(body).lapCount == 1, "Retry restores independent lap counting");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
     }
 
     private static void ValidateLegacy(RaceCourse course)
