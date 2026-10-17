@@ -41,6 +41,7 @@ public sealed class PlayerDriveInputGate : IDriveInputSource
     {
         IsBlocked = blocked;
     }
+    public void RequirePedalRelease() => NeedsPedalRelease = true;
 
     public bool ToggleDirection()
     {

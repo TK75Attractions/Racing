@@ -15,6 +15,7 @@ public static class SkillGameplayValidation
         ValidateOperatorStop();
         ValidateReconnectGate();
         ValidateRecoveryOccupancy();
+        ValidateRecoveryProtection();
         Debug.Log("SKILL_GAMEPLAY_RULES_PASS");
     }
     private static void ValidateStartingLine()
@@ -89,6 +90,22 @@ public static class SkillGameplayValidation
             UnityEngine.Object.DestroyImmediate(blocker); Physics.SyncTransforms();
             Require(resetter.TryResetCar(true)&&body.position.z< -19,"A clear recovery must return to the last safe road.");
             Require(laps.GetCarData(body).lapCount==1&&resetter.RecoveryCount==1,"Recovery must preserve laps and count only successful moves.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+    private static void ValidateRecoveryProtection()
+    {
+        GameObject root=new GameObject("Recovery protection QA",typeof(Rigidbody),typeof(CarItemEffects));
+        try
+        {
+            CarItemEffects effects=root.GetComponent<CarItemEffects>(); Call(effects,"Awake");
+            Require(effects.ApplyOil(),"Oil should affect an unprotected driver.");
+            effects.GrantRecoveryProtection(2);
+            Require(!effects.IsOiled&&effects.IsRecoveryProtected,"Recovery must clear lingering afflictions.");
+            Require(!effects.ApplyOil()&&!effects.ApplyConfuse()&&!effects.ApplySpin(Vector3.right),
+                "Recovered drivers need a short grace period against chained items.");
+            Set(effects,"recoveryProtectionRemaining",0f);
+            Require(effects.ApplyConfuse(),"Recovery protection must not be permanent.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }

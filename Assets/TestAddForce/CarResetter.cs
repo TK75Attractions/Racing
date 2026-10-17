@@ -15,6 +15,7 @@ public class CarResetter : MonoBehaviour
     private bool hasSafeSample, resetHeld, manualPending;
     private float unsafeSeconds, overturnedSeconds, stuckSeconds;
     private readonly Collider[] occupants = new Collider[32];
+    private static readonly float[] RecoverySides = {0f,-1f,1f};
     public int RecoveryCount { get; private set; }
     public int AutomaticRecoveryCount { get; private set; }
     public bool IsRecoveryPending { get; private set; }
@@ -111,8 +112,9 @@ public class CarResetter : MonoBehaviour
         Quaternion rotation = Quaternion.LookRotation(forward, sample.up);
         float clearance = GetGroundClearance(rotation, sample.up);
         float lane = Mathf.Max(0f, Mathf.Min(6f,sample.width*.5f-2f));
-        foreach (float offset in new[] {0f,-lane,lane})
+        foreach (float side in RecoverySides)
         {
+            float offset = side * lane;
             Vector3 position = sample.position + sample.right * offset + sample.up * clearance;
             int count = Physics.OverlapBoxNonAlloc(position + sample.up*.4f, new Vector3(1.45f,.65f,2.85f),
                 occupants, rotation, ~0, QueryTriggerInteraction.Ignore);
@@ -143,6 +145,8 @@ public class CarResetter : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
         }
         debugMover?.SuppressInputAfterRespawn();
+        GetComponent<CarItemEffects>()?.GrantRecoveryProtection(2f);
+        if (inputSource is PlayerDriveInputGate gate) gate.RequirePedalRelease();
 
         Debug.Log($"{name} Reset");
     }
