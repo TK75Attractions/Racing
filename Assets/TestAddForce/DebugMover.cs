@@ -25,7 +25,7 @@ public class DebugMover : MonoBehaviour
     [Tooltip("この速度（m/s）から操舵角を小さくし始めます。")]
     [SerializeField, Min(0f)] private float steeringFadeStartSpeed = 10f;
 
-    [Tooltip("この速度（m/s）で高速時操舵倍率に達します。")]
+    [Tooltip("この速度（m/s）で高速時操舵倍率に達し、以降は速度の二乗に反比例してさらに下がります。")]
     [SerializeField, Min(0f)] private float steeringFadeFullSpeed = 30f;
 
     [Tooltip("高速時に残す操舵角の割合。")]
@@ -36,6 +36,13 @@ public class DebugMover : MonoBehaviour
 
     [Tooltip("速度に応じて操舵角を変えるか。無効にすると全速度で同じ曲がりやすさになります。")]
     [SerializeField] private bool enableSpeedSensitiveSteering = true;
+
+    [Tooltip("旋回要求の横加速度（m/s²）から速度別の切れ角上限を求めます。実際の横加速度を保証する値ではありません。")]
+    [SerializeField, Min(1f)] private float steeringLateralAcceleration = 22f;
+    [Tooltip("ゲーム入力単位の中央不感帯。シーンの除算値6.5では0.08が実ハンドル約0.52度です。")]
+    [SerializeField, Min(0f)] private float steeringDeadzone = .08f;
+    [Tooltip("入力平滑化の時定数（秒）。高速時も切り返し・中央復帰は速く応答します。0で無効。")]
+    [SerializeField, Min(0f)] private float steeringResponseSeconds = .045f;
 
     [Header("Drift")]
     [Tooltip("ドリフトを開始する生のハンドル入力の絶対値（高速時の操舵補正前）。")]
@@ -148,6 +155,8 @@ public class DebugMover : MonoBehaviour
     private CarItemEffects itemEffects;
     private Vector3 drivingUp;
     private bool useCachedDrivingUp;
+    private float filteredSteeringInput;
+    private float steeringAngleLimit = 30f;
 
     public IDriveInputSource InputSource => inputSource;
     /// <summary>実際に走行へ反映しているペダル入力（-1:ブレーキ 〜 1:アクセル）。</summary>
@@ -155,6 +164,14 @@ public class DebugMover : MonoBehaviour
     public float SpeedMetersPerSecond => speedMetersPerSecond;
     /// <summary>速度によって操舵角にかけている倍率（1で通常、小さいほど曲がりにくい）。</summary>
     public float SteeringSpeedMultiplier => appliedSteeringMultiplier;
+    public float AppliedSteeringAngle => appliedSteeringAngle;
+    public float SteeringAngleLimit => steeringAngleLimit;
+    public float SteeringMaximumAngle => maxSteeringAngle;
+    // HUD uses input units so faded ends show exactly where further handle travel stops helping.
+    public float SteeringInputRange => maxSteeringAngle / Mathf.Max(.0001f, steeringInputMultiplier);
+    public float SteeringInputLimit => steeringAngleLimit /
+        Mathf.Max(.0001f, steeringInputMultiplier * appliedSteeringMultiplier);
+    public float RawSteeringInput => rawSteeringInput;
     public bool IsInputSuppressed => Time.time < inputSuppressedUntil;
     public bool IsDrifting => isDrifting;
     public float DriftCharge => driftCharge;
@@ -218,6 +235,7 @@ public class DebugMover : MonoBehaviour
             Gmanager.Control == null ||
             !Gmanager.Control.IsDrivingEnabled)
         {
+            ClearUserInput();
             ResetBoosts();
             return;
         }
@@ -284,6 +302,7 @@ public class DebugMover : MonoBehaviour
 
     public void SetInputSource(IDriveInputSource source)
     {
+        ClearUserInput();
         ResetBoosts();
         inputSource = source;
     }
@@ -304,6 +323,7 @@ public class DebugMover : MonoBehaviour
 
     private void OnDisable()
     {
+        ClearUserInput();
         ResetBoosts();
     }
 
@@ -541,6 +561,12 @@ public class DebugMover : MonoBehaviour
 
     private void ReadInput()
     {
+        if (!inputSource.IsConnected)
+        {
+            ClearUserInput();
+            ResetBoosts();
+            return;
+        }
         DriveInputState input = inputSource.CurrentState;
         rawPedalInput = input.pedal;
         appliedPedalInput = Mathf.Clamp(rawPedalInput, -1f, 1f);
@@ -548,19 +574,30 @@ public class DebugMover : MonoBehaviour
         rawSteeringInput = input.steering * (itemEffects != null ? itemEffects.SteeringSign : 1f);
         if (itemEffects != null && itemEffects.BlocksDriverInput)
         {
-            rawPedalInput = 0f;
-            appliedPedalInput = 0f;
-            rawSteeringInput = 0f;
+            ClearUserInput();
+            return;
         }
 
         Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp());
         speedMetersPerSecond = planarVelocity.magnitude;
 
         appliedSteeringMultiplier = GetSpeedSteeringMultiplier(speedMetersPerSecond);
-        appliedSteeringAngle = Mathf.Clamp(
-            rawSteeringInput * steeringInputMultiplier * appliedSteeringMultiplier,
-            -maxSteeringAngle,
-            maxSteeringAngle);
+        steeringAngleLimit = enableSpeedSensitiveSteering
+            ? Mathf.Min(maxSteeringAngle, Mathf.Atan(Mathf.Max(1f, steeringLateralAcceleration) * wheelbase /
+                Mathf.Max(.01f, speedMetersPerSecond * speedMetersPerSecond)) * Mathf.Rad2Deg)
+            : maxSteeringAngle;
+        float limit = SteeringInputLimit;
+        float request = Mathf.Sign(rawSteeringInput) * Mathf.Max(0f, Mathf.Abs(rawSteeringInput) - steeringDeadzone);
+        // Saturate before filtering: turning past the limit must never store a delayed countersteer.
+        request = Mathf.Clamp(request, -limit, limit);
+        filteredSteeringInput = Mathf.Clamp(filteredSteeringInput, -limit, limit);
+        // Keep small IMU fluctuations on one time constant; otherwise faster falling samples bias the center.
+        bool returning = Mathf.Abs(request) < Mathf.Abs(filteredSteeringInput) * .65f || request * filteredSteeringInput < 0f;
+        float response = steeringResponseSeconds * (returning ? .55f : 1f);
+        float blend = response <= 0f ? 1f : 1f - Mathf.Exp(-Time.fixedDeltaTime / response);
+        filteredSteeringInput = Mathf.Lerp(filteredSteeringInput, request, blend);
+        appliedSteeringAngle = Mathf.Clamp(filteredSteeringInput * steeringInputMultiplier * appliedSteeringMultiplier,
+            -steeringAngleLimit, steeringAngleLimit);
     }
 
     // 遅いほど大きく、速いほど小さい操舵倍率を返す。ドリフト判定に使う生のハンドル入力には影響しない。
@@ -575,7 +612,10 @@ public class DebugMover : MonoBehaviour
         float speedRatio = Mathf.InverseLerp(steeringFadeStartSpeed, fullSpeed, speed);
         // 1より大きい鋭さでは低速側の効きを保ち、1より小さいと早い段階から曲がりにくくする。
         float fadeRatio = Mathf.Pow(speedRatio, Mathf.Max(0.01f, steeringFadeSharpness));
-        return Mathf.Lerp(1f, Mathf.Clamp01(highSpeedSteeringMultiplier), fadeRatio);
+        float multiplier = Mathf.Lerp(1f, Mathf.Clamp01(highSpeedSteeringMultiplier), fadeRatio);
+        // Keep reducing beyond the fade range. Constant lock would increase yaw with speed.
+        float overspeed = Mathf.Max(1f, speed / fullSpeed);
+        return multiplier / (overspeed * overspeed);
     }
 
     private void ClearUserInput()
@@ -585,6 +625,8 @@ public class DebugMover : MonoBehaviour
         rawSteeringInput = 0f;
         appliedSteeringAngle = 0f;
         appliedSteeringMultiplier = 1f;
+        filteredSteeringInput = 0f;
+        steeringAngleLimit = maxSteeringAngle;
     }
 
     private bool ShouldProtectDrift => enableDriftDynamics && enableDriftSpinProtection &&
@@ -598,11 +640,16 @@ public class DebugMover : MonoBehaviour
 
     private float GetProtectedSteeringAngle(Vector3 forward, Vector3 velocity)
     {
-        float forwardSpeed = Vector3.Dot(velocity, forward);
-        if (!ShouldProtectDrift || forwardSpeed < 3f || !HasDriftGroundContact()) return appliedSteeringAngle;
-        // At speed, full lock asks more lateral force than the tires can supply and builds a spin.
-        float safeAngle = Mathf.Atan(GetDriftYawLimit(velocity.magnitude) * wheelbase / forwardSpeed) * Mathf.Rad2Deg;
+        float safeAngle = GetDriftSteeringAngleLimit(forward, velocity);
         return Mathf.Clamp(appliedSteeringAngle, -safeAngle, safeAngle);
+    }
+
+    private float GetDriftSteeringAngleLimit(Vector3 forward, Vector3 velocity)
+    {
+        float forwardSpeed = Vector3.Dot(velocity, forward);
+        if (!ShouldProtectDrift || forwardSpeed < 3f || !HasDriftGroundContact()) return float.PositiveInfinity;
+        // At speed, full lock asks more lateral force than the tires can supply and builds a spin.
+        return Mathf.Atan(GetDriftYawLimit(velocity.magnitude) * wheelbase / forwardSpeed) * Mathf.Rad2Deg;
     }
 
     private void ApplyDriftSpinProtection(float deltaTime)
@@ -646,7 +693,9 @@ public class DebugMover : MonoBehaviour
         Vector3 up = GetDrivingUp();
         Vector3 vehicleForward = Vector3.ProjectOnPlane(rb.rotation * Vector3.forward, up).normalized;
         Vector3 velocity = Vector3.ProjectOnPlane(rb.linearVelocity, up);
-        float tireSteeringAngle = GetProtectedSteeringAngle(vehicleForward, velocity);
+        steeringAngleLimit = Mathf.Min(steeringAngleLimit, GetDriftSteeringAngleLimit(vehicleForward, velocity));
+        float tireSteeringAngle = Mathf.Clamp(appliedSteeringAngle, -steeringAngleLimit, steeringAngleLimit);
+        appliedSteeringAngle = tireSteeringAngle;
 
         foreach (TireForce tire in tires)
         {
