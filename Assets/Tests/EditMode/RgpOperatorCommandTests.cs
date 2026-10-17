@@ -76,4 +76,40 @@ public sealed class RgpOperatorCommandTests
         Assert.That(session.TryCommand("CALIBRATE",new[]{"ALL"},15,out _,out _),Is.False);
         session.Disconnect();Assert.That(session.ImuStatus,Is.EqualTo("Unknown"));Assert.That(session.ImuAddress,Is.Empty);
     }
+
+    [Test] public void StartupCalibratesOnceAndWaitsForVerifiedStatusBeforeZeroingAngle()
+    {
+        var session = Ready(out var sent);
+        session.TryCommand("GET_STATUS", null, 10, out uint status, out _);
+        session.Receive(Frame("ACK,10,0,"+status+",GET_STATUS,OK,WAIT_ANGLE,1,1,0,0"), 11);
+        session.Tick(12);
+        Assert.That(sent[sent.Count-1], Does.Contain(",CALIBRATE,ALL*"));
+        SerialInputProtocol.TryParse(sent[sent.Count-1], out RgpFrame calibration);
+        session.Receive(Frame("ACK,11,0,"+calibration.Sequence+",CALIBRATE,ACCEPTED,ALL"), 13);
+        int count = sent.Count;
+        session.Tick(14); session.Tick(4000);
+        Assert.That(sent.Count, Is.EqualTo(count), "ACCEPTED must not trigger repeated calibration or imply completion");
+        session.TryCommand("GET_STATUS", null, 4001, out status, out _);
+        session.Receive(Frame("ACK,12,0,"+status+",GET_STATUS,OK,WAIT_ANGLE,1,1,0,1"), 4002);
+        session.Tick(4003);
+        Assert.That(sent[sent.Count-1], Does.Contain(",ANGLE_ZERO*"));
+        Assert.That(session.IsFresh(4003), Is.False);
+        SerialInputProtocol.TryParse(sent[sent.Count-1], out RgpFrame zero);
+        session.Receive(Frame("ACK,13,0,"+zero.Sequence+",ANGLE_ZERO,OK"), 4004);
+        session.Tick(4005);
+        Assert.That(sent.Count, Is.EqualTo(count+2));
+    }
+
+    [Test] public void FailedAutomaticCalibrationIsBoundedAndReadyHardwareIsUntouched()
+    {
+        var session = Ready(out var sent);
+        int count = sent.Count; session.Tick(10);
+        Assert.That(sent.Count, Is.EqualTo(count));
+        session.TryCommand("GET_STATUS", null, 11, out uint status, out _);
+        session.Receive(Frame("ACK,10,0,"+status+",GET_STATUS,OK,WAIT_ANGLE,1,1,0,0"), 12);
+        session.Tick(13); string wire = sent[sent.Count-1];
+        session.Tick(1013); session.Tick(2013); session.Tick(3013); session.Tick(4013);
+        Assert.That(sent.FindAll(s => s.Contains(",CALIBRATE,")).Count, Is.EqualTo(3));
+        Assert.That(sent[sent.Count-1], Is.EqualTo(wire));
+    }
 }
