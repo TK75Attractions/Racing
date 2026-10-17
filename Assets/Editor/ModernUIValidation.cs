@@ -218,9 +218,13 @@ public static class ModernUIValidation
         foreach(RacingMenuButton button in card.Find("ResultMenu").GetComponentsInChildren<RacingMenuButton>(true))
             Require(button.targetGraphic.enabled && button.targetGraphic.raycastTarget,"Result action has no pointer hit target.");
         session.GetPlayerResult(1).didFinish=false;
+        session.GetPlayerResult(1).goalLap=2; session.GetPlayerResult(1).completedLaps=1;
+        session.GetPlayerResult(1).bestLapTime=float.MaxValue;
         session.GetPlayerResult(1).finalLapTime=3.5f;
         session.GetPlayerResult(1).carName="Player2_Car";
         results.ShowResults(session);
+        Require(Text(card,"ResultRow2/Gap")=="1 / 2 周" && Text(card,"RaceSummary/Best")=="--'--.---",
+            "DNF must show achieved laps and must not format an unset best lap as a huge time.");
         Require(Text(card,"ResultRow2/Time")=="DNF" && Text(card,"PlacementRibbon/Ordinal")=="DNF" && !card.Find("Medal/Artwork").gameObject.activeSelf,"DNF must not award a finish medal.");
         Require(Text(card,"ResultRow2/Rank")=="—" && Text(card,"RaceSummary/Last")=="--'--.---" && Text(card,"ResultRow2/CarName")=="SPORT CAR", "DNF must not display a finish rank, unfinished lap time or internal vehicle name.");
         session.GetPlayerResult(0).didFinish=false;results.ShowResults(session);
