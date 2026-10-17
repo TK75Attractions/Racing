@@ -23,6 +23,7 @@ internal static class MacDashboardService
                 throw new IOException("同名の起動設定が別のアプリを使用しています。既存設定は変更しません。");
         }
         string? dotnet = null;
+        QuickStart.Settings? connection = null;
         if (install)
         {
             string? host = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH");
@@ -30,6 +31,9 @@ internal static class MacDashboardService
                 .FirstOrDefault(path => !string.IsNullOrEmpty(path) && File.Exists(path));
             if (dotnet == null || !File.Exists(Path.Combine(AppContext.BaseDirectory, "Dashboard", "index.html")))
                 throw new IOException(".NETと管理画面を確認できません。プロジェクトから常駐設定を実行してください。");
+            // Resolve the private route here: the macOS app CLI may not read preferences from launchd.
+            connection = await QuickStart.Configure(CancellationToken.None);
+            if (connection.Origin == null) throw new IOException(connection.Notice ?? "Tailscaleの接続設定を確認できませんでした。");
         }
         await QuickStart.Run("/bin/launchctl", CancellationToken.None, "bootout", scope + "/" + Label);
         if (!install)
@@ -44,11 +48,11 @@ internal static class MacDashboardService
         string assets = Path.Combine(service, "Dashboard"); Directory.CreateDirectory(assets);
         foreach (string source in Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory, "Dashboard")))
             File.Copy(source, Path.Combine(assets, Path.GetFileName(source)), true);
-        var environment = new XElement("dict", new XElement("key", "DOTNET_CLI_TELEMETRY_OPTOUT"), new XElement("string", "1"));
+        var environment = new XElement("dict", new XElement("key", "DOTNET_CLI_TELEMETRY_OPTOUT"), new XElement("string", "1"),
+            new XElement("key", "RACING_DASHBOARD_ORIGIN"), new XElement("string", connection!.Origin),
+            new XElement("key", "RACING_DASHBOARD_OPERATORS"), new XElement("string", string.Join(",", connection.Operators)));
         string? sourceAssets = DashboardAssets.FindSourceDirectory();
         if (sourceAssets != null) environment.Add(new XElement("key", "RACING_DASHBOARD_ASSETS"), new XElement("string", sourceAssets));
-        string? operators = Environment.GetEnvironmentVariable("RACING_DASHBOARD_OPERATORS");
-        if (!string.IsNullOrWhiteSpace(operators)) environment.Add(new XElement("key", "RACING_DASHBOARD_OPERATORS"), new XElement("string", operators));
         var document = new XDocument(new XDeclaration("1.0", "UTF-8", null),
             new XDocumentType("plist", "-//Apple//DTD PLIST 1.0//EN", "http://www.apple.com/DTDs/PropertyList-1.0.dtd", null),
             new XElement("plist", new XAttribute("version", "1.0"), new XElement("dict",
