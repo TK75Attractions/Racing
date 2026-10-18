@@ -37,6 +37,11 @@ public class DebugMover : MonoBehaviour
     [Tooltip("速度に応じて操舵角を変えるか。無効にすると全速度で同じ曲がりやすさになります。")]
     [SerializeField] private bool enableSpeedSensitiveSteering = true;
 
+    [Tooltip("ハンドルの操作範囲を速度ごとの安全な旋回量へ連続的に割り当て、接地中の旋回をトルクで補助します。")]
+    [SerializeField] private bool enableResponsiveSteering = true;
+    [SerializeField, Min(0f)] private float steeringYawResponse = 18f;
+    [SerializeField, Min(0f)] private float steeringMaxYawAcceleration = 30f;
+
     [Header("Drift")]
     [Tooltip("ドリフトを開始する生のハンドル入力の絶対値（高速時の操舵補正前）。")]
     [SerializeField, Min(0.01f)] private float driftStartHandle = 8f;
@@ -155,6 +160,7 @@ public class DebugMover : MonoBehaviour
     public float SpeedMetersPerSecond => speedMetersPerSecond;
     /// <summary>速度によって操舵角にかけている倍率（1で通常、小さいほど曲がりにくい）。</summary>
     public float SteeringSpeedMultiplier => appliedSteeringMultiplier;
+    public float WheelSteeringAngle => appliedSteeringAngle;
     public bool IsInputSuppressed => Time.time < inputSuppressedUntil;
     public bool IsDrifting => isDrifting;
     public float DriftCharge => driftCharge;
@@ -559,7 +565,11 @@ public class DebugMover : MonoBehaviour
         rawPedalInput = input.pedal;
         appliedPedalInput = Mathf.Clamp(rawPedalInput, -1f, 1f);
         // コンフューズ中はハンドルを左右反転します。ドリフト判定も反転後の値で行います。
-        rawSteeringInput = input.steering * (itemEffects != null ? itemEffects.SteeringSign : 1f);
+        float fullSteeringInput = inputSource is IDriveSteeringCalibration calibration
+            ? calibration.FullSteeringInput : SteeringResponse.FullLockUnits;
+        rawSteeringInput = (enableResponsiveSteering
+            ? SteeringResponse.CanonicalInput(input.steering,fullSteeringInput) : input.steering)
+            * (itemEffects != null ? itemEffects.SteeringSign : 1f);
         if (itemEffects != null && itemEffects.BlocksDriverInput)
         {
             rawPedalInput = 0f;
@@ -571,7 +581,10 @@ public class DebugMover : MonoBehaviour
         speedMetersPerSecond = planarVelocity.magnitude;
 
         appliedSteeringMultiplier = GetSpeedSteeringMultiplier(speedMetersPerSecond);
-        appliedSteeringAngle = Mathf.Clamp(
+        appliedSteeringAngle = enableResponsiveSteering ? SteeringResponse.WheelAngle(
+            rawSteeringInput * steeringInputMultiplier, maxSteeringAngle, appliedSteeringMultiplier,
+            speedMetersPerSecond, wheelbase, driftMaxYawRate, driftMaxLateralAcceleration,
+            enableDriftDynamics && enableDriftSpinProtection) : Mathf.Clamp(
             rawSteeringInput * steeringInputMultiplier * appliedSteeringMultiplier,
             -maxSteeringAngle,
             maxSteeringAngle);
@@ -625,25 +638,33 @@ public class DebugMover : MonoBehaviour
             driftRecoveryTimeRemaining = driftRecoverySeconds;
         else
             driftRecoveryTimeRemaining = Mathf.Max(0f, driftRecoveryTimeRemaining - deltaTime);
-        if (!ShouldProtectDrift || !HasDriftGroundContact()) return;
+        bool protectDrift = ShouldProtectDrift;
+        bool responsive = enableResponsiveSteering && enableLateralTireForces && !IsInputSuppressed &&
+            (itemEffects == null || (!itemEffects.BlocksDriverInput && !itemEffects.IsOiled));
+        // Slippery/disabled controls must not be cancelled by the new response assistance.
+        if (enableResponsiveSteering && itemEffects != null && (itemEffects.BlocksDriverInput || itemEffects.IsOiled)) return;
+        if ((!protectDrift && !responsive) || !HasDriftGroundContact()) return;
 
         Vector3 up = GetDrivingUp();
         Vector3 forward = Vector3.ProjectOnPlane(rb.rotation * Vector3.forward, up).normalized;
         Vector3 velocity = Vector3.ProjectOnPlane(rb.linearVelocity, up);
         float forwardSpeed = Vector3.Dot(velocity, forward);
-        if (forwardSpeed < 3f) return;
+        if (responsive ? Mathf.Abs(forwardSpeed) < .75f : forwardSpeed < 3f) return;
 
         float yawLimit = GetDriftYawLimit(velocity.magnitude);
         float steeringAngle = GetProtectedSteeringAngle(forward, velocity);
-        float desiredYaw = Mathf.Clamp(forwardSpeed * Mathf.Tan(steeringAngle * Mathf.Deg2Rad) / wheelbase,
+        float desiredYaw = Mathf.Clamp(SteeringResponse.YawRate(steeringAngle,forwardSpeed,wheelbase),
             -yawLimit, yawLimit);
         float slipAngle = Vector3.SignedAngle(velocity, forward, up);
-        float excessSlip = slipAngle - Mathf.Clamp(slipAngle, -driftMaxSlipAngle, driftMaxSlipAngle);
+        float excessSlip = protectDrift && forwardSpeed >= 3f
+            ? slipAngle - Mathf.Clamp(slipAngle, -driftMaxSlipAngle, driftMaxSlipAngle) : 0f;
         // Ease the body back toward its direction of travel rather than allowing rotation to run away.
         desiredYaw = Mathf.Clamp(desiredYaw - excessSlip * Mathf.Deg2Rad * driftYawResponse, -yawLimit, yawLimit);
         float yawRate = Vector3.Dot(rb.angularVelocity, up);
-        float yawAcceleration = Mathf.Clamp((desiredYaw - yawRate) * driftYawResponse,
-            -driftMaxYawAcceleration, driftMaxYawAcceleration);
+        float response = responsive ? Mathf.Max(steeringYawResponse,protectDrift ? driftYawResponse : 0f) : driftYawResponse;
+        float accelerationLimit = responsive ? steeringMaxYawAcceleration : driftMaxYawAcceleration;
+        float yawAcceleration = Mathf.Clamp((desiredYaw - yawRate) * response,
+            -accelerationLimit, accelerationLimit);
         rb.AddTorque(up * yawAcceleration, ForceMode.Acceleration);
 
         if (Mathf.Abs(excessSlip) > .01f)

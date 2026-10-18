@@ -25,7 +25,9 @@ public sealed class RacingTelemetryUI : MonoBehaviour
     {
         if(Gmanager.Control?.IManager==null || pedal==null)return;
         DriveInputState input=Gmanager.Control.IManager.GetInputState(player);
-        SetInput(input.pedal, input.steering);
+        IDriveInputSource source=Gmanager.Control.IManager.GetPlayerInputSource(player);
+        float full=source is IDriveSteeringCalibration calibration ? calibration.FullSteeringInput : SteeringResponse.FullLockUnits;
+        SetInput(input.pedal, SteeringResponse.CanonicalInput(input.steering,full)/SteeringResponse.FullLockUnits);
     }
     public void SetInput(float pedalAmount, float steeringAmount)
     {
