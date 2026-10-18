@@ -129,6 +129,10 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         // 専用路面ではコース外リスポーンを停止し、姿勢復元がワープで置き換わらないようにします。
         var lapManager = UnityEngine.Object.FindFirstObjectByType<LapManager>();
         if (lapManager != null) lapManager.enabled = false;
+        // CarResetter owns its own off-course FixedUpdate. Disabling LapManager alone
+        // does not prevent it from teleporting this isolated physics fixture onto the course.
+        var resetter = body.GetComponent<CarResetter>();
+        if (resetter != null) resetter.enabled = false;
 
         // 平坦な広い路面で飛行と着地を分離して検証します。
         // 実際のコースの障害物やアイテムが着地だけの比較へ混ざらないよう、同じシーンに検証路面を作ります。
