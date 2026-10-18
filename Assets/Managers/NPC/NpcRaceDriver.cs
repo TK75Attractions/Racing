@@ -24,6 +24,9 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     private LapManager.NpcRecoveryState safeState;
     private bool hasSafeState;
     private float unrecoveredSeconds;
+    private float lastRecoveryCacheProgress=float.NegativeInfinity;
+    private int recoveryBackoffSteps;
+    public float LastRecoveryRollbackMeters { get; private set; }
     public string RecoveryBlockedReason { get; private set; } = "";
     private sealed class ContactGrace { public Rigidbody Other; public Collider[] Colliders; public float Until; }
     private Collider[] ownColliders;
@@ -159,10 +162,17 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         bool overdue = unrecoveredSeconds >= 6f;
         if (!hasSafeState) { RecoveryBlockedReason="no-safe-road"; return; }
         if (!overdue && manager.IsNpcRecoveryVisible(body.position)) { RecoveryBlockedReason="visible-car"; return; }
-        if (!course.TryGetSampleAtProgress(safeRawProgress, out RaceCourse.CourseSample sample) || !course.HasRoadAtProgress(safeRawProgress))
+        // A grounded sample can still be beside an obstruction. Repeated failure at the same
+        // cache needs an earlier road, rather than another reset into the identical obstruction.
+        int backoff=Mathf.Abs(safeState.progress-lastRecoveryCacheProgress)<12f ? Mathf.Min(recoveryBackoffSteps+1,4) : 0;
+        if (!laps.CanRestoreNpcRecovery(body,safeState)) backoff=Mathf.Max(1,backoff);
+        float rollback=Mathf.Min(backoff*20f,Mathf.Max(0f,safeState.progress-safeState.lap*course.TotalLength-5f));
+        float recoveryRaw=safeRawProgress-manager.CourseProgressSign*rollback;
+        LapManager.NpcRecoveryState recoveryState=safeState; recoveryState.progress-=rollback;
+        if (!course.TryGetSampleAtProgress(recoveryRaw, out RaceCourse.CourseSample sample) || !course.HasRoadAtProgress(recoveryRaw))
         { RecoveryBlockedReason="missing-road"; return; }
         if (!overdue && manager.IsNpcRecoveryVisible(sample.position)) { RecoveryBlockedReason="visible-target"; return; }
-        if (!laps.CanRestoreNpcRecovery(body,safeState)) { RecoveryBlockedReason="forward-progress"; return; }
+        if (!laps.CanRestoreNpcRecovery(body,recoveryState)) { RecoveryBlockedReason="forward-progress"; return; }
         bool roadSupported=false;
         foreach (RaycastHit hit in Physics.RaycastAll(sample.position+sample.up*2f,-sample.up,3f,
                      Physics.DefaultRaycastLayers,QueryTriggerInteraction.Ignore))
@@ -171,7 +181,8 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         if (!roadSupported) { RecoveryBlockedReason="unsupported-road"; return; }
         CarResetter resetter=GetComponent<CarResetter>();
         if (resetter==null || !resetter.TryResetToRoadSample(sample)) { RecoveryBlockedReason="occupied-road"; return; }
-        laps.RestoreNpcRecovery(body,safeState);
+        laps.RestoreNpcRecovery(body,recoveryState);
+        lastRecoveryCacheProgress=safeState.progress; recoveryBackoffSteps=backoff; LastRecoveryRollbackMeters=rollback;
         // As on the starting grid, ask the physical drivetrain to accelerate immediately.
         // Slewing the requested speed from zero here consumes the entire jump run-up.
         targetSpeed=Mathf.Min(cruiseSpeed,24f); reverseUntil=Time.time; stuck=unrecoveredSeconds=0; RecoveryBlockedReason=""; RecoveryCount++;

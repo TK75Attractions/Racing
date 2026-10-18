@@ -31,6 +31,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         public float finishTime, progress, distanceDriven, meanSpeed, maxSpeed, maxStall, offCourseSeconds, maxTilt, nearbyHumanSeconds, racingSeconds;
         public int takeoffs, landings, humanRecoveries, automaticRecoveries;
         public string recoveryBlockedReason;
+        public float maxRecoveryRollbackMeters;
         [NonSerialized] public TireForce[] tires;
         [NonSerialized] public DebugMover mover;
         [NonSerialized] public Vector3 previousPosition;
@@ -263,6 +264,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         foreach (RaceParticipant entry in manager.Participants)
         {
             CarRecord record = run.cars[entry.Index]; Rigidbody body = entry.Body;
+            record.maxRecoveryRollbackMeters=Mathf.Max(record.maxRecoveryRollbackMeters,entry.Driver?.LastRecoveryRollbackMeters??0f);
             if (!entry.IsRacing)
             {
                 if (entry.Index < 2 && entry.Result?.didFinish == true && run.firstHumanFinish < 0) run.firstHumanFinish = now;
