@@ -329,7 +329,7 @@ public class LapManager : MonoBehaviour
             return;
         }
 
-        if (raceCourse.IsPointInsideCourse(data.rb.position))
+        if (raceCourse.IsPointInsideDrivingArea(data.rb.position))
         {
             data.isOffCourse = false;
             data.offCourseTimer = 0f;

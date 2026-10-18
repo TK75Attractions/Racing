@@ -13,7 +13,11 @@ public class CarResetter : MonoBehaviour
     private RaceCourse.CourseSample safeSample;
     private int safeLap;
     private bool hasSafeSample, resetHeld, manualPending;
-    private float unsafeSeconds, overturnedSeconds, stuckSeconds;
+    private float unsafeSeconds, overturnedSeconds, stuckSeconds, wallStuckSeconds;
+    private float lastWallContactTime = float.NegativeInfinity;
+    private Collider lastWallCollider;
+    private Vector3 wallProgressPosition;
+    private bool trackingWallProgress;
     private readonly Collider[] occupants = new Collider[32];
     private static readonly float[] RecoverySides = {0f,-1f,1f};
     public int RecoveryCount { get; private set; }
@@ -65,22 +69,87 @@ public class CarResetter : MonoBehaviour
     private void FixedUpdate()
     {
         if (rb == null || rb.isKinematic || debugMover == null || !debugMover.isActiveAndEnabled ||
-            Gmanager.Control == null || Gmanager.Control.state != Gmanager.State.Game || course == null) return;
-        if (inputSource is PlayerDriveInputGate gate && (gate.IsBlocked || !gate.IsConnected || gate.NeedsPedalRelease))
-        { unsafeSeconds = overturnedSeconds = stuckSeconds = 0f; return; }
+            Gmanager.Control == null || Gmanager.Control.state != Gmanager.State.Game || course == null)
+        { ClearRecoveryTimers(); return; }
+        if (debugMover.IsInputSuppressed ||
+            inputSource is PlayerDriveInputGate gate && (gate.IsBlocked || !gate.IsConnected || gate.NeedsPedalRelease))
+        { ClearRecoveryTimers(); return; }
         RememberSafeRoad(false);
         if (!course.TryGetNearestRoadSample(rb.position, out RaceCourse.CourseSample here)) return;
         int grounded = 0; foreach (TireForce tire in tires) if (tire.IsGrounded) grounded++;
-        bool outside = !course.IsPointInsideCourse(rb.position) || rb.position.y < here.position.y - 4f;
+        bool outside = !course.IsPointInsideDrivingArea(rb.position) || rb.position.y < here.position.y - 4f;
         float dt = Time.fixedDeltaTime;
         unsafeSeconds = outside ? unsafeSeconds + dt : 0f;
         overturnedSeconds = Vector3.Dot(transform.up, here.up) < .2f && grounded < 2 ? overturnedSeconds + dt : 0f;
-        bool pushing = inputSource != null && Mathf.Abs(inputSource.CurrentState.pedal) > .4f;
+        bool pushing = inputSource != null && inputSource.IsConnected && Mathf.Abs(inputSource.CurrentState.pedal) > .4f;
         stuckSeconds = pushing && rb.linearVelocity.magnitude < .5f && grounded > 0 ? stuckSeconds + dt : 0f;
-        if (unsafeSeconds < 1.8f && overturnedSeconds < 2.5f && stuckSeconds < 4f) return;
+        UpdateWallStuckTimer(pushing, dt);
+        if (unsafeSeconds < 1.8f && overturnedSeconds < 2.5f && stuckSeconds < 4f && wallStuckSeconds < 4f) return;
         RecoveryReason = outside ? "off-course" : overturnedSeconds >= 2.5f ? "overturned" : "stuck";
         IsRecoveryPending = true;
         if (TryResetCar(true)) AutomaticRecoveryCount++;
+    }
+
+    private void OnCollisionEnter(Collision collision) => RememberWallContact(collision);
+    private void OnCollisionStay(Collision collision) => RememberWallContact(collision);
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.collider != lastWallCollider) return;
+        lastWallCollider = null;
+        lastWallContactTime = float.NegativeInfinity;
+    }
+
+    private void RememberWallContact(Collision collision)
+    {
+        for (int i = 0; i < collision.contactCount; i++)
+            RememberWallContact(collision.collider, collision.GetContact(i).normal);
+    }
+
+    private void RememberWallContact(Collider obstacle, Vector3 normal)
+    {
+        if (obstacle == null || obstacle.attachedRigidbody == rb ||
+            (obstacle.attachedRigidbody != null && !obstacle.attachedRigidbody.isKinematic)) return;
+        if (obstacle.GetComponentInParent<RaceBarrierPath>() != null ||
+            Mathf.Abs(normal.y) < .2f)
+        {
+            lastWallContactTime = Time.fixedTime;
+            lastWallCollider = obstacle;
+        }
+    }
+
+    private void UpdateWallStuckTimer(bool pushing, float dt)
+    {
+        // 壁に乗ってタイヤの接地判定が切れても、入力があるのに同じ場所へ
+        // 留まる状態を検出する。速度が出ている小刻みな往復や回転も対象にする。
+        // スリープ中は OnCollisionStay が来ないが、接触終了までは壁に挟まったまま。
+        bool sleepingContact = rb.IsSleeping() && lastWallCollider != null &&
+            lastWallCollider.enabled && lastWallCollider.gameObject.activeInHierarchy;
+        if (!pushing || (!sleepingContact && Time.fixedTime - lastWallContactTime > .1f))
+        {
+            trackingWallProgress = false;
+            wallStuckSeconds = 0f;
+            return;
+        }
+        if (!trackingWallProgress || (rb.position - wallProgressPosition).sqrMagnitude >= 4f)
+        {
+            trackingWallProgress = true;
+            wallProgressPosition = rb.position;
+            wallStuckSeconds = 0f;
+        }
+        wallStuckSeconds += dt;
+    }
+
+    private void ClearRecoveryTimers()
+    {
+        unsafeSeconds = overturnedSeconds = stuckSeconds = wallStuckSeconds = 0f;
+        trackingWallProgress = false;
+    }
+
+    private void OnDisable()
+    {
+        ClearRecoveryTimers();
+        lastWallContactTime = float.NegativeInfinity;
+        lastWallCollider = null;
     }
 
     private void RememberSafeRoad(bool initial)
@@ -131,7 +200,7 @@ public class CarResetter : MonoBehaviour
             if (occupied) continue;
             ApplyReset(position,rotation); Physics.SyncTransforms(); laps?.NotifyManualRespawn(rb);
             RecoveryCount++; LastRecoveryTime=Time.time;
-            unsafeSeconds=overturnedSeconds=stuckSeconds=0; IsRecoveryPending=false;
+            ClearRecoveryTimers(); lastWallContactTime=float.NegativeInfinity; lastWallCollider=null; IsRecoveryPending=false;
             return true;
         }
         IsRecoveryPending=true;

@@ -60,6 +60,9 @@ public sealed class RaceBarrierPath : MonoBehaviour
     private const float ReturnArcRadiusRatio = 0.375f;
 
     private readonly List<Sample> samples = new List<Sample>();
+    private static readonly HashSet<RaceBarrierPath> activePaths = new HashSet<RaceBarrierPath>();
+    private readonly List<Vector3> drivingInner = new List<Vector3>();
+    private readonly List<Vector3> drivingOuter = new List<Vector3>();
     private Transform generatedRoot;
     private Transform visualRoot;
     private Transform colliderRoot;
@@ -97,6 +100,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
 
     private void OnEnable()
     {
+        activePaths.Add(this);
         if (Application.isPlaying || generateInEditMode)
         {
             Rebuild();
@@ -105,7 +109,29 @@ public sealed class RaceBarrierPath : MonoBehaviour
 
     private void OnDisable()
     {
+        activePaths.Remove(this);
         CleanupGeneratedObjects();
+    }
+
+    /// <summary>道路と同様に高さを無視し、物理バリアの張り出しを走行範囲に含めます。</summary>
+    public static bool IsPointInsideDrivingFootprint(Vector3 position, UnityEngine.SceneManagement.Scene scene)
+    {
+        Vector2 point = new Vector2(position.x, position.z);
+        foreach (RaceBarrierPath path in activePaths)
+        {
+            if (path == null || !path.isActiveAndEnabled || path.gameObject.scene != scene ||
+                path.generatedColliderMesh == null) continue;
+            for (int i = 1; i < path.drivingInner.Count; i++)
+            {
+                Vector3 a = path.transform.TransformPoint(path.drivingInner[i - 1]);
+                Vector3 b = path.transform.TransformPoint(path.drivingOuter[i - 1]);
+                Vector3 c = path.transform.TransformPoint(path.drivingInner[i]);
+                Vector3 d = path.transform.TransformPoint(path.drivingOuter[i]);
+                if (RaceCourse.IsInsideTriangle(point, a, b, c) ||
+                    RaceCourse.IsInsideTriangle(point, b, d, c)) return true;
+            }
+        }
+        return false;
     }
 
     private void OnValidate()
@@ -171,6 +197,23 @@ public sealed class RaceBarrierPath : MonoBehaviour
         if (generateCollider)
         {
             BuildColliderChain();
+            // かえしの途中が最も外へ張り出すため、断面全体から外縁を求めます。
+            for (int i = 0; i < samples.Count; i++)
+            {
+                Vector3 outward = GetOutward(GetTangent(i));
+                Vector3 outer = samples[i].position;
+                float maximum = 0f;
+                for (int section = 1; section <= wallSectionSegments * 2; section++)
+                {
+                    Vector3 candidate = GetSectionPoint(samples[i], outward, section);
+                    float distance = Vector3.Dot(candidate - samples[i].position, outward);
+                    if (distance <= maximum) continue;
+                    maximum = distance;
+                    outer = candidate;
+                }
+                drivingInner.Add(samples[i].position);
+                drivingOuter.Add(outer);
+            }
         }
     }
 
@@ -545,6 +588,8 @@ public sealed class RaceBarrierPath : MonoBehaviour
 
     private void CleanupGeneratedObjects()
     {
+        drivingInner.Clear();
+        drivingOuter.Clear();
         // ExecuteAlways の非シリアライズ参照は、スクリプト再読み込み時に失われる。
         // 既存の生成階層を直接探し、古い壁がシーンに残らないようにする。
         List<GameObject> roots = new List<GameObject>();

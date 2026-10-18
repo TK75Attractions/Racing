@@ -151,6 +151,11 @@ public class RaceCourse : MonoBehaviour
     public bool IsPointInsideCourse(Vector3 worldPosition) =>
         IsInsideBand(ToXZ(worldPosition));
 
+    /// <summary>道路帯と、同じシーンにある走行可能なレースバリアの張り出しを含む範囲。</summary>
+    public bool IsPointInsideDrivingArea(Vector3 worldPosition) =>
+        IsPointInsideCourse(worldPosition) ||
+        (HasValidPath && RaceBarrierPath.IsPointInsideDrivingFootprint(worldPosition, gameObject.scene));
+
     private bool IsInsideBand(Vector2 point)
     {
         EnsureCache();
@@ -165,7 +170,7 @@ public class RaceCourse : MonoBehaviour
         return false;
     }
 
-    private static bool IsInsideTriangle(Vector2 point, Vector3 a, Vector3 b, Vector3 c)
+    internal static bool IsInsideTriangle(Vector2 point, Vector3 a, Vector3 b, Vector3 c)
     {
         Vector2 ab = ToXZ(b - a);
         Vector2 ac = ToXZ(c - a);

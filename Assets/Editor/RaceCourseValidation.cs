@@ -24,6 +24,8 @@ public static class RaceCourseValidation
             ValidateEmpty(course);
             ValidateEditorOperations(course);
             ValidateOffCourseState(course);
+            ValidateBarrierDrivingArea(course);
+            ValidateWallStuckRecovery(course);
             ValidateGoalOnlyLaps();
             Debug.Log("RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.");
         }
@@ -288,6 +290,206 @@ public static class RaceCourseValidation
         {
             UnityEngine.Object.DestroyImmediate(carRoot);
             UnityEngine.Object.DestroyImmediate(managerRoot);
+        }
+    }
+
+    private static void ValidateBarrierDrivingArea(RaceCourse course)
+    {
+        Vector3 origin = new Vector3(10000f, 20f, 10000f);
+        SetPoints(course, new[] { origin, origin + Vector3.forward * 100f }, false);
+        GameObject root = new GameObject("Wall driving validation");
+        try
+        {
+            LapManager manager = root.AddComponent<LapManager>();
+            SerializedObject settings = new SerializedObject(manager);
+            settings.FindProperty("raceCourse").objectReferenceValue = course;
+            settings.FindProperty("respawnWhenOffCourse").boolValue = true;
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            GameObject car = new GameObject("Wall driving car");
+            car.transform.SetParent(root.transform);
+            Rigidbody body = car.AddComponent<Rigidbody>();
+            body.isKinematic = true;
+            var data = new LapManager.CarTimeData { rb = body, carName = car.name };
+            MethodInfo update = typeof(LapManager).GetMethod("UpdateCourseState", BindingFlags.Instance | BindingFlags.NonPublic);
+            foreach (int side in new[] { -1, 1 })
+            {
+                GameObject wall = new GameObject("Driving wall");
+                wall.transform.SetParent(root.transform);
+                RaceBarrierPath path = wall.AddComponent<RaceBarrierPath>();
+                path.SetWorldPath(new[] { origin + Vector3.right * (side * 5f),
+                    origin + Vector3.right * (side * 5f) + Vector3.forward * 100f }, side, false, null, null, true);
+                MeshFilter visual = wall.GetComponentInChildren<MeshFilter>();
+                Vector3[] vertices = visual.sharedMesh.vertices;
+                // Test every section, including the point furthest out and the inward return.
+                float maximumX = 0f;
+                for (int section = 0; section <= 32; section++)
+                {
+                    Vector3 position = visual.transform.TransformPoint(vertices[section]) + Vector3.forward * 50f;
+                    maximumX = Mathf.Max(maximumX, Mathf.Abs(position.x - origin.x));
+                    Require(course.IsPointInsideDrivingArea(position), $"Wall section {side}/{section} is drivable.");
+                    body.position = position;
+                    data.isOffCourse = true;
+                    data.offCourseTimer = 1f;
+                    update.Invoke(manager, new object[] { data, 3f });
+                    Require(!data.isOffCourse && data.offCourseTimer == 0f, "Wall driving clears the off-course timer.");
+                    Near(body.position, position, "Wall driving must not respawn after the timeout");
+                }
+                Vector3 onWall = origin + new Vector3(side * 12f, 5f, 50f);
+                Require(!course.IsPointInsideCourse(onWall) && course.IsPointInsideDrivingArea(onWall),
+                    "The wall extends the driving area without changing the road band.");
+                Vector3 beyond = origin + new Vector3(side * (maximumX + .2f), 5f, 50f);
+                Require(!course.IsPointInsideDrivingArea(beyond), "The driving area ends at the wall's outer extent.");
+                settings.Update();
+                settings.FindProperty("respawnWhenOffCourse").boolValue = false;
+                settings.ApplyModifiedPropertiesWithoutUndo();
+                body.position = beyond;
+                update.Invoke(manager, new object[] { data, 3f });
+                Require(data.isOffCourse && data.offCourseTimer >= 3f, "Leaving the wall still starts off-course detection.");
+                settings.Update();
+                settings.FindProperty("respawnWhenOffCourse").boolValue = true;
+                settings.ApplyModifiedPropertiesWithoutUndo();
+                Require(!course.IsPointInsideDrivingArea(origin + new Vector3(side * 12f, 5f, -1f)),
+                    "An open wall must not extend past its end.");
+                path.Rebuild();
+                Require(course.IsPointInsideDrivingArea(onWall), "Rebuilding preserves the wall driving area.");
+                path.enabled = false;
+                Require(!course.IsPointInsideDrivingArea(onWall), "Disabled barriers do not extend the driving area.");
+                path.enabled = true;
+                Require(course.IsPointInsideDrivingArea(onWall), "Re-enabling restores the wall driving area.");
+                path.SetWorldPath(new[] { origin + Vector3.right * (side * 5f),
+                    origin + Vector3.right * (side * 5f) + Vector3.forward * 100f }, side, false, null, null, false);
+                Require(!course.IsPointInsideDrivingArea(onWall), "Visual-only barriers are not drivable.");
+                UnityEngine.Object.DestroyImmediate(wall);
+            }
+            Debug.Log("WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+
+    private sealed class RecoveryInput : IDriveInputSource
+    {
+        public int PlayerIndex => 0;
+        public string DeviceId => "WALL_RECOVERY_VALIDATION";
+        public bool IsConnected { get; set; } = true;
+        public DriveInputState CurrentState { get; set; }
+        public void UpdateInput(float dt) { }
+        public void Dispose() { }
+    }
+
+    private static void ValidateWallStuckRecovery(RaceCourse course)
+    {
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        Vector3 origin = new Vector3(10000f, 20f, 10000f);
+        SetPoints(course, new[] { origin, origin + Vector3.forward * 100f }, false);
+        GameObject root = new GameObject("Wall recovery validation");
+        GameObject managerRoot = new GameObject("Inactive recovery game manager");
+        managerRoot.SetActive(false);
+        Gmanager previous = Gmanager.Control;
+        try
+        {
+            Gmanager manager = managerRoot.AddComponent<Gmanager>();
+            manager.state = Gmanager.State.Game;
+            Gmanager.Control = manager;
+            LapManager laps = root.AddComponent<LapManager>();
+            typeof(LapManager).GetField("raceCourse", flags).SetValue(laps, course);
+            GameObject wall = new GameObject("Recovery wall"); wall.transform.SetParent(root.transform);
+            RaceBarrierPath path = wall.AddComponent<RaceBarrierPath>();
+            path.SetWorldPath(new[] { origin + Vector3.right * 5f, origin + new Vector3(5f, 0f, 100f) }, 1, false, null, null, true);
+            Collider wallCollider = wall.GetComponentInChildren<MeshCollider>();
+            GameObject car = new GameObject("Wall recovery car", typeof(DebugMover), typeof(BoxCollider), typeof(CarResetter));
+            car.transform.SetParent(root.transform);
+            Rigidbody body = car.GetComponent<Rigidbody>(); body.useGravity = false;
+            DebugMover mover = car.GetComponent<DebugMover>();
+            typeof(DebugMover).GetMethod("Awake", flags).Invoke(mover, null);
+            CarResetter resetter = car.GetComponent<CarResetter>();
+            typeof(CarResetter).GetMethod("Awake", flags).Invoke(resetter, null);
+            var input = new RecoveryInput { CurrentState = new DriveInputState { pedal = 1f } };
+            resetter.SetInputSource(input);
+            body.position = origin + new Vector3(0f, 1f, 30f);
+            laps.RegisterCar(body); laps.GetCarData(body).lapCount = 1;
+            resetter.SetCourse(course, laps);
+            MethodInfo tick = typeof(CarResetter).GetMethod("FixedUpdate", flags);
+            MethodInfo contact = typeof(CarResetter).GetMethod("RememberWallContact", flags, null,
+                new[] { typeof(Collider), typeof(Vector3) }, null);
+            Vector3 pinned = origin + new Vector3(12f, 5f, 30f);
+            int frames = Mathf.CeilToInt(4.2f / Time.fixedDeltaTime);
+            void Prepare()
+            {
+                typeof(CarResetter).GetMethod("OnDisable", flags).Invoke(resetter, null);
+                typeof(DebugMover).GetField("inputSuppressedUntil", flags).SetValue(mover, float.NegativeInfinity);
+                body.position = pinned; body.rotation = Quaternion.identity;
+                body.WakeUp();
+                input.CurrentState = new DriveInputState { pedal = 1f }; input.IsConnected = true;
+            }
+            void Step(bool touching = true)
+            {
+                if (touching) contact.Invoke(resetter, new object[] { wallCollider, Vector3.left });
+                tick.Invoke(resetter, null);
+            }
+            Prepare();
+            for (int i = 0; i < frames * 2; i++)
+            { body.position = pinned + Vector3.forward * (i * Time.fixedDeltaTime * 2f); Step(); }
+            Require(resetter.AutomaticRecoveryCount == 0, "Smooth wall driving must not trigger stuck recovery.");
+            Prepare(); input.CurrentState = DriveInputState.Neutral;
+            for (int i = 0; i < frames; i++) Step();
+            Require(resetter.AutomaticRecoveryCount == 0, "Parking against a wall without input must not recover.");
+            Prepare(); input.IsConnected = false;
+            for (int i = 0; i < frames; i++) Step();
+            Require(resetter.AutomaticRecoveryCount == 0, "Disconnected input must not cause wall recovery.");
+            Prepare();
+            contact.Invoke(resetter, new object[] { wallCollider, Vector3.left });
+            typeof(CarResetter).GetField("lastWallContactTime", flags).SetValue(resetter, Time.fixedTime - .2f);
+            for (int i = 0; i < frames; i++) Step(false);
+            Require(resetter.AutomaticRecoveryCount == 0, "An old wall contact must not recover an airborne car.");
+            GameObject support = new GameObject("Non-wall contact", typeof(BoxCollider));
+            support.transform.SetParent(root.transform);
+            Prepare();
+            for (int i = 0; i < frames; i++)
+            { contact.Invoke(resetter, new object[] { support.GetComponent<Collider>(), Vector3.up }); Step(false); }
+            Require(resetter.AutomaticRecoveryCount == 0, "A flat floor must not count as a wall contact.");
+            support.AddComponent<Rigidbody>().useGravity = false;
+            Prepare();
+            for (int i = 0; i < frames; i++)
+            { contact.Invoke(resetter, new object[] { support.GetComponent<Collider>(), Vector3.left }); Step(false); }
+            Require(resetter.AutomaticRecoveryCount == 0, "Contact with another dynamic car must not count as a wall.");
+            Prepare();
+            for (int i = 0; i < frames && resetter.AutomaticRecoveryCount == 0; i++)
+            {
+                body.position = pinned + Vector3.forward * (i % 2 == 0 ? .15f : -.15f);
+                body.linearVelocity = Vector3.forward * 2f;
+                Step();
+            }
+            Require(resetter.AutomaticRecoveryCount == 1 && resetter.RecoveryReason == "stuck" &&
+                course.IsPointInsideCourse(body.position) && body.position.y < origin.y + 2f,
+                "Wall jitter with no grounded tires must recover to the safe road.");
+            Require(laps.GetCarData(body).lapCount == 1 && body.linearVelocity == Vector3.zero,
+                "Recovery must preserve the lap and stop the trapped car's velocity.");
+            Prepare();
+            contact.Invoke(resetter, new object[] { wallCollider, Vector3.left });
+            typeof(CarResetter).GetField("lastWallContactTime", flags).SetValue(resetter, Time.fixedTime - .2f);
+            body.Sleep();
+            Require(body.IsSleeping(), "The stationary wall case must exercise a sleeping rigidbody.");
+            for (int i = 0; i < frames && resetter.AutomaticRecoveryCount == 1; i++) Step(false);
+            Require(resetter.AutomaticRecoveryCount == 2, "Sleeping wall contacts must still trigger recovery without collision-stay messages.");
+            Prepare(); input.CurrentState = new DriveInputState { pedal = -1f };
+            GameObject blocker = new GameObject("Occupied recovery lanes", typeof(BoxCollider), typeof(Rigidbody));
+            blocker.transform.SetParent(root.transform);
+            blocker.GetComponent<Rigidbody>().isKinematic = true;
+            blocker.GetComponent<BoxCollider>().size = new Vector3(20f, 4f, 10f);
+            blocker.transform.position = origin + new Vector3(0f, 1f, 30f); Physics.SyncTransforms();
+            for (int i = 0; i < frames; i++) Step();
+            Require(resetter.AutomaticRecoveryCount == 2 && resetter.IsRecoveryPending,
+                "Reverse input must request recovery but wait while the road is occupied.");
+            UnityEngine.Object.DestroyImmediate(blocker); Physics.SyncTransforms(); Step();
+            Require(resetter.AutomaticRecoveryCount == 3 && !resetter.IsRecoveryPending,
+                "Pending wall recovery must complete as soon as a lane clears.");
+            Debug.Log("WALL_STUCK_RECOVERY_PASS: smooth driving, neutral/disconnected input, stale contacts, ungrounded jitter, sleeping contacts, safe road/lap preservation, reverse input, occupied-road retry.");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+            UnityEngine.Object.DestroyImmediate(managerRoot);
+            Gmanager.Control = previous;
         }
     }
 
