@@ -108,7 +108,13 @@ public static class SteeringResponseValidation
             float ratio=(half.heldYaw/half.heldSpeed)/(full.heldYaw/full.heldSpeed);
             Require(Mathf.Abs(ratio-.5f)<.08f,"The physical half-turn must retain approximately half the curvature.");
         }
-        foreach(string condition in new[]{"ground","air","oil","suppressed","no-grip"})ValidateGuard(condition);
+        SimulationMode previous=Physics.simulationMode;
+        Physics.simulationMode=SimulationMode.Script;
+        try
+        {
+            foreach(string condition in new[]{"ground","air","oil","suppressed","no-grip"})ValidateGuard(condition);
+        }
+        finally {Physics.simulationMode=previous;}
         SteeringValidation.Run(); DriftValidation.Run(); RoadSeamValidation.Run();
         Debug.Log("RESPONSIVE_STEERING_PASS: 18 physical angle/speed trials, 5 eligibility guards, calibrated input, drift and seam regressions.");
     }
@@ -142,7 +148,13 @@ public static class SteeringResponseValidation
             Rigidbody body=CreateCar(root,out DebugMover mover,out Input input,out CarStabilityController stability);
             body.linearVelocity=Vector3.forward*20;
             input.CurrentState=new DriveInputState {steering=90f/6.5f};
-            if(condition=="air"){body.position+=Vector3.up*20;Physics.SyncTransforms();}
+            if(condition=="air")
+            {
+                body.transform.position=body.position+Vector3.up*20;
+                Physics.SyncTransforms();
+                foreach(GroundCheck ground in body.GetComponentsInChildren<GroundCheck>())
+                    Require(!ground.CheckNow(),"The airborne fixture must have no wheel contact.");
+            }
             if(condition=="suppressed")mover.SuppressInputAfterRespawn();
             if(condition=="no-grip")typeof(DebugMover).GetField("enableLateralTireForces",Private).SetValue(mover,false);
             if(condition=="oil")
@@ -151,8 +163,9 @@ public static class SteeringResponseValidation
                 Call(effects,"Awake");Require(effects.ApplyOil(),"The guard fixture must actually be oiled.");
             }
             Call(mover,"ReadInput");
+            Vector3 before=body.GetAccumulatedTorque();
             typeof(DebugMover).GetMethod("ApplyDriftSpinProtection",Private).Invoke(mover,new object[]{.02f});
-            float torque=body.GetAccumulatedTorque().magnitude;
+            float torque=(body.GetAccumulatedTorque()-before).magnitude;
             Require(condition=="ground"?torque>.01f:torque<.0001f,"Unexpected steering assistance in "+condition);
         }
         finally {UnityEngine.Object.DestroyImmediate(root);}
