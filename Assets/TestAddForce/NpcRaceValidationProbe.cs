@@ -30,6 +30,7 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
     }
     [Serializable] private sealed class Report
     {
+        public string mode="full-race";
         public bool success, countdownStopped, cpuFinishKeptHumansRacing, resultsContainFour, retryCreatesNewCpus;
         public float simulatedSeconds;
         public int cpuOvertakes, humanOvertakes;
@@ -61,6 +62,7 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
         foreach (RaceItemPickup pickup in FindObjectsByType<RaceItemPickup>(FindObjectsSortMode.None)) pickup.gameObject.SetActive(false);
         if (Environment.GetEnvironmentVariable("RACING_NPC_RECOVERY_ONLY") == "1")
         {
+            report.mode="recovery-only";
             typeof(Gmanager).GetMethod("StartGameWhenScreenCovered", Private).Invoke(manager, null);
             yield return ValidateRecovery();
             report.success=report.occupiedRecoveryRejected && report.visibleRecoveryRejected && report.hiddenRecoverySucceeded && report.checkpointStatePreserved && report.droveAfterRecovery && report.automaticRecoverySucceeded && report.humanContactGraceSucceeded && report.humanContactGraceReleased;
@@ -208,6 +210,7 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
         report.occupiedRecoveryRejected = driver.RecoveryCount==before && Vector3.Distance(cpu.Body.position,fallen)<.01f;
         blockedRoad.SetActive(false); Destroy(blockedRoad); Physics.SyncTransforms();
         otherCpu.Body.position = new Vector3(2600,100,2500);
+        Physics.SyncTransforms();
         Camera viewed = manager.GetPlayerViewCamera(0);
         Vector3 cameraPosition=safe.position+Vector3.up*3-Vector3.forward*20;
         viewed.transform.SetPositionAndRotation(cameraPosition,Quaternion.LookRotation(safe.position-cameraPosition));

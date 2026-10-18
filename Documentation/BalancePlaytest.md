@@ -25,7 +25,7 @@ Editorのドメイン再読み込みをまたぐ起動状態は `SessionState` �
 
 ## 試走条件と記録
 
-同速2条件、速い側を入れ替えた速度差2条件、両者低速、アイテムあり2条件、復帰支援あり、途中停止の計9条件があります。Unityの乱数seedを記録しますが、物理やCPUの展開が完全に一致する保証はありません。周回数は現在のシーン設定を読み、通常の全体360秒・人間先着後40秒の終了条件を使います。
+同速2条件、速い側を入れ替えた速度差2条件、両者低速、アイテムあり2条件、復帰支援あり、途中停止の計9条件があります。Unityの乱数seedを記録しますが、物理やCPUの展開が完全に一致する保証はありません。周回数は現在のシーン設定を読み、通常の全体360秒・人間先着後40〜180秒の終了条件を使います。猶予は残距離とそれまでのペースに応じて設定されます。
 
 約0.1物理秒ごとに全車の位置・速度・入力・進捗・周回・順位・アイテム状態を `trace.csv` へ保存します。接触・被弾・逸脱・復帰・停止などは `events.csv`、各試走と全体の集計は `summary.json` と `report.json` に保存します。公式ゲーム時計と物理積算時間は別の値として記録します。
 
@@ -61,5 +61,9 @@ RACING_BALANCE_RUN=equal-control-101,items-402 Tools/RunBalancePlaytest.sh
 
 ```sh
 RACING_BALANCE_SKILL_SUITE=1 RACING_BALANCE_TIME_SCALE=6 \
-RACING_BALANCE_OUTPUT="$PWD/Artifacts/SkillPlaytest/Before" Tools/RunBalancePlaytest.sh
+RACING_BALANCE_OUTPUT="$PWD/Artifacts/SkillPlaytest/Recheck" Tools/RunBalancePlaytest.sh
 ```
+
+初心者・慎重派は、画面にジャンプ案内が表示された場合に0.35秒後に助走するモデルです。再接続・復帰後はペダル解放案内に応じて0.3秒間中立にします。これは案内を理解することを仮定した入力であり、人による理解度の検証ではありません。
+
+試走結果、改善途中の失敗、21項目の修正、通常速度の追加確認は [レベル別試走レポート](../Artifacts/SkillPlaytest/README.md) を参照してください。保存済み最終6条件の不変条件は `python3 Tools/VerifySkillPlaytest.py Artifacts/SkillPlaytest/After` で検証できます。

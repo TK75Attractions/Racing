@@ -26,8 +26,15 @@ public static class SkillGameplayValidation
     {
         Run();
         ModernUIValidation.Run();
+        RacingPolishValidation.Run();
         RoadSeamValidation.RunAllFixes();
         Debug.Log("SKILL_GAMEPLAY_ALL_PASS");
+    }
+    public static void RunAllAndRecovery()
+    {
+        RunAll();
+        Environment.SetEnvironmentVariable("RACING_NPC_RECOVERY_ONLY","1");
+        NpcRaceValidation.RunBatch();
     }
     private static void ValidateDriverNotice()
     {
