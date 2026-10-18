@@ -101,7 +101,12 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
         Debug.developerConsoleVisible = false;
         report.renderGraph = (!GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode).ToString();
         rigs = (PlayerDisplayRig[])typeof(Gmanager).GetField("displayRigs",Private).GetValue(manager);
-        if (Display.displays.Length == 1)
+        if (RacePlayerWindows.UsesNativeWindow)
+        {
+            report.outputMode = "P1 and P2 independent desktop windows";
+            presenter = rigs[1].CameraRoot.GetComponent<RenderGraphDisplayOutput>();
+        }
+        else if (Display.displays.Length == 1)
         {
             report.outputMode = "Single physical display; P1 native window, P2 1920x1080 offscreen stack presented to Display 1";
             var cameras = Cameras(rigs[1]); foreach (Camera camera in cameras) camera.targetDisplay = 0;

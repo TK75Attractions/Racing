@@ -67,7 +67,7 @@ public class Gmanager : MonoBehaviour
     [SerializeField, Min(60f)] private float maximumRaceSeconds = 360f;
 
     [Header("Displays")]
-    [Tooltip("P1 uses the main game window (Display 1). P2's output display number, as shown in the Game view. With an external main display, select the other external display here.")]
+    [Tooltip("P1 uses the main game window. On macOS, P2 opens a movable window on this preferred screen (or the main screen if unavailable). In the Editor, this is P2's Game view display number.")]
     [SerializeField, Range(2, 8)] private int playerTwoDisplay = 2;
     public int PlayerTwoDisplayIndex => playerTwoDisplay - 1;
 
