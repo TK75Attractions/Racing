@@ -241,7 +241,8 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
         Collider ownSolid=Array.Find(cpu.Car.GetComponentsInChildren<Collider>(),c=>!c.isTrigger && c.attachedRigidbody==cpu.Body);
         Collider humanSolid=Array.Find(humanCar.Car.GetComponentsInChildren<Collider>(),c=>!c.isTrigger && c.attachedRigidbody==humanCar.Body);
         report.humanContactGraceSucceeded=Physics.GetIgnoreCollision(ownSolid,humanSolid);
-        humanCar.Body.position=ahead.position+Vector3.up;
+        // Test expiry after separation; parking on the driving route can cause a new contact.
+        humanCar.Body.position=new Vector3(2600,100,2700); Physics.SyncTransforms();
         yield return new WaitForSeconds(3f);
         report.humanContactGraceReleased=!Physics.GetIgnoreCollision(ownSolid,humanSolid);
     }
