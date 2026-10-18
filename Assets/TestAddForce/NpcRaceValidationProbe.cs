@@ -108,7 +108,10 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
     private void FinishReport()
     {
         File.WriteAllText(Path.Combine(output, "report.json"), JsonUtility.ToJson(report,true)); trace.Dispose(); trace = null;
-        Type.GetType("NpcRaceValidation, Assembly-CSharp-Editor").GetMethod("Finish").Invoke(null,new object[]{report.success, report.success ? "NPC_RACE_PASS: four actual cars, CPU laps/jump/landing, overtakes, human finish policy, results, retry and guarded recovery" : JsonUtility.ToJson(report)});
+        string successMessage=report.mode=="recovery-only"
+            ? "NPC_RECOVERY_PASS: occupied/visible guards, backward retry, preserved laps, driving, automatic recovery and contact-grace expiry"
+            : "NPC_RACE_PASS: four actual cars, CPU laps/jump/landing, overtakes, human finish policy, results, retry and guarded recovery";
+        Type.GetType("NpcRaceValidation, Assembly-CSharp-Editor").GetMethod("Finish").Invoke(null,new object[]{report.success, report.success ? successMessage : JsonUtility.ToJson(report)});
     }
     private void FixedUpdate()
     {
