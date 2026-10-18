@@ -198,18 +198,29 @@ test('Raw section preserves TEL, TX direction, CRLF and untrusted text without t
   assert.match(ui.elements.get('latest-tel').textContent,/ハンドル 左 30°、アクセル 70.0%、ブレーキ 10.0%/);
   ui.context.setConnection(false);assert.equal(log.children.length,0);
 });
-test('Hardware uses explicit evidence and never invents pedal connectivity from zero inputs',()=>{
-  const ui=fixture();const hardware={sessionOpen:true,recent:true,state:'READY',ads:'Ok',imu:'Fault',imuAddress:'0x68',imuIdentity:'0x68'};
-  ui.render({...base,serial:{portOpen:true,lines:[]},hardware});
+const healthyHardware = {sessionOpen:true,recent:true,state:'READY',ads:'Ok',imu:'Ok',generation:1,
+  inputFresh:true,telemetryEnabled:true,invalidTelemetry:false,angleLocked:true,calibrated:true,
+  imus:[{address:'0x68',identity:'0x68',status:'Ok'},{address:'0x69',identity:'0x68',status:'Fault'}],
+  pedals:[{number:1,accel:0,brake:0},{number:2,accel:.7,brake:.3}],commands:[]};
+test('Hardware shows both IMUs and validates independent pedal values including zero',()=>{
+  const ui=fixture();
+  ui.render({...base,serial:{portOpen:true,lines:[]},hardware:healthyHardware});
   const cards=ui.elements.get('hardware-grid').children;
-  assert.match(cards[0].textContent,/通信中/);assert.match(cards[1].textContent,/異常・接続要確認/);
-  assert.match(cards[2].textContent,/動作確認済み/);
-  assert.match(cards[3].textContent,/物理接続：未確認/);assert.match(cards[4].textContent,/物理接続：未確認/);
-  assert.equal(ui.elements.get('serial-send').disabled,false);
-  ui.render({...base,serial:{portOpen:true,lines:[]},hardware:{...hardware,recent:false}});
-  assert.ok(ui.elements.get('hardware-grid').children.slice(1).every(card=>!card.textContent.includes('動作確認済み')));
+  assert.equal(cards.length,6);
+  assert.match(cards[1].textContent,/IMU 1.*動作確認済み.*0x68/);
+  assert.match(cards[2].textContent,/IMU 2.*異常・接続要確認.*0x69/);
+  assert.match(cards[4].textContent,/P1 ペダル.*動作確認済み.*アクセル 0%/);
+  assert.match(cards[5].textContent,/P2 ペダル.*動作確認済み.*アクセル 70%.*ブレーキ 30%/);
+  ui.render({...base,serial:{portOpen:true,lines:[]},hardware:{...healthyHardware,pedals:[{number:1,accel:2,brake:0},healthyHardware.pedals[1]]}});
+  assert.match(ui.elements.get('hardware-grid').children[4].textContent,/入力データ異常/);
+  assert.match(ui.elements.get('hardware-grid').children[5].textContent,/動作確認済み/);
+  for(const [overrides,label] of [[{inputFresh:false},'正常な入力を受信できません'],[{invalidTelemetry:true},'入力データ異常'],
+    [{ads:'Fault'},'センサー異常'],[{telemetryEnabled:false},'入力配信停止中'],[{recent:false},'入力未確認']]) {
+    ui.render({...base,serial:{portOpen:true,lines:[]},hardware:{...healthyHardware,...overrides}});
+    assert.ok(ui.elements.get('hardware-grid').children[4].textContent.includes(label));
+  }
   assert.equal(ui.elements.get('serial-send').disabled,true);
-  ui.render({...base,serial:{portOpen:true,lines:[]},hardware},{canControl:false});
+  ui.render({...base,serial:{portOpen:true,lines:[]},hardware:healthyHardware},{canControl:false});
   assert.equal(ui.elements.get('serial-send').disabled,true);
 });
 test('Players can select cars and practice independently, including timeouts and waiting',()=>{
@@ -247,4 +258,38 @@ test('Race buttons advance selection and tutorial with mixed player preparation'
   ui.render({...base,state:'Tutorial',playerProgress:[{state:'Tutorial'},{state:'Tutorial'}]});
   assert.deepEqual(enabled(),['countdown']);
   ui.render({...base,state:'Countdown'});assert.deepEqual(enabled(),[]);
+});
+function trackCommand(ui,command,sequence=8) {
+  vm.runInContext(`commandRequest = {command:${JSON.stringify(command)},sequence:${sequence},generation:1,sessionId:'unity'}`,ui.context);
+}
+function commandSnapshot(command,status,data=[],sequence=8) {
+  return {...base,sessionId:'unity',serial:{portOpen:true,lines:[]},hardware:{...healthyHardware,commands:[{sequence,command,status,data,devices:['0x48','0x68']}]}};
+}
+test('Structured command results show status, configuration, progress, completion and failures inline',()=>{
+  const ui=fixture();trackCommand(ui,'GET_CONFIG');
+  ui.render(commandSnapshot('GET_CONFIG','OK',['8','GET_CONFIG','OK','TEL_RATE','50','IMU_RATE','20','TEL_STREAM','1','IMU_STREAM','0','DBG_STREAM','0','BETA','0.200']));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'完了');
+  assert.match(ui.elements.get('serial-command-values').textContent,/入力の送信頻度50 Hz/);
+  assert.ok(!ui.elements.get('serial-command-result').textContent.includes('@ACK'));
+  trackCommand(ui,'GET_STATUS');ui.render(commandSnapshot('GET_STATUS','OK',['8','GET_STATUS','OK','READY','1','0','1','0']));
+  assert.match(ui.elements.get('serial-command-values').textContent,/IMU全体異常.*校正未完了/);
+  trackCommand(ui,'CALIBRATE');ui.render(commandSnapshot('CALIBRATE','ACCEPTED',['8','CALIBRATE','ACCEPTED','GYRO']));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'実行中');
+  ui.render(commandSnapshot('CALIBRATE','DONE',['CAL_DONE','8','GYRO']));
+  assert.match(ui.elements.get('serial-command-status').textContent,/校正が完了/);
+  assert.match(ui.elements.get('serial-command-values').textContent,/ジャイロ/);
+  trackCommand(ui,'SCAN_I2C');ui.render(commandSnapshot('SCAN_I2C','DONE',['I2C_SCAN_END','8','2']));
+  assert.match(ui.elements.get('serial-command-values').textContent,/検出数2台.*0x48 \/ 0x68/);
+  ui.render(commandSnapshot('SCAN_I2C','UNSUPPORTED',['8','SCAN_I2C','UNSUPPORTED']));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'失敗');
+  assert.match(ui.elements.get('serial-command-status').textContent,/対応していません/);
+  ui.render(commandSnapshot('SCAN_I2C','TIMEOUT'));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'結果未確認');
+});
+test('Unrelated results and new device sessions cannot complete an operator request',()=>{
+  const ui=fixture();trackCommand(ui,'PING');ui.context.showCommandResult('waiting','応答待ち');
+  ui.render(commandSnapshot('PING','OK',['9','PING','OK','PONG'],9));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'応答待ち');
+  const snapshot=commandSnapshot('PING','OK',['8','PING','OK','PONG']);snapshot.hardware.generation=2;
+  ui.render(snapshot);assert.equal(ui.elements.get('serial-command-badge').textContent,'結果未確認');
 });

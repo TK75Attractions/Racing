@@ -64,7 +64,7 @@
         <section class="panel hardware" aria-labelledby="hardware-title">
           <div class="panel-heading"><div><span class="section-kicker">04 / DEVICE HEALTH</span><h2 id="hardware-title">機器・接続状態</h2></div><span class="mini-status" id="hardware-state">未確認</span></div>
           <div class="hardware-grid" id="hardware-grid"></div>
-          <p class="control-note">ADS1115・IMUは装置の状態通知を表示します。各ペダルの物理接続は現行プロトコルでは判別できません。入力が0でも未接続とは判定しません。</p>
+          <p class="control-note">ペダルは有効な入力の継続受信で動作を確認します。0%は正常な入力です。物理的な断線の判定には対応していません。IMUは通知されたアドレスごとに表示します。</p>
         </section>
         <section class="panel serial-controls" aria-labelledby="serial-controls-title">
           <div class="panel-heading"><div><span class="section-kicker">05 / SERIAL COMMANDS</span><h2 id="serial-controls-title">ESP32へ送信</h2></div></div>
@@ -84,7 +84,13 @@
             <p class="control-note" id="serial-command-help">状態とセンサーの動作状況を照会します。</p>
             <button id="serial-send" class="command-send" type="submit" disabled>ESP32へ送信</button>
           </form>
-          <p id="serial-command-status" role="status">シリアル接続を待っています。</p><p id="serial-command-last" class="control-note"></p>
+          <div id="serial-command-result" class="command-result" aria-live="polite" aria-atomic="true">
+            <div class="command-result-heading"><h3 id="serial-command-title">実行結果</h3><span id="serial-command-badge" class="result-badge">待機中</span></div>
+            <ol id="serial-command-steps" class="command-steps" aria-label="操作の進行状況"></ol>
+            <p id="serial-command-status" role="status">シリアル接続を待っています。</p>
+            <dl id="serial-command-values" class="command-values"></dl>
+            <p id="serial-command-last" class="control-note"></p>
+          </div>
         </section>
         <section class="panel raw-serial" aria-labelledby="raw-title">
           <div class="panel-heading"><div><span class="section-kicker">06 / RAW SERIAL</span><h2 id="raw-title">シリアル生データ</h2></div><button id="raw-pause" type="button">表示を一時停止</button></div>

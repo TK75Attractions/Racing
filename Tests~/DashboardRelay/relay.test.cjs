@@ -226,7 +226,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         assert.ok(!(await page.locator('#serial-log').innerText()).includes('@TEL,'));
         await page.locator('#raw-log').filter({hasText:'@TEL,'}).waitFor();
         assert.equal(await page.locator('[data-flow-state]').count(),7);
-        assert.equal(await page.locator('#hardware-grid .hardware-card').count(),5);
+        assert.equal(await page.locator('#hardware-grid .hardware-card').count(),6);
         assert.equal(await page.locator('#serial-send').isDisabled(),true);
         await page.locator('#raw-pause').click();
         assert.match(await page.locator('#raw-status').innerText(),/一時停止/);
@@ -312,9 +312,10 @@ test('Serial Lab → real PTY receiver → production bridge → WebSocket, 100 
         await page.locator('#serial-send:enabled').waitFor();
         assert.match(await page.locator('#hardware-grid').innerText(),/通信中/);
         assert.match(await page.locator('#hardware-grid').innerText(),/動作確認済み/);
-        assert.match(await page.locator('#hardware-grid').innerText(),/物理接続：未確認/);
+        assert.match(await page.locator('#hardware-grid').innerText(),/P1 ペダル[\s\S]*動作確認済み/);
         await page.selectOption('#serial-command','GET_CONFIG');await page.click('#serial-send');
-        await page.locator('#serial-command-status').filter({hasText:'を送信しました'}).waitFor();
+        await page.locator('#serial-command-badge').filter({hasText:'完了'}).waitFor();
+        assert.match(await page.locator('#serial-command-values').innerText(),/入力の送信頻度/);
         await page.locator('#serial-log').filter({hasText:'入力の送信頻度'}).waitFor();
         await page.locator('#raw-log').filter({hasText:'@TEL,'}).waitFor();
         await page.screenshot({path:path.join(root,'Artifacts/DashboardRealtime/operator-desktop.png'),fullPage:true});
