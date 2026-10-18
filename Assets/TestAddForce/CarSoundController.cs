@@ -32,6 +32,11 @@ public class CarSoundController : MonoBehaviour
     private void Update()
     {
         if (carRigidbody == null || audioCore == null) return;
+        if (Gmanager.Control != null && !Gmanager.Control.IsEngineAudioActive(carRigidbody))
+        {
+            MuteEngine();
+            return;
+        }
         if (Time.time >= nextEnvironmentCheck)
         {
             nextEnvironmentCheck = Time.time + .1f;
@@ -46,5 +51,13 @@ public class CarSoundController : MonoBehaviour
         currentGear = gearbox.Gear; currentRpm = gearbox.Rpm;
         audioCore.SetEngineState(currentRpm, gearbox.Load, Mathf.Clamp01(masterVolume) * RaceAudioSettings.Engine *
             (Time.timeScale > 0f ? 1f : 0f), gearbox.Combustion, gearbox.ShiftSerial, boost, tunnelAmount);
+    }
+
+    private void OnDisable() => MuteEngine();
+
+    private void MuteEngine()
+    {
+        if (audioCore != null)
+            audioCore.SetEngineState(AutomaticGearbox.IdleRpm, 0f, 0f, 0f, 0, 0f, 0f);
     }
 }

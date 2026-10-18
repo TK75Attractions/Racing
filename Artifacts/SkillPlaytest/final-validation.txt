@@ -1,0 +1,20 @@
+Editor gameplay/UI/physics/audio/display regressions passed.
+The NPC run below used recovery-only mode; the historical NPC_RACE_PASS log text is broader than this run. See NpcRecovery/report.json for the nine checks actually run. The logger is now mode-specific.
+
+SKILL_GAMEPLAY_RULES_PASS
+UI_IDLE_VALIDATION_PASS: 120 unchanged frames produce zero ring/button/standings rebuilds; changed values still update.
+UI_HOT_PATH_VALIDATION_PASS: 3601 speed inputs -> 50 gauge rebuilds; changing charge -> zero static-ring rebuilds; 1000 time/speed/boost updates -> 0 managed bytes.
+BUTTON_STATE_VALIDATION_PASS: 50% hold, retained MAX after release, disabled state, settled 120 frames with zero rebuilds/allocations.
+MODERN_UI_VALIDATION_PASS: fonts, backgrounds, both player HUDs, live timing, lap counts, speed, spectator and ESC actions.
+RACING_POLISH_VALIDATION_PASS: nearest road, jump-gap exclusion, slope clearance, lap state, current tutorial instruction and display-aware dropdowns.
+ROAD_SEAM_VALIDATION_PASS: 9 real-car step crossings and open-edge takeoff.
+RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+UI_IDLE_VALIDATION_PASS: 120 unchanged frames produce zero ring/button/standings rebuilds; changed values still update.
+UI_HOT_PATH_VALIDATION_PASS: 3601 speed inputs -> 50 gauge rebuilds; changing charge -> zero static-ring rebuilds; 1000 time/speed/boost updates -> 0 managed bytes.
+BUTTON_STATE_VALIDATION_PASS: 50% hold, retained MAX after release, disabled state, settled 120 frames with zero rebuilds/allocations.
+MODERN_UI_VALIDATION_PASS: fonts, backgrounds, both player HUDs, live timing, lap counts, speed, spectator and ESC actions.
+PlayerAudioValidation PASSED: independent final laps, spectator, retry, single lap, menu tracks, stereo viewpoint and no default-output leakage.
+MULTI_DISPLAY_VALIDATION_PASS: Render Graph enabled, no compatibility define; Display 1/3 routing; unequal-size output pairs; stable UI; explicit stack color/depth target resize, reuse and cleanup; presentation shader.
+REQUESTED_RACING_FIXES_VALIDATION_PASS
+SKILL_GAMEPLAY_ALL_PASS
+NPC_RACE_PASS: four actual cars, CPU laps/jump/landing, overtakes, human finish policy, results, retry and guarded recovery

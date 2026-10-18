@@ -1,0 +1,12 @@
+ROAD_SEAM_VALIDATION_PASS: 9 real-car step crossings and open-edge takeoff.
+RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+UI_IDLE_VALIDATION_PASS: 120 unchanged frames produce zero ring/button/standings rebuilds; changed values still update.
+UI_HOT_PATH_VALIDATION_PASS: 3601 speed inputs -> 50 gauge rebuilds; changing charge -> zero static-ring rebuilds; 1000 time/speed/boost updates -> 0 managed bytes.
+BUTTON_STATE_VALIDATION_PASS: 50% hold, retained MAX after release, disabled state, settled 120 frames with zero rebuilds/allocations.
+MODERN_UI_VALIDATION_PASS: fonts, backgrounds, both player HUDs, live timing, lap counts, speed, spectator and ESC actions.
+PlayerAudioValidation PASSED: independent final laps, spectator, retry, single lap, menu tracks, stereo viewpoint and no default-output leakage.
+MULTI_DISPLAY_VALIDATION_PASS: Render Graph enabled, no compatibility define; Display 1/3 routing; unequal-size output pairs; stable UI; explicit stack color/depth target resize, reuse and cleanup; presentation shader.
+REQUESTED_RACING_FIXES_VALIDATION_PASS
+RGP: 54 passed, 0 failed
+Dashboard browser unit tests: 19 passed, 0 failed
+RACING_FIX_PREVIEWS_PASS: result selection left/right, countdown 3/2/1 and GO rendered and visually inspected.

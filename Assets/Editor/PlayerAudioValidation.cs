@@ -38,6 +38,15 @@ public static class PlayerAudioValidation
                 players.SetValue(player, i);
             }
 
+            RaceAudioOutput audioOutput = root.AddComponent<RaceAudioOutput>();
+            Set(audioOutput, "sampleRate", AudioSettings.outputSampleRate);
+            Set(audioOutput, "accepting", true);
+            typeof(RaceAudioOutput).GetMethod("OnAudioConfigurationChanged", Private)
+                .Invoke(audioOutput, new object[] { true });
+            Require((bool)Get(audioOutput, "accepting"),
+                "A default-device notification at the same DSP rate must not interrupt independent outputs.");
+            Set(audioOutput, "accepting", false);
+
             RaceBackgroundMusic music = root.AddComponent<RaceBackgroundMusic>();
             Call(music, "Awake");
             AudioSource[] sources = (AudioSource[])Get(music, "sources");
@@ -89,6 +98,14 @@ public static class PlayerAudioValidation
             arguments[0] = 1;
             typeof(PlayerAudioCapture).GetMethod("GetPerspectiveGains", Private).Invoke(capture, arguments);
             Require((float)arguments[2] == 0 && (float)arguments[3] == 0, "Distant engines must be silent in the other viewpoint.");
+            foreach (Gmanager.State silentState in new[] { Gmanager.State.Goal, Gmanager.State.Result, Gmanager.State.Title })
+            {
+                manager.state = silentState;
+                arguments[0] = 0;
+                typeof(PlayerAudioCapture).GetMethod("GetPerspectiveGains", Private).Invoke(capture, arguments);
+                Require((float)arguments[2] == 0 && (float)arguments[3] == 0,
+                    "Engine PCM must be silent during " + silentState);
+            }
             float[] pcm = { .5f, -.5f, 1f, -1f };
             typeof(PlayerAudioCapture).GetMethod("OnAudioFilterRead", Private).Invoke(capture, new object[] { pcm, 2 });
             Require(pcm.All(sample => sample == 0), "Captured audio must never leak into Unity's default output.");
@@ -103,7 +120,7 @@ public static class PlayerAudioValidation
                 outputType.GetMethod("ra_shutdown", nativeFlags).Invoke(null, null);
                 Require(count >= 0, "Unity must load the native plugin and enumerate real audio endpoints.");
             }
-            Debug.Log("PlayerAudioValidation PASSED: independent final laps, spectator, retry, single lap, menu tracks, stereo viewpoint and no default-output leakage.");
+            Debug.Log("PlayerAudioValidation PASSED: independent final laps, spectator, retry, single lap, menu tracks, stereo viewpoint, unchanged-rate device notification and no default-output leakage.");
         }
         finally
         {

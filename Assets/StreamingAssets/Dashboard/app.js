@@ -24,6 +24,7 @@ let connected = false;
 let currentState = null;
 let lastFrameAt = 0;
 let frameBusy = false;
+let frameGeneration = 0;
 const frameUrls = [null, null];
 
 function setConnection(isConnected) {
@@ -34,6 +35,7 @@ function setConnection(isConnected) {
   badge.querySelector('span').textContent = isConnected ? (localMode ? 'UNITY 接続中' : '遠隔監視中') : (localMode ? 'UNITY 未接続' : '遠隔未接続');
   $('footer-status').textContent = isConnected ? 'Unity からデータを受信中' : 'Unity との接続を確認中';
   if (!isConnected) {
+    frameGeneration++;
     currentState = null;
     $('game-state').textContent = '接続待機';
     $('state-detail').textContent = localMode ? 'Unity を起動してください' : '遠隔データを待っています';
@@ -672,25 +674,38 @@ async function poll() {
 }
 
 async function refreshFrames() {
+  if (frameBusy || !connected) return;
   frameBusy = true;
+  const generation = frameGeneration;
   try {
-    for (let n = 1; n <= 2; n++) {
+    await Promise.all([1, 2].map(async (n) => {
+      let url = null;
       try {
-        const response = await apiFetch(`/api/player/${n}/frame`);
+        const response = await apiFetch(`/api/player/${n}/frame`, { signal: AbortSignal.timeout(5000) });
         if (!response.ok) throw new Error('Camera unavailable');
-        const url = URL.createObjectURL(await response.blob());
+        url = URL.createObjectURL(await response.blob());
+        const decoded = new Image();
+        decoded.src = url;
+        await decoded.decode();
+        if (!connected || generation !== frameGeneration) return;
         const img = $('feed-' + n);
         const old = frameUrls[n - 1];
-        img.onload = () => { if (old) URL.revokeObjectURL(old); };
         img.src = url;
         frameUrls[n - 1] = url;
+        url = null;
         img.hidden = false;
         $('placeholder-' + n).hidden = true;
+        if (old) URL.revokeObjectURL(old);
       } catch {
-        $('feed-' + n).hidden = true;
-        $('placeholder-' + n).hidden = false;
+        // A transient capture failure keeps the last successfully decoded picture visible.
+        if (generation === frameGeneration && !frameUrls[n - 1]) {
+          $('feed-' + n).hidden = true;
+          $('placeholder-' + n).hidden = false;
+        }
+      } finally {
+        if (url) URL.revokeObjectURL(url);
       }
-    }
+    }));
   } finally { frameBusy = false; }
 }
 

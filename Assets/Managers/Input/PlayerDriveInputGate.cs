@@ -11,14 +11,24 @@ public sealed class PlayerDriveInputGate : IDriveInputSource
     public bool IsConnected => source != null && source.IsConnected;
     public bool IsBlocked { get; private set; }
     public bool IsReverse { get; private set; }
+    public bool NeedsPedalRelease { get; private set; }
+    // Used only to retain a reset-button edge while the gate temporarily emits neutral input.
+    public bool ResetButtonHeld => source != null && source.IsConnected && source.CurrentState.resetPressed;
 
     public DriveInputState CurrentState
     {
         get
         {
-            if (IsBlocked || source == null) return DriveInputState.Neutral;
+            if (source == null) return DriveInputState.Neutral;
+            if (!source.IsConnected) { NeedsPedalRelease = true; return DriveInputState.Neutral; }
+            if (IsBlocked) return DriveInputState.Neutral;
 
             DriveInputState state = source.CurrentState;
+            if (NeedsPedalRelease)
+            {
+                if (System.Math.Abs(state.pedal) <= .05f) NeedsPedalRelease = false;
+                return DriveInputState.Neutral;
+            }
             if (IsReverse) state.pedal = -state.pedal;
             return state;
         }
@@ -33,6 +43,7 @@ public sealed class PlayerDriveInputGate : IDriveInputSource
     {
         IsBlocked = blocked;
     }
+    public void RequirePedalRelease() => NeedsPedalRelease = true;
 
     public bool ToggleDirection()
     {
@@ -44,6 +55,7 @@ public sealed class PlayerDriveInputGate : IDriveInputSource
     {
         IsBlocked = false;
         IsReverse = false;
+        NeedsPedalRelease = false;
     }
 
     public void UpdateInput(float deltaTime)

@@ -17,6 +17,7 @@ public class LapManager : MonoBehaviour
         [System.NonSerialized] public float raceProgressDistance;
         [System.NonSerialized] public float verifiedRaceProgressDistance;
         [System.NonSerialized] public bool hasVerifiedProgress;
+        [System.NonSerialized] public bool hasLeftStartArea;
         public int nextCheckpointIndex = 0;
         public int lastCheckpointIndex = -1;
         public int passedCheckpointCount;
@@ -41,7 +42,6 @@ public class LapManager : MonoBehaviour
     [SerializeField] private RaceCourse raceCourse;
     [SerializeField] private CheckpointSensor[] checkpoints = new CheckpointSensor[0];
     [SerializeField] private bool autoFindCheckpoints = true;
-    [SerializeField] private bool allowLapWithoutCheckpoints = true;
     [SerializeField] private int goalLap = DefaultGoalLaps;
 
     [Header("Off Course")]
@@ -57,7 +57,6 @@ public class LapManager : MonoBehaviour
     [SerializeField] private bool resetVelocityOnRespawn = true;
 
     private readonly Dictionary<Rigidbody, CarTimeData> carDataMap = new Dictionary<Rigidbody, CarTimeData>();
-    private int[] checkpointCycle = new int[0];
     private bool raceActive;
     private bool hasProgressReference;
     private bool reverseProgressDirection;
@@ -108,54 +107,8 @@ public class LapManager : MonoBehaviour
         }
     }
 
-    public void OnCarPassCheckpoint(Rigidbody rb, CheckpointSensor checkpoint)
-    {
-        if (!raceActive || rb == null || checkpoint == null)
-        {
-            return;
-        }
-
-        CarTimeData data = GetOrCreateCarData(rb);
-        if (data.isFinished)
-        {
-            return;
-        }
-
-        int checkpointIndex = checkpoint.CheckpointIndex;
-        int checkpointCount = GetCheckpointCount();
-
-        if (data.allCheckpointsPassed)
-        {
-            return;
-        }
-
-        if (checkpointIndex == data.lastCheckpointIndex)
-        {
-            return;
-        }
-
-        if (checkpointIndex != data.nextCheckpointIndex)
-        {
-            Debug.Log($"{data.carName} invalid checkpoint {checkpointIndex}. Next: {data.nextCheckpointIndex}");
-            return;
-        }
-
-        data.lastCheckpointIndex = checkpointIndex;
-        data.passedCheckpointCount++;
-        data.allCheckpointsPassed = data.passedCheckpointCount >= checkpointCount;
-        int cycleIndex = Array.IndexOf(checkpointCycle, checkpointIndex);
-        data.nextCheckpointIndex = checkpointCycle.Length > 0 ? checkpointCycle[(cycleIndex + 1) % checkpointCycle.Length] : checkpointIndex + 1;
-        SetRespawnPoint(data, checkpoint.RespawnPoint);
-
-        if (data.allCheckpointsPassed)
-        {
-            Debug.Log($"{data.carName} all checkpoints passed. Waiting for goal");
-        }
-        else
-        {
-            Debug.Log($"{data.carName} checkpoint {checkpointIndex} passed. Next: {data.nextCheckpointIndex}");
-        }
-    }
+    // Kept for old scene references; checkpoint transforms now serve only as grid anchors.
+    public void OnCarPassCheckpoint(Rigidbody rb, CheckpointSensor checkpoint) { }
 
     public bool OnCarPassGoal(Rigidbody rb)
     {
@@ -180,7 +133,7 @@ public class LapManager : MonoBehaviour
         }
 
         // OnCarPassGoal の通常の周回完了処理を再利用する。
-        data.allCheckpointsPassed = true;
+        data.hasCrossedGoal = true;
         if (finish && goalLap > 0)
         {
             data.lapCount = Mathf.Max(data.lapCount, goalLap - 1);
@@ -197,7 +150,6 @@ public class LapManager : MonoBehaviour
         }
 
         CarTimeData data = GetOrCreateCarData(rb);
-        data.hasCrossedGoal = true;
         data.lapCount = 0;
         data.currentLapTime = 0f;
         data.totalRaceTime = 0f;
@@ -205,23 +157,16 @@ public class LapManager : MonoBehaviour
         data.isFinished = false;
         data.hasVerifiedProgress = false;
         ResetCheckpointProgress(data);
-        // On the initial grid the first sensor can precede the goal; select it in road order.
-        if (raceCourse != null && startTransform != null && raceCourse.HasValidPath && checkpoints.Length > 0)
-        {
-            float raw = raceCourse.GetProgressDistance(startTransform.position), nearest = float.MaxValue;
-            foreach (CheckpointSensor checkpoint in checkpoints)
-            {
-                if (checkpoint == null) continue;
-                float distance = Mathf.Repeat((reverseProgressDirection ? -1f : 1f) *
-                    (raceCourse.GetProgressDistance(checkpoint.transform.position) - raw) + .5f, raceCourse.TotalLength);
-                if (distance < nearest) { nearest = distance; data.nextCheckpointIndex = checkpoint.CheckpointIndex; }
-            }
-        }
+        data.hasLeftStartArea = false;
         SetRespawnPoint(data, startTransform);
         if (!hasProgressReference && startTransform != null)
         {
             InitializeProgressReference(startTransform);
         }
+        // A grid behind the finish crosses it once to start the circuit. That short run-up
+        // is not a completed lap; keep timing from GO and require no intermediate sensors.
+        data.hasCrossedGoal = startTransform == null || raceCourse == null || !hasProgressReference ||
+            GetLapProgressDistance(rb.position, raceCourse.TotalLength) <= raceCourse.TotalLength * .5f;
         raceActive = true;
     }
 
@@ -241,21 +186,15 @@ public class LapManager : MonoBehaviour
         if (!data.hasCrossedGoal)
         {
             data.hasCrossedGoal = true;
-            data.currentLapTime = 0f;
-            data.totalRaceTime = 0f;
+            data.hasLeftStartArea = false;
             ResetCheckpointProgress(data);
             SetRespawnPoint(data, goalTransform);
             Debug.Log($"{data.carName} joined race");
             return false;
         }
 
-        if (!CanCompleteLap(data))
-        {
-            Debug.Log($"{data.carName} goal ignored. Checkpoint {data.nextCheckpointIndex}/{GetCheckpointCount()}");
-            return false;
-        }
-
         data.lapCount++;
+        data.hasLeftStartArea = false;
         if (data.currentLapTime < data.bestLapTime)
         {
             data.bestLapTime = data.currentLapTime;
@@ -469,16 +408,6 @@ public class LapManager : MonoBehaviour
         float rawStartDistance = raceCourse.GetProgressDistance(referencePosition);
         progressStartDistance = ToDirectedProgress(rawStartDistance, lapLength);
         hasProgressReference = true;
-        checkpointCycle = new int[checkpoints.Length];
-        for (int i = 0; i < checkpoints.Length; i++) checkpointCycle[i] = checkpoints[i] != null ? checkpoints[i].CheckpointIndex : i;
-        Array.Sort(checkpointCycle, (a, b) => GetCheckpointLapDistance(a, lapLength).CompareTo(GetCheckpointLapDistance(b, lapLength)));
-    }
-
-    private float GetCheckpointLapDistance(int index, float length)
-    {
-        foreach (CheckpointSensor checkpoint in checkpoints)
-            if (checkpoint != null && checkpoint.CheckpointIndex == index) return GetLapProgressDistance(checkpoint.transform.position, length);
-        return 0;
     }
 
     private float GetValidatedProgress(CarTimeData data, float lapLength)
@@ -488,17 +417,9 @@ public class LapManager : MonoBehaviour
         float directed = ToDirectedProgress(raw, lapLength);
         float progress = hasProgressReference ? Mathf.Repeat(directed-progressStartDistance,lapLength) : directed;
         // Rear grid slots and recovery behind the start must not appear almost a lap ahead.
-        if ((data.passedCheckpointCount == 0 || (data.lapCount == 0 && data.lastCheckpointIndex <= 0 && !data.allCheckpointsPassed)) && progress > lapLength * .5f)
+        if (progress > 10f && progress < lapLength * .5f) data.hasLeftStartArea = true;
+        if (!data.hasLeftStartArea && progress > lapLength * .5f)
             progress -= lapLength;
-        if (!data.allCheckpointsPassed && checkpoints.Length > 0)
-        {
-            int next = Mathf.Clamp(data.nextCheckpointIndex, 0, checkpoints.Length - 1);
-            if (checkpoints[next] != null)
-            {
-                float checkpointProgress = GetLapProgressDistance(checkpoints[next].transform.position, lapLength);
-                progress = Mathf.Min(progress, checkpointProgress);
-            }
-        }
         float total = data.lapCount * lapLength + progress;
         raceCourse.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample sample);
         // Below-road/off-road projections must not change ranking or forbid a safe backward recovery.
@@ -526,25 +447,9 @@ public class LapManager : MonoBehaviour
             : Mathf.Repeat(rawDistance, lapLength);
     }
 
-    private bool CanCompleteLap(CarTimeData data)
-    {
-        int checkpointCount = GetCheckpointCount();
-        if (checkpointCount == 0)
-        {
-            return allowLapWithoutCheckpoints;
-        }
-
-        return data.allCheckpointsPassed;
-    }
-
-    private int GetCheckpointCount()
-    {
-        return checkpoints == null ? 0 : checkpoints.Length;
-    }
-
     private void ResetCheckpointProgress(CarTimeData data)
     {
-        data.nextCheckpointIndex = checkpointCycle.Length > 0 ? checkpointCycle[0] : 0;
+        data.nextCheckpointIndex = 0;
         data.lastCheckpointIndex = -1;
         data.passedCheckpointCount = 0;
         data.allCheckpointsPassed = false;
@@ -635,6 +540,8 @@ public class LapManager : MonoBehaviour
     public void NotifyManualRespawn(Rigidbody body)
     {
         if (body == null || !carDataMap.TryGetValue(body, out CarTimeData data)) return;
+        Physics.SyncTransforms();
+        foreach (GoalSensor goal in FindObjectsByType<GoalSensor>(FindObjectsSortMode.None)) goal.IgnoreRespawnInsideGoal(body);
         data.isOffCourse = false;
         data.offCourseTimer = 0f;
         data.hasValidRacePosition = true;

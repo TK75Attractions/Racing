@@ -10,6 +10,7 @@ public sealed class PlayerAudioCapture : MonoBehaviour
     private Gmanager manager;
     private AudioSource source;
     private Transform emitter;
+    private Rigidbody engineBody;
     private int stream;
     private int bgmPlayer = -1;
     private volatile float p1Left, p1Right, p2Left, p2Right;
@@ -27,6 +28,7 @@ public sealed class PlayerAudioCapture : MonoBehaviour
         output = audioOutput;
         manager = gameManager;
         emitter = car;
+        engineBody = car != null ? car.GetComponent<Rigidbody>() : null;
         stream = player + 1;
         source = GetComponent<AudioSource>();
         source.spatialBlend = 0f;
@@ -52,6 +54,7 @@ public sealed class PlayerAudioCapture : MonoBehaviour
     private void GetPerspectiveGains(int player, float gain, out float left, out float right)
     {
         left = right = 0f;
+        if (manager != null && !manager.IsEngineAudioActive(engineBody)) return;
         Transform camera = manager != null ? manager.GetPlayerAudioPerspective(player) : null;
         if (camera == null || emitter == null) return;
         Vector3 relative = camera.InverseTransformPoint(emitter.position);

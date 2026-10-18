@@ -248,6 +248,20 @@ public class DebugMover : MonoBehaviour
 
     private void ApplyDriving()
     {
+        // Observe the gate even with stale held input; reconnecting never reuses a held pedal.
+        _ = inputSource.CurrentState;
+        if (!inputSource.IsConnected || (inputSource is PlayerDriveInputGate gate && gate.NeedsPedalRelease))
+        {
+            ClearUserInput(); ResetBoosts(); itemEffects?.StopRocketAutopilot();
+            ApplyTireForces(); ApplyVelocityResistance();
+            Vector3 velocity = Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp());
+            speedMetersPerSecond = velocity.magnitude;
+            bool grounded = false;
+            foreach (TireForce tire in tires) grounded |= tire.GetComponent<GroundCheck>().CheckNow();
+            if (grounded && velocity.sqrMagnitude > .0001f)
+                rb.AddForce(-velocity.normalized * Mathf.Min(12f, velocity.magnitude / Time.fixedDeltaTime), ForceMode.Acceleration);
+            return;
+        }
         itemEffects?.LimitRocketJumpMomentum();
 
         if (IsInputSuppressed)

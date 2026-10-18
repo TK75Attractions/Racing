@@ -100,9 +100,25 @@ public static class MultiDisplayValidation
                         Require(Mathf.Approximately(rigs[player].MainCamera.aspect, 16f / 9f), "Camera aspect must remain 16:9.");
                     }
                 }
+                for (int player = 0; player < 2; player++)
+                {
+                    byte[] jpeg = rigs[player].CaptureJpeg(640, 360);
+                    Require(jpeg != null && jpeg.Length > 1000, "Dashboard must capture both complete player stacks.");
+                    foreach (Camera camera in Cameras(rigs[player]))
+                        Require(camera.targetTexture == textures[player], "Preview must restore every camera target.");
+                    Require(Mathf.Approximately(rigs[player].Canvas.scaleFactor, scales[player]),
+                        "Preview must restore the player's UI scale after capture.");
+                    Texture2D decoded = new Texture2D(2, 2);
+                    try
+                    {
+                        Require(decoded.LoadImage(jpeg) && decoded.width == 640 && decoded.height == 360,
+                            "Preview must produce a decodable JPEG at the requested size.");
+                    }
+                    finally { Object.DestroyImmediate(decoded); }
+                }
             }
             var output = fixture.AddComponent<RenderGraphDisplayOutput>();
-            output.Configure(Cameras(rigs[1]), 2);
+            output.Configure(Cameras(rigs[1]), 2, rigs[1].BackImageCamera);
             var resize = typeof(RenderGraphDisplayOutput).GetMethod("ResizeTarget", Private);
             RenderTexture previous = null;
             foreach (Vector2Int dimensions in sizes)
@@ -120,12 +136,13 @@ public static class MultiDisplayValidation
                 Require(output.Target == current, "Unchanged output size must reuse its target.");
                 previous = current;
             }
+            ValidatePresentation(output, rigs[1]);
             output.enabled = false;
             Require(output.Target == null, "Disabling output must release its target.");
             foreach (Camera camera in Cameras(rigs[1])) Require(camera.targetTexture == null, "Disabling output must detach owned targets.");
             Require(Resources.Load<Shader>("DisplayOutput") != null && Resources.Load<Shader>("DisplayOutput").isSupported,
                 "Display presentation shader must be included and supported.");
-            string result = "MULTI_DISPLAY_VALIDATION_PASS: Render Graph enabled, no compatibility define; Display 1/3 routing; unequal-size output pairs; stable UI; explicit stack color/depth target resize, reuse and cleanup; presentation shader.";
+            string result = "MULTI_DISPLAY_VALIDATION_PASS: Render Graph enabled, no compatibility define; Display 1/3 routing; unequal-size output pairs; stable UI; explicit stack color/depth target resize, reuse and cleanup; ordered presentation into alternating buffers; completed-stack/once-per-frame guards; presentation shader.";
             Directory.CreateDirectory("Logs/DisplayValidation");
             File.WriteAllText("Logs/DisplayValidation/validation.txt", result + Environment.NewLine);
             Debug.Log(result);
@@ -150,6 +167,62 @@ public static class MultiDisplayValidation
         });
         Require(report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded, "Display validation build failed.");
         Debug.Log("MULTI_DISPLAY_BUILD_PASS: " + path);
+    }
+
+    private static void ValidatePresentation(RenderGraphDisplayOutput output, PlayerDisplayRig rig)
+    {
+        var rendered = new System.Collections.Generic.List<Camera> { rig.BackCamera };
+        var shouldPresent = typeof(RenderGraphDisplayOutput).GetMethod("ShouldPresent", Private);
+        Require(!(bool)shouldPresent.Invoke(output, new object[] { rendered, 10 }),
+            "A background-only render must not publish an incomplete stack.");
+        rendered.Add(rig.BackImageCamera);
+        Require((bool)shouldPresent.Invoke(output, new object[] { rendered, 10 }),
+            "A completed output stack must be eligible for presentation.");
+        typeof(RenderGraphDisplayOutput).GetField("lastPresentedFrame", Private).SetValue(output, 10);
+        Require(!(bool)shouldPresent.Invoke(output, new object[] { rendered, 10 }) &&
+            (bool)shouldPresent.Invoke(output, new object[] { rendered, 11 }),
+            "Present once per frame, then allow the next frame.");
+
+        Shader shader = Resources.Load<Shader>("DisplayOutput");
+        var material = new Material(shader);
+        var buffers = new[] { new RenderTexture(64, 32, 0), new RenderTexture(64, 32, 0) };
+        var readback = new Texture2D(64, 32, TextureFormat.RGBA32, false, true);
+        RenderTexture previous = RenderTexture.active;
+        try
+        {
+            typeof(RenderGraphDisplayOutput).GetField("presentation", Private).SetValue(output, material);
+            material.SetTexture("_BlitTexture", output.Target);
+            material.SetVector("_BlitScaleBias", new Vector4(1, 1, 0, 0));
+            material.SetFloat("_EncodeSRGB", 0);
+            var record = typeof(RenderGraphDisplayOutput).GetMethod("RecordPresentation", Private);
+            foreach (var buffer in buffers) buffer.Create();
+            for (int frame = 0; frame < 8; frame++)
+            {
+                Color expected = frame % 2 == 0 ? Color.red : Color.green;
+                RenderTexture.active = output.Target;
+                GL.Clear(true, true, expected);
+                var buffer = buffers[frame % 2];
+                using (var commands = new CommandBuffer())
+                {
+                    record.Invoke(output, new object[] { commands, new RenderTargetIdentifier(buffer), 64, 32 });
+                    Graphics.ExecuteCommandBuffer(commands);
+                }
+                RenderTexture.active = buffer;
+                readback.ReadPixels(new Rect(0, 0, 64, 32), 0, 0);
+                readback.Apply();
+                foreach (Color pixel in readback.GetPixels())
+                    Require(Mathf.Abs(pixel.r - expected.r) < .02f && Mathf.Abs(pixel.g - expected.g) < .02f && pixel.b < .02f,
+                        "Every alternating output buffer must contain the current complete frame, including edges.");
+            }
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            typeof(RenderGraphDisplayOutput).GetField("presentation", Private).SetValue(output, null);
+            Object.DestroyImmediate(material);
+            Object.DestroyImmediate(readback);
+            foreach (var buffer in buffers) Object.DestroyImmediate(buffer);
+        }
     }
 
     private static Camera[] Cameras(PlayerDisplayRig rig) => new[] {
