@@ -43,6 +43,8 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         public float finalForwardSpeed;
         public float finalVerticalSpeed;
         public float maxYawRate;
+        public float maxSteeringAngle;
+        public float maxSteeringLimitExcess;
         public float minimumSpeed = float.MaxValue;
         public float initialSpeed;
         public float maximumRise;
@@ -78,18 +80,18 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             Path.Combine(Path.GetTempPath(), "racing-stability", recordBaseline ? "baseline" : "latest");
         Directory.CreateDirectory(folder);
         trace = new StreamWriter(Path.Combine(folder, "trace.csv"));
-        trace.WriteLine("trial,time,x,y,z,vx,vy,vz,tilt,angularSpeed,groundedWheels,driveForce");
+        trace.WriteLine("trial,time,x,y,z,vx,vy,vz,tilt,angularSpeed,groundedWheels,driveForce,steeringAngle,steeringLimit");
         Application.runInBackground = true;
         yield return (IEnumerator)Type.GetType("RacingPolishValidation, Assembly-CSharp-Editor")
             .GetMethod("ValidatePlayModeControls").Invoke(null, null);
         Time.timeScale = 3f;
         var manager = UnityEngine.Object.FindFirstObjectByType<Gmanager>();
-        // Keep this physics validation local and advance past the practice lesson.
+        // Keep physics validation local. Selection/tutorial behavior has separate UI checks.
         var publisher = manager.GetComponent<RaceRemoteFirebasePublisher>();
         if (publisher != null) publisher.enabled = false;
-        manager.StartGame();
-        while (manager.state != Gmanager.State.Tutorial || AnyTransitionActive()) yield return null;
-        typeof(Gmanager).GetMethod("FinishTutorialWhenScreenCovered", Fields).Invoke(manager, null);
+        foreach (Camera camera in UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.None))
+            camera.enabled = false; // Physics timing must not depend on rendering the entire course.
+        typeof(Gmanager).GetMethod("StartGameWhenScreenCovered", Fields).Invoke(manager, null);
         typeof(Gmanager).GetMethod("CompleteGameStart", Fields).Invoke(manager, null);
         foreach (var transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
             transition.ApplyStateImmediate(Gmanager.State.Countdown);
@@ -117,12 +119,12 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             string name = (x > 500f ? "east" : "west") + "-" + speed + (downhill ? "-down" : "-up");
             Vector3 direction = downhill ? Vector3.back : Vector3.forward;
             yield return Place(new Vector3(x, downhill ? 0.36f : -14.64f, downhill ? 540f : 490f), Quaternion.LookRotation(direction));
-            yield return new WaitForSeconds(0.3f);
+            yield return WaitForPhysicsSeconds(0.3f);
             body.linearVelocity = direction * speed;
             body.angularVelocity = Vector3.zero;
             input.CurrentState = new DriveInputState { pedal = 1f };
             Begin(name);
-            yield return new WaitForSeconds(5f);
+            yield return WaitForPhysicsSeconds(5f);
             End();
         }
 
@@ -142,7 +144,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         body.useGravity = false;
         input.CurrentState = new DriveInputState { pedal = 1f };
         Begin("hover-no-contact");
-        yield return new WaitForSeconds(0.25f);
+        yield return WaitForPhysicsSeconds(0.25f);
         End();
         body.useGravity = true;
         Set(stability, "enableUprightAssist", true);
@@ -155,7 +157,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             body.angularVelocity = new Vector3(2f, 0f, 1.5f);
             input.CurrentState = new DriveInputState { pedal = pedal };
             Begin("jump-" + rotation.x + "-" + rotation.z + "-pedal-" + pedal);
-            yield return new WaitForSeconds(4f);
+            yield return WaitForPhysicsSeconds(4f);
             End();
         }
 
@@ -164,10 +166,10 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         foreach (float pedal in new[] { 0f, 1f, -1f })
         {
             yield return Place(floor, Quaternion.Euler(0f, 0f, 180f));
-            yield return new WaitForSeconds(0.3f);
+            yield return WaitForPhysicsSeconds(0.3f);
             input.CurrentState = new DriveInputState { pedal = pedal };
             Begin("inverted-assist-off-" + pedal);
-            yield return new WaitForSeconds(1f);
+            yield return WaitForPhysicsSeconds(1f);
             End();
         }
         Set(stability, "enableUprightAssist", true);
@@ -176,7 +178,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             yield return Place(floor, Quaternion.Euler(0f, 0f, 180f));
             input.CurrentState = new DriveInputState { pedal = pedal };
             Begin("inverted-recovery-" + pedal);
-            yield return new WaitForSeconds(4f);
+            yield return WaitForPhysicsSeconds(4f);
             End();
         }
 
@@ -184,10 +186,10 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         foreach (float pedal in new[] { 1f, -1f })
         {
             yield return Place(floor, Quaternion.identity);
-            yield return new WaitForSeconds(0.3f);
+            yield return WaitForPhysicsSeconds(0.3f);
             input.CurrentState = new DriveInputState { pedal = pedal, steering = 12f };
             Begin("flat-steering-" + pedal);
-            yield return new WaitForSeconds(2f);
+            yield return WaitForPhysicsSeconds(2f);
             End();
         }
 
@@ -195,17 +197,45 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         foreach (float steering in new[] { -12f, 12f })
         {
             yield return Place(floor, Quaternion.identity);
-            yield return new WaitForSeconds(.3f);
+            yield return WaitForPhysicsSeconds(.3f);
             body.linearVelocity = Vector3.forward * 15f;
             input.CurrentState = new DriveInputState { pedal = 1f, steering = steering };
             Begin(steering < 0f ? "drift-left" : "drift-right");
-            yield return new WaitForSeconds(1.5f);
+            yield return WaitForPhysicsSeconds(1.5f);
             input.CurrentState = new DriveInputState { pedal = 1f, steering = -steering };
-            yield return new WaitForSeconds(.14f);
+            yield return WaitForPhysicsSeconds(.14f);
             input.CurrentState = new DriveInputState { pedal = 1f, steering = 0f };
-            yield return new WaitForSeconds(1.2f);
+            yield return WaitForPhysicsSeconds(1.2f);
             End();
         }
+
+        // Matched IMU-like turns at road/boost speeds using the production prefab and physics.
+        foreach (float speed in new[] { 8f, 20f, 40f, 60f })
+        foreach (float handle in new[] { -3f, 3f, -30f, 30f })
+        {
+            yield return Place(floor, Quaternion.identity);
+            yield return WaitForPhysicsSeconds(.3f);
+            body.linearVelocity = Vector3.forward * speed;
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = handle };
+            Begin($"steering-comfort-{speed}-{handle}");
+            trial.initialSpeed = speed;
+            yield return WaitForPhysicsSeconds(.7f);
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = -handle };
+            yield return WaitForPhysicsSeconds(.3f);
+            input.CurrentState = new DriveInputState { pedal = 1f };
+            yield return WaitForPhysicsSeconds(.8f);
+            End();
+        }
+        yield return Place(floor, Quaternion.identity);
+        yield return WaitForPhysicsSeconds(.3f);
+        body.linearVelocity = Vector3.forward * 40f;
+        Begin("steering-center-noise");
+        for (int frame = 0; frame < 100; frame++)
+        {
+            input.CurrentState = new DriveInputState { pedal = 1f, steering = Mathf.Sin(frame * 2.3f) * .07f };
+            yield return new WaitForFixedUpdate();
+        }
+        End();
 
         // Full-lock drifts at low/high speed, with and without an existing sideways/yaw disturbance.
         foreach (float speed in new[] { 8f, 20f, 40f })
@@ -213,17 +243,17 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         foreach (bool disturbed in new[] { false, true })
         {
             yield return Place(floor, Quaternion.identity);
-            yield return new WaitForSeconds(.3f);
+            yield return WaitForPhysicsSeconds(.3f);
             body.linearVelocity = Vector3.forward * speed + (disturbed ? Vector3.right * Mathf.Sign(steering) * speed * .25f : Vector3.zero);
             body.angularVelocity = disturbed ? Vector3.up * Mathf.Sign(steering) * 1.8f : Vector3.zero;
             input.CurrentState = new DriveInputState { pedal = 1f, steering = steering };
             Begin("spin-guard-" + speed + (steering < 0f ? "-left" : "-right") + (disturbed ? "-disturbed" : "-clean"));
             trial.initialSpeed = speed;
-            yield return new WaitForSeconds(1.5f);
+            yield return WaitForPhysicsSeconds(1.5f);
             input.CurrentState = new DriveInputState { pedal = 1f, steering = -steering };
-            yield return new WaitForSeconds(.14f);
+            yield return WaitForPhysicsSeconds(.14f);
             input.CurrentState = new DriveInputState { pedal = 1f, steering = 0f };
-            yield return new WaitForSeconds(1.2f);
+            yield return WaitForPhysicsSeconds(1.2f);
             End();
         }
 
@@ -231,27 +261,27 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         foreach (float speed in new[] { 6f, 20f, 40f })
         {
             yield return Place(floor, Quaternion.identity);
-            yield return new WaitForSeconds(.35f);
+            yield return WaitForPhysicsSeconds(.35f);
             body.position += Vector3.up * .1f;
             Physics.SyncTransforms();
             body.linearVelocity = new Vector3(0f, 1f, speed);
             input.CurrentState = new DriveInputState { pedal = 1f };
             Begin("road-contact-" + speed);
-            yield return new WaitForSeconds(1.5f);
+            yield return WaitForPhysicsSeconds(1.5f);
             End();
         }
         yield return Place(floor, Quaternion.identity);
-        yield return new WaitForSeconds(.35f);
+        yield return WaitForPhysicsSeconds(.35f);
         body.linearVelocity = new Vector3(0f, 5f, 15f);
         Begin("road-takeoff");
-        yield return new WaitForSeconds(1.2f);
+        yield return WaitForPhysicsSeconds(1.2f);
         End();
 
         // yaw の角速度だけは補正で消さない（地面から十分離した状態）。
         yield return Place(floor + Vector3.up * 80f, Quaternion.identity);
         body.angularVelocity = Vector3.up;
         Begin("air-yaw");
-        yield return new WaitForSeconds(0.5f);
+        yield return WaitForPhysicsSeconds(0.5f);
         End();
 
         // Charged drift state in flight must not redirect falling motion or damp airborne yaw.
@@ -262,7 +292,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         Set(mover, "driftDirection", 1f);
         input.CurrentState = new DriveInputState { pedal = 1f, steering = 30f };
         Begin("air-yaw-drift");
-        yield return new WaitForSeconds(.5f);
+        yield return WaitForPhysicsSeconds(.5f);
         End();
 
         // Flight keeps the takeoff speed without tire propulsion; gravity still controls landing.
@@ -274,7 +304,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             input.CurrentState = new DriveInputState { pedal = pedal };
             Begin("air-glide-" + speed + "-pedal-" + pedal);
             trial.initialSpeed = speed;
-            yield return new WaitForSeconds(2f);
+            yield return WaitForPhysicsSeconds(2f);
             End();
         }
         yield return Place(floor + Vector3.up * 80f, Quaternion.identity);
@@ -285,7 +315,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         input.CurrentState = new DriveInputState { pedal = 1f, steering = 30f };
         Begin("air-glide-drift");
         trial.initialSpeed = 20f;
-        yield return new WaitForSeconds(2f);
+        yield return WaitForPhysicsSeconds(2f);
         End();
 
         File.WriteAllText(Path.Combine(folder, "report.json"), JsonUtility.ToJson(report, true));
@@ -295,6 +325,11 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         var failures = new List<string>();
         foreach (var result in report.trials)
         {
+            if (result.name.StartsWith("steering-comfort-") &&
+                (result.maxSteeringLimitExcess > .001f || result.maxTilt > 15f || result.maxSlipAngle > 20f || result.finalSlipAngle > 5f || result.finalForwardSpeed < 5f))
+                failures.Add(result.name + ": steering envelope, slip recovery or stability regression");
+            if (result.name == "steering-center-noise" && (result.maxSteeringAngle > .001f || result.yawChange > .1f))
+                failures.Add(result.name + ": IMU center noise changed the heading");
             if (result.name.StartsWith("road-contact-") && (result.airSeconds > .2f || result.finalTilt > 8f || result.groundedWheels < 2))
                 failures.Add(result.name + ": road contact was not restored promptly");
             if (result.name == "road-takeoff" && (result.maximumRise < .8f || result.airSeconds < .5f))
@@ -426,21 +461,23 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         trial.finalForwardSpeed = Vector3.Dot(planarVelocity, forward);
         trial.finalVerticalSpeed = body.linearVelocity.y;
         trial.maxYawRate = Mathf.Max(trial.maxYawRate, Mathf.Abs(Vector3.Dot(body.angularVelocity, Vector3.up)));
+        trial.maxSteeringAngle = Mathf.Max(trial.maxSteeringAngle, Mathf.Abs(mover.AppliedSteeringAngle));
+        trial.maxSteeringLimitExcess = Mathf.Max(trial.maxSteeringLimitExcess, Mathf.Abs(mover.AppliedSteeringAngle) - mover.SteeringAngleLimit);
         trial.minimumSpeed = Mathf.Min(trial.minimumSpeed, planarVelocity.magnitude);
         trial.enteredDrift |= mover.IsDrifting;
         trial.releasedBoost |= mover.IsDriftBoosting;
         var p = body.position;
         var v = body.linearVelocity;
         trace.WriteLine(string.Format(CultureInfo.InvariantCulture,
-            "{0},{1:F3},{2:F3},{3:F3},{4:F3},{5:F3},{6:F3},{7:F3},{8:F3},{9:F3},{10},{11:F3}",
-            trial.name, trialTime, p.x, p.y, p.z, v.x, v.y, v.z, tilt, body.angularVelocity.magnitude, grounded, drive));
+            "{0},{1:F3},{2:F3},{3:F3},{4:F3},{5:F3},{6:F3},{7:F3},{8:F3},{9:F3},{10},{11:F3},{12:F4},{13:F4}",
+            trial.name, trialTime, p.x, p.y, p.z, v.x, v.y, v.z, tilt, body.angularVelocity.magnitude, grounded, drive,
+            mover.AppliedSteeringAngle, mover.SteeringAngleLimit));
     }
 
-    private static bool AnyTransitionActive()
+    private static IEnumerator WaitForPhysicsSeconds(float seconds)
     {
-        foreach (var transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
-            if (transition.IsTransitioning) return true;
-        return false;
+        float end = Time.fixedTime + seconds;
+        while (Time.fixedTime + .0001f < end) yield return new WaitForFixedUpdate();
     }
 
     private static void Set(object instance, string field, object value) =>

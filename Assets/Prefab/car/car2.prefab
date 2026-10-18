@@ -467,6 +467,9 @@ MonoBehaviour:
   steeringFadeFullSpeed: 30
   highSpeedSteeringMultiplier: 0.35
   steeringFadeSharpness: 1
+  steeringLateralAcceleration: 22
+  steeringDeadzone: 0.08
+  steeringResponseSeconds: 0.045
   enableSpeedSensitiveSteering: 1
   driftStartHandle: 8
   driftFullChargeHandle: 30

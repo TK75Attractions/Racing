@@ -46,6 +46,10 @@ public static class RacingHUDBuilder
         IsolateCanvas(speed);
         RectTransform gauge=RacingUITheme.Rect(speed,"Gauge",Vector2.zero,Vector2.one);
         if(gauge.GetComponent<RacingSpeedGauge>()==null)gauge.gameObject.AddComponent<RacingSpeedGauge>();
+        RectTransform acceleration=RacingUITheme.Rect(speed,"Acceleration",Vector2.zero,Vector2.one);
+        IsolateCanvas(acceleration);
+        TMP_Text accelerationCaption=RacingHUDStyle.Label(speed,"AccelerationCaption","",.30f,.72f,.70f,.84f,18f,RacingHUDStyle.Muted,TextAlignmentOptions.Center);
+        (acceleration.GetComponent<RacingAccelerationGauge>() ?? acceleration.gameObject.AddComponent<RacingAccelerationGauge>()).Configure(playerIndex,accelerationCaption);
         RacingHUDStyle.Label(speed,"Heading","スピード",.29f,.51f,.72f,.64f,18f,RacingHUDStyle.Muted,TextAlignmentOptions.Center);
         RacingHUDStyle.Label(speed,"EnglishHeading","SPEED",.33f,.43f,.67f,.51f,12f,RacingHUDStyle.Muted,TextAlignmentOptions.Center);
         Number(speed,"Txt","0",.21f,.08f,.78f,.53f,96f,Color.white,TextAlignmentOptions.Center);
@@ -82,10 +86,13 @@ public static class RacingHUDBuilder
         RacingUITheme.Rule(boost,"Glow",new Vector2(.065f,.10f),new Vector2(.935f,.29f),new Color(1,.025f,.39f,.10f));
         RectTransform fill=RacingUITheme.Rect(boost,"Fill",new Vector2(.07f,.14f),new Vector2(.93f,.25f));
         RacingBoostGraphic bar=fill.GetComponent<RacingBoostGraphic>() ?? fill.gameObject.AddComponent<RacingBoostGraphic>();bar.Configure(RacingBoostGraphic.DisplayMode.Bar);boost.gameObject.SetActive(false);
-        RectTransform telemetry=NeonUI.Panel(root,"Telemetry",new Vector2(.71f,.045f),new Vector2(.98f,.115f));
-        IsolateCanvas(telemetry);
-        RacingTelemetryUI controls=telemetry.GetComponent<RacingTelemetryUI>() ?? telemetry.gameObject.AddComponent<RacingTelemetryUI>();controls.Configure(playerIndex);
-        RacingHUDStyle.Label(root,"Player",$"プレイヤー {playerIndex+1} / PLAYER {playerIndex+1}",.022f,.003f,.32f,.029f,17f,Color.white);
+        Transform legacyTelemetry=root.Find("Telemetry");
+        if(legacyTelemetry!=null)legacyTelemetry.gameObject.SetActive(false);
+        RacingHUDStyle.Label(root,"Player",$"プレイヤー {playerIndex+1} / PLAYER {playerIndex+1}",.25f,.041f,.40f,.067f,17f,Color.white);
+        RectTransform steering=RacingUITheme.Rect(root,"SteeringIndicator",Vector2.zero,new Vector2(1f,.04f));
+        IsolateCanvas(steering);
+        TMP_Text steeringCaption=RacingHUDStyle.Label(root,"SteeringCaption","",.405f,.041f,.70f,.065f,16f,RacingHUDStyle.Muted,TextAlignmentOptions.Center);
+        (steering.GetComponent<RacingSteeringIndicator>() ?? steering.gameObject.AddComponent<RacingSteeringIndicator>()).Configure(playerIndex,steeringCaption);
         return root;
     }
     private static void IsolateCanvas(RectTransform instrument)
