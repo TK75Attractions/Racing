@@ -118,3 +118,10 @@ InitTestScene*.unity*
 # Locally exported manuals include this PC's private VPN URL.
 /output/pdf/
 /tmp/pdfs/
+
+# Independent monitor: webhook credentials and runtime state stay on the game PC.
+/Tools/RaceMonitor/monitor.local.json
+/Tools/RaceMonitor/monitor.state.json
+/Tools/RaceMonitor/monitor.paused
+**/__pycache__/
+/Tools/RaceMonitor/monitor.state.json.lock

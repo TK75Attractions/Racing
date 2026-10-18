@@ -1,0 +1,13 @@
+{
+  "webhook_url": "",
+  "webhook_format": "discord",
+  "name": "Racing",
+  "poll_seconds": 5,
+  "hold_seconds": 30,
+  "recovery_seconds": 30,
+  "reminder_seconds": 1800,
+  "error_threshold": 5,
+  "error_window_seconds": 60,
+  "preparation_seconds": 180,
+  "arm_after_first_snapshot": true
+}
