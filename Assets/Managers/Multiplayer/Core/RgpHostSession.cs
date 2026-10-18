@@ -22,7 +22,6 @@ public sealed class RgpHostSession
     private bool hasTelemetry;
     private double lastTelemetryAt;
     private string sessionId;
-    private bool automaticCalibrationAttempted, automaticAngleZeroAttempted;
     public event Action<string> CommandTimedOut;
     public bool Compatible { get; private set; } = true;
     public bool SessionOpen { get; private set; }
@@ -64,8 +63,6 @@ public sealed class RgpHostSession
             if (active.Command == command) { reason = "command_pending"; return false; }
         if ((command == "ANGLE_ZERO" || command == "CALIBRATE" || command == "SET_BETA") && State != "READY" && State != "WAIT_ANGLE")
         { reason = "device_not_ready"; return false; }
-        if (command == "CALIBRATE") automaticCalibrationAttempted = true;
-        if (command == "ANGLE_ZERO") automaticAngleZeroAttempted = true;
         sequence = nextSequence;
         SendCommand(command, now, false, args); reason = null; return true;
     }
@@ -83,7 +80,6 @@ public sealed class RgpHostSession
     public void Start(double now)
     {
         pending.Clear(); nextSequence = 0; hasTelSequence = false;
-        automaticCalibrationAttempted = automaticAngleZeroAttempted = false;
         SessionOpen = false; State = "UNKNOWN"; Compatible = true; ResetHardware();
         TelemetryRate = 100; TelemetryEnabled = true; Invalidate();
         byte[] random = new byte[8];
@@ -120,25 +116,6 @@ public sealed class RgpHostSession
                 continue;
             }
             request.Retries++; request.SentAt = now; send(request.Wire);
-        }
-        PrepareHardwareAutomatically(now);
-    }
-
-    private void PrepareHardwareAutomatically(double now)
-    {
-        // Wait for hardware status and the initial setup ACKs. A calibrated device is left alone.
-        // Each operation gets one SEQ per session; Tick only retries that exact wire on timeout.
-        if (!SessionOpen || pending.Count != 0 || AdsStatus != "Ok" || ImuStatus != "Ok" ||
-            (State != "WAIT_ANGLE" && State != "READY")) return;
-        if (!Calibrated && !automaticCalibrationAttempted)
-        {
-            automaticCalibrationAttempted = true;
-            TryCommand("CALIBRATE", new[] { "ALL" }, now, out _, out _);
-        }
-        else if (Calibrated && !AngleLocked && !automaticAngleZeroAttempted)
-        {
-            automaticAngleZeroAttempted = true;
-            TryCommand("ANGLE_ZERO", Array.Empty<string>(), now, out _, out _);
         }
     }
     public void Disconnect()

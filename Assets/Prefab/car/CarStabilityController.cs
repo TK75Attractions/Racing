@@ -18,9 +18,6 @@ public class CarStabilityController : MonoBehaviour
     [SerializeField, Min(0f)] private float maximumDownforce = 32f;
     [Tooltip("路面から離れる速度がこれ以上ならジャンプとして補助を止めます。")]
     [SerializeField, Min(0f)] private float jumpReleaseSpeed = 2.5f;
-    [Tooltip("連続した路面で吸収する段差の高さ。ジャンプの空白区間では適用しません。")]
-    [SerializeField, Min(0f)] private float maximumSeamHeight = .18f;
-    [SerializeField, Min(0f)] private float seamDepartureSpeed = .6f;
 
     [Header("Airborne Stability")]
     [Tooltip("空中で車体の上方向を鉛直へ戻す強さ。進行方向や上下速度は変更しません。")]
@@ -85,22 +82,16 @@ public class CarStabilityController : MonoBehaviour
         rb.AddTorque(Vector3.ClampMagnitude(torque, Mathf.Max(0f, maxUprightTorque) * recovery), ForceMode.Acceleration);
     }
 
-    private void ApplyRoadContact(bool applyAdhesion = true)
+    private void ApplyRoadContact()
     {
         Vector3 normal = Vector3.zero;
-        Vector3 supportPoint = Vector3.zero;
         int supportedWheels = 0;
-        // A fast seam impulse can move a wheel beyond the ordinary adhesion tolerance in
-        // one physics step. Widen only the departing-car probe, and still verify road ahead.
-        bool departing = Vector3.Dot(rb.linearVelocity, rb.rotation * Vector3.up) > seamDepartureSpeed;
-        float contactRange = departing ? roadContactRange + maximumSeamHeight : roadContactRange;
         foreach (GroundCheck wheel in tireGroundChecks)
         {
-            if (wheel == null || !wheel.TryGetNearbyGround(contactRange, out RaycastHit hit)) continue;
+            if (wheel == null || !wheel.TryGetNearbyGround(roadContactRange, out RaycastHit hit)) continue;
             Rigidbody support = hit.collider.attachedRigidbody;
             if (support != null && !support.isKinematic) continue;
             normal += hit.normal;
-            supportPoint += hit.point;
             supportedWheels++;
         }
         // Two wheels and an upright body are needed: walls, another car and flight provide no adhesion.
@@ -108,58 +99,10 @@ public class CarStabilityController : MonoBehaviour
         normal.Normalize();
         if (Vector3.Dot(rb.rotation * Vector3.up, normal) < .7f) return;
         float departingSpeed = Vector3.Dot(rb.linearVelocity, normal);
-        if (applyAdhesion && Mathf.Abs(departingSpeed) <= jumpReleaseSpeed &&
-            HasContinuousRoadAhead(supportPoint / supportedWheels, normal))
-        {
-            float rise = 0f;
-            foreach (GroundCheck wheel in tireGroundChecks)
-                if (wheel != null) rise = Mathf.Max(rise, wheel.GetUpcomingStepRise(rb.linearVelocity, normal,
-                    supportPoint / supportedWheels, maximumSeamHeight));
-            if (rise > 0f)
-            {
-                rb.position += normal * rise;
-                Physics.SyncTransforms();
-            }
-        }
-        if (departingSpeed > seamDepartureSpeed && HasContinuousRoadAhead(supportPoint / supportedWheels, normal))
-        {
-            // Collision impulses from a shallow seam must not turn horizontal speed into flight.
-            // Only remove speed away from a nearby continuous road; retain its tangent velocity.
-            rb.linearVelocity -= normal * (departingSpeed - seamDepartureSpeed);
-            departingSpeed = seamDepartureSpeed;
-        }
-        if (!applyAdhesion || departingSpeed > jumpReleaseSpeed) return;
+        if (departingSpeed > jumpReleaseSpeed) return;
         float speedSquared = Vector3.ProjectOnPlane(rb.linearVelocity, normal).sqrMagnitude;
         float acceleration = roadDownforce + speedSquared * speedDownforce + Mathf.Max(0f, departingSpeed) * 12f;
         rb.AddForce(-normal * Mathf.Min(maximumDownforce, acceleration), ForceMode.Acceleration);
-    }
-
-    private bool HasContinuousRoadAhead(Vector3 supportPoint, Vector3 normal)
-    {
-        Vector3 direction = Vector3.ProjectOnPlane(rb.linearVelocity, normal);
-        if (direction.sqrMagnitude < 1f) return false;
-        float lookAhead = Mathf.Max(3f, direction.magnitude * Time.fixedDeltaTime + 2f);
-        Vector3 ahead = supportPoint + direction.normalized * lookAhead;
-        float probeHeight = maximumSeamHeight + .1f;
-        foreach (RaycastHit hit in Physics.RaycastAll(ahead + normal * probeHeight, -normal,
-                     probeHeight * 2f, ~0, QueryTriggerInteraction.Ignore))
-        {
-            if (hit.collider.attachedRigidbody != null && !hit.collider.attachedRigidbody.isKinematic) continue;
-            if (hit.collider.attachedRigidbody == rb || Vector3.Dot(hit.normal, normal) < .95f) continue;
-            if (Mathf.Abs(Vector3.Dot(hit.point - supportPoint, normal)) <= maximumSeamHeight) return true;
-        }
-        return false;
-    }
-
-    private void OnCollisionEnter(Collision collision) => AbsorbRoadSeam(collision);
-    private void OnCollisionStay(Collision collision) => AbsorbRoadSeam(collision);
-
-    private void AbsorbRoadSeam(Collision collision)
-    {
-        if (!enableUprightAssist || rb == null || rb.isKinematic ||
-            (collision.rigidbody != null && !collision.rigidbody.isKinematic)) return;
-        // Run after the solver as well, before a large impulse can lift the wheels out of probe range.
-        ApplyRoadContact(false);
     }
 
     private bool IsBodySupported()

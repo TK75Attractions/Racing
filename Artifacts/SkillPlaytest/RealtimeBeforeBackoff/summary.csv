@@ -1,9 +1,0 @@
-run,seed,items,termination,seconds,car,finished,rank,laps,progress_m,mean_speed_mps,max_stall_s,off_course_s,vehicle_contacts,environment_contacts,items_used,afflictions,manual_resets,cpu_recoveries,human_recoveries,automatic_recoveries,recovery_blocked,granted_human_grace_s
-skill-stop-rejoin,6104,False,observation-window-ended,70.03,P1,False,1,0,1163.34,18.13,0.0,0.0,0,310,0,0,0,0,0,0,,0.0
-skill-stop-rejoin,6104,False,observation-window-ended,70.03,P2,False,3,0,623.82,11.63,2.66,5.12,3,386,0,0,0,0,2,2,,0.0
-skill-stop-rejoin,6104,False,observation-window-ended,70.03,CPU 1,False,2,0,665.92,11.11,0.0,0.0,11,347,0,0,0,0,0,0,,0.0
-skill-stop-rejoin,6104,False,observation-window-ended,70.03,CPU 2,False,4,0,305.8,6.59,1.78,18.0,10,210,0,0,0,7,0,0,forward-progress,0.0
-skill-disconnect-rejoin,6105,False,observation-window-ended,70.05,P1,False,1,0,1078.35,16.87,0.0,0.0,3,300,0,0,0,0,0,0,,0.0
-skill-disconnect-rejoin,6105,False,observation-window-ended,70.05,P2,False,3,0,1015.41,15.78,1.92,0.0,4,288,0,0,0,0,0,0,,0.0
-skill-disconnect-rejoin,6105,False,observation-window-ended,70.05,CPU 1,False,2,0,1068.34,16.7,0.0,0.0,17,319,0,0,0,0,0,0,,0.0
-skill-disconnect-rejoin,6105,False,observation-window-ended,70.05,CPU 2,False,4,0,968.97,15.4,0.0,0.0,18,350,0,0,0,0,0,0,,0.0

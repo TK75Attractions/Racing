@@ -1,0 +1,46 @@
+{
+  "unityVersion": "6000.3.9f1",
+  "passed": true,
+  "sampledAcceleration50Hz": 9.933,
+  "sampledAcceleration100Hz": 9.933,
+  "units": "m/s²",
+  "stimulus": "10 m/s² speed ramp for 0.6 seconds",
+  "images": [
+    {
+      "file": "hud-indicator-acceleration-1280x720.png",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hud-indicator-acceleration-1920x1080.png",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "file": "hud-indicator-deceleration-1280x720.png",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hud-indicator-deceleration-1920x1080.png",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "file": "hud-indicator-neutral-1280x720.png",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "hud-indicator-neutral-1920x1080.png",
+      "width": 1920,
+      "height": 1080
+    }
+  ],
+  "sourceSha256": {
+    "Assets/Managers/UI/RacingSteeringIndicator.cs": "d081227445b5a641045320166dcbb5e3a146420f97100b8d0c91e8eb928a4cde",
+    "Assets/Managers/UI/RacingAccelerationGauge.cs": "07cd93f47a894c3d7fdd81a12c3fdf029d1a86da3cf1f60e05501a53d3472b4b",
+    "Assets/Managers/UI/RacingHUDBuilder.cs": "83db3728fe72cc4b542bc97de15d0f10613634547bf9aa0743ada4afce80e875",
+    "Assets/Editor/RacingHUDFontBuilder.cs": "57cc1a257e0b3687ea93ec3507cddb6a1d519239034ea6b11320010a275cd303"
+  }
+}

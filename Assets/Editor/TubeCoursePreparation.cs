@@ -8,7 +8,7 @@ using UnityEngine;
 /// <summary>Bakes terrain apertures without changing the supplied tube mesh.</summary>
 public static class TubeCoursePreparation
 {
-    public const string ModelPath = "Assets/Scenes/1016こうしゃ.fbx";
+    public const string ModelPath = "Assets/Scenes/1009こうしゃチューブ.fbx";
     public const string DataFolder = "Assets/Scenes/TubeCourseData";
 
     private struct Vertex
@@ -174,10 +174,8 @@ public static class TubeCoursePreparation
         for (int i = 0; i < vertices.Length; i++)
         {
             if (uv[i].y > .999f) continue; // Profile seam duplicates the first point.
-            // Group by the authored UVs, independent of the FBX's ring count.
-            // The 1016 model has 133 rings; rounding to 120 merged adjacent rings.
-            int longitudinal = Mathf.RoundToInt(uv[i].x * 1000000f);
-            int profile = Mathf.RoundToInt(uv[i].y * 1000000f);
+            int longitudinal = Mathf.RoundToInt(uv[i].x * 120f);
+            int profile = Mathf.RoundToInt(uv[i].y * 34f);
             if (!groups.TryGetValue(longitudinal, out var ring))
                 groups.Add(longitudinal, ring = new SortedDictionary<int, Vector3>());
             ring[profile] = transform.TransformPoint(vertices[i]);

@@ -13,35 +13,6 @@ public static class NeonRaceMarkersBuilder
     private const string Folder = "Assets/Prefab/Course/NeonRaceMarkers";
     private static Material metal, inset, cyan, pink, white;
 
-    [MenuItem("Racing/Place Finish Gate at Goal")]
-    public static void PlaceFinishGate()
-    {
-        GoalSensor goal = UnityEngine.Object.FindFirstObjectByType<GoalSensor>();
-        RaceCourse course = UnityEngine.Object.FindFirstObjectByType<RaceCourse>();
-        if (goal == null || course == null || !course.TryGetNearestRoadSample(goal.transform.position, out RaceCourse.CourseSample sample))
-            throw new InvalidOperationException("A goal sensor and a valid road are required.");
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "/NeonGoalGate.prefab");
-        Transform existing = goal.transform.Find("CircuitFinishGate");
-        GameObject gate = existing != null ? existing.gameObject : (GameObject)PrefabUtility.InstantiatePrefab(prefab, goal.transform);
-        Undo.RegisterFullObjectHierarchyUndo(gate, "Place finish gate");
-        gate.name = "CircuitFinishGate";
-        gate.transform.SetPositionAndRotation(sample.position, Quaternion.LookRotation(sample.forward, sample.up));
-        gate.transform.localScale = new Vector3(sample.width / 16f, 1f, 1f);
-        // The finish sensor is logical; its old cube must not obscure the sign or road.
-        Renderer sensorRenderer = goal.GetComponent<Renderer>();
-        if (sensorRenderer != null) { Undo.RecordObject(sensorRenderer, "Hide goal sensor"); sensorRenderer.enabled = false; }
-        EditorSceneManager.MarkSceneDirty(goal.gameObject.scene);
-    }
-
-    public static void PlaceFinishGateBatch()
-    {
-        if (!Application.isBatchMode) throw new InvalidOperationException("Batch only.");
-        EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
-        PlaceFinishGate();
-        EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
-        Debug.Log("FINISH_GATE_PLACEMENT_PASS");
-    }
-
     [MenuItem("Racing/Create Neon Start Line and Goal Gate")]
     public static void Build()
     {

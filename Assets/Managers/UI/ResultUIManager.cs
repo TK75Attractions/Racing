@@ -38,7 +38,7 @@ public class ResultUIManager
         NeonUI.Text(tableHead,"Rank","POS / 順位",new Vector2(.02f,0),new Vector2(.15f,1),22f,TextAlignmentOptions.Center,true,new Color(.6f,.83f,1));
         NeonUI.Text(tableHead,"Driver","ドライバー",new Vector2(.18f,0),new Vector2(.52f,1),24f);
         NeonUI.Text(tableHead,"Time","タイム",new Vector2(.60f,0),new Vector2(.79f,1),24f,TextAlignmentOptions.Center);
-        NeonUI.Text(tableHead,"Gap","差 / 周回",new Vector2(.80f,0),new Vector2(.98f,1),24f,TextAlignmentOptions.Center);
+        NeonUI.Text(tableHead,"Gap","ギャップ",new Vector2(.80f,0),new Vector2(.98f,1),24f,TextAlignmentOptions.Center);
         for(int i=0;i<4;i++)
         {
             float top=.72f-i*.095f;
@@ -140,9 +140,8 @@ public class ResultUIManager
         metal.SetFloat("_UnderlayOffsetX",.75f);metal.SetFloat("_UnderlayOffsetY",-.75f);
         medalNumber.UpdateMeshPadding();
         ordinal.text=finished?(position==1?"1ST":position==2?"2ND":position==3?"3RD":"4TH"):"DNF";
-        completedLaps.text=finished?$"{position} 位 / FINISH": local!=null&&local.goalLap>0
-            ? $"未完走 / {Mathf.Clamp(local.completedLaps,0,local.goalLap)} / {local.goalLap} 周" : "未完走 / DID NOT FINISH";
-        bestLap.text=local!=null&&local.bestLapTime>0&&local.bestLapTime<float.MaxValue?FormatTime(local.bestLapTime):"--'--.---";
+        completedLaps.text=finished?$"{position} 位 / FINISH": "未完走 / DID NOT FINISH";
+        bestLap.text=local!=null&&local.bestLapTime>0?FormatTime(local.bestLapTime):"--'--.---";
         lastLap.text=local!=null&&local.didFinish&&local.finalLapTime>0?FormatTime(local.finalLapTime):"--'--.---";
         SetMenuState(0,0);
         SetPedalConfirmationReady(false);
@@ -157,9 +156,7 @@ public class ResultUIManager
         carIcons[index].gameObject.SetActive(result!=null);
         if(result!=null)carIcons[index].color=Color.Lerp(result.isCpu ? new Color(1f,.8f,.25f) : PlayerCarPaint.GetPlayerColor(result.playerNumber-1),Color.white,.3f);
         times[index].text=result==null?"—":result.didFinish?FormatTime(result.totalRaceTime):"DNF";
-        gaps[index].text=result==null?"—":!result.didFinish&&result.goalLap>0
-            ? $"{Mathf.Clamp(result.completedLaps,0,result.goalLap)} / {result.goalLap} 周"
-            : index==0||!result.didFinish?"—":"+"+Mathf.Max(0,result.totalRaceTime-winnerTime).ToString("0.000");
+        gaps[index].text=result==null||index==0||!result.didFinish?"—":"+"+Mathf.Max(0,result.totalRaceTime-winnerTime).ToString("0.000");
         times[index].color=local?new Color(1,.62f,.78f):Color.white;
         gaps[index].color=local?new Color(1,.62f,.78f):new Color(.74f,.80f,.95f);
     }

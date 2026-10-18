@@ -267,17 +267,6 @@ public class RaceCourse : MonoBehaviour
         return cachedRoadSegments[low];
     }
 
-    /// <summary>進行方向の路面切れを予告する。逆走設定にも対応。</summary>
-    public bool IsJumpAhead(Vector3 worldPosition, float directionSign, float lookAhead = 45f)
-    {
-        if (!HasValidPath) return false;
-        float raw = GetProgressDistance(worldPosition);
-        float sign = directionSign < 0f ? -1f : 1f;
-        for (float distance = 0; distance <= lookAhead; distance += 5f)
-            if (!HasRoadAtProgress(raw + sign * distance)) return true;
-        return false;
-    }
-
     public bool TryGetNearestCenterLineDirection(Vector3 worldPosition, out Vector3 direction)
     {
         direction = Vector3.zero;

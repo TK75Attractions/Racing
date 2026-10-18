@@ -77,7 +77,6 @@ public sealed class CarItemEffects : MonoBehaviour
     private float oilDropTimeRemaining = -1f;
     private float confuseTimeRemaining;
     private float spinTimeRemaining;
-    private float recoveryProtectionRemaining;
     private float spinStartRate;
     private float originalMaxAngularVelocity;
     private GameObject shieldBubble;
@@ -100,7 +99,6 @@ public sealed class CarItemEffects : MonoBehaviour
     public bool IsOiled => oilTimeRemaining > 0f;
     public bool IsConfused => confuseTimeRemaining > 0f;
     public bool IsSpinning => spinTimeRemaining > 0f;
-    public bool IsRecoveryProtected => recoveryProtectionRemaining > 0f;
     public float ShieldTimeRemaining => shieldTimeRemaining;
     public float RocketTimeRemaining => rocketTimeRemaining;
     public float ConfuseTimeRemaining => confuseTimeRemaining;
@@ -117,7 +115,7 @@ public sealed class CarItemEffects : MonoBehaviour
     public float FrontGripMultiplier => IsSpinning ? spinGripMultiplier : IsOiled ? oilFrontGripMultiplier : 1f;
     public float RearGripMultiplier => IsSpinning ? spinGripMultiplier : IsOiled ? oilRearGripMultiplier : 1f;
     // 走行終了で無効化された車は妨害を受けません。
-    private bool IsReceptive => enabled && gameObject.activeInHierarchy && !IsRecoveryProtected;
+    private bool IsReceptive => enabled && gameObject.activeInHierarchy;
 
     private void Awake()
     {
@@ -153,7 +151,6 @@ public sealed class CarItemEffects : MonoBehaviour
         }
 
         float dt = Time.fixedDeltaTime;
-        recoveryProtectionRemaining = Mathf.Max(0f, recoveryProtectionRemaining - dt);
         shieldTimeRemaining = Mathf.Max(0f, shieldTimeRemaining - dt);
         oilTimeRemaining = Mathf.Max(0f, oilTimeRemaining - dt);
         confuseTimeRemaining = Mathf.Max(0f, confuseTimeRemaining - dt);
@@ -257,7 +254,6 @@ public sealed class CarItemEffects : MonoBehaviour
 
     public void ClearAll()
     {
-        recoveryProtectionRemaining = 0f;
         shieldTimeRemaining = 0f;
         rocketTimeRemaining = 0f;
         protectRocketJump = false;
@@ -268,18 +264,6 @@ public sealed class CarItemEffects : MonoBehaviour
         spinTimeRemaining = 0f;
         if (body != null) body.maxAngularVelocity = originalMaxAngularVelocity;
         UpdateShieldVisual();
-    }
-
-    public void GrantRecoveryProtection(float seconds)
-    {
-        ClearAll();
-        recoveryProtectionRemaining = Mathf.Max(0f, seconds);
-    }
-
-    public void StopRocketAutopilot()
-    {
-        rocketTimeRemaining = rocketExitGraceRemaining = 0f;
-        protectRocketJump = false;
     }
 
     private void StartRocket()

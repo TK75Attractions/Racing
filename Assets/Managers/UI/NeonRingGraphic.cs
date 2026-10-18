@@ -35,12 +35,10 @@ public sealed class NeonRingGraphic : MaskableGraphic
         aa=1f/Mathf.Max(.1f,canvas!=null?canvas.scaleFactor:1f);
         if(display==Display.Light)
         {
-            Color signal = Color.Lerp(new Color(.16f,.18f,.22f,1f), color, amount);
-            Disc(radius, Color.Lerp(new Color(.025f,.03f,.04f,1f), signal * .6f, amount),
-                Color.Lerp(new Color(.01f,.012f,.02f,1f), signal, amount));
-            Arc(radius*.77f,0,360,3f,signal);
+            Disc(radius,new Color(.10f,.012f,.025f,.96f),new Color(.03f,.008f,.02f,1));
+            Arc(radius*.77f,0,360,3f,color);
             for(int y=-4;y<=4;y++)for(int x=-4;x<=4;x++)
-                if(x*x+y*y<20) Dot(center+new Vector2(x,y)*radius*.15f,radius*.045f,signal);
+                if(x*x+y*y<20) Dot(center+new Vector2(x,y)*radius*.15f,radius*.045f,color);
             return;
         }
         Disc(radius,new Color(.015f,.025f,.085f,.78f),new Color(.015f,.025f,.085f,.15f));

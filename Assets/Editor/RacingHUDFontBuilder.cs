@@ -34,7 +34,7 @@ public static class RacingHUDFontBuilder
         foreach (string source in sources)
             foreach (Match match in Regex.Matches(File.ReadAllText(source), "\"([^\"\\r\\n]*)\""))
                 corpus += match.Groups[1].Value;
-        // The dropdown marker uses the English font; it has no glyph in the M PLUS masters.
+        // The dropdown's small arrow belongs to FontRole.English; M PLUS has no such glyph.
         string characters = new string(corpus.Where(c => c >= 32 && c != '▾').Distinct().OrderBy(c => c).ToArray());
         foreach (string weight in new[] { "Medium", "Bold", "Tutorial" })
         {
@@ -65,6 +65,8 @@ public static class RacingHUDFontBuilder
                 atlas.name = font.name + " Atlas";
                 AssetDatabase.AddObjectToAsset(atlas, font);
             }
+            // CopySerialized replaces tables but not TMP's cached character lookup in this editor session.
+            font.ReadFontAssetDefinition();
             EditorUtility.SetDirty(font);
         }
         AssetDatabase.SaveAssets();
