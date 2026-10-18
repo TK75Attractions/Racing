@@ -162,8 +162,12 @@ public sealed class RaceAudioOutput : MonoBehaviour
 
     private void OnAudioConfigurationChanged(bool deviceWasChanged)
     {
+        int updatedRate = AudioSettings.outputSampleRate;
+        // Unity's default device can change when an HDMI/DisplayLink screen is
+        // activated. Independent outputs need reopening only if DSP rate changes.
+        if (updatedRate == sampleRate) return;
         accepting = false;
-        sampleRate = AudioSettings.outputSampleRate;
+        sampleRate = updatedRate;
         RefreshDevices();
         accepting = available;
     }

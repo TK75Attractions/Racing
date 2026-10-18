@@ -119,7 +119,7 @@ public sealed class PlayerDisplayRig
         {
             var output = CameraRoot.GetComponent<RenderGraphDisplayOutput>() ??
                 CameraRoot.AddComponent<RenderGraphDisplayOutput>();
-            output.Configure(new[] { BackCamera, BackImageCamera, MainCamera, FrontCamera, UiCamera }, DisplayIndex);
+            output.Configure(new[] { BackCamera, BackImageCamera, MainCamera, FrontCamera, UiCamera }, DisplayIndex, BackImageCamera);
         }
     }
 
