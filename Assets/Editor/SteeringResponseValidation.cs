@@ -28,6 +28,7 @@ public static class SteeringResponseValidation
         public string revision,methodology="Actual car2 prefab, production tire/drivetrain/stability code, isolated flat road. Editor Physics.Simulate at 0.02s; not a human or hardware test. Initial pose and velocity are set only between trials; no pose/velocity writes during each driving trial. Physical handle degrees are supplied as handle/6.5 through a player gate. 0.6s turn, 0.6s center, 0.6s opposite lock. Speed may change naturally; yaw is radians/second. Update/camera/network latency are outside this test.";
         public List<Trial> trials=new List<Trial>();
     }
+    private static Report lastReport;
     private static readonly MethodInfo Drive=typeof(DebugMover).GetMethod("ApplyDriving",Private);
     private static readonly MethodInfo Stabilize=typeof(CarStabilityController).GetMethod("FixedUpdate",Private);
     public static void RecordBatch()
@@ -47,6 +48,7 @@ public static class SteeringResponseValidation
                 foreach(float handle in new[]{-90f,-45f,-15f,15f,45f,90f})
                     report.trials.Add(Run(speed,handle,trace));
             }
+            lastReport=report;
             File.WriteAllText(Path.Combine(folder,"report.json"),JsonUtility.ToJson(report,true));
             Debug.Log("STEERING_RESPONSE_RECORDED: "+folder+"; trials="+report.trials.Count);
         }
@@ -57,23 +59,7 @@ public static class SteeringResponseValidation
         GameObject root=new GameObject("Steering response trial");
         try
         {
-            var road=new GameObject("Road",typeof(BoxCollider));road.transform.SetParent(root.transform);
-            road.transform.position=Vector3.down*.5f; road.GetComponent<BoxCollider>().size=new Vector3(500,1,500);
-            road.GetComponent<BoxCollider>().sharedMaterial=AssetDatabase.LoadAssetAtPath<PhysicsMaterial>("Assets/TestAddForce/New Physics Material.physicMaterial");
-            var prefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/car/car2.prefab");
-            GameObject car=UnityEngine.Object.Instantiate(prefab,root.transform);
-            car.transform.SetPositionAndRotation(Vector3.zero,Quaternion.identity);
-            Rigidbody body=car.GetComponent<Rigidbody>();body.isKinematic=false;
-            var stability=car.GetComponent<CarStabilityController>(); Call(stability,"Awake");
-            foreach(GroundCheck ground in car.GetComponentsInChildren<GroundCheck>())Call(ground,"Awake");
-            foreach(TireForce tire in car.GetComponentsInChildren<TireForce>())Call(tire,"Awake");
-            var mover=car.GetComponent<DebugMover>(); Call(mover,"Awake");
-            var input=new Input();mover.SetInputSource(new PlayerDriveInputGate(input));
-            Physics.SyncTransforms();
-            float bottom=float.MaxValue;
-            foreach(TireForce tire in car.GetComponentsInChildren<TireForce>())bottom=Mathf.Min(bottom,tire.GetComponent<SphereCollider>().bounds.min.y);
-            body.position+=Vector3.up*(.03f-bottom);Physics.SyncTransforms();
-            for(int i=0;i<40;i++){Stabilize.Invoke(stability,null);Physics.Simulate(.02f);}
+            Rigidbody body=CreateCar(root,out DebugMover mover,out Input input,out CarStabilityController stability);
             body.linearVelocity=Vector3.forward*speed;body.angularVelocity=Vector3.zero;
             var trial=new Trial {initialSpeed=speed,handleDegrees=handle};
             for(int i=0;i<90;i++)
@@ -102,5 +88,76 @@ public static class SteeringResponseValidation
         }
         finally {UnityEngine.Object.DestroyImmediate(root);}
     }
+
+    public static void ValidateBatch()
+    {
+        RecordBatch();
+        foreach(Trial trial in lastReport.trials)
+        {
+            Require(trial.firstYaw*Mathf.Sign(trial.handleDegrees)>0,"The first physics step must turn toward the handle.");
+            Require(trial.timeToTurn>0&&trial.timeToTurn<=.021f,"Turning must begin within one 20ms step.");
+            Require(trial.timeToCenter>0&&trial.timeToCenter<=.12f,"Centering must settle promptly.");
+            Require(trial.timeToReverse>0&&trial.timeToReverse<=.12f,"Countersteering must respond promptly.");
+            Require(trial.maxTilt<5&&trial.maxSlip<13,"Responsive steering must not introduce roll or uncontrolled slip.");
+        }
+        foreach(float speed in new[]{8f,20f,40f})
+        foreach(float sign in new[]{-1f,1f})
+        {
+            Trial half=lastReport.trials.Find(t=>t.initialSpeed==speed&&t.handleDegrees==sign*45);
+            Trial full=lastReport.trials.Find(t=>t.initialSpeed==speed&&t.handleDegrees==sign*90);
+            float ratio=(half.heldYaw/half.heldSpeed)/(full.heldYaw/full.heldSpeed);
+            Require(Mathf.Abs(ratio-.5f)<.08f,"The physical half-turn must retain approximately half the curvature.");
+        }
+        foreach(string condition in new[]{"ground","air","oil","suppressed","no-grip"})ValidateGuard(condition);
+        SteeringValidation.Run(); DriftValidation.Run(); RoadSeamValidation.Run();
+        Debug.Log("RESPONSIVE_STEERING_PASS: 18 physical angle/speed trials, 5 eligibility guards, calibrated input, drift and seam regressions.");
+    }
+    private static Rigidbody CreateCar(GameObject root,out DebugMover mover,out Input input,out CarStabilityController stability)
+    {
+            var road=new GameObject("Road",typeof(BoxCollider));road.transform.SetParent(root.transform);
+            road.transform.position=Vector3.down*.5f; road.GetComponent<BoxCollider>().size=new Vector3(500,1,500);
+            road.GetComponent<BoxCollider>().sharedMaterial=AssetDatabase.LoadAssetAtPath<PhysicsMaterial>("Assets/TestAddForce/New Physics Material.physicMaterial");
+            var prefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/car/car2.prefab");
+            GameObject car=UnityEngine.Object.Instantiate(prefab,root.transform);
+            car.transform.SetPositionAndRotation(Vector3.zero,Quaternion.identity);
+            Rigidbody body=car.GetComponent<Rigidbody>();body.isKinematic=false;
+            stability=car.GetComponent<CarStabilityController>(); Call(stability,"Awake");
+            foreach(GroundCheck ground in car.GetComponentsInChildren<GroundCheck>())Call(ground,"Awake");
+            foreach(TireForce tire in car.GetComponentsInChildren<TireForce>())Call(tire,"Awake");
+            mover=car.GetComponent<DebugMover>(); Call(mover,"Awake");
+            input=new Input();mover.SetInputSource(new PlayerDriveInputGate(input));
+            Physics.SyncTransforms();
+            float bottom=float.MaxValue;
+            foreach(TireForce tire in car.GetComponentsInChildren<TireForce>())bottom=Mathf.Min(bottom,tire.GetComponent<SphereCollider>().bounds.min.y);
+            body.position+=Vector3.up*(.03f-bottom);Physics.SyncTransforms();
+            for(int i=0;i<40;i++){Stabilize.Invoke(stability,null);Physics.Simulate(.02f);}
+
+        return body;
+    }
+    private static void ValidateGuard(string condition)
+    {
+        var root=new GameObject("Steering guard "+condition);
+        try
+        {
+            Rigidbody body=CreateCar(root,out DebugMover mover,out Input input,out CarStabilityController stability);
+            body.linearVelocity=Vector3.forward*20;
+            input.CurrentState=new DriveInputState {steering=90f/6.5f};
+            if(condition=="air"){body.position+=Vector3.up*20;Physics.SyncTransforms();}
+            if(condition=="suppressed")mover.SuppressInputAfterRespawn();
+            if(condition=="no-grip")typeof(DebugMover).GetField("enableLateralTireForces",Private).SetValue(mover,false);
+            if(condition=="oil")
+            {
+                CarItemEffects effects=body.GetComponent<CarItemEffects>()??body.gameObject.AddComponent<CarItemEffects>();
+                Call(effects,"Awake");Require(effects.ApplyOil(),"The guard fixture must actually be oiled.");
+            }
+            Call(mover,"ReadInput");
+            typeof(DebugMover).GetMethod("ApplyDriftSpinProtection",Private).Invoke(mover,new object[]{.02f});
+            float torque=body.GetAccumulatedTorque().magnitude;
+            Require(condition=="ground"?torque>.01f:torque<.0001f,"Unexpected steering assistance in "+condition);
+        }
+        finally {UnityEngine.Object.DestroyImmediate(root);}
+    }
+    private static void Require(bool condition,string message){if(!condition)throw new InvalidOperationException(message);}
+
     private static void Call(object target,string name)=>target.GetType().GetMethod(name,Private).Invoke(target,null);
 }

@@ -8,11 +8,12 @@ public static class SteeringValidation
 {
     private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
 
-    private sealed class StubInput : IDriveInputSource
+    private sealed class StubInput : IDriveInputSource, IDriveSteeringCalibration
     {
         public int PlayerIndex => 0;
         public string DeviceId => "VALIDATION";
         public bool IsConnected => true;
+        public float FullSteeringInput { get; set; } = 30f;
         public DriveInputState CurrentState { get; set; }
         public void UpdateInput(float deltaTime) { }
         public void Dispose() { }
@@ -25,6 +26,7 @@ public static class SteeringValidation
         try
         {
             DebugMover mover = car.AddComponent<DebugMover>();
+            Set(mover,"enableResponsiveSteering",false); // Retain coverage for the explicit legacy opt-out.
             Rigidbody body = car.GetComponent<Rigidbody>();
             Set(mover, "rb", body);
 
@@ -75,6 +77,25 @@ public static class SteeringValidation
             mover.SuppressInputAfterRespawn();
             Near(Get(mover, "appliedSteeringAngle"), 0f, "Respawn must clear the steering angle.");
             Near(mover.SteeringSpeedMultiplier, 1f, "Respawn must reset the steering multiplier.");
+
+            Set(mover,"enableResponsiveSteering",true);
+            Set(mover,"inputSuppressedUntil",-1f);
+            input.FullSteeringInput=90f/6.5f;
+            var gate=new PlayerDriveInputGate(input); mover.SetInputSource(gate);
+            Near(gate.FullSteeringInput,input.FullSteeringInput,"The player gate must retain physical steering calibration.");
+            Near(Steer(mover,body,input,90f/6.5f,0),30f,"Physical 90 degrees must reach driving full lock.");
+            Near(Get(mover,"rawSteeringInput"),30f,"Drift uses the same calibrated full-lock input.");
+            foreach(float speed in new[]{8f,20f,40f})
+            {
+                float full=Steer(mover,body,input,90f/6.5f,speed);
+                float half=Steer(mover,body,input,45f/6.5f,speed);
+                Near(Mathf.Tan(half*Mathf.Deg2Rad)/Mathf.Tan(full*Mathf.Deg2Rad),.5f,
+                    "Half the physical turn must request half the curvature, including at high speed.");
+                Near(Steer(mover,body,input,-45f/6.5f,speed),-half,"Calibration must be symmetric.");
+            }
+            var settings=new Esp32SerialConfiguration();
+            Near(settings.SteeringLockDegrees,90f,"The physical full-lock default must be 90 degrees.");
+            Near(settings.FullSteeringInput*settings.SteeringDivisor,90f,"Driving calibration must be independent of the transport divisor.");
 
             Debug.Log("Steering validation passed.");
         }
