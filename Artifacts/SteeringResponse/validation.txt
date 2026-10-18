@@ -1,0 +1,4 @@
+Unity 6000.3.9f1 / 2026-10-18
+ROAD_SEAM_VALIDATION_PASS: 9 real-car step crossings and open-edge takeoff.
+RESPONSIVE_STEERING_PASS: 18 physical angle/speed trials, 5 eligibility guards, calibrated input, drift and seam regressions.
+Core tests: 61 passed, 0 failed (Artifacts/Rgp/test-results.xml)
