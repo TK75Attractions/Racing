@@ -472,6 +472,30 @@ public class Gmanager : MonoBehaviour
         for (int i = 0; i < PlayerCount; i++) ConfirmTitleStart(i);
     }
 
+    public bool AdvanceDashboardToTutorial()
+    {
+        if ((state != State.CarSelection && state != State.Tutorial) || !CanUseDashboardControls || finishingPreparation) return false;
+        bool advanced = false;
+        for (int i = 0; i < PlayerCount; i++)
+        {
+            if (players[i].preparationState == State.CarSelection)
+            { players[i].carSelection.Confirm(); advanced = true; }
+            else if (players[i].preparationState == State.Title)
+            { int index = i; TransitionPlayer(index, State.Tutorial, () => BeginPlayerTutorial(index)); advanced = true; }
+        }
+        return advanced;
+    }
+
+    public bool AdvanceDashboardToCountdown()
+    {
+        if (state != State.Tutorial || !CanUseDashboardControls || finishingPreparation || drivingTutorial == null) return false;
+        for (int i = 0; i < PlayerCount; i++)
+            if (players[i].preparationState != State.Tutorial) return false;
+        finishingPreparation = true;
+        TransitionTo(State.Countdown, FinishTutorialWhenScreenCovered, CompleteGameStart);
+        return true;
+    }
+
     private void ConfirmCarSelection(int index)
     {
         PlayerRuntime player = players[index];

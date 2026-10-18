@@ -189,6 +189,20 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       send('count');await waitFor(()=>output.includes('APPLIED=1'));
       assert.equal((await request('/api/action/start',{...options,body:'x'.repeat(5000)})).status,413);
     });
+    await t.test('operator advances selection to tutorial and countdown with guarded actions',async()=>{
+      send('state:CarSelection');await waitFor(async()=>(await request('/api/status')).json.state==='CarSelection');
+      const advance=async action=>{
+        const snapshot=(await request('/api/status')).json;
+        return request('/api/action/'+action,{method:'POST',origin:'http://127.0.0.1:8766',body:{id:crypto.randomUUID(),targetSession:snapshot.sessionId,
+          expectedState:snapshot.state,stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime}});
+      };
+      assert.equal((await advance('countdown')).status,409);
+      assert.equal((await advance('tutorial')).status,200);
+      await waitFor(async()=>(await request('/api/status')).json.state==='Tutorial');
+      assert.equal((await advance('countdown')).status,200);
+      await waitFor(async()=>(await request('/api/status')).json.state==='Countdown');
+      assert.equal((await advance('tutorial')).status,409);
+    });
     await t.test('two simultaneous viewers receive the same event',async()=>{
       const a=await open(),b=await open();send('event:multiple viewers');
       await Promise.all([a,b].map(s=>waitFor(()=>s.packets.some(p=>p.lines.some(l=>l.line==='multiple viewers')))));

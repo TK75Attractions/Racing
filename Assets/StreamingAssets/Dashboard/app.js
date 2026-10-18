@@ -9,7 +9,14 @@ let canSendSerial = false;
 const $ = (id) => document.getElementById(id);
 const labels = { Title: 'タイトル', CarSelection: '車選択', Tutorial: 'チュートリアル', Countdown: 'カウントダウン', Game: 'レース中', Goal: 'ゴール処理中', Result: '結果表示' };
 const details = { Title: '開始操作を待っています', CarSelection: '参加者が車を選んでいます', Tutorial: '参加者が操作を練習しています', Countdown: 'スタートまでまもなく', Game: 'レース進行中', Goal: '完走処理中', Result: '次のレースを選択できます' };
-const actions = { start: 'Title', result: 'Game', retry: 'Result', title: 'Result' };
+const actions = { start: 'Title', tutorial: 'CarSelection', countdown: 'Tutorial', result: 'Game', retry: 'Result', title: 'Result' };
+function actionAvailable(action, snapshot) {
+  const preparing = snapshot?.playerProgress || [];
+  if (action === 'tutorial' && snapshot?.state === 'Tutorial')
+    return preparing.some(player => ['Title', 'CarSelection'].includes(player.state));
+  if (action === 'countdown' && preparing.some(player => player.state !== 'Tutorial')) return false;
+  return actions[action] === snapshot?.state;
+}
 let connected = false;
 let currentState = null;
 let lastFrameAt = 0;
@@ -121,7 +128,7 @@ function render(snapshot, { canControl = localMode } = {}) {
     $('pedal-' + n).textContent = (player.pedal || 0).toFixed(2);
     $('steer-' + n).textContent = (player.steering || 0).toFixed(2);
   }
-  for (const button of document.querySelectorAll('[data-action]')) button.disabled = !canControl || actions[button.dataset.action] !== currentState;
+  for (const button of document.querySelectorAll('[data-action]')) button.disabled = !canControl || !actionAvailable(button.dataset.action, snapshot);
   if (localMode) $('control-note').textContent = snapshot.state === 'Game' ? '「結果を表示」はレースを終了し、現在の記録で結果画面へ進みます。' : '現在のゲーム状態に応じて操作できます。';
   renderSerialAlerts(snapshot.serial, snapshot.inputMode);
   renderLog(snapshot.serial.lines || []);
@@ -523,7 +530,7 @@ async function refreshFrames() {
 
 document.querySelectorAll('[data-action]').forEach((button) => {
   button.addEventListener('click', async () => {
-    if (!localMode || !connected || actions[button.dataset.action] !== currentState) return;
+    if (!localMode || !connected || !actionAvailable(button.dataset.action, latestSnapshot)) return;
     if (liveController) { await liveController.command(button.dataset.action); return; }
     button.disabled = true;
     $('control-note').textContent = 'Unity に操作を送信中…';

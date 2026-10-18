@@ -238,3 +238,13 @@ test('Raw display pauses rendering, bounds history, and resumes with fresh data'
   assert.equal(ui.elements.get('raw-log').children.length,1);
   assert.match(ui.elements.get('raw-log').textContent,/new/);
 });
+
+test('Race buttons advance selection and tutorial with mixed player preparation',()=>{
+  const ui=fixture(), enabled=()=>ui.buttons.filter(button=>!button.disabled).map(button=>button.dataset.action);
+  ui.render({...base,state:'CarSelection'}); assert.deepEqual(enabled(),['tutorial']);
+  ui.render({...base,state:'Tutorial',playerProgress:[{state:'Tutorial'},{state:'CarSelection'}]});
+  assert.deepEqual(enabled(),['tutorial']);
+  ui.render({...base,state:'Tutorial',playerProgress:[{state:'Tutorial'},{state:'Tutorial'}]});
+  assert.deepEqual(enabled(),['countdown']);
+  ui.render({...base,state:'Countdown'});assert.deepEqual(enabled(),[]);
+});
