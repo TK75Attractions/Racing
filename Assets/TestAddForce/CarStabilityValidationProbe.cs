@@ -45,6 +45,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         public float maxYawRate;
         public float minimumSpeed = float.MaxValue;
         public float initialSpeed;
+        public float physicsSeconds;
         public float maximumRise;
         public bool enteredDrift;
         public bool releasedBoost;
@@ -69,6 +70,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
     private string folder;
     private StreamWriter trace;
     private float trialTime;
+    private double trialStartedFixedTime;
     private static readonly BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic;
 
     private IEnumerator Start()
@@ -244,8 +246,9 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             yield return new WaitForSeconds(1.5f);
             End();
         }
-        yield return Place(floor, Quaternion.identity);
-        yield return new WaitForSeconds(.35f);
+        // Launch at the actual open edge. A vertical impulse above continuous flat
+        // road deliberately exercises seam absorption instead of a genuine takeoff.
+        yield return Place(floor + Vector3.forward * 149f, Quaternion.identity);
         body.linearVelocity = new Vector3(0f, 5f, 15f);
         Begin("road-takeoff");
         yield return new WaitForSeconds(1.2f);
@@ -322,7 +325,8 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             if (result.name.StartsWith("air-glide-") &&
                 (result.airSeconds < 1.9f || result.groundedWheels != 0 || result.maxDriveWhileAirborne > .001f ||
                  result.finalPlanarSpeed < result.initialSpeed * .9f || result.finalPlanarSpeed > result.initialSpeed * 1.02f ||
-                 result.horizontalDistance < result.initialSpeed * 1.9f || Mathf.Abs(result.finalVerticalSpeed + 14.62f) > .5f))
+                 result.horizontalDistance < result.initialSpeed * 1.9f ||
+                 Mathf.Abs(result.finalVerticalSpeed - (5f + Physics.gravity.y * result.physicsSeconds)) > .5f))
                 failures.Add(result.name + ": excessive air resistance, tire propulsion, or changed gravity");
             if (result.name == "air-yaw-drift" &&
                 (result.yawChange < 20f || result.maxTilt > 1f || Mathf.Abs(result.finalVerticalSpeed) > .5f))
@@ -373,12 +377,16 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         startingPosition = body.position;
         observedAir = false;
         trialTime = 0f;
+        trialStartedFixedTime = Time.fixedTimeAsDouble;
         recording = true;
     }
 
     private void End()
     {
         Sample();
+        // WaitForSeconds resumes on a rendered frame and can overshoot the requested
+        // duration. Compare gravity with the physics time actually simulated.
+        trial.physicsSeconds = (float)(Time.fixedTimeAsDouble - trialStartedFixedTime);
         recording = false;
         trace.Flush();
     }
