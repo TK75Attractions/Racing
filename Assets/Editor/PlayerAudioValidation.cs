@@ -89,6 +89,14 @@ public static class PlayerAudioValidation
             arguments[0] = 1;
             typeof(PlayerAudioCapture).GetMethod("GetPerspectiveGains", Private).Invoke(capture, arguments);
             Require((float)arguments[2] == 0 && (float)arguments[3] == 0, "Distant engines must be silent in the other viewpoint.");
+            foreach (Gmanager.State silentState in new[] { Gmanager.State.Goal, Gmanager.State.Result, Gmanager.State.Title })
+            {
+                manager.state = silentState;
+                arguments[0] = 0;
+                typeof(PlayerAudioCapture).GetMethod("GetPerspectiveGains", Private).Invoke(capture, arguments);
+                Require((float)arguments[2] == 0 && (float)arguments[3] == 0,
+                    "Engine PCM must be silent during " + silentState);
+            }
             float[] pcm = { .5f, -.5f, 1f, -1f };
             typeof(PlayerAudioCapture).GetMethod("OnAudioFilterRead", Private).Invoke(capture, new object[] { pcm, 2 });
             Require(pcm.All(sample => sample == 0), "Captured audio must never leak into Unity's default output.");

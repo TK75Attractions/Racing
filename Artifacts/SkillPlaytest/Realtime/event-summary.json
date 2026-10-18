@@ -1,0 +1,322 @@
+[
+  {
+    "run": "skill-stop-rejoin",
+    "events": [
+      {
+        "car": "P1",
+        "event": "airborne",
+        "count": 3
+      },
+      {
+        "car": "P2",
+        "event": "airborne",
+        "count": 5
+      },
+      {
+        "car": "CPU 1",
+        "event": "airborne",
+        "count": 4
+      },
+      {
+        "car": "CPU 2",
+        "event": "airborne",
+        "count": 11
+      },
+      {
+        "car": "P1",
+        "event": "grounded",
+        "count": 3
+      },
+      {
+        "car": "P2",
+        "event": "grounded",
+        "count": 5
+      },
+      {
+        "car": "CPU 1",
+        "event": "grounded",
+        "count": 4
+      },
+      {
+        "car": "CPU 2",
+        "event": "grounded",
+        "count": 11
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "count": 361
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "count": 339
+      },
+      {
+        "car": "CPU 1",
+        "event": "vehicle-contact",
+        "count": 13
+      },
+      {
+        "car": "CPU 2",
+        "event": "vehicle-contact",
+        "count": 12
+      },
+      {
+        "car": "P2",
+        "event": "vehicle-contact",
+        "count": 5
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "count": 312
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "count": 400
+      },
+      {
+        "car": "P2",
+        "event": "jump-notice-seen",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "position-discontinuity",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "off-course",
+        "count": 5
+      },
+      {
+        "car": "P2",
+        "event": "on-course",
+        "count": 5
+      },
+      {
+        "car": "P2",
+        "event": "position-discontinuity",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "release-pedal-response",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "still-racing",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "still-racing",
+        "count": 1
+      },
+      {
+        "car": "CPU 1",
+        "event": "still-racing",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "still-racing",
+        "count": 1
+      }
+    ],
+    "details": [
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 361
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 339
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 312
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 337
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "detail": "平面.012",
+        "count": 2
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "detail": "Tube Road Shoulders",
+        "count": 44
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "detail": "BézierCurve.001",
+        "count": 17
+      }
+    ]
+  },
+  {
+    "run": "skill-disconnect-rejoin",
+    "events": [
+      {
+        "car": "P1",
+        "event": "airborne",
+        "count": 5
+      },
+      {
+        "car": "P2",
+        "event": "airborne",
+        "count": 9
+      },
+      {
+        "car": "CPU 1",
+        "event": "airborne",
+        "count": 10
+      },
+      {
+        "car": "CPU 2",
+        "event": "airborne",
+        "count": 9
+      },
+      {
+        "car": "P1",
+        "event": "grounded",
+        "count": 5
+      },
+      {
+        "car": "P2",
+        "event": "grounded",
+        "count": 9
+      },
+      {
+        "car": "CPU 1",
+        "event": "grounded",
+        "count": 10
+      },
+      {
+        "car": "CPU 2",
+        "event": "grounded",
+        "count": 9
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "count": 326
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "count": 276
+      },
+      {
+        "car": "CPU 1",
+        "event": "vehicle-contact",
+        "count": 11
+      },
+      {
+        "car": "CPU 2",
+        "event": "vehicle-contact",
+        "count": 10
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "count": 301
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "count": 311
+      },
+      {
+        "car": "P2",
+        "event": "input-disconnected",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "vehicle-contact",
+        "count": 3
+      },
+      {
+        "car": "P1",
+        "event": "vehicle-contact",
+        "count": 2
+      },
+      {
+        "car": "P2",
+        "event": "input-reconnected",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "release-pedal-response",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "still-racing",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "still-racing",
+        "count": 1
+      },
+      {
+        "car": "CPU 1",
+        "event": "still-racing",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "still-racing",
+        "count": 1
+      }
+    ],
+    "details": [
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 326
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 276
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 301
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 311
+      }
+    ]
+  }
+]

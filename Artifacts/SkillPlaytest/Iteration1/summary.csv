@@ -1,0 +1,9 @@
+run,seed,items,termination,seconds,car,finished,rank,laps,progress_m,mean_speed_mps,max_stall_s,off_course_s,vehicle_contacts,environment_contacts,items_used,afflictions,manual_resets,cpu_recoveries,human_recoveries,automatic_recoveries,recovery_blocked,granted_human_grace_s
+skill-novice-expert,6101,False,human-grace-timeout,352.54,P1,False,4,0,214.89,6.18,0.72,127.19,16,736,0,0,0,0,76,76,,180.0
+skill-novice-expert,6101,False,human-grace-timeout,352.54,P2,True,1,2,3658.13,21.45,0.0,0.0,0,693,0,0,0,0,0,0,,180.0
+skill-novice-expert,6101,False,human-grace-timeout,352.54,CPU 1,False,3,0,217.99,7.48,0.52,109.07,26,470,0,0,0,29,0,0,,180.0
+skill-novice-expert,6101,False,human-grace-timeout,352.54,CPU 2,True,2,2,3658.13,17.24,0.0,0.0,12,816,0,0,0,0,0,0,,180.0
+skill-club-expert,6102,True,,0.0,P1,False,0,0,0.0,0.0,0.0,0.0,0,0,0,0,0,0,0,0,,0.0
+skill-club-expert,6102,True,,0.0,P2,False,0,0,0.0,0.0,0.0,0.0,0,0,0,0,0,0,0,0,,0.0
+skill-club-expert,6102,True,,0.0,CPU 1,False,0,0,0.0,0.0,0.0,0.0,0,0,0,0,0,0,0,0,,0.0
+skill-club-expert,6102,True,,0.0,CPU 2,False,0,0,0.0,0.0,0.0,0.0,0,0,0,0,0,0,0,0,,0.0

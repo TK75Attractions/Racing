@@ -100,6 +100,22 @@ public static class MultiDisplayValidation
                         Require(Mathf.Approximately(rigs[player].MainCamera.aspect, 16f / 9f), "Camera aspect must remain 16:9.");
                     }
                 }
+                for (int player = 0; player < 2; player++)
+                {
+                    byte[] jpeg = rigs[player].CaptureJpeg(640, 360);
+                    Require(jpeg != null && jpeg.Length > 1000, "Dashboard must capture both complete player stacks.");
+                    foreach (Camera camera in Cameras(rigs[player]))
+                        Require(camera.targetTexture == textures[player], "Preview must restore every camera target.");
+                    Require(Mathf.Approximately(rigs[player].Canvas.scaleFactor, scales[player]),
+                        "Preview must restore the player's UI scale after capture.");
+                    Texture2D decoded = new Texture2D(2, 2);
+                    try
+                    {
+                        Require(decoded.LoadImage(jpeg) && decoded.width == 640 && decoded.height == 360,
+                            "Preview must produce a decodable JPEG at the requested size.");
+                    }
+                    finally { Object.DestroyImmediate(decoded); }
+                }
             }
             var output = fixture.AddComponent<RenderGraphDisplayOutput>();
             output.Configure(Cameras(rigs[1]), 2);

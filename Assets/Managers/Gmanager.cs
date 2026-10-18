@@ -57,6 +57,7 @@ public class Gmanager : MonoBehaviour
     [SerializeField, Min(0f)] private float goMessageSeconds = 0.75f;
     [SerializeField] private LapManager lapManager;
     [SerializeField, Min(0f)] private float secondPlaceTimeoutSeconds = 40f;
+    [SerializeField, Min(0f)] private float maximumHumanFinishGraceSeconds = 180f;
 
     [Header("Preparation Time Limits")]
     [SerializeField, Min(1f)] private float carSelectionTimeLimitSeconds = CarSelectionUI.DefaultTimeLimitSeconds;
@@ -152,6 +153,13 @@ public class Gmanager : MonoBehaviour
     public bool IsDrivingEnabled => state == State.Game || ((state == State.CarSelection || state == State.Tutorial) &&
         !finishingPreparation && drivingTutorial != null && drivingTutorial.HasAnyStarted);
     public bool CanUseDashboardControls => !IsScreenTransitioning();
+    public bool IsEngineAudioActive(Rigidbody body)
+    {
+        if (state != State.Countdown && state != State.Game && state != State.Tutorial && state != State.CarSelection)
+            return false;
+        RaceParticipant participant = FindParticipant(body);
+        return participant == null || participant.Result == null;
+    }
     public int GoalLap => lapManager != null ? lapManager.GoalLap : 0;
     public int GetPlayerLap(int index)
     {
@@ -168,6 +176,9 @@ public class Gmanager : MonoBehaviour
         if (index < 0 || index >= displayRigs.Length) return null;
         return displayRigs[index]?.BackImageCamera ?? displayRigs[index]?.MainCamera;
     }
+
+    public byte[] CapturePlayerFrame(int index) => index >= 0 && index < displayRigs.Length
+        ? displayRigs[index]?.CaptureJpeg(640, 360) : null;
 
     public Camera GetPlayerViewCamera(int index) => index >= 0 && index < displayRigs.Length ? displayRigs[index]?.MainCamera : null;
 
@@ -534,7 +545,17 @@ public class Gmanager : MonoBehaviour
     {
         if (state != State.Game || IsScreenTransitioning() || (resultRecord != null && (resultRecord.isCpu || resultRecord.playerNumber > PlayerCount))) return;
 
-        RaceResultRecord first = resultRecord ?? CreateFallbackResult(0, true, 1);
+        if (resultRecord == null)
+        {
+            // Operator stop classifies the current standings; it does not award P1 a finish.
+            if (raceSession == null) raceSession = new RaceParticipantSession(PlayerCount, 0, 0f, maximumRaceSeconds);
+            if (participants.Count == 0)
+                for (int i = 0; i < PlayerCount; i++) raceSession.CloseParticipant(i, CreateFallbackResult(i, false, i + 1));
+            CompleteRace(raceSession.Result, null);
+            return;
+        }
+
+        RaceResultRecord first = resultRecord;
         first.playerNumber = first.playerNumber > 0 ? first.playerNumber : 1;
         first.didFinish = true;
         if (raceSession != null && participants.Count > 0)
@@ -975,6 +996,18 @@ public class Gmanager : MonoBehaviour
         RaceFinishRegistration registration = raceSession.RegisterFinish(entry.Index, result);
         if (registration == RaceFinishRegistration.Ignored) return;
         entry.Result = result; latestSessionResult = raceSession.Result;
+        if (registration == RaceFinishRegistration.FirstPlace && lapManager != null && course != null)
+        {
+            RaceParticipant remaining = GetParticipant(raceSession.UnfinishedPlayerIndex);
+            if (remaining?.IsRacing == true && lapManager.GoalLap > 0)
+            {
+                float progress = lapManager.GetRaceProgressDistance(remaining.Body);
+                float pace = Mathf.Max(0f, progress) / Mathf.Max(1f, time);
+                raceSession.ExtendHumanGrace(HumanFinishGrace.Estimate(
+                    lapManager.GoalLap * course.TotalLength - progress, pace,
+                    secondPlaceTimeoutSeconds, maximumHumanFinishGraceSeconds));
+            }
+        }
         if (entry.IsCpu)
         {
             FreezeCpu(entry); UpdateParticipantOrder(); return;
@@ -1349,6 +1382,9 @@ public class Gmanager : MonoBehaviour
                 mover != null ? mover.AccelerationPadBoostTimeRemaining : 0f,
                 mover != null ? mover.AccelerationPadBoostDuration : 0f, ownerPosition, playerIndex == 0 ? progressGap : -progressGap);
             ui.UpdateParticipants(participants);
+            ui.UpdateDriverNotice(player.inputGate, player.car.GetComponent<CarResetter>(),
+                state == State.Game && player.result == null && !player.withdrewFromRace,
+                course != null && course.IsJumpAhead(player.rigidbody.position,CourseProgressSign));
         }
     }
 

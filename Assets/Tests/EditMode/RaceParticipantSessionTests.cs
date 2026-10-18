@@ -52,4 +52,21 @@ public class RaceParticipantSessionTests
         Assert.That(s.RegisterDnf(1, new RaceResultRecord()), Is.True);
         Assert.That(s.RegisterWithdrawal(1, new RaceResultRecord()), Is.False);
     }
+    [Test] public void AdaptiveGraceRespectsDistanceAndKeepsTheOverallDeadline()
+    {
+        Assert.That(HumanFinishGrace.Estimate(30,20,40,180),Is.EqualTo(40));
+        Assert.That(HumanFinishGrace.Estimate(1800,12,40,180),Is.EqualTo(158));
+        Assert.That(HumanFinishGrace.Estimate(3000,0,40,180),Is.EqualTo(180));
+        var s=Create(100); s.Tick(30); s.RegisterFinish(0,new RaceResultRecord()); s.ExtendHumanGrace(180);
+        Assert.That(s.SecondPlaceTimeRemaining,Is.EqualTo(70));
+        Assert.That(s.Tick(69),Is.False); Assert.That(s.Tick(1),Is.True);
+        s.ExtendHumanGrace(180); Assert.That(s.HasTimedOut,Is.True);
+    }
+    [Test] public void AdaptiveGraceCannotStartAWindowOrShortenOne()
+    {
+        var s=Create(); s.ExtendHumanGrace(180); Assert.That(s.WaitingForSecondPlace,Is.False);
+        s.RegisterFinish(0,new RaceResultRecord()); s.ExtendHumanGrace(10);
+        Assert.That(s.SecondPlaceTimeRemaining,Is.EqualTo(40));
+        s.ExtendHumanGrace(float.NaN); Assert.That(s.SecondPlaceTimeRemaining,Is.EqualTo(40));
+    }
 }

@@ -23,6 +23,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
 
     public RenderTexture Target => target;
     public int PresentedFrames { get; private set; }
+    public bool CapturingPreview { get; set; }
 
     public void Configure(Camera[] outputCameras, int outputDisplay)
     {
@@ -65,7 +66,10 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
     }
 
     private void LateUpdate() => RefreshTarget();
-    private void BeginRendering(ScriptableRenderContext context, List<Camera> rendered) => RefreshTarget();
+    private void BeginRendering(ScriptableRenderContext context, List<Camera> rendered)
+    {
+        if (!CapturingPreview) RefreshTarget();
+    }
 
     private void RefreshTarget()
     {
@@ -103,64 +107,4 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
     private void Present(ScriptableRenderContext context, List<Camera> rendered)
     {
         using var timing = PresentMarker.Auto();
-        if (target == null || Application.isEditor || (!nativeWindow && displayIndex >= Display.displays.Length)) return;
-        // Render requests for thumbnails/captures also raise this event. Only
-        // present after this display's normal stack has been rendered.
-        bool hasOutput = false;
-        foreach (Camera camera in cameras)
-            if (camera != null && camera.targetTexture == target && rendered.Contains(camera))
-            { hasOutput = true; break; }
-        if (!hasOutput) return;
-        if (nativeWindow)
-        {
-            RacePlayerWindows.Present(nativeTexture);
-            PresentedFrames++;
-            return;
-        }
-        if (presentation == null)
-        {
-            Shader shader = Resources.Load<Shader>("DisplayOutput");
-            if (shader == null) { Debug.LogError("Display presentation shader is missing."); enabled = false; return; }
-            presentation = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
-        }
-        Display display = Display.displays[displayIndex];
-        presentation.SetTexture(TextureId, target);
-        // URP exposes RenderTextures with bottom-left UV origin; native Metal
-        // backbuffers use top-left, just as URP's Render Graph final blit does.
-        presentation.SetVector(ScaleBiasId, SystemInfo.graphicsUVStartsAtTop
-            ? new Vector4(1f, -1f, 0f, 1f) : new Vector4(1f, 1f, 0f, 0f));
-        presentation.SetFloat(EncodeId, QualitySettings.activeColorSpace == ColorSpace.Linear &&
-            display.requiresSrgbBlitToBackbuffer ? 1f : 0f);
-        RenderTexture previous = RenderTexture.active;
-        try
-        {
-            Graphics.SetRenderTarget(display.colorBuffer, display.depthBuffer);
-            GL.Viewport(new Rect(0, 0,
-                displayIndex == 0 ? Screen.width : display.renderingWidth,
-                displayIndex == 0 ? Screen.height : display.renderingHeight));
-            if (presentation.SetPass(0))
-            {
-                Graphics.DrawProceduralNow(MeshTopology.Triangles, 3);
-                PresentedFrames++;
-            }
-        }
-        finally { RenderTexture.active = previous; }
-    }
-
-    private void ReleaseTarget()
-    {
-        if (target == null) return;
-        if (cameras != null)
-            foreach (Camera camera in cameras)
-                if (camera != null && camera.targetTexture == target) camera.targetTexture = null;
-        target.Release();
-        DestroyOwned(target);
-        target = null;
-        nativeTexture = System.IntPtr.Zero;
-    }
-
-    private static void DestroyOwned(Object value)
-    {
-        if (Application.isPlaying) Destroy(value); else DestroyImmediate(value);
-    }
-}
+        if (CapturingPreview || target == null || Application.isEditor || (!nativeWindow && displayIndex >= Display.displays.Length)) return;

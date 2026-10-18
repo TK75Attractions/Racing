@@ -14,6 +14,9 @@ public static class ModernUIValidation
         foreach (FontRole role in Enum.GetValues(typeof(FontRole)))
             Require(RacingUIFontCatalog.Get(role) != null, $"Missing UI font: {role}");
         Require(RacingUIFontCatalog.GetHUD(false) != null && RacingUIFontCatalog.GetHUD(true) != null, "Missing medium/bold HUD fonts.");
+        foreach(bool bold in new[]{false,true})
+            Require(RacingUIFontCatalog.GetHUD(bold).HasCharacters("接続を確認してくださいコース復帰待ちペダルを離して再開しましたこの先ジャンプ：まっすぐ加速"),
+                "The static HUD atlas is missing driver assistance characters. Rebuild HUD fonts.");
         TMP_FontAsset japanese = RacingUIFontCatalog.Get(FontRole.Japanese);
         Require(japanese.HasCharacters("スタートリトライタイトルへハンドルで操作ペダルを踏み込んで決定準備完了相手待っています観戦中済終了前進後退走行方向切替操作一時停止あなた順位いまの周位人走行タイムこのスピードコースあいてプレイヤー加速秒もうすぐレース終了効果音", out uint[] missing),
             "Japanese UI font is missing required characters.");
@@ -174,6 +177,8 @@ public static class ModernUIValidation
         feedback.SetState(true,.5f,NeonUI.Pink);
         for(int frame=0;frame<60;frame++)feedback.Tick(1f/60f);
         Require(Text(button.transform,"HoldPercent")=="50%","Hold percentage does not match actual progress.");
+        Require(button.transform.Find("HoldPercent").GetComponent<TMP_Text>().color.r<.1f,
+            "A selected bright button needs a dark, readable hold percentage.");
         feedback.SetConfirmed(true);feedback.SetState(false,0,NeonUI.Pink);
         for(int frame=0;frame<60;frame++)feedback.Tick(1f/60f);
         Require(feedback.IsRetained && Text(button.transform,"HoldPercent")=="100%","Start must remain selected after releasing the hold.");
@@ -201,6 +206,22 @@ public static class ModernUIValidation
         RectTransform result=RacingUITheme.Rect(host,"Result",Vector2.zero,Vector2.one);
         ScreenTransitionController transition=host.gameObject.AddComponent<ScreenTransitionController>();
         transition.Initialize(title,play,result,"","準備",1);
+        for (int seconds = 3; seconds >= 1; seconds--)
+        {
+            transition.ShowCountdown(seconds);
+            for (int lamp = 0; lamp < 3; lamp++)
+                Require(play.Find("CountdownStatus/Lamp" + lamp + "/Signal").GetComponent<NeonRingGraphic>().amount ==
+                    (lamp < 4 - seconds ? 1f : 0f), "Countdown must light one additional signal per count.");
+        }
+        transition.ShowGo();
+        for (int lamp = 0; lamp < 3; lamp++)
+        {
+            NeonRingGraphic signal = play.Find("CountdownStatus/Lamp" + lamp + "/Signal").GetComponent<NeonRingGraphic>();
+            Require(signal.amount == 1f && signal.color.g > signal.color.r, "GO must turn all signals green.");
+        }
+        transition.ShowCountdown(3);
+        Require(play.Find("CountdownStatus/Lamp1/Signal").GetComponent<NeonRingGraphic>().amount == 0f,
+            "Retry must reset the start lights.");
         RacingMenuButton start=title.Find("Player2Pedal").GetComponent<RacingMenuButton>();
         Require(start.IsActive() && start.targetGraphic.enabled && start.targetGraphic.raycastTarget,"Title start has no active pointer hit target.");
         foreach(RacingMenuButton button in title.GetComponentsInChildren<RacingMenuButton>(true))
@@ -215,12 +236,25 @@ public static class ModernUIValidation
         Require(Text(card,"ResultRow2/Gap")=="+2.125" && Text(card,"PlacementRibbon/Ordinal")=="2ND","Result times and local medal do not match real data.");
         Require(card.Find("ResultMenu").GetComponentsInChildren<RacingMenuButton>(false).Length==2,"Result must have two actions.");
         Require(Text(card,"ResultMenu/Option1/Label")=="もう一度" && Text(card,"ResultMenu/Option2/Label")=="メインメニュー","Result action labels are wrong.");
+        PedalButtonFeedback retry = card.Find("ResultMenu/Option1").GetComponent<PedalButtonFeedback>();
+        PedalButtonFeedback mainMenu = card.Find("ResultMenu/Option2").GetComponent<PedalButtonFeedback>();
+        results.SetMenuState(1, 0f);
+        retry.SetPointerState(true, false, true); // A parked mouse must not create a second selected option.
+        for (int i = 0; i < 60; i++) { retry.Tick(1f / 60f); mainMenu.Tick(1f / 60f); }
+        Require(mainMenu.transform.localScale.x > retry.transform.localScale.x + .03f,
+            "Steering selection must visibly enlarge exactly one option even with pointer hover elsewhere.");
+        Color selectedText = card.Find("ResultMenu/Option2/Label").GetComponent<TMP_Text>().color;
+        Require(selectedText.maxColorComponent < .1f, "Selected button must use dark text on its bright surface.");
         foreach(RacingMenuButton button in card.Find("ResultMenu").GetComponentsInChildren<RacingMenuButton>(true))
             Require(button.targetGraphic.enabled && button.targetGraphic.raycastTarget,"Result action has no pointer hit target.");
         session.GetPlayerResult(1).didFinish=false;
+        session.GetPlayerResult(1).goalLap=2; session.GetPlayerResult(1).completedLaps=1;
+        session.GetPlayerResult(1).bestLapTime=float.MaxValue;
         session.GetPlayerResult(1).finalLapTime=3.5f;
         session.GetPlayerResult(1).carName="Player2_Car";
         results.ShowResults(session);
+        Require(Text(card,"ResultRow2/Gap")=="1 / 2 周" && Text(card,"RaceSummary/Best")=="--'--.---",
+            "DNF must show achieved laps and must not format an unset best lap as a huge time.");
         Require(Text(card,"ResultRow2/Time")=="DNF" && Text(card,"PlacementRibbon/Ordinal")=="DNF" && !card.Find("Medal/Artwork").gameObject.activeSelf,"DNF must not award a finish medal.");
         Require(Text(card,"ResultRow2/Rank")=="—" && Text(card,"RaceSummary/Last")=="--'--.---" && Text(card,"ResultRow2/CarName")=="SPORT CAR", "DNF must not display a finish rank, unfinished lap time or internal vehicle name.");
         session.GetPlayerResult(0).didFinish=false;results.ShowResults(session);

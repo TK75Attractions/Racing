@@ -38,6 +38,30 @@ public class GroundCheck : MonoBehaviour
     /// <summary>接地判定を変えず、微小な浮き上がりを抑える補助用の路面を探します。</summary>
     public bool TryGetNearbyGround(float surfaceGap, out RaycastHit hit) => TryGetSurface(surfaceGap, out hit);
 
+    public float GetUpcomingStepRise(Vector3 velocity, Vector3 normal, Vector3 supportPoint, float maximumHeight)
+    {
+        if (wheelCollider == null || !wheelCollider.enabled || wheelCollider.isTrigger) return 0f;
+        Vector3 travel = Vector3.ProjectOnPlane(velocity, normal);
+        if (travel.sqrMagnitude < 1f) return 0f;
+        Vector3 scale = transform.lossyScale;
+        float radius = wheelCollider.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+        Vector3 futureCenter = transform.TransformPoint(wheelCollider.center) + travel * Time.fixedDeltaTime +
+            travel.normalized * Mathf.Max(radius, 1.3f);
+        float rise = 0f;
+        foreach (RaycastHit hit in Physics.RaycastAll(futureCenter + normal * maximumHeight, -normal,
+                     checkDistance + maximumHeight, groundLayers, QueryTriggerInteraction.Ignore))
+        {
+            if (hit.collider.attachedRigidbody == ownerRigidbody ||
+                (hit.collider.attachedRigidbody != null && !hit.collider.attachedRigidbody.isKinematic) ||
+                Vector3.Dot(hit.normal, normal) < .995f) continue;
+            float required = Vector3.Dot(hit.point - futureCenter, normal) + radius + .015f;
+            float stepHeight = Vector3.Dot(hit.point - supportPoint, normal);
+            if (stepHeight > .025f && stepHeight <= maximumHeight && required > .025f &&
+                required <= maximumHeight + .08f) rise = Mathf.Max(rise, required);
+        }
+        return rise;
+    }
+
     private bool TryGetSurface(float surfaceGap, out RaycastHit surface)
     {
         Vector3 wheelUp = ownerRigidbody != null ? ownerRigidbody.rotation * Vector3.up : Vector3.up;
