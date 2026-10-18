@@ -6,6 +6,18 @@ using System.Security.Cryptography;
 // Pure protocol/session state; all methods are called on the game's main thread.
 public sealed class RgpHostSession
 {
+    public sealed class ImuDevice
+    {
+        public string Address = "", Identity = "", Status = "Unknown";
+    }
+    public sealed class CommandResult
+    {
+        public uint Sequence;
+        public string Command, Status;
+        public string[] Data = Array.Empty<string>();
+        public readonly List<string> Devices = new List<string>();
+        public double UpdatedAt;
+    }
     private sealed class PendingCommand
     {
         public string Command;
@@ -13,9 +25,14 @@ public sealed class RgpHostSession
         public double SentAt;
         public int Retries;
         public bool RequiredForSetup;
+        public CommandResult Result;
     }
     private readonly Action<string> send;
     private readonly Dictionary<uint, PendingCommand> pending = new Dictionary<uint, PendingCommand>();
+    private readonly List<CommandResult> commandResults = new List<CommandResult>();
+    public CommandResult[] CommandResults => commandResults.ToArray();
+    public ImuDevice[] Imus { get; } = { new ImuDevice(), new ImuDevice() };
+    public int Generation { get; private set; }
     private uint nextSequence;
     private uint lastTelSequence;
     private bool hasTelSequence;
@@ -61,6 +78,8 @@ public sealed class RgpHostSession
         if (pending.Count >= 8) { reason = "commands_pending"; return false; }
         foreach (PendingCommand active in pending.Values)
             if (active.Command == command) { reason = "command_pending"; return false; }
+        if (commandResults.Exists(result => result.Command == command && result.Status == "ACCEPTED"))
+        { reason = "command_pending"; return false; }
         if ((command == "ANGLE_ZERO" || command == "CALIBRATE" || command == "SET_BETA") && State != "READY" && State != "WAIT_ANGLE")
         { reason = "device_not_ready"; return false; }
         sequence = nextSequence;
@@ -70,8 +89,18 @@ public sealed class RgpHostSession
     private void ResetHardware()
     {
         AdsStatus = ImuStatus = "Unknown"; AdsAddress = ImuAddress = ImuIdentity = "";
+        foreach (ImuDevice imu in Imus) { imu.Address = imu.Identity = ""; imu.Status = "Unknown"; }
         AngleLocked = Calibrated = false;
     }
+    private ImuDevice FindImu(string address)
+    {
+        if (string.IsNullOrEmpty(address) || !System.Text.RegularExpressions.Regex.IsMatch(address, @"\A0x[0-9A-Fa-f]{2}\z")) return null;
+        foreach (ImuDevice imu in Imus) if (imu.Address == address) return imu;
+        foreach (ImuDevice imu in Imus) if (imu.Address.Length == 0) { imu.Address = address; return imu; }
+        return null;
+    }
+    private void InvalidateImus()
+    { foreach (ImuDevice imu in Imus) imu.Status = "Unknown"; }
     public double StaleAfterMilliseconds => Math.Max(3000.0 / TelemetryRate, 100);
     public bool IsFresh(double now) => Compatible && SessionOpen && State == "READY" && TelemetryEnabled &&
         hasTelemetry && now - lastTelemetryAt <= StaleAfterMilliseconds;
@@ -79,6 +108,7 @@ public sealed class RgpHostSession
     public RgpHostSession(Action<string> send) { this.send = send ?? throw new ArgumentNullException(nameof(send)); }
     public void Start(double now)
     {
+        Generation++; commandResults.Clear();
         pending.Clear(); nextSequence = 0; hasTelSequence = false;
         SessionOpen = false; State = "UNKNOWN"; Compatible = true; ResetHardware();
         TelemetryRate = 100; TelemetryEnabled = true; Invalidate();
@@ -94,7 +124,15 @@ public sealed class RgpHostSession
         string body = "CMD," + seq.ToString(CultureInfo.InvariantCulture) + ",0," + command;
         if (args.Length > 0) body += "," + string.Join(",", args);
         string wire = SerialInputProtocol.Encode(body);
-        pending.Add(seq, new PendingCommand { Command = command, Wire = wire, SentAt = now, RequiredForSetup = requiredForSetup });
+        var result = new CommandResult { Sequence = seq, Command = command, Status = "SENT", UpdatedAt = now };
+        commandResults.Add(result);
+        // Never evict an operation that still awaits its ACK or asynchronous completion.
+        if (commandResults.Count > 32)
+        {
+            int old = commandResults.FindIndex(item => item != result && item.Status != "SENT" && item.Status != "ACCEPTED");
+            if (old >= 0) commandResults.RemoveAt(old);
+        }
+        pending.Add(seq, new PendingCommand { Command = command, Wire = wire, SentAt = now, RequiredForSetup = requiredForSetup, Result = result });
         send(wire);
     }
     public void Tick(double now)
@@ -108,18 +146,24 @@ public sealed class RgpHostSession
             {
                 pending.Remove(seq);
                 LastCommandResult = request.Command + ": TIMEOUT (result unknown)";
+                request.Result.Status = "TIMEOUT"; request.Result.UpdatedAt = now;
                 // Failed setup leaves input disabled. Never repeat an operation with a new SEQ.
                 if (request.RequiredForSetup && (request.Command == "OPEN_SESSION" || request.Command == "GET_STATUS" || request.Command == "GET_CONFIG"))
                 { SessionOpen = false; Invalidate(); }
-                if (request.Command == "GET_STATUS") AdsStatus = ImuStatus = "Unknown";
+                if (request.Command == "GET_STATUS") { AdsStatus = ImuStatus = "Unknown"; InvalidateImus(); }
                 CommandTimedOut?.Invoke(request.Command);
                 continue;
             }
             request.Retries++; request.SentAt = now; send(request.Wire);
         }
+        foreach (CommandResult result in commandResults)
+            if (result.Status == "ACCEPTED" && now - result.UpdatedAt >= 120000)
+            { result.Status = "TIMEOUT"; result.UpdatedAt = now; }
     }
     public void Disconnect()
     {
+        if (SessionOpen || State != "DISCONNECTED") Generation++;
+        commandResults.Clear();
         pending.Clear(); SessionOpen = false; State = "DISCONNECTED"; Invalidate(); ResetHardware();
     }
     private void Invalidate()
@@ -147,6 +191,7 @@ public sealed class RgpHostSession
         {
             if (d[2].Split('.')[0].TrimStart('0') != "1")
             {
+                Generation++; commandResults.Clear();
                 Compatible = false; SessionOpen = false; pending.Clear(); Invalidate(); ResetHardware();
                 return "INCOMPATIBLE";
             }
@@ -165,35 +210,77 @@ public sealed class RgpHostSession
             case "EVT":
                 if (d[0] == "STATE") SetState(d[1]);
                 if (d[0] == "ADS_READY") AdsStatus = "Ok";
-                if (d[0] == "IMU_FOUND") ImuStatus = "Ok";
+                if (d[0] == "IMU_FOUND")
+                {
+                    ImuStatus = "Ok";
+                    ImuDevice imu = d.Length > 1 ? FindImu(d[1]) : null;
+                    if (imu != null) imu.Status = "Ok";
+                }
                 if (d[0] == "ANGLE_LOCKED") AngleLocked = true;
                 if (d[0] == "ANGLE_UNLOCKED") AngleLocked = false;
                 if (d[0] == "CAL_START") Calibrated = false;
+                if (d[0] == "CAL_DONE") Calibrated = true;
                 // A bus-wide loss cannot identify which individual sensor was unplugged.
                 if (d[0] == "I2C_LOST") AdsStatus = ImuStatus = "Unknown";
                 if (d[0] == "I2C_RESTORED") AdsStatus = ImuStatus = "Unknown";
+                if (d[0] == "I2C_LOST" || d[0] == "I2C_RESTORED") InvalidateImus();
+                if (d[0] == "CAL_DONE" || d[0] == "I2C_SCAN_END")
+                    CompleteOperation(d[1], d[0] == "CAL_DONE" ? "CALIBRATE" : "SCAN_I2C", "DONE", d, receivedAt);
                 if (d[0] == "CONFIG_CHANGED") ApplyConfig(d[1], d[2]);
                 if (d[0] == "I2C_LOST" || d[0] == "ANGLE_UNLOCKED")
                 { SetState(d[0] == "I2C_LOST" ? "RECOVERING" : "WAIT_ANGLE"); }
                 return "EVENT";
             case "SYS":
+                if (d[0] == "I2C_DEVICE" && SerialInputProtocol.UInt(d[1], out uint scanSeq))
+                {
+                    CommandResult scan = commandResults.Find(item => item.Sequence == scanSeq && item.Command == "SCAN_I2C" &&
+                        (item.Status == "SENT" || item.Status == "ACCEPTED"));
+                    if (scan != null && !scan.Devices.Contains(d[2])) scan.Devices.Add(d[2]);
+                }
                 if (d[0] == "CONFIG") ApplyConfig(d[1], d[2]);
                 if (d[0] == "DEVICE" && d[1] == "ADS1115") AdsAddress = d[2];
-                if (d[0] == "DEVICE" && d[1] == "IMU") { ImuAddress = d[2]; ImuIdentity = d[3]; }
+                if (d[0] == "DEVICE" && d[1] == "IMU")
+                {
+                    ImuAddress = d[2]; ImuIdentity = d[3];
+                    ImuDevice imu = FindImu(d[2]);
+                    if (imu != null) { imu.Identity = d[3]; if (ImuStatus == "Ok") imu.Status = "Ok"; }
+                }
                 return "SYS";
             case "ERR":
+                if (d[1] == "HANDLE" && d[2] == "ANGLE_REFERENCE_INVALID") AngleLocked = false;
+                if (d[1] == "CALIBRATION") Calibrated = false;
+                int req = Array.IndexOf(d, "REQ", 3);
+                if (req >= 0 && req + 1 < d.Length) CompleteOperation(d[req + 1], null, "FAILED", d, receivedAt);
+                if (d[1] == "IMU" && d.Length > 3)
+                {
+                    ImuDevice imu = FindImu(d[3]);
+                    if (imu != null) imu.Status = "Fault";
+                }
                 if (d[0] == "ERROR" || d[0] == "FATAL")
                 {
                     SetState(d[0]);
-                    if (d[1] == "I2C") AdsStatus = ImuStatus = "Unknown";
+                    if (d[1] == "I2C") { AdsStatus = ImuStatus = "Unknown"; InvalidateImus(); }
                     if (d[1] == "ADS1115") AdsStatus = "Fault";
-                    if (d[1] == "IMU") ImuStatus = "Fault";
+                    if (d[1] == "IMU")
+                    {
+                        ImuStatus = "Fault";
+                        if (d.Length <= 3 || FindImu(d[3]) == null) InvalidateImus();
+                    }
                 }
                 return d[0];
             case "ACK": return Ack(d, receivedAt);
             case "IMU": case "DBG": return frame.Type;
             default: return "IGNORED";
         }
+    }
+    private void CompleteOperation(string origin, string command, string status, string[] data, double now)
+    {
+        if (!SerialInputProtocol.UInt(origin, out uint seq)) return;
+        CommandResult result = commandResults.Find(item => item.Sequence == seq &&
+            (command == null || item.Command == command) && (item.Status == "SENT" || item.Status == "ACCEPTED"));
+        if (result == null) return;
+        result.Status = status; result.Data = data; result.UpdatedAt = now;
+        pending.Remove(seq);
     }
     private string Ack(string[] d, double now)
     {
@@ -202,6 +289,12 @@ public sealed class RgpHostSession
         // A delayed OPEN_SESSION ACK from before HELLO must not consume the new request.
         if (d[1] == "OPEN_SESSION" && d[2] == "OK" && d[3] != sessionId) return "UNMATCHED_ACK";
         pending.Remove(seq);
+        // A completion event may precede its ACK; keep the terminal outcome in that case.
+        if (request.Result.Status == "SENT")
+        {
+            request.Result.Status = d[2] == "OK" && (d[1] == "CALIBRATE" || d[1] == "SCAN_I2C") ? "ACCEPTED" : d[2];
+            request.Result.Data = d; request.Result.UpdatedAt = now;
+        }
         LastCommandResult = d[1] + ": " + d[2];
         if (d[2] != "OK" && d[2] != "ACCEPTED")
         {
@@ -219,6 +312,10 @@ public sealed class RgpHostSession
                     break;
                 case "GET_STATUS":
                     AdsStatus = d[4] == "1" ? "Ok" : "Fault"; ImuStatus = d[5] == "1" ? "Ok" : "Fault";
+                    if (ImuStatus == "Ok")
+                        foreach (ImuDevice imu in Imus) { if (imu.Address.Length > 0) imu.Status = "Ok"; }
+                    else
+                        foreach (ImuDevice imu in Imus) { if (imu.Status == "Ok") imu.Status = "Unknown"; }
                     AngleLocked = d[6] == "1"; Calibrated = d[7] == "1";
                     SetState(d[3] == "READY" && (d[4] != "1" || d[5] != "1" || d[6] != "1" || d[7] != "1") ? "NOT_READY" : d[3]);
                     break;

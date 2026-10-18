@@ -70,9 +70,30 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     [Serializable] private sealed class HardwareSnapshot
     {
         public bool sessionOpen, recent, angleLocked, calibrated;
+        public bool inputFresh, invalidTelemetry, telemetryEnabled;
+        public int generation;
+        public ImuSnapshot[] imus;
+        public PedalSnapshot[] pedals;
+        public CommandSnapshot[] commands;
         public string state, ads, imu, adsAddress, imuAddress, imuIdentity;
         public int pending;
         public string lastCommand;
+    }
+    [Serializable] private sealed class ImuSnapshot
+    {
+        public string address, identity, status;
+    }
+    [Serializable] private sealed class PedalSnapshot
+    {
+        public int number;
+        public float accel, brake;
+    }
+    [Serializable] private sealed class CommandSnapshot
+    {
+        public uint sequence;
+        public string command, status;
+        public string[] data;
+        public string[] devices;
     }
     [Serializable] private sealed class RawEntry
     {
@@ -326,7 +347,17 @@ public sealed class RaceDashboardBridge : MonoBehaviour
                 imu = serial?.Session.ImuStatus ?? "Unknown", adsAddress = serial?.Session.AdsAddress ?? "",
                 imuAddress = serial?.Session.ImuAddress ?? "", imuIdentity = serial?.Session.ImuIdentity ?? "",
                 angleLocked = serial?.Session.AngleLocked ?? false, calibrated = serial?.Session.Calibrated ?? false,
-                pending = serial?.Session.PendingCommands ?? 0, lastCommand = serial?.Session.LastCommandResult ?? ""
+                pending = serial?.Session.PendingCommands ?? 0, lastCommand = serial?.Session.LastCommandResult ?? "",
+                inputFresh = serial?.HasFreshTelemetry ?? false, invalidTelemetry = serial?.InvalidTelemetry ?? false,
+                telemetryEnabled = serial?.Session.TelemetryEnabled ?? false, generation = serial?.Session.Generation ?? 0,
+                imus = Array.ConvertAll(serial?.Session.Imus ?? Array.Empty<RgpHostSession.ImuDevice>(), imu =>
+                    new ImuSnapshot { address = imu.Address, identity = imu.Identity, status = imu.Status }),
+                pedals = serial == null ? Array.Empty<PedalSnapshot>() : new[] {
+                    new PedalSnapshot { number = 1, accel = serial.Session.PlayerOne.Accel, brake = serial.Session.PlayerOne.Brake },
+                    new PedalSnapshot { number = 2, accel = serial.Session.PlayerTwo.Accel, brake = serial.Session.PlayerTwo.Brake } },
+                commands = Array.ConvertAll(serial?.Session.CommandResults ?? Array.Empty<RgpHostSession.CommandResult>(), command =>
+                    new CommandSnapshot { sequence = command.Sequence, command = command.Command, status = command.Status,
+                        data = command.Data, devices = command.Devices.ToArray() })
             },
             playerProgress = BuildPlayerProgress(),
             state = race != null ? race.state.ToString() : "Unknown",
