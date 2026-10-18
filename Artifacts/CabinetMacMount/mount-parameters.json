@@ -1,0 +1,45 @@
+{
+  "status": "concept - not a fabrication or structural approval",
+  "units": "mm",
+  "device_envelope": {
+    "width": 360.0,
+    "base_depth": 250.0,
+    "base_thickness": 18.0,
+    "lid_length": 250.0
+  },
+  "cavity_clear": {
+    "width": 400,
+    "height": 520,
+    "depth": 170
+  },
+  "front_cover": {
+    "width": 480,
+    "height": 560,
+    "thickness": 12,
+    "viewing_opening": [
+      400,
+      270
+    ]
+  },
+  "opening_angle_deg": 130.0,
+  "screen_outward_lean_deg": 20,
+  "base_downward_angle_deg": 60,
+  "hinge_from_side_plane_and_floor": [
+    -135.0,
+    1280.0
+  ],
+  "screen_top": [
+    -49.4949641685828,
+    1514.9231551964772
+  ],
+  "keyboard_front": [
+    -9.999999999999972,
+    1063.4936490538903
+  ],
+  "body_and_lid_max_depth": 150.5884572681199,
+  "sources": {
+    "blender": "racing-cabinet-flow.blend",
+    "source_units_confirmed": false,
+    "conditional_mm_per_model_unit": 10
+  }
+}
