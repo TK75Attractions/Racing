@@ -1,0 +1,13 @@
+State=Result; Notice=この先ジャンプ：まっすぐ加速
+Canvas=ScreenSpaceCamera; Scale=(0.01, 0.01, 0.01); Size=(x:-960.00, y:-540.00, width:1920.00, height:1080.00); Enabled=True
+UI camera=True; Mask=32; Rect=(x:0.00, y:0.13, width:1.00, height:0.75); Position=(492.39, 0.00, 506.29)
+Toast active=False alpha=0 scale=(0.01, 0.01, 0.01)
+Result active=True alpha=1 scale=(0.01, 0.01, 0.01)
+ResultCard active=True alpha=1 scale=(0.01, 0.01, 0.01)
+ResultRow1 active=True alpha=1 scale=(0.01, 0.01, 0.01)
+ResultRow2 active=True alpha=1 scale=(0.01, 0.01, 0.01)
+ResultRow3 active=True alpha=1 scale=(0.01, 0.01, 0.01)
+ResultRow4 active=True alpha=1 scale=(0.01, 0.01, 0.01)
+Goal active=False alpha=0 scale=(0.01, 0.01, 0.01)
+Hero active=False alpha=1 scale=(0.02, 0.02, 0.02)
+ScreenFade active=True alpha=0 scale=(0.01, 0.01, 0.01)
