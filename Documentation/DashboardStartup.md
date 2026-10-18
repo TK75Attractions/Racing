@@ -29,3 +29,7 @@ App StoreまたはGoogle Playで「Tailscale」をインストールします。
 FinderでRacingフォルダー内の **Tools > DashboardRelay > Start Dashboard.command** をダブルクリックします。表示されたターミナルは開いたまま使います。
 
 このMacは中継の自動起動を設定済みです。Unity停止中もページは開けます。レース情報を表示するにはUnityをPlayしてください。利用中はMacを起動・ログインしたまま、スリープさせずに使います。
+
+## エラーをDiscordなどへ通知する
+
+ブラウザーとは独立して動く監視ツールを用意しています。継続する機器異常・入力の途絶・エラーの増加をWebhookで通知します。設定と常駐手順は[運用エラーのWebhook通知](RaceMonitor.md)を参照してください。
