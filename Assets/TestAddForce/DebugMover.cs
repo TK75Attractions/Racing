@@ -34,7 +34,7 @@ public class DebugMover : MonoBehaviour
     [Tooltip("操舵角を小さくしていく曲線の形。1で直線的、1より大きいと高速側で一気に曲がりにくくなり、1より小さいと低速側から曲がりにくくなります。")]
     [SerializeField, Range(0.1f, 5f)] private float steeringFadeSharpness = 1f;
 
-    [Tooltip("速度に応じて操舵角を変えるか。無効にすると全速度で同じ曲がりやすさになります。")]
+    [Tooltip("速度に応じた操舵倍率を使うか。無効でもスピン防止の旋回速度・横加速度上限は残ります。")]
     [SerializeField] private bool enableSpeedSensitiveSteering = true;
 
     [Tooltip("ハンドルの操作範囲を速度ごとの安全な旋回量へ連続的に割り当て、接地中の旋回をトルクで補助します。")]
@@ -43,10 +43,10 @@ public class DebugMover : MonoBehaviour
     [SerializeField, Min(0f)] private float steeringMaxYawAcceleration = 30f;
 
     [Header("Drift")]
-    [Tooltip("ドリフトを開始する生のハンドル入力の絶対値（高速時の操舵補正前）。")]
+    [Tooltip("ドリフトを開始する入力の絶対値（高速時の操舵補正前）。比例操舵では最大30の共通単位を使い、初期値8は物理ハンドル24度です。")]
     [SerializeField, Min(0.01f)] private float driftStartHandle = 8f;
 
-    [Tooltip("チャージが最大速度でたまるハンドル入力の絶対値。")]
+    [Tooltip("チャージが最大速度でたまる入力の絶対値。比例操舵の初期値30は物理ハンドル90度です。")]
     [SerializeField, Min(0.01f)] private float driftFullChargeHandle = 30f;
 
     [SerializeField, Min(0f)] private float maxDriftCharge = 3f;
