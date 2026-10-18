@@ -36,6 +36,10 @@ Macの実行ログで、1920×1080と2880×1800の描画先が混同されるMet
 
 追加画面は `RenderGraphDisplayOutput` がその画面の `renderingWidth/Height` に合った深度付きRenderTextureを作り、背景・レース・UIのカメラスタック全体をRender Graphで描画します。描画後に、その画面のネイティブcolorBufferへフルスクリーン描画で転送します。これによりURP 17.3のメイン画面サイズによるバックバッファimportを通らず、異なる解像度の出力を扱えます。画面サイズの変更時はターゲットを作り直し、停止時に解放します。メイン画面とEditorのGameビューは通常のURP出力を使います。
 
+追加画面への転送は、完成した背景・レース・UIスタックを確認した後、SRPの `CommandBuffer` で1フレームに1回だけ行います。色バッファを全面上書きし、Storeを明示して `ScriptableRenderContext.Submit()` で提出します。即時描画の `Graphics.DrawProceduralNow` は使用しません。背景だけの描画要求で未完成の画像を転送することも防ぎます。SRPの提出順序は [Unityの説明](https://docs.unity.cn/Packages/com.unity.render-pipelines.core%4017.0/manual/srp-using-scriptable-render-context.html) を参照してください。
+
+PC品質設定のVSyncを有効にして無制限描画を避け、`Run In Background` も有効にしています。別画面や管理画面へフォーカスを移してもゲームの更新を継続します。物理演算の時間刻みや車の移動処理は変更していません。`Display Outputs` の検証には、不完全なスタック・同じフレーム内の重複転送の抑止と、交互の描画先への8フレーム分のGPU転送・全画素読み戻しを含めています。実際のDisplayLinkドライバー／USB接続でのちらつきは別途実機確認が必要です。
+
 UI倍率は各リグの出力サイズと16:9の描画領域から計算します。別画面の描画中に変わりうるOverlayカメラのpixelWidth/Heightは参照せず、倍率が変わったときだけCanvasへ反映します。
 
 Unityを開いたまま設定を更新する場合は `Racing > Validation > Enable Desktop Render Graph` を実行し、コンパイル完了後に `Racing > Validation > Display Outputs` でRender Graph設定・表示番号・異なる解像度の倍率・RenderTextureのリサイズと解放を検証します。`Racing > Build > Mac Display Validation` は `Builds/DisplayValidation/Race.app` へ検証用Development Buildを作成します。既存の `build.app` には修正は反映されないため、再ビルドが必要です。

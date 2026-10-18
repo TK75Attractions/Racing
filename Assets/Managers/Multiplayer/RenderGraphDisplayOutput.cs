@@ -12,6 +12,8 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
 {
     private Camera[] cameras;
     private int displayIndex;
+    private Camera stackBaseCamera;
+    private int lastPresentedFrame = -1;
     private RenderTexture target;
     private Material presentation;
     private static readonly int TextureId = Shader.PropertyToID("_BlitTexture");
@@ -22,11 +24,13 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
     public RenderTexture Target => target;
     public int PresentedFrames { get; private set; }
 
-    public void Configure(Camera[] outputCameras, int outputDisplay)
+    public void Configure(Camera[] outputCameras, int outputDisplay, Camera stackBase)
     {
         ReleaseTarget();
         cameras = outputCameras;
         displayIndex = outputDisplay;
+        stackBaseCamera = stackBase;
+        lastPresentedFrame = -1;
         RefreshTarget();
     }
 
@@ -79,11 +83,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
         if (target == null || Application.isEditor || displayIndex >= Display.displays.Length) return;
         // Render requests for thumbnails/captures also raise this event. Only
         // present after this display's normal stack has been rendered.
-        bool hasOutput = false;
-        foreach (Camera camera in cameras)
-            if (camera != null && camera.targetTexture == target && rendered.Contains(camera))
-            { hasOutput = true; break; }
-        if (!hasOutput) return;
+        if (!ShouldPresent(rendered, Time.frameCount)) return;
         if (presentation == null)
         {
             Shader shader = Resources.Load<Shader>("DisplayOutput");
@@ -98,20 +98,39 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
             ? new Vector4(1f, -1f, 0f, 1f) : new Vector4(1f, 1f, 0f, 0f));
         presentation.SetFloat(EncodeId, QualitySettings.activeColorSpace == ColorSpace.Linear &&
             display.requiresSrgbBlitToBackbuffer ? 1f : 0f);
-        RenderTexture previous = RenderTexture.active;
+        CommandBuffer commands = CommandBufferPool.Get("Racing.Display.Present");
         try
         {
-            Graphics.SetRenderTarget(display.colorBuffer, display.depthBuffer);
-            GL.Viewport(new Rect(0, 0,
+            RecordPresentation(commands, display.colorBuffer,
                 displayIndex == 0 ? Screen.width : display.renderingWidth,
-                displayIndex == 0 ? Screen.height : display.renderingHeight));
-            if (presentation.SetPass(0))
-            {
-                Graphics.DrawProceduralNow(MeshTopology.Triangles, 3);
-                PresentedFrames++;
-            }
+                displayIndex == 0 ? Screen.height : display.renderingHeight);
+            // Use the same SRP context as the cameras. Immediate GL/Graphics calls
+            // bypass its ordering and render-pass load/store tracking on Metal.
+            context.ExecuteCommandBuffer(commands);
+            context.Submit(); // URP's camera Submit has already run before this event.
+            lastPresentedFrame = Time.frameCount;
+            PresentedFrames++;
         }
-        finally { RenderTexture.active = previous; }
+        finally { CommandBufferPool.Release(commands); }
+    }
+
+    private bool ShouldPresent(List<Camera> rendered, int frame)
+    {
+        // BackCamera alone and thumbnail/render requests must not publish a partial
+        // frame. The base camera identifies the completed background/race/UI stack.
+        return frame != lastPresentedFrame && stackBaseCamera != null &&
+            stackBaseCamera.isActiveAndEnabled && stackBaseCamera.targetTexture == target &&
+            rendered.Contains(stackBaseCamera);
+    }
+
+    private void RecordPresentation(CommandBuffer commands, RenderTargetIdentifier destination, int width, int height)
+    {
+        // This fullscreen pass overwrites every pixel. Do not load an undefined
+        // swapchain image, and explicitly store the result for the compositor.
+        // No depth attachment is needed for presentation.
+        commands.SetRenderTarget(destination, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
+        commands.SetViewport(new Rect(0, 0, width, height));
+        commands.DrawProcedural(Matrix4x4.identity, presentation, 0, MeshTopology.Triangles, 3);
     }
 
     private void ReleaseTarget()
