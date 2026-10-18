@@ -97,4 +97,5 @@ body.remote .controls{display:block}
 .command-result.error .result-badge,.command-result.unknown .result-badge{color:#ffc1b5;border-color:#986354}
 .command-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
 .command-values>div{border:1px solid #303943;border-radius:4px;padding:10px}.command-values dt{font-size:10px;color:#93a5b7}.command-values dd{font-size:13px;font-weight:600;margin:6px 0 0;color:#eff0ec;line-height:1.6}
+.serial-alert.resolved{color:#a8bc9c;border-color:#425442}.serial-alert.resolved .alert-time{color:#90a28a}
 @media(max-width:420px){.command-values{grid-template-columns:1fr}.buttons button{height:auto;min-height:47px;padding:8px}}

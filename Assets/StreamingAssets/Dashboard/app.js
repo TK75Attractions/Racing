@@ -19,6 +19,7 @@ function actionAvailable(action, snapshot) {
   return actions[action] === snapshot?.state;
 }
 let commandRequest = null, commandResultSignature = '';
+let alertSession = '', alertItems = new Map();
 let connected = false;
 let currentState = null;
 let lastFrameAt = 0;
@@ -133,7 +134,7 @@ function render(snapshot, { canControl = localMode } = {}) {
   }
   for (const button of document.querySelectorAll('[data-action]')) button.disabled = !canControl || !actionAvailable(button.dataset.action, snapshot);
   if (localMode) $('control-note').textContent = snapshot.state === 'Game' ? '「結果を表示」はレースを終了し、現在の記録で結果画面へ進みます。' : '現在のゲーム状態に応じて操作できます。';
-  renderSerialAlerts(snapshot.serial, snapshot.inputMode);
+  renderSerialAlerts(snapshot.serial, snapshot.inputMode, snapshot);
   renderLog(snapshot.serial.lines || []);
   if (snapshot.telemetry) renderTelemetry(snapshot.telemetry);
   renderParticipants(snapshot);
@@ -224,7 +225,7 @@ function rgpErrorExplanation(d, truncated = false) {
   if (reqAt >= 0 && /^\d+$/.test(detail[reqAt + 1] || '')) text += ` 要求番号 ${detail[reqAt + 1]}。`;
   if (!truncated && textAt >= 0 && detail[textAt + 1]) text += ` 装置からの補足：${rgpText(detail[textAt + 1])}`;
   if (d[2] === 'WHOAMI_MISMATCH' && detail.length >= 3) text += ` アドレス ${detail[0]}、期待値 ${detail[1]}、実際 ${detail[2]}。`;
-  else if (['NO_RESPONSE', 'WHOAMI_FAILED', 'CONNECTION_LOST'].includes(d[2]) && /^0x[0-9A-F]{2}$/.test(detail[0] || '')) text += ` 対象 ${detail[0]}。`;
+  else if (/^0x[0-9A-F]{2}$/.test(detail[0] || '')) text += ` 対象 ${detail[0]}。`;
   if (truncated) text += '（遠隔データの末尾が省略されています）';
   return text;
 }
@@ -298,22 +299,89 @@ function explainSerialEntry(entry) {
 }
 
 let serialAlertSignature = '';
-function renderSerialAlerts(serial, inputMode = '') {
-  const unique = new Map([...(serial.lines || []), ...(serial.alerts || [])].map(entry => [entry.id, entry]));
-  const alerts = [...unique.values()].sort((a, b) => a.id - b.id).map(entry => ({ entry, ...explainSerialEntry(entry) }))
-    .filter(item => item.level !== 'info').reverse().slice(0, 8);
-  if (serial.portOpen === false && /serial|シリアル/i.test(inputMode) && !/disabled/i.test(inputMode))
-    alerts.unshift({ entry: { time: '現在' }, level: 'warning', text: 'シリアルポートが未接続です。USB接続とUnityのポート設定を確認してください。' });
-  if (serial.errors > 0 && !alerts.some(item => item.entry.status === 'INVALID'))
-    alerts.push({ entry: { time: '累計' }, level: 'warning', text: `解析エラーが${serial.errors.toLocaleString('ja-JP')}件記録されています。詳細が履歴から消えている場合はUnity側のログも確認してください。` });
+function serialFrame(entry) {
+  const line = String(entry?.line || '').trimEnd();
+  if (entry?.status === 'INVALID') return null;
+  const match = line.match(/^@([A-Z][A-Z0-9_.-]*),([0-9]+),([0-9]+)(?:,([^*]*))?\*([0-9A-F]{4})$/);
+  return match && rgpCrc(line.slice(1, line.lastIndexOf('*'))) === match[5] ?
+    { type: match[1], data: match[4]?.split(',') || [] } : null;
+}
+function alertRecovered(item, entries, snapshot) {
+  const frame = serialFrame(item.entry), d = frame?.data || [];
+  const h = snapshot?.hardware;
+  const known = snapshot?.serial?.portOpen && h?.sessionOpen && h?.recent;
+  const address = d.slice(3).find(value => /^0x[0-9A-F]{2}$/.test(value));
+  const after = entries.filter(entry => entry.id > item.entry.id).map(entry => ({entry, frame:serialFrame(entry)}));
+  const command = frame?.type === 'ACK' ? d[1] : item.entry.status === 'TIMEOUT' ? item.entry.line : null;
+  const requestAt = d.indexOf('REQ');
+  const recovery = after.find(({frame: next}) => {
+    if (!next) return false;
+    const n = next.data;
+    if (command) return next.type === 'ACK' && n[1] === command && n[2] === 'OK';
+    if (frame?.type === 'ERR' && requestAt >= 0)
+      return next.type === 'EVT' && ['CAL_DONE', 'I2C_SCAN_END'].includes(n[0]) && n[1] === d[requestAt + 1];
+    if (item.entry.status === 'INVALID') return item.entry.line?.startsWith('@TEL,') ?
+      next.type === 'TEL' && !h?.invalidTelemetry : next.type === 'TEL' || next.type === 'ACK';
+    if (item.entry.status === 'STALE') return next.type === 'TEL';
+    if (frame?.type === 'ERR') {
+      if (d[1] === 'I2C') return next.type === 'EVT' && n[0] === 'I2C_RESTORED';
+      if (d[1] === 'IMU') return next.type === 'EVT' && n[0] === 'IMU_FOUND' && (!address || n[1] === address);
+      if (d[1] === 'ADS1115') return next.type === 'EVT' && n[0] === 'ADS_READY';
+      if (d[1] === 'HANDLE') return next.type === 'EVT' && n[0] === 'ANGLE_LOCKED';
+      if (d[1] === 'CALIBRATION') return next.type === 'EVT' && n[0] === 'CAL_DONE';
+    }
+    return next.type === 'EVT' && n[0] === 'STATE' && n[1] === 'READY';
+  });
+  if (recovery) return recovery.entry.receivedAt || Date.now();
+  // Snapshots cover recovery events that have already left the replay window.
+  if (!known || (item.entry.receivedAt && snapshot.serverTime < item.entry.receivedAt)) return null;
+  if (command || requestAt >= 0) return null;
+  if (item.entry.status === 'INVALID') return !h.invalidTelemetry && h.inputFresh ? Date.now() : null;
+  if (item.entry.status === 'STALE') return h.inputFresh ? Date.now() : null;
+  if (frame?.type === 'ERR') {
+    const healthy = { I2C: h.ads === 'Ok' && h.imu === 'Ok', ADS1115: h.ads === 'Ok',
+      IMU: address ? h.imus?.some(imu => imu.address === address && imu.status === 'Ok') : h.imu === 'Ok',
+      HANDLE: h.angleLocked, CALIBRATION: h.calibrated };
+    if (Object.hasOwn(healthy, d[1])) return healthy[d[1]] ? Date.now() : null;
+    return null;
+  }
+  return h.state === 'READY' && h.inputFresh ? Date.now() : null;
+}
+function renderSerialAlerts(serial, inputMode = '', snapshot = latestSnapshot) {
+  const session = snapshot?.sessionId || '';
+  if (session !== alertSession) { alertItems.clear(); alertSession = session; }
+  const unique = new Map([...(serial.lines || []), ...(serial.alerts || []), ...(snapshot?.telemetry ? [snapshot.telemetry] : [])].map(entry => [entry.id, entry]));
+  const entries = [...unique.values()].sort((a, b) => a.id - b.id);
+  for (const entry of entries) {
+    const explanation = explainSerialEntry(entry);
+    if (explanation.level === 'info') continue;
+    const frame = serialFrame(entry), d = frame?.data || [];
+    const address = d.slice(3).find(value => /^0x[0-9A-F]{2}$/.test(value)) || '';
+    const key = frame?.type === 'ERR' ? ['ERR', ...d.slice(0,3), address].join(':') :
+      frame?.type === 'ACK' ? `ACK:${d[1]}` : frame?.type === 'EVT' ? `EVT:${d.slice(0,2).join(':')}` :
+      `${entry.status}:${entry.status === 'TIMEOUT' ? entry.line : entry.line?.startsWith('@TEL,') ? 'TEL' : '通信'}`;
+    if (!alertItems.has(key) || alertItems.get(key).entry.id < entry.id)
+      alertItems.set(key, {entry, ...explanation, resolvedAt:null});
+  }
+  const now = Date.now();
+  const portIssue = serial.portOpen === false && /serial|シリアル/i.test(inputMode) && !/disabled/i.test(inputMode);
+  if (portIssue) alertItems.set('port', {entry:{time:'現在'},level:'warning',text:'シリアルポートが未接続です。USB接続とUnityのポート設定を確認してください。',resolvedAt:null});
+  for (const [key, item] of alertItems) {
+    if (item.resolvedAt == null) item.resolvedAt = key === 'port' ? (portIssue ? null : now) : alertRecovered(item, entries, snapshot);
+  }
+  const alerts = [...alertItems.values()].filter(item => item.resolvedAt == null || now - item.resolvedAt < 10000)
+    .sort((a,b) => Number(a.resolvedAt != null) - Number(b.resolvedAt != null) || (b.entry.id || Infinity) - (a.entry.id || Infinity));
+  // Retain tombstones for IDs still present in replay, so expired notices cannot reappear.
+  for (const [key, item] of alertItems)
+    if (key !== 'port' && !unique.has(item.entry.id) && item.resolvedAt != null && now - item.resolvedAt >= 10000) alertItems.delete(key);
   const signature = JSON.stringify(alerts);
   if (signature === serialAlertSignature) return;
   serialAlertSignature = signature;
   $('serial-alerts').hidden = !alerts.length;
   $('serial-alert-list').replaceChildren(...alerts.map(item => {
-    const row = document.createElement('div'); row.className = 'serial-alert ' + item.level;
+    const row = document.createElement('div'); row.className = 'serial-alert ' + item.level + (item.resolvedAt != null ? ' resolved' : '');
     const time = document.createElement('span'); time.className = 'alert-time'; time.textContent = item.entry.time || '—';
-    const text = document.createElement('p'); text.textContent = item.text;
+    const text = document.createElement('p'); text.textContent = (item.resolvedAt != null ? '解決済み · ' : '未解決 · ') + item.text;
     row.append(time, text); return row;
   }));
 }
@@ -656,7 +724,10 @@ updateCommandFields();
 setSerialControls(false);
 renderPlayerProgress(null); renderHardware(null);
 
-function updateClock() { $('clock').textContent = new Date().toLocaleTimeString('ja-JP', { hour12: false }); }
+function updateClock() {
+  $('clock').textContent = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+  if (connected && latestSnapshot) renderSerialAlerts(latestSnapshot.serial, latestSnapshot.inputMode, latestSnapshot);
+}
 updateClock();
 setInterval(updateClock, 1000);
 if (localMode) {
