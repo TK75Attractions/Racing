@@ -198,8 +198,15 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
         int before = driver.RecoveryCount;
         for(int i=0;i<2;i++) manager.GetPlayerViewCamera(i).transform.SetPositionAndRotation(new Vector3(2500,100,2500),Quaternion.identity);
         otherCpu.Body.position = safe.position + Vector3.up*1.2f;
+        // Recovery now considers side lanes too. Occupy all candidates for this rejection case.
+        GameObject blockedRoad=new GameObject("Recovery lanes occupied",typeof(Rigidbody),typeof(BoxCollider));
+        blockedRoad.GetComponent<Rigidbody>().isKinematic=true;
+        blockedRoad.GetComponent<BoxCollider>().size=new Vector3(40,4,20);
+        blockedRoad.transform.SetPositionAndRotation(safe.position+safe.up,Quaternion.LookRotation(safe.forward,safe.up));
+        Physics.SyncTransforms();
         recover.Invoke(driver,null);
         report.occupiedRecoveryRejected = driver.RecoveryCount==before && Vector3.Distance(cpu.Body.position,fallen)<.01f;
+        blockedRoad.SetActive(false); Destroy(blockedRoad); Physics.SyncTransforms();
         otherCpu.Body.position = new Vector3(2600,100,2500);
         Camera viewed = manager.GetPlayerViewCamera(0);
         Vector3 cameraPosition=safe.position+Vector3.up*3-Vector3.forward*20;
