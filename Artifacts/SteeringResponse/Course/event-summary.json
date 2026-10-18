@@ -1,0 +1,569 @@
+[
+  {
+    "run": "skill-club-expert",
+    "events": [
+      {
+        "car": "P1",
+        "event": "airborne",
+        "count": 6
+      },
+      {
+        "car": "P2",
+        "event": "airborne",
+        "count": 10
+      },
+      {
+        "car": "CPU 1",
+        "event": "airborne",
+        "count": 19
+      },
+      {
+        "car": "CPU 2",
+        "event": "airborne",
+        "count": 12
+      },
+      {
+        "car": "P1",
+        "event": "grounded",
+        "count": 6
+      },
+      {
+        "car": "P2",
+        "event": "grounded",
+        "count": 10
+      },
+      {
+        "car": "CPU 1",
+        "event": "grounded",
+        "count": 19
+      },
+      {
+        "car": "CPU 2",
+        "event": "grounded",
+        "count": 12
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "count": 829
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "count": 829
+      },
+      {
+        "car": "CPU 1",
+        "event": "vehicle-contact",
+        "count": 7
+      },
+      {
+        "car": "CPU 2",
+        "event": "vehicle-contact",
+        "count": 9
+      },
+      {
+        "car": "P2",
+        "event": "item",
+        "count": 6
+      },
+      {
+        "car": "P2",
+        "event": "charge",
+        "count": 4
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "count": 812
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "count": 710
+      },
+      {
+        "car": "P2",
+        "event": "afflicted",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "item",
+        "count": 5
+      },
+      {
+        "car": "P1",
+        "event": "afflicted",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "charge",
+        "count": 3
+      },
+      {
+        "car": "P2",
+        "event": "off-course",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "on-course",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "position-discontinuity",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "vehicle-contact",
+        "count": 2
+      },
+      {
+        "car": "CPU 1",
+        "event": "off-course",
+        "count": 1
+      },
+      {
+        "car": "CPU 1",
+        "event": "on-course",
+        "count": 1
+      },
+      {
+        "car": "CPU 1",
+        "event": "position-discontinuity",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "off-course",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "on-course",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "finished",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "finished",
+        "count": 1
+      },
+      {
+        "car": "CPU 1",
+        "event": "dnf",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "dnf",
+        "count": 1
+      }
+    ],
+    "details": [
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 812
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 786
+      },
+      {
+        "car": "P2",
+        "event": "item",
+        "detail": "Shield",
+        "count": 4
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 781
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 708
+      },
+      {
+        "car": "P2",
+        "event": "item",
+        "detail": "Oil",
+        "count": 2
+      },
+      {
+        "car": "P2",
+        "event": "afflicted",
+        "detail": "Confuse",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "item",
+        "detail": "Confuse",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "afflicted",
+        "detail": "Oil",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "detail": "Tube Road Shoulders",
+        "count": 8
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "detail": "BézierCurve.001",
+        "count": 23
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "detail": "Plane.012",
+        "count": 15
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "detail": "WallCollider",
+        "count": 28
+      },
+      {
+        "car": "P1",
+        "event": "item",
+        "detail": "Oil",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "Plane.012",
+        "count": 2
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "WallCollider",
+        "count": 5
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "Tube Road Shoulders",
+        "count": 6
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "BézierCurve.001",
+        "count": 4
+      },
+      {
+        "car": "P1",
+        "event": "item",
+        "detail": "Rocket",
+        "count": 3
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "detail": "Tube Road Shoulders",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "run": "skill-aggressive-items",
+    "events": [
+      {
+        "car": "P1",
+        "event": "airborne",
+        "count": 5
+      },
+      {
+        "car": "P2",
+        "event": "airborne",
+        "count": 7
+      },
+      {
+        "car": "CPU 1",
+        "event": "airborne",
+        "count": 10
+      },
+      {
+        "car": "CPU 2",
+        "event": "airborne",
+        "count": 7
+      },
+      {
+        "car": "P1",
+        "event": "grounded",
+        "count": 5
+      },
+      {
+        "car": "P2",
+        "event": "grounded",
+        "count": 7
+      },
+      {
+        "car": "CPU 1",
+        "event": "grounded",
+        "count": 10
+      },
+      {
+        "car": "CPU 2",
+        "event": "grounded",
+        "count": 7
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "count": 759
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "count": 930
+      },
+      {
+        "car": "CPU 1",
+        "event": "vehicle-contact",
+        "count": 11
+      },
+      {
+        "car": "CPU 2",
+        "event": "vehicle-contact",
+        "count": 11
+      },
+      {
+        "car": "P1",
+        "event": "item",
+        "count": 6
+      },
+      {
+        "car": "P1",
+        "event": "charge",
+        "count": 6
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "count": 639
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "count": 822
+      },
+      {
+        "car": "P2",
+        "event": "item",
+        "count": 5
+      },
+      {
+        "car": "CPU 1",
+        "event": "off-course",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "off-course",
+        "count": 2
+      },
+      {
+        "car": "CPU 1",
+        "event": "on-course",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "on-course",
+        "count": 2
+      },
+      {
+        "car": "CPU 2",
+        "event": "position-discontinuity",
+        "count": 1
+      },
+      {
+        "car": "CPU 1",
+        "event": "position-discontinuity",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "charge",
+        "count": 1
+      },
+      {
+        "car": "CPU 1",
+        "event": "afflicted",
+        "count": 2
+      },
+      {
+        "car": "P2",
+        "event": "off-course",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "on-course",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "afflicted",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "finished",
+        "count": 1
+      },
+      {
+        "car": "P2",
+        "event": "finished",
+        "count": 1
+      },
+      {
+        "car": "CPU 1",
+        "event": "dnf",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "dnf",
+        "count": 1
+      }
+    ],
+    "details": [
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 746
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 909
+      },
+      {
+        "car": "P1",
+        "event": "item",
+        "detail": "Shield",
+        "count": 3
+      },
+      {
+        "car": "P1",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 639
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "detail": "Road Surface",
+        "count": 813
+      },
+      {
+        "car": "P2",
+        "event": "item",
+        "detail": "Confuse",
+        "count": 1
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "detail": "Plane",
+        "count": 5
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "detail": "Plane.012",
+        "count": 7
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "Plane",
+        "count": 4
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "Plane.012",
+        "count": 3
+      },
+      {
+        "car": "CPU 1",
+        "event": "environment-contact",
+        "detail": "BézierCurve.001",
+        "count": 1
+      },
+      {
+        "car": "P1",
+        "event": "item",
+        "detail": "Oil",
+        "count": 3
+      },
+      {
+        "car": "P2",
+        "event": "item",
+        "detail": "Rocket",
+        "count": 2
+      },
+      {
+        "car": "P2",
+        "event": "item",
+        "detail": "Oil",
+        "count": 2
+      },
+      {
+        "car": "CPU 1",
+        "event": "afflicted",
+        "detail": "Oil",
+        "count": 2
+      },
+      {
+        "car": "P2",
+        "event": "environment-contact",
+        "detail": "Tube Road Shoulders",
+        "count": 9
+      },
+      {
+        "car": "CPU 2",
+        "event": "afflicted",
+        "detail": "Oil",
+        "count": 1
+      },
+      {
+        "car": "CPU 2",
+        "event": "environment-contact",
+        "detail": "WallCollider",
+        "count": 14
+      }
+    ]
+  }
+]

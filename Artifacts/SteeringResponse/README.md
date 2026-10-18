@@ -51,3 +51,25 @@ USBハンドル・表示・ネットワークを通した遅延、実機の角�
 本番SampleSceneで41条件すべて成功。左右のドリフト開始・解除、8 / 20 / 40 m/sの最大入力と横滑り外乱（左右・外乱有無の12条件）、小さい路面浮き、道路端からの離陸、横転復帰、空中の旋回慣性、空中の駆動力ゼロと重力を確認した。前項の治具修正後の最終結果は [Stability/result.txt](Stability/result.txt)、詳細は [Stability/report.json](Stability/report.json) とtrace.csv。テストは `CarStabilityValidation.RunFullBatch`、環境変数 `RACING_STABILITY_OUTPUT` で保存先を指定し、非同期のため `-quit` を付けずに実行する。
 
 専用路面での車両物理の測定中だけコース外リセットを止めている。実コースのレースでは通常のリセットとアイテムを使う。
+
+## 実コースの自動走行
+
+更新後のSampleScene（1周1904.19m）で、2周・アイテムあり・CPU2台の2レースを実施した。中級/上級、積極的/中級の入力モデル4走行すべてが完走し、記録したレース中の実行時エラーは0件。製品の入力ゲート・タイヤ・操舵・アイテム・リセット・ラップ処理を使い、走行中に位置や速度を強制しない。コース走行では共通単位±30の自動入力を使用し、物理ハンドル角との対応は前述の18条件で別途確認している。
+
+| レース・入力モデル | 完走時間（公式時計） | 周回 | リセット（うち自動） | アイテム使用 |
+| --- | --- | --- | --- | --- |
+| club-expert / P1 中級 | 214.30秒 | 2 | 0 (0) | 5 |
+| club-expert / P2 上級 | 172.30秒 | 2 | 1 (1) | 6 |
+| aggressive-items / P1 積極的 | 151.75秒 | 2 | 0 (0) | 6 |
+| aggressive-items / P2 中級 | 196.75秒 | 2 | 0 (0) | 5 |
+
+両プレイヤーの完走で既存ルールどおりレースが終了した。同時走行のCPU2台は各レースとも1周台で終了し、結果はDNF。全参加者が完走したという結果ではない。これは自動入力の走行回帰であり、人間の習熟度や操作の分かりやすさを測るユーザーテストではない。今回の対象はこの2レースのみで、初心者・切断復帰など残りのスキルシナリオはこの操舵版で再実施していない。
+
+[Course/report.json](Course/report.json)、[Course/summary.csv](Course/summary.csv)、各レースのtrace.csv / events.csv / summary.jsonへ記録した。JPGは本番カメラのキャプチャで、UIを含む画面全体の検証には用いていない。比較のため、公式時計と固定物理更新で数えた時間を別々に保存している。
+
+```sh
+RACING_BALANCE_OUTPUT="$PWD/Artifacts/SteeringResponse/Course" \
+RACING_BALANCE_RUN=skill-club-expert,skill-aggressive-items \
+RACING_BALANCE_SKILL_SUITE=1 RACING_BALANCE_TIME_SCALE=6 \
+  ./Tools/RunBalancePlaytest.sh
+```
