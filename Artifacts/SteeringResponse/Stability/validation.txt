@@ -1,0 +1,4 @@
+Unity 6000.3.9f1 / 2026-10-18
+Product steering: ef7b337 (later commits update tests, docs and inspector tooltips)
+CarStabilityValidation.RunFullBatch
+CAR_STABILITY_PLAYMODE_PASS (41 trials):  report=/Users/kenichirowada/.codex/worktrees/24c6/Racing/Artifacts/SteeringResponse/Stability

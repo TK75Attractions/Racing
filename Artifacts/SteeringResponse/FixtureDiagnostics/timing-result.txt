@@ -1,0 +1,1 @@
+CAR_STABILITY_PLAYMODE_FAIL (41 trials): road-takeoff: adhesion suppressed a real jump; air-glide-20-pedal-0: excessive air resistance, tire propulsion, or changed gravity; air-glide-40-pedal-0: excessive air resistance, tire propulsion, or changed gravity report=/Users/kenichirowada/.codex/worktrees/24c6/Racing/Artifacts/SteeringResponse/Stability
