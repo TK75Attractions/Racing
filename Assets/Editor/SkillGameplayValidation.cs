@@ -15,6 +15,7 @@ public static class SkillGameplayValidation
         ValidateOperatorStop();
         ValidateReconnectGate();
         ValidateRecoveryOccupancy();
+        ValidateHeldReset();
         ValidateRecoveryProtection();
         ValidateRecoveryInsideGoal();
         ValidateDriverNotice();
@@ -133,9 +134,31 @@ public static class SkillGameplayValidation
             blocker.GetComponent<BoxCollider>().size=new Vector3(40,4,20); Physics.SyncTransforms();
             body.position=new Vector3(20,-10,0);
             Require(!resetter.TryResetCar(true),"Recovery must wait when other cars occupy every candidate.");
+            blocker.GetComponent<BoxCollider>().size=new Vector3(3,4,12); Physics.SyncTransforms();
+            Require(resetter.TryResetCar(true)&&Mathf.Abs(body.position.x)>5f,
+                "Recovery must use a clear side lane when only the center is occupied.");
             UnityEngine.Object.DestroyImmediate(blocker); Physics.SyncTransforms();
             Require(resetter.TryResetCar(true)&&body.position.z< -19,"A clear recovery must return to the last safe road.");
-            Require(laps.GetCarData(body).lapCount==1&&resetter.RecoveryCount==1,"Recovery must preserve laps and count only successful moves.");
+            Require(laps.GetCarData(body).lapCount==1&&resetter.RecoveryCount==2,"Recovery must preserve laps and count only successful moves.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+    private static void ValidateHeldReset()
+    {
+        GameObject root=new GameObject("Held reset QA");
+        try
+        {
+            RaceCourse course=MakeCourse(root);
+            GameObject car=new GameObject("Car",typeof(Rigidbody),typeof(BoxCollider),typeof(CarResetter)); car.transform.SetParent(root.transform);
+            car.GetComponent<Rigidbody>().isKinematic=true;
+            var resetter=car.GetComponent<CarResetter>(); Call(resetter,"Awake"); resetter.SetCourse(course,null);
+            var source=new Input {CurrentState=new DriveInputState {resetPressed=true}};
+            var gate=new PlayerDriveInputGate(source); resetter.SetInputSource(gate);
+            for(int i=0;i<5;i++)Call(resetter,"Update");
+            Require(resetter.RecoveryCount==1,"A held reset must not repeat when the recovery gate emits neutral input.");
+            source.CurrentState=DriveInputState.Neutral; Call(resetter,"Update");
+            source.CurrentState=new DriveInputState {resetPressed=true}; Call(resetter,"Update");
+            Require(resetter.RecoveryCount==2,"Releasing and pressing reset must allow another recovery.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }

@@ -57,7 +57,7 @@ public class CarResetter : MonoBehaviour
     {
         bool pressed = inputSource != null && inputSource.CurrentState.resetPressed;
         if (pressed && !resetHeld) manualPending = true;
-        resetHeld = pressed;
+        resetHeld = inputSource is PlayerDriveInputGate gate ? gate.ResetButtonHeld : pressed;
         if (debugMover != null && debugMover.IsInputSuppressed) return;
         if (manualPending && TryResetCar()) manualPending = false;
     }

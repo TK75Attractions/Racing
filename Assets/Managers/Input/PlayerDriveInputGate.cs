@@ -12,6 +12,8 @@ public sealed class PlayerDriveInputGate : IDriveInputSource
     public bool IsBlocked { get; private set; }
     public bool IsReverse { get; private set; }
     public bool NeedsPedalRelease { get; private set; }
+    // Used only to retain a reset-button edge while the gate temporarily emits neutral input.
+    public bool ResetButtonHeld => source != null && source.IsConnected && source.CurrentState.resetPressed;
 
     public DriveInputState CurrentState
     {
