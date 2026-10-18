@@ -44,6 +44,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         return sent;
     }
     public string PortName => portName;
+    public float FullSteeringInput => configuration.FullSteeringInput;
     public bool IsPortOpen => portIsOpen;
     public int PendingLineCount => receivedLines.Count;
     public long LinesReceived => Interlocked.Read(ref linesReceived);
@@ -244,13 +245,14 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 }
 
 // The cars use one logical input source each, while both adapters read the same port.
-public sealed class SharedPlayerDriveInputSource : IDriveInputSource
+public sealed class SharedPlayerDriveInputSource : IDriveInputSource, IDriveSteeringCalibration
 {
     private readonly TwoPlayerSerialInputSource sharedSource;
 
     public int PlayerIndex { get; }
     public string DeviceId => $"P{PlayerIndex + 1}";
     public bool IsConnected => sharedSource.IsConnected(PlayerIndex);
+    public float FullSteeringInput => sharedSource.FullSteeringInput;
     public DriveInputState CurrentState
     {
         get

@@ -5169,6 +5169,7 @@ MonoBehaviour:
   esp32Serial:
     portName:
     steeringDivisor: 6.5
+    steeringLockDegrees: 90
     readTimeoutMilliseconds: 200
   handle: 0
   peddale: 0
