@@ -16,7 +16,8 @@ LABEL = "com.racing.monitor"
 def service_plist(python: str, app: Path, logs: Path) -> dict:
     return {
         "Label": LABEL,
-        "ProgramArguments": [python, "-u", str(app / "monitor.py"), "--config", str(app / "monitor.local.json")],
+        "ProgramArguments": [python, "-u", str(app / "monitor.py"), "--config", str(app / "monitor.local.json"),
+                             "--hold-seconds", "5", "--poll-seconds", "1"],
         "WorkingDirectory": str(app), "RunAtLoad": True, "KeepAlive": True, "ThrottleInterval": 30,
         "StandardOutPath": str(logs / "monitor.log"), "StandardErrorPath": str(logs / "monitor-error.log"),
     }

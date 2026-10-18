@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import http.client
 import json
 import math
@@ -27,9 +28,9 @@ class Settings:
     webhook_format: str = "discord"
     name: str = "Racing"
     status_url: str = "http://127.0.0.1:8765/api/status"
-    poll_seconds: float = 5
+    poll_seconds: float = 1
     request_timeout_seconds: float = 3
-    hold_seconds: float = 30
+    hold_seconds: float = 5
     recovery_seconds: float = 30
     reminder_seconds: float = 1800
     stale_seconds: float = 15
@@ -234,6 +235,8 @@ class Monitor:
                 del self.incidents[key]
 
     def pending(self, now: float) -> list[tuple[str, str]]:
+        if not self.armed:
+            return []
         result = []
         unavailable = self.incidents.get("unity.unavailable")
         for key, incident in self.incidents.items():
@@ -391,20 +394,42 @@ def main(argv=None) -> int:
     parser.add_argument("--config", type=Path, default=Path(__file__).with_name("monitor.local.json"))
     parser.add_argument("--dry-run", action="store_true", help="通知を送らず、検知結果を表示する（状態ファイルは変更しない）")
     parser.add_argument("--once", action="store_true", help="状態を1回だけ確認する")
+    parser.add_argument("--managed", action="store_true", help="Unity起動用。標準入力のstopまたは終了で停止する")
+    parser.add_argument("--hold-seconds", type=positive_seconds, help="通知までの継続秒数を上書きする")
+    parser.add_argument("--poll-seconds", type=positive_seconds, help="状態の取得間隔を上書きする")
     args = parser.parse_args(argv)
     try:
         settings = Settings.load(args.config.resolve(), args.dry_run)
     except (OSError, ValueError, TypeError):
         print("監視設定を読み込めません。monitor.example.jsonをコピーし、設定内容を確認してください。", file=sys.stderr)
         return 2
+    if args.hold_seconds is not None:
+        settings.hold_seconds = args.hold_seconds
+    if args.poll_seconds is not None:
+        settings.poll_seconds = args.poll_seconds
     if args.dry_run:
         return run(settings, args)
     try:
         with InstanceLock(Path(settings.state_file + ".lock")):
             return run(settings, args)
+    except AlreadyRunning:
+        print("RACING_MONITOR_REUSED", flush=True)
+        print("同じ設定の運用監視が既に起動しています。")
+        return 0
     except OSError:
         print("同じ状態ファイルを使う監視が実行中か、保存先に書き込めません。", file=sys.stderr)
         return 2
+
+
+def positive_seconds(value: str) -> float:
+    seconds = float(value)
+    if not math.isfinite(seconds) or seconds <= 0:
+        raise argparse.ArgumentTypeError("正の秒数を指定してください。")
+    return seconds
+
+
+class AlreadyRunning(OSError):
+    pass
 
 
 class InstanceLock:
@@ -427,8 +452,10 @@ class InstanceLock:
             else:
                 import fcntl
                 fcntl.flock(self.stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except OSError:
+        except OSError as error:
             self.stream.close()
+            if error.errno in (errno.EAGAIN, errno.EACCES):
+                raise AlreadyRunning() from None
             raise
         return self
 
@@ -439,9 +466,21 @@ class InstanceLock:
 def run(settings: Settings, args) -> int:
     monitor, transport = Monitor(settings), Transport(settings)
     stop = threading.Event()
+    if args.managed:
+        # Editor startup may precede Play; require a fresh snapshot before arming.
+        # Retain notification cooldowns across script reloads.
+        monitor.armed = False
+        def watch_owner():
+            for line in sys.stdin:
+                if line.strip() == "stop":
+                    break
+            stop.set()
+        threading.Thread(target=watch_owner, daemon=True).start()
     for event in (signal.SIGINT, signal.SIGTERM):
         signal.signal(event, lambda *_: stop.set())
-    print("運用監視を開始しました。" + ("試運転のためWebhook送信は行いません。" if args.dry_run else "初回の正常な状態取得後に通知を有効化します。" if settings.arm_after_first_snapshot else "通知を有効化しています。"), flush=True)
+    print("運用監視を開始しました。" + ("試運転のためWebhook送信は行いません。" if args.dry_run else "初回の正常な状態取得後に通知を有効化します。" if not monitor.armed else "通知を有効化しています。"), flush=True)
+    if args.managed:
+        print("RACING_MONITOR_READY", flush=True)
     paused = False
     while not stop.is_set():
         if Path(settings.pause_file).exists():
@@ -457,6 +496,8 @@ def run(settings: Settings, args) -> int:
             paused = False
             now = time.time()
             monitor.observe(transport.snapshot(), now)
+            if stop.is_set():
+                break
             events = monitor.pending(now)
             if args.dry_run:
                 print(json.dumps({"armed": monitor.armed, "issues": list(monitor.incidents), "notification": payload(settings, monitor, events, now) if events else None}, ensure_ascii=False), flush=True)

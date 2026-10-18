@@ -8,7 +8,7 @@ import sys
 import tempfile
 import unittest
 import urllib.error
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("race_monitor", ROOT / "Tools/RaceMonitor/monitor.py")
@@ -36,7 +36,7 @@ class MonitorTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
-        self.settings = m.Settings(webhook_url="https://example.invalid/secret-token",
+        self.settings = m.Settings(hold_seconds=30, webhook_url="https://example.invalid/secret-token",
                                    state_file=str(Path(self.directory.name) / "state.json"))
         self.monitor = m.Monitor(self.settings)
 
@@ -280,6 +280,32 @@ class AdditionalTests(unittest.TestCase):
         self.observe(1066, serial={"lines": events})
         self.assertEqual(self.monitor.pending(1096), [("serial.errors", "recovered")])
 
+    def test_default_error_notification_requires_five_seconds(self):
+        settings = m.Settings(state_file=str(Path(self.directory.name) / "five-seconds.json"))
+        self.assertEqual(settings.hold_seconds, 5)
+        self.assertEqual(settings.poll_seconds, 1)
+        monitor = m.Monitor(settings)
+        monitor.observe(snapshot(1000, serial={"portOpen": False}), 1000)
+        self.assertEqual(monitor.pending(1004.99), [])
+        self.assertEqual(monitor.pending(1005), [("serial.port", "attention")])
+
+    def test_managed_wait_does_not_send_restored_incidents_before_play(self):
+        self.observe(1000, serial={"portOpen": False})
+        self.monitor.armed = False
+        self.monitor.observe(None, 1040)
+        self.assertEqual(self.monitor.pending(1040), [])
+        self.observe(1041, serial={"portOpen": False})
+        self.assertEqual(self.monitor.pending(1041), [("serial.port", "attention")])
+
+    def test_cli_timing_overrides_legacy_settings(self):
+        config = Path(self.directory.name) / "legacy.json"
+        config.write_text('{"hold_seconds":30,"poll_seconds":5}')
+        with patch.object(m, "run", return_value=0) as run:
+            self.assertEqual(m.main(["--config", str(config), "--dry-run", "--hold-seconds", "5", "--poll-seconds", "1"]), 0)
+        settings = run.call_args.args[0]
+        self.assertEqual(settings.hold_seconds, 5)
+        self.assertEqual(settings.poll_seconds, 1)
+
     def test_instance_lock_prevents_second_sender_and_releases_on_exit(self):
         path = Path(self.settings.state_file + ".lock")
         with m.InstanceLock(path):
@@ -306,6 +332,7 @@ class ServiceTests(unittest.TestCase):
         import install_service
         document = install_service.service_plist("/usr/local/bin/python3", Path("/home/test/Library/RacingMonitor"), Path("/home/test/Library/Logs"))
         self.assertTrue(document["KeepAlive"])
+        self.assertEqual(document["ProgramArguments"][-4:], ["--hold-seconds", "5", "--poll-seconds", "1"])
         self.assertNotIn("EnvironmentVariables", document)
         self.assertEqual(document["ProgramArguments"][3:5], ["--config", "/home/test/Library/RacingMonitor/monitor.local.json"])
 

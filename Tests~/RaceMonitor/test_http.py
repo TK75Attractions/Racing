@@ -48,7 +48,7 @@ class HttpTests(unittest.TestCase):
         self.thread.join(timeout=2)
 
     def test_real_http_detection_delivery_deduplication_and_recovery(self):
-        settings = m.Settings(status_url=self.url + "/api/status", webhook_url=self.url + "/webhook",
+        settings = m.Settings(hold_seconds=30, status_url=self.url + "/api/status", webhook_url=self.url + "/webhook",
                               state_file=str(Path(self.temp.name) / "state.json"))
         # Loopback HTTP is permitted only by this in-memory fixture; normal settings require HTTPS.
         monitor, transport = m.Monitor(settings), m.Transport(settings)
@@ -90,6 +90,32 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(self.received, [])
         self.assertFalse((Path(self.temp.name) / "monitor.state.json").exists())
         self.assertFalse((Path(self.temp.name) / "monitor.state.json.lock").exists())
+
+    def test_managed_owner_stop_and_eof_exit_without_webhook(self):
+        directory = Path(self.temp.name)
+        config = directory / "managed.json"
+        config.write_text(json.dumps({"status_url": self.url + "/api/status"}))
+        command = [sys.executable, str(ROOT / "Tools/RaceMonitor/monitor.py"), "--config", str(config), "--dry-run", "--managed"]
+        for owner_input in ("stop\n", ""):
+            result = subprocess.run(command, input=owner_input, capture_output=True, text=True, timeout=8)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("RACING_MONITOR_READY", result.stdout)
+        self.assertEqual(self.received, [])
+
+    def test_managed_start_reuses_existing_sender_without_stopping_it(self):
+        directory = Path(self.temp.name)
+        config = directory / "monitor.json"
+        config.write_text(json.dumps({"webhook_url": "https://example.invalid/not-contacted", "status_url": self.url + "/api/status"}))
+        command = [sys.executable, str(ROOT / "Tools/RaceMonitor/monitor.py"), "--config", str(config), "--managed", "--once"]
+        with m.InstanceLock(directory / "monitor.state.json.lock"):
+            result = subprocess.run(command, input="", capture_output=True, text=True, timeout=8)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("RACING_MONITOR_REUSED", result.stdout)
+            with self.assertRaises(OSError):
+                with m.InstanceLock(directory / "monitor.state.json.lock"):
+                    pass
+        self.assertEqual(self.received, [])
+        self.assertEqual(self.reads, 0)
 
     def test_maintenance_skips_source_and_notifications(self):
         result = self.cli(paused=True)
