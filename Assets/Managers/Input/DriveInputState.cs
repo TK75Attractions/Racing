@@ -20,3 +20,9 @@ public interface IDriveInputSource : IDisposable
 
     void UpdateInput(float deltaTime);
 }
+
+/// <summary>Driving-only calibration; menu controls continue reading the original input units.</summary>
+public interface IDriveSteeringCalibration
+{
+    float FullSteeringInput { get; }
+}
