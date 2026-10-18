@@ -1,0 +1,83 @@
+{
+  "passed": true,
+  "diagnosis": {
+    "gatewayStatusWhenRelayStopped": 502,
+    "responseBodyBytes": 0,
+    "contentTypePresent": false
+  },
+  "automatedSuite": {
+    "passed": 21,
+    "skipped": 1,
+    "skippedScope": "Native PTY serial input was unchanged"
+  },
+  "backgroundCliRegressionCases": 8,
+  "liveHttpsChecks": [
+    {
+      "path": "/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bodyBytes": 14047
+    },
+    {
+      "path": "/app.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "bodyBytes": 39919
+    },
+    {
+      "path": "/live.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "bodyBytes": 6968
+    },
+    {
+      "path": "/style.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "bodyBytes": 16830
+    },
+    {
+      "path": "/api/connection",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bodyBytes": 157,
+      "remote": true,
+      "canControl": true
+    },
+    {
+      "path": "/api/status",
+      "status": 503,
+      "contentType": "application/json; charset=utf-8",
+      "bodyBytes": 133
+    }
+  ],
+  "browser": {
+    "passed": true,
+    "transport": "Real Tailscale Serve HTTPS from this PC",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "httpStatus": 200,
+    "contentType": "text/html; charset=utf-8",
+    "page": "Race dashboard visible while Unity is stopped",
+    "downloads": 0,
+    "pageErrors": 0,
+    "limitation": "Mobile-width Chrome; not a separate physical phone or external network test"
+  },
+  "loginService": {
+    "passed": true,
+    "runAtLoad": true,
+    "keepAlive": true,
+    "verifiedVpnConfigurationSaved": true,
+    "mainProjectAssets": true,
+    "processReplaced": true,
+    "httpsAfterRestart": 200,
+    "recoverySeconds": 0.35
+  },
+  "screenshot": "availability-mobile.png",
+  "limitations": [
+    "The browser verification used this PC through its real Tailscale HTTPS endpoint; a separate physical smartphone was not operated",
+    "A full Mac logout/reboot was not performed; the installed RunAtLoad and KeepAlive flags and service restart were verified"
+  ]
+}

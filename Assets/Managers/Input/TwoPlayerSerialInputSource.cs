@@ -32,6 +32,8 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     public event Action<string, string> LineProcessed;
     public RgpSerialJournal Monitor { get; } = new RgpSerialJournal();
     public RgpHostSession Session => session;
+    public bool HasFreshTelemetry => portIsOpen && session.IsFresh(clock.Elapsed.TotalMilliseconds);
+    public bool InvalidTelemetry { get; private set; }
     public bool HasRecentDeviceData => portIsOpen && clock.Elapsed.TotalMilliseconds - lastDeviceDataAt < 3000;
     private double lastDeviceDataAt = double.NegativeInfinity;
     private double nextStatusAt = 2000;
@@ -98,12 +100,15 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
             LastSerialLineTime = Time.realtimeSinceStartup;
             if (!SerialInputProtocol.TryParse(received.Wire, out RgpFrame frame))
             {
+                if (LastSerialLine.StartsWith("@TEL,", StringComparison.Ordinal)) InvalidTelemetry = true;
                 ParseErrorCount++;
                 RecordParseResult("INVALID", LastSerialLine);
                 continue;
             }
             lastDeviceDataAt = received.ReceivedAt;
-            RecordParseResult(session.Receive(frame, received.ReceivedAt), LastSerialLine);
+            string result = session.Receive(frame, received.ReceivedAt);
+            if (frame.Type == "TEL" && result == "OK") InvalidTelemetry = false;
+            RecordParseResult(result, LastSerialLine);
         }
         session.Tick(clock.Elapsed.TotalMilliseconds);
         if (clock.Elapsed.TotalMilliseconds >= nextStatusAt)

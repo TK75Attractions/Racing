@@ -14,6 +14,8 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
     private int displayIndex;
     private RenderTexture target;
     private Material presentation;
+    private bool nativeWindow;
+    private System.IntPtr nativeTexture;
     private static readonly int TextureId = Shader.PropertyToID("_BlitTexture");
     private static readonly int ScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
     private static readonly int EncodeId = Shader.PropertyToID("_EncodeSRGB");
@@ -30,6 +32,20 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
         RefreshTarget();
     }
 
+    public void ConfigureWindow(Camera[] outputCameras, int preferredScreen)
+    {
+        if (!RacePlayerWindows.Open(preferredScreen))
+        {
+            Debug.LogError("Could not create the P2 window. Check the RaceWindows plugin and Metal graphics API.");
+            return;
+        }
+        nativeWindow = true;
+        cameras = outputCameras;
+        displayIndex = preferredScreen;
+        RefreshTarget();
+        Debug.Log("Race output windows: P1=Unity window, P2=native window (move either by its title bar).");
+    }
+
     private void OnEnable()
     {
         if (!Application.isPlaying) return;
@@ -42,6 +58,8 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
         RenderPipelineManager.beginContextRendering -= BeginRendering;
         RenderPipelineManager.endContextRendering -= Present;
         ReleaseTarget();
+        if (nativeWindow) RacePlayerWindows.Close();
+        nativeWindow = false;
         if (presentation != null) DestroyOwned(presentation);
         presentation = null;
     }
@@ -51,7 +69,15 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
 
     private void RefreshTarget()
     {
-        if (cameras == null || Application.isEditor || displayIndex <= 0 || displayIndex >= Display.displays.Length) return;
+        if (cameras == null || Application.isEditor) return;
+        if (nativeWindow)
+        {
+            if (RacePlayerWindows.CloseRequested) { Application.Quit(); return; }
+            Vector2Int size = RacePlayerWindows.Size;
+            ResizeTarget(size.x, size.y);
+            return;
+        }
+        if (displayIndex <= 0 || displayIndex >= Display.displays.Length) return;
         Display display = Display.displays[displayIndex];
         ResizeTarget(display.renderingWidth, display.renderingHeight);
     }
@@ -69,6 +95,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
             filterMode = FilterMode.Bilinear
         };
         target.Create();
+        if (nativeWindow) nativeTexture = target.GetNativeTexturePtr();
         foreach (Camera camera in cameras)
             if (camera != null) camera.targetTexture = target;
     }
@@ -76,7 +103,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
     private void Present(ScriptableRenderContext context, List<Camera> rendered)
     {
         using var timing = PresentMarker.Auto();
-        if (target == null || Application.isEditor || displayIndex >= Display.displays.Length) return;
+        if (target == null || Application.isEditor || (!nativeWindow && displayIndex >= Display.displays.Length)) return;
         // Render requests for thumbnails/captures also raise this event. Only
         // present after this display's normal stack has been rendered.
         bool hasOutput = false;
@@ -84,6 +111,12 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
             if (camera != null && camera.targetTexture == target && rendered.Contains(camera))
             { hasOutput = true; break; }
         if (!hasOutput) return;
+        if (nativeWindow)
+        {
+            RacePlayerWindows.Present(nativeTexture);
+            PresentedFrames++;
+            return;
+        }
         if (presentation == null)
         {
             Shader shader = Resources.Load<Shader>("DisplayOutput");
@@ -123,6 +156,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
         target.Release();
         DestroyOwned(target);
         target = null;
+        nativeTexture = System.IntPtr.Zero;
     }
 
     private static void DestroyOwned(Object value)

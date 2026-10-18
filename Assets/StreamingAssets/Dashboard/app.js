@@ -6,10 +6,20 @@ let logSignature = '';
 let rawPaused = false, rawSignature = '', rawPending = [], rawGap = false;
 let rawElements = new Map();
 let canSendSerial = false;
+let latestCanControl = false;
 const $ = (id) => document.getElementById(id);
 const labels = { Title: 'タイトル', CarSelection: '車選択', Tutorial: 'チュートリアル', Countdown: 'カウントダウン', Game: 'レース中', Goal: 'ゴール処理中', Result: '結果表示' };
 const details = { Title: '開始操作を待っています', CarSelection: '参加者が車を選んでいます', Tutorial: '参加者が操作を練習しています', Countdown: 'スタートまでまもなく', Game: 'レース進行中', Goal: '完走処理中', Result: '次のレースを選択できます' };
-const actions = { start: 'Title', result: 'Game', retry: 'Result', title: 'Result' };
+const actions = { start: 'Title', tutorial: 'CarSelection', countdown: 'Tutorial', result: 'Game', retry: 'Result', title: 'Result' };
+function actionAvailable(action, snapshot) {
+  const preparing = snapshot?.playerProgress || [];
+  if (action === 'tutorial' && snapshot?.state === 'Tutorial')
+    return preparing.some(player => ['Title', 'CarSelection'].includes(player.state));
+  if (action === 'countdown' && preparing.some(player => player.state !== 'Tutorial')) return false;
+  return actions[action] === snapshot?.state;
+}
+let commandRequest = null, commandResultSignature = '';
+let alertSession = '', alertItems = new Map();
 let connected = false;
 let currentState = null;
 let lastFrameAt = 0;
@@ -45,7 +55,7 @@ function setConnection(isConnected) {
     rawPending = []; rawSignature = ''; rawGap = false; renderRaw([], false, true);
     renderHardware(null); renderPlayerProgress(null); setSerialControls(false);
     $('serial-command-status').textContent = 'Unityへの再接続を待っています。';
-    $('serial-command-last').textContent = '';
+    if (commandRequest) showCommandResult('unknown', '接続が中断しました。再接続後に実行結果を確認します。');
     updateFlow(null);
     renderParticipants(null);
     $('serial-log').innerHTML = '<div class="empty-log">シリアル入力を待っています。Unity の接続状態を確認してください。</div>';
@@ -95,6 +105,7 @@ function updateFlow(state) {
 function render(snapshot, { canControl = localMode } = {}) {
   setConnection(true);
   latestSnapshot = snapshot;
+  latestCanControl = canControl;
   currentState = snapshot.state;
   updateFlow(snapshot.state);
   $('game-state').textContent = labels[snapshot.state] || snapshot.state;
@@ -121,9 +132,9 @@ function render(snapshot, { canControl = localMode } = {}) {
     $('pedal-' + n).textContent = (player.pedal || 0).toFixed(2);
     $('steer-' + n).textContent = (player.steering || 0).toFixed(2);
   }
-  for (const button of document.querySelectorAll('[data-action]')) button.disabled = !canControl || actions[button.dataset.action] !== currentState;
+  for (const button of document.querySelectorAll('[data-action]')) button.disabled = !canControl || !actionAvailable(button.dataset.action, snapshot);
   if (localMode) $('control-note').textContent = snapshot.state === 'Game' ? '「結果を表示」はレースを終了し、現在の記録で結果画面へ進みます。' : '現在のゲーム状態に応じて操作できます。';
-  renderSerialAlerts(snapshot.serial, snapshot.inputMode);
+  renderSerialAlerts(snapshot.serial, snapshot.inputMode, snapshot);
   renderLog(snapshot.serial.lines || []);
   if (snapshot.telemetry) renderTelemetry(snapshot.telemetry);
   renderParticipants(snapshot);
@@ -131,8 +142,7 @@ function render(snapshot, { canControl = localMode } = {}) {
   renderHardware(snapshot);
   renderRaw(snapshot.rawLines || [], snapshot.rawGap || false);
   setSerialControls(canControl && snapshot.serial.portOpen && snapshot.hardware?.sessionOpen && snapshot.hardware?.recent);
-  $('serial-command-last').textContent = snapshot.hardware?.lastCommand ?
-    `装置への直近要求：${snapshot.hardware.lastCommand} / ACK待ち ${snapshot.hardware.pending || 0}件（完了通知は下の通信履歴）` : '';
+  renderCommandResult(snapshot);
 }
 
 const drivingLabels = { Stopped: '停止', Driving: '走行中', Airborne: '空中',
@@ -215,7 +225,7 @@ function rgpErrorExplanation(d, truncated = false) {
   if (reqAt >= 0 && /^\d+$/.test(detail[reqAt + 1] || '')) text += ` 要求番号 ${detail[reqAt + 1]}。`;
   if (!truncated && textAt >= 0 && detail[textAt + 1]) text += ` 装置からの補足：${rgpText(detail[textAt + 1])}`;
   if (d[2] === 'WHOAMI_MISMATCH' && detail.length >= 3) text += ` アドレス ${detail[0]}、期待値 ${detail[1]}、実際 ${detail[2]}。`;
-  else if (['NO_RESPONSE', 'WHOAMI_FAILED', 'CONNECTION_LOST'].includes(d[2]) && /^0x[0-9A-F]{2}$/.test(detail[0] || '')) text += ` 対象 ${detail[0]}。`;
+  else if (/^0x[0-9A-F]{2}$/.test(detail[0] || '')) text += ` 対象 ${detail[0]}。`;
   if (truncated) text += '（遠隔データの末尾が省略されています）';
   return text;
 }
@@ -289,22 +299,89 @@ function explainSerialEntry(entry) {
 }
 
 let serialAlertSignature = '';
-function renderSerialAlerts(serial, inputMode = '') {
-  const unique = new Map([...(serial.lines || []), ...(serial.alerts || [])].map(entry => [entry.id, entry]));
-  const alerts = [...unique.values()].sort((a, b) => a.id - b.id).map(entry => ({ entry, ...explainSerialEntry(entry) }))
-    .filter(item => item.level !== 'info').reverse().slice(0, 8);
-  if (serial.portOpen === false && /serial|シリアル/i.test(inputMode) && !/disabled/i.test(inputMode))
-    alerts.unshift({ entry: { time: '現在' }, level: 'warning', text: 'シリアルポートが未接続です。USB接続とUnityのポート設定を確認してください。' });
-  if (serial.errors > 0 && !alerts.some(item => item.entry.status === 'INVALID'))
-    alerts.push({ entry: { time: '累計' }, level: 'warning', text: `解析エラーが${serial.errors.toLocaleString('ja-JP')}件記録されています。詳細が履歴から消えている場合はUnity側のログも確認してください。` });
+function serialFrame(entry) {
+  const line = String(entry?.line || '').trimEnd();
+  if (entry?.status === 'INVALID') return null;
+  const match = line.match(/^@([A-Z][A-Z0-9_.-]*),([0-9]+),([0-9]+)(?:,([^*]*))?\*([0-9A-F]{4})$/);
+  return match && rgpCrc(line.slice(1, line.lastIndexOf('*'))) === match[5] ?
+    { type: match[1], data: match[4]?.split(',') || [] } : null;
+}
+function alertRecovered(item, entries, snapshot) {
+  const frame = serialFrame(item.entry), d = frame?.data || [];
+  const h = snapshot?.hardware;
+  const known = snapshot?.serial?.portOpen && h?.sessionOpen && h?.recent;
+  const address = d.slice(3).find(value => /^0x[0-9A-F]{2}$/.test(value));
+  const after = entries.filter(entry => entry.id > item.entry.id).map(entry => ({entry, frame:serialFrame(entry)}));
+  const command = frame?.type === 'ACK' ? d[1] : item.entry.status === 'TIMEOUT' ? item.entry.line : null;
+  const requestAt = d.indexOf('REQ');
+  const recovery = after.find(({frame: next}) => {
+    if (!next) return false;
+    const n = next.data;
+    if (command) return next.type === 'ACK' && n[1] === command && n[2] === 'OK';
+    if (frame?.type === 'ERR' && requestAt >= 0)
+      return next.type === 'EVT' && ['CAL_DONE', 'I2C_SCAN_END'].includes(n[0]) && n[1] === d[requestAt + 1];
+    if (item.entry.status === 'INVALID') return item.entry.line?.startsWith('@TEL,') ?
+      next.type === 'TEL' && !h?.invalidTelemetry : next.type === 'TEL' || next.type === 'ACK';
+    if (item.entry.status === 'STALE') return next.type === 'TEL';
+    if (frame?.type === 'ERR') {
+      if (d[1] === 'I2C') return next.type === 'EVT' && n[0] === 'I2C_RESTORED';
+      if (d[1] === 'IMU') return next.type === 'EVT' && n[0] === 'IMU_FOUND' && (!address || n[1] === address);
+      if (d[1] === 'ADS1115') return next.type === 'EVT' && n[0] === 'ADS_READY';
+      if (d[1] === 'HANDLE') return next.type === 'EVT' && n[0] === 'ANGLE_LOCKED';
+      if (d[1] === 'CALIBRATION') return next.type === 'EVT' && n[0] === 'CAL_DONE';
+    }
+    return next.type === 'EVT' && n[0] === 'STATE' && n[1] === 'READY';
+  });
+  if (recovery) return recovery.entry.receivedAt || Date.now();
+  // Snapshots cover recovery events that have already left the replay window.
+  if (!known || (item.entry.receivedAt && snapshot.serverTime < item.entry.receivedAt)) return null;
+  if (command || requestAt >= 0) return null;
+  if (item.entry.status === 'INVALID') return !h.invalidTelemetry && h.inputFresh ? Date.now() : null;
+  if (item.entry.status === 'STALE') return h.inputFresh ? Date.now() : null;
+  if (frame?.type === 'ERR') {
+    const healthy = { I2C: h.ads === 'Ok' && h.imu === 'Ok', ADS1115: h.ads === 'Ok',
+      IMU: address ? h.imus?.some(imu => imu.address === address && imu.status === 'Ok') : h.imu === 'Ok',
+      HANDLE: h.angleLocked, CALIBRATION: h.calibrated };
+    if (Object.hasOwn(healthy, d[1])) return healthy[d[1]] ? Date.now() : null;
+    return null;
+  }
+  return h.state === 'READY' && h.inputFresh ? Date.now() : null;
+}
+function renderSerialAlerts(serial, inputMode = '', snapshot = latestSnapshot) {
+  const session = snapshot?.sessionId || '';
+  if (session !== alertSession) { alertItems.clear(); alertSession = session; }
+  const unique = new Map([...(serial.lines || []), ...(serial.alerts || []), ...(snapshot?.telemetry ? [snapshot.telemetry] : [])].map(entry => [entry.id, entry]));
+  const entries = [...unique.values()].sort((a, b) => a.id - b.id);
+  for (const entry of entries) {
+    const explanation = explainSerialEntry(entry);
+    if (explanation.level === 'info') continue;
+    const frame = serialFrame(entry), d = frame?.data || [];
+    const address = d.slice(3).find(value => /^0x[0-9A-F]{2}$/.test(value)) || '';
+    const key = frame?.type === 'ERR' ? ['ERR', ...d.slice(0,3), address].join(':') :
+      frame?.type === 'ACK' ? `ACK:${d[1]}` : frame?.type === 'EVT' ? `EVT:${d.slice(0,2).join(':')}` :
+      `${entry.status}:${entry.status === 'TIMEOUT' ? entry.line : entry.line?.startsWith('@TEL,') ? 'TEL' : '通信'}`;
+    if (!alertItems.has(key) || alertItems.get(key).entry.id < entry.id)
+      alertItems.set(key, {entry, ...explanation, resolvedAt:null});
+  }
+  const now = Date.now();
+  const portIssue = serial.portOpen === false && /serial|シリアル/i.test(inputMode) && !/disabled/i.test(inputMode);
+  if (portIssue) alertItems.set('port', {entry:{time:'現在'},level:'warning',text:'シリアルポートが未接続です。USB接続とUnityのポート設定を確認してください。',resolvedAt:null});
+  for (const [key, item] of alertItems) {
+    if (item.resolvedAt == null) item.resolvedAt = key === 'port' ? (portIssue ? null : now) : alertRecovered(item, entries, snapshot);
+  }
+  const alerts = [...alertItems.values()].filter(item => item.resolvedAt == null || now - item.resolvedAt < 10000)
+    .sort((a,b) => Number(a.resolvedAt != null) - Number(b.resolvedAt != null) || (b.entry.id || Infinity) - (a.entry.id || Infinity));
+  // Retain tombstones for IDs still present in replay, so expired notices cannot reappear.
+  for (const [key, item] of alertItems)
+    if (key !== 'port' && !unique.has(item.entry.id) && item.resolvedAt != null && now - item.resolvedAt >= 10000) alertItems.delete(key);
   const signature = JSON.stringify(alerts);
   if (signature === serialAlertSignature) return;
   serialAlertSignature = signature;
   $('serial-alerts').hidden = !alerts.length;
   $('serial-alert-list').replaceChildren(...alerts.map(item => {
-    const row = document.createElement('div'); row.className = 'serial-alert ' + item.level;
+    const row = document.createElement('div'); row.className = 'serial-alert ' + item.level + (item.resolvedAt != null ? ' resolved' : '');
     const time = document.createElement('span'); time.className = 'alert-time'; time.textContent = item.entry.time || '—';
-    const text = document.createElement('p'); text.textContent = item.text;
+    const text = document.createElement('p'); text.textContent = (item.resolvedAt != null ? '解決済み · ' : '未解決 · ') + item.text;
     row.append(time, text); return row;
   }));
 }
@@ -382,12 +459,27 @@ function renderHardware(snapshot) {
   $('hardware-state').textContent = !snapshot ? '未確認' : known ? rgpState(hardware.state) : port ? '装置の応答待ち' : 'シリアル未接続';
   const sensor = (state) => !known || state === 'Unknown' || !state ? ['unknown', '未確認'] :
     state === 'Ok' ? ['ok', '動作確認済み'] : ['fault', '異常・接続要確認'];
+  const pedal = (n) => {
+    const input = hardware?.pedals?.find(player => player.number === n);
+    if (!known) return [['unknown', '入力未確認'], 'ESP32の接続と応答を待っています'];
+    if (hardware.ads === 'Fault') return [['fault', 'センサー異常'], 'ペダル用センサーの接続を確認してください'];
+    if (hardware.invalidTelemetry) return [['fault', '入力データ異常'], '受信値・形式が不正です。ケーブルや装置を確認してください'];
+    if (!hardware.telemetryEnabled) return [['unknown', '入力配信停止中'], '入力データの配信を開始してください'];
+    if (!hardware.inputFresh || !input) return [['fault', '正常な入力を受信できません'], '入力の途絶または装置の準備状態を確認してください'];
+    if (![input.accel, input.brake].every(value => Number.isFinite(value) && value >= 0 && value <= 1))
+      return [['fault', '入力データ異常'], 'ペダルの入力値が正常な範囲を外れています'];
+    return [['ok', '動作確認済み'], `アクセル ${(input.accel * 100).toFixed(0)}% / ブレーキ ${(input.brake * 100).toFixed(0)}%`];
+  };
   const cards = [
     ['ESP32 / USBシリアル', !snapshot ? ['unknown','未確認'] : !port ? ['fault','未接続'] : known ? ['ok','通信中'] : ['unknown','ポート開放・応答待ち'],
-      !snapshot ? 'Unityの接続を待っています' : `${snapshot.serial.port || 'ポート不明'} / ${hardware?.state || '状態未確認'}`],
-    ['MPU6050 / IMU（I2C）', sensor(hardware?.imu), hardware?.imuAddress ? `アドレス ${hardware.imuAddress} / 識別値 ${hardware.imuIdentity || '不明'}（型式は装置の構成を確認）` : 'IMU全体の通知。型式・アドレスは未確認'],
-    ['ADS1115（I2C）', sensor(hardware?.ads), hardware?.adsAddress ? `アドレス ${hardware.adsAddress} / 全ADSセンサーの状態` : '全ADSセンサーの状態。アドレスは未確認'],
-    ...[1,2].map(n => [`P${n} アクセル・ブレーキ`, ['unknown','物理接続：未確認'], '個別の断線検出情報なし。最新の入力値は下のTEL欄で確認'])
+      !snapshot ? 'Unityの接続を待っています' : `${snapshot.serial.port || 'ポート不明'} / ${rgpState(hardware?.state)}`],
+    ...[0, 1].map(index => {
+      const imu = hardware?.imus?.[index];
+      return [`IMU ${index + 1}（I2C）`, sensor(imu?.status), imu?.address ?
+        `アドレス ${imu.address} / 識別値 ${imu.identity || '未確認'}` : '個別の機器通知を待っています'];
+    }),
+    ['ADS1115（I2C）', sensor(hardware?.ads), hardware?.adsAddress ? `アドレス ${hardware.adsAddress}` : 'ペダル用センサー / アドレス未確認'],
+    ...[1, 2].map(n => [`P${n} ペダル`, ...pedal(n)])
   ];
   $('hardware-grid').replaceChildren(...cards.map(([name, [level, state], detail]) => {
     const card = document.createElement('article'); card.className = 'hardware-card ' + level;
@@ -399,7 +491,7 @@ function renderHardware(snapshot) {
 }
 function setSerialControls(enabled) {
   canSendSerial = !!enabled;
-  if (canSendSerial && /接続を待|再接続を待/.test($('serial-command-status').textContent))
+  if (!commandRequest && canSendSerial && /接続を待|再接続を待/.test($('serial-command-status').textContent))
     $('serial-command-status').textContent = '操作を選択してESP32へ送信できます。';
   for (const control of document.querySelectorAll('[data-serial-control]')) control.disabled = !canSendSerial;
   $('serial-send').disabled = !canSendSerial;
@@ -455,28 +547,109 @@ function serialCommandArguments() {
     default: return [];
   }
 }
+function showCommandResult(stage, message, values = []) {
+  const title = commandRequest ? rgpName(rgpCommands, commandRequest.command) : '実行結果';
+  const signature = JSON.stringify([title, stage, message, values]);
+  if (signature === commandResultSignature) return;
+  commandResultSignature = signature;
+  const stages = {sending:'送信中', waiting:'応答待ち', running:'実行中', success:'完了', error:'失敗', unknown:'結果未確認'};
+  $('serial-command-title').textContent = title;
+  $('serial-command-badge').textContent = stages[stage];
+  $('serial-command-result').className = 'command-result ' + stage;
+  $('serial-command-status').textContent = message;
+  const done = stage === 'success' ? 3 : stage === 'running' ? 2 : stage === 'waiting' ? 1 : 0;
+  $('serial-command-steps').replaceChildren(...['送信', '受付', '完了'].map((text, index) => {
+    const step = document.createElement('li');
+    step.textContent = `${index + 1}  ${text}`;
+    step.className = index < done ? 'complete' : index === done && ['sending','waiting','running'].includes(stage) ? 'current' : '';
+    return step;
+  }));
+  $('serial-command-values').replaceChildren(...values.map(([name, value]) => {
+    const row = document.createElement('div');
+    const label = document.createElement('dt'); label.textContent = name;
+    const detail = document.createElement('dd'); detail.textContent = String(value);
+    row.append(label, detail); return row;
+  }));
+  $('serial-command-last').textContent = commandRequest?.sequence != null ? `要求番号 ${commandRequest.sequence}` : '';
+}
+function renderCommandResult(snapshot) {
+  if (!commandRequest || commandRequest.sequence == null) return;
+  if (snapshot.sessionId !== commandRequest.sessionId || snapshot.hardware?.generation !== commandRequest.generation) {
+    showCommandResult('unknown', '装置またはUnityの接続セッションが変わりました。この操作の実行結果は確認できません。');
+    return;
+  }
+  const result = snapshot.hardware?.commands?.find(item => item.sequence === commandRequest.sequence && item.command === commandRequest.command);
+  if (!result) return; // An older state update may arrive before the command response.
+  const d = result.data || [], command = result.command;
+  if (result.status === 'SENT') { showCommandResult('waiting', '送信しました。装置の応答を待っています。'); return; }
+  if (result.status === 'ACCEPTED') { showCommandResult('running', '装置が操作を受け付けました。完了までお待ちください。'); return; }
+  if (result.status === 'TIMEOUT') { showCommandResult('unknown', '装置からの応答・完了通知を確認できませんでした。機器の状態を確認してください。'); return; }
+  if (!['OK','DONE'].includes(result.status)) {
+    const errors = {INVALID_ARG:'指定した値を装置が受け付けられませんでした。設定値を確認してください。',
+      UNSUPPORTED:'この装置は選択した操作に対応していません。', BUSY:'装置は別の処理を実行中です。完了後に操作してください。',
+      NOT_READY:'装置の準備ができていません。機器・接続状態を確認してください。', FAILED:'装置で処理に失敗しました。機器の状態を確認してください。'};
+    const code = d[0] === 'ERROR' || d[0] === 'WARN' || d[0] === 'FATAL' ? d[2] : d[3];
+    const detail = code && Object.hasOwn(rgpErrors, code) ? [['原因', rgpErrors[code]]] : [];
+    showCommandResult('error', errors[result.status] || '装置が操作を完了できませんでした。機器の状態を確認してください。', detail);
+    return;
+  }
+  let message = '操作が完了しました。', values = [];
+  switch (command) {
+    case 'GET_STATUS':
+      message = '装置の現在の状態を確認しました。';
+      values = [['装置',rgpState(d[3])],['ペダル用センサー',d[4] === '1' ? '正常' : '異常'],
+        ['IMU全体',d[5] === '1' ? '正常' : '異常'],['ハンドル基準',d[6] === '1' ? '設定済み' : '未設定'],['校正',d[7] === '1' ? '完了' : '未完了']];
+      break;
+    case 'GET_CONFIG':
+      message = '現在の設定を取得しました。';
+      for (let i = 3; i + 1 < d.length; i += 2) {
+        if (!Object.hasOwn(rgpSettings, d[i])) continue;
+        values.push([rgpName(rgpSettings,d[i]), /_STREAM$/.test(d[i]) ? (d[i+1] === '1' ? '配信中' : '停止中') : /_RATE$/.test(d[i]) ? `${d[i+1]} Hz` : d[i+1]]);
+      }
+      break;
+    case 'PING': message = 'ESP32から応答がありました。通信は正常です。'; break;
+    case 'ANGLE_ZERO': message = '両ハンドルの現在位置を中央に設定しました。'; break;
+    case 'CALIBRATE':
+      message = result.status === 'DONE' ? 'センサーの校正が完了しました。' : '校正の要求を受け付けました。完了通知を待っています。';
+      if (result.status !== 'DONE') { showCommandResult('running',message); return; }
+      values = [['校正対象', rgpName(rgpTargets,d[2])]]; break;
+    case 'SCAN_I2C':
+      if (result.status !== 'DONE') { showCommandResult('running','機器を検索しています。完了通知を待っています。'); return; }
+      message = Number(d[2]) > 0 ? '接続されている機器を検出しました。' : '検索が完了しました。接続機器は見つかりませんでした。';
+      values = [['検出数',`${d[2]}台`],['機器のアドレス',result.devices?.join(' / ') || '検出なし']]; break;
+    case 'SET_RATE': message = 'データの送信頻度を変更しました。'; values = [[rgpName(rgpSettings,d[3]+'_RATE'),`${d[4]} Hz`]]; break;
+    case 'SET_STREAM': message = 'データの配信設定を変更しました。'; values = [[rgpName(rgpSettings,d[3]+'_STREAM'),d[4] === '1' ? '配信中' : '停止中']]; break;
+    case 'SET_BETA': message = '姿勢推定の調整値を変更しました。'; values = [['調整値',d[3]]]; break;
+  }
+  showCommandResult('success', message, values);
+}
 async function submitSerialCommand(event) {
   event.preventDefault();
   if (!canSendSerial || !connected || !localMode) return;
   const payload = {command:$('serial-command').value,args:serialCommandArguments()};
+  const request = commandRequest = {...payload,sessionId:latestSnapshot.sessionId,generation:latestSnapshot.hardware?.generation};
   setSerialControls(false);
-  $('serial-command-status').textContent = 'ESP32へ要求を送信中…';
+  showCommandResult('sending', 'ESP32へ操作を送信しています…');
   let outcome;
   try {
     if (liveController) outcome = await liveController.command('serial', payload);
     else {
-      const request = {...payload,id:crypto.randomUUID(),targetSession:latestSnapshot.sessionId,expectedState:latestSnapshot.state,
+      const body = {...payload,id:crypto.randomUUID(),targetSession:latestSnapshot.sessionId,expectedState:latestSnapshot.state,
         stateRevision:latestSnapshot.stateRevision,observedAt:latestSnapshot.serverTime};
-      const response = await apiFetch('/api/action/serial', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});
+      const response = await apiFetch('/api/action/serial', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
       outcome = await response.json();
       await poll();
     }
   } catch { }
-  const reasons = {invalid_arguments:'引数が不正です。',session_not_ready:'RGPセッションの確立を待っています。',commands_pending:'未完了の要求が多いため待機してください。',
-    command_pending:'同じ種類の要求がACK待ちです。',device_not_ready:'装置がREADYまたはWAIT_ANGLEのときに実行できます。',serial_disconnected:'シリアル接続・装置の応答を確認してください。',write_failed:'シリアル送信に失敗しました。'};
-  $('serial-command-status').textContent = outcome?.ok ?
-    `要求番号 ${outcome.serialSequence} を送信しました。装置のACKと完了通知を通信履歴で確認してください。` :
-    outcome ? `送信できませんでした。${reasons[outcome.reason] || 'ゲームや装置の最新状態を確認してください。'}` : '送信結果を確認できません。再送せず、通信履歴を確認してください。';
+  const reasons = {invalid_arguments:'指定した値を確認してください。',session_not_ready:'装置との接続準備を待っています。',commands_pending:'未完了の操作が多いため待機してください。',
+    command_pending:'同じ操作が応答待ちまたは実行中です。',device_not_ready:'装置の準備完了、またはハンドル基準の設定待ちのときに実行できます。',serial_disconnected:'シリアル接続・装置の応答を確認してください。',write_failed:'シリアル送信に失敗しました。'};
+  if (outcome?.ok) {
+    request.sequence = outcome.serialSequence;
+    showCommandResult('waiting','送信しました。装置の応答を待っています。');
+    renderCommandResult(latestSnapshot);
+  } else showCommandResult(outcome ? 'error' : 'unknown', outcome ?
+    `送信できませんでした。${reasons[outcome.reason] || 'ゲームや装置の最新状態を確認してください。'}` : '送信結果を確認できません。機器の状態を確認してください。');
+  if (connected) setSerialControls(latestCanControl && latestSnapshot.serial.portOpen && latestSnapshot.hardware?.sessionOpen && latestSnapshot.hardware?.recent);
 }
 
 async function apiFetch(path, options = {}) {
@@ -523,7 +696,7 @@ async function refreshFrames() {
 
 document.querySelectorAll('[data-action]').forEach((button) => {
   button.addEventListener('click', async () => {
-    if (!localMode || !connected || actions[button.dataset.action] !== currentState) return;
+    if (!localMode || !connected || !actionAvailable(button.dataset.action, latestSnapshot)) return;
     if (liveController) { await liveController.command(button.dataset.action); return; }
     button.disabled = true;
     $('control-note').textContent = 'Unity に操作を送信中…';
@@ -551,7 +724,10 @@ updateCommandFields();
 setSerialControls(false);
 renderPlayerProgress(null); renderHardware(null);
 
-function updateClock() { $('clock').textContent = new Date().toLocaleTimeString('ja-JP', { hour12: false }); }
+function updateClock() {
+  $('clock').textContent = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+  if (connected && latestSnapshot) renderSerialAlerts(latestSnapshot.serial, latestSnapshot.inputMode, latestSnapshot);
+}
 updateClock();
 setInterval(updateClock, 1000);
 if (localMode) {

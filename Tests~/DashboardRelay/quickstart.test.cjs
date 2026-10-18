@@ -20,6 +20,7 @@ test('one-click launcher: automatic Tailscale setup, fallbacks and process owner
  writeFileSync(cli,`#!/usr/bin/env node
 const fs=require('node:fs');const p=require('node:path');
 const args=process.argv.slice(2),mode=process.env.FAKE_MODE,dir=process.env.FAKE_DIR;
+if(process.platform==='darwin'&&process.env.TAILSCALE_BE_CLI!=='1'){console.log('GUI mode is not JSON');process.exit(0);}
 fs.appendFileSync(p.join(dir,'calls'),JSON.stringify(args)+'\\n');
 const route={TCP:{443:{HTTPS:true}},Web:{'race.demo.ts.net:443':{Handlers:{'/':{Proxy:'http://127.0.0.1:8766'}}}}};
 if(args[0]==='status'){

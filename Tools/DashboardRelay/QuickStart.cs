@@ -67,6 +67,8 @@ internal static class QuickStart
     {
         using var process = new Process { StartInfo = new ProcessStartInfo(executable) {
             UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true } };
+        // macOS bundles its GUI and CLI in one executable. launchd has no terminal environment.
+        if (OperatingSystem.IsMacOS()) process.StartInfo.Environment["TAILSCALE_BE_CLI"] = "1";
         foreach (string argument in arguments) process.StartInfo.ArgumentList.Add(argument);
         process.Start();
         Task<string> output = process.StandardOutput.ReadToEndAsync(), error = process.StandardError.ReadToEndAsync();

@@ -22,11 +22,13 @@ function fixture() {
   const buttons = [...html.matchAll(/data-action="([^"]+)"/g)].map(match=>Object.assign(new Element(),{dataset:{action:match[1]}}));
   const document = { getElementById(id) { assert.ok(elements.has(id), `Missing UI element ${id}`); return elements.get(id); },
     createElement(){return new Element();}, querySelectorAll(selector){return selector==='[data-action]'?buttons:[];} };
-  const context = vm.createContext({document,location:{origin:'http://127.0.0.1:8765'},URL:{revokeObjectURL(){}}});
+  let now = 100000;
+  class ClockDate extends Date { static now() { return now; } }
+  const context = vm.createContext({Date:ClockDate,document,location:{origin:'http://127.0.0.1:8765'},URL:{revokeObjectURL(){}}});
   // Load the real render functions without timers, network polling or UI event handlers.
   vm.runInContext(script.slice(0,script.indexOf("document.querySelectorAll('[data-action]').forEach")),context);
   const render = (snapshot,options) => context.render(snapshot,options);
-  return {elements,buttons,context,render};
+  return {elements,buttons,context,render,advance(ms) { now += ms; }};
 }
 const base = {state:'Game',goalLap:2,players:[{number:1},{number:2}],serial:{lines:[]},participantCount:4,
   participants:Array.from({length:4},(_,index)=>({number:index+1,isCpu:index>=2,position:4-index,lap:1,
@@ -156,8 +158,11 @@ test('Remote rendering shows alerts, parse counts and port failures while keyboa
   const ui=fixture();
   ui.render({...base,inputMode:'Serial P1/P2',serial:{portOpen:false,errors:4,lines:[]}}, {canControl:false});
   assert.match(ui.elements.get('serial-alert-list').textContent,/シリアルポートが未接続/);
-  assert.match(ui.elements.get('serial-alert-list').textContent,/解析エラーが4件/);
+  assert.equal(ui.elements.get('parse-errors').textContent,'4');
+  assert.ok(!ui.elements.get('serial-alert-list').textContent.includes('解析エラーが4件'));
   ui.render({...base,inputMode:'Keyboard P1/P2 (debug; serial disabled)',serial:{portOpen:false,errors:0,lines:[]}});
+  assert.match(ui.elements.get('serial-alert-list').textContent,/解決済み/);
+  ui.advance(10000); ui.render({...base,inputMode:'Keyboard',serial:{portOpen:false,errors:4,lines:[]}});
   assert.equal(ui.elements.get('serial-alerts').hidden,true);
 });
 test('All supplied host acceptance vectors can be explained without exceptions',()=>{
@@ -198,18 +203,29 @@ test('Raw section preserves TEL, TX direction, CRLF and untrusted text without t
   assert.match(ui.elements.get('latest-tel').textContent,/ハンドル 左 30°、アクセル 70.0%、ブレーキ 10.0%/);
   ui.context.setConnection(false);assert.equal(log.children.length,0);
 });
-test('Hardware uses explicit evidence and never invents pedal connectivity from zero inputs',()=>{
-  const ui=fixture();const hardware={sessionOpen:true,recent:true,state:'READY',ads:'Ok',imu:'Fault',imuAddress:'0x68',imuIdentity:'0x68'};
-  ui.render({...base,serial:{portOpen:true,lines:[]},hardware});
+const healthyHardware = {sessionOpen:true,recent:true,state:'READY',ads:'Ok',imu:'Ok',generation:1,
+  inputFresh:true,telemetryEnabled:true,invalidTelemetry:false,angleLocked:true,calibrated:true,
+  imus:[{address:'0x68',identity:'0x68',status:'Ok'},{address:'0x69',identity:'0x68',status:'Fault'}],
+  pedals:[{number:1,accel:0,brake:0},{number:2,accel:.7,brake:.3}],commands:[]};
+test('Hardware shows both IMUs and validates independent pedal values including zero',()=>{
+  const ui=fixture();
+  ui.render({...base,serial:{portOpen:true,lines:[]},hardware:healthyHardware});
   const cards=ui.elements.get('hardware-grid').children;
-  assert.match(cards[0].textContent,/通信中/);assert.match(cards[1].textContent,/異常・接続要確認/);
-  assert.match(cards[2].textContent,/動作確認済み/);
-  assert.match(cards[3].textContent,/物理接続：未確認/);assert.match(cards[4].textContent,/物理接続：未確認/);
-  assert.equal(ui.elements.get('serial-send').disabled,false);
-  ui.render({...base,serial:{portOpen:true,lines:[]},hardware:{...hardware,recent:false}});
-  assert.ok(ui.elements.get('hardware-grid').children.slice(1).every(card=>!card.textContent.includes('動作確認済み')));
+  assert.equal(cards.length,6);
+  assert.match(cards[1].textContent,/IMU 1.*動作確認済み.*0x68/);
+  assert.match(cards[2].textContent,/IMU 2.*異常・接続要確認.*0x69/);
+  assert.match(cards[4].textContent,/P1 ペダル.*動作確認済み.*アクセル 0%/);
+  assert.match(cards[5].textContent,/P2 ペダル.*動作確認済み.*アクセル 70%.*ブレーキ 30%/);
+  ui.render({...base,serial:{portOpen:true,lines:[]},hardware:{...healthyHardware,pedals:[{number:1,accel:2,brake:0},healthyHardware.pedals[1]]}});
+  assert.match(ui.elements.get('hardware-grid').children[4].textContent,/入力データ異常/);
+  assert.match(ui.elements.get('hardware-grid').children[5].textContent,/動作確認済み/);
+  for(const [overrides,label] of [[{inputFresh:false},'正常な入力を受信できません'],[{invalidTelemetry:true},'入力データ異常'],
+    [{ads:'Fault'},'センサー異常'],[{telemetryEnabled:false},'入力配信停止中'],[{recent:false},'入力未確認']]) {
+    ui.render({...base,serial:{portOpen:true,lines:[]},hardware:{...healthyHardware,...overrides}});
+    assert.ok(ui.elements.get('hardware-grid').children[4].textContent.includes(label));
+  }
   assert.equal(ui.elements.get('serial-send').disabled,true);
-  ui.render({...base,serial:{portOpen:true,lines:[]},hardware},{canControl:false});
+  ui.render({...base,serial:{portOpen:true,lines:[]},hardware:healthyHardware},{canControl:false});
   assert.equal(ui.elements.get('serial-send').disabled,true);
 });
 test('Players can select cars and practice independently, including timeouts and waiting',()=>{
@@ -237,4 +253,85 @@ test('Raw display pauses rendering, bounds history, and resumes with fresh data'
   vm.runInContext('rawPaused=false; renderRaw(rawPending,rawGap,true)',ui.context);
   assert.equal(ui.elements.get('raw-log').children.length,1);
   assert.match(ui.elements.get('raw-log').textContent,/new/);
+});
+
+test('Race buttons advance selection and tutorial with mixed player preparation',()=>{
+  const ui=fixture(), enabled=()=>ui.buttons.filter(button=>!button.disabled).map(button=>button.dataset.action);
+  ui.render({...base,state:'CarSelection'}); assert.deepEqual(enabled(),['tutorial']);
+  ui.render({...base,state:'Tutorial',playerProgress:[{state:'Tutorial'},{state:'CarSelection'}]});
+  assert.deepEqual(enabled(),['tutorial']);
+  ui.render({...base,state:'Tutorial',playerProgress:[{state:'Tutorial'},{state:'Tutorial'}]});
+  assert.deepEqual(enabled(),['countdown']);
+  ui.render({...base,state:'Countdown'});assert.deepEqual(enabled(),[]);
+});
+test('Resolved alerts disappear after ten seconds and retained history cannot resurrect them',()=>{
+  const ui=fixture(), error={...entry('ERROR','ERR,1,0,ERROR,I2C,CONNECTION_LOST,0x68'),receivedAt:99000};
+  const render=(lines,hardware={...healthyHardware,ads:'Unknown',imu:'Unknown',state:'RECOVERING'})=>
+    ui.render({...base,serverTime:100000,serial:{portOpen:true,errors:9,lines,alerts:[error]},hardware});
+  render([error]);assert.match(ui.elements.get('serial-alert-list').textContent,/未解決/);
+  ui.advance(20000);render([error]);assert.equal(ui.elements.get('serial-alerts').hidden,false);
+  const recovery={...entry('EVENT','EVT,2,0,I2C_RESTORED',2),receivedAt:120000};
+  render([error,recovery],healthyHardware);assert.match(ui.elements.get('serial-alert-list').textContent,/解決済み/);
+  ui.advance(9999);render([error,recovery],healthyHardware);assert.equal(ui.elements.get('serial-alerts').hidden,false);
+  ui.advance(1);render([error,recovery],healthyHardware);assert.equal(ui.elements.get('serial-alerts').hidden,true);
+  render([error,recovery],healthyHardware);assert.equal(ui.elements.get('serial-alerts').hidden,true);
+  const newFault=entry('ERROR','ERR,3,0,ERROR,I2C,CONNECTION_LOST,0x68',3);
+  ui.render({...base,serial:{portOpen:true,lines:[error,recovery,newFault]}});
+  assert.match(ui.elements.get('serial-alert-list').textContent,/未解決/);
+});
+test('Recovering one IMU does not dismiss the other IMU fault',()=>{
+  const ui=fixture();const a=entry('ERROR','ERR,1,0,ERROR,IMU,READ_FAILED,0x68'),b=entry('ERROR','ERR,2,0,ERROR,IMU,READ_FAILED,0x69',2);
+  ui.render({...base,serial:{portOpen:true,lines:[a,b]},hardware:healthyHardware});
+  ui.advance(10000);ui.render({...base,serial:{portOpen:true,lines:[a,b]},hardware:healthyHardware});
+  assert.equal(ui.elements.get('serial-alert-list').children.length,1);
+  assert.match(ui.elements.get('serial-alert-list').textContent,/0x69/);
+});
+function trackCommand(ui,command,sequence=8) {
+  vm.runInContext(`commandRequest = {command:${JSON.stringify(command)},sequence:${sequence},generation:1,sessionId:'unity'}`,ui.context);
+}
+function commandSnapshot(command,status,data=[],sequence=8) {
+  return {...base,sessionId:'unity',serial:{portOpen:true,lines:[]},hardware:{...healthyHardware,commands:[{sequence,command,status,data,devices:['0x48','0x68']}]}};
+}
+test('Structured command results show status, configuration, progress, completion and failures inline',()=>{
+  const ui=fixture();trackCommand(ui,'GET_CONFIG');
+  ui.render(commandSnapshot('GET_CONFIG','OK',['8','GET_CONFIG','OK','TEL_RATE','50','IMU_RATE','20','TEL_STREAM','1','IMU_STREAM','0','DBG_STREAM','0','BETA','0.200']));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'完了');
+  assert.match(ui.elements.get('serial-command-values').textContent,/入力の送信頻度50 Hz/);
+  assert.ok(!ui.elements.get('serial-command-result').textContent.includes('@ACK'));
+  trackCommand(ui,'GET_STATUS');ui.render(commandSnapshot('GET_STATUS','OK',['8','GET_STATUS','OK','READY','1','0','1','0']));
+  assert.match(ui.elements.get('serial-command-values').textContent,/IMU全体異常.*校正未完了/);
+  trackCommand(ui,'CALIBRATE');ui.render(commandSnapshot('CALIBRATE','ACCEPTED',['8','CALIBRATE','ACCEPTED','GYRO']));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'実行中');
+  ui.render(commandSnapshot('CALIBRATE','DONE',['CAL_DONE','8','GYRO']));
+  assert.match(ui.elements.get('serial-command-status').textContent,/校正が完了/);
+  assert.match(ui.elements.get('serial-command-values').textContent,/ジャイロ/);
+  trackCommand(ui,'SCAN_I2C');ui.render(commandSnapshot('SCAN_I2C','DONE',['I2C_SCAN_END','8','2']));
+  assert.match(ui.elements.get('serial-command-values').textContent,/検出数2台.*0x48 \/ 0x68/);
+  ui.render(commandSnapshot('SCAN_I2C','UNSUPPORTED',['8','SCAN_I2C','UNSUPPORTED']));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'失敗');
+  assert.match(ui.elements.get('serial-command-status').textContent,/対応していません/);
+  ui.render(commandSnapshot('SCAN_I2C','TIMEOUT'));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'結果未確認');
+});
+test('Unrelated results and new device sessions cannot complete an operator request',()=>{
+  const ui=fixture();trackCommand(ui,'PING');ui.context.showCommandResult('waiting','応答待ち');
+  ui.render(commandSnapshot('PING','OK',['9','PING','OK','PONG'],9));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'応答待ち');
+  const snapshot=commandSnapshot('PING','OK',['8','PING','OK','PONG']);snapshot.hardware.generation=2;
+  ui.render(snapshot);assert.equal(ui.elements.get('serial-command-badge').textContent,'結果未確認');
+});
+
+test('Repeated reports update one active issue and a recurrence restarts the recovery window',()=>{
+  const ui=fixture();
+  const lines=Array.from({length:40},(_,i)=>entry('ERROR','ERR,'+(i+1)+',0,ERROR,IMU,READ_FAILED,0x69',i+1));
+  ui.render({...base,serial:{portOpen:true,lines},hardware:healthyHardware});
+  assert.equal(ui.elements.get('serial-alert-list').children.length,1);
+  const recovered={...healthyHardware,imus:healthyHardware.imus.map(imu=>({...imu,status:'Ok'}))};
+  ui.render({...base,serial:{portOpen:true,lines},hardware:recovered});
+  ui.advance(10000);ui.render({...base,serial:{portOpen:true,lines},hardware:recovered});
+  assert.equal(ui.elements.get('serial-alerts').hidden,true);
+  lines.push(entry('ERROR','ERR,41,0,ERROR,IMU,READ_FAILED,0x69',41));
+  ui.render({...base,serial:{portOpen:true,lines},hardware:healthyHardware});
+  assert.equal(ui.elements.get('serial-alert-list').children.length,1);
+  assert.match(ui.elements.get('serial-alert-list').textContent,/未解決/);
 });

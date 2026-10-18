@@ -114,12 +114,13 @@ public sealed class PlayerDisplayRig
         // URP 17.3 imports every native backbuffer using Screen.width/height.
         // Additional displays can have a different size, so render their whole
         // stack to an explicit texture before presenting to the native buffers.
-        if (Application.isPlaying && !Application.isEditor && DisplayIndex > 0 &&
-            DisplayIndex < Display.displays.Length && CameraRoot != null)
+        if (Application.isPlaying && !Application.isEditor && DisplayIndex > 0 && CameraRoot != null)
         {
             var output = CameraRoot.GetComponent<RenderGraphDisplayOutput>() ??
                 CameraRoot.AddComponent<RenderGraphDisplayOutput>();
-            output.Configure(new[] { BackCamera, BackImageCamera, MainCamera, FrontCamera, UiCamera }, DisplayIndex);
+            var outputCameras = new[] { BackCamera, BackImageCamera, MainCamera, FrontCamera, UiCamera };
+            if (RacePlayerWindows.UsesNativeWindow) output.ConfigureWindow(outputCameras, DisplayIndex);
+            else if (DisplayIndex < Display.displays.Length) output.Configure(outputCameras, DisplayIndex);
         }
     }
 
@@ -251,7 +252,7 @@ public static class TwoPlayerDisplayFactory
 
         playerTwoDisplayIndex = Mathf.Clamp(playerTwoDisplayIndex, 1, 7);
         // Editor Game views preview virtual displays even with one physical monitor.
-        if (Application.isPlaying && !Application.isEditor)
+        if (Application.isPlaying && !Application.isEditor && !RacePlayerWindows.UsesNativeWindow)
         {
             if (Display.displays.Length <= playerTwoDisplayIndex)
             {
@@ -259,7 +260,11 @@ public static class TwoPlayerDisplayFactory
             }
             else
             {
+#if UNITY_STANDALONE_WIN
+                managerRoot.gameObject.AddComponent<WindowsPlayerWindow>().Activate(playerTwoDisplayIndex);
+#else
                 Display.displays[playerTwoDisplayIndex].Activate();
+#endif
                 Debug.Log($"Race display outputs: P1=Display 1 ({Screen.width}x{Screen.height}), P2=Display {playerTwoDisplayIndex + 1} ({Display.displays[playerTwoDisplayIndex].systemWidth}x{Display.displays[playerTwoDisplayIndex].systemHeight}).");
             }
         }

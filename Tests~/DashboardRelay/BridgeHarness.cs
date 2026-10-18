@@ -41,7 +41,7 @@ public class InputManager
 }
 public class Gmanager
 {
-    public enum State { Title, Countdown, Game, Result }
+    public enum State { Title, CarSelection, Tutorial, Countdown, Game, Result }
     public State state=State.Title;
     public bool CanUseDashboardControls=>true;
     public bool IsPreparing=>state==State.Title;
@@ -50,6 +50,8 @@ public class Gmanager
     public int GoalLap=>2;
     public List<RaceParticipant> Participants=new List<RaceParticipant>();
     public void StartGame(){state=State.Countdown;Harness.Applied++;}
+    public bool AdvanceDashboardToTutorial(){if(state!=State.CarSelection)return false;state=State.Tutorial;Harness.Applied++;return true;}
+    public bool AdvanceDashboardToCountdown(){if(state!=State.Tutorial)return false;state=State.Countdown;Harness.Applied++;return true;}
     public void ShowResult(){state=State.Result;Harness.Applied++;}
     public void RetryGame(){state=State.Title;Harness.Applied++;}
     public void ResetGame(){state=State.Title;Harness.Applied++;}

@@ -44,6 +44,10 @@ public static class MultiDisplayValidation
             "Desktop rendering must use Render Graph.");
         Require(!PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone).Split(';').Contains("URP_COMPATIBILITY_MODE"),
             "Remove URP_COMPATIBILITY_MODE and wait for script compilation before building.");
+        Require(PlayerSettings.fullScreenMode == FullScreenMode.Windowed && PlayerSettings.resizableWindow &&
+            !PlayerSettings.allowFullscreenSwitch, "Standalone must default to resizable windows without fullscreen switching.");
+        Require(File.Exists("Assets/Plugins/RaceWindows/macOS/libRaceWindows.dylib"),
+            "Build the native P2 window plugin with Native~/RaceWindows/build-macos.sh.");
         GameObject source = GameObject.Find("GameManagers");
         Require(source != null, "Open SampleScene before validating display outputs.");
         GameObject fixture = Object.Instantiate(source);
@@ -133,6 +137,7 @@ public static class MultiDisplayValidation
         }
     }
 
+    [MenuItem("Racing/Build/Mac Player Windows")]
     [MenuItem("Racing/Build/Mac Display Validation")]
     public static void BuildMac()
     {

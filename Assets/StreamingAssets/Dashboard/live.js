@@ -41,7 +41,7 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
     if (attempt !== socket) return;
     alive = false; socket = null;
     setConnection(false);
-    $('live-detail').textContent = '再接続中…';
+    $('live-detail').textContent = '再接続中… UnityがPlay中か確認してください。';
     try { attempt.close(); } catch { }
     setTimeout(connect, retry + Math.random() * 200);
     retry = Math.min(retry * 2, 10000);

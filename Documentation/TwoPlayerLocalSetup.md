@@ -3,30 +3,31 @@
 ## 実行条件
 
 - 1台のマイコンをUSB接続し、RGP/1のセッション確立・状態通知と、P1/P2の6項目TEL送信に対応していること（P1シリアル／P2キーボードの検証時も2人分すべての値が必要）
-- PCにモニターを2台接続してからゲームを起動すること
+- macOS（Metal）版は1台のモニターでもP1/P2を別ウィンドウで表示できます。Windows版のP2は追加ディスプレイが必要です。
 - `SampleScene` の `InputManager > Is Debug Mode` は通常プレイでは無効にすること
 
 現在の保存済み `SampleScene` は両者をキーボードで操作する検証設定です（`Is Debug Mode` ON、`Is P1 Serial P2 Keyboard Debug Mode` OFF）。P1はEnterまたはWを0.25秒押し、P2はRight Shiftまたは上矢印を0.25秒押すと、それぞれ車種選択へ進みます。車種を確定して両者の練習が完了するとレースが始まります。P1/P2ともESP32で操作する実機対戦では、両方のデバッグ設定を無効にしてください。
 
-ゲーム起動時にDisplay 1（2台目）を有効化し、次の表示を割り当てます。
+## P1・P2を通常ウィンドウで表示する
 
-- Display 0: Player 1の追従カメラとHUD
-- Display 1: Player 2の追従カメラとHUD
-- タイトルとリザルト: 両Displayに同じ内容
+StandaloneはP1/P2ともタイトルバー付きの移動・リサイズ可能なウィンドウで表示します。初期サイズは960×540（macOSでは画面の作業領域に収まるよう調整）です。以前のビルドで保存されたフルスクリーン設定も起動時にウィンドウへ切り替えます。フォーカスが外れてもゲーム進行とESP32入力を継続します。
 
-## Macの内蔵画面を使わず、外部2枚に出力する
+- P1: Unityのメインウィンドウ（アプリ名 `Race`）
+- P2: 独立ウィンドウ（`RACING — P2`）。タイトル・車種選択・練習・レース・リザルトまでP2のカメラとHUDを表示します。
+- macOSではUnityの追加ディスプレイをActivateせず、AppKitの通常ウィンドウとMetalへ出力します。フルスクリーンの追加画面や専用Spaceを作りません。
+- P2の初期配置は `GameManagers > GManager > Gmanager > Displays > Player Two Display` の画面番号を優先します。画面がなければP1と同じ画面へ開きます。macOSの画面列挙順はUnityのGameビューの番号と異なる場合があります。
+- 起動後は両方のタイトルバーをドラッグし、好きなモニターへ移動できます。OSのメインディスプレイを変更して再ビルドする必要はありません。
+- 各ウィンドウのサイズ・Retina倍率に応じて描画先とUI倍率を調整し、16:9以外の領域は余白になります。
+- macOSのP2はキーボードフォーカスを奪わず、両者のキーボード操作はP1ウィンドウで受け付けます。キーボードで検証するときはP1をクリックしてください。
+- macOSでP2の閉じるボタンを押すとゲーム全体を終了します。P1の終了時もP2ウィンドウを破棄します。
 
-このPCは `MacBookPro17,1`（13インチMacBook Pro / M1 / 2020）で、標準のDisplayPort/HDMI出力は外部1枚までです。通常のUSB-C/HDMI変換やドックだけでは、外部2枚を別映像で使うことはできません。外部2枚にはDisplayLink対応の追加出力機器・ドライバーなど、または外部2枚へのネイティブ出力をサポートするPCが必要です。Appleの仕様: https://support.apple.com/en-us/111893 。以下の設定は、OSが外部2枚と内蔵画面を別々の拡張ディスプレイとして認識した場合に使用します。
+Unityでは `Racing > Build > Mac Player Windows` を実行すると `Builds/DisplayValidation/Race.app` へDevelopment Buildを作成します。旧メニュー `Mac Display Validation` も同じ処理です。既存のアプリには再ビルドが必要です。
 
-UnityはP1のメインウィンドウと、追加で有効化したP2のディスプレイへ描画します。外部モニターを接続しただけでは、メインウィンドウが内蔵画面で起動することがあります。
+macOSプラグインは `Native~/RaceWindows/RaceWindows.mm` がソースで、`sh Native~/RaceWindows/build-macos.sh` でarm64/x86_64のUniversal dylibを生成します。Unityの別バージョンを使う場合は `UNITY_PLUGIN_HEADERS` でそのEditorの `Contents/PluginAPI` を指定します。生成物 `Assets/Plugins/RaceWindows/macOS/libRaceWindows.dylib` をPlayerに同梱してください。検証時だけ環境変数 `RACING_WINDOW_CAPTURE` にPNGの保存先を指定すると、P2に転送した10フレーム目の描画画像をGPUから読み戻して保存します。通常起動時には画像保存やCPUへの読み戻しは行いません。Editorではロードせず、これまでどおりGameビューを2つ開いてDisplay 1と `Player Two Display` をプレビューします。
 
-1. 3画面を接続し、macOSの「システム設定 > ディスプレイ」でミラーリングを解除します。
-2. P1に使う外部画面を選択し、「使用形態 / Use as」を「メインディスプレイ / Main display」にします。OSのメイン設定はゲーム起動前に変更してください。
-3. Unityで `SampleScene` を開き、`GameManagers > GManager > Gmanager > Displays > Player Two Display` を、P2に使う外部画面の番号にします。番号はUnityのGameビューと同じ1始まりです（2または3）。OSの画面配置とUnityの番号は必ずしも同じ順序ではありません。
-4. シーンを保存して Build And Run を行います。P2が内蔵画面へ出た場合は `Player Two Display` を2から3（または3から2）へ変更して保存・再ビルドします。P1はDisplay 1のメインウィンドウ、P2だけが指定した追加ディスプレイを有効化します。
-5. 内蔵画面をEditorや管理画面用に使い、外部2枚にそれぞれP1/P2が出ることを確認します。音声機器は映像の番号とは独立して選択します。
+WindowsではUnityの追加ディスプレイを作成後に通常ウィンドウ枠へ変更し、クライアント領域に合わせて描画解像度を更新します。macOS版の実装はMetal専用です。Linuxや他の描画APIでのP2ウィンドウ化は対象外です。
 
-EditorではGameビューを2つ開き、P1をDisplay 1、P2を `Player Two Display` の番号にします。各Gameウィンドウは好きな物理画面へ移動できます。Editorで仮想ディスプレイをプレビューする際は、接続台数不足のエラーを出しません。
+2026-10-17、Unity 6000.3.9f1 / Apple M1でMacビルド、起動・レース描画・終了を確認しました。Editorの出力先／異なるサイズのターゲット再生成／UI倍率の検証と、Windows用コードのコンパイルも成功しています。Standaloneの検証レポートは `Logs/PlayerWindows/verified/report.json`（`errors: []`）、P1画像は `optimized.png`、P2へ転送した実描画画像は `p2-presented.png` です。P1/P2それぞれの車とHUD、上下方向を確認しました。外部モニターでのチラつき解消、OS操作によるウィンドウの連続リサイズ、Windows実行は未確認です。
 
 ## 異なる解像度の画面での描画修正（Unity 6000.3.9f1 / URP 17.3）
 
@@ -34,7 +35,7 @@ Macの実行ログで、1920×1080と2880×1800の描画先が混同されるMet
 
 このプロジェクトではRender Graphを有効にし、Desktopの `Scripting Define Symbols` から `URP_COMPATIBILITY_MODE` を取り除いています。定義だけが残っていると、EditorとPlayerのURPリソース型（`Renderer2DResources`）のフィールドが食い違い、Build And Runでシリアライズエラーになる場合があります。
 
-追加画面は `RenderGraphDisplayOutput` がその画面の `renderingWidth/Height` に合った深度付きRenderTextureを作り、背景・レース・UIのカメラスタック全体をRender Graphで描画します。描画後に、その画面のネイティブcolorBufferへフルスクリーン描画で転送します。これによりURP 17.3のメイン画面サイズによるバックバッファimportを通らず、異なる解像度の出力を扱えます。画面サイズの変更時はターゲットを作り直し、停止時に解放します。メイン画面とEditorのGameビューは通常のURP出力を使います。
+P2は `RenderGraphDisplayOutput` が出力サイズに合った深度付きRenderTextureを作り、背景・レース・UIのカメラスタック全体をRender Graphで描画します。macOSではウィンドウのクライアント領域の物理ピクセル数を使い、描画後にUnityのMetalコマンドバッファでP2のCAMetalLayerへ転送・表示します。フレームごとのテクスチャ参照を保持し、リサイズや終了時も描画スレッドが参照しているテクスチャを保護します。Windowsの追加画面は `renderingWidth/Height` を使い、従来のネイティブcolorBufferへ転送します。これによりURP 17.3のメイン画面サイズによるバックバッファimportを通らず、異なる解像度の出力を扱えます。画面サイズの変更時はターゲットを作り直し、停止時に解放します。メイン画面とEditorのGameビューは通常のURP出力を使います。
 
 UI倍率は各リグの出力サイズと16:9の描画領域から計算します。別画面の描画中に変わりうるOverlayカメラのpixelWidth/Heightは参照せず、倍率が変わったときだけCanvasへ反映します。
 

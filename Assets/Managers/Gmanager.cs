@@ -67,7 +67,7 @@ public class Gmanager : MonoBehaviour
     [SerializeField, Min(60f)] private float maximumRaceSeconds = 360f;
 
     [Header("Displays")]
-    [Tooltip("P1 uses the main game window (Display 1). P2's output display number, as shown in the Game view. With an external main display, select the other external display here.")]
+    [Tooltip("P1 uses the main game window. On macOS, P2 opens a movable window on this preferred screen (or the main screen if unavailable). In the Editor, this is P2's Game view display number.")]
     [SerializeField, Range(2, 8)] private int playerTwoDisplay = 2;
     public int PlayerTwoDisplayIndex => playerTwoDisplay - 1;
 
@@ -470,6 +470,30 @@ public class Gmanager : MonoBehaviour
     {
         if (!IsPreparing) return;
         for (int i = 0; i < PlayerCount; i++) ConfirmTitleStart(i);
+    }
+
+    public bool AdvanceDashboardToTutorial()
+    {
+        if ((state != State.CarSelection && state != State.Tutorial) || !CanUseDashboardControls || finishingPreparation) return false;
+        bool advanced = false;
+        for (int i = 0; i < PlayerCount; i++)
+        {
+            if (players[i].preparationState == State.CarSelection)
+            { players[i].carSelection.Confirm(); advanced = true; }
+            else if (players[i].preparationState == State.Title)
+            { int index = i; TransitionPlayer(index, State.Tutorial, () => BeginPlayerTutorial(index)); advanced = true; }
+        }
+        return advanced;
+    }
+
+    public bool AdvanceDashboardToCountdown()
+    {
+        if (state != State.Tutorial || !CanUseDashboardControls || finishingPreparation || drivingTutorial == null) return false;
+        for (int i = 0; i < PlayerCount; i++)
+            if (players[i].preparationState != State.Tutorial) return false;
+        finishingPreparation = true;
+        TransitionTo(State.Countdown, FinishTutorialWhenScreenCovered, CompleteGameStart);
+        return true;
     }
 
     private void ConfirmCarSelection(int index)
