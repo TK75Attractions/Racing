@@ -32,4 +32,4 @@ FinderでRacingフォルダー内の **Tools > DashboardRelay > Start Dashboard.
 
 ## エラーをDiscordなどへ通知する
 
-ブラウザーとは独立して動く監視ツールを用意しています。継続する機器異常・入力の途絶・エラーの増加をWebhookで通知します。設定と常駐手順は[運用エラーのWebhook通知](RaceMonitor.md)を参照してください。
+Unity Editorを開くと、ブラウザーとは独立した運用監視も自動起動します。Webhook設定後は、Play中にエラーが5秒継続すると通知します。継続する機器異常・入力の途絶・エラーの増加をWebhookで通知します。設定と常駐手順は[運用エラーのWebhook通知](RaceMonitor.md)を参照してください。

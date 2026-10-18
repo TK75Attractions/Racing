@@ -181,6 +181,7 @@ public sealed class RaceDashboardWindow : EditorWindow
         using (new EditorGUI.DisabledScope(RaceDashboardLauncher.Busy))
             if (GUILayout.Button("ダッシュボードを開く", GUILayout.Height(34))) RaceDashboardLauncher.Start(true);
         EditorGUILayout.HelpBox(RaceDashboardLauncher.Message, MessageType.Info);
+        EditorGUILayout.HelpBox(RaceMonitorLauncher.Message, MessageType.Info);
         if (!string.IsNullOrEmpty(RaceDashboardLauncher.RemoteUrl))
         {
             EditorGUILayout.LabelField("別端末で開くURL");
