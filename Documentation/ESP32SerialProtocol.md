@@ -21,6 +21,8 @@ HELLOを受けたら入力・TELのSEQ追跡・未完了CMDを破棄し、新し
 
 TELの順序は `P1_HANDLE,P1_ACCEL,P1_BRAKE,P2_HANDLE,P2_ACCEL,P2_BRAKE`。ハンドルは右旋回が正の累積角度（±3600 degree）、各ペダルは0〜1です。通信層では6項目を独立して保持します。ゲーム入力への変換時に `pedal = accel - brake`、`steering = handle / Steering Divisor` とします。既存シーンのSteering Divisor=6.5は維持します。リセットは従来どおりキーボード操作です。
 
+走行時の最大操舵は `Steering Lock Degrees`（片側90°）で指定します。通信層は上記の変換を保ち、`FullSteeringInput = Steering Lock Degrees / Steering Divisor` を別途渡します。車両はこの最大値で正規化してから旋回を計算するため、Divisorによらず物理90°で最大、45°で半分の曲率になります。タイトル・車種選択の感度やRGPフレーム形式には変更がありません。詳細は [Steering.md](Steering.md) を参照してください。
+
 CRCは `@` の直後から `*` の直前までに対するCRC-16/CCITT-FALSE（初期値FFFF、多項式1021、反転なし、XOR Out=0）です。CRCは大文字16進4桁、LF終端、CRLF受信も許可します。最大長はLF込み256 bytes（CRLF時のみ257 bytes）。前後の空白を取り除いて受理せず、非ASCII・空フィールド・不正な数値構文・範囲外・CRC不一致を拒否します。
 
 受信はbyte単位で処理し、開始前のログを無視し、新しい `@` で再同期します。途中のフレームで1秒間byteが来なければ破棄します。DBGとERRの文章は正規のUTF-8パーセントエンコードを検証し、文章から装置状態は判定しません。未知TYPE・イベント・SYS KEY・設定名は無視します。
