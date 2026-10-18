@@ -28,7 +28,7 @@ Material:
     - _FlowSpeed: 14
     - _Intensity: 2.4
     - _SurfaceOffset: 0.03
-    - _TubeLength: 1058.6252
+    - _TubeLength: 1193.3789
     m_Colors:
     - _Cyan: {r: 0.04, g: 0.8, b: 1, a: 1}
     - _Violet: {r: 0.6, g: 0.16, b: 1, a: 1}

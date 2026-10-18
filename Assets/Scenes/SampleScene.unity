@@ -351,26 +351,6 @@ PrefabInstance:
       propertyPath: m_Mesh
       value:
       objectReference: {fileID: 4300000, guid: 0b6d2b7f0f483499fa1f83a99b9d52b2, type: 2}
-    - target: {fileID: -3350101853002094637, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
-      propertyPath: m_Mesh
-      value:
-      objectReference: {fileID: 4300000, guid: c14a0588f302f41569eae40b4071a322, type: 2}
-    - target: {fileID: -1398540048242649291, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
-      propertyPath: m_Mesh
-      value:
-      objectReference: {fileID: 4300000, guid: 9265db2d7a4a84a658b3889e9b96342c, type: 2}
-    - target: {fileID: 490939697822461851, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value:
-      objectReference: {fileID: 2100000, guid: 754426768b24045198a202f82a3b73c9, type: 2}
-    - target: {fileID: 919132149155446097, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
-      propertyPath: m_Name
-      value: "1009\u3053\u3046\u3057\u3083\u30C1\u30E5\u30FC\u30D6"
-      objectReference: {fileID: 0}
-    - target: {fileID: 4876933053422263863, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
-      propertyPath: m_Mesh
-      value:
-      objectReference: {fileID: 4300000, guid: 8aa170a99f4124bba86a5d55983c0b42, type: 2}
     - target: {fileID: -5558379239448502065, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
       value: 2
@@ -383,10 +363,18 @@ PrefabInstance:
       propertyPath: m_MeshLodSelectionBias
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: -3350101853002094637, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_Mesh
+      value:
+      objectReference: {fileID: 4300000, guid: c14a0588f302f41569eae40b4071a322, type: 2}
     - target: {fileID: -2036472721373001367, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: -1398540048242649291, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_Mesh
+      value:
+      objectReference: {fileID: 4300000, guid: 9265db2d7a4a84a658b3889e9b96342c, type: 2}
     - target: {fileID: -1393781089802967949, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
       value: 2
@@ -395,9 +383,17 @@ PrefabInstance:
       propertyPath: m_MeshLodSelectionBias
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 490939697822461851, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value:
+      objectReference: {fileID: 2100000, guid: 754426768b24045198a202f82a3b73c9, type: 2}
     - target: {fileID: 749727992793697501, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_Name
+      value: "1016\u3053\u3046\u3057\u3083"
       objectReference: {fileID: 0}
     - target: {fileID: 2116741621785716514, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
@@ -419,6 +415,10 @@ PrefabInstance:
       propertyPath: m_MeshLodSelectionBias
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 4876933053422263863, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_Mesh
+      value:
+      objectReference: {fileID: 4300000, guid: 8aa170a99f4124bba86a5d55983c0b42, type: 2}
     - target: {fileID: 6500614012991000065, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
       value: 2
@@ -453,9 +453,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -516098083770646512, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1438953303}
-    - targetCorrespondingSourceObject: {fileID: -1599826595754709761, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 374024904}
     - targetCorrespondingSourceObject: {fileID: -466329591000292508, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1929090627}
@@ -804,12 +801,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5619302609615435187, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       insertIndex: -1
       addedObject: {fileID: 15590686}
-    - targetCorrespondingSourceObject: {fileID: 4811171726696857748, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+    - targetCorrespondingSourceObject: {fileID: -4773377432820431117, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1996348294}
-    - targetCorrespondingSourceObject: {fileID: 1395320445879687111, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      addedObject: {fileID: 1440749432}
+    - targetCorrespondingSourceObject: {fileID: 3547049376241036475, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1222119340}
+      addedObject: {fileID: 1440749431}
     - targetCorrespondingSourceObject: {fileID: -6199037821215351459, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       insertIndex: -1
       addedObject: {fileID: 15590685}
@@ -5200,6 +5197,8 @@ MonoBehaviour:
   goMessageSeconds: 0.75
   lapManager: {fileID: 0}
   secondPlaceTimeoutSeconds: 40
+  carSelectionTimeLimitSeconds: 30
+  tutorialTimeLimitSeconds: 60
   npcCount: 2
   maximumRaceSeconds: 360
   playerTwoDisplay: 3
@@ -5628,6 +5627,9 @@ MonoBehaviour:
   cameraDistance: 5
   cameraHeight: 2
   rotationSmoothTime: 0.15
+  pitchSmoothTime: 0.3
+  maximumSlopePitch: 30
+  lookAheadDistance: 3
   heightSmoothTime: 0.25
   teleportDistance: 12
 --- !u!64 &218115899
@@ -5838,7 +5840,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00ec916ee6e71a54f84eefc4e2790ec4, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::EngineAudioCore
-  targetFrequency: 0
 --- !u!64 &232722503
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -7102,33 +7103,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 562540844463568461, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
---- !u!1 &374024900 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -1599826595754709761, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
-  m_PrefabInstance: {fileID: 15590328}
-  m_PrefabAsset: {fileID: 0}
---- !u!64 &374024904
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 374024900}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 2212009239438826721, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
 --- !u!1 &378227374
 GameObject:
   m_ObjectHideFlags: 0
@@ -9764,8 +9738,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 647429394}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.723313, z: -0, w: 0.6905204}
-  m_LocalPosition: {x: -68.83215, y: 0, z: 288.67664}
+  m_LocalRotation: {x: -0, y: 0.7233008, z: -0, w: 0.69053304}
+  m_LocalPosition: {x: -68.83215, y: 0, z: 288.67657}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11735,8 +11709,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 835309372}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.04926352, z: -0, w: 0.99878585}
-  m_LocalPosition: {x: -227.51065, y: 1.2058654, z: 152.17743}
+  m_LocalRotation: {x: -0, y: -0.04925941, z: -0, w: 0.99878603}
+  m_LocalPosition: {x: -227.51068, y: 1.2058654, z: 152.17743}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -15018,33 +14992,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -7945053023609533861, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
---- !u!1 &1222119336 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1395320445879687111, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
-  m_PrefabInstance: {fileID: 15590328}
-  m_PrefabAsset: {fileID: 0}
---- !u!64 &1222119340
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1222119336}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 6607839196387346367, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
 --- !u!1 &1227813713 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -170779839176976631, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -15569,7 +15516,7 @@ Transform:
   m_GameObject: {fileID: 1306382364}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.71234417, z: -0, w: 0.7018303}
-  m_LocalPosition: {x: 281.90002, y: -2.544412, z: 518.22534}
+  m_LocalPosition: {x: 281.90005, y: -2.5442524, z: 518.22534}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -16423,7 +16370,7 @@ Transform:
   m_GameObject: {fileID: 1380679281}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.6979321, z: -0, w: 0.71616393}
-  m_LocalPosition: {x: 636.177735, y: 16.01, z: 598}
+  m_LocalPosition: {x: 636.3242, y: 6.9578705, z: 600.73785}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -17069,6 +17016,60 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300000, guid: 0b6d2b7f0f483499fa1f83a99b9d52b2, type: 2}
+--- !u!1 &1440749429 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3547049376241036475, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+  m_PrefabInstance: {fileID: 15590328}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1440749430 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -4773377432820431117, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+  m_PrefabInstance: {fileID: 15590328}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &1440749431
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1440749429}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 6607839196387346367, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!64 &1440749432
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1440749430}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 9091874763089778162, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
 --- !u!64 &1449172686
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -17116,7 +17117,7 @@ Transform:
   m_GameObject: {fileID: 1450353379}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 500.000180, y: 5.000000, z: 500.000060}
+  m_LocalPosition: {x: 500.00018, y: 5, z: 500.00006}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -18844,7 +18845,7 @@ Transform:
   m_GameObject: {fileID: 1695549011}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.004898105, z: -0, w: 0.999988}
-  m_LocalPosition: {x: 261.6715, y: 3.3029366, z: 761.5916}
+  m_LocalPosition: {x: 261.67148, y: 3.3029354, z: 761.5916}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -18997,7 +18998,7 @@ Transform:
   m_GameObject: {fileID: 1706793162}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 1, z: -0, w: 0}
-  m_LocalPosition: {x: 496.0001, y: 6, z: 693.56714}
+  m_LocalPosition: {x: 496, y: 6, z: 693.56714}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -19096,8 +19097,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1728890043}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 620, y: 19, z: 598}
+  m_LocalRotation: {x: -0, y: 0.67207175, z: -0, w: 0.740486}
+  m_LocalPosition: {x: 619.9915, y: 12.073101, z: 598.7617}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -19302,715 +19303,781 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::RaceCourse
   waypoints:
-  - position: {x: -4, y: 285.6693}
+  - position: {x: -4.0000916, y: 285.66925}
     height: 0
     curve: 0
     width: 20
     jumpToNext: 0
     preserveAlignment: 0
-  - position: {x: -241.8, y: 296.7}
+  - position: {x: -241.80008, y: 296.69995}
     height: 0
     curve: 0
     width: 20
     jumpToNext: 0
     preserveAlignment: 0
-  - position: {x: -218.10008, y: 56.99993}
-    height: 2.000006
+  - position: {x: -218.10004, y: 56.99994}
+    height: 2.0000067
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 56.81938}
-    height: 2.000006
+  - position: {x: -218.10004, y: 56.819458}
+    height: 2.0000067
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 56.305492}
-    height: 2.000006
+  - position: {x: -218.10004, y: 56.30542}
+    height: 2.0000076
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 55.49993}
-    height: 2.000006
+  - position: {x: -218.10004, y: 55.49994}
+    height: 2.0000067
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 54.44438}
-    height: 2.000006
+  - position: {x: -218.10004, y: 54.444458}
+    height: 2.0000067
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 53.18049}
+  - position: {x: -218.10004, y: 53.18042}
+    height: 2.0000029
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -218.10004, y: 51.74994}
     height: 2.000001
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 51.74993}
-    height: 2.000001
+  - position: {x: -218.10004, y: 50.194458}
+    height: 2.0000038
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 50.194378}
-    height: 2
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -218.10008, y: 48.555477}
-    height: 2.000001
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -218.10008, y: 46.87493}
-    height: 2.000001
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -218.10008, y: 45.194374}
-    height: 2
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -218.10008, y: 43.55549}
+  - position: {x: -218.10004, y: 48.55542}
     height: 2.000002
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 41.999928}
+  - position: {x: -218.10004, y: 46.87494}
     height: 2.000001
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 37.364513}
-    height: 1.409717
+  - position: {x: -218.10004, y: 45.194397}
+    height: 2.0000029
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 31.166603}
-    height: -0.222227
+  - position: {x: -218.10004, y: 43.55548}
+    height: 2.0000029
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 23.718685}
-    height: -2.687504
+  - position: {x: -218.10004, y: 42}
+    height: 2
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 15.333266}
-    height: -5.777783
+  - position: {x: -218.10004, y: 37.364502}
+    height: 1.4097185
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: 6.32285}
-    height: -9.284726
+  - position: {x: -218.10004, y: 31.166626}
+    height: -0.22222424
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: -3.000063}
-    height: -13.000004
+  - position: {x: -218.10004, y: 23.718628}
+    height: -2.6875029
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: -12.322979}
-    height: -16.71528
+  - position: {x: -218.10004, y: 15.333313}
+    height: -5.7777815
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: -21.333391}
-    height: -20.222225
+  - position: {x: -218.10004, y: 6.3229065}
+    height: -9.284727
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: -29.718807}
+  - position: {x: -218.10004, y: -3.000122}
+    height: -13.000005
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -218.10004, y: -12.323029}
+    height: -16.715282
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -218.10004, y: -21.333374}
+    height: -20.222227
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -218.10004, y: -29.718842}
     height: -23.312504
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: -37.166725}
+  - position: {x: -218.10004, y: -37.16678}
     height: -25.777782
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: -43.364643}
+  - position: {x: -218.10004, y: -43.364655}
     height: -27.409727
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -218.10008, y: -48.000057}
+  - position: {x: -218.10004, y: -48}
     height: -28.000006
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -217.55539, y: -68.97228}
+  - position: {x: -217.55539, y: -68.97223}
     height: -28.000008
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -215.92996, y: -87.02784}
+  - position: {x: -215.93, y: -87.0278}
     height: -28.000008
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -213.2368, y: -102.37506}
+  - position: {x: -213.23682, y: -102.37506}
     height: -28.000013
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -209.48898, y: -115.22228}
-    height: -28.000013
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -204.69948, y: -125.777824}
-    height: -28.000011
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -198.88133, y: -134.25005}
-    height: -28.000011
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -192.04756, y: -140.84727}
-    height: -28.000011
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -184.21118, y: -145.77782}
-    height: -28.000013
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -175.38522, y: -149.25005}
-    height: -28.000013
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -165.58272, y: -151.47226}
+  - position: {x: -209.48895, y: -115.22232}
     height: -28.000015
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -154.81665, y: -152.65283}
+  - position: {x: -204.6995, y: -125.77786}
     height: -28.000015
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -143.10008, y: -153.00006}
+  - position: {x: -198.88138, y: -134.25006}
     height: -28.000015
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -130.49808, y: -153.24962}
-    height: -28.000017
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -117.2841, y: -154.05907}
-    height: -28.000017
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -103.78367, y: -155.51958}
+  - position: {x: -192.04755, y: -140.84723}
     height: -28.000015
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -90.322296, y: -157.72227}
+  - position: {x: -184.21118, y: -145.7778}
     height: -28.000015
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -77.22551, y: -160.7583}
-    height: -28.000017
+  - position: {x: -175.38516, y: -149.25003}
+    height: -28.000015
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -64.81883, y: -164.7188}
+  - position: {x: -165.58276, y: -151.47223}
     height: -28.00002
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -53.427773, y: -169.69493}
+  - position: {x: -154.81662, y: -152.6528}
+    height: -28.00002
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -143.10007, y: -153.00009}
+    height: -28.000015
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -130.49808, y: -153.24954}
+    height: -28.00002
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -117.28409, y: -154.05911}
+    height: -28.000015
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -103.78369, y: -155.51956}
+    height: -28.00002
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -90.322266, y: -157.7222}
+    height: -28.00002
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -77.225586, y: -160.75833}
+    height: -28.00002
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -64.81879, y: -164.71878}
+    height: -28.00002
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -53.427795, y: -169.69489}
     height: -28.000021
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -43.377857, y: -175.77783}
-    height: -28.000025
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -34.994614, y: -183.05864}
-    height: -28.000025
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -28.603552, y: -191.62851}
-    height: -28.000025
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: -24.530205, y: -201.57858}
+  - position: {x: -43.37784, y: -175.77786}
     height: -28.000023
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -23.100082, y: -213.00003}
-    height: -28.000025
+  - position: {x: -34.9946, y: -183.05865}
+    height: -28.000023
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -19.263304, y: -247.37505}
-    height: -28.000025
+  - position: {x: -28.603607, y: -191.62851}
+    height: -28.000023
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: -8.655664, y: -275.50006}
+  - position: {x: -24.53012, y: -201.57858}
+    height: -28.000023
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -23.100067, y: -213.00003}
+    height: -28.000023
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: -18.3779, y: -247.37509}
     height: -28.000027
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 7.368647, y: -297.37503}
+  - position: {x: -5.322235, y: -275.50006}
+    height: -28.000027
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 14.399933, y: -297.37506}
     height: -28.00003
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 27.455456, y: -313.00003}
-    height: -28.00004
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 50.250595, y: -322.37503}
-    height: -28.000048
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 74.399925, y: -325.50003}
-    height: -28.000048
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 98.54922, y: -322.37503}
-    height: -28.000048
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 121.344376, y: -313.00003}
+  - position: {x: 39.12216, y: -313.00006}
     height: -28.000042
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 141.43117, y: -297.37503}
-    height: -28.00003
+  - position: {x: 67.17764, y: -322.37506}
+    height: -28.00005
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 157.45547, y: -275.50003}
-    height: -28.000027
+  - position: {x: 96.900116, y: -325.50003}
+    height: -28.000046
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 168.06313, y: -247.37505}
-    height: -28.000027
+  - position: {x: 126.62216, y: -322.37506}
+    height: -28.00005
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89992, y: -213.00005}
-    height: -28.000027
+  - position: {x: 154.6777, y: -313.00006}
+    height: -28.000042
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -181.10767}
+  - position: {x: 179.39993, y: -297.37506}
+    height: -28.000029
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 199.12216, y: -275.50006}
     height: -28.000025
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -159.11115}
-    height: -28.000013
+  - position: {x: 212.17764, y: -247.37509}
+    height: -28.000023
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -145.03131}
-    height: -28.000013
+  - position: {x: 216.89981, y: -213.00006}
+    height: -28.000025
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -136.88892}
-    height: -28.000013
+  - position: {x: 216.9, y: -181.10757}
+    height: -28.000023
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -132.70493}
-    height: -28.000013
+  - position: {x: 216.9, y: -159.1113}
+    height: -28.000011
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -130.50006}
-    height: -28.000013
+  - position: {x: 216.9, y: -145.03131}
+    height: -28.000011
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -128.2952}
-    height: -28.000013
+  - position: {x: 216.9, y: -136.88882}
+    height: -28.000015
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -124.111145}
-    height: -28.000013
+  - position: {x: 216.9, y: -132.70505}
+    height: -28.000015
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -115.96881}
-    height: -28.000013
+  - position: {x: 216.9, y: -130.50006}
+    height: -28.000015
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -101.88892}
-    height: -28.000013
+  - position: {x: 216.9, y: -128.29507}
+    height: -28.000015
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -79.892395}
+  - position: {x: 216.9, y: -124.1113}
+    height: -28.000011
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -115.96881}
+    height: -28.000015
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -101.888824}
+    height: -28.000015
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -79.89255}
     height: -28.000008
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -48.00006}
-    height: -28.000006
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 171.89993, y: -47.67627}
-    height: -28.000006
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 171.89993, y: -47.40979}
-    height: -28.000006
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 171.89993, y: -47.132874}
-    height: -28.000006
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 171.89993, y: -46.777832}
-    height: -28.000006
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 171.89993, y: -46.276947}
-    height: -28.000006
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 171.89993, y: -45.56256}
-    height: -28.000006
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 171.89993, y: -44.566902}
-    height: -28.000006
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 171.89993, y: -43.22229}
-    height: -28.000006
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 171.89993, y: -41.461}
-    height: -28.000006
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 171.89993, y: -39.215332}
-    height: -28.000006
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 171.89993, y: -36.417603}
-    height: -28.000006
-    curve: 0
-    width: 12
-    jumpToNext: 0
-    preserveAlignment: 1
-  - position: {x: 171.89993, y: -33.00006}
+  - position: {x: 216.9, y: -48.00006}
     height: -28.000004
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -28.659777}
+  - position: {x: 216.9, y: -47.676086}
+    height: -28.000004
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -47.409973}
+    height: -28.000004
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -47.132874}
+    height: -28.000004
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -46.77765}
+    height: -28.000004
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -46.27716}
+    height: -28.000004
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -45.56256}
+    height: -28.000004
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -44.56671}
+    height: -28.000004
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -43.222473}
+    height: -28.000004
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -41.461}
+    height: -28.000004
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -39.21515}
+    height: -28.000004
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -36.417786}
+    height: -28.000004
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -33.00006}
+    height: -28.000004
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 216.9, y: -28.65976}
     height: -27.409721
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -23.277836}
-    height: -25.777777
+  - position: {x: 216.9, y: -23.277802}
+    height: -25.777775
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -17.06256}
-    height: -23.312498
+  - position: {x: 216.9, y: -17.0625}
+    height: -23.3125
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -10.222281}
+  - position: {x: 216.9, y: -10.2222595}
     height: -20.222221
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: -2.965339}
+  - position: {x: 216.9, y: -2.9653015}
     height: -16.715277
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 4.499938}
-    height: -13
+  - position: {x: 216.9, y: 4.499939}
+    height: -12.999999
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 11.965211}
+  - position: {x: 216.9, y: 11.9652405}
     height: -9.284722
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 19.222155}
-    height: -5.777776
+  - position: {x: 216.9, y: 19.222168}
+    height: -5.777775
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 26.062428}
-    height: -2.687499
+  - position: {x: 216.9, y: 26.062439}
+    height: -2.6875
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 32.277702}
-    height: -0.222221
+  - position: {x: 216.9, y: 32.27777}
+    height: -0.22222137
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 37.659657}
-    height: 1.409723
+  - position: {x: 216.9, y: 37.659607}
+    height: 1.4097204
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 41.999928}
-    height: 2
+  - position: {x: 216.89987, y: 41.999878}
+    height: 1.9999981
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 43.55548}
+  - position: {x: 216.874, y: 44.440918}
     height: 2.000002
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 45.194397}
-    height: 2.000002
+  - position: {x: 216.69162, y: 48.52765}
+    height: 2.0000029
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 46.87494}
-    height: 2.000001
+  - position: {x: 216.19681, y: 53.906128}
+    height: 2.0000057
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 48.55548}
-    height: 2.000002
+  - position: {x: 215.2333, y: 60.22223}
+    height: 2.0000076
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 50.194397}
-    height: 2.000002
+  - position: {x: 213.64474, y: 67.12146}
+    height: 2.0000076
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 51.74994}
-    height: 2.000001
+  - position: {x: 211.27487, y: 74.24988}
+    height: 2.0000067
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 53.18048}
-    height: 2.000001
+  - position: {x: 207.96762, y: 81.25342}
+    height: 2.0000076
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 54.444397}
-    height: 2.000007
+  - position: {x: 203.56674, y: 87.77777}
+    height: 2.0000076
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 55.49994}
-    height: 2.000007
+  - position: {x: 197.91562, y: 93.46869}
+    height: 2.0000076
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 56.30548}
-    height: 2.000007
+  - position: {x: 190.85837, y: 97.97211}
+    height: 2.0000076
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 56.819397}
-    height: 2.000007
+  - position: {x: 182.2385, y: 100.93396}
+    height: 2.0000057
     curve: 0
     width: 12
     jumpToNext: 0
     preserveAlignment: 1
-  - position: {x: 171.89993, y: 56.99994}
-    height: 2.000007
+  - position: {x: 171.89987, y: 101.99994}
+    height: 2.0000057
     curve: 0
     width: 12
     jumpToNext: 0
-    preserveAlignment: 0
-  - position: {x: 171.9, y: 85}
-    height: 9
+    preserveAlignment: 1
+  - position: {x: 170.9661, y: 101.99994}
+    height: 2.0000057
     curve: 0
-    width: 16
+    width: 12
     jumpToNext: 0
-    preserveAlignment: 0
-  - position: {x: 171.9, y: 98}
-    height: 13
+    preserveAlignment: 1
+  - position: {x: 169.6777, y: 101.99994}
+    height: 2.0000057
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 168.05637, y: 101.99994}
+    height: 2.0000057
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 166.12234, y: 101.99994}
+    height: 2.0000057
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 163.89645, y: 101.99994}
+    height: 2.0000057
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 161.40012, y: 101.99994}
+    height: 2.0000057
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 158.6536, y: 101.99994}
+    height: 2.0000057
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 155.6777, y: 101.99994}
+    height: 2.0000057
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 152.49387, y: 101.99994}
+    height: 2.0000057
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 149.12228, y: 101.99994}
+    height: 2.0000057
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 145.58395, y: 101.99994}
+    height: 2.0000057
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 141.90012, y: 101.99994}
+    height: 2.0000057
+    curve: 0
+    width: 12
+    jumpToNext: 0
+    preserveAlignment: 1
+  - position: {x: 118.99991, y: 97.99994}
+    height: 5
     curve: 0
     width: 20
     jumpToNext: 0
     preserveAlignment: 0
-  - position: {x: 118, y: 98}
+  - position: {x: 95.99991, y: 97.99994}
     height: 13
     curve: 0
     width: 20
     jumpToNext: 1
     preserveAlignment: 0
-  - position: {x: 106, y: 98}
+  - position: {x: 83.99991, y: 97.99994}
     height: 15
     curve: 0
     width: 16
     jumpToNext: 0
     preserveAlignment: 0
-  - position: {x: 36, y: 98}
+  - position: {x: 35.99991, y: 97.99994}
     height: 11.5
     curve: 0
     width: 16
     jumpToNext: 0
     preserveAlignment: 0
-  - position: {x: 28, y: 111}
+  - position: {x: 27.999908, y: 110.99994}
     height: 6.5
     curve: 0
     width: 16
     jumpToNext: 0
     preserveAlignment: 0
-  - position: {x: 14, y: 121}
+  - position: {x: 13.999908, y: 120.99994}
     height: 1
     curve: 0
     width: 18
     jumpToNext: 0
     preserveAlignment: 0
-  - position: {x: -4, y: 119}
+  - position: {x: -4.0000916, y: 118.99994}
     height: 0
     curve: 0
     width: 20
@@ -21400,7 +21467,7 @@ Transform:
   m_GameObject: {fileID: 1911937252}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 496, y: 5, z: 731.792888}
+  m_LocalPosition: {x: 496, y: 5, z: 731.7929}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -21939,33 +22006,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &1996348290 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4811171726696857748, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
-  m_PrefabInstance: {fileID: 15590328}
-  m_PrefabAsset: {fileID: 0}
---- !u!64 &1996348294
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1996348290}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 9091874763089778162, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
 --- !u!1 &1997491302 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4538642266173412553, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -22331,7 +22371,7 @@ Transform:
   m_GameObject: {fileID: 2041026962}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.999967, z: -0, w: -0.0081318775}
-  m_LocalPosition: {x: 502.91882, y: 3.3100765, z: 629.27466}
+  m_LocalPosition: {x: 502.91885, y: 3.3101552, z: 629.27466}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22505,8 +22545,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2059898388}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 140, y: 13, z: 98}
+  m_LocalRotation: {x: -0, y: 0.6711522, z: -0, w: 0.7413196}
+  m_LocalPosition: {x: 140.08545, y: 3.5082064, z: 101.14191}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22779,8 +22819,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2074162757}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.049255405, z: -0, w: 0.9987862}
-  m_LocalPosition: {x: 273.60907, y: 7.3003435, z: 640.8543}
+  m_LocalRotation: {x: -0, y: -0.04925129, z: -0, w: 0.99878645}
+  m_LocalPosition: {x: 273.60907, y: 7.300344, z: 640.8543}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

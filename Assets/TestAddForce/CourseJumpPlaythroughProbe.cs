@@ -126,7 +126,7 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
                 pickup.gameObject.SetActive(false);
             for (int index = 0; index < 2; index++)
             {
-                float x = index == 0 ? 505f : 604f;
+                float x = index == 0 ? 505f : 582f;
                 float progress = course.GetProgressDistance(new Vector3(x, 16f, 598f));
                 course.TryGetSampleAtProgress(progress, out var sample);
                 var box = new GameObject("Rocket test pickup " + index).AddComponent<ItemBox>();
@@ -248,8 +248,9 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
             driver.trial.maximumTilt = Mathf.Max(driver.trial.maximumTilt, Vector3.Angle(body.rotation * Vector3.up, Vector3.up));
             if (driver.trial.maximumTilt > 80f) Fail(driver.trial.player + " overturned during the trial.");
             int grounded = 0; foreach (TireForce tire in driver.tires) if (tire.GetComponent<GroundCheck>().CheckNow()) grounded++;
-            bool overJump = body.position.x > 605f && body.position.x < 650f &&
-                body.position.z > 590f && body.position.z < 606f && body.position.y > 14f;
+            bool overJump = false;
+            for (float offset = -8f; offset <= 8f; offset += 1f)
+                if (!course.HasRoadAtProgress(progress + offset)) overJump = true;
             driver.unexpectedAirborneSeconds = grounded == 0 && !overJump
                 ? driver.unexpectedAirborneSeconds + Time.fixedDeltaTime : 0f;
             driver.trial.maximumUnexpectedAirborneSeconds = Mathf.Max(driver.trial.maximumUnexpectedAirborneSeconds,
@@ -302,7 +303,7 @@ public sealed class CourseJumpPlaythroughProbe : MonoBehaviour
 
     public void Contact(GameObject car, Collision collision)
     {
-        if (!driving || collision.collider.GetComponentInParent<RaceCourse>() != null || collision.collider.GetComponentInParent<Rigidbody>() != null) return;
+        if (!driving || collision.collider.GetComponentInParent<Rigidbody>() != null) return;
         foreach (ContactPoint contact in collision.contacts)
         {
             if (contact.normal.y >= 0.5f || collision.impulse.magnitude < 0.2f) continue;
