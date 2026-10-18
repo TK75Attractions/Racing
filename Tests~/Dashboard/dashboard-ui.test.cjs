@@ -255,6 +255,85 @@ test('Raw display pauses rendering, bounds history, and resumes with fresh data'
   assert.match(ui.elements.get('raw-log').textContent,/new/);
 });
 
+test('Race buttons advance selection and tutorial with mixed player preparation',()=>{
+  const ui=fixture(), enabled=()=>ui.buttons.filter(button=>!button.disabled).map(button=>button.dataset.action);
+  ui.render({...base,state:'CarSelection'}); assert.deepEqual(enabled(),['tutorial']);
+  ui.render({...base,state:'Tutorial',playerProgress:[{state:'Tutorial'},{state:'CarSelection'}]});
+  assert.deepEqual(enabled(),['tutorial']);
+  ui.render({...base,state:'Tutorial',playerProgress:[{state:'Tutorial'},{state:'Tutorial'}]});
+  assert.deepEqual(enabled(),['countdown']);
+  ui.render({...base,state:'Countdown'});assert.deepEqual(enabled(),[]);
+});
+test('Resolved alerts disappear after ten seconds and retained history cannot resurrect them',()=>{
+  const ui=fixture(), error={...entry('ERROR','ERR,1,0,ERROR,I2C,CONNECTION_LOST,0x68'),receivedAt:99000};
+  const render=(lines,hardware={...healthyHardware,ads:'Unknown',imu:'Unknown',state:'RECOVERING'})=>
+    ui.render({...base,serverTime:100000,serial:{portOpen:true,errors:9,lines,alerts:[error]},hardware});
+  render([error]);assert.match(ui.elements.get('serial-alert-list').textContent,/未解決/);
+  ui.advance(20000);render([error]);assert.equal(ui.elements.get('serial-alerts').hidden,false);
+  const recovery={...entry('EVENT','EVT,2,0,I2C_RESTORED',2),receivedAt:120000};
+  render([error,recovery],healthyHardware);assert.match(ui.elements.get('serial-alert-list').textContent,/解決済み/);
+  ui.advance(9999);render([error,recovery],healthyHardware);assert.equal(ui.elements.get('serial-alerts').hidden,false);
+  ui.advance(1);render([error,recovery],healthyHardware);assert.equal(ui.elements.get('serial-alerts').hidden,true);
+  render([error,recovery],healthyHardware);assert.equal(ui.elements.get('serial-alerts').hidden,true);
+  const newFault=entry('ERROR','ERR,3,0,ERROR,I2C,CONNECTION_LOST,0x68',3);
+  ui.render({...base,serial:{portOpen:true,lines:[error,recovery,newFault]}});
+  assert.match(ui.elements.get('serial-alert-list').textContent,/未解決/);
+});
+test('Recovering one IMU does not dismiss the other IMU fault',()=>{
+  const ui=fixture();const a=entry('ERROR','ERR,1,0,ERROR,IMU,READ_FAILED,0x68'),b=entry('ERROR','ERR,2,0,ERROR,IMU,READ_FAILED,0x69',2);
+  ui.render({...base,serial:{portOpen:true,lines:[a,b]},hardware:healthyHardware});
+  ui.advance(10000);ui.render({...base,serial:{portOpen:true,lines:[a,b]},hardware:healthyHardware});
+  assert.equal(ui.elements.get('serial-alert-list').children.length,1);
+  assert.match(ui.elements.get('serial-alert-list').textContent,/0x69/);
+});
+function trackCommand(ui,command,sequence=8) {
+  vm.runInContext(`commandRequest = {command:${JSON.stringify(command)},sequence:${sequence},generation:1,sessionId:'unity'}`,ui.context);
+}
+function commandSnapshot(command,status,data=[],sequence=8) {
+  return {...base,sessionId:'unity',serial:{portOpen:true,lines:[]},hardware:{...healthyHardware,commands:[{sequence,command,status,data,devices:['0x48','0x68']}]}};
+}
+test('Structured command results show status, configuration, progress, completion and failures inline',()=>{
+  const ui=fixture();trackCommand(ui,'GET_CONFIG');
+  ui.render(commandSnapshot('GET_CONFIG','OK',['8','GET_CONFIG','OK','TEL_RATE','50','IMU_RATE','20','TEL_STREAM','1','IMU_STREAM','0','DBG_STREAM','0','BETA','0.200']));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'完了');
+  assert.match(ui.elements.get('serial-command-values').textContent,/入力の送信頻度50 Hz/);
+  assert.ok(!ui.elements.get('serial-command-result').textContent.includes('@ACK'));
+  trackCommand(ui,'GET_STATUS');ui.render(commandSnapshot('GET_STATUS','OK',['8','GET_STATUS','OK','READY','1','0','1','0']));
+  assert.match(ui.elements.get('serial-command-values').textContent,/IMU全体異常.*校正未完了/);
+  trackCommand(ui,'CALIBRATE');ui.render(commandSnapshot('CALIBRATE','ACCEPTED',['8','CALIBRATE','ACCEPTED','GYRO']));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'実行中');
+  ui.render(commandSnapshot('CALIBRATE','DONE',['CAL_DONE','8','GYRO']));
+  assert.match(ui.elements.get('serial-command-status').textContent,/校正が完了/);
+  assert.match(ui.elements.get('serial-command-values').textContent,/ジャイロ/);
+  trackCommand(ui,'SCAN_I2C');ui.render(commandSnapshot('SCAN_I2C','DONE',['I2C_SCAN_END','8','2']));
+  assert.match(ui.elements.get('serial-command-values').textContent,/検出数2台.*0x48 \/ 0x68/);
+  ui.render(commandSnapshot('SCAN_I2C','UNSUPPORTED',['8','SCAN_I2C','UNSUPPORTED']));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'失敗');
+  assert.match(ui.elements.get('serial-command-status').textContent,/対応していません/);
+  ui.render(commandSnapshot('SCAN_I2C','TIMEOUT'));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'結果未確認');
+});
+test('Unrelated results and new device sessions cannot complete an operator request',()=>{
+  const ui=fixture();trackCommand(ui,'PING');ui.context.showCommandResult('waiting','応答待ち');
+  ui.render(commandSnapshot('PING','OK',['9','PING','OK','PONG'],9));
+  assert.equal(ui.elements.get('serial-command-badge').textContent,'応答待ち');
+  const snapshot=commandSnapshot('PING','OK',['8','PING','OK','PONG']);snapshot.hardware.generation=2;
+  ui.render(snapshot);assert.equal(ui.elements.get('serial-command-badge').textContent,'結果未確認');
+});
+
+test('Repeated reports update one active issue and a recurrence restarts the recovery window',()=>{
+  const ui=fixture();
+  const lines=Array.from({length:40},(_,i)=>entry('ERROR','ERR,'+(i+1)+',0,ERROR,IMU,READ_FAILED,0x69',i+1));
+  ui.render({...base,serial:{portOpen:true,lines},hardware:healthyHardware});
+  assert.equal(ui.elements.get('serial-alert-list').children.length,1);
+  const recovered={...healthyHardware,imus:healthyHardware.imus.map(imu=>({...imu,status:'Ok'}))};
+  ui.render({...base,serial:{portOpen:true,lines},hardware:recovered});
+  ui.advance(10000);ui.render({...base,serial:{portOpen:true,lines},hardware:recovered});
+  assert.equal(ui.elements.get('serial-alerts').hidden,true);
+  lines.push(entry('ERROR','ERR,41,0,ERROR,IMU,READ_FAILED,0x69',41));
+  ui.render({...base,serial:{portOpen:true,lines},hardware:healthyHardware});
+  assert.equal(ui.elements.get('serial-alert-list').children.length,1);
+  assert.match(ui.elements.get('serial-alert-list').textContent,/未解決/);
 });
 
 
@@ -295,3 +374,4 @@ test('Preview fetches cannot overlap or restore stale images after a disconnect'
   await refresh;
   assert.equal(ui.elements.get('feed-1').hidden, true);
   assert.equal(revoked.length, 2);
+});

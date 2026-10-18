@@ -160,6 +160,9 @@ public sealed class RgpHostSession
             }
             request.Retries++; request.SentAt = now; send(request.Wire);
         }
+        foreach (CommandResult result in commandResults)
+            if (result.Status == "ACCEPTED" && now - result.UpdatedAt >= 120000)
+            { result.Status = "TIMEOUT"; result.UpdatedAt = now; }
         PrepareHardwareAutomatically(now);
     }
 
@@ -179,3 +182,173 @@ public sealed class RgpHostSession
             automaticAngleZeroAttempted = true;
             TryCommand("ANGLE_ZERO", Array.Empty<string>(), now, out _, out _);
         }
+    }
+    public void Disconnect()
+    {
+        if (SessionOpen || State != "DISCONNECTED") Generation++;
+        commandResults.Clear();
+        pending.Clear(); SessionOpen = false; State = "DISCONNECTED"; Invalidate(); ResetHardware();
+    }
+    private void Invalidate()
+    {
+        hasTelemetry = false; PlayerOne = default; PlayerTwo = default;
+    }
+    private void SetState(string state)
+    {
+        State = state;
+        if (state != "READY") Invalidate();
+    }
+    private void ApplyConfig(string name, string value)
+    {
+        if (name == "TEL_RATE") TelemetryRate = int.Parse(value, CultureInfo.InvariantCulture);
+        if (name == "TEL_STREAM")
+        {
+            TelemetryEnabled = value == "1";
+            if (!TelemetryEnabled) Invalidate();
+        }
+    }
+    public string Receive(RgpFrame frame, double receivedAt)
+    {
+        string[] d = frame.Data;
+        if (frame.Type == "SYS" && d[0] == "HELLO")
+        {
+            if (d[2].Split('.')[0].TrimStart('0') != "1")
+            {
+                Generation++; commandResults.Clear();
+                Compatible = false; SessionOpen = false; pending.Clear(); Invalidate(); ResetHardware();
+                return "INCOMPATIBLE";
+            }
+            Start(receivedAt); return "HELLO";
+        }
+        if (!Compatible) return "INCOMPATIBLE";
+        switch (frame.Type)
+        {
+            case "TEL":
+                if (!SessionOpen || State != "READY" || !TelemetryEnabled) return "NOT_READY";
+                uint delta = unchecked(frame.Sequence - lastTelSequence);
+                if (hasTelSequence && (delta == 0 || delta > 0x7FFFFFFF)) return "OLD_TEL";
+                PlayerOne = frame.Player(0); PlayerTwo = frame.Player(1);
+                hasTelSequence = true; lastTelSequence = frame.Sequence;
+                lastTelemetryAt = receivedAt; hasTelemetry = true; return "OK";
+            case "EVT":
+                if (d[0] == "STATE") SetState(d[1]);
+                if (d[0] == "ADS_READY") AdsStatus = "Ok";
+                if (d[0] == "IMU_FOUND")
+                {
+                    ImuStatus = "Ok";
+                    ImuDevice imu = d.Length > 1 ? FindImu(d[1]) : null;
+                    if (imu != null) imu.Status = "Ok";
+                }
+                if (d[0] == "ANGLE_LOCKED") AngleLocked = true;
+                if (d[0] == "ANGLE_UNLOCKED") AngleLocked = false;
+                if (d[0] == "CAL_START") Calibrated = false;
+                if (d[0] == "CAL_DONE") Calibrated = true;
+                // A bus-wide loss cannot identify which individual sensor was unplugged.
+                if (d[0] == "I2C_LOST") AdsStatus = ImuStatus = "Unknown";
+                if (d[0] == "I2C_RESTORED") AdsStatus = ImuStatus = "Unknown";
+                if (d[0] == "I2C_LOST" || d[0] == "I2C_RESTORED") InvalidateImus();
+                if (d[0] == "CAL_DONE" || d[0] == "I2C_SCAN_END")
+                    CompleteOperation(d[1], d[0] == "CAL_DONE" ? "CALIBRATE" : "SCAN_I2C", "DONE", d, receivedAt);
+                if (d[0] == "CONFIG_CHANGED") ApplyConfig(d[1], d[2]);
+                if (d[0] == "I2C_LOST" || d[0] == "ANGLE_UNLOCKED")
+                { SetState(d[0] == "I2C_LOST" ? "RECOVERING" : "WAIT_ANGLE"); }
+                return "EVENT";
+            case "SYS":
+                if (d[0] == "I2C_DEVICE" && SerialInputProtocol.UInt(d[1], out uint scanSeq))
+                {
+                    CommandResult scan = commandResults.Find(item => item.Sequence == scanSeq && item.Command == "SCAN_I2C" &&
+                        (item.Status == "SENT" || item.Status == "ACCEPTED"));
+                    if (scan != null && !scan.Devices.Contains(d[2])) scan.Devices.Add(d[2]);
+                }
+                if (d[0] == "CONFIG") ApplyConfig(d[1], d[2]);
+                if (d[0] == "DEVICE" && d[1] == "ADS1115") AdsAddress = d[2];
+                if (d[0] == "DEVICE" && d[1] == "IMU")
+                {
+                    ImuAddress = d[2]; ImuIdentity = d[3];
+                    ImuDevice imu = FindImu(d[2]);
+                    if (imu != null) { imu.Identity = d[3]; if (ImuStatus == "Ok") imu.Status = "Ok"; }
+                }
+                return "SYS";
+            case "ERR":
+                if (d[1] == "HANDLE" && d[2] == "ANGLE_REFERENCE_INVALID") AngleLocked = false;
+                if (d[1] == "CALIBRATION") Calibrated = false;
+                int req = Array.IndexOf(d, "REQ", 3);
+                if (req >= 0 && req + 1 < d.Length) CompleteOperation(d[req + 1], null, "FAILED", d, receivedAt);
+                if (d[1] == "IMU" && d.Length > 3)
+                {
+                    ImuDevice imu = FindImu(d[3]);
+                    if (imu != null) imu.Status = "Fault";
+                }
+                if (d[0] == "ERROR" || d[0] == "FATAL")
+                {
+                    SetState(d[0]);
+                    if (d[1] == "I2C") { AdsStatus = ImuStatus = "Unknown"; InvalidateImus(); }
+                    if (d[1] == "ADS1115") AdsStatus = "Fault";
+                    if (d[1] == "IMU")
+                    {
+                        ImuStatus = "Fault";
+                        if (d.Length <= 3 || FindImu(d[3]) == null) InvalidateImus();
+                    }
+                }
+                return d[0];
+            case "ACK": return Ack(d, receivedAt);
+            case "IMU": case "DBG": return frame.Type;
+            default: return "IGNORED";
+        }
+    }
+    private void CompleteOperation(string origin, string command, string status, string[] data, double now)
+    {
+        if (!SerialInputProtocol.UInt(origin, out uint seq)) return;
+        CommandResult result = commandResults.Find(item => item.Sequence == seq &&
+            (command == null || item.Command == command) && (item.Status == "SENT" || item.Status == "ACCEPTED"));
+        if (result == null) return;
+        result.Status = status; result.Data = data; result.UpdatedAt = now;
+        pending.Remove(seq);
+    }
+    private string Ack(string[] d, double now)
+    {
+        SerialInputProtocol.UInt(d[0], out uint seq);
+        if (!pending.TryGetValue(seq, out PendingCommand request) || request.Command != d[1]) return "UNMATCHED_ACK";
+        // A delayed OPEN_SESSION ACK from before HELLO must not consume the new request.
+        if (d[1] == "OPEN_SESSION" && d[2] == "OK" && d[3] != sessionId) return "UNMATCHED_ACK";
+        pending.Remove(seq);
+        // A completion event may precede its ACK; keep the terminal outcome in that case.
+        if (request.Result.Status == "SENT")
+        {
+            request.Result.Status = d[2] == "OK" && (d[1] == "CALIBRATE" || d[1] == "SCAN_I2C") ? "ACCEPTED" : d[2];
+            request.Result.Data = d; request.Result.UpdatedAt = now;
+        }
+        LastCommandResult = d[1] + ": " + d[2];
+        if (d[2] != "OK" && d[2] != "ACCEPTED")
+        {
+            if (request.RequiredForSetup && (d[1] == "OPEN_SESSION" || d[1] == "GET_STATUS" || d[1] == "GET_CONFIG"))
+            { SessionOpen = false; Invalidate(); }
+            return "ACK_FAILED";
+        }
+        if (d[2] == "OK")
+        {
+            switch (d[1])
+            {
+                case "OPEN_SESSION":
+                    SessionOpen = true;
+                    Command("PING", now); Command("GET_STATUS", now); Command("GET_CONFIG", now);
+                    break;
+                case "GET_STATUS":
+                    AdsStatus = d[4] == "1" ? "Ok" : "Fault"; ImuStatus = d[5] == "1" ? "Ok" : "Fault";
+                    if (ImuStatus == "Ok")
+                        foreach (ImuDevice imu in Imus) { if (imu.Address.Length > 0) imu.Status = "Ok"; }
+                    else
+                        foreach (ImuDevice imu in Imus) { if (imu.Status == "Ok") imu.Status = "Unknown"; }
+                    AngleLocked = d[6] == "1"; Calibrated = d[7] == "1";
+                    SetState(d[3] == "READY" && (d[4] != "1" || d[5] != "1" || d[6] != "1" || d[7] != "1") ? "NOT_READY" : d[3]);
+                    break;
+                case "GET_CONFIG":
+                    for (int i = 3; i + 1 < d.Length; i += 2) ApplyConfig(d[i], d[i + 1]);
+                    break;
+                case "SET_STREAM": ApplyConfig(d[3] + "_STREAM", d[4]); break;
+                case "SET_RATE": ApplyConfig(d[3] + "_RATE", d[4]); break;
+            }
+        }
+        return "ACK_" + d[2];
+    }
+}

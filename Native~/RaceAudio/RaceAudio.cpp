@@ -6,6 +6,8 @@
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 #include <algorithm>
+#include <atomic>
+#include <cmath>
 #include <mutex>
 #include <vector>
 
@@ -18,10 +20,23 @@
 // Each Unity source is a single producer. Each device callback is a single consumer.
 // Native callbacks allocate nothing and never take a lock.
 constexpr int StreamCount = 5; // BGM + two human engines + two CPU engines, per output device.
+constexpr ma_uint32 RingFrames = 16384;
+constexpr ma_uint32 MixChunkFrames = 256;
+struct Stream {
+    ma_pcm_rb ring{};
+    ma_linear_resampler resampler{};
+    std::atomic<ma_uint32> targetFrames{0};
+    bool primed = false; // Consumer-owned state below this line.
+    float filteredFrames = 0;
+    float lastLeft = 0, lastRight = 0;
+    float fade = 0;
+    ma_uint64 underruns = 0;
+};
 struct Output {
     std::mutex producerMutex;
     ma_device device{};
-    ma_pcm_rb streams[StreamCount]{};
+    Stream streams[StreamCount]{};
+    ma_uint32 sampleRate = 48000;
     bool open = false;
 };
 static ma_context context;
@@ -29,19 +44,80 @@ static bool initialized = false;
 static std::vector<ma_device_info> devices;
 static Output outputs[2];
 
+static bool InitStream(Stream& stream, ma_uint32 sampleRate) {
+    if (ma_pcm_rb_init(ma_format_f32, 2, RingFrames, nullptr, nullptr, &stream.ring) != MA_SUCCESS) return false;
+    auto config = ma_linear_resampler_config_init(ma_format_f32, 2, sampleRate, sampleRate);
+    config.lpfOrder = 0; // Only compensate small independent device clock differences.
+    if (ma_linear_resampler_init(&config, nullptr, &stream.resampler) != MA_SUCCESS) {
+        ma_pcm_rb_uninit(&stream.ring);
+        return false;
+    }
+    stream.targetFrames.store(std::min(RingFrames / 2, sampleRate / 20));
+    stream.primed = false;
+    stream.fade = 0;
+    stream.lastLeft = stream.lastRight = 0;
+    stream.underruns = 0;
+    return true;
+}
+
+static void UninitStream(Stream& stream) {
+    ma_linear_resampler_uninit(&stream.resampler, nullptr);
+    ma_pcm_rb_uninit(&stream.ring);
+}
+
 static void Mix(Output& output, float* data, ma_uint32 frames) {
     std::fill(data, data + frames * 2, 0.0f);
+    float scratch[MixChunkFrames * 2];
     for (auto& stream : output.streams) {
+        ma_uint32 queued = ma_pcm_rb_available_read(&stream.ring);
+        ma_uint32 target = stream.targetFrames.load(std::memory_order_relaxed);
+        if (!stream.primed && queued >= target) {
+            stream.primed = true;
+            stream.filteredFrames = static_cast<float>(target);
+            ma_linear_resampler_reset(&stream.resampler);
+        }
         ma_uint32 offset = 0;
-        while (offset < frames) {
-            ma_uint32 count = frames - offset;
-            void* samples = nullptr;
-            ma_pcm_rb_acquire_read(&stream, &count, &samples);
-            if (count == 0) break; // An underrun contributes silence, never stale samples.
-            auto* source = static_cast<float*>(samples);
-            for (ma_uint32 i = 0; i < count * 2; ++i) data[offset * 2 + i] += source[i];
-            ma_pcm_rb_commit_read(&stream, count);
-            offset += count;
+        if (stream.primed) {
+            // Filter callback/block jitter before correcting the independent USB/HDMI
+            // clock. A fixed-rate drain eventually empties or fills even a large ring.
+            float smoothing = std::min(1.0f, static_cast<float>(frames) / (output.sampleRate * .25f));
+            stream.filteredFrames += (queued - stream.filteredFrames) * smoothing;
+            float correction = (stream.filteredFrames - target) / output.sampleRate * .1f;
+            float ratio = 1.0f + std::max(-.005f, std::min(.005f, correction));
+            ma_linear_resampler_set_rate_ratio(&stream.resampler, ratio);
+            while (offset < frames) {
+                ma_uint32 available = ma_pcm_rb_available_read(&stream.ring);
+                void* samples = nullptr;
+                ma_pcm_rb_acquire_read(&stream.ring, &available, &samples);
+                if (available == 0) break;
+                ma_uint64 consumed = available;
+                ma_uint64 produced = std::min(MixChunkFrames, frames - offset);
+                ma_linear_resampler_process_pcm_frames(&stream.resampler, samples, &consumed, scratch, &produced);
+                ma_pcm_rb_commit_read(&stream.ring, static_cast<ma_uint32>(consumed));
+                for (ma_uint32 i = 0; i < produced; ++i) {
+                    stream.fade = std::min(1.0f, stream.fade + 1.0f / 128);
+                    stream.lastLeft = scratch[i * 2] * stream.fade;
+                    stream.lastRight = scratch[i * 2 + 1] * stream.fade;
+                    data[(offset + i) * 2] += stream.lastLeft;
+                    data[(offset + i) * 2 + 1] += stream.lastRight;
+                }
+                offset += static_cast<ma_uint32>(produced);
+                if (consumed == 0 && produced == 0) break;
+            }
+            if (offset < frames) {
+                ++stream.underruns;
+                stream.primed = false; // Refill once, instead of alternating PCM/silence every callback.
+                stream.fade = 0;
+            }
+        }
+        // Ramp the last sample to silence on starvation; never loop stale PCM.
+        float left = stream.lastLeft, right = stream.lastRight;
+        for (ma_uint32 i = 0; offset < frames && i < 128; ++i, ++offset) {
+            float gain = 1.0f - (i + 1) / 128.0f;
+            data[offset * 2] += left * gain;
+            data[offset * 2 + 1] += right * gain;
+            stream.lastLeft = left * gain;
+            stream.lastRight = right * gain;
         }
     }
     for (ma_uint32 i = 0; i < frames * 2; ++i) data[i] = std::max(-1.0f, std::min(1.0f, data[i]));
@@ -55,7 +131,7 @@ static void Close(Output& output) {
     if (!output.open) return;
     output.open = false;
     ma_device_uninit(&output.device); // Joins the device callback before freeing rings.
-    for (auto& stream : output.streams) ma_pcm_rb_uninit(&stream);
+    for (auto& stream : output.streams) UninitStream(stream);
 }
 
 EXPORT int ra_refresh_devices() {
@@ -101,10 +177,11 @@ EXPORT int ra_open(int player, int deviceIndex, int sampleRate) {
     auto& output = outputs[player];
     std::lock_guard<std::mutex> lock(output.producerMutex);
     Close(output);
+    output.sampleRate = static_cast<ma_uint32>(sampleRate);
     int ringCount = 0;
     for (auto& stream : output.streams) {
-        if (ma_pcm_rb_init(ma_format_f32, 2, 8192, nullptr, nullptr, &stream) != MA_SUCCESS) {
-            for (int i = 0; i < ringCount; ++i) ma_pcm_rb_uninit(&output.streams[i]);
+        if (!InitStream(stream, output.sampleRate)) {
+            for (int i = 0; i < ringCount; ++i) UninitStream(output.streams[i]);
             return -2;
         }
         ++ringCount;
@@ -114,11 +191,15 @@ EXPORT int ra_open(int player, int deviceIndex, int sampleRate) {
     config.playback.format = ma_format_f32;
     config.playback.channels = 2;
     config.sampleRate = static_cast<ma_uint32>(sampleRate);
+    // Prefer a stable device period over minimum latency on USB/DisplayLink docks.
+    config.performanceProfile = ma_performance_profile_conservative;
+    config.periodSizeInMilliseconds = 10;
+    config.periods = 3;
     config.dataCallback = Callback;
     config.pUserData = &output;
     ma_result result = ma_device_init(&context, &config, &output.device);
     if (result != MA_SUCCESS) {
-        for (auto& stream : output.streams) ma_pcm_rb_uninit(&stream);
+        for (auto& stream : output.streams) UninitStream(stream);
         return result;
     }
     output.open = true;
@@ -138,7 +219,12 @@ EXPORT void ra_push(int player, int streamIndex, const float* data, int frames, 
     auto& output = outputs[player];
     std::unique_lock<std::mutex> lock(output.producerMutex, std::try_to_lock);
     if (!lock.owns_lock() || !output.open) return;
-    auto& stream = output.streams[streamIndex];
+    auto& state = output.streams[streamIndex];
+    // Keep at least three Unity DSP blocks, within a bounded latency budget.
+    ma_uint32 target = std::min(RingFrames / 2,
+        std::max(output.sampleRate / 20, static_cast<ma_uint32>(std::min(frames, static_cast<int>(RingFrames)) * 3)));
+    state.targetFrames.store(target, std::memory_order_relaxed);
+    auto& stream = state.ring;
     int offset = 0;
     while (offset < frames) {
         ma_uint32 count = static_cast<ma_uint32>(frames - offset);

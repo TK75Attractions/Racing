@@ -120,8 +120,8 @@ public sealed class PlayerDisplayRig
             var output = CameraRoot.GetComponent<RenderGraphDisplayOutput>() ??
                 CameraRoot.AddComponent<RenderGraphDisplayOutput>();
             var outputCameras = new[] { BackCamera, BackImageCamera, MainCamera, FrontCamera, UiCamera };
-            if (RacePlayerWindows.UsesNativeWindow) output.ConfigureWindow(outputCameras, DisplayIndex);
-            else if (DisplayIndex < Display.displays.Length) output.Configure(outputCameras, DisplayIndex);
+            if (RacePlayerWindows.UsesNativeWindow) output.ConfigureWindow(outputCameras, DisplayIndex, BackImageCamera);
+            else if (DisplayIndex < Display.displays.Length) output.Configure(outputCameras, DisplayIndex, BackImageCamera);
         }
     }
 

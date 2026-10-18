@@ -111,7 +111,7 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
             report.outputMode = "Single physical display; P1 native window, P2 1920x1080 offscreen stack presented to Display 1";
             var cameras = Cameras(rigs[1]); foreach (Camera camera in cameras) camera.targetDisplay = 0;
             rigs[1].Canvas.targetDisplay = 0;
-            presenter = rigs[1].CameraRoot.AddComponent<RenderGraphDisplayOutput>(); presenter.Configure(cameras,0);
+            presenter = rigs[1].CameraRoot.AddComponent<RenderGraphDisplayOutput>(); presenter.Configure(cameras,0,rigs[1].BackImageCamera);
             typeof(RenderGraphDisplayOutput).GetMethod("ResizeTarget",Private).Invoke(presenter,new object[]{1920,1080});
             rigs[1].MainCamera.GetComponent<FreezeAspectRate>().ConfigureForDisplay(0,rigs[1].BackCamera);
             rigs[1].MainCamera.GetComponent<FreezeAspectRate>().ConfigureCanvas(rigs[1].Canvas);
