@@ -25,3 +25,17 @@ The source changes have not been published to GitHub Pages or deployed as a Unit
 Validation: 55 C# tests, 25 dashboard/live-client tests, and an actual Chrome fixture covering both progression buttons, six health cards, inline status results, ten-second recovery, 1440px/390px layouts, and no browser exceptions. The Unity C# project compiled with zero errors. Hardware was represented by sample data; no command was sent to a physical ESP32.
 
 Preview images: [hardware desktop](hardware-desktop.png), [hardware mobile](hardware-mobile.png), [command desktop](command-desktop.png), [command mobile](command-mobile.png), [flow mobile](flow-mobile.png).
+
+## iPad operator layout — 2026-10-18
+
+The race controls are now a compact toolbar above the two player feeds. Only actions applicable to the current game state appear; viewer controls remain disabled. Per-player preparation details sit with the feeds, so progression no longer stretches the camera panel. The top statistics include a linked device overview with six status chips and a fault count. A healthy overview requires current responses, all six checks, READY, calibration and a valid angle reference.
+
+Device health and ESP32 commands share two columns at widths of 840px and above. The serial monitor uses Japanese status badges, direction arrows, rotating steering-wheel graphics with a fixed neutral marker and separate accelerator/brake meters. Unconfirmed or old input is explicitly labeled. Original frames are available in a modal with pause/resume, Escape/backdrop dismissal and keyboard focus handling. Reception and the newest-500 buffer continue while the dialog is closed; raw rows are only rendered when opened. Firebase's existing remote feed does not carry raw frames, which the empty dialog explains.
+
+Validation:
+
+- `node --test Tests~/Dashboard/dashboard-ui.test.cjs Tests~/DashboardRelay/live-client.test.cjs`: **31 passed**.
+- `Tests~/Dashboard/serial-preview.cjs` in Chrome: **passed**, including 1024×768, 1180×820, 1366×1024 landscape layouts, 1440px desktop, 390px mobile, paired device panels, compact controls, signed steering-wheel rotation, no horizontal overflow, modal background-control isolation and focus restoration, dismissal, pause/resume, raw CRLF preservation and safe display of device text. No JavaScript exceptions.
+- Visual review: [iPad 1024](overview-1024.png), [iPad 1180](overview-1180.png), [iPad 1366](overview-1366.png), [serial monitor](desktop.png), [raw dialog](raw-dialog-ipad.png), [mobile monitor](mobile.png), [mobile dialog](raw-dialog-mobile.png).
+
+All previews use sample data. Physical iPad/Safari and ESP32 hardware were not tested; these dashboard changes have not been deployed.

@@ -61,7 +61,7 @@ function setConnection(isConnected) {
     updateFlow(null);
     renderParticipants(null);
     $('serial-log').innerHTML = '<div class="empty-log">シリアル入力を待っています。Unity の接続状態を確認してください。</div>';
-    for (const button of document.querySelectorAll('[data-action]')) button.disabled = true;
+    updateActions(null, false);
     for (let i = 1; i <= 2; i++) {
       $('player-status-' + i).textContent = '待機中';
       $('player-status-' + i).classList.remove('active');
@@ -104,6 +104,20 @@ function updateFlow(state) {
     `現在：${labels[state]}（${position + 1} / ${order.length}）`;
 }
 
+function updateActions(snapshot, canControl) {
+  let available = 0;
+  for (const button of document.querySelectorAll('[data-action]')) {
+    const applicable = actionAvailable(button.dataset.action, snapshot);
+    button.hidden = !applicable;
+    button.disabled = !canControl || !applicable;
+    button.classList.toggle('primary', applicable && button.dataset.action !== 'title');
+    if (applicable) available++;
+  }
+  $('action-empty').hidden = available > 0;
+  $('action-empty').textContent = !snapshot ? 'Unity の接続を待っています' :
+    ['Countdown', 'Goal'].includes(snapshot.state) ? '◷ 自動で次の画面へ進みます' : '現在、進行操作はありません';
+}
+
 function render(snapshot, { canControl = localMode } = {}) {
   setConnection(true);
   latestSnapshot = snapshot;
@@ -117,12 +131,13 @@ function render(snapshot, { canControl = localMode } = {}) {
   $('serial-count').textContent = (snapshot.serial.received ?? 0).toLocaleString('ja-JP');
   $('parse-errors').textContent = (snapshot.serial.errors ?? 0).toLocaleString('ja-JP');
   $('parse-errors').classList.toggle('error-count', snapshot.serial.errors > 0);
-  $('serial-sub').textContent = snapshot.serial.portOpen ? 'RAW LINES RECEIVED' : 'ポート未接続';
+  $('serial-sub').textContent = snapshot.serial.portOpen ? '受信した行数 / 累計' : 'ポート未接続';
   $('serial-port').textContent = 'PORT ' + (snapshot.serial.port || '—');
   $('port-status').textContent = snapshot.serial.portOpen ? '接続中' : '未接続';
   $('port-status').classList.toggle('active', snapshot.serial.portOpen);
-  $('input-mode').textContent = snapshot.inputMode || '—';
-  $('last-result').textContent = snapshot.serial.lastResult || '—';
+  $('input-mode').textContent = /keyboard/i.test(snapshot.inputMode || '') ? '⌨ キーボード' :
+    /serial/i.test(snapshot.inputMode || '') ? '↔ シリアル機器' : snapshot.inputMode || '—';
+  $('last-result').textContent = serialStatusLabel(snapshot.serial.lastResult);
   for (const player of snapshot.players || []) {
     const n = player.number;
     if (n !== 1 && n !== 2) continue;
@@ -134,11 +149,11 @@ function render(snapshot, { canControl = localMode } = {}) {
     $('pedal-' + n).textContent = (player.pedal || 0).toFixed(2);
     $('steer-' + n).textContent = (player.steering || 0).toFixed(2);
   }
-  for (const button of document.querySelectorAll('[data-action]')) button.disabled = !canControl || !actionAvailable(button.dataset.action, snapshot);
+  updateActions(snapshot, canControl);
   if (localMode) $('control-note').textContent = snapshot.state === 'Game' ? '「結果を表示」はレースを終了し、現在の記録で結果画面へ進みます。' : '現在のゲーム状態に応じて操作できます。';
   renderSerialAlerts(snapshot.serial, snapshot.inputMode, snapshot);
   renderLog(snapshot.serial.lines || []);
-  if (snapshot.telemetry) renderTelemetry(snapshot.telemetry);
+  renderTelemetry(snapshot.telemetry || null);
   renderParticipants(snapshot);
   renderPlayerProgress(snapshot);
   renderHardware(snapshot);
@@ -394,14 +409,49 @@ function isTelemetryEntry(entry) {
 }
 function renderTelemetry(entry) {
   const target = $('latest-tel');
-  if (!entry || !isTelemetryEntry(entry)) { target.textContent = 'TELの受信を待っています。'; return; }
+  if (!entry || !isTelemetryEntry(entry)) { target.textContent = 'ペダル・ハンドル入力を待っています。'; return; }
   const values = entry.line.slice(1, -5).split(',').slice(3, 9);
-  if (values.length !== 6 || values.some((v, i) => !Number.isFinite(Number(v)) || (i % 3 === 0 ? Math.abs(Number(v)) > 3600 : Number(v) < 0 || Number(v) > 1))) { target.textContent = 'TELの受信値を確認できません。'; return; }
+  if (values.length !== 6 || values.some((v, i) => v.trim() === '' || !Number.isFinite(Number(v)) || (i % 3 === 0 ? Math.abs(Number(v)) > 3600 : Number(v) < 0 || Number(v) > 1))) { target.textContent = '⚠ 受信した入力値が不正です。機器と接続を確認してください。'; return; }
+  const hardware = latestSnapshot?.hardware;
+  const current = latestSnapshot?.serial?.portOpen && hardware?.sessionOpen && hardware?.recent &&
+    hardware?.inputFresh && !hardware?.invalidTelemetry && hardware?.telemetryEnabled;
+  const heading = document.createElement('p'); heading.className = 'telemetry-heading';
+  heading.textContent = `${current ? '● 入力を受信中' : '◷ 最新の受信記録 / 現在の入力は未確認'} · ${entry.time || '時刻不明'}`;
+  const grid = document.createElement('div'); grid.className = 'telemetry-grid';
   const rows = [0, 1].map(i => {
     const [handle, accel, brake] = values.slice(i * 3, i * 3 + 3).map(Number);
-    return `P${i + 1}  HANDLE ${handle}° / ACCEL ${(accel * 100).toFixed(1)}% / BRAKE ${(brake * 100).toFixed(1)}%\n    ハンドル ${handle === 0 ? '中央' : handle > 0 ? '右' : '左'} ${Math.abs(handle)}°、アクセル ${(accel * 100).toFixed(1)}%、ブレーキ ${(brake * 100).toFixed(1)}%`;
+    const card = document.createElement('article'); card.className = 'telemetry-card' + (current ? '' : ' unconfirmed');
+    const name = document.createElement('h3'); name.textContent = `P${i + 1} の受信入力`;
+    const steering = document.createElement('div'); steering.className = 'steering-value';
+    const wheel = document.createElement('span'); wheel.className = 'steering-wheel';
+    wheel.setAttribute('aria-hidden', 'true');
+    // Static artwork; only the validated numeric angle controls its rotation.
+    wheel.innerHTML = '<svg viewBox="0 0 128 128" focusable="false"><path d="M59 5h10l-5 8z" fill="#9aaab8"/><circle cx="64" cy="64" r="55" fill="none" stroke="#34424e" stroke-dasharray="2 6"/><g><circle cx="64" cy="64" r="44" fill="none" stroke="#8092a2" stroke-width="8"/><path d="M23 54l32 11m50-11L73 65m-9 10v32" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/><circle cx="64" cy="64" r="12" fill="#111923" stroke="currentColor" stroke-width="4"/><path d="M64 20v11" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></g></svg>';
+    wheel.querySelector('g').setAttribute('transform', `rotate(${handle} 64 64)`);
+    const angle = document.createElement('span');
+    angle.textContent = `ハンドル ${handle === 0 ? '中央' : handle > 0 ? '右' : '左'} ${Math.abs(handle)}°`;
+    steering.append(wheel, angle);
+    card.append(name, steering);
+    for (const [label, value, kind] of [['アクセル', accel, 'accel'], ['ブレーキ', brake, 'brake']]) {
+      const row = document.createElement('div'); row.className = 'pedal-meter ' + kind;
+      const title = document.createElement('span'); title.textContent = label;
+      const amount = document.createElement('strong'); amount.textContent = `${(value * 100).toFixed(1)}%`;
+      const meter = document.createElement('meter'); meter.min = 0; meter.max = 1; meter.value = value;
+      meter.setAttribute('aria-label', `P${i + 1} ${label}`);
+      row.append(title, amount, meter); card.append(row);
+    }
+    return card;
   });
-  target.textContent = `${entry.time || ''}  最新の受信値（ゲームへの適用状態は上の入力表示を参照）\n${rows.join('\n')}\n${entry.line}`;
+  grid.append(...rows);
+  const note = document.createElement('p'); note.className = 'control-note'; note.textContent = '受信値を表示しています。ゲームへの適用状況はプレイヤー画面の入力表示で確認できます。';
+  target.replaceChildren(heading, grid, note);
+}
+function serialStatusLabel(status) {
+  return ({ OK:'✓ 正常', EVENT:'◆ 状態変化', ERROR:'✕ エラー', WARN:'⚠ 警告', INVALID:'✕ 解析失敗',
+    STALE:'◷ 古い入力', TIMEOUT:'◷ 応答なし', ACK_OK:'✓ 操作完了', ACK_ACCEPTED:'◷ 実行中',
+    ACK_FAILED:'✕ 操作失敗', SENT:'✓ 送信済み', UNMATCHED_ACK:'◇ 対応外の応答', SYS:'◇ 機器情報', HELLO:'◇ 装置起動',
+    DBG:'◇ 診断情報', IMU:'◇ 姿勢データ', IGNORED:'◇ 対象外', PARTIAL:'⚠ 一部のみ受信',
+    INCOMPATIBLE:'✕ 通信方式が不一致', 'Waiting for input':'◷ 入力待ち' })[status] || (status ? '◇ 通信情報' : '—');
 }
 function renderLog(lines) {
   lines = lines.filter(entry => !isTelemetryEntry(entry));
@@ -418,15 +468,15 @@ function renderLog(lines) {
   log.replaceChildren(...lines.slice().reverse().map((entry) => {
     const row = document.createElement('div');
     row.className = 'log-row';
-    const time = document.createElement('span'); time.textContent = entry.time;
+    const time = document.createElement('span'); time.textContent = entry.time || '—';
     const status = document.createElement('span');
-    status.textContent = (entry.direction ? entry.direction + ' ' : '') + entry.status;
     const explanation = explainSerialEntry(entry);
+    status.textContent = (entry.direction === 'TX' ? '↑ ' : '↓ ') +
+      (explanation.level === 'error' ? '✕ 要確認' : explanation.level === 'warning' ? '⚠ 注意' : serialStatusLabel(entry.status));
     status.className = explanation.level === 'error' ? 'bad' : explanation.level === 'warning' ? 'partial' : 'ok';
     const data = document.createElement('div'); data.className = 'serial-payload';
     const meaning = document.createElement('p'); meaning.className = 'serial-explanation'; meaning.textContent = explanation.text;
-    const raw = document.createElement('code'); raw.textContent = entry.line;
-    data.append(meaning, raw);
+    data.append(meaning);
     row.append(time, status, data);
     return row;
   }));
@@ -483,6 +533,23 @@ function renderHardware(snapshot) {
     ['ADS1115（I2C）', sensor(hardware?.ads), hardware?.adsAddress ? `アドレス ${hardware.adsAddress}` : 'ペダル用センサー / アドレス未確認'],
     ...[1, 2].map(n => [`P${n} ペダル`, ...pedal(n)])
   ];
+  const faults = cards.filter(([, [level]]) => level === 'fault').length;
+  const ready = cards.filter(([, [level]]) => level === 'ok').length;
+  const keyboard = /keyboard/i.test(snapshot?.inputMode || '');
+  const summary = $('device-summary');
+  const level = !snapshot || keyboard ? 'unknown' : faults ? 'fault' :
+    ready === cards.length && hardware?.state === 'READY' && hardware?.angleLocked && hardware?.calibrated ? 'ok' : 'unknown';
+  summary.className = level;
+  summary.textContent = !snapshot ? '確認待ち' : keyboard ? '⌨ 機器入力は未使用' : faults ? `⚠ ${faults}件 要確認` :
+    level === 'ok' ? '✓ すべて正常' : '◷ 準備・確認中';
+  $('device-summary-items').replaceChildren(...cards.map(([name, [state, text]], index) => {
+    const chip = document.createElement('span'); chip.className = 'device-chip ' + state;
+    chip.textContent = `${state === 'ok' ? '✓' : state === 'fault' ? '!' : '◷'} ${['USB', 'IMU 1', 'IMU 2', 'ADS', 'P1', 'P2'][index]}`;
+    chip.setAttribute('aria-label', `${name}：${text}`);
+    chip.title = `${name}：${text}`;
+    return chip;
+  }));
+  $('hardware-state').className = 'mini-status ' + level;
   $('hardware-grid').replaceChildren(...cards.map(([name, [level, state], detail]) => {
     const card = document.createElement('article'); card.className = 'hardware-card ' + level;
     const heading = document.createElement('h3'); heading.textContent = name;
@@ -502,6 +569,8 @@ function renderRaw(lines, gap = false, force = false) {
   rawPending = lines.slice(-500); rawGap = gap;
   $('raw-status').textContent = `${rawPaused ? '表示を一時停止中（受信は継続）' : '直近の送受信を表示'} / ${rawPending.length} 件${gap ? ' / 保持範囲外の生データ欠落あり' : ''}`;
   if (rawPaused && !force) return;
+  // Keep receiving while closed, but avoid rebuilding up to 500 rows on the iPad.
+  if (!$('raw-dialog').open && !force) return;
   const signature = JSON.stringify(rawPending);
   if (signature === rawSignature && !force) return;
   rawSignature = signature;
@@ -518,6 +587,12 @@ function renderRaw(lines, gap = false, force = false) {
     row.append(time, direction, code); retained.set(entry.id, {line:entry.line,row}); return row;
   }));
   rawElements = retained;
+  if (!rawPending.length) {
+    const empty = document.createElement('p'); empty.className = 'empty-log';
+    empty.textContent = localMode ? '送受信データを待っています。ESP32の接続を確認してください。' :
+      'Firebaseの遠隔監視では生データを配信していません。Unityのローカル画面または接続ブリッジで確認してください。';
+    log.append(empty);
+  }
   log.scrollTop = follow ? log.scrollHeight : oldTop;
 }
 function updateCommandFields() {
@@ -730,14 +805,27 @@ document.querySelectorAll('[data-action]').forEach((button) => {
 $('raw-pause').addEventListener('click', () => {
   rawPaused = !rawPaused;
   $('raw-pause').textContent = rawPaused ? '表示を再開' : '表示を一時停止';
+  $('raw-pause').setAttribute('aria-pressed', String(rawPaused));
   renderRaw(rawPending, rawGap, !rawPaused);
 });
+$('raw-open').addEventListener('click', () => {
+  $('raw-dialog').showModal();
+  renderRaw(rawPending, rawGap, !rawPaused);
+  if (!rawPaused) $('raw-log').scrollTop = $('raw-log').scrollHeight;
+});
+$('raw-close').addEventListener('click', () => $('raw-dialog').close());
+$('raw-dialog').addEventListener('click', (event) => {
+  const bounds = $('raw-dialog').getBoundingClientRect();
+  if (event.target === $('raw-dialog') &&
+    (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) $('raw-dialog').close();
+});
+$('raw-dialog').addEventListener('close', () => $('raw-open').focus());
 $('serial-command').addEventListener('change', updateCommandFields);
 $('command-stream').addEventListener('change', updateCommandFields);
 $('serial-command-form').addEventListener('submit', submitSerialCommand);
 updateCommandFields();
 setSerialControls(false);
-renderPlayerProgress(null); renderHardware(null);
+renderPlayerProgress(null); renderHardware(null); updateActions(null, false);
 
 function updateClock() {
   $('clock').textContent = new Date().toLocaleTimeString('ja-JP', { hour12: false });

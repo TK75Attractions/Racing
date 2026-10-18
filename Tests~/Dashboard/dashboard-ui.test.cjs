@@ -85,9 +85,9 @@ test('TEL updates latest numeric values without entering natural-language histor
   const log=ui.elements.get('serial-log');
   assert.ok(!log.textContent.includes(tel.line));
   assert.match(log.textContent,/2人分の入力が使用可能/);
-  assert.match(ui.elements.get('latest-tel').textContent,/P1  HANDLE -12.5° \/ ACCEL 75.0% \/ BRAKE 0.0%/);
-  assert.match(ui.elements.get('latest-tel').textContent,/P2  HANDLE 25° \/ ACCEL 0.0% \/ BRAKE 40.0%/);
-  assert.ok(ui.elements.get('latest-tel').textContent.includes(tel.line));
+  assert.match(ui.elements.get('latest-tel').textContent,/P1 の受信入力[\s\S]*ハンドル 左 12.5°アクセル75.0%ブレーキ0.0%/);
+  assert.match(ui.elements.get('latest-tel').textContent,/P2 の受信入力[\s\S]*ハンドル 右 25°アクセル0.0%ブレーキ40.0%/);
+  assert.ok(!ui.elements.get('latest-tel').textContent.includes(tel.line));
   ui.render({...base,telemetry:{...tel,id:3},serial:{portOpen:true,lines:[event,tel]}});
   assert.equal(log.children.length,1);
   ui.context.setConnection(false);
@@ -99,7 +99,7 @@ test('Invalid TEL remains in error history and outbound commands are translated'
   const command=entry('SENT','CMD,1,0,PING',2);command.direction='TX';
   ui.render({...base,serial:{portOpen:true,lines:[invalid,command]}});
   assert.match(ui.elements.get('serial-log').textContent,/装置へ「応答確認」を送信/);
-  assert.match(ui.elements.get('serial-log').textContent,/TX SENT/);
+  assert.match(ui.elements.get('serial-log').textContent,/↑ ✓ 送信済み/);
   assert.match(ui.elements.get('serial-alert-list').textContent,/CRC・形式/);
 });
 test('SYS, state, calibration, configuration and ACK have meaningful labels',()=>{
@@ -191,7 +191,7 @@ test('Dedicated alerts survive history eviction, are deduplicated and ordered ne
 });
 
 test('Raw section preserves TEL, TX direction, CRLF and untrusted text without translating',()=>{
-  const ui=fixture();const tel=entry('OK','TEL,9,0,-30,0.7,0.1,45,0.2,0.3');
+  const ui=fixture();ui.elements.get('raw-dialog').open=true;const tel=entry('OK','TEL,9,0,-30,0.7,0.1,45,0.2,0.3');
   const raw=[{...tel,direction:'RX',line:tel.line+'\r\n'},{id:10,time:'12:00:01',direction:'TX',line:'<img src=x>\n'}];
   ui.render({...base,rawLines:raw,rawGap:true,telemetry:tel});
   const log=ui.elements.get('raw-log');
@@ -200,8 +200,8 @@ test('Raw section preserves TEL, TX direction, CRLF and untrusted text without t
   assert.equal(log.children[1].children[1].textContent,'TX');
   assert.equal(log.children[1].children[2].textContent,'<img src=x>\n');
   assert.match(ui.elements.get('raw-status').textContent,/欠落あり/);
-  assert.match(ui.elements.get('latest-tel').textContent,/ハンドル 左 30°、アクセル 70.0%、ブレーキ 10.0%/);
-  ui.context.setConnection(false);assert.equal(log.children.length,0);
+  assert.match(ui.elements.get('latest-tel').textContent,/ハンドル 左 30°アクセル70.0%ブレーキ10.0%/);
+  ui.context.setConnection(false);assert.match(log.textContent,/送受信データを待っています/);
 });
 const healthyHardware = {sessionOpen:true,recent:true,state:'READY',ads:'Ok',imu:'Ok',generation:1,
   inputFresh:true,telemetryEnabled:true,invalidTelemetry:false,angleLocked:true,calibrated:true,
@@ -244,7 +244,7 @@ test('Players can select cars and practice independently, including timeouts and
   assert.equal([...html.matchAll(/data-flow-state=/g)].length,7);
 });
 test('Raw display pauses rendering, bounds history, and resumes with fresh data',()=>{
-  const ui=fixture();const raws=Array.from({length:600},(_,id)=>({id,time:'',direction:'RX',line:'raw'+id+'\n'}));
+  const ui=fixture();ui.elements.get('raw-dialog').open=true;const raws=Array.from({length:600},(_,id)=>({id,time:'',direction:'RX',line:'raw'+id+'\n'}));
   ui.render({...base,rawLines:raws});assert.equal(ui.elements.get('raw-log').children.length,500);
   vm.runInContext('rawPaused=true',ui.context);
   ui.render({...base,rawLines:[{id:601,direction:'RX',line:'new\n'}]});
@@ -374,4 +374,44 @@ test('Preview fetches cannot overlap or restore stale images after a disconnect'
   await refresh;
   assert.equal(ui.elements.get('feed-1').hidden, true);
   assert.equal(revoked.length, 2);
+});
+
+
+test('Device overview counts faults and never reports stale or incomplete hardware as healthy',()=>{
+  const ui=fixture();
+  const render=hardware=>ui.render({...base,serial:{portOpen:true,lines:[]},hardware});
+  render(healthyHardware);assert.match(ui.elements.get('device-summary').textContent,/1件 要確認/);
+  const healthy={...healthyHardware,imus:healthyHardware.imus.map(imu=>({...imu,status:'Ok'}))};
+  render(healthy);assert.match(ui.elements.get('device-summary').textContent,/すべて正常/);
+  assert.equal(ui.elements.get('device-summary-items').children.length,6);
+  for(const change of [{recent:false},{calibrated:false},{angleLocked:false},{state:'CALIBRATING'},{imus:[]}]) {
+    render({...healthy,...change});assert.ok(!ui.elements.get('device-summary').textContent.includes('すべて正常'));
+  }
+  ui.context.setConnection(false);assert.match(ui.elements.get('device-summary').textContent,/確認待ち/);
+});
+test('Progression shows only applicable actions and keeps viewer actions disabled',()=>{
+  const ui=fixture(), visible=()=>ui.buttons.filter(button=>!button.hidden);
+  ui.render({...base,state:'Title'});assert.deepEqual(visible().map(button=>button.dataset.action),['start']);
+  ui.render({...base,state:'Result'},{canControl:false});
+  assert.deepEqual(visible().map(button=>button.dataset.action),['retry','title']);assert.ok(visible().every(button=>button.disabled));
+  ui.render({...base,state:'Countdown'});assert.equal(visible().length,0);
+  assert.match(ui.elements.get('action-empty').textContent,/自動で次の画面へ/);
+  ui.context.setConnection(false);assert.equal(visible().length,0);
+});
+test('Input meters preserve independent values and warn for old or invalid telemetry',()=>{
+  const ui=fixture(), tel=entry('OK','TEL,9,0,0,0,0,25,0.7,0.3');
+  ui.render({...base,telemetry:tel,serial:{portOpen:true,lines:[]},hardware:healthyHardware});
+  const target=ui.elements.get('latest-tel');assert.match(target.textContent,/入力を受信中/);
+  const cards=target.children[1].children;
+  assert.equal(cards[0].children[2].children[2].value,0);assert.equal(cards[1].children[3].children[2].value,.3);
+  ui.render({...base,telemetry:tel,serial:{portOpen:true,lines:[]},hardware:{...healthyHardware,inputFresh:false}});
+  assert.match(target.textContent,/現在の入力は未確認/);
+  ui.render({...base,telemetry:entry('OK','TEL,9,0,0,2,0,25,0.7,0.3')});assert.match(target.textContent,/不正/);
+  ui.render(base);assert.match(target.textContent,/入力を待っています/);
+});
+test('Closed raw dialog buffers recent frames without rebuilding its contents',()=>{
+  const ui=fixture();const raw=[{id:1,direction:'RX',line:'@raw\r\n'}];
+  ui.render({...base,rawLines:raw});assert.equal(ui.elements.get('raw-log').children.length,0);
+  ui.elements.get('raw-dialog').open=true;vm.runInContext('renderRaw(rawPending,rawGap,true)',ui.context);
+  assert.equal(ui.elements.get('raw-log').children[0].children[2].textContent,raw[0].line);
 });
