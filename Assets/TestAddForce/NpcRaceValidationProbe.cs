@@ -37,6 +37,7 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
         public float splitSeconds, rearPairedSeconds;
         public bool occupiedRecoveryRejected, visibleRecoveryRejected, hiddenRecoverySucceeded, checkpointStatePreserved, droveAfterRecovery;
         public bool automaticRecoverySucceeded, humanContactGraceSucceeded, humanContactGraceReleased;
+        public bool repeatedRecoveryMovedBack;
         public string automaticRecoveryDetails;
         public List<Trial> cars = new List<Trial>();
         public string error;
@@ -65,7 +66,7 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
             report.mode="recovery-only";
             typeof(Gmanager).GetMethod("StartGameWhenScreenCovered", Private).Invoke(manager, null);
             yield return ValidateRecovery();
-            report.success=report.occupiedRecoveryRejected && report.visibleRecoveryRejected && report.hiddenRecoverySucceeded && report.checkpointStatePreserved && report.droveAfterRecovery && report.automaticRecoverySucceeded && report.humanContactGraceSucceeded && report.humanContactGraceReleased;
+            report.success=report.occupiedRecoveryRejected && report.visibleRecoveryRejected && report.hiddenRecoverySucceeded && report.checkpointStatePreserved && report.droveAfterRecovery && report.automaticRecoverySucceeded && report.humanContactGraceSucceeded && report.humanContactGraceReleased && report.repeatedRecoveryMovedBack;
             FinishReport(); yield break;
         }
         typeof(LapManager).GetField("goalLap", Private).SetValue(laps, 2);
@@ -101,7 +102,7 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
         report.retryCreatesNewCpus = manager.GetParticipant(2).Car != oldCpu && manager.Participants.Count == 4;
         yield return ValidateRecovery();
         report.success = report.error == null && report.countdownStopped && report.resultsContainFour && report.retryCreatesNewCpus && report.cpuFinishKeptHumansRacing && report.cpuOvertakes > 0 && report.humanOvertakes > 0 &&
-            report.occupiedRecoveryRejected && report.visibleRecoveryRejected && report.hiddenRecoverySucceeded && report.checkpointStatePreserved && report.droveAfterRecovery && report.automaticRecoverySucceeded && report.humanContactGraceSucceeded && report.humanContactGraceReleased;
+            report.occupiedRecoveryRejected && report.visibleRecoveryRejected && report.hiddenRecoverySucceeded && report.checkpointStatePreserved && report.droveAfterRecovery && report.automaticRecoverySucceeded && report.humanContactGraceSucceeded && report.humanContactGraceReleased && report.repeatedRecoveryMovedBack;
         FinishReport();
     }
     private void FinishReport()
@@ -222,6 +223,11 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
         LapManager.CarTimeData data = laps.GetCarData(cpu.Body);
         report.checkpointStatePreserved = data.lapCount==state.lap && data.nextCheckpointIndex==state.nextCheckpoint &&
             data.passedCheckpointCount==state.passedCount && laps.GetRaceProgressDistance(cpu.Body)<=state.progress+1;
+        float firstRecoveryProgress=laps.GetRaceProgressDistance(cpu.Body);
+        cpu.Body.position=safe.position-Vector3.up*20; cpu.Body.linearVelocity=Vector3.zero;
+        recover.Invoke(driver,null);
+        report.repeatedRecoveryMovedBack=driver.RecoveryCount==before+2 && driver.LastRecoveryRollbackMeters>0 &&
+            laps.GetRaceProgressDistance(cpu.Body)<firstRecoveryProgress-1f && data.lapCount==state.lap;
         float recoveredProgress = laps.GetRaceProgressDistance(cpu.Body);
         manager.course.TryGetSampleAtProgress(raw+manager.CourseProgressSign*150, out RaceCourse.CourseSample ahead);
         manager.GetParticipant(0).Body.position=ahead.position+Vector3.up;
