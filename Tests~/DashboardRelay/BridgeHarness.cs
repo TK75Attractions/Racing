@@ -61,6 +61,7 @@ public class Gmanager
     public RaceParticipant GetParticipant(int i)=>null;
     public int GetParticipantLap(RaceParticipant p)=>0; public float GetParticipantSpeed(RaceParticipant p)=>0;
     public UnityEngine.Camera GetPlayerCaptureCamera(int i)=>null;
+    public byte[] CapturePlayerFrame(int i)=>null;
 }
 public class RaceParticipant { public int Index,Position; public bool IsCpu,IsRacing; public float Progress; public NpcRaceDriver Driver; public RaceResultRecord Result; }
 public class NpcRaceDriver { public int RivalIndex,RecoveryCount; public bool HasContactGrace; public string DrivingStatus; public float TargetSpeed; }

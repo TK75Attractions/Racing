@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<test-run result="Passed" total="56" passed="56" failed="0">
+<test-run result="Passed" total="60" passed="60" failed="0">
   <test-case name="DrivingTutorialProgressTests.TimeoutEndsPracticeEvenWhenDisconnectedWithoutCompletingLessons" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.EarlyCompletionStopsTimerAndRecoveryDoesNotResetDeadline" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.TitlePedalHoldCannotFinishAcceleration" result="Passed" />
@@ -22,6 +22,10 @@
   <test-case name="RgpOperatorCommandTests.CommandsValidateArgumentCountRangeAndDirectionBeforeWriting" result="Passed" />
   <test-case name="RgpOperatorCommandTests.FailedOperatorQueriesDoNotDestroyTheEstablishedSession" result="Passed" />
   <test-case name="RgpOperatorCommandTests.HardwareEvidenceResetsAndUnmatchedAcksCannotClaimConnections" result="Passed" />
+  <test-case name="RgpOperatorCommandTests.TwoImusKeepSeparateIdentityFaultAndRecoveryEvidence" result="Passed" />
+  <test-case name="RgpOperatorCommandTests.AggregateImuHealthCannotInventAnUndiscoveredSecondDevice" result="Passed" />
+  <test-case name="RgpOperatorCommandTests.OperatorResultsMatchRequestsAndWaitForAsyncCompletion" result="Passed" />
+  <test-case name="RgpOperatorCommandTests.AsyncFailureEarlyCompletionTimeoutAndResetHaveDefiniteResults" result="Passed" />
   <test-case name="RgpOperatorCommandTests.StartupCalibratesOnceAndWaitsForVerifiedStatusBeforeZeroingAngle" result="Passed" />
   <test-case name="RgpOperatorCommandTests.FailedAutomaticCalibrationIsBoundedAndReadyHardwareIsUntouched" result="Passed" />
   <test-case name="RgpOperatorCommandTests.ManualStartupCalibrationDoesNotTriggerAnAdditionalAutomaticRequest" result="Passed" />

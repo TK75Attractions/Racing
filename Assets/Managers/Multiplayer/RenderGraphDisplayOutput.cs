@@ -72,7 +72,10 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
     }
 
     private void LateUpdate() => RefreshTarget();
-    private void BeginRendering(ScriptableRenderContext context, List<Camera> rendered) => RefreshTarget();
+    private void BeginRendering(ScriptableRenderContext context, List<Camera> rendered)
+    {
+        if (!CapturingPreview) RefreshTarget();
+    }
 
     private void RefreshTarget()
     {
