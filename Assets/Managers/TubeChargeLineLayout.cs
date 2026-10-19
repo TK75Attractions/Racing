@@ -57,7 +57,7 @@ public sealed class TubeChargeLineLayout : MonoBehaviour
     { if (visuals != null) visuals.SetActive(Available && RaceFeatureController.Enabled(RaceFeature.TubeChargeLines)); }
     private void BuildVisuals()
     {
-        if (visuals != null) Destroy(visuals);
+        if (visuals != null) { if (Application.isPlaying) Destroy(visuals); else DestroyImmediate(visuals); }
         visuals = new GameObject("Optional tube charge lines"); visuals.transform.SetParent(transform, false);
         visuals.hideFlags = HideFlags.DontSave;
         if (material != null) { if (Application.isPlaying) Destroy(material); else DestroyImmediate(material); }

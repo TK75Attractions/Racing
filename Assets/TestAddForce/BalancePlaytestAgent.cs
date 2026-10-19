@@ -73,6 +73,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     private string output;
     private StreamWriter trace, events;
     private bool skillSuite;
+    private bool challengePlaytest;
     private readonly float[] nextDecisionAt = new float[2];
     private readonly DriveInputState[] heldDecision = new DriveInputState[2];
     private readonly float[] releaseRequestedAt = {-1,-1};
@@ -82,6 +83,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
 
     private IEnumerator Start()
     {
+        challengePlaytest = Environment.GetEnvironmentVariable("RACING_CHALLENGE_PLAYTEST") == "1";
         output = Environment.GetEnvironmentVariable("RACING_BALANCE_OUTPUT") ?? Path.GetFullPath("Artifacts/BalancePlaytest");
         Directory.CreateDirectory(output);
         suite.startedUtc = DateTime.UtcNow.ToString("o"); suite.unityVersion = Application.unityVersion;
@@ -367,6 +369,19 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         if (run.name == "skill-stop-rejoin" && entry.Index == 1 && run.physicsSeconds >= 45 && run.physicsSeconds < 57) requested = 0;
         if (run.name == "temporary-stop-p2" && entry.Index == 1 && manager.time >= 45 && manager.time < 60) requested = 0;
         float lane = jumpAhead ? 0 : entry.Index == 0 ? 2 : -2;
+        if (challengePlaytest)
+        {
+            TubeChargeLineLayout line = entry.Car.GetComponent<TubeChargeLineController>()?.Layout;
+            if (line != null && line.Available)
+            {
+                float distance = line.DistanceFromEntry(raw);
+                if (distance >= -35f && distance <= TubeLineChallenge.Length + 6f)
+                {
+                    lane = entry.Index == 0 ? line.LaneOffset : -line.LaneOffset;
+                    requested = Mathf.Min(requested, 12f);
+                }
+            }
+        }
         Vector3 aim = Quaternion.Inverse(entry.Body.rotation) * (target.position + target.right * lane - entry.Body.position);
         float steering = Mathf.Clamp(Mathf.Atan2(aim.x, aim.z) * Mathf.Rad2Deg * 1.5f - entry.Body.angularVelocity.y * 8, -30, 30);
         if (skillSuite)

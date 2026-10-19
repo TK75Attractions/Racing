@@ -36,7 +36,7 @@ Gentle itemsを走行中にONへ切り替えると、残っているオイル・
 - 発動後は3秒の再発動待ち。追走相手の変更・条件からの逸脱で蓄積を失います。
 - OFF、復帰、完走、ゲーム終了で蓄積と追加加速を破棄し、再びONにしても持ち越しません。
 
-既定ではDrift coaching・Anti-chain hit protection・Slipstream boostがON、Gentle itemsはStandardでOFFです。比較時は全OFFから必要なものだけONにできます。
+既定ではGentle items以外の追加機能がON、Gentle itemsはStandardでOFF・ExperienceでONです。比較時は全OFFから必要なものだけONにできます。
 
 ## 検証
 
@@ -60,7 +60,9 @@ RACING_BALANCE_TIME_SCALE=3 RACING_BALANCE_OUTPUT=/private/tmp/racing-feature-ex
 Tools/RunBalancePlaytest.sh
 ```
 
-この体験プリセット指定と、Standardを前提にする`RACING_FEATURE_PLAYTEST=1`の切替プローブは、上記のように別々の試走で使用します。
+切替プローブはStandard／Experienceの両方に対応し、開始時のプリセットへ復元します。`RACING_CHALLENGE_PLAYTEST=1`を併用すると、検証用の人間代替入力がチューブ左右のラインを狙います。車の位置・速度は変更せず、通常のハンドルとペダルだけを使います。
+
+通常の自動試走はコース端を避けるため、ハンドルアシストの介入時間が0でも正常です。外れそうな入力での補正の成立は、実接地を使ったUnity検証で別に確認しています。
 
 2026年10月19日の検証結果は [Artifacts/GameplayFeatures](../Artifacts/GameplayFeatures/README.md) に保存しました。
 
