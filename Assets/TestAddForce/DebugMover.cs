@@ -180,16 +180,13 @@ public class DebugMover : MonoBehaviour
             (itemEffects == null || !(itemEffects.IsRocketActive || itemEffects.BlocksDriverInput || itemEffects.IsOiled || itemEffects.IsConfused || itemEffects.IsRecoveryProtected)) &&
             race.course != null && !race.course.IsJumpAhead(transform.position, race.CourseProgressSign, 45f);
     }
-    private void ApplySlipstreamBoost(float dt)
+    private void ApplyRoadRewardBoost(float dt, float legacySpeedDelta)
     {
         if (slipstreamBoostRemaining > 0f && !CanApplySlipstreamBoost()) CancelSlipstreamBoost();
         if (landingBoostRemaining > 0f && !CanApplyLandingBoost()) CancelLandingBoost();
         // Added rewards use the strongest acceleration, never their sum. Legacy boosts retain their rules.
-        float draftDelta = Mathf.Min(dt, slipstreamBoostRemaining) * 4f;
-        float landingDelta = Mathf.Min(dt, landingBoostRemaining) * 2.5f;
-        float budget = Mathf.Clamp(18f - activeDriftBoostAcceleration - activeAccelerationPadBoostAcceleration, 0f, 4f) * dt;
         float speed = Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp()).magnitude;
-        float delta = Mathf.Min(Mathf.Max(draftDelta, landingDelta), budget, Mathf.Max(0f, 32f - speed));
+        float delta = RoadRewardBudget.SpeedDelta(dt, slipstreamBoostRemaining, landingBoostRemaining, legacySpeedDelta, speed);
         slipstreamBoostRemaining = Mathf.Max(0f, slipstreamBoostRemaining - dt);
         landingBoostRemaining = Mathf.Max(0f, landingBoostRemaining - dt);
         if (delta > 0f) rb.AddForce(Vector3.ProjectOnPlane(transform.forward, GetDrivingUp()).normalized * delta, ForceMode.VelocityChange);
@@ -366,7 +363,7 @@ public class DebugMover : MonoBehaviour
             {
                 rb.AddForce(padDirection * padSpeedDelta, ForceMode.VelocityChange);
             }
-            ApplySlipstreamBoost(Time.fixedDeltaTime);
+            ApplyRoadRewardBoost(Time.fixedDeltaTime, boostSpeedDelta + padSpeedDelta);
         }
 
         ApplyTireForces();
