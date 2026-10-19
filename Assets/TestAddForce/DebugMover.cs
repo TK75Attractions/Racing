@@ -162,15 +162,15 @@ public class DebugMover : MonoBehaviour
     }
     private bool CanApplyLandingBoost()
     {
-        if (!RaceFeatureController.Enabled(RaceFeature.LandingBoost) || !CanApplyRoadReward()) return false;
+        if (!RaceFeatureController.Enabled(RaceFeature.LandingBoost) || !CanApplyRoadReward(15f)) return false;
         RaceCourse course = Gmanager.Control.course;
         float progress = course.GetProgressDistance(rb.position);
         return course.TryGetSampleAtProgress(progress, out RaceCourse.CourseSample here) &&
-            course.TryGetSampleAtProgress(progress + Gmanager.Control.CourseProgressSign * 40f, out RaceCourse.CourseSample ahead) &&
-            Vector3.Angle(here.forward, ahead.forward) < 12f;
+            course.TryGetSampleAtProgress(progress + Gmanager.Control.CourseProgressSign * 12f, out RaceCourse.CourseSample ahead) &&
+            Vector3.Angle(here.forward, ahead.forward) < 40f;
     }
     private bool CanApplySlipstreamBoost() => RaceFeatureController.Enabled(RaceFeature.Slipstream) && CanApplyRoadReward();
-    private bool CanApplyRoadReward()
+    private bool CanApplyRoadReward(float gapLookAhead = 45f)
     {
         Gmanager race = Gmanager.Control;
         return race != null && race.state == Gmanager.State.Game &&
@@ -178,7 +178,7 @@ public class DebugMover : MonoBehaviour
             !(inputSource is PlayerDriveInputGate gate && (gate.NeedsPedalRelease || gate.IsBlocked)) &&
             HasDriftGroundContact() && Vector3.Dot(transform.up, Vector3.up) > .85f &&
             (itemEffects == null || !(itemEffects.IsRocketActive || itemEffects.BlocksDriverInput || itemEffects.IsOiled || itemEffects.IsConfused || itemEffects.IsRecoveryProtected)) &&
-            race.course != null && !race.course.IsJumpAhead(transform.position, race.CourseProgressSign, 45f);
+            race.course != null && !race.course.IsJumpAhead(transform.position, race.CourseProgressSign, gapLookAhead);
     }
     private void ApplyRoadRewardBoost(float dt, float legacySpeedDelta)
     {

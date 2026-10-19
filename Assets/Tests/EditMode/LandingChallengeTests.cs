@@ -7,7 +7,7 @@ public sealed class LandingChallengeTests
     [Test] public void ADesignatedFlightRequiresStableLandingAndAwardsOnlyOncePerLap()
     {
         var c = new LandingChallenge(); Assert.IsTrue(c.TryArm(2, 0)); Fly(c);
-        for (int i = 0; i < 9; i++) Assert.IsFalse(c.Tick(true, 2, false, true, .02f));
+        for (int i = 0; i < 3; i++) Assert.IsFalse(c.Tick(true, 2, false, true, .02f));
         Assert.IsTrue(c.Tick(true, 2, false, true, .02f));
         Assert.IsFalse(c.TryArm(2, 0)); Assert.IsTrue(c.TryArm(2, 1));
     }

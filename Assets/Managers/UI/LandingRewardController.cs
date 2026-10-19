@@ -46,25 +46,25 @@ public sealed class LandingRewardController : MonoBehaviour
         if (!course.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample sample)) { Clear(); return; }
         int contacts = 0; foreach (GroundCheck wheel in wheels) if (wheel.CheckNow()) contacts++;
         Vector3 forward = own.Body.rotation * Vector3.forward;
-        bool aligned = Vector3.Dot(forward, sample.forward * manager.CourseProgressSign) > .9f;
-        bool stable = contacts >= 2 && aligned && own.Body.angularVelocity.magnitude < 2.5f &&
-            Vector3.Dot(own.Body.rotation * Vector3.up, sample.up) > .9f &&
-            Mathf.Abs(Vector3.Dot(own.Body.linearVelocity, sample.up)) < 4.5f &&
-            Mathf.Abs(Vector3.Dot(own.Body.position - sample.position, sample.up)) < 2f &&
-            Mathf.Abs(Vector3.Dot(own.Body.position - sample.position, sample.right)) < sample.width * .5f - .8f;
+        bool aligned = Vector3.Dot(forward, sample.forward * manager.CourseProgressSign) > .65f;
+        bool stable = contacts >= 2 && aligned && own.Body.angularVelocity.magnitude < 4.5f &&
+            Vector3.Dot(own.Body.rotation * Vector3.up, sample.up) > .65f &&
+            Mathf.Abs(Vector3.Dot(own.Body.linearVelocity, sample.up)) < 8f &&
+            Mathf.Abs(Vector3.Dot(own.Body.position - sample.position, sample.up)) < 3f &&
+            Mathf.Abs(Vector3.Dot(own.Body.position - sample.position, sample.right)) < sample.width * .5f - .5f;
         if (!challenge.Armed && stable)
             foreach (RaceCourse.JumpSection jump in jumps)
             {
                 float until = DirectedDelta(raw, jump.takeoff, course);
-                if (until < 0f || until > 12f) continue;
+                if (until < 0f || until > 20f) continue;
                 if (challenge.TryArm(jump.id, manager.GetParticipantLap(own))) { activeJump = jump; break; }
             }
         float afterLanding = DirectedDelta(activeJump.landing, raw, course);
-        bool landing = course.HasRoadAtProgress(raw) && afterLanding >= 0f && afterLanding <= 20f && stable;
+        bool landing = course.HasRoadAtProgress(raw) && afterLanding >= 0f && afterLanding <= 60f && stable;
         if (!challenge.Tick(true, contacts, !course.HasRoadAtProgress(raw), landing, dt)) return;
         SuccessfulLandings++;
         if (RaceFeatureController.Enabled(RaceFeature.LandingFeedback))
-        { noticeUntil = Time.time + 1.4f; RaceSoundEffects.PlayForPlayer(RaceSoundCue.Ready, own.Index); }
+        { noticeUntil = Time.time + 1.8f; RaceSoundEffects.PlayForPlayer(RaceSoundCue.Ready, own.Index); }
         if (mover.StartLandingBoost()) RewardBoosts++;
     }
     private float DirectedDelta(float from, float to, RaceCourse course)
@@ -78,14 +78,14 @@ public sealed class LandingRewardController : MonoBehaviour
         mover.InputSource != null && mover.InputSource.IsConnected &&
         !(mover.InputSource is PlayerDriveInputGate gate && (gate.IsBlocked || gate.NeedsPedalRelease)) &&
         !(resetter != null && resetter.IsRecoveryPending) &&
-        Vector3.Dot(own.Body.linearVelocity, own.Body.rotation * Vector3.forward) >= 6f &&
+        Vector3.Dot(own.Body.linearVelocity, own.Body.rotation * Vector3.forward) >= 4f &&
         (own.Effects == null || !(own.Effects.IsRocketActive || own.Effects.BlocksDriverInput || own.Effects.IsOiled ||
             own.Effects.IsConfused || own.Effects.IsRecoveryProtected));
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.relativeVelocity.magnitude < 3f) return;
+        if (collision.relativeVelocity.magnitude < 6f) return;
         for (int i = 0; i < collision.contactCount; i++)
-            if (Vector3.Dot(collision.GetContact(i).normal, Vector3.up) < .5f) { Clear(); return; }
+            if (Vector3.Dot(collision.GetContact(i).normal, Vector3.up) < .35f) { Clear(); return; }
     }
     private void OnDisable() { Clear(); }
 }
