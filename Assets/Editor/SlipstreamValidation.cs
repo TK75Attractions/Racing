@@ -12,7 +12,8 @@ public static class SlipstreamValidation
         public int PlayerIndex => 0;
         public string DeviceId => "slipstream-validation";
         public bool IsConnected { get; set; } = true;
-        public DriveInputState CurrentState => new DriveInputState { pedal = 1f };
+        public float Pedal { get; set; } = 1f;
+        public DriveInputState CurrentState => new DriveInputState { pedal = Pedal };
         public void UpdateInput(float dt) { }
         public void Dispose() { }
     }
@@ -136,6 +137,23 @@ public static class SlipstreamValidation
             Require(!mover.IsLandingBoosting, "Landing boost OFF must cancel remaining acceleration immediately.");
             features.SetFeature(RaceFeature.LandingFeedback, false);
             Require(landing.Notice.Length == 0, "Landing feedback OFF must clear the notice independently.");
+            own.Index = 1;
+            var gate = new PlayerDriveInputGate(input); mover.SetInputSource(gate);
+            PlayerAutodrive auto = car.AddComponent<PlayerAutodrive>(); auto.Configure(race, own);
+            features.SetFeature(RaceFeature.PlayerTwoAutodrive, true);
+            Require(auto.IsActive && gate.Source == auto && gate.IsConnected, "P2 AUTO must retain the existing input gate and supply a connected source.");
+            _ = gate.CurrentState;
+            Invoke(auto, "FixedUpdate");
+            Require(auto.CurrentState.pedal > 0f, "The bot must choose acceleration from the real vehicle and road state.");
+            features.SetFeature(RaceFeature.PlayerTwoAutodrive, false);
+            Require(!auto.IsActive && gate.Source == input && gate.NeedsPedalRelease, "OFF restores manual input and requires a released pedal.");
+            Require(gate.CurrentState.pedal == 0f, "A held manual pedal must not accelerate at handover.");
+            input.Pedal = 0f; _ = gate.CurrentState; input.Pedal = 1f;
+            Require(!gate.NeedsPedalRelease && gate.CurrentState.pedal == 1f, "Manual driving resumes after releasing the pedal.");
+            gate.SetBlocked(true); features.SetFeature(RaceFeature.PlayerTwoAutodrive, true);
+            Require(gate.IsBlocked && gate.CurrentState.pedal == 0f, "AUTO must preserve interruption-menu blocking.");
+            features.SetFeature(RaceFeature.PlayerTwoAutodrive, false);
+            Debug.Log("PLAYER_AUTODRIVE_VALIDATION_PASS: real observations, connected gated source, manual handover, pedal release and pause preservation.");
             Debug.Log("LANDING_REWARD_VALIDATION_PASS: designated gap/reverse geometry, contact-flight-stable landing, independent live boost/feedback OFF.");
             Debug.Log("STEERING_ASSIST_VALIDATION_PASS: grounded edge prediction, live OFF, wall, air and disconnect.");
             Debug.Log("SLIPSTREAM_VALIDATION_PASS: real ground queries, pursuit, live OFF, stacked roads, occlusion, disconnect, reverse direction.");

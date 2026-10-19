@@ -6,17 +6,17 @@ using UnityEngine.InputSystem;
 public sealed class RaceFeatureController : MonoBehaviour
 {
     private static readonly RaceFeature[] Features = {
-        RaceFeature.ExperienceItems, RaceFeature.DriftCoaching, RaceFeature.HitProtection, RaceFeature.Slipstream, RaceFeature.SteeringAssist, RaceFeature.LandingFeedback, RaceFeature.LandingBoost, RaceFeature.TubeChargeLines
+        RaceFeature.ExperienceItems, RaceFeature.DriftCoaching, RaceFeature.HitProtection, RaceFeature.Slipstream, RaceFeature.SteeringAssist, RaceFeature.LandingFeedback, RaceFeature.LandingBoost, RaceFeature.TubeChargeLines, RaceFeature.PlayerTwoAutodrive, RaceFeature.CpuRacing
     };
     private static readonly string[] Labels = {
-        "Gentle items (shield / rocket only)", "Drift coaching", "Anti-chain hit protection", "Slipstream boost", "Course edge steering assist", "Landing success feedback", "Safe landing reward boost", "Tube side charge lines"
+        "Gentle items (shield / rocket only)", "Drift coaching", "Anti-chain hit protection", "Slipstream boost", "Course edge steering assist", "Landing success feedback", "Safe landing reward boost", "Tube side charge lines", "P2 test autodrive (manual on OFF)", "CPU overtaking / counterattack"
     };
     public RaceFeatureSettings Settings { get; } = new RaceFeatureSettings();
     public bool PanelVisible { get; set; }
     public event System.Action FeaturesChanged;
     private Gmanager manager;
     private int appliedRevision = -1;
-    private Rect panel = new Rect(16, 16, 520, 490);
+    private Rect panel = new Rect(16, 16, 550, 560);
 
     public static bool Enabled(RaceFeature feature) => Gmanager.Control != null &&
         Gmanager.Control.Features != null && Gmanager.Control.Features.Settings.IsEnabled(feature);
@@ -47,6 +47,7 @@ public sealed class RaceFeatureController : MonoBehaviour
             foreach (RaceParticipant entry in manager.Participants)
             {
                 entry.Effects?.ApplyFeatureSwitches();
+                entry.Car?.GetComponent<PlayerAutodrive>()?.ApplySwitch();
                 entry.Car?.GetComponent<LandingRewardController>()?.ApplySwitches();
                 if (!Settings.IsEnabled(RaceFeature.TubeChargeLines)) entry.Car?.GetComponent<TubeChargeLineController>()?.Clear();
                 if (!Settings.IsEnabled(RaceFeature.SteeringAssist)) entry.Car?.GetComponent<CourseSteeringAssist>()?.Clear();
@@ -77,6 +78,8 @@ public sealed class RaceFeatureController : MonoBehaviour
             bool next = GUILayout.Toggle(current, Labels[i]);
             if (current != next) SetFeature(Features[i], next);
         }
+        if (manager != null && (manager.state == Gmanager.State.Title || manager.state == Gmanager.State.Result))
+            if (GUILayout.Button("Start test race - P1 manual / P2 AUTO")) manager.StartAutodriveTestRace();
         GUILayout.Space(8);
         GUILayout.Label("Rules now: " + Settings.ActivePreset + " / " + (manager != null ? manager.GoalLap : 2) + " lap(s)");
         GUILayout.Label(Settings.RulesLocked ? "Lap/time preset below applies to the NEXT race." : "Choose rules before either player starts.");

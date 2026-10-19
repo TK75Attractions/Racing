@@ -13,7 +13,7 @@ public sealed class LandingRewardController : MonoBehaviour
     private GroundCheck[] wheels;
     private RaceCourse.JumpSection activeJump;
     private int recoveryCount;
-    private float noticeUntil, previousProgress;
+    private float noticeUntil, previousProgress, boostPendingUntil;
     private bool hasProgress;
     public int SuccessfulLandings { get; private set; }
     public int RewardBoosts { get; private set; }
@@ -26,11 +26,11 @@ public sealed class LandingRewardController : MonoBehaviour
     }
     public void ApplySwitches()
     {
-        if (!RaceFeatureController.Enabled(RaceFeature.LandingBoost)) mover?.CancelLandingBoost();
+        if (!RaceFeatureController.Enabled(RaceFeature.LandingBoost)) { mover?.CancelLandingBoost(); boostPendingUntil = 0f; }
         if (!RaceFeatureController.Enabled(RaceFeature.LandingFeedback)) noticeUntil = 0;
         if (!RaceFeatureController.Enabled(RaceFeature.LandingFeedback) && !RaceFeatureController.Enabled(RaceFeature.LandingBoost)) Clear();
     }
-    public void Clear() { challenge.Clear(); noticeUntil = 0; mover?.CancelLandingBoost(); hasProgress = false; }
+    public void Clear() { challenge.Clear(); boostPendingUntil = 0f; noticeUntil = 0; mover?.CancelLandingBoost(); hasProgress = false; }
     private void FixedUpdate() { Tick(Time.fixedDeltaTime); }
     public void Tick(float dt)
     {
@@ -38,6 +38,11 @@ public sealed class LandingRewardController : MonoBehaviour
         { recoveryCount = resetter.RecoveryCount; Clear(); return; }
         bool enabled = RaceFeatureController.Enabled(RaceFeature.LandingFeedback) || RaceFeatureController.Enabled(RaceFeature.LandingBoost);
         if (!enabled || !CanAttempt()) { Clear(); return; }
+        if (boostPendingUntil > 0f)
+        {
+            if (!RaceFeatureController.Enabled(RaceFeature.LandingBoost) || Time.time > boostPendingUntil) boostPendingUntil = 0f;
+            else if (mover.StartLandingBoost()) { RewardBoosts++; boostPendingUntil = 0f; }
+        }
         RaceCourse course = manager.course;
         float raw = course.GetProgressDistance(own.Body.position);
         float delta = hasProgress ? DirectedDelta(previousProgress, raw, course) : 0f;
@@ -65,7 +70,11 @@ public sealed class LandingRewardController : MonoBehaviour
         SuccessfulLandings++;
         if (RaceFeatureController.Enabled(RaceFeature.LandingFeedback))
         { noticeUntil = Time.time + 1.8f; RaceSoundEffects.PlayForPlayer(RaceSoundCue.Ready, own.Index); }
-        if (mover.StartLandingBoost()) RewardBoosts++;
+        if (RaceFeatureController.Enabled(RaceFeature.LandingBoost))
+        {
+            if (mover.StartLandingBoost()) RewardBoosts++;
+            else boostPendingUntil = Time.time + .9f; // A front-axle touchdown may precede stable rear-wheel contact.
+        }
     }
     private float DirectedDelta(float from, float to, RaceCourse course)
     {

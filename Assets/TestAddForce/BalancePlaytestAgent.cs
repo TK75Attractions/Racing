@@ -74,6 +74,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     private StreamWriter trace, events;
     private bool skillSuite;
     private bool challengePlaytest;
+    private float assistStressStarted = -1f;
     private readonly float[] nextDecisionAt = new float[2];
     private readonly DriveInputState[] heldDecision = new DriveInputState[2];
     private readonly float[] releaseRequestedAt = {-1,-1};
@@ -163,7 +164,13 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         events = new StreamWriter(Path.Combine(folder, "events.csv")); events.WriteLine("time,car,event,detail,x,y,z");
         inputs[0].CurrentState = inputs[1].CurrentState = DriveInputState.Neutral;
         for (int i = 0; i < 2; i++) { inputs[i].IsConnected = true; nextDecisionAt[i] = 0; heldDecision[i] = DriveInputState.Neutral; releaseRequestedAt[i]=releaseUntil[i]=jumpNoticedAt[i]=-1; }
-        Invoke("StartGameWhenScreenCovered"); Invoke("CompleteGameStart");
+        assistStressStarted = -1f;
+        if (Environment.GetEnvironmentVariable("RACING_P2_AUTO") == "1")
+        {
+            while (!manager.CanUseDashboardControls) yield return null;
+            manager.StartAutodriveTestRace();
+        }
+        else { Invoke("StartGameWhenScreenCovered"); Invoke("CompleteGameStart"); }
         foreach (ScreenTransitionController transition in FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
             transition.ApplyStateImmediate(Gmanager.State.Countdown);
         while (manager.state != Gmanager.State.Game) yield return null;
@@ -173,7 +180,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             var record = new CarRecord { label = entry.Label, tires = entry.Car.GetComponentsInChildren<TireForce>(),
                 mover = entry.Car.GetComponent<DebugMover>(), previousPosition = entry.Body.position };
             run.cars.Add(record);
-            if (!entry.IsCpu && !skillSuite)
+            if (!entry.IsCpu && !skillSuite && !(entry.Index == 1 && manager.Features.Settings.IsEnabled(RaceFeature.PlayerTwoAutodrive)))
             {
                 record.mover.SetInputSource(inputs[entry.Index]);
                 entry.Car.GetComponent<CarResetter>()?.SetInputSource(inputs[entry.Index]);
@@ -329,9 +336,9 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             if (write)
             {
                 var data = laps.GetCarData(body); var effects = entry.Effects;
-                var input = entry.IsCpu ? entry.Driver.CurrentState : inputs[entry.Index].CurrentState;
+                var input = entry.IsCpu ? entry.Driver.CurrentState : record.mover.InputSource.CurrentState;
                 var gate=record.mover.InputSource as PlayerDriveInputGate;
-                trace.WriteLine(FormattableString.Invariant($"{now:F2},{entry.Label},{body.position.x:F3},{body.position.y:F3},{body.position.z:F3},{speed:F3},{laps.GetRaceProgressDistance(body):F3},{data.lapCount},{data.lastCheckpointIndex},{entry.Position},{input.pedal:F3},{input.steering:F3},{grounded},{offCourse},{effects.IsRocketActive},{effects.IsConfused},{effects.IsOiled},{effects.IsSpinning},{(entry.Driver?.TargetSpeed ?? 0):F3},{(entry.Driver?.RivalIndex ?? -1)},{inputs[Mathf.Min(entry.Index,1)].IsConnected},{gate?.NeedsPedalRelease??false},{(entry.IsCpu?entry.Driver.RecoveryCount:entry.Car.GetComponent<CarResetter>().RecoveryCount)},{entry.Driver?.RecoveryBlockedReason??""}"));
+                trace.WriteLine(FormattableString.Invariant($"{now:F2},{entry.Label},{body.position.x:F3},{body.position.y:F3},{body.position.z:F3},{speed:F3},{laps.GetRaceProgressDistance(body):F3},{data.lapCount},{data.lastCheckpointIndex},{entry.Position},{input.pedal:F3},{input.steering:F3},{grounded},{offCourse},{effects.IsRocketActive},{effects.IsConfused},{effects.IsOiled},{effects.IsSpinning},{(entry.Driver?.TargetSpeed ?? 0):F3},{(entry.Driver?.RivalIndex ?? -1)},{(entry.IsCpu || record.mover.InputSource.IsConnected)},{gate?.NeedsPedalRelease??false},{(entry.IsCpu?entry.Driver.RecoveryCount:entry.Car.GetComponent<CarResetter>().RecoveryCount)},{entry.Driver?.RecoveryBlockedReason??""}"));
             }
         }
         if (manager.GetParticipant(0).IsRacing && manager.GetParticipant(1).IsRacing &&
@@ -384,6 +391,16 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         }
         Vector3 aim = Quaternion.Inverse(entry.Body.rotation) * (target.position + target.right * lane - entry.Body.position);
         float steering = Mathf.Clamp(Mathf.Atan2(aim.x, aim.z) * Mathf.Rad2Deg * 1.5f - entry.Body.angularVelocity.y * 8, -30, 30);
+        if (entry.Index == 0 && Environment.GetEnvironmentVariable("RACING_ASSIST_STRESS") == "1")
+        {
+            manager.course.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample here);
+            manager.course.TryGetSampleAtProgress(raw + sign * 50f, out RaceCourse.CourseSample distant);
+            if (assistStressStarted < 0f && !entry.Effects.IsRocketActive && !entry.Car.GetComponent<DebugMover>().IsInputSuppressed && run.physicsSeconds > 15f && grounded >= 2 && speed > 8f && here.width >= 16f &&
+                Vector3.Angle(here.forward, distant.forward) < 10f && !manager.course.IsPointInsideTube(entry.Body.position) &&
+                !manager.course.IsJumpAhead(entry.Body.position, sign, 80f))
+            { assistStressStarted = run.physicsSeconds; Event(entry.Index, "outward-steering-stress", "30-degree input for 1.6 seconds; no state writes"); }
+            if (assistStressStarted >= 0f && run.physicsSeconds - assistStressStarted < 1.6f) steering = 30f;
+        }
         if (skillSuite)
         {
             float reaction = profile == "expert" ? .06f : profile == "intermediate" ? .14f : profile == "aggressive" ? .18f : .35f;

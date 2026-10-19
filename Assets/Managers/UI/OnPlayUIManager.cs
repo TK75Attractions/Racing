@@ -78,7 +78,7 @@ public class OnPlayUIManager
         { fieldSize.text = "/ " + entries.Count; displayedFieldSize = entries.Count; }
     }
 
-    public void UpdateDriverNotice(PlayerDriveInputGate gate, CarResetter resetter, bool racing, bool jumpAhead = false, string coachingNotice = "", bool slipstreamBoosting = false, string challengeNotice = "", string tubeNotice = "")
+    public void UpdateDriverNotice(PlayerDriveInputGate gate, CarResetter resetter, bool racing, bool jumpAhead = false, string coachingNotice = "", bool slipstreamBoosting = false, string challengeNotice = "", string tubeNotice = "", bool autodrive = false)
     {
         string text = !racing ? "" : gate != null && !gate.IsConnected ? "接続を確認してください" :
             resetter != null && resetter.IsRecoveryPending ? "コース復帰待ち" :
@@ -87,7 +87,7 @@ public class OnPlayUIManager
             jumpAhead ? "この先ジャンプ：まっすぐ加速" :
             !string.IsNullOrEmpty(challengeNotice) ? challengeNotice :
             !string.IsNullOrEmpty(tubeNotice) ? tubeNotice :
-            !string.IsNullOrEmpty(coachingNotice) ? coachingNotice : slipstreamBoosting ? "追走で加速！" : "";
+            !string.IsNullOrEmpty(coachingNotice) ? coachingNotice : slipstreamBoosting ? "追走で加速！" : autodrive ? "P2 自動運転テスト中" : "";
         if (text == displayedNotice || driverNotice == null) return;
         displayedNotice = text;
         driverNoticeText.text = text;

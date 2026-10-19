@@ -755,6 +755,15 @@ public class Gmanager : MonoBehaviour
         StartGameWhenScreenCovered();
     }
 
+    public void StartAutodriveTestRace()
+    {
+        if ((state != State.Title && state != State.Result) || IsScreenTransitioning()) return;
+        Features.SetFeature(RaceFeature.PlayerTwoAutodrive, true);
+        ClearCurrentRaceObjects(); Features.Settings.BeginPreparation(); ApplyFeatureRules();
+        StartGameWhenScreenCovered(); CompleteGameStart();
+        foreach (ScreenTransitionController transition in screenTransitions) transition?.ApplyStateImmediate(State.Countdown);
+    }
+
     private void StartGameWhenScreenCovered()
     {
         if (Features != null && !Features.Settings.RulesLocked)
@@ -842,6 +851,7 @@ public class Gmanager : MonoBehaviour
             player.car.AddComponent<CourseSteeringAssist>().Configure(this, participant);
             player.car.AddComponent<LandingRewardController>().Configure(this, participant);
             player.car.AddComponent<TubeChargeLineController>().Configure(this, participant);
+            if (playerIndex == 1) player.car.AddComponent<PlayerAutodrive>().Configure(this, participant);
 
             player.cameraController.SetCar(player.car.transform);
             player.displayRig.RaceCamera.Follow = player.cameraController.CameraTarget;
@@ -1422,7 +1432,7 @@ public class Gmanager : MonoBehaviour
             ui.UpdateDriverNotice(player.inputGate, player.car.GetComponent<CarResetter>(),
                 state == State.Game && player.result == null && !player.withdrewFromRace,
                 course != null && course.IsJumpAhead(player.rigidbody.position,CourseProgressSign),
-                player.car.GetComponent<DriftCoachingUI>()?.Notice ?? "", mover != null && mover.IsSlipstreamBoosting, player.car.GetComponent<LandingRewardController>()?.Notice ?? "", player.car.GetComponent<TubeChargeLineController>()?.Notice ?? "");
+                player.car.GetComponent<DriftCoachingUI>()?.Notice ?? "", mover != null && mover.IsSlipstreamBoosting, player.car.GetComponent<LandingRewardController>()?.Notice ?? "", player.car.GetComponent<TubeChargeLineController>()?.Notice ?? "", player.car.GetComponent<PlayerAutodrive>()?.IsActive == true);
         }
     }
 

@@ -18,6 +18,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     private RaceParticipant entry;
     private float targetSpeed = 25f, lane, desiredLane, nextDecision, stuck, reverseUntil, yieldUntil;
     private int rivalIndex;
+    private float landingLaneUntil;
     private bool driving;
     private int groundedTires;
     private float safeRawProgress, safeRaceProgress;
@@ -38,6 +39,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     public DriveInputState CurrentState { get; private set; }
     public int RivalIndex => rivalIndex;
     public int RecoveryCount { get; private set; }
+    public string ContestPhase => RaceFeatureController.Enabled(RaceFeature.CpuRacing) ? ((manager.time + entry.Index * 3f) % 16f < 10f ? "Attack" : "Counterattack room") : "Legacy";
     public float TargetSpeed => targetSpeed * 3.6f;
     public bool HasContactGrace => contactGrace.Count > 0;
     // Read-only diagnostics use the same decisions as the physical driver.
@@ -57,6 +59,8 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         if (resetter != null) { resetter.SetCourse(course, laps); resetter.enabled = false; }
         if (course.TryGetNearestRoadSample(body.position, out RaceCourse.CourseSample initial))
         {
+            if (RaceFeatureController.Enabled(RaceFeature.CpuRacing))
+                lane = desiredLane = Mathf.Clamp(Vector3.Dot(body.position - initial.position, initial.right), -2.4f, 2.4f);
             safeRawProgress = course.GetProgressDistance(initial.position); safeRaceProgress = laps.GetRaceProgressDistance(body);
             safeState = laps.CaptureNpcRecovery(body); hasSafeState = true;
         }
@@ -75,10 +79,12 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         if (!driving || manager.state != Gmanager.State.Game || !entry.IsRacing || laps == null || course == null || !course.HasValidPath)
         { CurrentState = DriveInputState.Neutral; return; }
         float dt = Time.fixedDeltaTime, sign = manager.CourseProgressSign;
+        bool improved = RaceFeatureController.Enabled(RaceFeature.CpuRacing);
         float raw = course.GetProgressDistance(body.position);
         float speed = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up).magnitude;
         int grounded = 0; foreach (TireForce tire in tires) if (tire.IsGrounded) grounded++;
         groundedTires = grounded;
+        if (grounded == 0 && speed > 6f) landingLaneUntil = Time.time + .8f;
         course.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample here);
         bool jumpAhead = false;
         float bendLimit = cruiseSpeed + maximumCatchup;
@@ -88,7 +94,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         {
             course.TryGetSampleAtProgress(raw + sign * distance, out RaceCourse.CourseSample sample);
             float bend = Vector3.Angle(Vector3.ProjectOnPlane(previous, Vector3.up), Vector3.ProjectOnPlane(sample.forward, Vector3.up));
-            float cornerSpeed = Mathf.Clamp(Mathf.Sqrt(6f * 6f / Mathf.Max(.005f, bend * Mathf.Deg2Rad)), 11f, 30f);
+            float cornerSpeed = Mathf.Clamp(Mathf.Sqrt((improved ? 8f : 6f) * 6f / Mathf.Max(.005f, bend * Mathf.Deg2Rad)), 11f, 30f);
             bendLimit = Mathf.Min(bendLimit, Mathf.Sqrt(cornerSpeed * cornerSpeed + 2f * 5f * Mathf.Max(0f, distance - 8f)));
             if (distance <= 30f && !course.HasRoadAtProgress(raw + sign * distance)) jumpAhead = true;
             previous = sample.forward;
@@ -107,7 +113,8 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
             if (rival?.IsRacing == true)
             {
                 float rivalSide = Vector3.Dot(rival.Body.position - here.position, here.right);
-                desiredLane = rivalSide >= 0 ? -2.4f : 2.4f;
+                float candidate = rivalSide >= 0 ? -2.4f : 2.4f;
+                if (!RaceFeatureController.Enabled(RaceFeature.CpuRacing) || PassingLaneClear(candidate, here)) desiredLane = candidate;
             }
         }
         RaceParticipant opponent = manager.GetParticipant(rivalIndex);
@@ -117,8 +124,12 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         float partnerSpeed = opponent?.IsRacing == true ? opponent.Body.linearVelocity.magnitude : cruiseSpeed;
         float adjusted = Mathf.Clamp(Mathf.Clamp(partnerSpeed + (finalLap ? 5f : 3f), 5f, cruiseSpeed) + (gap - contest) * .14f,
             Mathf.Max(7f, cruiseSpeed - maximumSlowdown), cruiseSpeed + maximumCatchup);
+        if (improved) adjusted = opponent?.IsRacing == true
+            ? CpuRacePace.Request(partnerSpeed, gap, manager.time, entry.Index, cruiseSpeed, maximumCatchup) : cruiseSpeed;
         float requested = Mathf.Min(adjusted, bendLimit);
-        if (jumpAhead) { requested = Mathf.Min(bendLimit, Mathf.Max(24f, requested)); desiredLane = 0; }
+        if (improved) jumpAhead |= course.IsJumpAhead(body.position, sign, 45f);
+        if (jumpAhead) { requested = Mathf.Min(bendLimit, improved ? 24f : Mathf.Max(24f, requested)); desiredLane = 0; }
+        if (improved && Time.time < landingLaneUntil) desiredLane = 0;
         float safeLane = Mathf.Min(3f, Mathf.Max(0, here.width * .5f - 3.5f));
         lane = Mathf.MoveTowards(lane, Mathf.Clamp(desiredLane, -safeLane, safeLane), dt * 1.2f);
         course.TryGetSampleAtProgress(raw + sign * Mathf.Clamp(5f + speed * .4f, 8f, 17f), out RaceCourse.CourseSample target);
@@ -132,13 +143,17 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
             Vector3 delta = other.Body.position - body.position;
             float forward = Vector3.Dot(delta, body.rotation * Vector3.forward);
             float side = Mathf.Abs(Vector3.Dot(delta, body.rotation * Vector3.right));
-            if (Mathf.Abs(delta.y) < 3f && forward > 0 && forward < 12f && side < 2.7f)
+            if ((improved ? Mathf.Abs(Vector3.Dot(delta, here.up)) : Mathf.Abs(delta.y)) < 3f && forward > 0 && forward < (improved ? 18f : 12f) && side < (improved ? 2.1f : 2.7f))
             {
-                requested = Mathf.Min(requested, Mathf.Max(0, other.Body.linearVelocity.magnitude - (12f - forward) * .7f));
-                if (!jumpAhead && safeLane > 2.5f) desiredLane = Vector3.Dot(other.Body.position - here.position, here.right) >= 0 ? -safeLane : safeLane;
+                if (forward < 12f) requested = Mathf.Min(requested, Mathf.Max(0, other.Body.linearVelocity.magnitude - (12f - forward) * .7f));
+                if (!jumpAhead && (!improved || Time.time >= landingLaneUntil) && safeLane > (improved ? 1.8f : 2.5f))
+                {
+                    float passing = Vector3.Dot(other.Body.position - here.position, here.right) >= 0 ? -safeLane : safeLane;
+                    if (!improved || PassingLaneClear(passing, here)) desiredLane = passing;
+                }
             }
         }
-        if (Time.time < yieldUntil) requested = Mathf.Min(requested, 8f);
+        if (Time.time < yieldUntil) requested = Mathf.Min(requested, improved ? Mathf.Max(10f, partnerSpeed - 1f) : 8f);
         targetSpeed = Mathf.MoveTowards(targetSpeed, requested, dt * accelerationSlew);
         float signedSpeed = Vector3.Dot(body.linearVelocity, transform.forward);
         float pedal = Mathf.Clamp((targetSpeed - signedSpeed) * .12f, -1f, 1f);
@@ -157,6 +172,21 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
             { safeRawProgress = raw; safeRaceProgress = progress; safeState = laps.CaptureNpcRecovery(body); hasSafeState = true; }
         }
     }
+    private bool PassingLaneClear(float candidate, RaceCourse.CourseSample here)
+    {
+        if (course.IsJumpAhead(body.position, manager.CourseProgressSign, 45f)) return false;
+        foreach (RaceParticipant other in manager.Participants)
+        {
+            if (other == entry || !other.IsRacing) continue;
+            Vector3 delta = other.Body.position - body.position;
+            float ahead = Vector3.Dot(delta, here.forward * manager.CourseProgressSign);
+            if (ahead < -8f || ahead > 24f || Mathf.Abs(Vector3.Dot(delta, here.up)) > 3f) continue;
+            float side = Vector3.Dot(other.Body.position - here.position, here.right);
+            if (Mathf.Abs(side - candidate) < 2.2f) return false;
+        }
+        return true;
+    }
+
     private void TryRecover()
     {
         bool overdue = unrecoveredSeconds >= 6f;
@@ -193,8 +223,14 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         RaceParticipant other = manager.FindParticipant(collision.rigidbody);
         if (other != null && !other.IsCpu)
         {
-            if (Time.time >= yieldUntil) desiredLane = Vector3.Dot(other.Body.position - body.position, transform.right) >= 0 ? -3f : 3f;
-            yieldUntil = Time.time + 3f;
+            if (Time.time >= yieldUntil)
+            {
+                if (RaceFeatureController.Enabled(RaceFeature.CpuRacing) &&
+                    course.TryGetSampleAtProgress(course.GetProgressDistance(body.position), out RaceCourse.CourseSample sample))
+                    desiredLane = Vector3.Dot(other.Body.position - sample.position, sample.right) >= 0f ? -3f : 3f;
+                else desiredLane = Vector3.Dot(other.Body.position - body.position, transform.right) >= 0 ? -3f : 3f;
+            }
+            yieldUntil = Time.time + (RaceFeatureController.Enabled(RaceFeature.CpuRacing) ? .65f : 3f);
             if (!contactGrace.Exists(grace => grace.Other == other.Body))
             {
                 ContactGrace grace = new ContactGrace { Other = other.Body, Colliders = other.Car.GetComponentsInChildren<Collider>(), Until = Time.time + 2f };
