@@ -613,6 +613,8 @@ public class DebugMover : MonoBehaviour
             wheelbase = Mathf.Max(.5f, Mathf.Abs(frontZ / frontCount - rearZ / rearCount));
     }
 
+    private CourseSteeringAssist courseSteeringAssist;
+
     private void ReadInput()
     {
         if (!inputSource.IsConnected)
@@ -652,6 +654,9 @@ public class DebugMover : MonoBehaviour
         filteredSteeringInput = Mathf.Lerp(filteredSteeringInput, request, blend);
         appliedSteeringAngle = Mathf.Clamp(filteredSteeringInput * steeringInputMultiplier * appliedSteeringMultiplier,
             -steeringAngleLimit, steeringAngleLimit);
+        if (courseSteeringAssist == null) courseSteeringAssist = GetComponent<CourseSteeringAssist>();
+        if (courseSteeringAssist != null)
+            appliedSteeringAngle = courseSteeringAssist.Assist(appliedSteeringAngle, steeringAngleLimit, GetDrivingUp(), Time.fixedDeltaTime);
     }
 
     // 遅いほど大きく、速いほど小さい操舵倍率を返す。ドリフト判定に使う生のハンドル入力には影響しない。

@@ -6,17 +6,17 @@ using UnityEngine.InputSystem;
 public sealed class RaceFeatureController : MonoBehaviour
 {
     private static readonly RaceFeature[] Features = {
-        RaceFeature.ExperienceItems, RaceFeature.DriftCoaching, RaceFeature.HitProtection, RaceFeature.Slipstream
+        RaceFeature.ExperienceItems, RaceFeature.DriftCoaching, RaceFeature.HitProtection, RaceFeature.Slipstream, RaceFeature.SteeringAssist
     };
     private static readonly string[] Labels = {
-        "Gentle items (shield / rocket only)", "Drift coaching", "Anti-chain hit protection", "Slipstream boost"
+        "Gentle items (shield / rocket only)", "Drift coaching", "Anti-chain hit protection", "Slipstream boost", "Course edge steering assist"
     };
     public RaceFeatureSettings Settings { get; } = new RaceFeatureSettings();
     public bool PanelVisible { get; set; }
     public event System.Action FeaturesChanged;
     private Gmanager manager;
     private int appliedRevision = -1;
-    private Rect panel = new Rect(16, 16, 430, 340);
+    private Rect panel = new Rect(16, 16, 470, 390);
 
     public static bool Enabled(RaceFeature feature) => Gmanager.Control != null &&
         Gmanager.Control.Features != null && Gmanager.Control.Features.Settings.IsEnabled(feature);
@@ -47,6 +47,7 @@ public sealed class RaceFeatureController : MonoBehaviour
             foreach (RaceParticipant entry in manager.Participants)
             {
                 entry.Effects?.ApplyFeatureSwitches();
+                if (!Settings.IsEnabled(RaceFeature.SteeringAssist)) entry.Car?.GetComponent<CourseSteeringAssist>()?.Clear();
                 if (!Settings.IsEnabled(RaceFeature.DriftCoaching)) entry.Car?.GetComponent<DriftCoachingUI>()?.ClearNotice();
                 if (!Settings.IsEnabled(RaceFeature.Slipstream)) entry.Car?.GetComponent<SlipstreamController>()?.Clear();
             }
@@ -88,7 +89,7 @@ public sealed class RaceFeatureController : MonoBehaviour
                 if (entry.IsCpu || entry.Car == null) continue;
                 int drifts = entry.Car.GetComponent<DriftCoachingUI>()?.SuccessfulReleases ?? 0;
                 int drafts = entry.Car.GetComponent<SlipstreamController>()?.SuccessfulBoosts ?? 0;
-                GUILayout.Label(entry.Label + "  drift releases: " + drifts + "  draft boosts: " + drafts);
+                GUILayout.Label(entry.Label + "  drift releases: " + drifts + "  draft boosts: " + drafts + "  assist(s): " + (entry.Car.GetComponent<CourseSteeringAssist>()?.ActiveSeconds ?? 0f).ToString("F1"));
             }
         GUILayout.Label("Debug choices reset on application restart.");
         GUI.DragWindow(new Rect(0, 0, 10000, 20));

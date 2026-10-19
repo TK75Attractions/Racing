@@ -94,6 +94,20 @@ public static class SlipstreamValidation
             targetBody.rotation = targetObject.transform.rotation; Physics.SyncTransforms();
             for (int i = 0; i < 50; i++) controller.Tick(.02f);
             Require(controller.SuccessfulBoosts == 1, "An oncoming car cannot be a target.");
+            CourseSteeringAssist assist = car.AddComponent<CourseSteeringAssist>(); assist.Configure(race, own);
+            body.position = new Vector3(13, .35f, 100); body.linearVelocity = new Vector3(4, 0, 10);
+            Physics.SyncTransforms();
+            for (int i = 0; i < 20; i++) assist.Assist(0, 20, Vector3.up, .02f);
+            Require(assist.CorrectionDegrees < -1f, "A grounded predicted right-edge departure must steer inward.");
+            features.SetFeature(RaceFeature.SteeringAssist, false);
+            Require(assist.CorrectionDegrees == 0, "Live OFF must clear steering assistance immediately.");
+            features.SetFeature(RaceFeature.SteeringAssist, true);
+            Require(assist.Assist(5, 20, Vector3.right, .02f) == 5, "Wall driving must preserve the driver's angle.");
+            body.position += Vector3.up * 5; Physics.SyncTransforms();
+            Require(assist.Assist(5, 20, Vector3.up, .02f) == 5, "Airborne cars must receive no assistance.");
+            body.position -= Vector3.up * 5; Physics.SyncTransforms(); input.IsConnected = false;
+            Require(assist.Assist(5, 20, Vector3.up, .02f) == 5, "Disconnected input cannot be steered.");
+            Debug.Log("STEERING_ASSIST_VALIDATION_PASS: grounded edge prediction, live OFF, wall, air and disconnect.");
             Debug.Log("SLIPSTREAM_VALIDATION_PASS: real ground queries, pursuit, live OFF, stacked roads, occlusion, disconnect, reverse direction.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); Gmanager.Control = previous; }

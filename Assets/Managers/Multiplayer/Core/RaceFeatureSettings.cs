@@ -10,13 +10,14 @@ public enum RaceFeature
     DriftCoaching = 2,
     HitProtection = 4,
     Slipstream = 8,
-    All = ExperienceItems | DriftCoaching | HitProtection | Slipstream
+    SteeringAssist = 16,
+    All = ExperienceItems | DriftCoaching | HitProtection | Slipstream | SteeringAssist
 }
 
 /// <summary>Session-local feature switches. Structural rules are frozen for a race.</summary>
 public sealed class RaceFeatureSettings
 {
-    public RaceFeature Enabled { get; private set; } = RaceFeature.DriftCoaching | RaceFeature.HitProtection | RaceFeature.Slipstream;
+    public RaceFeature Enabled { get; private set; } = RaceFeature.DriftCoaching | RaceFeature.HitProtection | RaceFeature.Slipstream | RaceFeature.SteeringAssist;
     public RacePreset SelectedPreset { get; private set; }
     public RacePreset ActivePreset { get; private set; }
     public bool RulesLocked { get; private set; }
