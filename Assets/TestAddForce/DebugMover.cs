@@ -147,7 +147,8 @@ public class DebugMover : MonoBehaviour
     public void CancelSlipstreamBoost() { slipstreamBoostRemaining = 0f; }
     public bool StartSlipstreamBoost()
     {
-        if (!CanApplySlipstreamBoost()) return false;
+        if (!CanApplySlipstreamBoost() || activeDriftBoostAcceleration + activeAccelerationPadBoostAcceleration >= 18f ||
+            Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp()).magnitude >= 32f) return false;
         slipstreamBoostRemaining = .7f; return true;
     }
     private bool CanApplySlipstreamBoost()

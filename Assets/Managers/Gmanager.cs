@@ -757,6 +757,8 @@ public class Gmanager : MonoBehaviour
 
     private void StartGameWhenScreenCovered()
     {
+        if (Features != null && !Features.Settings.RulesLocked)
+        { Features.Settings.BeginPreparation(); ApplyFeatureRules(); }
         Transform spawnPoint = GetStartPoint();
         Vector3 basePosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
         Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
@@ -833,8 +835,10 @@ public class Gmanager : MonoBehaviour
             AssignPlayerInput(player.car, playerIndex);
             player.car.AddComponent<DriftCoachingUI>().Configure(this, player.mover, playerIndex);
             lapManager?.RegisterCar(player.rigidbody, spawnPoint);
-            participants.Add(new RaceParticipant { Index = playerIndex, Car = player.car, Body = player.rigidbody,
-                Effects = player.itemEffects, Position = playerIndex + 1 });
+            RaceParticipant participant = new RaceParticipant { Index = playerIndex, Car = player.car, Body = player.rigidbody,
+                Effects = player.itemEffects, Position = playerIndex + 1 };
+            participants.Add(participant);
+            player.car.AddComponent<SlipstreamController>().Configure(this, participant);
 
             player.cameraController.SetCar(player.car.transform);
             player.displayRig.RaceCamera.Follow = player.cameraController.CameraTarget;
@@ -1415,7 +1419,7 @@ public class Gmanager : MonoBehaviour
             ui.UpdateDriverNotice(player.inputGate, player.car.GetComponent<CarResetter>(),
                 state == State.Game && player.result == null && !player.withdrewFromRace,
                 course != null && course.IsJumpAhead(player.rigidbody.position,CourseProgressSign),
-                player.car.GetComponent<DriftCoachingUI>()?.Notice ?? "");
+                player.car.GetComponent<DriftCoachingUI>()?.Notice ?? "", mover != null && mover.IsSlipstreamBoosting);
         }
     }
 

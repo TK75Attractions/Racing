@@ -20,6 +20,7 @@ public sealed class DriftCoachingUI : MonoBehaviour
         effects = GetComponent<CarItemEffects>(); tires = GetComponentsInChildren<TireForce>();
         mover.DriftBoostReleased += OnRelease;
     }
+    public void ClearNotice() { message = ""; messageUntil = 0f; }
     private void OnDestroy() { if (mover != null) mover.DriftBoostReleased -= OnRelease; }
     private void OnRelease(float normalizedCharge)
     {

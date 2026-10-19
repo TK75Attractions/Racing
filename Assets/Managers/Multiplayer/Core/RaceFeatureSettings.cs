@@ -20,6 +20,7 @@ public sealed class RaceFeatureSettings
     public RacePreset SelectedPreset { get; private set; }
     public RacePreset ActivePreset { get; private set; }
     public bool RulesLocked { get; private set; }
+    public bool HasQueuedPreset { get; private set; }
     public int Revision { get; private set; }
     public bool IsEnabled(RaceFeature feature) => feature != RaceFeature.None && (Enabled & feature) == feature;
     public void SetFeature(RaceFeature feature, bool enabled)
@@ -34,6 +35,7 @@ public sealed class RaceFeatureSettings
         if (preset != RacePreset.Standard && preset != RacePreset.Experience) return;
         SelectedPreset = preset;
         if (!RulesLocked) ApplyPreset();
+        else HasQueuedPreset = true;
     }
     public void BeginPreparation()
     {
@@ -48,12 +50,13 @@ public sealed class RaceFeatureSettings
     }
     public void ResetForNextGroup()
     {
-        SelectedPreset = RacePreset.Standard;
+        if (!HasQueuedPreset) SelectedPreset = RacePreset.Standard;
         UnlockAtTitle();
     }
     private void ApplyPreset()
     {
         ActivePreset = SelectedPreset;
+        HasQueuedPreset = false;
         SetFeature(RaceFeature.ExperienceItems, ActivePreset == RacePreset.Experience);
     }
 }

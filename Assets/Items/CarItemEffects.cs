@@ -90,7 +90,7 @@ public sealed class CarItemEffects : MonoBehaviour
                 }
             }
         }
-        if (gentle && !lastGentleEnabled) ClearHarmfulEffects();
+        if (gentle && !lastGentleEnabled) { ClearHarmfulEffects(); hitProtection.Clear(); }
         lastProtectionEnabled = protect; lastGentleEnabled = gentle;
     }
     public void ClearHarmfulEffects()

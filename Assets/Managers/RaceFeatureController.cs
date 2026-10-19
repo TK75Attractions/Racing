@@ -44,7 +44,12 @@ public sealed class RaceFeatureController : MonoBehaviour
         appliedRevision = Settings.Revision;
         if (manager != null)
         {
-            foreach (RaceParticipant entry in manager.Participants) entry.Effects?.ApplyFeatureSwitches();
+            foreach (RaceParticipant entry in manager.Participants)
+            {
+                entry.Effects?.ApplyFeatureSwitches();
+                if (!Settings.IsEnabled(RaceFeature.DriftCoaching)) entry.Car?.GetComponent<DriftCoachingUI>()?.ClearNotice();
+                if (!Settings.IsEnabled(RaceFeature.Slipstream)) entry.Car?.GetComponent<SlipstreamController>()?.Clear();
+            }
             if (Settings.IsEnabled(RaceFeature.ExperienceItems)) OilSlick.ClearAll();
         }
         FeaturesChanged?.Invoke();
@@ -72,11 +77,19 @@ public sealed class RaceFeatureController : MonoBehaviour
         GUILayout.Label("Rules now: " + Settings.ActivePreset + " / " + (manager != null ? manager.GoalLap : 2) + " lap(s)");
         GUILayout.Label(Settings.RulesLocked ? "Lap/time preset below applies to the NEXT race." : "Choose rules before either player starts.");
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Standard: 2 laps")) SelectPreset(RacePreset.Standard);
+        if (GUILayout.Button("Standard: scene rules")) SelectPreset(RacePreset.Standard);
         if (GUILayout.Button("Experience: 1 lap")) SelectPreset(RacePreset.Experience);
         GUILayout.EndHorizontal();
         GUILayout.Label("Next preset: " + Settings.SelectedPreset);
         if (GUILayout.Button("All added features OFF (legacy comparison)")) SetFeature(RaceFeature.All, false);
+        if (manager != null)
+            foreach (RaceParticipant entry in manager.Participants)
+            {
+                if (entry.IsCpu || entry.Car == null) continue;
+                int drifts = entry.Car.GetComponent<DriftCoachingUI>()?.SuccessfulReleases ?? 0;
+                int drafts = entry.Car.GetComponent<SlipstreamController>()?.SuccessfulBoosts ?? 0;
+                GUILayout.Label(entry.Label + "  drift releases: " + drifts + "  draft boosts: " + drafts);
+            }
         GUILayout.Label("Debug choices reset on application restart.");
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
     }

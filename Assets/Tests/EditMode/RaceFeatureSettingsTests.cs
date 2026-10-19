@@ -28,6 +28,18 @@ public sealed class RaceFeatureSettingsTests
         Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
         Assert.IsFalse(settings.RulesLocked);
     }
+    [Test] public void AnExplicitQueuedPresetSurvivesNextGroupWhileUnqueuedExperienceResets()
+    {
+        var settings = new RaceFeatureSettings();
+        settings.BeginPreparation();
+        settings.SelectPreset(RacePreset.Experience);
+        settings.ResetForNextGroup();
+        Assert.AreEqual(RacePreset.Experience, settings.ActivePreset);
+        Assert.IsFalse(settings.HasQueuedPreset);
+        settings.BeginPreparation();
+        settings.ResetForNextGroup();
+        Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
+    }
     [Test] public void ExperienceRulesAndCustomStandardRulesDoNotMutateEachOther()
     {
         var standard = new RaceRuleSet(RacePreset.Standard, 3, 240, 25, 120);

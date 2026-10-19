@@ -21,6 +21,7 @@ public static class RaceFeatureValidation
         Require(rules.GoalLaps == 1 && rules.MaximumSeconds == 180 && rules.MaximumGraceSeconds == 90,
             "Experience limits must match the UI and race session.");
         ValidateCoachingAndItems();
+        SlipstreamValidation.Run();
         RacingHUDFontBuilder.Build();
         foreach (bool bold in new[] { false, true })
             Require(RacingUIFontCatalog.GetHUD(bold).HasCharacters("ドリフト加速！少し逆に切って加速曲がってためる保護中"),
