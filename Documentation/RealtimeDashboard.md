@@ -2,6 +2,8 @@
 
 起動手順のみを読む場合は[ダッシュボード起動マニュアル](DashboardStartup.md)を参照してください。
 
+他の人への共有は[主催者向けマニュアル](DashboardSharingOwner.md)、招待を受けた側の準備は[参加者向けマニュアル](DashboardSharingParticipant.md)を参照してください。
+
 既存の画面でレース管理、順位・CPU状態、プレイヤープレビュー、シリアル最新値、通信履歴を使う。ゲームPCと閲覧端末は別回線でよく、両方にTailscaleを導入して接続する。
 
 ## 構成
