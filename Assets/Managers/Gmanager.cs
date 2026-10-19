@@ -841,6 +841,7 @@ public class Gmanager : MonoBehaviour
             player.car.AddComponent<SlipstreamController>().Configure(this, participant);
             player.car.AddComponent<CourseSteeringAssist>().Configure(this, participant);
             player.car.AddComponent<LandingRewardController>().Configure(this, participant);
+            player.car.AddComponent<TubeChargeLineController>().Configure(this, participant);
 
             player.cameraController.SetCar(player.car.transform);
             player.displayRig.RaceCamera.Follow = player.cameraController.CameraTarget;
@@ -1421,7 +1422,7 @@ public class Gmanager : MonoBehaviour
             ui.UpdateDriverNotice(player.inputGate, player.car.GetComponent<CarResetter>(),
                 state == State.Game && player.result == null && !player.withdrewFromRace,
                 course != null && course.IsJumpAhead(player.rigidbody.position,CourseProgressSign),
-                player.car.GetComponent<DriftCoachingUI>()?.Notice ?? "", mover != null && mover.IsSlipstreamBoosting, player.car.GetComponent<LandingRewardController>()?.Notice ?? "");
+                player.car.GetComponent<DriftCoachingUI>()?.Notice ?? "", mover != null && mover.IsSlipstreamBoosting, player.car.GetComponent<LandingRewardController>()?.Notice ?? "", player.car.GetComponent<TubeChargeLineController>()?.Notice ?? "");
         }
     }
 

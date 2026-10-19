@@ -6,17 +6,17 @@ using UnityEngine.InputSystem;
 public sealed class RaceFeatureController : MonoBehaviour
 {
     private static readonly RaceFeature[] Features = {
-        RaceFeature.ExperienceItems, RaceFeature.DriftCoaching, RaceFeature.HitProtection, RaceFeature.Slipstream, RaceFeature.SteeringAssist, RaceFeature.LandingFeedback, RaceFeature.LandingBoost
+        RaceFeature.ExperienceItems, RaceFeature.DriftCoaching, RaceFeature.HitProtection, RaceFeature.Slipstream, RaceFeature.SteeringAssist, RaceFeature.LandingFeedback, RaceFeature.LandingBoost, RaceFeature.TubeChargeLines
     };
     private static readonly string[] Labels = {
-        "Gentle items (shield / rocket only)", "Drift coaching", "Anti-chain hit protection", "Slipstream boost", "Course edge steering assist", "Landing success feedback", "Safe landing reward boost"
+        "Gentle items (shield / rocket only)", "Drift coaching", "Anti-chain hit protection", "Slipstream boost", "Course edge steering assist", "Landing success feedback", "Safe landing reward boost", "Tube side charge lines"
     };
     public RaceFeatureSettings Settings { get; } = new RaceFeatureSettings();
     public bool PanelVisible { get; set; }
     public event System.Action FeaturesChanged;
     private Gmanager manager;
     private int appliedRevision = -1;
-    private Rect panel = new Rect(16, 16, 500, 450);
+    private Rect panel = new Rect(16, 16, 520, 490);
 
     public static bool Enabled(RaceFeature feature) => Gmanager.Control != null &&
         Gmanager.Control.Features != null && Gmanager.Control.Features.Settings.IsEnabled(feature);
@@ -48,10 +48,12 @@ public sealed class RaceFeatureController : MonoBehaviour
             {
                 entry.Effects?.ApplyFeatureSwitches();
                 entry.Car?.GetComponent<LandingRewardController>()?.ApplySwitches();
+                if (!Settings.IsEnabled(RaceFeature.TubeChargeLines)) entry.Car?.GetComponent<TubeChargeLineController>()?.Clear();
                 if (!Settings.IsEnabled(RaceFeature.SteeringAssist)) entry.Car?.GetComponent<CourseSteeringAssist>()?.Clear();
                 if (!Settings.IsEnabled(RaceFeature.DriftCoaching)) entry.Car?.GetComponent<DriftCoachingUI>()?.ClearNotice();
                 if (!Settings.IsEnabled(RaceFeature.Slipstream)) entry.Car?.GetComponent<SlipstreamController>()?.Clear();
             }
+            manager.course?.GetComponent<TubeChargeLineLayout>()?.ApplySwitch();
             if (Settings.IsEnabled(RaceFeature.ExperienceItems)) OilSlick.ClearAll();
         }
         FeaturesChanged?.Invoke();
@@ -94,7 +96,7 @@ public sealed class RaceFeatureController : MonoBehaviour
             }
         if (manager != null)
             foreach (RaceParticipant entry in manager.Participants)
-                if (!entry.IsCpu && entry.Car != null) GUILayout.Label(entry.Label + "  landings: " + (entry.Car.GetComponent<LandingRewardController>()?.SuccessfulLandings ?? 0));
+                if (!entry.IsCpu && entry.Car != null) GUILayout.Label(entry.Label + "  landings: " + (entry.Car.GetComponent<LandingRewardController>()?.SuccessfulLandings ?? 0) + "  tube lines: " + (entry.Car.GetComponent<TubeChargeLineController>()?.SuccessfulLines ?? 0));
         GUILayout.Label("Debug choices reset on application restart.");
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
     }

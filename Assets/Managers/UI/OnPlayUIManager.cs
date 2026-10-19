@@ -78,7 +78,7 @@ public class OnPlayUIManager
         { fieldSize.text = "/ " + entries.Count; displayedFieldSize = entries.Count; }
     }
 
-    public void UpdateDriverNotice(PlayerDriveInputGate gate, CarResetter resetter, bool racing, bool jumpAhead = false, string coachingNotice = "", bool slipstreamBoosting = false, string challengeNotice = "")
+    public void UpdateDriverNotice(PlayerDriveInputGate gate, CarResetter resetter, bool racing, bool jumpAhead = false, string coachingNotice = "", bool slipstreamBoosting = false, string challengeNotice = "", string tubeNotice = "")
     {
         string text = !racing ? "" : gate != null && !gate.IsConnected ? "接続を確認してください" :
             resetter != null && resetter.IsRecoveryPending ? "コース復帰待ち" :
@@ -86,6 +86,7 @@ public class OnPlayUIManager
             resetter != null && UnityEngine.Time.time - resetter.LastRecoveryTime < 1.5f ? "コースへ復帰しました" :
             jumpAhead ? "この先ジャンプ：まっすぐ加速" :
             !string.IsNullOrEmpty(challengeNotice) ? challengeNotice :
+            !string.IsNullOrEmpty(tubeNotice) ? tubeNotice :
             !string.IsNullOrEmpty(coachingNotice) ? coachingNotice : slipstreamBoosting ? "追走で加速！" : "";
         if (text == displayedNotice || driverNotice == null) return;
         displayedNotice = text;
