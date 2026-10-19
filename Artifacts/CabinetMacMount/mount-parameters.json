@@ -1,0 +1,73 @@
+{
+  "revision": "20261019-bold-observer-frame",
+  "model_mm_per_unit": 10,
+  "cabinet": {
+    "height_mm": 2150,
+    "width_mm": 1206,
+    "length_mm": 2652.83962,
+    "width_including_cover_mm": 1218
+  },
+  "window": {
+    "width_mm": 360,
+    "height_mm": 240,
+    "top_from_cabinet_top_mm": 500,
+    "top_from_floor_mm": 1650,
+    "bottom_from_floor_mm": 1410,
+    "center_source_y": -46.3,
+    "outline_width_mm": 20,
+    "black_clearance_mm": 35
+  },
+  "cover": {
+    "width_mm": 480,
+    "height_mm": 480,
+    "thickness_mm": 12,
+    "bottom_from_floor_mm": 1200,
+    "top_from_floor_mm": 1680
+  },
+  "cavity": {
+    "clear_width_mm": 400,
+    "clear_depth_mm": 170,
+    "bottom_from_floor_mm": 1210,
+    "top_from_floor_mm": 1660,
+    "clear_height_mm": 450
+  },
+  "device": {
+    "name": "MacBook Pro 13-inch 2020",
+    "width_mm": 304.1,
+    "depth_mm": 212.4,
+    "closed_height_mm": 15.6,
+    "screen_diagonal_in": 13.3,
+    "screen_resolution": [
+      2560,
+      1600
+    ],
+    "active_area_approx_mm": [
+      286.47078705899884,
+      179.04424191187425
+    ],
+    "opening_deg": 130,
+    "lid_outward_from_vertical_deg": 20,
+    "base_downward_from_horizontal_deg": 60,
+    "hinge_floor_mm": 1430.4092873450732,
+    "hinge_inset_mm": 135,
+    "lid_top_floor_mm": 1630,
+    "base_thickness_model_mm": 12,
+    "lid_thickness_model_mm": 3.6,
+    "hinge_to_lid_top_model_mm": 212.4,
+    "notes": "Closed exterior dimensions are Apple specifications. Hinge-axis location, open-part thickness allocation, bezel and port clearances remain model approximations; support positions require device check."
+  },
+  "sources": [
+    {
+      "title": "Apple: MacBook Pro 13-inch 2020, 4 ports",
+      "url": "https://support.apple.com/ja-jp/111339"
+    },
+    {
+      "title": "Apple: MacBook Pro 13-inch 2020, 2 ports",
+      "url": "https://support.apple.com/ja-jp/111981"
+    },
+    {
+      "title": "Apple: MacBook Pro 13-inch M1 2020",
+      "url": "https://support.apple.com/ja-jp/111893"
+    }
+  ]
+}
