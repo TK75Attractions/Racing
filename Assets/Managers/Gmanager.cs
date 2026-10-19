@@ -831,6 +831,7 @@ public class Gmanager : MonoBehaviour
             player.withdrewFromRace = false;
             player.displayedRacePosition = playerIndex + 1;
             AssignPlayerInput(player.car, playerIndex);
+            player.car.AddComponent<DriftCoachingUI>().Configure(this, player.mover, playerIndex);
             lapManager?.RegisterCar(player.rigidbody, spawnPoint);
             participants.Add(new RaceParticipant { Index = playerIndex, Car = player.car, Body = player.rigidbody,
                 Effects = player.itemEffects, Position = playerIndex + 1 });
@@ -1413,7 +1414,8 @@ public class Gmanager : MonoBehaviour
             ui.UpdateParticipants(participants);
             ui.UpdateDriverNotice(player.inputGate, player.car.GetComponent<CarResetter>(),
                 state == State.Game && player.result == null && !player.withdrewFromRace,
-                course != null && course.IsJumpAhead(player.rigidbody.position,CourseProgressSign));
+                course != null && course.IsJumpAhead(player.rigidbody.position,CourseProgressSign),
+                player.car.GetComponent<DriftCoachingUI>()?.Notice ?? "");
         }
     }
 

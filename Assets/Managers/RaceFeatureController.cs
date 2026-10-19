@@ -42,6 +42,11 @@ public sealed class RaceFeatureController : MonoBehaviour
     {
         if (appliedRevision == Settings.Revision) return;
         appliedRevision = Settings.Revision;
+        if (manager != null)
+        {
+            foreach (RaceParticipant entry in manager.Participants) entry.Effects?.ApplyFeatureSwitches();
+            if (Settings.IsEnabled(RaceFeature.ExperienceItems)) OilSlick.ClearAll();
+        }
         FeaturesChanged?.Invoke();
     }
     private void OnGUI()

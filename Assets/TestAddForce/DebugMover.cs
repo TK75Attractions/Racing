@@ -142,6 +142,35 @@ public class DebugMover : MonoBehaviour
     [Tooltip("加速度盤から受けた加速度（実行時モニター）。")]
     [SerializeField] private float activeAccelerationPadBoostAcceleration;
 
+    private float slipstreamBoostRemaining;
+    public bool IsSlipstreamBoosting => slipstreamBoostRemaining > 0f;
+    public void CancelSlipstreamBoost() { slipstreamBoostRemaining = 0f; }
+    public bool StartSlipstreamBoost()
+    {
+        if (!CanApplySlipstreamBoost()) return false;
+        slipstreamBoostRemaining = .7f; return true;
+    }
+    private bool CanApplySlipstreamBoost()
+    {
+        Gmanager race = Gmanager.Control;
+        return RaceFeatureController.Enabled(RaceFeature.Slipstream) && race != null && race.state == Gmanager.State.Game &&
+            rb != null && !rb.isKinematic && !IsInputSuppressed && inputSource != null && inputSource.IsConnected &&
+            !(inputSource is PlayerDriveInputGate gate && (gate.NeedsPedalRelease || gate.IsBlocked)) &&
+            HasDriftGroundContact() && Vector3.Dot(transform.up, Vector3.up) > .85f &&
+            (itemEffects == null || !(itemEffects.IsRocketActive || itemEffects.BlocksDriverInput || itemEffects.IsOiled || itemEffects.IsConfused)) &&
+            race.course != null && !race.course.IsJumpAhead(transform.position, race.CourseProgressSign, 45f);
+    }
+    private void ApplySlipstreamBoost(float dt)
+    {
+        if (slipstreamBoostRemaining <= 0f) return;
+        if (!CanApplySlipstreamBoost()) { CancelSlipstreamBoost(); return; }
+        float speed = Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp()).magnitude;
+        float acceleration = Mathf.Clamp(18f - activeDriftBoostAcceleration - activeAccelerationPadBoostAcceleration, 0f, 4f);
+        float delta = Mathf.Min(acceleration * Mathf.Min(dt, slipstreamBoostRemaining), Mathf.Max(0f, 32f - speed));
+        slipstreamBoostRemaining = Mathf.Max(0f, slipstreamBoostRemaining - dt);
+        rb.AddForce(Vector3.ProjectOnPlane(transform.forward, GetDrivingUp()).normalized * delta, ForceMode.VelocityChange);
+    }
+
     private Rigidbody rb;
     private IDriveInputSource inputSource;
     private float inputSuppressedUntil;
@@ -173,7 +202,12 @@ public class DebugMover : MonoBehaviour
         Mathf.Max(.0001f, steeringInputMultiplier * appliedSteeringMultiplier);
     public float RawSteeringInput => rawSteeringInput;
     public bool IsInputSuppressed => Time.time < inputSuppressedUntil;
+    public bool HasGroundedWheels
+    {
+        get { foreach (TireForce tire in tires) if (tire.IsGrounded) return true; return false; }
+    }
     public bool IsDrifting => isDrifting;
+    public event System.Action<float> DriftBoostReleased;
     public float DriftCharge => driftCharge;
     public float NormalizedDriftCharge => maxDriftCharge > 0f ? driftCharge / maxDriftCharge : 0f;
     /// <summary>チャージ表示の段階数です。0 は段階分けなしを表します。</summary>
@@ -197,7 +231,7 @@ public class DebugMover : MonoBehaviour
     public bool IsRocketBoosting => isActiveAndEnabled && itemEffects != null && itemEffects.IsRocketActive;
     /// <summary>ドリフト、加速度盤、ロケットを合わせた加速画面演出用の強度です。</summary>
     public float BoostVisualIntensity => Mathf.Max(DriftBoostVisualIntensity,
-        IsAccelerationPadBoosting || IsRocketBoosting ? 1f : 0f);
+        IsAccelerationPadBoosting || IsRocketBoosting ? 1f : IsSlipstreamBoosting ? .35f : 0f);
 
     private float[] vehicleDefaults;
     public Vector4 VehicleMultipliers { get; private set; } = Vector4.one;
@@ -262,6 +296,7 @@ public class DebugMover : MonoBehaviour
                 rb.AddForce(-velocity.normalized * Mathf.Min(12f, velocity.magnitude / Time.fixedDeltaTime), ForceMode.Acceleration);
             return;
         }
+        if (!RaceFeatureController.Enabled(RaceFeature.Slipstream)) CancelSlipstreamBoost();
         itemEffects?.LimitRocketJumpMomentum();
 
         if (IsInputSuppressed)
@@ -273,7 +308,7 @@ public class DebugMover : MonoBehaviour
         {
             // ロケット中は自動操縦が速度と向きを直接決めるため、運転入力・タイヤ力・速度抵抗を使いません。
             // ドリフトチャージは保持し、ロケット後に解放できるようにします。
-            ClearUserInput();
+            ClearUserInput(); CancelSlipstreamBoost();
             itemEffects.ApplyRocketAutopilot(Time.fixedDeltaTime);
             speedMetersPerSecond = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up).magnitude;
             return;
@@ -307,6 +342,7 @@ public class DebugMover : MonoBehaviour
             {
                 rb.AddForce(padDirection * padSpeedDelta, ForceMode.VelocityChange);
             }
+            ApplySlipstreamBoost(Time.fixedDeltaTime);
         }
 
         ApplyTireForces();
@@ -384,6 +420,7 @@ public class DebugMover : MonoBehaviour
 
     private void ResetBoosts()
     {
+        CancelSlipstreamBoost();
         ResetDrift();
         accelerationPadBoostTimeRemaining = 0f;
         accelerationPadBoostDuration = 0f;
@@ -396,6 +433,8 @@ public class DebugMover : MonoBehaviour
         // 再解放時は、新しいチャージ量と設定時間で置き換える。
         driftBoostTimeRemaining = Mathf.Max(0f, driftBoostDuration);
         activeDriftBoostAcceleration = driftBoostTimeRemaining > 0f ? Mathf.Max(0f, acceleration) : 0f;
+        if (activeDriftBoostAcceleration > 0f) DriftBoostReleased?.Invoke(
+            Mathf.Clamp01(acceleration / Mathf.Max(.0001f, maxDriftCharge * driftBoostAccelerationPerCharge)));
     }
 
     private float ConsumeDriftBoost(float deltaTime)
