@@ -244,6 +244,23 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             yield return null;
         }
         if(skillSuite) {Capture(folder,"result-p1",0); Capture(folder,"result-p2",1);}
+        if (manager.state == Gmanager.State.Result)
+        {
+            var results = (ResultUIManager[])typeof(Gmanager).GetField("resultUIManagers", Private).GetValue(manager);
+            string observed = "";
+            for (int i = 0; i < 2; i++)
+            {
+                RaceResultRecord local = results[i].CurrentSessionResult?.GetPlayerResult(i);
+                if (local?.achievements == null || results[i].AchievementText != ResultUIManager.FormatHighlight(local))
+                { suite.error = "Actual result achievement snapshot/UI mismatch for P" + (i + 1); break; }
+                observed += "P" + (i + 1) + ": " + results[i].AchievementText + "\n";
+            }
+            bool originalHighlight = manager.Features.Settings.IsEnabled(RaceFeature.ResultHighlights);
+            manager.Features.SetFeature(RaceFeature.ResultHighlights, false);
+            if (results[0].AchievementText.Length > 0 || results[1].AchievementText.Length > 0) suite.error = "Result highlight live OFF failed.";
+            manager.Features.SetFeature(RaceFeature.ResultHighlights, originalHighlight);
+            File.WriteAllText(Path.Combine(folder, "result-highlights.txt"), observed);
+        }
         yield return null;
     }
 

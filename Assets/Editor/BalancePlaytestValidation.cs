@@ -18,6 +18,7 @@ public static class BalancePlaytestValidation
         if (model == null || model.GetComponentInChildren<MeshFilter>(true) == null)
             throw new InvalidOperationException("The course model is not imported. Materialize Git LFS assets before playtesting.");
         if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        if (Environment.GetEnvironmentVariable("RACING_VALIDATE_RESULT_UI") == "1") ResultHighlightValidation.Run();
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
         SessionState.SetBool(Key, true);
         Resume();

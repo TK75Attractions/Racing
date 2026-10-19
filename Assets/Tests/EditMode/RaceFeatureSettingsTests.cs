@@ -2,6 +2,13 @@ using NUnit.Framework;
 
 public sealed class RaceFeatureSettingsTests
 {
+    [Test] public void TestAutodriveStartsOffWhileGameplayImprovementsStartOn()
+    {
+        var settings = new RaceFeatureSettings();
+        Assert.IsFalse(settings.IsEnabled(RaceFeature.PlayerTwoAutodrive));
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.CpuRacing));
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.ResultHighlights));
+    }
     [Test] public void FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked()
     {
         var settings = new RaceFeatureSettings();

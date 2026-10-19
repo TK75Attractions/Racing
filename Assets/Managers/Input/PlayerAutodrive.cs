@@ -12,6 +12,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
     private GroundCheck[] wheels;
     private DebugMover mover;
     public bool IsActive { get; private set; }
+    public bool WasUsed { get; private set; }
     public int PlayerIndex => own?.Index ?? 1;
     public string DeviceId => "P2 test autodrive";
     public bool IsConnected => true;
@@ -27,7 +28,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
         bool next = own != null && own.Index == 1 && RaceFeatureController.Enabled(RaceFeature.PlayerTwoAutodrive);
         if (next == IsActive || gate == null) return;
         CurrentState = DriveInputState.Neutral; bot.Clear();
-        gate.SwitchSource(next ? this : manual); IsActive = next;
+        gate.SwitchSource(next ? this : manual); IsActive = next; WasUsed |= next;
         mover.SetInputSource(gate); GetComponent<CarResetter>()?.SetInputSource(gate);
     }
     private void FixedUpdate()

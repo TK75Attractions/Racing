@@ -1038,6 +1038,7 @@ public class Gmanager : MonoBehaviour
         if (entry == null || entry.Result != null) return;
         PlayerRuntime player = entry.IsCpu ? null : players[entry.Index];
         result.carName = player?.carSelection?.SelectedVehicleName ?? result.carName;
+        if (!entry.IsCpu) result.achievements = CaptureAchievements(entry);
         RaceFinishRegistration registration = raceSession.RegisterFinish(entry.Index, result);
         if (registration == RaceFinishRegistration.Ignored) return;
         entry.Result = result; latestSessionResult = raceSession.Result;
@@ -1688,6 +1689,22 @@ public class Gmanager : MonoBehaviour
         foreach (ScreenTransitionController transition in screenTransitions) transition?.ClearRaceStatus();
     }
 
+    public void RefreshResultHighlights()
+    { foreach (ResultUIManager ui in resultUIManagers) ui?.RefreshHighlight(); }
+
+    private static RaceAchievementSnapshot CaptureAchievements(RaceParticipant entry)
+    {
+        if (entry == null || entry.Car == null) return new RaceAchievementSnapshot();
+        return new RaceAchievementSnapshot {
+            driftReleases = entry.Car.GetComponent<DriftCoachingUI>()?.SuccessfulReleases ?? 0,
+            landings = entry.Car.GetComponent<LandingRewardController>()?.SuccessfulLandings ?? 0,
+            tubeLines = entry.Car.GetComponent<TubeChargeLineController>()?.SuccessfulLines ?? 0,
+            slipstreamBoosts = entry.Car.GetComponent<SlipstreamController>()?.SuccessfulBoosts ?? 0,
+            verifiedProgress = Mathf.Max(0f, entry.Progress),
+            usedAutodrive = entry.Car.GetComponent<PlayerAutodrive>()?.WasUsed ?? false
+        };
+    }
+
     private RaceResultRecord CreateFallbackResult(int playerIndex, bool didFinish, int finishPosition)
     {
         PlayerRuntime player = players[playerIndex];
@@ -1695,7 +1712,7 @@ public class Gmanager : MonoBehaviour
         float currentLapTime = data != null ? data.currentLapTime : time;
         float totalRaceTime = data != null ? data.totalRaceTime + data.currentLapTime : time;
         float bestLapTime = data != null && data.bestLapTime < float.MaxValue ? data.bestLapTime : 0f;
-        return new RaceResultRecord
+        var record = new RaceResultRecord
         {
             playerNumber = playerIndex + 1,
             finishPosition = finishPosition,
@@ -1707,6 +1724,8 @@ public class Gmanager : MonoBehaviour
             finalLapTime = currentLapTime,
             bestLapTime = bestLapTime
         };
+        record.achievements = CaptureAchievements(GetParticipant(playerIndex));
+        return record;
     }
 
     /// <summary>
