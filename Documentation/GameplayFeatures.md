@@ -4,6 +4,8 @@
 
 ゲームのキーボード入力を受けるウィンドウで **F8** を押すと比較用パネルを開閉します。Editorと通常ビルドの両方で使えます。ゲームを一時停止せず、マウスで両プレイヤー共通のスイッチを変更します。Inspectorを探す必要はありません。
 
+Macでファンクションキーがメディア操作に割り当てられている場合は、fn+F8を使います。
+
 パネルは操作PC側だけに出ます。ハンドル・ペダルには追加操作を割り当てません。設定はディスクへ保存せず、アプリ再起動で既定値に戻ります。
 
 ## レース設定
@@ -49,5 +51,17 @@ RACING_FEATURE_PLAYTEST=1 RACING_BALANCE_RUN=equal-control-101 \
 RACING_BALANCE_TIME_SCALE=3 RACING_BALANCE_OUTPUT=/private/tmp/racing-feature-playthrough \
 Tools/RunBalancePlaytest.sh
 ```
+
+体験プリセットを最初から指定する実走は、次のように行います。
+
+```sh
+RACING_FEATURE_PRESET=experience RACING_BALANCE_RUN=items-402 \
+RACING_BALANCE_TIME_SCALE=3 RACING_BALANCE_OUTPUT=/private/tmp/racing-feature-experience \
+Tools/RunBalancePlaytest.sh
+```
+
+この体験プリセット指定と、Standardを前提にする`RACING_FEATURE_PLAYTEST=1`の切替プローブは、上記のように別々の試走で使用します。
+
+2026年10月19日の検証結果は [Artifacts/GameplayFeatures](../Artifacts/GameplayFeatures/README.md) に保存しました。
 
 人による理解度・楽しさや、実ハンドル／2画面／2音声機器の評価は自動テストと分けて行います。
