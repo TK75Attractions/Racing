@@ -24,7 +24,7 @@ public static class RaceFeatureValidation
         SlipstreamValidation.Run();
         RacingHUDFontBuilder.Build();
         foreach (bool bold in new[] { false, true })
-            Require(RacingUIFontCatalog.GetHUD(bold).HasCharacters("ドリフト加速！少し逆に切って加速曲がってためる保護中"),
+            Require(RacingUIFontCatalog.GetHUD(bold).HasCharacters("ドリフト加速！少し逆に切って加速曲がってためる保護中着地成功！"),
                 "All new Japanese notices must be baked into the HUD fonts.");
         Debug.Log("RACE_FEATURE_VALIDATION_PASS: presets, live switches, coaching, anti-chain protection and fonts.");
     }

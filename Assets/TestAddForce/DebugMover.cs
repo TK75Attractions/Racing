@@ -151,25 +151,48 @@ public class DebugMover : MonoBehaviour
             Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp()).magnitude >= 32f) return false;
         slipstreamBoostRemaining = .7f; return true;
     }
-    private bool CanApplySlipstreamBoost()
+    private float landingBoostRemaining;
+    public bool IsLandingBoosting => landingBoostRemaining > 0f;
+    public void CancelLandingBoost() { landingBoostRemaining = 0f; }
+    public bool StartLandingBoost()
+    {
+        if (!CanApplyLandingBoost() || activeDriftBoostAcceleration + activeAccelerationPadBoostAcceleration >= 18f ||
+            Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp()).magnitude >= 32f) return false;
+        landingBoostRemaining = .5f; return true;
+    }
+    private bool CanApplyLandingBoost()
+    {
+        if (!RaceFeatureController.Enabled(RaceFeature.LandingBoost) || !CanApplyRoadReward()) return false;
+        RaceCourse course = Gmanager.Control.course;
+        float progress = course.GetProgressDistance(rb.position);
+        return course.TryGetSampleAtProgress(progress, out RaceCourse.CourseSample here) &&
+            course.TryGetSampleAtProgress(progress + Gmanager.Control.CourseProgressSign * 40f, out RaceCourse.CourseSample ahead) &&
+            Vector3.Angle(here.forward, ahead.forward) < 12f;
+    }
+    private bool CanApplySlipstreamBoost() => RaceFeatureController.Enabled(RaceFeature.Slipstream) && CanApplyRoadReward();
+    private bool CanApplyRoadReward()
     {
         Gmanager race = Gmanager.Control;
-        return RaceFeatureController.Enabled(RaceFeature.Slipstream) && race != null && race.state == Gmanager.State.Game &&
+        return race != null && race.state == Gmanager.State.Game &&
             rb != null && !rb.isKinematic && !IsInputSuppressed && inputSource != null && inputSource.IsConnected &&
             !(inputSource is PlayerDriveInputGate gate && (gate.NeedsPedalRelease || gate.IsBlocked)) &&
             HasDriftGroundContact() && Vector3.Dot(transform.up, Vector3.up) > .85f &&
-            (itemEffects == null || !(itemEffects.IsRocketActive || itemEffects.BlocksDriverInput || itemEffects.IsOiled || itemEffects.IsConfused)) &&
+            (itemEffects == null || !(itemEffects.IsRocketActive || itemEffects.BlocksDriverInput || itemEffects.IsOiled || itemEffects.IsConfused || itemEffects.IsRecoveryProtected)) &&
             race.course != null && !race.course.IsJumpAhead(transform.position, race.CourseProgressSign, 45f);
     }
     private void ApplySlipstreamBoost(float dt)
     {
-        if (slipstreamBoostRemaining <= 0f) return;
-        if (!CanApplySlipstreamBoost()) { CancelSlipstreamBoost(); return; }
+        if (slipstreamBoostRemaining > 0f && !CanApplySlipstreamBoost()) CancelSlipstreamBoost();
+        if (landingBoostRemaining > 0f && !CanApplyLandingBoost()) CancelLandingBoost();
+        // Added rewards use the strongest acceleration, never their sum. Legacy boosts retain their rules.
+        float draftDelta = Mathf.Min(dt, slipstreamBoostRemaining) * 4f;
+        float landingDelta = Mathf.Min(dt, landingBoostRemaining) * 2.5f;
+        float budget = Mathf.Clamp(18f - activeDriftBoostAcceleration - activeAccelerationPadBoostAcceleration, 0f, 4f) * dt;
         float speed = Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp()).magnitude;
-        float acceleration = Mathf.Clamp(18f - activeDriftBoostAcceleration - activeAccelerationPadBoostAcceleration, 0f, 4f);
-        float delta = Mathf.Min(acceleration * Mathf.Min(dt, slipstreamBoostRemaining), Mathf.Max(0f, 32f - speed));
+        float delta = Mathf.Min(Mathf.Max(draftDelta, landingDelta), budget, Mathf.Max(0f, 32f - speed));
         slipstreamBoostRemaining = Mathf.Max(0f, slipstreamBoostRemaining - dt);
-        rb.AddForce(Vector3.ProjectOnPlane(transform.forward, GetDrivingUp()).normalized * delta, ForceMode.VelocityChange);
+        landingBoostRemaining = Mathf.Max(0f, landingBoostRemaining - dt);
+        if (delta > 0f) rb.AddForce(Vector3.ProjectOnPlane(transform.forward, GetDrivingUp()).normalized * delta, ForceMode.VelocityChange);
     }
 
     private Rigidbody rb;
@@ -232,7 +255,7 @@ public class DebugMover : MonoBehaviour
     public bool IsRocketBoosting => isActiveAndEnabled && itemEffects != null && itemEffects.IsRocketActive;
     /// <summary>ドリフト、加速度盤、ロケットを合わせた加速画面演出用の強度です。</summary>
     public float BoostVisualIntensity => Mathf.Max(DriftBoostVisualIntensity,
-        IsAccelerationPadBoosting || IsRocketBoosting ? 1f : IsSlipstreamBoosting ? .35f : 0f);
+        IsAccelerationPadBoosting || IsRocketBoosting ? 1f : (IsSlipstreamBoosting || IsLandingBoosting) ? .35f : 0f);
 
     private float[] vehicleDefaults;
     public Vector4 VehicleMultipliers { get; private set; } = Vector4.one;
@@ -309,7 +332,7 @@ public class DebugMover : MonoBehaviour
         {
             // ロケット中は自動操縦が速度と向きを直接決めるため、運転入力・タイヤ力・速度抵抗を使いません。
             // ドリフトチャージは保持し、ロケット後に解放できるようにします。
-            ClearUserInput(); CancelSlipstreamBoost();
+            ClearUserInput(); CancelSlipstreamBoost(); CancelLandingBoost();
             itemEffects.ApplyRocketAutopilot(Time.fixedDeltaTime);
             speedMetersPerSecond = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up).magnitude;
             return;
@@ -421,6 +444,7 @@ public class DebugMover : MonoBehaviour
 
     private void ResetBoosts()
     {
+        CancelLandingBoost();
         CancelSlipstreamBoost();
         ResetDrift();
         accelerationPadBoostTimeRemaining = 0f;
@@ -679,6 +703,7 @@ public class DebugMover : MonoBehaviour
 
     private void ClearUserInput()
     {
+        courseSteeringAssist?.Clear();
         rawPedalInput = 0f;
         appliedPedalInput = 0f;
         rawSteeringInput = 0f;

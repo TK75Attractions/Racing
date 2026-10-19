@@ -107,6 +107,36 @@ public static class SlipstreamValidation
             Require(assist.Assist(5, 20, Vector3.up, .02f) == 5, "Airborne cars must receive no assistance.");
             body.position -= Vector3.up * 5; Physics.SyncTransforms(); input.IsConnected = false;
             Require(assist.Assist(5, 20, Vector3.up, .02f) == 5, "Disconnected input cannot be steered.");
+            input.IsConnected = true;
+            points = data.FindProperty("waypoints"); points.arraySize = 4;
+            for (int i = 0; i < 4; i++)
+            {
+                SerializedProperty point = points.GetArrayElementAtIndex(i);
+                point.FindPropertyRelative("position").vector2Value = new Vector2(0, new[] { 0f, 120f, 140f, 400f }[i]);
+                point.FindPropertyRelative("height").floatValue = 0;
+                point.FindPropertyRelative("width").floatValue = 30;
+                point.FindPropertyRelative("jumpToNext").boolValue = i == 1;
+            }
+            data.ApplyModifiedPropertiesWithoutUndo(); course.RebuildCache();
+            var jumpSections = new List<RaceCourse.JumpSection>(); course.CopyJumpSections(jumpSections, 1f);
+            Require(jumpSections.Count == 1 && Mathf.Abs(jumpSections[0].length - 20f) < .1f, "Designated jumps must come from actual road gaps.");
+            course.CopyJumpSections(jumpSections, -1f);
+            Require(Mathf.Abs(jumpSections[0].takeoff - 140f) < .1f, "Reverse races must exchange takeoff and landing.");
+            LandingRewardController landing = car.AddComponent<LandingRewardController>(); landing.Configure(race, own);
+            body.linearVelocity = Vector3.forward * 10;
+            for (int i = 110; i < 120; i++)
+            { car.transform.position = body.position = new Vector3(0, .35f, i); Physics.SyncTransforms(); landing.Tick(.02f); }
+            for (int i = 120; i < 140; i++)
+            { car.transform.position = body.position = new Vector3(0, 4f, i); Physics.SyncTransforms(); landing.Tick(.02f); }
+            car.transform.position = body.position = new Vector3(0, .35f, 142); Physics.SyncTransforms();
+            for (int i = 0; i < 11; i++) landing.Tick(.02f);
+            Require(landing.SuccessfulLandings == 1 && mover.IsLandingBoosting && landing.Notice.Length > 0,
+                "A real contact-to-air-to-stable-contact sequence over a designated gap must award success.");
+            features.SetFeature(RaceFeature.LandingBoost, false);
+            Require(!mover.IsLandingBoosting, "Landing boost OFF must cancel remaining acceleration immediately.");
+            features.SetFeature(RaceFeature.LandingFeedback, false);
+            Require(landing.Notice.Length == 0, "Landing feedback OFF must clear the notice independently.");
+            Debug.Log("LANDING_REWARD_VALIDATION_PASS: designated gap/reverse geometry, contact-flight-stable landing, independent live boost/feedback OFF.");
             Debug.Log("STEERING_ASSIST_VALIDATION_PASS: grounded edge prediction, live OFF, wall, air and disconnect.");
             Debug.Log("SLIPSTREAM_VALIDATION_PASS: real ground queries, pursuit, live OFF, stacked roads, occlusion, disconnect, reverse direction.");
         }
