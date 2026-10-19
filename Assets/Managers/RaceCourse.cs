@@ -151,10 +151,14 @@ public class RaceCourse : MonoBehaviour
     public bool IsPointInsideCourse(Vector3 worldPosition) =>
         IsInsideBand(ToXZ(worldPosition));
 
-    /// <summary>道路帯と、同じシーンにある走行可能なレースバリアの張り出しを含む範囲。</summary>
+    /// <summary>道路帯、レースバリアの張り出し、設定されたチューブ内部を含む走行範囲。</summary>
     public bool IsPointInsideDrivingArea(Vector3 worldPosition) =>
         IsPointInsideCourse(worldPosition) ||
-        (HasValidPath && RaceBarrierPath.IsPointInsideDrivingFootprint(worldPosition, gameObject.scene));
+        (HasValidPath && (RaceBarrierPath.IsPointInsideDrivingFootprint(worldPosition, gameObject.scene) ||
+            IsPointInsideTube(worldPosition)));
+
+    public bool IsPointInsideTube(Vector3 worldPosition) =>
+        TubeDriveSurface.IsPointInside(road?.tubeInterior, worldPosition);
 
     private bool IsInsideBand(Vector2 point)
     {

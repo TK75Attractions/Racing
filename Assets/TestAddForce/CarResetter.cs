@@ -16,6 +16,7 @@ public class CarResetter : MonoBehaviour
     private float unsafeSeconds, overturnedSeconds, stuckSeconds, wallStuckSeconds;
     private float lastWallContactTime = float.NegativeInfinity;
     private Collider lastWallCollider;
+    private Vector3 lastWallNormal;
     private Vector3 wallProgressPosition;
     private bool trackingWallProgress;
     private readonly Collider[] occupants = new Collider[32];
@@ -77,10 +78,13 @@ public class CarResetter : MonoBehaviour
         RememberSafeRoad(false);
         if (!course.TryGetNearestRoadSample(rb.position, out RaceCourse.CourseSample here)) return;
         int grounded = 0; foreach (TireForce tire in tires) if (tire.IsGrounded) grounded++;
-        bool outside = !course.IsPointInsideDrivingArea(rb.position) || rb.position.y < here.position.y - 4f;
+        bool onTubeWall = HasWallContact && TubeDriveSurface.Contains(lastWallCollider);
+        bool outside = !course.IsPointInsideDrivingArea(rb.position) ||
+            (rb.position.y < here.position.y - 4f && !course.IsPointInsideTube(rb.position));
         float dt = Time.fixedDeltaTime;
         unsafeSeconds = outside ? unsafeSeconds + dt : 0f;
-        overturnedSeconds = Vector3.Dot(transform.up, here.up) < .2f && grounded < 2 ? overturnedSeconds + dt : 0f;
+        Vector3 recoveryUp = onTubeWall ? lastWallNormal : here.up;
+        overturnedSeconds = Vector3.Dot(rb.rotation * Vector3.up, recoveryUp) < .2f && grounded < 2 ? overturnedSeconds + dt : 0f;
         bool pushing = inputSource != null && inputSource.IsConnected && Mathf.Abs(inputSource.CurrentState.pedal) > .4f;
         stuckSeconds = pushing && rb.linearVelocity.magnitude < .5f && grounded > 0 ? stuckSeconds + dt : 0f;
         UpdateWallStuckTimer(pushing, dt);
@@ -109,22 +113,25 @@ public class CarResetter : MonoBehaviour
     {
         if (obstacle == null || obstacle.attachedRigidbody == rb ||
             (obstacle.attachedRigidbody != null && !obstacle.attachedRigidbody.isKinematic)) return;
-        if (obstacle.GetComponentInParent<RaceBarrierPath>() != null ||
+        if (TubeDriveSurface.Contains(obstacle) || obstacle.GetComponentInParent<RaceBarrierPath>() != null ||
             Mathf.Abs(normal.y) < .2f)
         {
             lastWallContactTime = Time.fixedTime;
             lastWallCollider = obstacle;
+            lastWallNormal = normal;
         }
     }
+
+    private bool HasWallContact => lastWallCollider != null && lastWallCollider.enabled &&
+        lastWallCollider.gameObject.activeInHierarchy &&
+        (rb.IsSleeping() || Time.fixedTime - lastWallContactTime <= .1f);
 
     private void UpdateWallStuckTimer(bool pushing, float dt)
     {
         // 壁に乗ってタイヤの接地判定が切れても、入力があるのに同じ場所へ
         // 留まる状態を検出する。速度が出ている小刻みな往復や回転も対象にする。
         // スリープ中は OnCollisionStay が来ないが、接触終了までは壁に挟まったまま。
-        bool sleepingContact = rb.IsSleeping() && lastWallCollider != null &&
-            lastWallCollider.enabled && lastWallCollider.gameObject.activeInHierarchy;
-        if (!pushing || (!sleepingContact && Time.fixedTime - lastWallContactTime > .1f))
+        if (!pushing || !HasWallContact)
         {
             trackingWallProgress = false;
             wallStuckSeconds = 0f;
