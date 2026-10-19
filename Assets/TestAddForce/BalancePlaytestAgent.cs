@@ -31,6 +31,9 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         public float finishTime, progress, distanceDriven, meanSpeed, maxSpeed, maxStall, offCourseSeconds, maxTilt, nearbyHumanSeconds, racingSeconds;
         public int takeoffs, landings, humanRecoveries, automaticRecoveries;
         public string recoveryBlockedReason;
+        public float steeringAssistSeconds;
+        public int landingRewards;
+        public bool usedAutodrive;
         public float maxRecoveryRollbackMeters;
         [NonSerialized] public TireForce[] tires;
         [NonSerialized] public DebugMover mover;
@@ -118,6 +121,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         {
             plans = new[] {
                 SkillPlan("skill-novice-expert", 6101, 12, 27, false, "novice", "expert"),
+                SkillPlan("skill-rivalry", 6107, 22, 22, false, "intermediate", "intermediate"),
                 SkillPlan("skill-club-expert", 6102, 20, 28, true, "intermediate", "expert"),
                 SkillPlan("skill-aggressive-items", 6103, 32, 22, true, "aggressive", "intermediate"),
                 SkillPlan("skill-stop-rejoin", 6104, 24, 16, false, "intermediate", "cautious"),
@@ -160,7 +164,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         suite.runs.Add(run);
         string folder = Path.Combine(output, run.name); Directory.CreateDirectory(folder);
         trace = new StreamWriter(Path.Combine(folder, "trace.csv"));
-        trace.WriteLine("time,car,x,y,z,speed,progress,lap,checkpoint,position,pedal,steering,grounded,offCourse,rocket,confuse,oil,spin,cpuTargetSpeed,cpuRival,connected,needsRelease,recoveries,recoveryBlocked");
+        trace.WriteLine("time,car,x,y,z,speed,progress,lap,checkpoint,position,pedal,steering,grounded,offCourse,rocket,confuse,oil,spin,cpuTargetSpeed,cpuRival,connected,needsRelease,recoveries,recoveryBlocked,appliedSteering,assistCorrection");
         events = new StreamWriter(Path.Combine(folder, "events.csv")); events.WriteLine("time,car,event,detail,x,y,z");
         inputs[0].CurrentState = inputs[1].CurrentState = DriveInputState.Neutral;
         for (int i = 0; i < 2; i++) { inputs[i].IsConnected = true; nextDecisionAt[i] = 0; heldDecision[i] = DriveInputState.Neutral; releaseRequestedAt[i]=releaseUntil[i]=jumpNoticedAt[i]=-1; }
@@ -223,6 +227,9 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             record.recoveryBlockedReason=entry.Driver?.RecoveryBlockedReason ?? "";
             CarResetter resetter=entry.Car.GetComponent<CarResetter>();
             if(!entry.IsCpu) {record.humanRecoveries=resetter?.RecoveryCount??0; record.automaticRecoveries=resetter?.AutomaticRecoveryCount??0;}
+            record.steeringAssistSeconds = entry.Car.GetComponent<CourseSteeringAssist>()?.ActiveSeconds ?? 0f;
+            record.landingRewards = entry.Car.GetComponent<LandingRewardController>()?.RewardBoosts ?? 0;
+            record.usedAutodrive = entry.Car.GetComponent<PlayerAutodrive>()?.WasUsed ?? false;
             record.meanSpeed = record.samples > 0 ? record.speedSum / record.samples : 0;
             if (entry.Index < 2 && record.finished) finishedHumans++;
             Event(entry.Index, entry.Result == null ? "still-racing" : record.finished ? "finished" : "dnf", "position=" + record.position + ";laps=" + record.laps);
@@ -300,7 +307,8 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             float raw = manager.course.GetProgressDistance(body.position);
             manager.course.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample here);
             int grounded = 0; foreach (TireForce tire in record.tires) if (tire.IsGrounded) grounded++;
-            bool offCourse = !manager.course.IsPointInsideCourse(body.position) || body.position.y < here.position.y - 6;
+            bool offCourse = !manager.course.IsPointInsideDrivingArea(body.position) ||
+                (body.position.y < here.position.y - 4f && !manager.course.IsPointInsideTube(body.position));
             record.offCourseStreak = offCourse ? record.offCourseStreak + dt : 0;
             if (offCourse) record.offCourseSeconds += dt;
             if (offCourse != record.wasOffCourse) { Event(entry.Index, offCourse ? "off-course" : "on-course", ""); record.wasOffCourse = offCourse; }
@@ -355,7 +363,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 var data = laps.GetCarData(body); var effects = entry.Effects;
                 var input = entry.IsCpu ? entry.Driver.CurrentState : record.mover.InputSource.CurrentState;
                 var gate=record.mover.InputSource as PlayerDriveInputGate;
-                trace.WriteLine(FormattableString.Invariant($"{now:F2},{entry.Label},{body.position.x:F3},{body.position.y:F3},{body.position.z:F3},{speed:F3},{laps.GetRaceProgressDistance(body):F3},{data.lapCount},{data.lastCheckpointIndex},{entry.Position},{input.pedal:F3},{input.steering:F3},{grounded},{offCourse},{effects.IsRocketActive},{effects.IsConfused},{effects.IsOiled},{effects.IsSpinning},{(entry.Driver?.TargetSpeed ?? 0):F3},{(entry.Driver?.RivalIndex ?? -1)},{(entry.IsCpu || record.mover.InputSource.IsConnected)},{gate?.NeedsPedalRelease??false},{(entry.IsCpu?entry.Driver.RecoveryCount:entry.Car.GetComponent<CarResetter>().RecoveryCount)},{entry.Driver?.RecoveryBlockedReason??""}"));
+                trace.WriteLine(FormattableString.Invariant($"{now:F2},{entry.Label},{body.position.x:F3},{body.position.y:F3},{body.position.z:F3},{speed:F3},{laps.GetRaceProgressDistance(body):F3},{data.lapCount},{data.lastCheckpointIndex},{entry.Position},{input.pedal:F3},{input.steering:F3},{grounded},{offCourse},{effects.IsRocketActive},{effects.IsConfused},{effects.IsOiled},{effects.IsSpinning},{(entry.Driver?.TargetSpeed ?? 0):F3},{(entry.Driver?.RivalIndex ?? -1)},{(entry.IsCpu || record.mover.InputSource.IsConnected)},{gate?.NeedsPedalRelease??false},{(entry.IsCpu?entry.Driver.RecoveryCount:entry.Car.GetComponent<CarResetter>().RecoveryCount)},{entry.Driver?.RecoveryBlockedReason??""},{record.mover.AppliedSteeringAngle:F3},{(entry.Car.GetComponent<CourseSteeringAssist>()?.CorrectionDegrees ?? 0f):F3}"));
             }
         }
         if (manager.GetParticipant(0).IsRacing && manager.GetParticipant(1).IsRacing &&

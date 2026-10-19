@@ -414,6 +414,14 @@ public class DebugMover : MonoBehaviour
     /// ドリフトチャージを加算します（最大チャージに対する割合）。チャージはドリフト解放まで保持されます。
     /// 既に満タンなどで増えなかった場合は false を返します。
     /// </summary>
+    // Pedal needed to balance this vehicle's ordinary rolling resistance at a target speed.
+    // This is an input estimate, not an extra force or a change to the vehicle configuration.
+    public float CruisePedalForSpeed(float targetSpeed)
+    {
+        int driven = 0; foreach (TireForce tire in tires) if (tire.IsFrontWheel) driven++;
+        return Mathf.Clamp01(Mathf.Max(0f, targetSpeed) * velocityResistance / Mathf.Max(.01f, driveForcePerFrontWheel * driven));
+    }
+
     public bool AddDriftCharge(float normalizedAmount)
     {
         if (!enableDriftDynamics || maxDriftCharge <= 0f || normalizedAmount <= 0f) return false;

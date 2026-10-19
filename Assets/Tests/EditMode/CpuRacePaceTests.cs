@@ -2,6 +2,17 @@ using NUnit.Framework;
 
 public sealed class CpuRacePaceTests
 {
+    [Test] public void MaintainingTheTargetNeedsEnoughPedalToBalanceTheActualCarResistance()
+    {
+        Assert.AreEqual(.4f, CpuRacePace.Pedal(20, 20, .4f));
+        Assert.Greater(CpuRacePace.Pedal(20, 18, .4f), .4f);
+        Assert.Less(CpuRacePace.Pedal(20, 30, .4f), 0f);
+    }
+    [Test] public void CpuThrottleAndBrakeUseTheSameRangeAsThePlayersPedal()
+    {
+        Assert.AreEqual(1f, CpuRacePace.Pedal(30, 0, .6f));
+        Assert.AreEqual(-1f, CpuRacePace.Pedal(0, 30, 0f));
+    }
     [Test] public void ANearbyCpuCanCatchAndOvertakeInsteadOfOnlyFollowing()
     { Assert.Greater(CpuRacePace.Request(22, 15, 0, 2, 25, 5), 26); }
     [Test] public void TheCounterattackWindowGivesRoomWithoutStoppingInFrontOfThePlayer()

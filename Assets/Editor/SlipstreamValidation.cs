@@ -60,6 +60,7 @@ public static class SlipstreamValidation
                 Invoke(wheel.GetComponent<GroundCheck>(), "Awake"); Invoke(tire, "Awake");
             }
             DebugMover mover = car.AddComponent<DebugMover>(); Invoke(mover, "Awake");
+            Require(Mathf.Abs(mover.CruisePedalForSpeed(20f) - .4f) < .001f, "The pedal feedforward must use the real vehicle drag and front-wheel drive force.");
             var input = new Input(); mover.SetInputSource(input);
             var targetObject = new GameObject("Target"); targetObject.transform.SetParent(root.transform);
             targetObject.transform.position = new Vector3(0, .35f, 110);

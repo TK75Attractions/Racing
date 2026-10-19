@@ -15,6 +15,8 @@ def analyze(folder):
         frames = {}
         with (root / run['name'] / 'trace.csv').open() as stream:
             for row in csv.DictReader(stream):
+                if any(value is None for value in row.values()):
+                    continue  # A live trace can end in a partially flushed row.
                 frames.setdefault(float(row['time']), {})[row['car']] = row
         states, previous, events, last_event = {}, {}, [], {}
         for time, cars in sorted(frames.items()):

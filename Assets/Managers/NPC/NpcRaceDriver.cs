@@ -14,6 +14,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     private RaceCourse course;
     private LapManager laps;
     private Rigidbody body;
+    private DebugMover mover;
     private TireForce[] tires;
     private RaceParticipant entry;
     private float targetSpeed = 25f, lane, desiredLane, nextDecision, stuck, reverseUntil, yieldUntil;
@@ -54,7 +55,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         manager = race; course = race.course; laps = lapManager; entry = participant;
         body = GetComponent<Rigidbody>(); body.interpolation = RigidbodyInterpolation.Interpolate; ownColliders = GetComponentsInChildren<Collider>(); tires = GetComponentsInChildren<TireForce>();
         rivalIndex = entry.Index % 2; lane = desiredLane = entry.Index % 2 == 0 ? -2f : 2f;
-        GetComponent<DebugMover>().SetInputSource(this);
+        mover = GetComponent<DebugMover>(); mover.SetInputSource(this);
         CarResetter resetter = GetComponent<CarResetter>();
         if (resetter != null) { resetter.SetCourse(course, laps); resetter.enabled = false; }
         if (course.TryGetNearestRoadSample(body.position, out RaceCourse.CourseSample initial))
@@ -130,6 +131,16 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         if (improved) jumpAhead |= course.IsJumpAhead(body.position, sign, 45f);
         if (jumpAhead) { requested = Mathf.Min(bendLimit, improved ? 24f : Mathf.Max(24f, requested)); desiredLane = 0; }
         if (improved && Time.time < landingLaneUntil) desiredLane = 0;
+        if (improved && (jumpAhead || Time.time < landingLaneUntil))
+        {
+            foreach (RaceParticipant other in manager.Participants)
+            {
+                if (other == entry || !other.IsRacing) continue;
+                Vector3 delta = other.Body.position - body.position;
+                if (Mathf.Abs(Vector3.Dot(delta, here.forward)) < 12f && Mathf.Abs(Vector3.Dot(delta, here.up)) < 6f)
+                { desiredLane = lane; break; } // Do not merge onto an alongside car in the air or on the ramp.
+            }
+        }
         float safeLane = Mathf.Min(3f, Mathf.Max(0, here.width * .5f - 3.5f));
         lane = Mathf.MoveTowards(lane, Mathf.Clamp(desiredLane, -safeLane, safeLane), dt * 1.2f);
         course.TryGetSampleAtProgress(raw + sign * Mathf.Clamp(5f + speed * .4f, 8f, 17f), out RaceCourse.CourseSample target);
@@ -153,10 +164,19 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
                 }
             }
         }
+        if (improved && course.IsJumpAhead(body.position, sign, 90f))
+        {
+            float ownProgress = laps.GetRaceProgressDistance(body);
+            foreach (RaceParticipant other in manager.Participants)
+            {
+                if (other == entry || !other.IsRacing || Mathf.Abs(Vector3.Dot(other.Body.position - body.position, here.up)) > 6f) continue;
+                requested = CpuJumpSpacing.Request(requested, other.Body.linearVelocity.magnitude, other.Progress - ownProgress);
+            }
+        }
         if (Time.time < yieldUntil) requested = Mathf.Min(requested, improved ? Mathf.Max(10f, partnerSpeed - 1f) : 8f);
         targetSpeed = Mathf.MoveTowards(targetSpeed, requested, dt * accelerationSlew);
         float signedSpeed = Vector3.Dot(body.linearVelocity, transform.forward);
-        float pedal = Mathf.Clamp((targetSpeed - signedSpeed) * .12f, -1f, 1f);
+        float pedal = improved ? CpuRacePace.Pedal(targetSpeed, signedSpeed, mover.CruisePedalForSpeed(targetSpeed)) : Mathf.Clamp((targetSpeed - signedSpeed) * .12f, -1f, 1f);
         bool stranded = !course.IsPointInsideCourse(body.position) || Mathf.Abs(body.position.y-here.position.y)>6f || Vector3.Dot(transform.up,Vector3.up)<.3f;
         unrecoveredSeconds = stranded ? unrecoveredSeconds + dt : 0f;
         stuck = ((speed < 1f && requested > 3f) || Vector3.Dot(transform.up, Vector3.up) < .3f || Mathf.Abs(body.position.y - here.position.y) > 6f || !course.IsPointInsideCourse(body.position)) ? stuck + dt : 0;

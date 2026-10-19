@@ -37,14 +37,22 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
             gate.IsBlocked || gate.NeedsPedalRelease || mover.IsInputSuppressed)
         { CurrentState = DriveInputState.Neutral; bot.Clear(); return; }
         int contacts = 0; foreach (GroundCheck wheel in wheels) if (wheel.CheckNow()) contacts++;
-        DriveInputState decision = bot.Decide(manager.course, own.Body, manager.CourseProgressSign, contacts, Time.time, 24f, -1.8f);
+        float cap = 24f;
+        if (manager.course.IsJumpAhead(own.Body.position, manager.CourseProgressSign, 90f))
+            foreach (RaceParticipant other in manager.Participants)
+            {
+                if (other == own || !other.IsRacing) continue;
+                cap = CpuJumpSpacing.Request(cap, other.Body.linearVelocity.magnitude, other.Progress - own.Progress);
+            }
+        DriveInputState decision = bot.Decide(manager.course, own.Body, manager.CourseProgressSign, contacts, Time.time,
+            24f, -1.8f, speedCap: cap, vehicle: mover);
         foreach (RaceParticipant other in manager.Participants)
         {
             if (other == own || !other.IsRacing) continue;
             Vector3 local = Quaternion.Inverse(own.Body.rotation) * (other.Body.position - own.Body.position);
             if (local.z <= 0f || local.z >= 12f || Mathf.Abs(local.x) > 2.1f || Mathf.Abs(local.y) > 2f) continue;
             float target = Mathf.Max(0f, other.Body.linearVelocity.magnitude - Mathf.Max(0f, 8f - local.z) * .5f);
-            decision.pedal = Mathf.Min(decision.pedal, Mathf.Clamp((target - own.Body.linearVelocity.magnitude) * .12f, -1f, 1f));
+            decision.pedal = Mathf.Min(decision.pedal, CpuRacePace.Pedal(target, Vector3.Dot(own.Body.linearVelocity, own.Body.rotation * Vector3.forward), mover.CruisePedalForSpeed(target)));
         }
         CurrentState = decision;
     }

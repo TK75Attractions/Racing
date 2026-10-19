@@ -18,7 +18,9 @@ public static class BalancePlaytestValidation
         if (model == null || model.GetComponentInChildren<MeshFilter>(true) == null)
             throw new InvalidOperationException("The course model is not imported. Materialize Git LFS assets before playtesting.");
         if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
-        if (Environment.GetEnvironmentVariable("RACING_VALIDATE_RESULT_UI") == "1") ResultHighlightValidation.Run();
+        if (Environment.GetEnvironmentVariable("RACING_VALIDATE_FEATURES") == "1") RaceFeatureValidation.Run();
+        else if (Environment.GetEnvironmentVariable("RACING_VALIDATE_RESULT_UI") == "1") ResultHighlightValidation.Run();
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RACING_GEOMETRY_AUDIT_TRACE"))) RaceExperienceGeometryAudit.Run();
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
         SessionState.SetBool(Key, true);
         Resume();
