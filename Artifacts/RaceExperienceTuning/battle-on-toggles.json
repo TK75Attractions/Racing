@@ -1,0 +1,21 @@
+{
+    "completedPhases": 3,
+    "driftReleases": 4,
+    "slipstreamBoosts": 1,
+    "successfulLandings": 4,
+    "landingBoosts": 4,
+    "successfulTubeLines": 0,
+    "steeringAssistSeconds": 0.0,
+    "landingsByPlayer": [
+        2,
+        2
+    ],
+    "linesByPlayer": [
+        0,
+        0
+    ],
+    "preset": "Standard",
+    "tubeLayoutAvailable": true,
+    "passed": true,
+    "error": ""
+}

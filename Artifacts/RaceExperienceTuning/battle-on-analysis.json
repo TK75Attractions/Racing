@@ -1,0 +1,416 @@
+{
+  "method": "Progress changes must clear +/-3m, be within 40m in world space, on the same height, moving forward, with no recovery. Five-second debounce per pair. These are observed order changes, not a human enjoyment score.",
+  "runtimeErrors": [],
+  "runs": [
+    {
+      "name": "skill-rivalry",
+      "events": [
+        {
+          "time": 3.72,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 3.82,
+          "human": "P1",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 4.02,
+          "human": "P2",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 4.22,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 34.42,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 37.62,
+          "human": "P1",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 43.22,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 49.02,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 49.42,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 57.92,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 61.62,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 72.42,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 74.94,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 78.9,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 86.7,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 90.42,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 93.78,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 96.3,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 100.26,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 105.65,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 108.41,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 120.89,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 126.17,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 135.07,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 143.97,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 144.77,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 153.28,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 158.88,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 160.28,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 172.68,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 182.68,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 188.58,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 190.98,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 198.99,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 200.99,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 209.29,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        }
+      ],
+      "cpuPasses": 21,
+      "humanPasses": 15,
+      "cars": [
+        {
+          "label": "P1",
+          "finished": true,
+          "position": 4,
+          "maxStall": 0.0,
+          "offCourseSeconds": 0.0,
+          "vehicleContacts": 6,
+          "humanRecoveries": 0,
+          "cpuRecoveries": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "position": 1,
+          "maxStall": 0.0,
+          "offCourseSeconds": 0.0,
+          "vehicleContacts": 5,
+          "humanRecoveries": 0,
+          "cpuRecoveries": 0
+        },
+        {
+          "label": "CPU 1",
+          "finished": true,
+          "position": 3,
+          "maxStall": 0.0,
+          "offCourseSeconds": 0.0,
+          "vehicleContacts": 16,
+          "humanRecoveries": 0,
+          "cpuRecoveries": 0
+        },
+        {
+          "label": "CPU 2",
+          "finished": true,
+          "position": 2,
+          "maxStall": 0.0,
+          "offCourseSeconds": 0.0,
+          "vehicleContacts": 17,
+          "humanRecoveries": 0,
+          "cpuRecoveries": 0
+        }
+      ]
+    },
+    {
+      "name": "skill-club-expert",
+      "events": [
+        {
+          "time": 3.22,
+          "human": "P1",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 4.02,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 12.22,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 29.92,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 43.22,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 74.58,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 76.74,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 84.3,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 90.66,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 95.82,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 142.37,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 158.28,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 159.08,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 171.18,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 209.49,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        },
+        {
+          "time": 224.09,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        }
+      ],
+      "cpuPasses": 9,
+      "humanPasses": 7,
+      "cars": [
+        {
+          "label": "P1",
+          "finished": true,
+          "position": 4,
+          "maxStall": 0.0,
+          "offCourseSeconds": 2.139998197555542,
+          "vehicleContacts": 5,
+          "humanRecoveries": 0,
+          "cpuRecoveries": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "position": 1,
+          "maxStall": 0.0,
+          "offCourseSeconds": 0.0,
+          "vehicleContacts": 1,
+          "humanRecoveries": 0,
+          "cpuRecoveries": 0
+        },
+        {
+          "label": "CPU 1",
+          "finished": true,
+          "position": 3,
+          "maxStall": 0.0,
+          "offCourseSeconds": 0.0,
+          "vehicleContacts": 5,
+          "humanRecoveries": 0,
+          "cpuRecoveries": 0
+        },
+        {
+          "label": "CPU 2",
+          "finished": true,
+          "position": 2,
+          "maxStall": 0.0,
+          "offCourseSeconds": 0.0,
+          "vehicleContacts": 1,
+          "humanRecoveries": 0,
+          "cpuRecoveries": 0
+        }
+      ]
+    }
+  ]
+}

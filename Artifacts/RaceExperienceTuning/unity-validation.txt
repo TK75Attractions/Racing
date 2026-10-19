@@ -1,3 +1,4 @@
+2026-10-20 / Unity 6000.3.9f1
 PLAYER_AUTODRIVE_VALIDATION_PASS: real observations, connected gated source, manual handover, pedal release and pause preservation.
 LANDING_REWARD_VALIDATION_PASS: designated gap/reverse geometry, contact-flight-stable landing, independent live boost/feedback OFF.
 STEERING_ASSIST_VALIDATION_PASS: grounded edge prediction, live OFF, wall, air and disconnect.
