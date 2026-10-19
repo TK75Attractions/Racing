@@ -1,0 +1,41 @@
+using NUnit.Framework;
+
+public sealed class RaceFeatureSettingsTests
+{
+    [Test] public void FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked()
+    {
+        var settings = new RaceFeatureSettings();
+        settings.BeginPreparation();
+        settings.SetFeature(RaceFeature.Slipstream, false);
+        Assert.IsFalse(settings.IsEnabled(RaceFeature.Slipstream));
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.HitProtection));
+        settings.SetFeature(RaceFeature.All, false);
+        Assert.AreEqual(RaceFeature.None, settings.Enabled);
+        settings.SetFeature(RaceFeature.DriftCoaching, true);
+        Assert.AreEqual(RaceFeature.DriftCoaching, settings.Enabled);
+    }
+    [Test] public void AQueuedPresetCannotChangeTheCurrentRace()
+    {
+        var settings = new RaceFeatureSettings();
+        settings.BeginPreparation();
+        settings.SelectPreset(RacePreset.Experience);
+        Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
+        Assert.IsFalse(settings.IsEnabled(RaceFeature.ExperienceItems));
+        settings.BeginPreparation();
+        Assert.AreEqual(RacePreset.Experience, settings.ActivePreset);
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.ExperienceItems));
+        settings.ResetForNextGroup();
+        Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
+        Assert.IsFalse(settings.RulesLocked);
+    }
+    [Test] public void ExperienceRulesAndCustomStandardRulesDoNotMutateEachOther()
+    {
+        var standard = new RaceRuleSet(RacePreset.Standard, 3, 240, 25, 120);
+        var experience = new RaceRuleSet(RacePreset.Experience, 3, 240, 25, 120);
+        Assert.AreEqual(3, standard.GoalLaps);
+        Assert.AreEqual(240, standard.MaximumSeconds);
+        Assert.AreEqual(1, experience.GoalLaps);
+        Assert.AreEqual(180, experience.MaximumSeconds);
+        Assert.AreEqual(90, experience.MaximumGraceSeconds);
+    }
+}

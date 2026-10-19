@@ -22,7 +22,9 @@ public sealed class ItemBox : RaceItemPickup
         int racePosition = 1;
         CarItemEffects opponent = null;
         if (Gmanager.Control != null) Gmanager.Control.TryGetItemContext(body, out racePosition, out opponent);
-        RaceItemType item = itemTable.Roll(racePosition, opponent != null, Random.value);
+        RaceItemType item = RaceFeatureController.Enabled(RaceFeature.ExperienceItems)
+            ? (racePosition <= 1 ? RaceItemType.Shield : RaceItemType.Rocket)
+            : itemTable.Roll(racePosition, opponent != null, Random.value);
         if (item == RaceItemType.None) return false;
 
         effects.UseItem(item, opponent);

@@ -43,6 +43,22 @@ public class Gmanager : MonoBehaviour
     }
 
     public static Gmanager Control = null;
+    public RaceFeatureController Features { get; private set; }
+    private RaceRuleSet activeRules;
+    private int standardGoalLaps;
+    private float RaceMaximumSeconds => activeRules?.MaximumSeconds ?? maximumRaceSeconds;
+    private float RaceGraceSeconds => activeRules?.GraceSeconds ?? secondPlaceTimeoutSeconds;
+    private float RaceMaximumGraceSeconds => activeRules?.MaximumGraceSeconds ?? maximumHumanFinishGraceSeconds;
+
+    public void ApplyFeatureRules()
+    {
+        if (Features == null || lapManager == null) return;
+        activeRules = new RaceRuleSet(Features.Settings.ActivePreset, standardGoalLaps, maximumRaceSeconds,
+            secondPlaceTimeoutSeconds, maximumHumanFinishGraceSeconds);
+        lapManager.SetGoalLaps(activeRules.GoalLaps);
+        foreach (ScreenTransitionController transition in screenTransitions) transition?.RefreshLapTotal();
+        foreach (OnPlayUIManager ui in onPlayUIManagers) ui?.Lap.SetTotalLaps(activeRules.GoalLaps);
+    }
     [SerializeField] public InputManager IManager = null;
     [SerializeField] public VManager VManager = null;
     public CinemachineCamera VCamera;
@@ -214,6 +230,10 @@ public class Gmanager : MonoBehaviour
         IManager = GetComponent<InputManager>();
         IManager?.Init();
         ResolveLapManager();
+        standardGoalLaps = lapManager != null ? lapManager.GoalLap : LapManager.DefaultGoalLaps;
+        Features = GetComponent<RaceFeatureController>() ?? gameObject.AddComponent<RaceFeatureController>();
+        Features.Configure(this);
+        ApplyFeatureRules();
         EnsureSpeedScenery();
         if (lapManager != null)
         {
@@ -467,6 +487,8 @@ public class Gmanager : MonoBehaviour
         if (!IsPreparing || playerIndex < 0 || playerIndex >= PlayerCount) return;
         PlayerRuntime player = players[playerIndex];
         if (player.preparationState != State.Title || screenTransitions[playerIndex]?.IsTransitioning == true) return;
+        if (Features != null && !Features.Settings.RulesLocked)
+        { Features.Settings.BeginPreparation(); ApplyFeatureRules(); }
         soundEffects?.Play(RaceSoundCue.Ready, playerIndex);
         TransitionPlayer(playerIndex, State.CarSelection, () =>
         {
@@ -524,7 +546,10 @@ public class Gmanager : MonoBehaviour
             player.titleInputArmed = false; player.titleReleaseTimer = player.readyHoldTimer = 0f;
             bool allTitle = true;
             foreach (PlayerRuntime participant in players) allTitle &= participant.preparationState == State.Title;
-            if (allTitle) state = State.Title;
+            if (allTitle)
+            {
+                state = State.Title; Features?.Settings.UnlockAtTitle(); ApplyFeatureRules();
+            }
         });
     }
 
@@ -548,7 +573,7 @@ public class Gmanager : MonoBehaviour
         if (resultRecord == null)
         {
             // Operator stop classifies the current standings; it does not award P1 a finish.
-            if (raceSession == null) raceSession = new RaceParticipantSession(PlayerCount, 0, 0f, maximumRaceSeconds);
+            if (raceSession == null) raceSession = new RaceParticipantSession(PlayerCount, 0, 0f, RaceMaximumSeconds);
             if (participants.Count == 0)
                 for (int i = 0; i < PlayerCount; i++) raceSession.CloseParticipant(i, CreateFallbackResult(i, false, i + 1));
             CompleteRace(raceSession.Result, null);
@@ -567,7 +592,7 @@ public class Gmanager : MonoBehaviour
             CompleteRace(raceSession.Result,null);
             return;
         }
-        raceSession = new RaceParticipantSession(PlayerCount, 0, 0f, maximumRaceSeconds);
+        raceSession = new RaceParticipantSession(PlayerCount, 0, 0f, RaceMaximumSeconds);
         raceSession.Start();
         raceSession.RegisterFinish(0, first);
         raceSession.Tick(0f);
@@ -609,6 +634,8 @@ public class Gmanager : MonoBehaviour
         Action covered = () =>
         {
             ClearCurrentRaceObjects();
+            Features?.Settings.BeginPreparation();
+            ApplyFeatureRules();
             StartGameWhenScreenCovered();
         };
         if (primary == null)
@@ -741,7 +768,7 @@ public class Gmanager : MonoBehaviour
         RaceItemPickup.ResetAll();
         raceLightning?.ResetRace();
         participants.Clear(); orderedParticipants.Clear();
-        raceSession = new RaceParticipantSession(PlayerCount, Mathf.Clamp(npcCount, 0, 2), secondPlaceTimeoutSeconds, maximumRaceSeconds);
+        raceSession = new RaceParticipantSession(PlayerCount, Mathf.Clamp(npcCount, 0, 2), RaceGraceSeconds, RaceMaximumSeconds);
         raceSession.Start();
         countdownTimeRemaining = Mathf.Max(0f, raceCountdownSeconds);
         lastCountdownSound = -1;
@@ -1005,7 +1032,7 @@ public class Gmanager : MonoBehaviour
                 float pace = Mathf.Max(0f, progress) / Mathf.Max(1f, time);
                 raceSession.ExtendHumanGrace(HumanFinishGrace.Estimate(
                     lapManager.GoalLap * course.TotalLength - progress, pace,
-                    secondPlaceTimeoutSeconds, maximumHumanFinishGraceSeconds));
+                    RaceGraceSeconds, RaceMaximumGraceSeconds));
             }
         }
         if (entry.IsCpu)
@@ -1172,6 +1199,8 @@ public class Gmanager : MonoBehaviour
     {
         state = State.Title;
         ClearCurrentRaceObjects();
+        Features?.Settings.ResetForNextGroup();
+        ApplyFeatureRules();
         SwitchCameraForState(State.Title);
         ResetTitleStartInputGate();
         Debug.Log("Two-player game reset");

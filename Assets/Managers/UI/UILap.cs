@@ -9,6 +9,11 @@ public class UILap
     [SerializeField] private TMP_Text lapText;
     [SerializeField] private int currentLap = 1;
     private UIValuePulse valuePulse;
+    private TMP_Text totalText;
+    public void SetTotalLaps(int total)
+    {
+        if (totalText != null) totalText.text = "/ " + Mathf.Max(1, total);
+    }
 
     public void Init(Transform parent)
     {
@@ -35,6 +40,7 @@ public class UILap
             }
         }
 
+        totalText = rootTransform != null ? rootTransform.Find("Total")?.GetComponent<TMP_Text>() : null;
         UpdateText();
     }
 

@@ -1,0 +1,78 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+/// <summary>F8 controls are available in player builds and never save debugging state to disk.</summary>
+[DisallowMultipleComponent]
+public sealed class RaceFeatureController : MonoBehaviour
+{
+    private static readonly RaceFeature[] Features = {
+        RaceFeature.ExperienceItems, RaceFeature.DriftCoaching, RaceFeature.HitProtection, RaceFeature.Slipstream
+    };
+    private static readonly string[] Labels = {
+        "Gentle items (shield / rocket only)", "Drift coaching", "Anti-chain hit protection", "Slipstream boost"
+    };
+    public RaceFeatureSettings Settings { get; } = new RaceFeatureSettings();
+    public bool PanelVisible { get; set; }
+    public event System.Action FeaturesChanged;
+    private Gmanager manager;
+    private int appliedRevision = -1;
+    private Rect panel = new Rect(16, 16, 430, 340);
+
+    public static bool Enabled(RaceFeature feature) => Gmanager.Control != null &&
+        Gmanager.Control.Features != null && Gmanager.Control.Features.Settings.IsEnabled(feature);
+
+    public void Configure(Gmanager race) { manager = race; }
+    public void SetFeature(RaceFeature feature, bool enabled)
+    {
+        Settings.SetFeature(feature, enabled);
+        ApplyChanges();
+    }
+    public void SelectPreset(RacePreset preset)
+    {
+        Settings.SelectPreset(preset);
+        if (!Settings.RulesLocked) manager?.ApplyFeatureRules();
+        ApplyChanges();
+    }
+    private void Update()
+    {
+        if (Keyboard.current != null && Keyboard.current.f8Key.wasPressedThisFrame) PanelVisible = !PanelVisible;
+        ApplyChanges();
+    }
+    private void ApplyChanges()
+    {
+        if (appliedRevision == Settings.Revision) return;
+        appliedRevision = Settings.Revision;
+        FeaturesChanged?.Invoke();
+    }
+    private void OnGUI()
+    {
+        if (!PanelVisible) return;
+        // Keep IMGUI in ASCII: the cabinet's default IMGUI font does not contain Japanese.
+        float scale = Mathf.Clamp(Screen.height / 900f, .75f, 1.5f);
+        Matrix4x4 previous = GUI.matrix;
+        GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+        panel = GUILayout.Window(GetInstanceID(), panel, DrawPanel, "Racing debug - F8 to close");
+        GUI.matrix = previous;
+    }
+    private void DrawPanel(int id)
+    {
+        GUILayout.Label("Feature switches apply immediately (both players).");
+        for (int i = 0; i < Features.Length; i++)
+        {
+            bool current = Settings.IsEnabled(Features[i]);
+            bool next = GUILayout.Toggle(current, Labels[i]);
+            if (current != next) SetFeature(Features[i], next);
+        }
+        GUILayout.Space(8);
+        GUILayout.Label("Rules now: " + Settings.ActivePreset + " / " + (manager != null ? manager.GoalLap : 2) + " lap(s)");
+        GUILayout.Label(Settings.RulesLocked ? "Lap/time preset below applies to the NEXT race." : "Choose rules before either player starts.");
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("Standard: 2 laps")) SelectPreset(RacePreset.Standard);
+        if (GUILayout.Button("Experience: 1 lap")) SelectPreset(RacePreset.Experience);
+        GUILayout.EndHorizontal();
+        GUILayout.Label("Next preset: " + Settings.SelectedPreset);
+        if (GUILayout.Button("All added features OFF (legacy comparison)")) SetFeature(RaceFeature.All, false);
+        GUILayout.Label("Debug choices reset on application restart.");
+        GUI.DragWindow(new Rect(0, 0, 10000, 20));
+    }
+}
