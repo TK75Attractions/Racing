@@ -1,0 +1,5 @@
+run,seed,items,termination,seconds,car,finished,rank,laps,progress_m,mean_speed_mps,max_stall_s,off_course_s,vehicle_contacts,environment_contacts,items_used,afflictions,manual_resets,cpu_recoveries,human_recoveries,automatic_recoveries,recovery_blocked,granted_human_grace_s
+human-fast-items-7101,7101,True,both-humans-finished,146.92,P1,True,2,2,3808.39,34.88,0.0,0.0,16,655,4,1,0,0,0,0,,46.863365173339844
+human-fast-items-7101,7101,True,both-humans-finished,146.92,P2,True,3,2,3808.39,29.2,0.26,0.0,9,1457,4,0,0,0,0,0,,46.863365173339844
+human-fast-items-7101,7101,True,both-humans-finished,146.92,CPU 1,False,4,1,3730.71,26.68,0.32,0.0,4,673,0,5,0,2,0,0,,46.863365173339844
+human-fast-items-7101,7101,True,both-humans-finished,146.92,CPU 2,True,1,2,3808.39,35.76,0.28,0.0,5,612,0,0,0,1,0,0,,46.863365173339844

@@ -1,0 +1,2 @@
+113.75,CPU 2,finish-car-retired,"winning run complete; no parked meshes or labels",496.003,3.348,681.298
+117.29,P1,finish-car-retired,"winning run complete; no parked meshes or labels",496.004,3.348,679.566
