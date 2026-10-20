@@ -28,11 +28,19 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     private volatile bool portIsOpen;
     private long linesReceived;
     private bool inputWasFresh;
+    private bool processingReceivedFrames;
 
     public event Action<string, string> LineProcessed;
     public RgpSerialJournal Monitor { get; } = new RgpSerialJournal();
     public RgpHostSession Session => session;
-    public bool HasFreshTelemetry => portIsOpen && session.IsFresh(clock.Elapsed.TotalMilliseconds);
+    public bool HasFreshTelemetry
+    {
+        get
+        {
+            ProcessReceivedFrames();
+            return portIsOpen && session.IsFresh(clock.Elapsed.TotalMilliseconds);
+        }
+    }
     public bool InvalidTelemetry { get; private set; }
     public bool HasRecentDeviceData => portIsOpen && clock.Elapsed.TotalMilliseconds - lastDeviceDataAt < 3000;
     private double lastDeviceDataAt = double.NegativeInfinity;
@@ -79,6 +87,10 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 
     public bool IsConnected(int playerIndex)
     {
+        // Catch-up FixedUpdate runs before Gmanager.Update after a slow frame. The
+        // reader may already have fresh TEL queued: apply it before checking its age,
+        // otherwise a render hitch permanently latches the car's pedal-release gate.
+        ProcessReceivedFrames();
         return playerIndex >= 0 && playerIndex < (playerOneOnly ? 1 : 2) && portIsOpen &&
             session.IsFresh(clock.Elapsed.TotalMilliseconds);
     }
@@ -86,30 +98,8 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     public void UpdateInput(float deltaTime)
     {
         FlushDiagnostics();
-        if (!portIsOpen)
-        {
-            session.Disconnect();
-            inputWasFresh = false;
-            while (receivedLines.TryDequeue(out _)) { }
-            return;
-        }
-        while (receivedLines.TryDequeue(out ReceivedFrame received))
-        {
-            LinesProcessed++;
-            LastSerialLine = received.Wire.TrimEnd('\r', '\n');
-            LastSerialLineTime = Time.realtimeSinceStartup;
-            if (!SerialInputProtocol.TryParse(received.Wire, out RgpFrame frame))
-            {
-                if (LastSerialLine.StartsWith("@TEL,", StringComparison.Ordinal)) InvalidTelemetry = true;
-                ParseErrorCount++;
-                RecordParseResult("INVALID", LastSerialLine);
-                continue;
-            }
-            lastDeviceDataAt = received.ReceivedAt;
-            string result = session.Receive(frame, received.ReceivedAt);
-            if (frame.Type == "TEL" && result == "OK") InvalidTelemetry = false;
-            RecordParseResult(result, LastSerialLine);
-        }
+        ProcessReceivedFrames();
+        if (!portIsOpen) return;
         session.Tick(clock.Elapsed.TotalMilliseconds);
         if (clock.Elapsed.TotalMilliseconds >= nextStatusAt)
         {
@@ -120,6 +110,42 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         if (inputWasFresh && !fresh && portIsOpen && session.State == "READY" && session.TelemetryEnabled)
             RecordParseResult("STALE", "TEL");
         inputWasFresh = fresh;
+    }
+
+    // Called on the main thread only; the read thread still owns byte I/O alone.
+    // Keep each frame's original receive timestamp so old queued data cannot hide a real outage.
+    private void ProcessReceivedFrames()
+    {
+        if (processingReceivedFrames) return; // LineProcessed subscribers may inspect input.
+        processingReceivedFrames = true;
+        try
+        {
+            if (!portIsOpen)
+            {
+                session.Disconnect();
+                inputWasFresh = false;
+                while (receivedLines.TryDequeue(out _)) { }
+                return;
+            }
+            while (receivedLines.TryDequeue(out ReceivedFrame received))
+            {
+                LinesProcessed++;
+                LastSerialLine = received.Wire.TrimEnd('\r', '\n');
+                LastSerialLineTime = Time.realtimeSinceStartup;
+                if (!SerialInputProtocol.TryParse(received.Wire, out RgpFrame frame))
+                {
+                    if (LastSerialLine.StartsWith("@TEL,", StringComparison.Ordinal)) InvalidTelemetry = true;
+                    ParseErrorCount++;
+                    RecordParseResult("INVALID", LastSerialLine);
+                    continue;
+                }
+                lastDeviceDataAt = received.ReceivedAt;
+                string result = session.Receive(frame, received.ReceivedAt);
+                if (frame.Type == "TEL" && result == "OK") InvalidTelemetry = false;
+                RecordParseResult(result, LastSerialLine);
+            }
+        }
+        finally { processingReceivedFrames = false; }
     }
 
     private void Send(string wire)

@@ -25,6 +25,7 @@ sources = [tool / "Tests/UnityStubs.cs", tool / "Tests/ReceiverProbe.cs",
            root / "Assets/Managers/Input/Esp32SerialConfiguration.cs",
            root / "Assets/Managers/Input/TwoPlayerSerialInputSource.cs",
            root / "Assets/Managers/Input/DriveInputState.cs",
+           root / "Assets/Managers/Input/PlayerDriveInputGate.cs",
            root / "Assets/Managers/Multiplayer/Core/SerialInputProtocol.cs",
            root / "Assets/Managers/Multiplayer/Core/RgpHostSession.cs",
            root / "Assets/Managers/Multiplayer/Core/RgpSerialJournal.cs"]
@@ -39,12 +40,14 @@ subprocess.run([str(mono), str(compiler), "-langversion:latest", f"-r:{nunit}", 
                 str(root / "Assets/Managers/Multiplayer/Core/SerialInputProtocol.cs"),
                 str(root / "Assets/Managers/Multiplayer/Core/RgpHostSession.cs")], check=True, env=env)
 subprocess.run([str(mono), str(regression)], check=True, env=env)
-for mode, scenario, duration in [("timeout", "02-input-and-timeout.json", 8),
+for mode, scenario, duration in [("hitches", None, 8),
+                                 ("queued-stale", "04-queued-stale.json", 8),
+                                 ("timeout", "02-input-and-timeout.json", 8),
                                  ("fragments", "03-boot-and-fragments.json", 8)]:
     port_file = output / f"{mode}.port"
     port_file.unlink(missing_ok=True)
-    sender = subprocess.Popen([str(root / "Builds/ESP32Simulator/esp32-simulator-cli"),
-                               "--scenario", str(tool / "Scenarios" / scenario),
+    controls = ["--scenario", str(tool / "Scenarios" / scenario)] if scenario else ["--frame", "30,0.75,0,-15,0.5,0"]
+    sender = subprocess.Popen([str(root / "Builds/ESP32Simulator/esp32-simulator-cli"), *controls,
                                "--duration", str(duration), "--port-file", str(port_file)],
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:
@@ -67,6 +70,8 @@ for mode, scenario, duration in [("timeout", "02-input-and-timeout.json", 8),
         if result.returncode:
             print(result.stderr, file=sys.stderr)
             raise RuntimeError(f"Receiver failed: {mode}")
+        if mode in ("hitches", "queued-stale"):
+            sender.terminate()  # These probes finish before port closure; do not fill an unread PTY.
         stdout, stderr = sender.communicate(timeout=3)
         print(stdout, end="")
         if sender.returncode:

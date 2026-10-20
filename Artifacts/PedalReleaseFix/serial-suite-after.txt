@@ -1,0 +1,26 @@
+SWIFT_RGP_TESTS_PASS: 103 assertions
+CLI_START_GATE_PASS: HELLO before gate, no early TEL, six-value frame, clean SIGTERM
+CRC vectors passed: 19
+Host valid vectors passed: 50
+Host invalid vectors passed: 57
+Shared malformed framing vectors rejected: 18
+SERIAL_PROTOCOL_REGRESSION_PASS: 18 existing NUnit cases
+HITCH 150ms: queued=15 received=15 pedal=0.75/0.5 releaseRequired=False parseErrors=0
+HITCH 350ms: queued=36 received=36 pedal=0.75/0.5 releaseRequired=False parseErrors=0
+HITCH 650ms: queued=65 received=65 pedal=0.75/0.5 releaseRequired=False parseErrors=0
+MONO_RGP_PTY_RECEIVER_PASS: hitches (both players keep their held pedals)
+PORT=/dev/ttys000
+SENT=150 SKIPPED=4 HZ=101.8
+QUEUED_STALE: queued=14 pedal=0/0 releaseRequired=True
+MONO_RGP_PTY_RECEIVER_PASS: queued-stale (real outage, held-pedal block, release and repress)
+PORT=/dev/ttys000
+SENT=264 SKIPPED=3 HZ=45.9
+session=True numeric=True independent=True atomicStop=True resumed=True stale=True recovered=True invalid=False slowFragment=False closed=True lines=644
+MONO_RGP_PTY_RECEIVER_PASS: timeout
+PORT=/dev/ttys000
+SENT=644 SKIPPED=5 HZ=100.0
+session=True numeric=True independent=False atomicStop=False resumed=False stale=False recovered=False invalid=True slowFragment=True closed=True lines=559
+MONO_RGP_PTY_RECEIVER_PASS: fragments
+PORT=/dev/ttys000
+SENT=587 SKIPPED=232 HZ=100.8
+MONO_INTEGRATION_TESTS_PASS

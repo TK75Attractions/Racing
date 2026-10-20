@@ -1,0 +1,2 @@
+System.Exception: Normal queued telemetry falsely latched the pedal-release gate after a slow frame.
+HITCH 150ms: queued=15 received=16 pedal=0/0 releaseRequired=True parseErrors=0
