@@ -1,43 +1,50 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// ミニマップ上の車を表す矢印です。外部スプライトを使わずに頂点だけで描きます。
-/// 進行方向が分かるよう、+Y方向を車の前方として組み立てます。
-/// </summary>
+/// <summary>Outlined human arrows and CPU dots, independent of player color.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class MiniMapMarkerGraphic : MaskableGraphic
 {
-    [SerializeField, Range(0f, 0.5f)] private float tailNotch = 0.22f;
-
-    protected override void Awake()
+    public bool IsCpu { get; private set; }
+    public bool IsAtEdge { get; private set; }
+    public void Configure(bool cpu, bool edge = false)
     {
-        base.Awake();
-        raycastTarget = false;
+        if (IsCpu == cpu && IsAtEdge == edge) return;
+        IsCpu = cpu; IsAtEdge = edge; SetVerticesDirty();
     }
-
+    protected override void Awake() { base.Awake(); raycastTarget = false; }
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear();
-
-        Rect rect = GetPixelAdjustedRect();
-        float halfWidth = rect.width * 0.5f;
-        float halfHeight = rect.height * 0.5f;
-        Vector2 center = rect.center;
-
-        Color32 vertexColor = color;
-        Vector2 tip = center + new Vector2(0f, halfHeight);
-        Vector2 left = center + new Vector2(-halfWidth, -halfHeight);
-        Vector2 tail = center + new Vector2(0f, -halfHeight + (rect.height * tailNotch));
-        Vector2 right = center + new Vector2(halfWidth, -halfHeight);
-
-        vh.AddVert(tip, vertexColor, Vector2.zero);
-        vh.AddVert(left, vertexColor, Vector2.zero);
-        vh.AddVert(tail, vertexColor, Vector2.zero);
-        vh.AddVert(right, vertexColor, Vector2.zero);
-
-        vh.AddTriangle(0, 1, 2);
-        vh.AddTriangle(0, 2, 3);
+        Rect r = GetPixelAdjustedRect();
+        // Double contour stays legible over both bright track and dark background.
+        Shape(vh, r, 1f, new Color(.005f,.015f,.03f,1f));
+        Shape(vh, r, .80f, Color.white);
+        Shape(vh, r, .59f, color);
+        if (IsAtEdge)
+            RacingPanelGraphic.Line(vh, r.center + new Vector2(-r.width*.22f,-r.height*.48f),
+                r.center + new Vector2(r.width*.22f,-r.height*.48f), 2f, Color.white, .5f);
+    }
+    private void Shape(VertexHelper vh, Rect r, float scale, Color tint)
+    {
+        int start = vh.currentVertCount;
+        if (IsCpu)
+        {
+            vh.AddVert(r.center, tint, Vector2.zero);
+            for (int i = 0; i <= 16; i++)
+            {
+                float a = i * Mathf.PI / 8f;
+                vh.AddVert(r.center + new Vector2(Mathf.Cos(a)*r.width,Mathf.Sin(a)*r.height)*(.5f*scale), tint, Vector2.zero);
+                if (i > 0) vh.AddTriangle(start, start+i, start+i+1);
+            }
+        }
+        else
+        {
+            vh.AddVert(r.center + new Vector2(0,r.height*.5f)*scale, tint, Vector2.zero);
+            vh.AddVert(r.center + new Vector2(-r.width*.5f,-r.height*.5f)*scale, tint, Vector2.zero);
+            vh.AddVert(r.center + new Vector2(r.width*.5f,-r.height*.5f)*scale, tint, Vector2.zero);
+            vh.AddTriangle(start,start+1,start+2);
+        }
     }
 }

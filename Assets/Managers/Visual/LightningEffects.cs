@@ -70,6 +70,11 @@ public sealed class LightningEffects : MonoBehaviour
     [Tooltip("雷鳴全体の音量。")]
     [SerializeField, Range(0f, 1f)] private float thunderVolume = 0.8f;
 
+    [Header("Driving Visibility")]
+    [Tooltip("プレイヤーの画面中央を横切る幹・枝は、そのカメラの描画中だけ隠します。")]
+    [SerializeField] private bool protectDrivingView = true;
+    [SerializeField] private Vector2 centralClearRadius = new Vector2(.22f, .24f);
+
     private sealed class Strand
     {
         public LineRenderer line;
@@ -120,6 +125,54 @@ public sealed class LightningEffects : MonoBehaviour
     }
 
     public int ActiveBoltCount => activeBolts.Count;
+
+    private void OnEnable()
+    {
+        RenderPipelineManager.beginCameraRendering += BeforeCameraRendering;
+        RenderPipelineManager.endCameraRendering += AfterCameraRendering;
+    }
+
+    private void OnDisable()
+    {
+        RenderPipelineManager.beginCameraRendering -= BeforeCameraRendering;
+        RenderPipelineManager.endCameraRendering -= AfterCameraRendering;
+        ReleaseAllBolts();
+    }
+
+    private void BeforeCameraRendering(ScriptableRenderContext context, Camera camera)
+    {
+        bool protect = protectDrivingView && (camera.name == "MainCamera" || camera.CompareTag("MainCamera"));
+        foreach (Bolt bolt in activeBolts)
+            foreach (Strand strand in bolt.strands)
+                strand.line.enabled = !protect || !CrossesDrivingView(strand, camera);
+    }
+
+    private void AfterCameraRendering(ScriptableRenderContext context, Camera camera)
+    {
+        foreach (Bolt bolt in activeBolts)
+            foreach (Strand strand in bolt.strands) strand.line.enabled = true;
+    }
+
+    private bool CrossesDrivingView(Strand strand, Camera camera)
+    {
+        // Conservative segment bounds include a margin for line width and Bloom.
+        Vector2 radius = centralClearRadius + Vector2.one * .03f;
+        Vector3 previous = camera.WorldToViewportPoint(strand.world[0]);
+        for (int i = 1; i < strand.count; i++)
+        {
+            Vector3 current = camera.WorldToViewportPoint(strand.world[i]);
+            if (Mathf.Max(previous.z, current.z) > camera.nearClipPlane)
+            {
+                if (Mathf.Min(previous.z, current.z) <= camera.nearClipPlane) return true;
+                if (Mathf.Max(previous.x, current.x) >= .5f - radius.x &&
+                    Mathf.Min(previous.x, current.x) <= .5f + radius.x &&
+                    Mathf.Max(previous.y, current.y) >= .5f - radius.y &&
+                    Mathf.Min(previous.y, current.y) <= .5f + radius.y) return true;
+            }
+            previous = current;
+        }
+        return false;
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics()

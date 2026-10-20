@@ -42,6 +42,8 @@ White, silver, blue, pink and black are available. The committed vehicle and pai
 
 The preview uses mesh copies without driving scripts or colliders. Its local point lights are isolated by range, layer and distance so they do not affect the other player's practice area. The large preview renders at up to 30 frames per second while rotating; thumbnails are captured once per screen. The showroom is inactive while closed, and its private textures/materials are released on teardown. The sedan's legacy materials are copied to URP-compatible materials. Coupe preview wheels come from the complete wheel prefab.
 
+Car body paint, dark plastic/interior, metal wheel parts, glass and rubber use the shared surface recipe. Run **Racing > Visuals > Build Car Material Tuning** after changing source car materials; showroom copies receive the same recipe without modifying their source assets.
+
 ## Configuration and validation
 
 Edit `Assets/Resources/UI/CarSelectionCatalog.asset` for vehicle models, descriptions and performance multipliers. Shared asset materials remain intact.

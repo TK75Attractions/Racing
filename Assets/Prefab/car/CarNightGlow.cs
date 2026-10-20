@@ -18,7 +18,7 @@ public sealed class CarNightGlow : MonoBehaviour
     private MeshRenderer glowRenderer;
     private Mesh glowMesh;
     private Material glowMaterial;
-    private Texture2D gradient;
+    private static Texture2D gradient;
     private Light bodyLight;
     private Bounds carBounds;
     private Color glowColor;
@@ -112,7 +112,7 @@ public sealed class CarNightGlow : MonoBehaviour
             Debug.LogWarning("CarNightGlow: no supported glow shader was found.", this);
             return;
         }
-        gradient = CreateGradient();
+        PrepareSharedResources();
         glowMaterial = new Material(shader) { name = "Car Night Glow", hideFlags = HideFlags.HideAndDontSave };
         if (lampShader) glowMaterial.SetFloat(IntensityId, 0f);
         else
@@ -159,6 +159,20 @@ public sealed class CarNightGlow : MonoBehaviour
         glowRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
         glowRenderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
         glowRenderer.enabled = false;
+    }
+
+    /// <summary>All cars use the same immutable mask, prepared before the title.</summary>
+    public static void PrepareSharedResources()
+    {
+        if (gradient == null) gradient = CreateGradient();
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetSharedResources()
+    {
+        // Also handles entering Play Mode with domain reload disabled.
+        if (gradient != null) Destroy(gradient);
+        gradient = null;
     }
 
     private static Texture2D CreateGradient()
@@ -230,6 +244,5 @@ public sealed class CarNightGlow : MonoBehaviour
         if (bodyLight != null) Destroy(bodyLight.gameObject);
         if (glowMaterial != null) Destroy(glowMaterial);
         if (glowMesh != null) Destroy(glowMesh);
-        if (gradient != null) Destroy(gradient);
     }
 }

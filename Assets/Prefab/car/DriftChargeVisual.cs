@@ -55,6 +55,7 @@ public sealed class DriftChargeVisual : MonoBehaviour
         mover = GetComponent<DebugMover>();
         body = GetComponent<Rigidbody>();
         CacheRearWheels();
+        CreateSparks();
     }
 
     private void Update()

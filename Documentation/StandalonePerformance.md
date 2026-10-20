@@ -99,3 +99,22 @@ P1 はネイティブ表示、P2 は既存の RenderTexture スタックを使�
 CSV はメモリに蓄積して終了後に書き、レース中の毎フレームの文字列整形・ディスク I/O を避ける。遅いフレームの診断スナップショットには小量の割り当てがあり、その影響が次のフレームに現れる可能性がある。強制終了・クラッシュでは最終ファイルは保証しない。バックグラウンドでも動くが、比較時はフォーカス・解像度・画面枚数を揃え、`focusedFrames` も確認する。
 
 この追記時点では Unity の Windows ビルド・実行は未検証。リードが実機で、無入力遷移、両プレイヤーの移動、2 本の描画スタック、完走／240 秒終了、JSON / CSV の生成と終了コードを確認する。
+
+## 2026-10-21: 開始付近の停止調査（57 / 61）
+
+対象は lead の `P61/perf-s1`（Windows Development / D3D11、Adreno X1-85）。CSV は起動からでなく GO 後の秒数。0–10秒は最大133.34ms、10–25秒は1183.47ms、25秒以降は200.00ms。50ms超は各115/145、104/169、1000/1730フレームで、長い停止の集中と、全体的な50ms前後の負荷は区別する。最大値は21.125516秒、速度0.0062m/s、距離1790.527m、GC差分は全世代0。17–22秒の主要スパイクでは Game Object Count=2944 / Object Count=18961 が一定。最大停止の観測カウンターは Main Thread=72.77ms / CPU Main Thread Frame Time=57.79ms、直前は81.97/141.38msで、1183ms全体を説明できない。GPU Frame Time=0 は GPU 待ちがない証明ではない。
+
+`player.log` は車4台の参加→P1/CPU1リセット→初周通過の順。時刻付きログがないため、個々のリセットをCSVの秒に割り当てることはできない。CSV冒頭は約58mで既に移動中なので、1790mを開始前グリッドとする解釈は採用しない。初回コンパイル、物理の追い付き、GC、OS/ドライバー停止のどれか一つに原因を確定する材料は不足している。
+
+コード上のタイミングと対処:
+
+- 行灯は `OnEnable`、道路・進路マーカー・設置アイテムはシーン読み込み、夜の遠景リングは最初の `LateUpdate/ApplyEnvironment`（512三角形）で生成。夜の初期値はシーンの `timeOfDay: 1` を維持。行灯の `OnValidate`→`OnEnable`→最初の`Update`での重複再生成を抑制した。
+- 車4台は `StartGameWhenScreenCovered` で生成し、カウントダウン後の GO は運転再開・表示・音の切替。車の煙、衝突火花、ドリフト火花を初回発生時から車両の `Awake` へ前倒し（車自体の生成は遮蔽中のまま）。`CarNightGlow` の64×64マスクはタイトル前に1回作り全車共有。タイヤ痕の固定バッファと雷の合成音はタイトル前に準備する。雷は既存の音量0の公開APIで合成のみ行い、音は再生しない。
+- 花びらはカメラ検出時に生成。雷の線・ライトのプールは初回使用で増える。両者およびHUDは別タスクの編集範囲につき変更なし。SEは `RaceSoundEffects.Awake` で全cue合成、BGMは `RaceBackgroundMusic.Awake` でロード済み。車のエンジンは `EngineAudioCore.OnEnable` で初期化。最大スパイクとこれらの実行時刻の一致は未確認。
+- `RaceStartupWarmup` は `Resources/RaceStartupVariants.shadervariants` をタイトル前に `WarmUp`。20シェーダー/125 variantsで、Resourcesの演出・環境Sky/Rain・URP Lit/Unlit/Particles Unlitを参照し、使用材質のキーワードと夜のFOG_EXP2・追加ライト・cascade shadowを含めた限定集合。全URP組合せやフォールバック専用の旧Standard等を網羅するものではない。Resources参照によりビルドへ含める。起動ログ `RACE_STARTUP_WARMUP` の件数・warmedを確認し、材質やURP設定変更時は集合を更新する。
+
+リードによる確認: 上記Windows手順の引数に `-force-d3d11` を追加し、同じ解像度・2本のスタック・フォーカス条件で新規プロセスを計測する。初回とキャッシュ済みを分け、GO前の読み込み時間も記録する。`Racing.Startup.Warmup` が準備中に終わり、開始後の `Shader.CreateGPUProgram` / `CreateGraphicsGraphicsPipelineImpl`、`GC.Alloc`、`Physics.Simulate` / FixedUpdate回数、OS側CPU/ドライバー待ちを17–22秒で採取する。最初の10秒だけでなく10–25秒を比較し、`CourseVisualTour` と既存 `VisualEffectsValidation.Run` / `LightningValidation` / Standalone Renderingで見た目・構成も確認する。本編集ではUnity起動・ビルド・検証メニュー・撮影・性能再計測は未実施。
+
+D3D12の `upload buffer was too small` は提示されたD3D11ログにはなく、原因未確定。候補は大きなモデル/チューブ/道路の頂点・index・テクスチャの一括転送、起動時static batching、AdrenoドライバーとUnity D3D12 backend。15本の木は描画LODを軽くしてもLOD0や同居するLODデータのロード・転送がなくなるとは限らない。遠景リングは小さく、巨大転送の第一候補ではない。今回の行灯二重生成抑制は不要な再転送を減らすがD3D12修正済みとはしない。D3D11を比較基準とし、リードはD3D12の完全ログ/クラッシュ情報を保存し、木→チューブ→static batchingを一つずつ除外したビルドで切り分ける。該当が確定したらモデルLOD0の別アセット化/軽量化、メッシュの区間分割、転送の分散を検討する（物理用メッシュや既存15本LOD検証を無断変更しない）。D3D12は実際の頂点形式と2画面HDRターゲットを含む `GraphicsStateCollection` を実機で採取し、読み込み中に温める必要がある。SVCだけでPSOの停止解消は保証しない。
+
+公式資料: [Unity 6000.3 SVC.WarmUpのAPI別制限](https://docs.unity3d.com/6000.3/Documentation/ScriptReference/ShaderVariantCollection.WarmUp.html)、[PSOの読み込み中の事前準備と確認マーカー](https://docs.unity3d.com/6000.3/Documentation/Manual/shader-prewarm.html)。

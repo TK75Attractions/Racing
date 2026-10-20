@@ -39,6 +39,8 @@ public static class DrivingFeelValidation
             Rigidbody body = car.AddComponent<Rigidbody>();
             body.useGravity = false;
             var controller = rig.AddComponent<RaceDirectionCameraController>();
+            // This check measures the vibration filter independently of scene obstacles.
+            typeof(RaceDirectionCameraController).GetField("avoidOcclusion", PrivateInstance).SetValue(controller, false);
             controller.SetCar(car.transform);
             Require(body.interpolation == RigidbodyInterpolation.Interpolate, "Followed car must interpolate between physics frames.");
             var tick = typeof(RaceDirectionCameraController).GetMethod("UpdateCameraTarget", PrivateInstance);

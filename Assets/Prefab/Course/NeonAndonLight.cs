@@ -115,6 +115,9 @@ public sealed class NeonAndonLight : MonoBehaviour
     private void OnEnable()
     {
         if (!built) built = Build();
+        // OnValidate can precede OnEnable during loading. That build already uses
+        // the serialized values, so do not destroy and upload everything again.
+        if (built) dirty = false;
     }
 
     private void OnDisable()

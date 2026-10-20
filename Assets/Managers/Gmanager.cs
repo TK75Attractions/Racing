@@ -828,6 +828,8 @@ public class Gmanager : MonoBehaviour
                 player.car.AddComponent<TireEffectsVisual>();
             CarNightGlow nightGlow = player.car.GetComponent<CarNightGlow>() ?? player.car.AddComponent<CarNightGlow>();
             nightGlow.Configure(playerIndex);
+            CarParticipantBadge badge = player.car.GetComponent<CarParticipantBadge>() ?? player.car.AddComponent<CarParticipantBadge>();
+            badge.Configure(playerIndex, displayRigs);
             if (player.car.GetComponent<CarWallCollisionResponse>() == null)
                 player.car.AddComponent<CarWallCollisionResponse>();
             player.chargeVisual = player.car.GetComponent<DriftChargeVisual>();
@@ -887,6 +889,8 @@ public class Gmanager : MonoBehaviour
             vehicle.name = $"CPU{cpu + 1}_Car";
             CarNightGlow nightGlow = vehicle.GetComponent<CarNightGlow>() ?? vehicle.AddComponent<CarNightGlow>();
             nightGlow.Configure(index);
+            CarParticipantBadge badge = vehicle.GetComponent<CarParticipantBadge>() ?? vehicle.AddComponent<CarParticipantBadge>();
+            badge.Configure(index, displayRigs);
             // CPUs borrow the vehicle physics/visuals, never a player display or input device.
             foreach (Camera camera in vehicle.GetComponentsInChildren<Camera>(true)) camera.enabled = false;
             foreach (AudioListener listener in vehicle.GetComponentsInChildren<AudioListener>(true)) listener.enabled = false;

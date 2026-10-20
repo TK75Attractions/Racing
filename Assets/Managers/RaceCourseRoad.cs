@@ -27,6 +27,11 @@ public static class RaceCourseRoad
         [Tooltip("チューブ内壁まで道路の両側を埋める対象。未指定のコースでは生成しません。")]
         public MeshCollider tubeInterior;
 
+        [Min(0f), Tooltip("舗装端の幅 (World)。0で無効")]
+        public float pavedEdgeWidth = 0.35f;
+        [Min(0f), Tooltip("草の縁取り幅 (World)。0で無効")]
+        public float grassEdgeWidth = 0.3f;
+
         [Tooltip("チューブ内を除き、ジャンプの両脇を含めて道路境界へ青いバリアを生成します。")]
         public bool generateBarriers;
         public Material barrierMaterial;
@@ -35,6 +40,9 @@ public static class RaceCourseRoad
 
     public const string RootName = "Generated Race Course Road";
     private const float PaintOffset = 0.01f;
+    private const float EdgeOffset = 0.006f;
+    private static Texture2D roadDetailTexture;
+    private static Texture2D roadSpecTexture;
 
     private struct Vertex
     {
@@ -67,6 +75,7 @@ public static class RaceCourseRoad
 
         var vertices = new Vector3[count * 2];
         var uv = new Vector2[vertices.Length];
+        var uv2 = new Vector2[vertices.Length];
         var triangles = new List<int>((count - 1) * 6);
         var samples = new Vertex[vertices.Length];
         for (int i = 0; i < count; i++)
@@ -78,6 +87,7 @@ public static class RaceCourseRoad
                 Vector3 position = side == 0 ? left[i] : right[i];
                 vertices[index] = owner.InverseTransformPoint(position);
                 uv[index] = new Vector2(side * halfWidth * 2f, distances[i]);
+                uv2[index] = new Vector2(0.5f + (side == 0 ? -0.25f : 0.25f), distances[i] / 64f);
                 samples[index] = new Vertex
                 {
                     position = position,
@@ -101,6 +111,7 @@ public static class RaceCourseRoad
         Mesh surface = NewMesh("RaceCourseRoadSurface", vertices.Length);
         surface.vertices = vertices;
         surface.uv = uv;
+        surface.uv2 = uv2;
         surface.SetTriangles(triangles, 0);
         surface.RecalculateNormals();
         if (closedLoop)
@@ -115,8 +126,8 @@ public static class RaceCourseRoad
         }
         surface.RecalculateBounds();
         surface.RecalculateTangents();
-        GameObject asphalt = CreatePart(root.transform, "Road Surface", surface,
-            new[] { settings.asphaltMaterial != null ? settings.asphaltMaterial : LoadMaterial("Asphalt") });
+        Material asphaltMaterial = CreateRoadMaterial(settings.asphaltMaterial != null ? settings.asphaltMaterial : LoadMaterial("Asphalt"));
+        GameObject asphalt = CreatePart(root.transform, "Road Surface", surface, new[] { asphaltMaterial });
         if (settings.generateCollider)
         {
             MeshCollider collider = asphalt.AddComponent<MeshCollider>();
@@ -127,6 +138,7 @@ public static class RaceCourseRoad
         }
 
         BuildTubeShoulders(owner, root.transform, center, left, right, distances, roadSegments, settings);
+        BuildRoadEdges(owner, root.transform, center, left, right, distances, roadSegments, settings);
         RaceCourseBarriers.Build(root.transform, center, left, right, closedLoop, settings);
 
         // Paint is clipped against each surface triangle, so it follows curves, width changes
@@ -154,17 +166,170 @@ public static class RaceCourseRoad
             for (int block = Mathf.FloorToInt(start / stripeLength); block * stripeLength < end; block++)
             {
                 int material = block % 2 == 0 ? 1 : 0;
-                paint.Add(a, b, c, block * stripeLength, (block + 1) * stripeLength, -1, material);
-                paint.Add(a, b, c, block * stripeLength, (block + 1) * stripeLength, 1, material);
+                paint.Add(a, b, c, block * stripeLength, (block + 1) * stripeLength, -1, material == 0 ? 2 : 1);
+                paint.Add(a, b, c, block * stripeLength, (block + 1) * stripeLength, 1, material == 0 ? 2 : 1);
             }
         }
         Mesh markings = paint.ToMesh();
         GameObject markingObject = CreatePart(root.transform, "Road Markings", markings, new[]
         {
             settings.whiteMaterial != null ? settings.whiteMaterial : LoadMaterial("White"),
-            settings.redMaterial != null ? settings.redMaterial : LoadMaterial("Red")
+            settings.redMaterial != null ? settings.redMaterial : LoadMaterial("Red"),
+            CreateEmissiveCurbMaterial(settings.whiteMaterial != null ? settings.whiteMaterial : LoadMaterial("White"))
         });
         markingObject.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
+    }
+
+    private static Material CreateRoadMaterial(Material source)
+    {
+        if (source == null) return source;
+        Material material = new Material(source) { name = "Generated Road Asphalt", hideFlags = HideFlags.DontSave };
+        EnsureRoadTextures();
+        material.SetTexture("_DetailAlbedoMap", roadDetailTexture);
+        material.SetTextureScale("_DetailAlbedoMap", Vector2.one);
+        material.SetFloat("_DetailAlbedoMapScale", 1f);
+        material.EnableKeyword("_DETAIL_MULX2");
+        material.SetTexture("_SpecGlossMap", roadSpecTexture);
+        material.SetTextureScale("_SpecGlossMap", new Vector2(0.02f, 0.02f));
+        material.EnableKeyword("_SPECGLOSSMAP");
+        return material;
+    }
+
+    private static Material CreateEmissiveCurbMaterial(Material source)
+    {
+        if (source == null) return source;
+        Material material = new Material(source) { name = "Generated Curb White", hideFlags = HideFlags.DontSave };
+        material.EnableKeyword("_EMISSION");
+        material.SetColor("_EmissionColor", new Color(1.15f, 1.1f, 0.95f, 1f));
+        return material;
+    }
+
+    private static void EnsureRoadTextures()
+    {
+        if (roadDetailTexture != null && roadSpecTexture != null) return;
+        const int size = 128;
+        roadDetailTexture = new Texture2D(size, size, TextureFormat.RGBA32, false, true)
+        { name = "Generated Low Frequency Asphalt Variation", wrapMode = TextureWrapMode.Repeat, filterMode = FilterMode.Bilinear, hideFlags = HideFlags.DontSave };
+        roadSpecTexture = new Texture2D(size, size, TextureFormat.RGBA32, false, true)
+        { name = "Generated Asphalt Smoothness Variation", wrapMode = TextureWrapMode.Repeat, filterMode = FilterMode.Bilinear, hideFlags = HideFlags.DontSave };
+        var albedo = new Color[size * size];
+        var specular = new Color[size * size];
+        for (int y = 0; y < size; y++)
+        for (int x = 0; x < size; x++)
+        {
+            float u = x / (float)size, v = y / (float)size;
+            float broad = PeriodicNoise(u, v, 6, 19) * 0.65f + PeriodicNoise(u, v, 17, 53) * 0.35f;
+            float repair = Mathf.SmoothStep(0.62f, 0.78f, PeriodicNoise(u, v, 3, 97));
+            float tire = Mathf.Max(TireTrack(u, 0.43f), TireTrack(u, 0.57f));
+            float stain = Mathf.Clamp01((broad - 0.48f) * 1.4f);
+            float value = Mathf.Clamp(0.51f - stain * 0.11f + repair * 0.045f - tire * 0.12f, 0.33f, 0.62f);
+            int index = y * size + x;
+            albedo[index] = new Color(value, value, value, 1f);
+            float gloss = Mathf.Clamp(0.04f + tire * 0.045f + stain * 0.018f, 0.02f, 0.11f);
+            specular[index] = new Color(0.2f, 0.2f, 0.2f, gloss);
+        }
+        roadDetailTexture.SetPixels(albedo); roadDetailTexture.Apply(false, true);
+        roadSpecTexture.SetPixels(specular); roadSpecTexture.Apply(false, true);
+    }
+
+    private static float TireTrack(float u, float center)
+    {
+        float distance = Mathf.Abs(u - center);
+        return 1f - Mathf.SmoothStep(0.012f, 0.045f, distance);
+    }
+
+    private static float PeriodicNoise(float u, float v, int cells, int seed)
+    {
+        float x = u * cells, y = v * cells;
+        int x0 = Mathf.FloorToInt(x), y0 = Mathf.FloorToInt(y);
+        float tx = Mathf.SmoothStep(0f, 1f, x - x0), ty = Mathf.SmoothStep(0f, 1f, y - y0);
+        float a = HashNoise(x0, y0, cells, seed), b = HashNoise(x0 + 1, y0, cells, seed);
+        float c = HashNoise(x0, y0 + 1, cells, seed), d = HashNoise(x0 + 1, y0 + 1, cells, seed);
+        return Mathf.Lerp(Mathf.Lerp(a, b, tx), Mathf.Lerp(c, d, tx), ty);
+    }
+
+    private static float HashNoise(int x, int y, int cells, int seed)
+    {
+        x = (x % cells + cells) % cells; y = (y % cells + cells) % cells;
+        uint n = (uint)(x * 374761393 + y * 668265263 + seed * 1442695041);
+        n = (n ^ (n >> 13)) * 1274126177u;
+        return (n ^ (n >> 16)) / (float)uint.MaxValue;
+    }
+
+    private static void BuildRoadEdges(Transform owner, Transform root, List<Vector3> center,
+        List<Vector3> left, List<Vector3> right, List<float> distances, List<bool> segments, Settings settings)
+    {
+        if (settings.pavedEdgeWidth <= 0f && settings.grassEdgeWidth <= 0f) return;
+        int count = center.Count;
+        var vertices = new List<Vector3>(count * 8);
+        var uv = new List<Vector2>(count * 8);
+        var uv2 = new List<Vector2>(count * 8);
+        var pavement = new List<int>(); var grass = new List<int>();
+        var previousGround = new bool[2];
+        var groundBySide = new bool[2];
+        var row = new Vector3[3];
+        MeshCollider wall = settings.tubeInterior;
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 side = (right[i] - left[i]).normalized;
+            float halfWidth = Vector3.Distance(left[i], right[i]) * 0.5f;
+            bool inTube = wall != null && wall.enabled && wall.Raycast(new Ray(center[i], -side), out RaycastHit lh, 25f) &&
+                wall.Raycast(new Ray(center[i], side), out RaycastHit rh, 25f) && lh.distance >= halfWidth - .1f && rh.distance >= halfWidth - .1f;
+            groundBySide[0] = groundBySide[1] = false;
+            bool adjacentRoad = (i > 0 && segments[i - 1]) || (i < count - 1 && segments[i]);
+            if (!inTube && adjacentRoad)
+            {
+                for (int sideIndex = 0; sideIndex < 2; sideIndex++)
+                {
+                    float sign = sideIndex == 0 ? -1f : 1f;
+                    Vector3 probe = center[i] + side * (sign * (halfWidth + 0.6f)) + Vector3.up * 0.2f;
+                    groundBySide[sideIndex] = Physics.Raycast(probe, Vector3.down, out RaycastHit ground, 1.2f,
+                        Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)
+                        && Mathf.Abs(ground.point.y - center[i].y) < 0.35f;
+                }
+            }
+            int first = vertices.Count;
+            for (int s = 0; s < 2; s++)
+            {
+                float sign = s == 0 ? -1f : 1f;
+                Vector3 roadEdge = s == 0 ? left[i] : right[i];
+                Vector3 pavementOuter = roadEdge + side * (sign * settings.pavedEdgeWidth) + Vector3.up * EdgeOffset;
+                Vector3 grassOuter = pavementOuter + side * (sign * settings.grassEdgeWidth);
+                row[0] = roadEdge + Vector3.up * EdgeOffset; row[1] = pavementOuter; row[2] = grassOuter;
+                for (int band = 0; band < 3; band++)
+                {
+                    Vector3 point = row[band]; vertices.Add(owner.InverseTransformPoint(point));
+                    uv.Add(new Vector2(sign * (halfWidth + settings.pavedEdgeWidth + settings.grassEdgeWidth), distances[i]));
+                    uv2.Add(new Vector2(0.5f + sign * 0.25f, distances[i] / 64f));
+                }
+            }
+            if (i == 0 || !segments[i - 1]) { previousGround[0] = groundBySide[0]; previousGround[1] = groundBySide[1]; continue; }
+            for (int s = 0; s < 2; s++)
+            {
+                if (!groundBySide[s] || !previousGround[s]) continue;
+                int a = first - 6 + s * 3, b = first + s * 3;
+                AddQuad(pavement, a, b, a + 1, b + 1, s == 1);
+                AddQuad(grass, a + 1, b + 1, a + 2, b + 2, s == 1);
+            }
+            previousGround[0] = groundBySide[0]; previousGround[1] = groundBySide[1];
+        }
+        if (pavement.Count == 0 && grass.Count == 0) return;
+        Mesh mesh = NewMesh("RaceCourseRoadEdges", vertices.Count);
+        mesh.SetVertices(vertices); mesh.SetUVs(0, uv); mesh.SetUVs(1, uv2); mesh.subMeshCount = 2;
+        mesh.SetTriangles(pavement, 0); mesh.SetTriangles(grass, 1); mesh.RecalculateNormals(); mesh.RecalculateBounds();
+        Material source = settings.asphaltMaterial != null ? settings.asphaltMaterial : LoadMaterial("Asphalt");
+        Material edge = new Material(source) { name = "Generated Pavement Edge", hideFlags = HideFlags.DontSave };
+        edge.SetColor("_BaseColor", new Color(0.63f, 0.63f, 0.61f, 1f)); edge.SetFloat("_Smoothness", 0.06f);
+        Material grassMaterial = new Material(source) { name = "Generated Grass Verge", hideFlags = HideFlags.DontSave };
+        grassMaterial.SetColor("_BaseColor", new Color(0.16f, 0.24f, 0.14f, 1f)); grassMaterial.SetFloat("_Smoothness", 0.08f);
+        GameObject edgePart = CreatePart(root, "Pavement Edge and Grass", mesh, new[] { edge, grassMaterial });
+        edgePart.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
+    }
+
+    private static void AddQuad(List<int> triangles, int a, int b, int c, int d, bool reverse)
+    {
+        if (!reverse) triangles.AddRange(new[] { a, c, b, c, d, b });
+        else triangles.AddRange(new[] { a, b, c, c, b, d });
     }
 
     private static void BuildTubeShoulders(Transform owner, Transform root, List<Vector3> center,
@@ -253,6 +418,11 @@ public static class RaceCourseRoad
                 Mesh mesh = filter.sharedMesh;
                 if (mesh != null && (mesh.hideFlags & HideFlags.DontSave) == HideFlags.DontSave) DestroyGenerated(mesh);
             }
+            var generatedMaterials = new HashSet<Material>();
+            foreach (MeshRenderer renderer in root.GetComponentsInChildren<MeshRenderer>(true))
+                foreach (Material material in renderer.sharedMaterials)
+                    if (material != null && (material.hideFlags & HideFlags.DontSave) == HideFlags.DontSave) generatedMaterials.Add(material);
+            foreach (Material material in generatedMaterials) DestroyGenerated(material);
             DestroyGenerated(root);
         }
     }
@@ -268,7 +438,7 @@ public static class RaceCourseRoad
         private readonly Transform owner;
         private readonly List<Vector3> positions = new List<Vector3>();
         private readonly List<Vector2> uv = new List<Vector2>();
-        private readonly List<int>[] triangles = { new List<int>(), new List<int>() };
+        private readonly List<int>[] triangles = { new List<int>(), new List<int>(), new List<int>() };
         private List<Vertex> polygon = new List<Vertex>(8);
         private List<Vertex> buffer = new List<Vertex>(8);
 
@@ -327,8 +497,8 @@ public static class RaceCourseRoad
             Mesh mesh = NewMesh("RaceCourseRoadMarkings", positions.Count);
             mesh.SetVertices(positions);
             mesh.SetUVs(0, uv);
-            mesh.subMeshCount = 2;
-            for (int i = 0; i < 2; i++) mesh.SetTriangles(triangles[i], i);
+            mesh.subMeshCount = triangles.Length;
+            for (int i = 0; i < triangles.Length; i++) mesh.SetTriangles(triangles[i], i);
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
             return mesh;

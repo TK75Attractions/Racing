@@ -10,12 +10,13 @@ public sealed class TubeChargeLineController : MonoBehaviour
     private CarResetter resetter;
     private GroundCheck[] wheels;
     private int recoveryCount;
-    private float noticeUntil;
+    public DriverNoticeSignal Notices { get; } = new DriverNoticeSignal();
     private string guidance = "";
     public TubeChargeLineLayout Layout { get; private set; }
     public int SuccessfulLines { get; private set; }
+    public string Guidance => RaceFeatureController.Enabled(RaceFeature.TubeChargeLines) ? guidance : "";
     public bool Pending => challenge.IsPending;
-    public string Notice => RaceFeatureController.Enabled(RaceFeature.TubeChargeLines) && Time.time < noticeUntil ? "ライン成功！チャージ増加" : RaceFeatureController.Enabled(RaceFeature.TubeChargeLines) ? guidance : "";
+    public string Notice => RaceFeatureController.Enabled(RaceFeature.TubeChargeLines) && Notices.Text.Length > 0 ? Notices.Text : RaceFeatureController.Enabled(RaceFeature.TubeChargeLines) ? guidance : "";
     public void Configure(Gmanager race, RaceParticipant driver)
     {
         manager = race; own = driver; mover = GetComponent<DebugMover>(); resetter = GetComponent<CarResetter>();
@@ -24,7 +25,7 @@ public sealed class TubeChargeLineController : MonoBehaviour
         Layout = race.course.GetComponent<TubeChargeLineLayout>() ?? race.course.gameObject.AddComponent<TubeChargeLineLayout>();
         Layout.Configure(race.course, race.CourseProgressSign);
     }
-    public void Clear() { challenge.Clear(); noticeUntil = 0f; guidance = ""; }
+    public void Clear() { challenge.Clear(); Notices.Clear(); guidance = ""; }
     private void OnDisable() { Clear(); }
     private void FixedUpdate() { Tick(Time.fixedDeltaTime); }
     public void Tick(float dt)
@@ -47,7 +48,7 @@ public sealed class TubeChargeLineController : MonoBehaviour
         guidance = eligible && distance >= -25f && distance < -2f && !challenge.WasAwarded(lap) ? "横の光るラインでチャージ" : "";
         if (!challenge.Tick(lap, lane, distance, eligible, dt)) return;
         if (!mover.AddDriftCharge(.25f)) return; // Full charge gets no false success notification.
-        SuccessfulLines++; noticeUntil = Time.time + 1.5f;
+        SuccessfulLines++; Notices.Publish("ライン成功！チャージ増加", DriverNoticePriority.Success, 1.5f);
         own.Effects?.NotifyChargeCollected();
         RaceSoundEffects.PlayForPlayer(RaceSoundCue.Ready, own.Index);
     }

@@ -13,11 +13,12 @@ public sealed class LandingRewardController : MonoBehaviour
     private GroundCheck[] wheels;
     private RaceCourse.JumpSection activeJump;
     private int recoveryCount;
-    private float noticeUntil, previousProgress, boostPendingUntil;
+    private float previousProgress, boostPendingUntil;
+    public DriverNoticeSignal Notices { get; } = new DriverNoticeSignal();
     private bool hasProgress;
     public int SuccessfulLandings { get; private set; }
     public int RewardBoosts { get; private set; }
-    public string Notice => RaceFeatureController.Enabled(RaceFeature.LandingFeedback) && Time.time < noticeUntil ? "着地成功！" : "";
+    public string Notice => RaceFeatureController.Enabled(RaceFeature.LandingFeedback) && Notices.Text.Length > 0 ? Notices.Text : "";
     public void Configure(Gmanager race, RaceParticipant driver)
     {
         manager = race; own = driver; mover = GetComponent<DebugMover>();
@@ -27,10 +28,10 @@ public sealed class LandingRewardController : MonoBehaviour
     public void ApplySwitches()
     {
         if (!RaceFeatureController.Enabled(RaceFeature.LandingBoost)) { mover?.CancelLandingBoost(); boostPendingUntil = 0f; }
-        if (!RaceFeatureController.Enabled(RaceFeature.LandingFeedback)) noticeUntil = 0;
+        if (!RaceFeatureController.Enabled(RaceFeature.LandingFeedback)) Notices.Clear();
         if (!RaceFeatureController.Enabled(RaceFeature.LandingFeedback) && !RaceFeatureController.Enabled(RaceFeature.LandingBoost)) Clear();
     }
-    public void Clear() { challenge.Clear(); boostPendingUntil = 0f; noticeUntil = 0; mover?.CancelLandingBoost(); hasProgress = false; }
+    public void Clear() { challenge.Clear(); boostPendingUntil = 0f; Notices.Clear(); mover?.CancelLandingBoost(); hasProgress = false; }
     private void FixedUpdate() { Tick(Time.fixedDeltaTime); }
     public void Tick(float dt)
     {
@@ -69,7 +70,7 @@ public sealed class LandingRewardController : MonoBehaviour
         if (!challenge.Tick(true, contacts, !course.HasRoadAtProgress(raw), landing, dt)) return;
         SuccessfulLandings++;
         if (RaceFeatureController.Enabled(RaceFeature.LandingFeedback))
-        { noticeUntil = Time.time + 1.8f; RaceSoundEffects.PlayForPlayer(RaceSoundCue.Ready, own.Index); }
+        { Notices.Publish("着地成功！", DriverNoticePriority.Success, 1.8f); RaceSoundEffects.PlayForPlayer(RaceSoundCue.Ready, own.Index); }
         if (RaceFeatureController.Enabled(RaceFeature.LandingBoost))
         {
             if (mover.StartLandingBoost()) RewardBoosts++;

@@ -70,6 +70,8 @@ public sealed class TireEffectsVisual : MonoBehaviour
         mover = GetComponent<DebugMover>();
         body = GetComponent<Rigidbody>();
         CacheWheels();
+        // Allocate before driving, rather than on the first skid/braking frame.
+        if (smokeEnabled) CreateSmoke();
     }
 
     /// <summary>タイヤ1本の滑りの強さ（0〜1）を求めます。検証からも呼び出します。</summary>

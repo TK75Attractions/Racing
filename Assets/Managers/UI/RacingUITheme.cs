@@ -68,7 +68,7 @@ public static class RacingUITheme
         label.overflowMode = TextOverflowModes.Ellipsis;
         label.extraPadding = true;
         label.raycastTarget = false;
-        label.fontStyle = FontStyles.Normal;
+        label.fontStyle = RacingHUDStyle.TextStyle;
     }
 
     public static void Rule(Transform parent, string name, Vector2 min, Vector2 max, Color tint)

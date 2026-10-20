@@ -15,9 +15,9 @@ public sealed class RacingLeaderboardUI : MonoBehaviour
         for (int i = 0; i < rows.Length; i++)
         {
             rows[i] = NeonUI.Panel(transform, "Player" + i, Vector2.zero, Vector2.one, i == owner);
-            ranks[i] = NeonUI.Text(rows[i], "Rank", (i+1).ToString(), new Vector2(.035f,.09f), new Vector2(.12f,.91f), 25f, italic:true);
-            names[i] = NeonUI.Text(rows[i], "Name", i < 2 ? "P"+(i+1) : "CPU "+(i-1), new Vector2(.20f,.14f), new Vector2(.74f,.88f), 19f);
-            gaps[i] = NeonUI.Text(rows[i], "Gap", "—", new Vector2(.73f,.14f), new Vector2(.96f,.88f), 16f, TextAlignmentOptions.Right, true);
+            ranks[i] = NeonUI.Text(rows[i], "Rank", (i+1).ToString(), new Vector2(.035f,.09f), new Vector2(.12f,.91f), RacingHUDStyle.JapaneseSize, italic:false);
+            names[i] = NeonUI.Text(rows[i], "Name", i < 2 ? "P"+(i+1) : "CPU "+(i-1), new Vector2(.20f,.14f), new Vector2(.74f,.88f), RacingHUDStyle.SecondarySize);
+            gaps[i] = NeonUI.Text(rows[i], "Gap", "—", new Vector2(.73f,.14f), new Vector2(.96f,.88f), RacingHUDStyle.CaptionSize, TextAlignmentOptions.Right, false);
         }
         SetPosition(owner + 1, 0);
     }

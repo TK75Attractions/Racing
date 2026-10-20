@@ -101,11 +101,8 @@ public static class TubeCoursePreparation
         if (material == null)
         {
             material = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = "Tube Interior" };
-            Material imported = tube.GetComponent<MeshRenderer>().sharedMaterial;
-            Color color = imported != null && imported.HasProperty("_BaseColor") ? imported.GetColor("_BaseColor") :
-                imported != null && imported.HasProperty("_Color") ? imported.color : new Color(.42f, .46f, .5f);
-            material.SetColor("_BaseColor", color);
-            material.SetFloat("_Smoothness", .15f);
+            material.SetColor("_BaseColor", new Color(.05f, .06f, .11f));
+            material.SetFloat("_Smoothness", .55f);
             AssetDatabase.CreateAsset(material, materialPath);
         }
         material.SetFloat("_Cull", 0f);
@@ -116,6 +113,9 @@ public static class TubeCoursePreparation
         renderer.sharedMaterials = materials;
         PrefabUtility.RecordPrefabInstancePropertyModifications(renderer);
         AlignRaceMarkers(scene);
+        // Refresh visual endpoint sections after preparation, retaining all existing scene references.
+        TubeSpeedPatternController patterns = course.GetComponent<TubeSpeedPatternController>();
+        if (patterns != null) patterns.Rebuild();
         AssetDatabase.SaveAssets();
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);

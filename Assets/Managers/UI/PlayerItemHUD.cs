@@ -142,9 +142,9 @@ public sealed class PlayerItemHUD : MonoBehaviour
     private void ShowToast(string title, string caption, Color tint)
     {
         if (toastTitle == null) return;
-        toastTitle.text = title;
+        RacingHUDStyle.SetText(toastTitle, title, true);
         toastTitle.color = tint;
-        toastCaption.text = caption;
+        RacingHUDStyle.SetText(toastCaption, caption);
         toastAge = 0f;
     }
 
@@ -260,7 +260,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
             text = "保護中 / PROTECTED"; tint = ShieldColor;
         }
 
-        statusLabel.text = text;
+        if (statusLabel.text != text) RacingHUDStyle.SetText(statusLabel, text, true);
         statusLabel.color = tint;
         statusRect.gameObject.SetActive(!string.IsNullOrEmpty(text));
     }
@@ -308,13 +308,13 @@ public sealed class PlayerItemHUD : MonoBehaviour
         toastGroup.alpha = 0f;
         toastGroup.blocksRaycasts = false;
         toastTitle = RacingHUDStyle.Label(toastRect, "Title", string.Empty, .06f, .40f, .94f, .90f,
-            32f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
+            RacingHUDStyle.NoticeSize, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
         toastCaption = RacingHUDStyle.Label(toastRect, "Caption", string.Empty, .06f, .12f, .94f, .41f,
-            19f, RacingHUDStyle.Muted, TextAlignmentOptions.Center);
+            RacingHUDStyle.CaptionSize, RacingHUDStyle.Muted, TextAlignmentOptions.Center);
         statusRect = RacingHUDStyle.Plate(root, "StatusPlate", new Vector2(.345f, .065f), new Vector2(.655f, .125f),
             RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
         statusLabel = RacingHUDStyle.Label(statusRect, "Status", string.Empty, .05f, .15f, .95f, .85f,
-            23f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
+            RacingHUDStyle.JapaneseSize, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
         statusRect.gameObject.SetActive(false);
     }
 

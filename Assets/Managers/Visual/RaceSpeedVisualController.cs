@@ -1,5 +1,6 @@
 using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 /// <summary>
 /// 車両の水平速度とブースト状態を、カメラと画面演出へ変換します。
@@ -32,15 +33,15 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
     [Tooltip("ONにすると、現在のCinemachineカメラのFOVを通常時FOVとして使用します。")]
     [SerializeField] private bool useCameraFovAsNormal;
     [SerializeField, Range(1f, 179f)] private float normalFov = 60f;
-    [SerializeField, Range(1f, 179f)] private float highSpeedFov = 70f;
-    [SerializeField, Min(0f)] private float boostFovAdd = 4f;
-    [SerializeField, Min(0f)] private float boostFovKick = 4f;
-    [SerializeField, Range(1f, 179f)] private float maximumFov = 82f;
+    [SerializeField, Range(1f, 179f)] private float highSpeedFov = 68f;
+    [SerializeField, Min(0f)] private float boostFovAdd = 3f;
+    [SerializeField, Min(0f)] private float boostFovKick = 2f;
+    [SerializeField, Range(1f, 179f)] private float maximumFov = 74f;
     [SerializeField, Min(0f)] private float fovResponse = 7f;
 
     [Header("Camera Pullback")]
-    [SerializeField, Min(0f)] private float highSpeedPullback = 0.25f;
-    [SerializeField, Min(0f)] private float boostPullback = 0.12f;
+    [SerializeField, Min(0f)] private float highSpeedPullback = 0.6f;
+    [SerializeField, Min(0f)] private float boostPullback = 0.15f;
 
     [Header("Camera Shake")]
     [Tooltip("走行・ブースト時のカメラ振動。標準では無効にして車体の小さな上下動で速度を表現します。") ]
@@ -73,9 +74,11 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
     [SerializeField, Min(0f)] private float speedLinesShapeWidth = 15f;
     [SerializeField, Min(0f)] private float speedLinesShapeHeight = 8f;
     [SerializeField, Min(0f)] private float speedLinesShapeDepth = 1f;
-    [SerializeField, Min(0f)] private float speedLinesVelocityScale = 0.20f;
+    [SerializeField, Min(0f)] private float speedLinesVelocityScale = 0.06f;
     [SerializeField, Min(0f)] private float speedLinesLengthScale = 4f;
     [SerializeField, Range(0f, 1f)] private float speedLinesAlpha = 0.24f;
+    [Tooltip("画面中央に速度線を表示しない楕円の半径（Viewport比）。")]
+    [SerializeField] private Vector2 speedLinesClearRadius = new Vector2(.32f, .3f);
 
     [Header("Response")]
     [SerializeField, Min(0f)] private float boostFadeInSpeed = 8f;
@@ -94,6 +97,114 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
     private bool gameplayActive;
     private bool configured;
     private bool ownsSpeedLines;
+    private RaceDirectionCameraController directionCamera;
+    private ParticleSystem.Particle[] lineParticles;
+    private Vector3 renderPivotPosition;
+    private bool renderPivotAdjusted;
+    private Transform resolvedFollow;
+    [SerializeField, HideInInspector] private int framingDefaultsVersion;
+
+    private void OnEnable()
+    {
+        if (framingDefaultsVersion == 0)
+        {
+            // SampleScene already serializes the old defaults; preserve other Inspector tuning.
+            if (highSpeedFov == 70f) highSpeedFov = 68f;
+            if (boostFovAdd == 4f) boostFovAdd = 3f;
+            if (boostFovKick == 4f) boostFovKick = 2f;
+            if (maximumFov == 82f) maximumFov = 74f;
+            if (highSpeedPullback == .25f) highSpeedPullback = .6f;
+            if (boostPullback == .12f) boostPullback = .15f;
+            if (speedLinesVelocityScale == .2f) speedLinesVelocityScale = .06f;
+            framingDefaultsVersion = 1;
+        }
+        RenderPipelineManager.beginCameraRendering += BeforeCameraRendering;
+        RenderPipelineManager.endCameraRendering += AfterCameraRendering;
+    }
+
+    private void OnDisable()
+    {
+        RenderPipelineManager.beginCameraRendering -= BeforeCameraRendering;
+        RenderPipelineManager.endCameraRendering -= AfterCameraRendering;
+        RestoreRenderPivot();
+        if (configured) ResetVisuals();
+    }
+
+    private void BeforeCameraRendering(ScriptableRenderContext context, Camera camera)
+    {
+        if (!configured) return;
+        if (speedLines != null && speedLines.TryGetComponent<ParticleSystemRenderer>(out var lineRenderer))
+            lineRenderer.enabled = camera == targetCamera;
+        if (camera != targetCamera) return;
+        Transform follow = raceCamera != null ? raceCamera.Follow : null;
+        if (follow != resolvedFollow)
+        {
+            resolvedFollow = follow;
+            directionCamera = null;
+            // Resolve on target changes only, including tutorial and post-finish spectating.
+            if (follow != null)
+                foreach (var controller in FindObjectsByType<RaceDirectionCameraController>(FindObjectsSortMode.None))
+                    if (controller.CameraTarget == follow) { directionCamera = controller; break; }
+        }
+        if (gameplayActive && directionCamera != null && visualEffectPivot != null &&
+            (Gmanager.Control == null || Gmanager.Control.IsDrivingEnabled))
+        {
+            renderPivotPosition = visualEffectPivot.position;
+            visualEffectPivot.position += directionCamera.ConstrainCameraPosition(camera.transform.position)
+                - camera.transform.position;
+            renderPivotAdjusted = true;
+        }
+        if (speedLines == null) return;
+        // Cinemachine moves the Camera child; the effect pivot itself can remain at the rig origin.
+        speedLines.transform.SetPositionAndRotation(camera.transform.TransformPoint(Vector3.forward * 15f),
+            camera.transform.rotation * Quaternion.Euler(0f, 180f, 0f));
+        int capacity = speedLines.main.maxParticles;
+        if (lineParticles == null || lineParticles.Length < capacity)
+            lineParticles = new ParticleSystem.Particle[capacity];
+        int count = speedLines.GetParticles(lineParticles);
+        var main = speedLines.main;
+        Transform space = main.simulationSpace == ParticleSystemSimulationSpace.Custom
+            ? main.customSimulationSpace : speedLines.transform;
+        if (space == null) space = speedLines.transform;
+        var renderer = speedLines.GetComponent<ParticleSystemRenderer>();
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 world = main.simulationSpace == ParticleSystemSimulationSpace.World
+                ? lineParticles[i].position : space.TransformPoint(lineParticles[i].position);
+            Vector3 velocity = main.simulationSpace == ParticleSystemSimulationSpace.World
+                ? lineParticles[i].velocity : space.TransformVector(lineParticles[i].velocity);
+            // Include the stretched tail, rather than protecting only the particle's centre.
+            float length = Mathf.Abs(renderer.velocityScale) * velocity.magnitude
+                + Mathf.Abs(renderer.lengthScale) * lineParticles[i].GetCurrentSize(speedLines);
+            Vector3 extent = velocity.normalized * length;
+            if (IsInSpeedLineClearArea(camera, world) || IsInSpeedLineClearArea(camera, world - extent) ||
+                IsInSpeedLineClearArea(camera, world + extent))
+                lineParticles[i].remainingLifetime = 0f;
+        }
+        speedLines.SetParticles(lineParticles, count);
+    }
+
+    private bool IsInSpeedLineClearArea(Camera camera, Vector3 world)
+    {
+        Vector3 viewport = camera.WorldToViewportPoint(world);
+        float x = (viewport.x - .5f) / Mathf.Max(.01f, speedLinesClearRadius.x);
+        float y = (viewport.y - .5f) / Mathf.Max(.01f, speedLinesClearRadius.y);
+        return viewport.z <= camera.nearClipPlane || x * x + y * y < 1f;
+    }
+
+    private void AfterCameraRendering(ScriptableRenderContext context, Camera camera)
+    {
+        if (camera == targetCamera) RestoreRenderPivot();
+        if (speedLines != null && speedLines.TryGetComponent<ParticleSystemRenderer>(out var lineRenderer))
+            lineRenderer.enabled = true;
+    }
+
+    private void RestoreRenderPivot()
+    {
+        if (renderPivotAdjusted && visualEffectPivot != null)
+            visualEffectPivot.position = renderPivotPosition;
+        renderPivotAdjusted = false;
+    }
 
     public float CurrentVisualSpeed01 => visualSpeed01;
     public float CurrentBoostIntensity => boostBlend;
@@ -272,8 +383,15 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
         float noiseY = Mathf.PerlinNoise(0.37f, time) * 2f - 1f;
         float noiseZ = Mathf.PerlinNoise(time, 0.73f) * 2f - 1f;
 
+        Vector3 pullbackOffset = Vector3.back * pullback;
+        if (targetCamera != null)
+        {
+            Vector3 worldOffset = -targetCamera.transform.forward * pullback;
+            pullbackOffset = visualEffectPivot.parent != null
+                ? visualEffectPivot.parent.InverseTransformVector(worldOffset) : worldOffset;
+        }
         visualEffectPivot.localPosition = basePivotPosition
-            + Vector3.back * pullback
+            + pullbackOffset
             + new Vector3(noiseX, noiseY, 0f) * shakeStrength;
 
         float rotationStrength = enableDrivingCameraShake
@@ -307,6 +425,14 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
         var main = speedLines.main;
         main.startSpeedMultiplier = Mathf.Lerp(speedLinesMinSpeed, speedLinesMaxSpeed, lineStrength);
 
+        // Emit around the view perimeter; approaching particles move further outward on screen.
+        var shape = speedLines.shape;
+        float halfHeight = targetCamera != null
+            ? 15f * Mathf.Tan(targetCamera.fieldOfView * .5f * Mathf.Deg2Rad) : speedLinesShapeHeight * .5f;
+        float halfWidth = targetCamera != null ? halfHeight * targetCamera.aspect : speedLinesShapeWidth * .5f;
+        shape.scale = new Vector3(Mathf.Max(speedLinesShapeWidth * .5f, halfWidth),
+            Mathf.Max(speedLinesShapeHeight * .5f, halfHeight), Mathf.Max(.01f, speedLinesShapeDepth));
+
         if (emission.rateOverTimeMultiplier > 0.01f)
         {
             if (!speedLines.isPlaying) speedLines.Play();
@@ -319,10 +445,10 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
 
     private void EnsureSpeedLines()
     {
-        if (speedLines != null || visualEffectPivot == null) return;
+        if (visualEffectPivot == null) return;
 
         Transform existing = visualEffectPivot.Find("SpeedLines");
-        if (existing != null) speedLines = existing.GetComponent<ParticleSystem>();
+        if (speedLines == null && existing != null) speedLines = existing.GetComponent<ParticleSystem>();
         if (speedLines == null)
         {
             GameObject lineObject = new GameObject("SpeedLines");
@@ -333,6 +459,8 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
 
         speedLines.transform.localPosition = new Vector3(0f, 0f, 15f);
         speedLines.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
+        speedLines.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
         var main = speedLines.main;
         main.loop = true;
@@ -349,8 +477,13 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
         emission.rateOverTime = 0f;
 
         var shape = speedLines.shape;
-        shape.shapeType = ParticleSystemShapeType.Box;
-        shape.scale = new Vector3(speedLinesShapeWidth, speedLinesShapeHeight, speedLinesShapeDepth);
+        // A zero-angle cone keeps velocity along local +Z; Circle would emit radially in XY.
+        shape.shapeType = ParticleSystemShapeType.Cone;
+        shape.angle = 0f;
+        shape.radius = 1f;
+        shape.radiusThickness = .12f;
+        shape.arc = 360f;
+        shape.randomDirectionAmount = 0f;
 
         var renderer = speedLines.GetComponent<ParticleSystemRenderer>();
         renderer.renderMode = ParticleSystemRenderMode.Stretch;

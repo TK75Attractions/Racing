@@ -41,6 +41,8 @@ public sealed class CarCollisionSparks : MonoBehaviour
     private void Awake()
     {
         body = GetComponent<Rigidbody>();
+        // Vehicle loading owns preparation; collision callbacks only emit particles.
+        CreateSparks();
     }
 
     private void OnCollisionEnter(Collision collision)
