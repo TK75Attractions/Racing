@@ -9,6 +9,11 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
     public const string OverlayName = "Tube Speed Light Patterns";
     [SerializeField] private MeshFilter tube;
     [SerializeField] private Material patternMaterial;
+    [SerializeField] private Mesh bakedWallMesh;
+    [SerializeField] private Mesh readableWallSource;
+    [SerializeField] private Vector3[] bakedRingCenters;
+    [SerializeField] private float bakedLength;
+    [SerializeField] private bool bakedReverse;
 
     public MeshFilter Tube => tube;
     public Material PatternMaterial => patternMaterial;
@@ -38,21 +43,42 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
     {
         Clear();
         if (!isActiveAndEnabled || tube == null || tube.sharedMesh == null || patternMaterial == null) return;
-        if (!tube.sharedMesh.isReadable || tube.sharedMesh.vertexCount == 0 ||
-            tube.sharedMesh.uv.Length != tube.sharedMesh.vertexCount)
+        Mesh displayMesh = tube.sharedMesh;
+        Mesh portalSource = readableWallSource != null ? readableWallSource : tube.sharedMesh;
+        Vector3[] centers = null;
+        float length = patternMaterial.GetFloat("_TubeLength");
+        bool reverse = false;
+        if (bakedWallMesh != null && bakedRingCenters != null && bakedRingCenters.Length > 1)
         {
-            Debug.LogWarning("Tube wall visuals need a readable tube mesh with authored ring UVs.", this);
-            return;
+            displayMesh = bakedWallMesh;
+            centers = new Vector3[bakedRingCenters.Length];
+            for (int i = 0; i < centers.Length; i++) centers[i] = tube.transform.TransformPoint(bakedRingCenters[i]);
+            length = bakedLength;
+            reverse = bakedReverse;
+        }
+        else if (portalSource.isReadable && portalSource.vertexCount > 0 &&
+            portalSource.uv.Length == portalSource.vertexCount)
+        {
+            overlayMesh = BuildWallMetadata(portalSource, out centers, out length, out reverse);
+            displayMesh = overlayMesh;
+        }
+        else
+        {
+            // Drawing the imported mesh needs no CPU access. Retain the legacy overlay
+            // even before the Editor bake has been run; never hide all wall visuals.
+            Debug.LogWarning("Tube wall metadata is unavailable; using the original mesh overlay. Run TubeWallVisualPreparation.Run in the Editor.", this);
         }
         GameObject overlay = new GameObject(OverlayName, typeof(MeshFilter), typeof(MeshRenderer))
         { hideFlags = HideFlags.DontSave, layer = tube.gameObject.layer };
         ownedOverlay = overlay;
         overlay.transform.SetParent(tube.transform, false);
-        overlayMesh = BuildWallMetadata(out Vector3[] centers, out float length, out bool reverse);
-        overlay.GetComponent<MeshFilter>().sharedMesh = overlayMesh;
-        portals = overlay.AddComponent<TubePortalVisualController>();
-        portals.Build(tube, centers, reverse);
-        var materials = new Material[tube.sharedMesh.subMeshCount];
+        overlay.GetComponent<MeshFilter>().sharedMesh = displayMesh;
+        if (centers != null)
+        {
+            portals = overlay.AddComponent<TubePortalVisualController>();
+            portals.Build(tube, centers, reverse, portalSource);
+        }
+        var materials = new Material[displayMesh.subMeshCount];
         for (int i = 0; i < materials.Length; i++) materials[i] = patternMaterial;
         MeshRenderer renderer = overlay.GetComponent<MeshRenderer>();
         renderer.sharedMaterials = materials;
@@ -75,9 +101,8 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
 
     // Same UV ring grouping as TubeCoursePreparation.ReadRings. UV2 stores actual
     // distance, outer-wall emphasis, signed turn and curvature; no vertices are added.
-    private Mesh BuildWallMetadata(out Vector3[] centers, out float length, out bool reverse)
+    private Mesh BuildWallMetadata(Mesh source, out Vector3[] centers, out float length, out bool reverse)
     {
-        Mesh source = tube.sharedMesh;
         Vector3[] vertices = source.vertices;
         Vector2[] uv = source.uv;
         var groups = new SortedDictionary<int, Dictionary<int, Vector3>>();
@@ -138,6 +163,22 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
         mesh.SetUVs(1, metadata);
         return mesh;
     }
+
+#if UNITY_EDITOR
+    // The Editor builder uses exactly the same metadata calculation as the runtime fallback.
+    public Mesh CreateBakedWallMetadata(Mesh source, out Vector3[] centers, out float length, out bool reverse)
+        => BuildWallMetadata(source, out centers, out length, out reverse);
+
+    public void SetBakedWallMetadata(Mesh source, Mesh wall, Vector3[] centers, float length, bool reverse)
+    {
+        readableWallSource = source;
+        bakedWallMesh = wall;
+        bakedRingCenters = new Vector3[centers.Length];
+        for (int i = 0; i < centers.Length; i++) bakedRingCenters[i] = tube.transform.InverseTransformPoint(centers[i]);
+        bakedLength = length;
+        bakedReverse = reverse;
+    }
+#endif
 
     private void Clear()
     {

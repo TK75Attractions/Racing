@@ -13,7 +13,9 @@ public sealed class PlayerAudioCapture : MonoBehaviour
     private Rigidbody engineBody;
     private int stream;
     private int bgmPlayer = -1;
+    private int sourcePlayer = -1;
     private volatile float p1Left, p1Right, p2Left, p2Right;
+    private float nextDiagnosticTime;
 
     public void ConfigureMusic(RaceAudioOutput audioOutput, int player)
     {
@@ -28,6 +30,7 @@ public sealed class PlayerAudioCapture : MonoBehaviour
         output = audioOutput;
         manager = gameManager;
         emitter = car;
+        sourcePlayer = player;
         engineBody = car != null ? car.GetComponent<Rigidbody>() : null;
         stream = player + 1;
         source = GetComponent<AudioSource>();
@@ -49,6 +52,22 @@ public sealed class PlayerAudioCapture : MonoBehaviour
         p1Left = left; p1Right = right;
         GetPerspectiveGains(1, gain, out left, out right);
         p2Left = left; p2Right = right;
+        if (RaceAudioSettings.DiagnosticsEnabled && Time.unscaledTime>=nextDiagnosticTime)
+        {
+            nextDiagnosticTime=Time.unscaledTime+2f;
+            for (int player=0;player<2;player++) if (player!=sourcePlayer) LogPerspective(player);
+        }
+    }
+
+    private void LogPerspective(int player)
+    {
+        Transform camera=manager!=null?manager.GetPlayerAudioPerspective(player):null;
+        if (camera==null || emitter==null) return;
+        Vector3 relative=camera.InverseTransformPoint(emitter.position);
+        float distance=relative.magnitude;
+        float pan=distance>.01f?Mathf.Clamp(relative.x/distance,-1f,1f):0f;
+        float attenuation=distance<=8f?1f:Mathf.Clamp01(1f-(distance-8f)/72f);
+        Debug.Log($"RACE_AUDIO_POSITION: source=P{sourcePlayer+1} output=P{player+1} distance={distance:F1}m pan={pan:F2} attenuation={attenuation:F2}");
     }
 
     private void GetPerspectiveGains(int player, float gain, out float left, out float right)

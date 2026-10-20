@@ -94,10 +94,13 @@ public static class CarSelectionValidation
             ui.ApplyToCar(car);
             Require(car.transform.Find("SelectedVehicleBody") != null, "Sedan body reaches gameplay car");
             Require(car.GetComponent<DebugMover>().VehicleMultipliers == new Vector4(1.1f, .9f, 1.15f, .9f), "Selected handling reaches gameplay car");
+            Require(car.GetComponent<CarSoundController>().VehicleProfile == 1 && car.GetComponent<CarExhaustVisual>() != null,
+                "Selected vehicle also configures its exhaust tone and color");
             int bodies = car.GetComponentsInChildren<Rigidbody>(true).Length;
             catalog.Apply(car, 1, 0); Require(car.GetComponentsInChildren<Rigidbody>(true).Length == bodies, "Body change keeps production physics rig");
             catalog.Apply(car, 0, 2); Require(car.transform.Find("SelectedVehicleBody") == null, "Switch back restores coupe");
             Require(car.GetComponent<DebugMover>().VehicleMultipliers == Vector4.one, "Grade reset does not compound tuning");
+            Require(car.GetComponent<CarSoundController>().VehicleProfile == 0, "Returning to SPORT GT restores its sound profile");
             UnityEngine.Object.DestroyImmediate(car);
             Debug.Log("CAR_SELECTION_BEHAVIOR_PASS");
             ui.Open(); ui.SelectVehicle(0); ui.SelectPaint(0);

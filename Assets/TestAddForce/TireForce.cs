@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(GroundCheck))]
 public class TireForce : MonoBehaviour
@@ -13,9 +14,17 @@ public class TireForce : MonoBehaviour
     [SerializeField] private float appliedDriveForce;
     [SerializeField] private float appliedLateralForce;
 
+    [Header("表示専用ホイール")]
+    [SerializeField, Min(0.05f)] private float visualWheelRadius = .34f;
+    [SerializeField, Min(0.1f)] private float maximumVisibleWheelSpeed = 36f;
+
     private Rigidbody carRb;
     private GroundCheck groundCheck;
     private Quaternion initialLocalRotation;
+    private readonly List<Transform> wheelVisuals = new List<Transform>();
+    private readonly List<Vector3> wheelVisualBasePositions = new List<Vector3>();
+    private readonly List<Quaternion> wheelVisualBaseRotations = new List<Quaternion>();
+    private float visibleWheelAngle;
 
     public bool IsFrontWheel => isFrontTire;
     /// <summary>直近の物理フレームで接地していたか。タイヤ痕や煙などの表示用です。</summary>
@@ -28,6 +37,16 @@ public class TireForce : MonoBehaviour
     {
         groundCheck = GetComponent<GroundCheck>();
         initialLocalRotation = transform.localRotation;
+        foreach (Transform child in transform)
+        {
+            if (child.GetComponentInChildren<MeshRenderer>(true) == null ||
+                child.GetComponentInChildren<Collider>(true) != null ||
+                child.GetComponentInChildren<TireForce>(true) != null ||
+                child.GetComponentInChildren<Rigidbody>(true) != null) continue;
+            wheelVisuals.Add(child);
+            wheelVisualBasePositions.Add(child.localPosition);
+            wheelVisualBaseRotations.Add(child.localRotation);
+        }
     }
 
     public void Init(Rigidbody rb)
@@ -62,6 +81,7 @@ public class TireForce : MonoBehaviour
         }
 
         UpdateVisualSteering(steeringAngle);
+        UpdateWheelVisuals(Time.fixedDeltaTime);
 
         isGrounded = groundCheck.CheckNow();
         if (!isGrounded)
@@ -156,6 +176,31 @@ public class TireForce : MonoBehaviour
     {
         float visualAngle = isFrontTire ? steeringAngle : 0f;
         transform.localRotation = initialLocalRotation * Quaternion.Euler(0f, visualAngle, 0f);
+    }
+
+    private void UpdateWheelVisuals(float deltaTime)
+    {
+        float speed = carRb != null ? Vector3.Dot(carRb.GetPointVelocity(transform.position), transform.forward) : 0f;
+        // Keep the low-speed roll cue, then cap visible rotation to avoid strobing at racing speed.
+        float angularSpeed = Mathf.Clamp(speed / Mathf.Max(.05f, visualWheelRadius),
+            -maximumVisibleWheelSpeed, maximumVisibleWheelSpeed);
+        visibleWheelAngle = Mathf.Repeat(visibleWheelAngle + angularSpeed * deltaTime * Mathf.Rad2Deg, 360f);
+        Vector3 suspensionOffset = Vector3.zero;
+        if (isGrounded && groundCheck != null)
+        {
+            Vector3 normal = groundCheck.GroundHit.normal;
+            if (normal.sqrMagnitude > .001f)
+                suspensionOffset = transform.InverseTransformVector(
+                    normal.normalized * (visualWheelRadius - Vector3.Dot(transform.position - groundCheck.GroundHit.point, normal.normalized)));
+        }
+        Quaternion spin = Quaternion.AngleAxis(visibleWheelAngle, Vector3.right);
+        for (int index = 0; index < wheelVisuals.Count; index++)
+        {
+            Transform visual = wheelVisuals[index];
+            if (visual == null) continue;
+            visual.localPosition = wheelVisualBasePositions[index] + suspensionOffset;
+            visual.localRotation = wheelVisualBaseRotations[index] * spin;
+        }
     }
 
     private void ResetMonitorValues()

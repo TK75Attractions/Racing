@@ -18,6 +18,7 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
     private void Awake()
     {
         gameManager = GetComponent<Gmanager>();
+        if (GetComponent<RaceAudioOperatorPanel>()==null) gameObject.AddComponent<RaceAudioOperatorPanel>();
         menuClip = Resources.Load<AudioClip>(MenuClipPath);
         raceClip = Resources.Load<AudioClip>(RaceClipPath);
         finalLapClip = Resources.Load<AudioClip>(FinalLapClipPath);
@@ -35,7 +36,7 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
             // Music gain is applied inside the filter, so BGM mute cannot silence UI cues.
             source.volume = 1f;
             mixers[player] = sourceObject.AddComponent<RaceSoundEffectsMixer>();
-            mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm);
+            mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm * RaceAudioSettings.NotificationDuck);
             GetComponent<RaceSoundEffects>()?.RegisterMixer(player,mixers[player]);
             sourceObject.AddComponent<PlayerAudioCapture>().ConfigureMusic(GetComponent<RaceAudioOutput>(), player);
         }
@@ -50,7 +51,7 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
         for (int player = 0; player < sources.Length; player++)
         {
             AudioSource source = sources[player];
-            mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm);
+            mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm * RaceAudioSettings.NotificationDuck);
             int viewedPlayer = gameManager.GetAudioViewedPlayer(player);
             bool menu = gameManager.state == Gmanager.State.Result ||
                 (gameManager.IsPreparing && gameManager.GetPlayerPreparationState(player) != Gmanager.State.Tutorial);

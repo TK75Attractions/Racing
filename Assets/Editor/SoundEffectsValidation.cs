@@ -42,11 +42,18 @@ public static class SoundEffectsValidation
             mixers[0].SetEffectsGain(0f); mixers[0].Mix(p1,2);
             Require(p1.All(value=>value==0f),"Effects mute must silence active voices immediately.");
             mixers[0].SetMusicGain(.5f); Array.Fill(p1,.25f); mixers[0].Mix(p1,2);
-            Require(p1.All(value=>Math.Abs(value-.125f)<.00001f),"Effects mute must preserve the independent BGM gain.");
+            float limitedMusic=.125f/Mathf.Sqrt(1f+.125f*.125f);
+            Require(p1.All(value=>Math.Abs(value-limitedMusic)<.00001f),"Effects mute must preserve BGM through the output limiter.");
             PlayerAudioValidation.Run();
             ModernUIValidation.Run();
             ExportPreview();
-            Debug.Log("SOUND_EFFECTS_VALIDATION_PASS: nine synthesized cues, player routing, duplicate suppression, independent BGM/effects mute, native output compatibility and audio settings UI.");
+            foreach (RaceVehicleAudioCue cue in Enum.GetValues(typeof(RaceVehicleAudioCue)))
+            {
+                float[] pcm=RaceVehicleSoundBank.Get(cue).Samples;
+                Require(pcm.Length>1000 && pcm.Length<RaceSoundClip.SampleRate && pcm.All(value=>!float.IsNaN(value)&&!float.IsInfinity(value)&&Math.Abs(value)<.4f),
+                    "Vehicle cues must be short, finite and leave mix headroom.");
+            }
+            Debug.Log("SOUND_EFFECTS_VALIDATION_PASS: nine UI cues, four vehicle cues, player routing, duplicate suppression, ducking, soft limiting, independent mute and native output compatibility.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }

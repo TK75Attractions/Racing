@@ -828,6 +828,7 @@ public class Gmanager : MonoBehaviour
                 player.car.AddComponent<TireEffectsVisual>();
             CarNightGlow nightGlow = player.car.GetComponent<CarNightGlow>() ?? player.car.AddComponent<CarNightGlow>();
             nightGlow.Configure(playerIndex);
+            if (player.car.GetComponent<CarBodyMotion>() == null) player.car.AddComponent<CarBodyMotion>();
             CarParticipantBadge badge = player.car.GetComponent<CarParticipantBadge>() ?? player.car.AddComponent<CarParticipantBadge>();
             badge.Configure(playerIndex, displayRigs);
             if (player.car.GetComponent<CarWallCollisionResponse>() == null)
@@ -889,6 +890,7 @@ public class Gmanager : MonoBehaviour
             vehicle.name = $"CPU{cpu + 1}_Car";
             CarNightGlow nightGlow = vehicle.GetComponent<CarNightGlow>() ?? vehicle.AddComponent<CarNightGlow>();
             nightGlow.Configure(index);
+            if (vehicle.GetComponent<CarBodyMotion>() == null) vehicle.AddComponent<CarBodyMotion>();
             CarParticipantBadge badge = vehicle.GetComponent<CarParticipantBadge>() ?? vehicle.AddComponent<CarParticipantBadge>();
             badge.Configure(index, displayRigs);
             // CPUs borrow the vehicle physics/visuals, never a player display or input device.

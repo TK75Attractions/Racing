@@ -57,6 +57,8 @@ public sealed class TireEffectsVisual : MonoBehaviour
         public float lastAlpha;
         public float smokeAccumulator;
         public float slip;
+        public Collider surfaceCollider;
+        public int surfaceType;
     }
 
     private DebugMover mover;
@@ -64,6 +66,7 @@ public sealed class TireEffectsVisual : MonoBehaviour
     private WheelState[] wheels = new WheelState[0];
     private ParticleSystem smoke;
     private Material smokeMaterial;
+    private bool wasGrounded;
 
     private void Awake()
     {
@@ -104,15 +107,43 @@ public sealed class TireEffectsVisual : MonoBehaviour
         float planarSpeed = Vector3.ProjectOnPlane(velocity, Vector3.up).magnitude;
         float forwardSpeed = Vector3.Dot(velocity, transform.forward);
         float deltaTime = Time.deltaTime;
+        float audibleSlip=0f;
+        int surface=0;
+        int groundedWheels=0;
 
         foreach (WheelState wheel in wheels)
         {
             if (wheel.tire == null) continue;
+            if (wheel.tire.IsGrounded)
+            {
+                groundedWheels++;
+                if (groundedWheels==1)
+                {
+                    Collider collider=wheel.tire.GroundHit.collider;
+                    if (wheel.surfaceCollider!=collider)
+                    { wheel.surfaceCollider=collider; wheel.surfaceType=GetSurfaceType(collider); }
+                    surface=wheel.surfaceType;
+                }
+            }
             wheel.slip = EvaluateSlip(wheel.tire.IsGrounded, planarSpeed, wheel.tire.LateralSlipSpeed,
                 mover.PedalInput, forwardSpeed);
+            audibleSlip=Mathf.Max(audibleSlip,wheel.slip);
             UpdateMark(wheel, velocity);
             UpdateSmoke(wheel, velocity, deltaTime);
         }
+        bool grounded=groundedWheels>=2;
+        if (grounded && !wasGrounded && velocity.y < -4f)
+            RaceSoundEffects.PlayVehicleCue(RaceVehicleAudioCue.Landing,transform.position,Mathf.Clamp01(-velocity.y/16f));
+        wasGrounded=grounded;
+        RaceSoundEffects.UpdateTireSkid(GetInstanceID(),transform.position,audibleSlip,surface);
+    }
+
+    private static int GetSurfaceType(Collider collider)
+    {
+        string name=collider!=null && collider.sharedMaterial!=null?collider.sharedMaterial.name:string.Empty;
+        if (name.IndexOf("gravel",System.StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("dirt",System.StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("sand",System.StringComparison.OrdinalIgnoreCase)>=0) return 1;
+        if (name.IndexOf("grass",System.StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("soil",System.StringComparison.OrdinalIgnoreCase)>=0) return 2;
+        return 0;
     }
 
     private void UpdateMark(WheelState wheel, Vector3 velocity)
@@ -210,6 +241,8 @@ public sealed class TireEffectsVisual : MonoBehaviour
             wheel.smokeAccumulator = 0f;
             wheel.slip = 0f;
         }
+        RaceSoundEffects.UpdateTireSkid(GetInstanceID(),transform.position,0f,0);
+        wasGrounded=false;
     }
 
     private void CacheWheels()

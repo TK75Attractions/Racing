@@ -38,6 +38,8 @@ The catalog uses existing project assets and fictional game vehicle names.
 
 Ratings are ten-point game balance values. Acceleration changes drive force; speed changes the drive-force/resistance ratio; handling changes steering angle and lateral grip; drift changes charge rate. Multipliers apply relative to the original prefab settings and do not compound.
 
+選択した車種は車体性能に加えて、エンジン排気の共鳴プロファイルと小さな排気パフの色を切り替えます。3種類の差は控えめで、ギア・回転数・出力ゲインは共通です。パフはアクセル入力中だけ少量を発生させます。
+
 White, silver, blue, pink and black are available. The committed vehicle and paint are independently saved for each player and used in both tutorial and race, including restarts. Browsing and cancelling do not change the saved selection. The sedan replaces chassis meshes while retaining the production physics rig, wheel positions, collider and FWD drivetrain. SPORT GT-R shares the coupe model with a different performance grade.
 
 The preview uses mesh copies without driving scripts or colliders. Its local point lights are isolated by range, layer and distance so they do not affect the other player's practice area. The large preview renders at up to 30 frames per second while rotating; thumbnails are captured once per screen. The showroom is inactive while closed, and its private textures/materials are released on teardown. The sedan's legacy materials are copied to URP-compatible materials. Coupe preview wheels come from the complete wheel prefab.

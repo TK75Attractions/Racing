@@ -35,5 +35,8 @@ public sealed class CarSelectionCatalog : ScriptableObject
         PlayerCarPaint paint = car.GetComponent<PlayerCarPaint>() ?? car.AddComponent<PlayerCarPaint>();
         paint.SetColor(Paints[Mathf.Clamp(paintIndex, 0, Paints.Length - 1)]);
         car.GetComponent<DebugMover>()?.ConfigureVehicle(vehicle.acceleration, vehicle.topSpeed, vehicle.handling, vehicle.drift);
+        car.GetComponent<CarSoundController>()?.ConfigureVehicleProfile(Mathf.Clamp(vehicleIndex, 0, 2));
+        CarExhaustVisual exhaust = car.GetComponent<CarExhaustVisual>() ?? car.AddComponent<CarExhaustVisual>();
+        exhaust.Configure(Mathf.Clamp(vehicleIndex, 0, 2));
     }
 }

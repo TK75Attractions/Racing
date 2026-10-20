@@ -17,7 +17,16 @@ public class CarSoundController : MonoBehaviour
     public float CurrentRpm => currentRpm;
     public float TunnelAmount => tunnelAmount;
     public bool IsShifting => gearbox.IsShifting;
+    public int VehicleProfile => vehicleProfile;
     public bool IsReverse => carRigidbody != null && Vector3.Dot(carRigidbody.linearVelocity, transform.forward) < -.8f;
+    private int vehicleProfile;
+
+    public void ConfigureVehicleProfile(int profile)
+    {
+        vehicleProfile = Mathf.Clamp(profile, 0, 2);
+        if (audioCore == null) audioCore = GetComponentInChildren<EngineAudioCore>();
+        audioCore?.ConfigureVehicleProfile(vehicleProfile);
+    }
 
     private void Awake()
     {
@@ -49,7 +58,7 @@ public class CarSoundController : MonoBehaviour
         float boost = mover != null ? mover.BoostVisualIntensity : 0f;
         gearbox.Step(Time.deltaTime, Vector3.Dot(carRigidbody.linearVelocity, transform.forward), throttle, grounded, boost);
         currentGear = gearbox.Gear; currentRpm = gearbox.Rpm;
-        audioCore.SetEngineState(currentRpm, gearbox.Load, Mathf.Clamp01(masterVolume) * RaceAudioSettings.Engine *
+        audioCore.SetEngineState(currentRpm, gearbox.Load, Mathf.Clamp01(masterVolume) * RaceAudioSettings.Engine * RaceAudioSettings.NotificationDuck *
             (Time.timeScale > 0f ? 1f : 0f), gearbox.Combustion, gearbox.ShiftSerial, boost, tunnelAmount);
     }
 

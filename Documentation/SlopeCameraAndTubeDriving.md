@@ -36,3 +36,6 @@ Unity 6000.3.9f1 で `Racing > Validate Slope Camera And Tube Driving`、また�
 検証用の平面を0度、左右60／80／90度に傾け、面の長手方向から25度向きを変えた4輪車で1秒間の駆動を比較します。重力を無効にし、加速比較中の姿勢を固定することで重力・遠心力と駆動の問題を区別します。ドリフトでは姿勢固定を解除し、速度維持、法線方向の速度、旋回軸を検証します。80／90度の面からマーカーを外すと、接地できないことも確認します。
 
 カメラは実際の路面へのレイ判定を使い、±20度の坂、平地、路面に沿った移動と振動、離陸中の車体回転、リスポーンを検証します。既存のカメラ振動・操舵・ドリフト・視覚効果の回帰検証も実行します。検証用オブジェクトは保存しません。実コースでの周回と描画は `TubeGameplayCapture.RunBatch` で別途確認しています。結果は [Artifacts/SlopeTubeDriving/README.md](../Artifacts/SlopeTubeDriving/README.md) を参照してください。
+
+チューブ壁面データの生成: Unity 6000.3.9f1 で `-batchmode -nographics -projectPath <プロジェクトパス> -executeMethod TubeWallVisualPreparation.Run -quit -logFile <ログパス>`（または SampleScene を開き Racing > Prepare Tube Wall Visuals）をリードが実行する。
+TubeCourseData に読み取り可能な TubeWallSource.asset と UV2 付き TubeWallOverlay.asset を冪等に生成し、参照とリング中心をシーンに保存する。FBX の Read/Write 設定は変更しない。

@@ -9,6 +9,7 @@ public sealed class CarNightGlow : MonoBehaviour
     [SerializeField, Min(0f)] private float bodyLightIntensity = 1.6f;
     [SerializeField, Range(4f, 6f)] private float bodyLightRange = 5f;
     [SerializeField, Range(0f, 1f)] private float airborneGlow = 0.15f;
+    [SerializeField, Range(0f, 1f)] private float contactShadowOpacity = .34f;
 
     private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
     private static readonly int ColorId = Shader.PropertyToID("_Color");
@@ -18,6 +19,9 @@ public sealed class CarNightGlow : MonoBehaviour
     private MeshRenderer glowRenderer;
     private Mesh glowMesh;
     private Material glowMaterial;
+    private Transform shadowRoot;
+    private MeshRenderer shadowRenderer;
+    private Material shadowMaterial;
     private static Texture2D gradient;
     private Light bodyLight;
     private Bounds carBounds;
@@ -76,6 +80,21 @@ public sealed class CarNightGlow : MonoBehaviour
             Vector3 position = glowRoot.localPosition;
             position.y = groundHeight / contacts + 0.035f;
             glowRoot.localPosition = position;
+        }
+        if (shadowRoot != null && contacts > 0)
+        {
+            Vector3 point = Vector3.zero;
+            foreach (TireForce tire in tires)
+                if (tire != null && tire.IsGrounded) point += tire.GroundHit.point;
+            point /= contacts;
+            shadowRoot.position = point + Vector3.up * .018f;
+        }
+        if (shadowRenderer != null)
+        {
+            shadowRenderer.enabled = contacts > 0;
+            Color color = shadowMaterial.GetColor(BaseColorId);
+            color.a = contactShadowOpacity * groundBlend;
+            shadowMaterial.SetColor(BaseColorId, color);
         }
 
         float strength = environmentBlend * groundBlend * glowIntensity;
@@ -159,6 +178,44 @@ public sealed class CarNightGlow : MonoBehaviour
         glowRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
         glowRenderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
         glowRenderer.enabled = false;
+        CreateContactShadow(shader);
+    }
+
+    private void CreateContactShadow(Shader shader)
+    {
+        if (lampShader) shader = Shader.Find("Universal Render Pipeline/Unlit");
+        if (shader == null || !shader.isSupported) return;
+        shadowMaterial = new Material(shader) { name = "Car Contact Shadow", hideFlags = HideFlags.HideAndDontSave };
+        shadowMaterial.SetTexture("_BaseMap", gradient);
+        shadowMaterial.SetColor(BaseColorId, new Color(.015f, .01f, .04f, contactShadowOpacity));
+        shadowMaterial.SetFloat("_Surface", 1f);
+        shadowMaterial.SetFloat("_Blend", 0f);
+        shadowMaterial.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+        shadowMaterial.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+        shadowMaterial.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+        shadowMaterial.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+        shadowMaterial.SetFloat("_ZWrite", 0f);
+        shadowMaterial.SetFloat("_Cull", (float)CullMode.Off);
+        shadowMaterial.SetOverrideTag("RenderType", "Transparent");
+        shadowMaterial.SetShaderPassEnabled("DepthOnly", false);
+        shadowMaterial.SetShaderPassEnabled("DepthNormalsOnly", false);
+        shadowMaterial.SetShaderPassEnabled("ShadowCaster", false);
+        shadowMaterial.SetShaderPassEnabled("MotionVectors", false);
+        shadowMaterial.renderQueue = (int)RenderQueue.Transparent - 10;
+
+        GameObject plate = new GameObject("Car Contact Shadow") { layer = gameObject.layer };
+        shadowRoot = plate.transform;
+        shadowRoot.SetParent(transform, false);
+        shadowRoot.localScale = new Vector3(carBounds.size.x * 1.25f, 1f, carBounds.size.z * .95f);
+        plate.AddComponent<MeshFilter>().sharedMesh = glowMesh;
+        shadowRenderer = plate.AddComponent<MeshRenderer>();
+        shadowRenderer.sharedMaterial = shadowMaterial;
+        shadowRenderer.shadowCastingMode = ShadowCastingMode.Off;
+        shadowRenderer.receiveShadows = false;
+        shadowRenderer.lightProbeUsage = LightProbeUsage.Off;
+        shadowRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        shadowRenderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
+        shadowRenderer.enabled = false;
     }
 
     /// <summary>All cars use the same immutable mask, prepared before the title.</summary>
@@ -235,14 +292,17 @@ public sealed class CarNightGlow : MonoBehaviour
     private void OnDisable()
     {
         if (glowRenderer != null) glowRenderer.enabled = false;
+        if (shadowRenderer != null) shadowRenderer.enabled = false;
         if (bodyLight != null) bodyLight.enabled = false;
     }
 
     private void OnDestroy()
     {
         if (glowRoot != null) Destroy(glowRoot.gameObject);
+        if (shadowRoot != null) Destroy(shadowRoot.gameObject);
         if (bodyLight != null) Destroy(bodyLight.gameObject);
         if (glowMaterial != null) Destroy(glowMaterial);
+        if (shadowMaterial != null) Destroy(shadowMaterial);
         if (glowMesh != null) Destroy(glowMesh);
     }
 }

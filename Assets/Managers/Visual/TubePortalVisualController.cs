@@ -14,10 +14,15 @@ public sealed class TubePortalVisualController : MonoBehaviour
     private static readonly Color Reflector = new Color(.65f, .72f, .8f, 1f);
     private static readonly Color Lantern = new Color(1.25f, .48f, .13f, 0f);
 
-    public void Build(MeshFilter tube, Vector3[] centers, bool reverse)
+    public void Build(MeshFilter tube, Vector3[] centers, bool reverse, Mesh readableSource = null)
     {
         Release();
-        if (tube == null || centers.Length < 2) return;
+        if (tube == null || centers == null || centers.Length < 2) return;
+        Mesh sourceMesh = readableSource != null ? readableSource : tube.sharedMesh;
+        if (sourceMesh == null || !sourceMesh.isReadable) return;
+        Vector3[] source = sourceMesh.vertices;
+        Vector2[] uv = sourceMesh.uv;
+        if (source.Length == 0 || uv.Length != source.Length) return;
         Shader shader = Resources.Load<Shader>("TubeSpeedPatterns");
         if (shader == null) return;
         material = new Material(shader) { name = "Tube portal vertex glow", hideFlags = HideFlags.DontSave, renderQueue = 2001 };
@@ -41,8 +46,6 @@ public sealed class TubePortalVisualController : MonoBehaviour
             float floor = -10f;
             if (course != null) floor = Vector3.Dot(course.GetNearestPointOnCenterLineWorld(center) - center, up);
             float left = float.PositiveInfinity, rightExtent = float.NegativeInfinity, top = float.NegativeInfinity;
-            Vector3[] source = tube.sharedMesh.vertices;
-            Vector2[] uv = tube.sharedMesh.uv;
             float endpointUV = end == 0 ? float.PositiveInfinity : float.NegativeInfinity;
             foreach (Vector2 point in uv) endpointUV = end == 0 ? Mathf.Min(endpointUV, point.x) : Mathf.Max(endpointUV, point.x);
             for (int i = 0; i < source.Length; i++)

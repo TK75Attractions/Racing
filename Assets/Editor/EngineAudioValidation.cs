@@ -71,6 +71,12 @@ public static class EngineAudioValidation
 
     private static void ValidateDsp(string output)
     {
+        float[] gt = new float[Rate * 2], rs = new float[Rate * 2], gtr = new float[Rate * 2];
+        new EngineSynth(Rate, 123u, 0).Render(gt, 2, 4200, .7f, .2f, 1, 0, 0, 0);
+        new EngineSynth(Rate, 123u, 1).Render(rs, 2, 4200, .7f, .2f, 1, 0, 0, 0);
+        new EngineSynth(Rate, 123u, 2).Render(gtr, 2, 4200, .7f, .2f, 1, 0, 0, 0);
+        Require(!gt.SequenceEqual(rs) && !rs.SequenceEqual(gtr) && !gt.SequenceEqual(gtr),
+            "Each vehicle profile must produce a distinct but valid exhaust resonance.");
         foreach (int rate in new[] { 44100, 48000, 96000 })
         {
             EngineSynth synth = new EngineSynth(rate);

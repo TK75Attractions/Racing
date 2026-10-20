@@ -27,9 +27,9 @@ public static class RaceSoundBank
         Tone(.15f,.17f,660f,440f),
         Tone(.26f,.23f,523.25f,659.25f,783.99f),
         Tone(.13f,.25f,740f),
-        Tone(.48f,.27f,740f,987.77f,1480f),
-        Tone(.85f,.25f,523.25f,659.25f,783.99f,1046.5f,1318.5f),
-        Tone(.42f,.19f,783.99f,659.25f,1046.5f)
+        Tone(.48f,.27f,740f,880f,1174.66f),
+        Tone(.85f,.25f,523.25f,659.25f,783.99f,880f,987.77f),
+        Tone(.42f,.19f,783.99f,659.25f,880f)
     };
 
     private static RaceSoundClip Tone(float duration,float gain,params float[] notes)
@@ -46,7 +46,7 @@ public static class RaceSoundBank
             float release=Mathf.Clamp01((noteSeconds-local)/.025f);
             float decay=Mathf.Exp(-local*5f);
             phase += 2*Math.PI*notes[note]/RaceSoundClip.SampleRate;
-            pcm[i]=(float)(Math.Sin(phase)+.16*Math.Sin(phase*2)) * gain * attack * release * decay / 1.16f;
+            pcm[i]=(float)(Math.Sin(phase)+.09*Math.Sin(phase*2)) * gain * attack * release * decay / 1.09f;
         }
         pcm[0]=pcm[pcm.Length-1]=0f;
         return new RaceSoundClip(pcm);

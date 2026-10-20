@@ -55,13 +55,16 @@ public sealed class CarCollisionSparks : MonoBehaviour
 
     private void NotifyImpact(Collision collision)
     {
-        if (Impact == null || !IsGameplayActive() || collision.contactCount == 0) return;
+        if (!IsGameplayActive() || collision.contactCount == 0) return;
 
         float impactSpeed;
         if (IsDynamicBody(collision.rigidbody))
         {
             if (collision.rigidbody.GetComponent<CarCollisionSparks>() == null) return;
             impactSpeed = collision.relativeVelocity.magnitude;
+            if (collision.contactCount>0 && GetInstanceID()<collision.rigidbody.GetInstanceID() && impactSpeed>=1.2f)
+                RaceSoundEffects.PlayVehicleCue(impactSpeed>=8f?RaceVehicleAudioCue.HeavyImpact:RaceVehicleAudioCue.LightImpact,
+                    collision.GetContact(0).point,Mathf.Clamp01(impactSpeed/18f));
         }
         else
         {
@@ -71,7 +74,7 @@ public sealed class CarCollisionSparks : MonoBehaviour
         }
 
         float strength = EvaluateImpactStrength(impactSpeed);
-        if (strength > 0f) Impact.Invoke(strength);
+        if (strength > 0f) Impact?.Invoke(strength);
     }
 
     /// <summary>衝突の速さ（m/s）を揺れの強さ（0〜1）に変換します。</summary>
