@@ -168,9 +168,10 @@ public sealed class RgpHostSession
 
     private void PrepareHardwareAutomatically(double now)
     {
-        // Wait for hardware status and the initial setup ACKs. A calibrated device is left alone.
+        // Hardware status is the prerequisite. PING/config/diagnostic ACK latency must
+        // not hold angle preparation behind their one-second retry cycle.
         // Each operation gets one SEQ per session; Tick only retries that exact wire on timeout.
-        if (!SessionOpen || pending.Count != 0 || AdsStatus != "Ok" || ImuStatus != "Ok" ||
+        if (!SessionOpen || AdsStatus != "Ok" || ImuStatus != "Ok" ||
             (State != "WAIT_ANGLE" && State != "READY")) return;
         if (!Calibrated && !automaticCalibrationAttempted)
         {

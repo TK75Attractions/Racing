@@ -189,6 +189,20 @@ public sealed class RgpOperatorCommandTests
         Assert.That(sent.Count, Is.EqualTo(count+2));
     }
 
+    [Test] public void SlowDiagnosticAckCannotDelayVerifiedStartupAnglePreparation()
+    {
+        var sent = new List<string>();
+        var session = new RgpHostSession(sent.Add); session.Start(0);
+        SerialInputProtocol.TryParse(sent[0], out RgpFrame open);
+        session.Receive(Frame("ACK,1,0,0,OPEN_SESSION,OK," + open.Data[1]), 1);
+        // PING and GET_CONFIG replies are delayed, but the authoritative hardware status is ready.
+        session.Receive(Frame("ACK,2,0,2,GET_STATUS,OK,WAIT_ANGLE,1,1,0,1"), 2);
+        session.Tick(3);
+        Assert.That(sent[sent.Count - 1], Does.Contain(",ANGLE_ZERO*"),
+            "The next input update must prepare the angle without waiting for unrelated 1-second retries.");
+        Assert.That(session.IsFresh(3), Is.False, "Preparation must never bypass READY plus new TEL.");
+    }
+
     [Test] public void FailedAutomaticCalibrationIsBoundedAndReadyHardwareIsUntouched()
     {
         var session = Ready(out var sent);

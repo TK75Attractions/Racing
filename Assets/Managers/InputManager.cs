@@ -294,6 +294,7 @@ public class InputManager : MonoBehaviour
                 $"{Mathf.Max(0f, Time.realtimeSinceStartup - sharedSerialInputSource.LastSerialLineTime):F2} s ago";
             GUILayout.Label($"Shared controller: {(sharedSerialInputSource.IsPortOpen ? "Connected" : "Disconnected")}    Port: {sharedSerialInputSource.PortName}", serialDebugLabelStyle);
             GUILayout.Label($"Raw lines: {sharedSerialInputSource.LinesReceived}    Processed: {sharedSerialInputSource.LinesProcessed}    Parse errors: {sharedSerialInputSource.ParseErrorCount}", serialDebugLabelStyle);
+            GUILayout.Label($"State: {sharedSerialInputSource.Session.State}    First usable input: {sharedSerialInputSource.FirstUsableInputMilliseconds:F0} ms (-1 = waiting)", serialDebugLabelStyle);
             GUILayout.Label($"Last input: {age}    Raw: {sharedSerialInputSource.LastSerialLine}    Parse: {sharedSerialInputSource.LastParseResult}", serialDebugLabelStyle);
         }
         for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)

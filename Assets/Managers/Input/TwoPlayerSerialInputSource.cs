@@ -44,7 +44,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     public bool InvalidTelemetry { get; private set; }
     public bool HasRecentDeviceData => portIsOpen && clock.Elapsed.TotalMilliseconds - lastDeviceDataAt < 3000;
     private double lastDeviceDataAt = double.NegativeInfinity;
-    private double nextStatusAt = 2000;
+    private double nextStatusAt = 250;
     public bool TrySendCommand(string command, string[] args, out uint sequence, out string reason)
     {
         sequence = 0; reason = "serial_disconnected";
@@ -62,6 +62,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     public string LastSerialLine { get; private set; } = "-";
     public string LastParseResult { get; private set; } = "Waiting for input";
     public float LastSerialLineTime { get; private set; } = -1f;
+    public double FirstUsableInputMilliseconds { get; private set; } = -1;
 
     public TwoPlayerSerialInputSource(
         Esp32SerialConfiguration configuration,
@@ -103,7 +104,8 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         session.Tick(clock.Elapsed.TotalMilliseconds);
         if (clock.Elapsed.TotalMilliseconds >= nextStatusAt)
         {
-            nextStatusAt = clock.Elapsed.TotalMilliseconds + 2000;
+            // Startup/recovery needs prompt status verification; steady-state diagnostics stay at 2s.
+            nextStatusAt = clock.Elapsed.TotalMilliseconds + (session.State == "READY" ? 2000 : 250);
             session.TryCommand("GET_STATUS", Array.Empty<string>(), clock.Elapsed.TotalMilliseconds, out _, out _);
         }
         bool fresh = session.IsFresh(clock.Elapsed.TotalMilliseconds);
@@ -142,6 +144,12 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
                 lastDeviceDataAt = received.ReceivedAt;
                 string result = session.Receive(frame, received.ReceivedAt);
                 if (frame.Type == "TEL" && result == "OK") InvalidTelemetry = false;
+                if (frame.Type == "TEL" && result == "OK" && FirstUsableInputMilliseconds < 0 &&
+                    session.IsFresh(clock.Elapsed.TotalMilliseconds))
+                {
+                    FirstUsableInputMilliseconds = clock.Elapsed.TotalMilliseconds;
+                    Monitor.Diagnostic("INPUT_READY", "startup_ms=" + FirstUsableInputMilliseconds.ToString("F0", System.Globalization.CultureInfo.InvariantCulture));
+                }
                 RecordParseResult(result, LastSerialLine);
             }
         }
