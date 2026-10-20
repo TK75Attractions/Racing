@@ -11,6 +11,9 @@ public sealed class FinishRunController : MonoBehaviour, IDriveInputSource
     private DebugMover mover;
     private GroundCheck[] wheels;
     private float elapsed, initialSpeed;
+    private Renderer[] retiredRenderers;
+    private bool[] previousVisibility;
+    public bool IsRetiredFromView => retiredRenderers != null;
     public bool IsActive { get; private set; }
     public float ElapsedSeconds => elapsed;
     public int PlayerIndex => participant?.Index ?? -1;
@@ -20,6 +23,7 @@ public sealed class FinishRunController : MonoBehaviour, IDriveInputSource
 
     public void Begin(Gmanager race, RaceParticipant entry)
     {
+        RestoreVisibility();
         manager = race; participant = entry; mover = GetComponent<DebugMover>();
         wheels = GetComponentsInChildren<GroundCheck>();
         initialSpeed = entry.Body.linearVelocity.magnitude;
@@ -65,6 +69,26 @@ public sealed class FinishRunController : MonoBehaviour, IDriveInputSource
         participant.Body.linearVelocity = Vector3.zero;
         participant.Body.angularVelocity = Vector3.zero;
         participant.Body.isKinematic = true;
+        ApplyVisibilitySwitch();
+    }
+
+    public void ApplyVisibilitySwitch()
+    {
+        if (!RaceFeatureController.Enabled(RaceFeature.FinishRun)) { RestoreVisibility(); return; }
+        if (IsActive || manager == null || manager.state != Gmanager.State.Game || participant?.Result?.didFinish != true || retiredRenderers != null) return;
+        // A collision-free parked finisher still obscures racers and spectator cameras.
+        // Keep the short physical celebration, then retire its meshes and identity label.
+        retiredRenderers = GetComponentsInChildren<Renderer>(true);
+        previousVisibility = new bool[retiredRenderers.Length];
+        for (int i = 0; i < retiredRenderers.Length; i++)
+        { previousVisibility[i] = retiredRenderers[i].enabled; retiredRenderers[i].enabled = false; }
+    }
+    private void RestoreVisibility()
+    {
+        if (retiredRenderers == null) return;
+        for (int i = 0; i < retiredRenderers.Length; i++)
+            if (retiredRenderers[i] != null) retiredRenderers[i].enabled = previousVisibility[i];
+        retiredRenderers = null; previousVisibility = null;
     }
 
     public void UpdateInput(float dt) { }

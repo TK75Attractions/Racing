@@ -47,6 +47,7 @@ public sealed class RaceFeatureController : MonoBehaviour
             foreach (RaceParticipant entry in manager.Participants)
             {
                 if (!Settings.IsEnabled(RaceFeature.FinishRun)) entry.Car?.GetComponent<FinishRunController>()?.Stop();
+                entry.Car?.GetComponent<FinishRunController>()?.ApplyVisibilitySwitch();
                 entry.Effects?.ApplyFeatureSwitches();
                 entry.Car?.GetComponent<PlayerAutodrive>()?.ApplySwitch();
                 entry.Car?.GetComponent<LandingRewardController>()?.ApplySwitches();

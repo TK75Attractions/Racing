@@ -1,0 +1,73 @@
+{
+  "method": "Progress changes must clear +/-3m, be within 40m in world space, on the same height, moving forward, with no recovery. Five-second debounce per pair. These are observed order changes, not a human enjoyment score.",
+  "runtimeErrors": [],
+  "runs": [
+    {
+      "name": "human-fast-control-7102",
+      "events": [
+        {
+          "time": 21.02,
+          "human": "P2",
+          "cpu": "CPU 2",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 25.22,
+          "human": "P2",
+          "cpu": "CPU 1",
+          "event": "cpu-passed-human"
+        },
+        {
+          "time": 38.92,
+          "human": "P1",
+          "cpu": "CPU 1",
+          "event": "human-passed-cpu"
+        }
+      ],
+      "cpuPasses": 2,
+      "humanPasses": 1,
+      "cars": [
+        {
+          "label": "P1",
+          "finished": true,
+          "position": 2,
+          "maxStall": 0.0,
+          "offCourseSeconds": 0.0,
+          "vehicleContacts": 14,
+          "humanRecoveries": 0,
+          "cpuRecoveries": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "position": 4,
+          "maxStall": 4.699995994567871,
+          "offCourseSeconds": 1.839998483657837,
+          "vehicleContacts": 10,
+          "humanRecoveries": 2,
+          "cpuRecoveries": 0
+        },
+        {
+          "label": "CPU 1",
+          "finished": true,
+          "position": 3,
+          "maxStall": 0.0,
+          "offCourseSeconds": 0.0,
+          "vehicleContacts": 2,
+          "humanRecoveries": 0,
+          "cpuRecoveries": 0
+        },
+        {
+          "label": "CPU 2",
+          "finished": true,
+          "position": 1,
+          "maxStall": 0.0,
+          "offCourseSeconds": 0.0,
+          "vehicleContacts": 4,
+          "humanRecoveries": 0,
+          "cpuRecoveries": 0
+        }
+      ]
+    }
+  ]
+}
