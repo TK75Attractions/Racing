@@ -418,9 +418,9 @@ public class VManager : MonoBehaviour
     {
         // 速度Volumeの現在値を基準にして、Boost Volume側へ合成値を書き込みます。
         effect.bloom.intensity.Override(EffectiveBloom(effect) + boostBloom);
-        effect.motionBlur.intensity.Override(EffectiveMotionBlur(effect) + boostMotionBlur);
-        effect.lensDistortion.intensity.Override(EffectiveLensDistortion(effect) + boostLensDistortion);
-        effect.chromaticAberration.intensity.Override(EffectiveChromatic(effect) + boostChromaticAberration);
+        effect.motionBlur.intensity.Override(ReadableBlur(EffectiveMotionBlur(effect) + boostMotionBlur, .18f));
+        effect.lensDistortion.intensity.Override(ReadableDistortion(EffectiveLensDistortion(effect) + boostLensDistortion));
+        effect.chromaticAberration.intensity.Override(ReadableChromatic(EffectiveChromatic(effect) + boostChromaticAberration));
         effect.vignette.intensity.Override(EffectiveVignette(effect) + boostVignette);
         effect.colorAdjustments.postExposure.Override(BaseValue(colorAdjustments, colorAdjustments.postExposure) + boostPostExposure);
         effect.colorAdjustments.contrast.Override(EffectiveContrast(effect) + boostContrast);
@@ -433,7 +433,7 @@ public class VManager : MonoBehaviour
         effect.chargeVignette.intensity.Override(EffectiveVignette(effect) + chargeVignetteIntensity);
         effect.chargeVignette.smoothness.Override(chargeVignetteSmoothness);
         effect.chargeVignette.color.Override(effect.chargeTint);
-        effect.chargeChromaticAberration.intensity.Override(EffectiveChromatic(effect) + chargeChromaticIntensity);
+        effect.chargeChromaticAberration.intensity.Override(ReadableChromatic(EffectiveChromatic(effect) + chargeChromaticIntensity));
     }
 
     private void ApplySpeedSettings(PlayerEffect effect)
@@ -449,14 +449,21 @@ public class VManager : MonoBehaviour
         effect.speedBloom.threshold.Override(speedBloomThreshold);
         effect.speedBloom.scatter.Override(speedBloomScatter);
         effect.speedBloom.intensity.Override(Mathf.Lerp(speedBloomLow, speedBloomHigh, t));
-        effect.speedMotionBlur.intensity.Override(Mathf.Lerp(speedMotionBlurLow, speedMotionBlurHigh, t));
-        effect.speedLensDistortion.intensity.Override(Mathf.Lerp(speedDistortionLow, speedDistortionHigh, t));
-        effect.speedChromaticAberration.intensity.Override(Mathf.Lerp(speedChromaticLow, speedChromaticHigh, t));
+        effect.speedMotionBlur.intensity.Override(ReadableBlur(Mathf.Lerp(speedMotionBlurLow, speedMotionBlurHigh, t), .14f));
+        effect.speedLensDistortion.intensity.Override(ReadableDistortion(Mathf.Lerp(speedDistortionLow, speedDistortionHigh, t)));
+        effect.speedChromaticAberration.intensity.Override(ReadableChromatic(Mathf.Lerp(speedChromaticLow, speedChromaticHigh, t)));
         effect.speedVignette.intensity.Override(Mathf.Lerp(speedVignetteLow, speedVignetteHigh, t));
         effect.speedVignette.smoothness.Override(speedVignetteSmoothness);
         effect.speedColorAdjustments.contrast.Override(Mathf.Lerp(speedContrastLow, speedContrastHigh, t));
         effect.speedColorAdjustments.saturation.Override(Mathf.Lerp(speedSaturationLow, speedSaturationHigh, t));
     }
+
+    // Bound the composite effect, not only its speed component: boost/charge used
+    // to add enough blur and colour separation to hide nearby cars and road edges.
+    private static bool ClearSpeedView => RaceFeatureController.Enabled(RaceFeature.ClearSpeedPresentation);
+    private static float ReadableBlur(float value, float limit) => ClearSpeedView ? Mathf.Min(value, limit) : value;
+    private static float ReadableDistortion(float value) => ClearSpeedView ? Mathf.Clamp(value, -.045f, .045f) : value;
+    private static float ReadableChromatic(float value) => ClearSpeedView ? Mathf.Min(value, .04f) : value;
 
     private float EffectiveBloom(PlayerEffect effect) => effect.speedActive
         ? Mathf.Lerp(speedBloomLow, speedBloomHigh, effect.speed01)

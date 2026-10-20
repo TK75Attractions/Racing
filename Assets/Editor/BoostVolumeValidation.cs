@@ -82,6 +82,9 @@ public static class BoostVolumeValidation
             manager.ConfigurePlayerCameras(cameras);
             // 通常Volume 1個と、プレイヤーごとの加速・速度・チャージ・稲妻の光 Volume 4個ずつ。
             Require(root.GetComponentsInChildren<Volume>().Length == 9, "Reconfiguration must not leak player visual volumes.");
+            // Ordinary MonoBehaviours do not receive Play Mode lifecycle messages
+            // in this Edit Mode check. Exercise teardown explicitly before disposal.
+            typeof(VManager).GetMethod("OnDestroy", PrivateInstance).Invoke(manager, null);
             UnityEngine.Object.DestroyImmediate(manager);
             Require(p1Data.volumeLayerMask.value == 1 && !p1Data.renderPostProcessing,
                 "Disposal must restore the camera configuration.");
