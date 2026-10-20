@@ -27,11 +27,10 @@ public static class RaceSpeedPlanner
         return limit;
     }
 
-    // Small attack/response windows near a fast rival; distant/slow players do not cap the race pace.
+    // Fast pace must retain the live CPU contest switch instead of overriding it.
     public static float CpuCruise(float partnerSpeed, float gap, float time, int index)
     {
-        if (Mathf.Abs(gap) > 35f || partnerSpeed < 30f) return Cruise;
-        float phase = (time + index * 3f) % 16f;
-        return Mathf.Clamp(partnerSpeed + (phase < 10f ? 4f : -1f) + gap * .08f, 38f, Cruise + 2f);
+        return RaceFeatureController.Enabled(RaceFeature.CpuRacing)
+            ? CpuRacePace.FastRequest(partnerSpeed, gap, time, index, Cruise) : Cruise;
     }
 }

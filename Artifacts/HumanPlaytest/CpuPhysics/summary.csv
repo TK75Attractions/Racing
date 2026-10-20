@@ -1,0 +1,9 @@
+run,seed,items,termination,seconds,car,finished,rank,laps,progress_m,mean_speed_mps,max_stall_s,off_course_s,vehicle_contacts,environment_contacts,items_used,afflictions,manual_resets,cpu_recoveries,human_recoveries,automatic_recoveries,recovery_blocked,granted_human_grace_s
+human-fast-items-7101,7101,True,both-humans-finished,141.93,P1,True,1,2,3808.39,32.7,0.3,1.82,21,610,4,2,0,0,1,1,,40.0
+human-fast-items-7101,7101,True,both-humans-finished,141.93,P2,True,4,2,3808.39,29.53,3.6,0.0,19,1271,6,0,0,0,1,1,,40.0
+human-fast-items-7101,7101,True,both-humans-finished,141.93,CPU 1,True,2,2,3808.39,29.27,0.0,0.0,0,600,0,0,0,0,0,0,,40.0
+human-fast-items-7101,7101,True,both-humans-finished,141.93,CPU 2,True,3,2,3808.39,30.31,0.3,0.0,2,660,0,1,0,1,0,0,,40.0
+human-fast-control-7102,7102,False,human-grace-timeout,153.35,P1,True,2,2,3808.39,34.21,0.0,0.0,5,585,0,0,0,0,0,0,,40.0
+human-fast-control-7102,7102,False,human-grace-timeout,153.35,P2,False,4,1,3797.95,27.86,2.18,0.0,8,1312,0,0,0,0,0,0,,40.0
+human-fast-control-7102,7102,False,human-grace-timeout,153.35,CPU 1,True,3,2,3808.39,29.22,0.0,0.0,5,618,0,0,0,0,0,0,,40.0
+human-fast-control-7102,7102,False,human-grace-timeout,153.35,CPU 2,True,1,2,3808.39,34.04,0.0,0.0,6,582,0,0,0,0,0,0,,40.0

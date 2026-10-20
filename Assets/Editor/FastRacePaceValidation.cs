@@ -40,6 +40,11 @@ public static class FastRacePaceValidation
             Require(bot.Decide(course, body, 1f, 4, 2f, cruise: 24f).pedal < 0, "Explicit legacy pace must remain available for comparison.");
             features.SetFeature(RaceFeature.FastAiPace, true);
             Require(RaceSpeedPlanner.Enabled, "Live ON must restore fast pace.");
+            Require(RaceSpeedPlanner.CpuCruise(31, -100, 0, 2) < 31f, "Fast CPUs must retain a response to an outdistanced rival.");
+            features.SetFeature(RaceFeature.CpuRacing, false);
+            Require(RaceSpeedPlanner.CpuCruise(31, -100, 0, 2) == RaceSpeedPlanner.Cruise && RaceSpeedPlanner.Enabled,
+                "CPU contest OFF must restore full cruise without disabling fast road planning.");
+            features.SetFeature(RaceFeature.CpuRacing, true);
             Debug.Log($"FAST_RACE_PACE_VALIDATION_PASS: min={minimum:F2}m/s max={maximum:F2}m/s idealTwoLaps={idealSeconds:F2}s, default driver, live independent OFF/ON.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); Gmanager.Control = previous; }
