@@ -25,7 +25,7 @@ public class DebugMover : MonoBehaviour
     [Tooltip("この速度（m/s）から操舵角を小さくし始めます。")]
     [SerializeField, Min(0f)] private float steeringFadeStartSpeed = 10f;
 
-    [Tooltip("この速度（m/s）で高速時操舵倍率に達し、以降は速度の二乗に反比例してさらに下がります。")]
+    [Tooltip("旧補正が高速時操舵倍率に達する速度。F8の高速旋回が有効な間は新しい倍率下限も使います。")]
     [SerializeField, Min(0f)] private float steeringFadeFullSpeed = 30f;
 
     [Tooltip("高速時に残す操舵角の割合。")]
@@ -43,6 +43,21 @@ public class DebugMover : MonoBehaviour
     [SerializeField, Min(0f)] private float steeringDeadzone = .08f;
     [Tooltip("入力平滑化の時定数（秒）。高速時も切り返し・中央復帰は速く応答します。0で無効。")]
     [SerializeField, Min(0f)] private float steeringResponseSeconds = .045f;
+
+    [Header("High Speed Cornering (F8 switch)")]
+    [Tooltip("高速でも残す操舵倍率の下限。F8の高速旋回が有効な間だけ使用します。")]
+    [SerializeField, Range(.1f, 1f)] private float corneringSteeringMultiplier = .65f;
+    [Tooltip("高速旋回で許容する路面内の横加速度目安。旋回要求を抑えつつ減速で曲がりやすさを戻します。")]
+    [SerializeField, Min(22f)] private float corneringLateralAcceleration = 48f;
+    [SerializeField, Min(.1f)] private float corneringYawRate = 1.05f;
+    [Tooltip("ハンドルによる自動減速は、この速度以下へは要求しません。")]
+    [SerializeField, Min(1f)] private float corneringMinimumSpeed = 22f;
+    [SerializeField, Min(0f)] private float corneringMaxBraking = 14f;
+    private float corneringRequestedAngle;
+    [SerializeField] private float corneringBrakingAcceleration;
+    public float CorneringBrakingAcceleration => corneringBrakingAcceleration;
+    private bool UseHighSpeedCornering => enableSpeedSensitiveSteering && RaceFeatureController.Enabled(RaceFeature.HighSpeedCornering);
+    private float CorneringBoostScale => 1f - Mathf.Clamp01(corneringBrakingAcceleration / 4f);
 
     [Header("Drift")]
     [Tooltip("ドリフトを開始する生のハンドル入力の絶対値（高速時の操舵補正前）。")]
@@ -189,7 +204,7 @@ public class DebugMover : MonoBehaviour
         float delta = RoadRewardBudget.SpeedDelta(dt, slipstreamBoostRemaining, landingBoostRemaining, legacySpeedDelta, speed);
         slipstreamBoostRemaining = Mathf.Max(0f, slipstreamBoostRemaining - dt);
         landingBoostRemaining = Mathf.Max(0f, landingBoostRemaining - dt);
-        if (delta > 0f) rb.AddForce(Vector3.ProjectOnPlane(transform.forward, GetDrivingUp()).normalized * delta, ForceMode.VelocityChange);
+        if (delta > 0f) rb.AddForce(Vector3.ProjectOnPlane(transform.forward, GetDrivingUp()).normalized * (delta * CorneringBoostScale), ForceMode.VelocityChange);
     }
 
     private Rigidbody rb;
@@ -350,7 +365,9 @@ public class DebugMover : MonoBehaviour
                 ResetDrift();
             }
 
-            float boostSpeedDelta = ConsumeDriftBoost(Time.fixedDeltaTime);
+            UpdateCorneringBrake();
+
+            float boostSpeedDelta = ConsumeDriftBoost(Time.fixedDeltaTime) * CorneringBoostScale;
             if (boostSpeedDelta > 0f)
             {
                 Vector3 forward = Vector3.ProjectOnPlane(transform.forward, GetDrivingUp()).normalized;
@@ -358,7 +375,7 @@ public class DebugMover : MonoBehaviour
                 rb.AddForce(forward * boostSpeedDelta, ForceMode.VelocityChange);
             }
 
-            float padSpeedDelta = ConsumeAccelerationPadBoost(Time.fixedDeltaTime, out Vector3 padDirection);
+            float padSpeedDelta = ConsumeAccelerationPadBoost(Time.fixedDeltaTime, out Vector3 padDirection) * CorneringBoostScale;
             if (padSpeedDelta > 0f)
             {
                 rb.AddForce(padDirection * padSpeedDelta, ForceMode.VelocityChange);
@@ -369,6 +386,7 @@ public class DebugMover : MonoBehaviour
         ApplyTireForces();
         ApplyDriftSpinProtection(Time.fixedDeltaTime);
         ApplyVelocityResistance();
+        ApplyCorneringBrake();
     }
 
     public void SetInputSource(IDriveInputSource source)
@@ -668,11 +686,16 @@ public class DebugMover : MonoBehaviour
 
         appliedSteeringMultiplier = GetSpeedSteeringMultiplier(speedMetersPerSecond);
         steeringAngleLimit = enableSpeedSensitiveSteering
-            ? Mathf.Min(maxSteeringAngle, Mathf.Atan(Mathf.Max(1f, steeringLateralAcceleration) * wheelbase /
+            ? Mathf.Min(maxSteeringAngle, Mathf.Atan(GetSteeringLateralAcceleration(speedMetersPerSecond) * wheelbase /
                 Mathf.Max(.01f, speedMetersPerSecond * speedMetersPerSecond)) * Mathf.Rad2Deg)
             : maxSteeringAngle;
         float limit = SteeringInputLimit;
         float request = Mathf.Sign(rawSteeringInput) * Mathf.Max(0f, Mathf.Abs(rawSteeringInput) - steeringDeadzone);
+        // Preserve bounded handle intent separately from the tire safety cap: turning
+        // further must ask for more braking even when the tires have reached their limit.
+        float requestedAngle = Mathf.Clamp(request * steeringInputMultiplier, -maxSteeringAngle, maxSteeringAngle) * appliedSteeringMultiplier;
+        float intentBlend = steeringResponseSeconds <= 0f ? 1f : 1f - Mathf.Exp(-Time.fixedDeltaTime / steeringResponseSeconds);
+        corneringRequestedAngle = Mathf.Lerp(corneringRequestedAngle, requestedAngle, intentBlend);
         // Saturate before filtering: turning past the limit must never store a delayed countersteer.
         request = Mathf.Clamp(request, -limit, limit);
         filteredSteeringInput = Mathf.Clamp(filteredSteeringInput, -limit, limit);
@@ -703,7 +726,39 @@ public class DebugMover : MonoBehaviour
         float multiplier = Mathf.Lerp(1f, Mathf.Clamp01(highSpeedSteeringMultiplier), fadeRatio);
         // Keep reducing beyond the fade range. Constant lock would increase yaw with speed.
         float overspeed = Mathf.Max(1f, speed / fullSpeed);
-        return multiplier / (overspeed * overspeed);
+        float legacy = multiplier / (overspeed * overspeed);
+        return UseHighSpeedCornering ? Mathf.Max(legacy, corneringSteeringMultiplier) : legacy;
+    }
+
+    private float GetSteeringLateralAcceleration(float speed)
+    {
+        float legacy = Mathf.Max(1f, steeringLateralAcceleration);
+        return UseHighSpeedCornering
+            ? Mathf.Max(legacy, Mathf.Min(corneringLateralAcceleration, speed * corneringYawRate)) : legacy;
+    }
+
+    private void UpdateCorneringBrake()
+    {
+        corneringBrakingAcceleration = 0f;
+        if (!UseHighSpeedCornering || !HasDriftGroundContact() || IsInputSuppressed ||
+            inputSource == null || !inputSource.IsConnected ||
+            inputSource is PlayerDriveInputGate gate && (gate.IsBlocked || gate.NeedsPedalRelease) ||
+            itemEffects != null && (itemEffects.BlocksDriverInput || itemEffects.IsRocketActive || itemEffects.IsOiled)) return;
+        Vector3 velocity = Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp());
+        float speed = velocity.magnitude;
+        float curvature = Mathf.Tan(Mathf.Abs(corneringRequestedAngle) * Mathf.Deg2Rad) / Mathf.Max(.5f, wheelbase);
+        if (curvature < .0001f) return;
+        float targetSpeed = Mathf.Max(corneringMinimumSpeed, Mathf.Sqrt(Mathf.Max(1f, steeringLateralAcceleration) / curvature));
+        float activation = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(18f, 30f, speed));
+        corneringBrakingAcceleration = Mathf.Min(corneringMaxBraking, Mathf.Max(0f, speed - targetSpeed) * 1.8f) * activation;
+    }
+
+    private void ApplyCorneringBrake()
+    {
+        if (corneringBrakingAcceleration <= 0f) return;
+        Vector3 velocity = Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp());
+        float deceleration = Mathf.Min(corneringBrakingAcceleration, velocity.magnitude / Time.fixedDeltaTime);
+        rb.AddForce(-velocity.normalized * deceleration, ForceMode.Acceleration);
     }
 
     private void ClearUserInput()
@@ -715,6 +770,7 @@ public class DebugMover : MonoBehaviour
         appliedSteeringAngle = 0f;
         appliedSteeringMultiplier = 1f;
         filteredSteeringInput = 0f;
+        corneringRequestedAngle = corneringBrakingAcceleration = 0f;
         steeringAngleLimit = maxSteeringAngle;
     }
 
@@ -724,7 +780,8 @@ public class DebugMover : MonoBehaviour
 
     private float GetDriftYawLimit(float speed)
     {
-        return Mathf.Min(driftMaxYawRate, driftMaxLateralAcceleration / Mathf.Max(1f, speed));
+        float lateral = UseHighSpeedCornering ? Mathf.Max(driftMaxLateralAcceleration, GetSteeringLateralAcceleration(speed)) : driftMaxLateralAcceleration;
+        return Mathf.Min(driftMaxYawRate, lateral / Mathf.Max(1f, speed));
     }
 
     private float GetProtectedSteeringAngle(Vector3 forward, Vector3 velocity)
