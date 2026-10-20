@@ -37,7 +37,8 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
             gate.IsBlocked || gate.NeedsPedalRelease || mover.IsInputSuppressed)
         { CurrentState = DriveInputState.Neutral; bot.Clear(); return; }
         int contacts = 0; foreach (GroundCheck wheel in wheels) if (wheel.CheckNow()) contacts++;
-        float cap = 24f;
+        float cruise = RaceSpeedPlanner.Enabled ? RaceSpeedPlanner.Cruise : 24f;
+        float cap = cruise;
         if (manager.course.IsJumpAhead(own.Body.position, manager.CourseProgressSign, 90f))
             foreach (RaceParticipant other in manager.Participants)
             {
@@ -45,7 +46,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
                 cap = CpuJumpSpacing.Request(cap, other.Body.linearVelocity.magnitude, other.Progress - own.Progress);
             }
         DriveInputState decision = bot.Decide(manager.course, own.Body, manager.CourseProgressSign, contacts, Time.time,
-            24f, -1.8f, speedCap: cap, vehicle: mover);
+            cruise, -1.8f, reaction: .06f, speedCap: cap, vehicle: mover);
         foreach (RaceParticipant other in manager.Participants)
         {
             if (other == own || !other.IsRacing) continue;

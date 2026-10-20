@@ -128,8 +128,12 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         if (improved) adjusted = opponent?.IsRacing == true
             ? CpuRacePace.Request(partnerSpeed, gap, manager.time, entry.Index, cruiseSpeed, maximumCatchup) : cruiseSpeed;
         float requested = Mathf.Min(adjusted, bendLimit);
+        bool fastPace = RaceSpeedPlanner.Enabled;
+        if (fastPace)
+            requested = RaceSpeedPlanner.Limit(course, raw, sign,
+                RaceSpeedPlanner.CpuCruise(partnerSpeed, gap, manager.time, entry.Index));
         if (improved) jumpAhead |= course.IsJumpAhead(body.position, sign, 45f);
-        if (jumpAhead) { requested = Mathf.Min(bendLimit, improved ? 24f : Mathf.Max(24f, requested)); desiredLane = 0; }
+        if (jumpAhead) { requested = fastPace ? Mathf.Min(requested, RaceSpeedPlanner.JumpSpeed) : Mathf.Min(bendLimit, improved ? 24f : Mathf.Max(24f, requested)); desiredLane = 0; }
         if (improved && Time.time < landingLaneUntil) desiredLane = 0;
         if (improved && (jumpAhead || Time.time < landingLaneUntil))
         {
@@ -174,9 +178,9 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
             }
         }
         if (Time.time < yieldUntil) requested = Mathf.Min(requested, improved ? Mathf.Max(10f, partnerSpeed - 1f) : 8f);
-        targetSpeed = Mathf.MoveTowards(targetSpeed, requested, dt * accelerationSlew);
+        targetSpeed = Mathf.MoveTowards(targetSpeed, requested, dt * (fastPace ? (requested < targetSpeed ? 30f : 12f) : accelerationSlew));
         float signedSpeed = Vector3.Dot(body.linearVelocity, transform.forward);
-        float pedal = improved ? CpuRacePace.Pedal(targetSpeed, signedSpeed, mover.CruisePedalForSpeed(targetSpeed)) : Mathf.Clamp((targetSpeed - signedSpeed) * .12f, -1f, 1f);
+        float pedal = improved || fastPace ? CpuRacePace.Pedal(targetSpeed, signedSpeed, mover.CruisePedalForSpeed(targetSpeed)) : Mathf.Clamp((targetSpeed - signedSpeed) * .12f, -1f, 1f);
         bool stranded = !course.IsPointInsideCourse(body.position) || Mathf.Abs(body.position.y-here.position.y)>6f || Vector3.Dot(transform.up,Vector3.up)<.3f;
         unrecoveredSeconds = stranded ? unrecoveredSeconds + dt : 0f;
         stuck = ((speed < 1f && requested > 3f) || Vector3.Dot(transform.up, Vector3.up) < .3f || Mathf.Abs(body.position.y - here.position.y) > 6f || !course.IsPointInsideCourse(body.position)) ? stuck + dt : 0;

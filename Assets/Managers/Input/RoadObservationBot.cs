@@ -6,7 +6,7 @@ public sealed class RoadObservationBot
     private float nextDecision;
     private DriveInputState held;
     public DriveInputState Decide(RaceCourse course, Rigidbody body, float sign, int contacts, float now,
-        float cruise = 24f, float lane = 0f, float reaction = .1f, float noise = .25f,
+        float cruise = RaceSpeedPlanner.Cruise, float lane = 0f, float reaction = .1f, float noise = .25f,
         float speedCap = float.PositiveInfinity, DebugMover vehicle = null)
     {
         if (course == null || body == null || !course.HasValidPath) return DriveInputState.Neutral;
@@ -17,8 +17,9 @@ public sealed class RoadObservationBot
         float speed = Vector3.ProjectOnPlane(body.linearVelocity, body.rotation * Vector3.up).magnitude;
         course.TryGetSampleAtProgress(raw + sign * Mathf.Clamp(5f + speed * .4f, 8f, 17f), out RaceCourse.CourseSample target);
         course.TryGetSampleAtProgress(raw + sign * 28f, out RaceCourse.CourseSample far);
-        float desired = Vector3.Angle(target.forward, far.forward) > 15f ? Mathf.Min(cruise, 14f) : cruise;
-        if (course.IsJumpAhead(body.position, sign, 35f)) { desired = Mathf.Max(24f, desired); }
+        float desired = RaceSpeedPlanner.Enabled ? RaceSpeedPlanner.Limit(course, raw, sign, cruise) :
+            Vector3.Angle(target.forward, far.forward) > 15f ? Mathf.Min(cruise, 14f) : cruise;
+        if (!RaceSpeedPlanner.Enabled && course.IsJumpAhead(body.position, sign, 35f)) { desired = Mathf.Max(24f, desired); }
         desired = Mathf.Min(desired, speedCap);
         float safeLane = Mathf.Max(0f, target.width * .5f - 2f);
         Vector3 local = Quaternion.Inverse(body.rotation) * (target.position + target.right * Mathf.Clamp(lane, -safeLane, safeLane) - body.position);

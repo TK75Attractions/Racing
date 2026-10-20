@@ -84,6 +84,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     private readonly float[] releaseRequestedAt = {-1,-1};
     private readonly float[] releaseUntil = {-1,-1};
     private readonly float[] jumpNoticedAt = {-1,-1};
+    private readonly RoadObservationBot[] fastBots = { new RoadObservationBot(), new RoadObservationBot() };
     private OnPlayUIManager[] driverUis;
 
     private IEnumerator Start()
@@ -111,16 +112,21 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             suite.observationWindowSeconds = Mathf.Clamp(window, 0, 360);
         foreach (var publisher in FindObjectsByType<RaceRemoteFirebasePublisher>(FindObjectsSortMode.None)) publisher.enabled = false;
         var plans = new[] {
+            SkillPlan("fast-control-101", 6201, 50, 50, false, "fast", "fast"),
             Plan("equal-control-101", 101, 25, 25, false), Plan("equal-control-102", 102, 25, 25, false),
             Plan("split-fast-p1", 201, 27, 13, false), Plan("split-fast-p2", 202, 13, 27, false),
             Plan("both-slow", 301, 12, 12, false),
             Plan("items-401", 401, 25, 25, true), Plan("items-402", 402, 25, 25, true),
             Plan("items-reset-assisted", 401, 25, 25, true, true), Plan("temporary-stop-p2", 501, 25, 25, false)
         };
+        // The default pace benchmark uses the production observation driver. Explicit
+        // novice/slow profiles remain available for usability and regression scenarios.
         skillSuite = Environment.GetEnvironmentVariable("RACING_BALANCE_SKILL_SUITE") == "1";
         if (skillSuite)
         {
             plans = new[] {
+                SkillPlan("skill-fast-pace", 6201, 50, 50, false, "fast", "fast"),
+                SkillPlan("skill-fast-pace-2", 6202, 50, 50, false, "fast", "fast"),
                 SkillPlan("skill-novice-expert", 6101, 12, 27, false, "novice", "expert"),
                 SkillPlan("skill-rivalry", 6107, 22, 22, false, "intermediate", "intermediate"),
                 SkillPlan("skill-club-expert", 6102, 20, 28, true, "intermediate", "expert"),
@@ -170,6 +176,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         inputs[0].CurrentState = inputs[1].CurrentState = DriveInputState.Neutral;
         for (int i = 0; i < 2; i++) { inputs[i].IsConnected = true; nextDecisionAt[i] = 0; heldDecision[i] = DriveInputState.Neutral; releaseRequestedAt[i]=releaseUntil[i]=jumpNoticedAt[i]=-1; }
         assistStressStarted = -1f;
+        foreach (var bot in fastBots) bot.Clear();
         if (Environment.GetEnvironmentVariable("RACING_P2_AUTO") == "1")
         {
             while (!manager.CanUseDashboardControls) yield return null;
@@ -384,6 +391,14 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     private DriveInputState Drive(RaceParticipant entry, int grounded, float speed, float raw, bool reset)
     {
         float sign = manager.CourseProgressSign;
+        string fastProfile = entry.Index == 0 ? run.p1Profile : run.p2Profile;
+        if (fastProfile == "fast")
+        {
+            DriveInputState fast = fastBots[entry.Index].Decide(manager.course, entry.Body, sign, grounded, run.physicsSeconds,
+                RaceSpeedPlanner.Enabled ? RaceSpeedPlanner.Cruise : 24f, entry.Index == 0 ? 1.8f : -1.8f,
+                reaction: .06f, noise: .1f, vehicle: entry.Car.GetComponent<DebugMover>());
+            fast.resetPressed = reset; return fast;
+        }
         manager.course.TryGetSampleAtProgress(raw + sign * Mathf.Clamp(5 + speed * .4f, 8, 17), out RaceCourse.CourseSample target);
         manager.course.TryGetSampleAtProgress(raw + sign * 25, out RaceCourse.CourseSample far);
         float requested = entry.Index == 0 ? run.p1TargetSpeed : run.p2TargetSpeed;

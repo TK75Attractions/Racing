@@ -18,13 +18,14 @@ public enum RaceFeature
     CpuRacing = 512,
     ResultHighlights = 1024,
     HighSpeedCornering = 2048,
-    All = ExperienceItems | DriftCoaching | HitProtection | Slipstream | SteeringAssist | LandingFeedback | LandingBoost | TubeChargeLines | PlayerTwoAutodrive | CpuRacing | ResultHighlights | HighSpeedCornering
+    FastAiPace = 4096,
+    All = ExperienceItems | DriftCoaching | HitProtection | Slipstream | SteeringAssist | LandingFeedback | LandingBoost | TubeChargeLines | PlayerTwoAutodrive | CpuRacing | ResultHighlights | HighSpeedCornering | FastAiPace
 }
 
 /// <summary>Session-local feature switches. Structural rules are frozen for a race.</summary>
 public sealed class RaceFeatureSettings
 {
-    public RaceFeature Enabled { get; private set; } = RaceFeature.DriftCoaching | RaceFeature.HitProtection | RaceFeature.Slipstream | RaceFeature.SteeringAssist | RaceFeature.LandingFeedback | RaceFeature.LandingBoost | RaceFeature.TubeChargeLines | RaceFeature.CpuRacing | RaceFeature.ResultHighlights | RaceFeature.HighSpeedCornering;
+    public RaceFeature Enabled { get; private set; } = RaceFeature.DriftCoaching | RaceFeature.HitProtection | RaceFeature.Slipstream | RaceFeature.SteeringAssist | RaceFeature.LandingFeedback | RaceFeature.LandingBoost | RaceFeature.TubeChargeLines | RaceFeature.CpuRacing | RaceFeature.ResultHighlights | RaceFeature.HighSpeedCornering | RaceFeature.FastAiPace;
     public RacePreset SelectedPreset { get; private set; }
     public RacePreset ActivePreset { get; private set; }
     public bool RulesLocked { get; private set; }
