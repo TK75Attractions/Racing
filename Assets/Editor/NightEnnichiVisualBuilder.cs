@@ -106,8 +106,8 @@ public static class NightEnnichiVisualBuilder
                 string path = Folder + "/Tree_" + name.Replace('.', '_') + ".mat";
                 Material material = GetOrCreateMaterial(path, shader);
                 Configure(material, shader,
-                    leaves ? new Color(1f, .62f, .78f) : new Color(.22f, .14f, .10f),
-                    leaves ? .25f : .15f, leaves ? new Color(.14f, .04f, .08f) : Color.black);
+                    leaves ? new Color(1f, .78f, .88f) : new Color(.22f, .14f, .10f),
+                    leaves ? .25f : .15f, leaves ? new Color(.30f, .14f, .20f) : Color.black);
                 importer.AddRemap(sources[name], material);
             }
             Configure(tube, shader, new Color(.05f, .06f, .11f), .55f, Color.black);
