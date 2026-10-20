@@ -28,11 +28,11 @@ with (output / "sender.log").open("w") as log:
         # Wait for Unity to finish importing before starting TEL, so an unread PTY cannot fill up.
         result = subprocess.run([
             unity, "-batchmode", "-projectPath", str(root), "-executeMethod",
-            "P1SteeringTestValidation.Run", "-quit", "-logFile", str(output / "unity.log"),
+            "P1SteeringTestValidation.RunAll", "-quit", "-logFile", str(output / "unity.log"),
         ], env=dict(os.environ, RACING_STEERING_TEST_PTY=port_file.read_text().strip(),
                     RACING_STEERING_TEST_START=str(start_file)), timeout=300)
         lines = (output / "unity.log").read_text().splitlines()
-        markers = [line for line in lines if line.startswith("P1_STEERING_TEST_")]
+        markers = [line for line in lines if line.startswith(("P1_STEERING_TEST_", "SKILL_GAMEPLAY_RULES_PASS", "RACE_FEATURE_VALIDATION_PASS"))]
         print("\n".join(markers), flush=True)
         if result.returncode or not any(line.startswith("P1_STEERING_TEST_PTY_PASS:") for line in markers):
             raise RuntimeError("Steering validation failed; see " + str(output / "unity.log"))

@@ -1,12 +1,13 @@
 using UnityEngine.InputSystem;
 
-public sealed class KeyboardDriveInputSource : IDriveInputSource
+public sealed class KeyboardDriveInputSource : IDriveInputSource, IDriveInputStatusSource
 {
     private const float KeyboardSteeringValue = 10f;
 
     public int PlayerIndex { get; }
     public string DeviceId => $"KEYBOARD_P{PlayerIndex + 1}";
     public bool IsConnected => Keyboard.current != null;
+    public DriveConnectionState ConnectionState => IsConnected ? DriveConnectionState.Ready : DriveConnectionState.KeyboardMissing;
     public DriveInputState CurrentState { get; private set; }
 
     public KeyboardDriveInputSource(int playerIndex)

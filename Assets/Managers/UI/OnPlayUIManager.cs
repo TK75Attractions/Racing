@@ -80,9 +80,12 @@ public class OnPlayUIManager
 
     public void UpdateDriverNotice(PlayerDriveInputGate gate, CarResetter resetter, bool racing, bool jumpAhead = false, string coachingNotice = "", bool slipstreamBoosting = false, string challengeNotice = "", string tubeNotice = "", bool autodrive = false)
     {
-        string text = !racing ? "" : gate != null && !gate.IsConnected ? "接続を確認してください" :
+        string inputNotice = gate == null || gate.IsBlocked ? "" : DriverInputNotice.Connection(gate.Source);
+        string pedalNotice = DriverInputNotice.Pedal(gate?.Source);
+        string text = !racing || gate?.IsBlocked == true ? "" : inputNotice.Length > 0 ? inputNotice :
             resetter != null && resetter.IsRecoveryPending ? "コース復帰待ち" :
-            gate != null && gate.NeedsPedalRelease ? "ペダルを離して再開" :
+            gate != null && gate.NeedsPedalRelease ? DriverInputNotice.Release(gate.Source) :
+            pedalNotice.Length > 0 ? pedalNotice :
             resetter != null && UnityEngine.Time.time - resetter.LastRecoveryTime < 1.5f ? "コースへ復帰しました" :
             jumpAhead ? "この先ジャンプ：まっすぐ加速" :
             !string.IsNullOrEmpty(challengeNotice) ? challengeNotice :

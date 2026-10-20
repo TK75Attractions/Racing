@@ -23,6 +23,7 @@ public class InputManager : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float p1ConstantPedal = 1f;
     public P1SteeringTestMode SteeringTestMode => p1SteeringTestMode;
     public float ConstantTestPedal => p1ConstantPedal;
+    public bool ConstantTestPedalPaused => steeringTestSource?.ConstantPedalPaused == true;
     private P1SteeringTestInputSource steeringTestSource;
 
     [Header("ESP32 USB Serial (P1 + P2)")]
@@ -137,6 +138,14 @@ public class InputManager : MonoBehaviour
         if (mode < P1SteeringTestMode.Normal || mode > P1SteeringTestMode.ConstantPedal) return;
         p1SteeringTestMode = mode;
         ApplySteeringTestSettings();
+        if (mode == P1SteeringTestMode.ConstantPedal) ResumeP1ConstantPedal();
+    }
+
+    public void PauseP1ConstantPedal() => steeringTestSource?.PauseConstantPedal();
+    public void ResumeP1ConstantPedal()
+    {
+        if (p1SteeringTestMode == P1SteeringTestMode.ConstantPedal && steeringTestSource?.IsConnected == true)
+            steeringTestSource.RequestConstantResume();
     }
 
     public void SetP1ConstantPedal(float value)
@@ -160,7 +169,7 @@ public class InputManager : MonoBehaviour
         steeringTestSource.IsRacing = race != null && race.state == Gmanager.State.Game && race.GetParticipant(0)?.IsRacing == true;
         if (changed && race != null)
         {
-            // A live change keeps the existing pause/reconnect gate and requires a real release.
+            // A live change keeps the existing gate; constant mode supplies an acknowledged neutral sample.
             GameObject car = race.GetParticipant(0)?.Car ?? race.GetComponent<DrivingTutorialController>()?.GetPlayerCar(0);
             if (car?.GetComponent<DebugMover>()?.InputSource is PlayerDriveInputGate gate) gate.RequirePedalRelease();
         }

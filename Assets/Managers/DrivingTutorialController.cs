@@ -86,7 +86,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
         displays[i].RaceCamera.ForceCameraPosition(cameraPosition,
             Quaternion.LookRotation(player.camera.LookTarget.position - cameraPosition));
         player.ui = new DrivingTutorialUI(displays[i].CanvasRoot.transform, i);
-        player.ui.Update(player.lesson, player.input.CurrentState, 0f, player.input.IsConnected);
+        player.ui.Update(player.lesson, player.input.CurrentState, 0f, player.input.IsConnected, DriverInputNotice.Connection(player.input));
         Physics.SyncTransforms();
     }
 
@@ -128,7 +128,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
                 player.body.angularVelocity = Vector3.zero;
                 player.body.isKinematic = true;
             }
-            player.ui.Update(player.lesson, input, speed, player.input.IsConnected);
+            player.ui.Update(player.lesson, input, speed, player.input.IsConnected, DriverInputNotice.Connection(player.input));
             complete &= player.lesson.IsFinished;
         }
         readyTimer = complete ? readyTimer + dt : 0f;

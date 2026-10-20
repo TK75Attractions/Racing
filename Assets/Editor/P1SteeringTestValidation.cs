@@ -11,11 +11,12 @@ using UnityEngine.InputSystem.LowLevel;
 public static class P1SteeringTestValidation
 {
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
-    private sealed class Input : IDriveInputSource
+    private sealed class Input : IDriveInputSource, IDriveInputStatusSource
     {
         public int PlayerIndex => 0;
         public string DeviceId => "Steering test QA";
-        public bool IsConnected { get; set; } = true;
+        public DriveConnectionState ConnectionState { get; set; } = DriveConnectionState.Ready;
+        public bool IsConnected { get => ConnectionState == DriveConnectionState.Ready; set => ConnectionState = value ? DriveConnectionState.Ready : DriveConnectionState.Unavailable; }
         public DriveInputState CurrentState { get; set; }
         public void UpdateInput(float dt) { }
         public void Dispose() { }
@@ -47,13 +48,122 @@ public static class P1SteeringTestValidation
         Require(gate.CurrentState.pedal == .65f, "Releasing S resumes the chosen constant input.");
         source.ConstantPedal = 4f; Require(source.CurrentState.pedal == 1f, "Constant pedal is bounded.");
         source.ConstantPedal = float.NaN; Require(source.CurrentState.pedal == 0f, "Nonfinite pedal must not reach physics.");
-        keys.IsConnected = false; Require(!source.IsConnected && source.CurrentState.pedal == 0f, "Without keyboard release controls the debug source must stop.");
+        source.ConstantPedal = .65f; keys.IsConnected = false;
+        Require(source.IsConnected && source.CurrentState.pedal == .65f, "Constant pedal must work without a keyboard when ESP32 steering is connected.");
+        source.Mode = P1SteeringTestMode.KeyboardPedal;
+        Require(!source.IsConnected && source.ConnectionState == DriveConnectionState.KeyboardMissing, "W/S mode must still require a keyboard.");
+        source.Mode = P1SteeringTestMode.ConstantPedal;
+        source.PauseConstantPedal();
+        Require(gate.CurrentState.pedal == 0f && source.ConstantPedalPaused, "F8 release must stop the constant pedal without a keyboard.");
+        gate.RequirePedalRelease(); source.RequestConstantResume(); gate.SetBlocked(true);
+        Require(source.CurrentState.pedal == 0f && gate.CurrentState.pedal == 0f && source.ResumePending, "Raw reads and paused gates cannot acknowledge a resume.");
+        gate.SetBlocked(false);
+        Require(gate.CurrentState.pedal == 0f && !gate.NeedsPedalRelease && !source.ResumePending && gate.CurrentState.pedal == .65f,
+            "F8 resume must send neutral through the existing gate before driving.");
+        source.RequestConstantResume(); serial.IsConnected = false;
+        Require(gate.CurrentState.pedal == 0f && !source.ResumePending, "Communication loss must cancel an unconsumed resume request.");
+        serial.IsConnected = true;
+        Require(gate.CurrentState.pedal == 0f && gate.NeedsPedalRelease, "Reconnection still needs an explicit resume.");
+        source.RequestConstantResume(); _ = gate.CurrentState;
+        Require(gate.CurrentState.pedal == .65f, "An explicit F8 resume must work after reconnection without a keyboard.");
         source.Mode = P1SteeringTestMode.Normal;
         Require(source.IsConnected && source.CurrentState.pedal == .2f, "OFF must restore the original source.");
         source.Dispose();
-        Debug.Log("P1_STEERING_TEST_LOGIC_PASS: independent axes, normal restore, constant race-only, bounds, pause, disconnect, reconnect release and resume.");
+        RacingHUDFontBuilder.Build();
+        ValidateNotices();
+        Debug.Log("P1_STEERING_TEST_LOGIC_PASS: independent axes, normal restore, constant race-only, bounds, keyboard optional, pause, disconnect and explicit neutral-acknowledged resume.");
         string port = Environment.GetEnvironmentVariable("RACING_STEERING_TEST_PTY");
         if (!string.IsNullOrEmpty(port)) ValidatePtyAndPhysics(port);
+    }
+
+    public static void RunAll()
+    {
+        Run();
+        SkillGameplayValidation.Run();
+        RaceFeatureValidation.Run();
+    }
+
+    private static void ValidateNotices()
+    {
+        var root = new GameObject("Input notices QA", typeof(RectTransform), typeof(Canvas));
+        try
+        {
+            var ui = new OnPlayUIManager(); ui.Init(root.transform, null, 0);
+            var normal = new Input(); var wheel = new Input(); var keys = new Input { IsConnected = false };
+            var source = new P1SteeringTestInputSource(normal, keys) { Serial = wheel, Mode = P1SteeringTestMode.ConstantPedal, IsRacing = true };
+            var gate = new PlayerDriveInputGate(source);
+            var notice = root.transform.Find("ModernHUD/DriverNotice");
+            var label = notice.Find("Text").GetComponent<TMPro.TMP_Text>();
+            ui.UpdateDriverNotice(gate, null, true);
+            Require(!notice.gameObject.activeSelf, "A connected constant pedal without a keyboard must not show a connection error.");
+            foreach (DriveConnectionState status in Enum.GetValues(typeof(DriveConnectionState)))
+            {
+                if (status == DriveConnectionState.Ready) continue;
+                wheel.ConnectionState = status; ui.UpdateDriverNotice(gate, null, true);
+                Require(notice.gameObject.activeSelf && label.text == DriverInputNotice.Connection(wheel), "HUD must describe the actual wheel status: " + status);
+                if (status == DriveConnectionState.SerialPreparing || status == DriveConnectionState.TelemetryWaiting || status == DriveConnectionState.TelemetryStale)
+                    Require(!label.text.Contains("接続を確認"), "Preparation and telemetry waits must not claim a missing cable.");
+                foreach (bool bold in new[] { false, true }) Require(RacingUIFontCatalog.GetHUD(bold).HasCharacters(label.text), "Input status glyphs must exist in both static HUD fonts.");
+            }
+            wheel.ConnectionState = DriveConnectionState.Ready; gate.RequirePedalRelease();
+            ui.UpdateDriverNotice(gate, null, true);
+            Require(label.text == "S / F8で常時ペダルを再開", "The constant latch must describe a usable resume action.");
+            source.RequestConstantResume(); _ = gate.CurrentState; ui.UpdateDriverNotice(gate, null, true);
+            Require(!notice.gameObject.activeSelf, "Resume must clear the stale notice.");
+            source.PauseConstantPedal(); ui.UpdateDriverNotice(gate, null, true);
+            Require(label.text == "常時ペダル停止中：F8で再開", "An intentional constant pedal stop must not be reported as disconnected.");
+            source.RequestConstantResume(); _ = gate.CurrentState; source.ConstantPedal = 0f; ui.UpdateDriverNotice(gate, null, true);
+            Require(label.text.Contains("0%"), "Zero constant pedal must explain its setting.");
+            wheel.IsConnected = false; gate.SetBlocked(true); ui.UpdateDriverNotice(gate, null, true);
+            Require(!notice.gameObject.activeSelf, "Paused drivers must not see stale control notices.");
+            gate.SetBlocked(false); ui.UpdateDriverNotice(gate, null, false);
+            Require(!notice.gameObject.activeSelf, "Finished drivers must not see control notices.");
+            gate.SwitchSource(normal); ui.UpdateDriverNotice(gate, null, true);
+            Require(!label.text.Contains("接続を確認"), "A replaced input must not report the unused wheel's loss.");
+            ValidateNoticeLayout(root, ui, source, wheel, label);
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
+        Debug.Log("P1_STEERING_TEST_NOTICE_PASS: status-specific messages, optional keyboard, explicit resume, zero/pause settings, blocked/finished/unused-source suppression and static font coverage.");
+    }
+
+    private static void ValidateNoticeLayout(GameObject root, OnPlayUIManager ui, P1SteeringTestInputSource source, Input wheel, TMPro.TMP_Text label)
+    {
+        var cameraObject = new GameObject("Input notice camera");
+        var target = new RenderTexture(1280, 720, 24);
+        RenderTexture previous = RenderTexture.active;
+        try
+        {
+            Camera camera = cameraObject.AddComponent<Camera>(); camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = Color.black; camera.cullingMask = 1 << 30;
+            camera.nearClipPlane = .1f; camera.farClipPlane = 20f; camera.targetTexture = target;
+            Canvas canvas = root.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = camera; canvas.planeDistance = 1f;
+            var scaler = root.AddComponent<UnityEngine.UI.CanvasScaler>();
+            scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            foreach (Transform child in root.GetComponentsInChildren<Transform>(true)) child.gameObject.layer = 30;
+            string output = "Logs/P1SteeringTest"; System.IO.Directory.CreateDirectory(output);
+            foreach (DriveConnectionState status in Enum.GetValues(typeof(DriveConnectionState)))
+            {
+                wheel.ConnectionState = status; source.ConstantPedal = 1f;
+                var gate = new PlayerDriveInputGate(source);
+                if (status == DriveConnectionState.Ready) gate.RequirePedalRelease();
+                ui.UpdateDriverNotice(gate, null, true);
+                Canvas.ForceUpdateCanvases(); label.ForceMeshUpdate();
+                Require(!label.isTextOverflowing, "Input notice must fit the 720p HUD: " + status);
+                if (status != DriveConnectionState.Ready && status != DriveConnectionState.SerialPreparing) continue;
+                camera.Render(); RenderTexture.active = target;
+                var image = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+                image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0); image.Apply();
+                System.IO.File.WriteAllBytes(output + "/notice-" + status + ".png", image.EncodeToPNG());
+                UnityEngine.Object.DestroyImmediate(image);
+            }
+        }
+        finally
+        {
+            RenderTexture.active = previous; UnityEngine.Object.DestroyImmediate(target);
+            UnityEngine.Object.DestroyImmediate(cameraObject);
+        }
     }
 
     private static void ValidatePtyAndPhysics(string port)
@@ -68,6 +178,7 @@ public static class P1SteeringTestValidation
         GameObject car = null, floor = null;
         TwoPlayerSerialInputSource transport = null;
         Keyboard keyboard = InputSystem.AddDevice<Keyboard>(); keyboard.MakeCurrent();
+        var removedKeyboards = new List<Keyboard>();
         try
         {
             SessionState.SetBool(SerialSimulatorSession.EnabledKey, true);
@@ -108,6 +219,7 @@ public static class P1SteeringTestValidation
             var entries = (List<RaceParticipant>)typeof(Gmanager).GetField("participants", Private).GetValue(race);
             entries.Add(new RaceParticipant { Index = 0, Car = car, Body = body });
             race.state = Gmanager.State.Game; Step(input, keyboard);
+            _ = gate.CurrentState; // Consume a pending F8 resume using the actual vehicle gate.
             Require(input.GetInputState(0).pedal == .65f, "The real source must apply constant input during racing.");
             input.SetP1SteeringTestMode(P1SteeringTestMode.KeyboardPedal); Step(input, keyboard, Key.W);
             Require(ReferenceEquals(p1, input.GetPlayerInputSource(0)) && gate.NeedsPedalRelease && gate.CurrentState.pedal == 0f,
@@ -117,6 +229,21 @@ public static class P1SteeringTestValidation
             Require(input.GetInputState(0).pedal == 0f && gate.CurrentState.pedal == 0f && !gate.NeedsPedalRelease,
                 "S must override constant input even when W is held and clear the live-switch gate.");
             Step(input, keyboard);
+            input.PauseP1ConstantPedal();
+            Require(gate.CurrentState.pedal == 0f, "The production F8 release action must stop constant input.");
+            gate.RequirePedalRelease(); input.ResumeP1ConstantPedal();
+            Require(input.GetInputState(0).pedal == 0f && gate.CurrentState.pedal == 0f && !gate.NeedsPedalRelease,
+                "The production F8 resume action must clear the existing gate with a neutral sample.");
+            foreach (var device in InputSystem.devices) if (device is Keyboard found) removedKeyboards.Add(found);
+            foreach (var device in removedKeyboards) InputSystem.RemoveDevice(device);
+            // Device reconfiguration may exceed the real 100 ms TEL timeout; wait for live input,
+            // then perform the same explicit F8 resume a driver uses after a genuine outage.
+            deadline = DateTime.UtcNow.AddSeconds(6);
+            while (!input.IsPlayerConnected(0) && DateTime.UtcNow < deadline) { input.UpdateInput(.01f); Thread.Sleep(10); }
+            input.ResumeP1ConstantPedal(); _ = gate.CurrentState;
+            Debug.Log($"P1_NO_KEYBOARD_STATE: keyboard={Keyboard.current?.name ?? "none"} status={DriveInputStatus.Of(p1)} raw={input.GetInputState(0).pedal} gated={gate.CurrentState.pedal} release={gate.NeedsPedalRelease} blocked={gate.IsBlocked}");
+            Require(Keyboard.current == null && input.IsPlayerConnected(0) && gate.CurrentState.pedal == .65f,
+                "Constant input through the real serial adapter must remain connected and drive with no Keyboard device.");
             Physics.simulationMode = SimulationMode.Script; Physics.SyncTransforms();
             Vector3 start = body.position;
             for (int i = 0; i < 80; i++)
@@ -126,13 +253,15 @@ public static class P1SteeringTestValidation
             }
             float distance = Vector3.Distance(start, body.position), heading = Mathf.Abs(Mathf.DeltaAngle(0f, body.rotation.eulerAngles.y));
             Require(distance > 3f && body.linearVelocity.magnitude > 3f && heading > 5f, "The production car must accelerate and turn using the PTY wheel and constant pedal through its gate.");
+            foreach (var device in removedKeyboards) InputSystem.AddDevice(device);
+            removedKeyboards.Clear(); keyboard.MakeCurrent();
             input.SetP1SteeringTestMode(P1SteeringTestMode.Normal); Step(input, keyboard, Key.W);
             Require(input.GetInputState(0).pedal == 0f && ReferenceEquals(p2, input.GetPlayerInputSource(1)), "OFF restores the original zero serial pedal and leaves P2's adapter unchanged.");
             input.SetP1SteeringTestMode(P1SteeringTestMode.ConstantPedal); Step(input, keyboard);
             input.SharedSerialInputSource.Dispose();
             Require(!input.IsPlayerConnected(0) && input.GetInputState(0).pedal == 0f && gate.CurrentState.pedal == 0f,
                 "Real transport closure must cancel constant input.");
-            Debug.Log($"P1_STEERING_TEST_PTY_PASS: real RGP input, keyboard W/S and ignored A/D, P2 unchanged, preparation neutral, live switching/release, S priority, production physics distance={distance:F2}m heading={heading:F2}deg speed={body.linearVelocity.magnitude:F2}m/s, normal restore and port closure.");
+            Debug.Log($"P1_STEERING_TEST_PTY_PASS: real RGP input, keyboard W/S and ignored A/D, P2 unchanged, preparation neutral, live switching/release, S priority, F8 release/resume, no keyboard device, production physics distance={distance:F2}m heading={heading:F2}deg speed={body.linearVelocity.magnitude:F2}m/s, normal restore and port closure.");
 
             // Also enable the same mode after starting with serial entirely disabled.
             input.SetP1SteeringTestMode(P1SteeringTestMode.Normal);
@@ -156,6 +285,7 @@ public static class P1SteeringTestValidation
         finally
         {
             transport?.Dispose();
+            foreach (var device in removedKeyboards) InputSystem.AddDevice(device);
             UnityEngine.Object.DestroyImmediate(root); UnityEngine.Object.DestroyImmediate(car); UnityEngine.Object.DestroyImmediate(floor);
             InputSystem.RemoveDevice(keyboard); Gmanager.Control = previous; Physics.simulationMode = physicsMode;
             SessionState.SetBool(SerialSimulatorSession.EnabledKey, enabled); SessionState.SetString(SerialSimulatorSession.PortKey, oldPort); SessionState.SetFloat(SerialSimulatorSession.DivisorKey, divisor);

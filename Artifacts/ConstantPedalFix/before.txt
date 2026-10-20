@@ -1,0 +1,2 @@
+修正前: ESP32接続済み・キーボードなし・Constant pedalの再現テスト
+InvalidOperationException: Constant pedal must work without a keyboard when ESP32 steering is connected.

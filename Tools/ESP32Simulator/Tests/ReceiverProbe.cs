@@ -15,7 +15,7 @@ internal static class ReceiverProbe
                 !MacPseudoTerminalLineReader.IsSupportedPath(args[0])) throw new Exception("PTY path validation failed.");
             var config = new Esp32SerialConfiguration().WithSimulatorPort(args[0], 6.5f);
             bool numeric=false, independent=false, atomicStop=false, resumed=false, stale=false, recovered=false;
-            bool invalid=false, slowFragment=false, closed=false, session=false;
+            bool invalid=false, slowFragment=false, closed=false, session=false, preparingNotice=false, staleNotice=false;
             using (var source = new TwoPlayerSerialInputSource(config, args[0]))
             {
                 source.LineProcessed += (status, line) => {
@@ -23,6 +23,8 @@ internal static class ReceiverProbe
                     session |= status=="ACK_OK" && line.Contains(",OPEN_SESSION,OK,");
                 };
                 if (!source.IsPortOpen) throw new Exception("PTY did not open.");
+                if (source.GetConnectionState(-1) != DriveConnectionState.Unavailable || source.GetConnectionState(2) != DriveConnectionState.Unavailable)
+                    throw new Exception("Invalid players must not be reported as connected.");
                 var timer=Stopwatch.StartNew();
                 while (timer.Elapsed.TotalSeconds<10)
                 {
@@ -33,12 +35,14 @@ internal static class ReceiverProbe
                         Math.Abs(p2.pedal-.5f)<.001f && Math.Abs(p2.steering+15f/6.5f)<.001f;
                     independent |= both && Math.Abs(p1.pedal-.4f)<.001f && Math.Abs(p2.pedal+.55f)<.001f;
                     atomicStop |= !source.IsConnected(0)&&!source.IsConnected(1)&&source.LastSerialLine.Contains(",STATE,WAIT_ANGLE*");
+                    preparingNotice |= atomicStop && source.GetConnectionState(0) == DriveConnectionState.SerialPreparing;
                     resumed |= atomicStop && both;
                     stale |= resumed && source.LastParseResult=="STALE" && !source.IsConnected(0)&&!source.IsConnected(1);
+                    staleNotice |= stale && source.GetConnectionState(0) == DriveConnectionState.TelemetryStale;
                     recovered |= stale && both;
                     slowFragment |= both && Math.Abs(p1.pedal-.25f)<.001f && Math.Abs(p1.steering+10f/6.5f)<.001f &&
                         Math.Abs(p2.pedal-.6f)<.001f && Math.Abs(p2.steering-20f/6.5f)<.001f;
-                    if (!source.IsPortOpen) { closed=true; break; }
+                    if (!source.IsPortOpen) { closed=source.GetConnectionState(0)==DriveConnectionState.SerialDisconnected; break; }
                     Thread.Sleep(5);
                 }
                 var journal = source.Monitor.Read("", 0);
@@ -47,7 +51,7 @@ internal static class ReceiverProbe
                     throw new Exception("Realtime journal lost telemetry/command or retained normal TEL history.");
                 Console.WriteLine($"session={session} numeric={numeric} independent={independent} atomicStop={atomicStop} resumed={resumed} stale={stale} recovered={recovered} invalid={invalid} slowFragment={slowFragment} closed={closed} lines={source.LinesReceived}");
                 if (!session || !numeric || !closed || source.PendingLineCount>8) throw new Exception("RGP session, numeric input, close detection or queue drain failed.");
-                if (args[1]=="timeout" && !(independent&&atomicStop&&resumed&&stale&&recovered)) throw new Exception("Atomic/stale scenario failed.");
+                if (args[1]=="timeout" && !(independent&&atomicStop&&resumed&&stale&&recovered&&preparingNotice&&staleNotice)) throw new Exception("Atomic/stale scenario or connection diagnostics failed.");
                 if (args[1]=="fragments" && !(invalid&&slowFragment)) throw new Exception("CRC/fragment scenario failed.");
             }
             Console.WriteLine("MONO_RGP_PTY_RECEIVER_PASS: "+args[1]); return 0;
