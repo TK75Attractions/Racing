@@ -136,6 +136,7 @@ public sealed class PlayerDisplayRig
         Texture2D pixels = new Texture2D(width, height, TextureFormat.RGB24, false);
         RenderGraphDisplayOutput output = CameraRoot != null ? CameraRoot.GetComponent<RenderGraphDisplayOutput>() : null;
         bool wasCapturing = output != null && output.CapturingPreview;
+        RenderMode canvasMode = Canvas != null ? Canvas.renderMode : RenderMode.WorldSpace;
         for (int i = 0; i < stack.Length; i++) previous[i] = stack[i] != null ? stack[i].targetTexture : null;
         try
         {
@@ -146,6 +147,19 @@ public sealed class PlayerDisplayRig
             RenderTexture.active = thumbnail;
             GL.Clear(true, true, Color.black);
             UnityEngine.Canvas.ForceUpdateCanvases();
+            if (Canvas != null && UiCamera != null && canvasMode == RenderMode.ScreenSpaceCamera)
+            {
+                // URP render requests do not emit ScreenSpaceCamera canvas geometry.
+                // Preserve its laid-out pose and submit the same live UI as world geometry.
+                RectTransform rect = (RectTransform)Canvas.transform;
+                Vector3 position = rect.position, scale = rect.localScale;
+                Quaternion rotation = rect.rotation; Vector2 size = rect.rect.size;
+                Canvas.renderMode = RenderMode.WorldSpace;
+                rect.SetPositionAndRotation(position, rotation); rect.localScale = scale; rect.sizeDelta = size;
+                foreach (UnityEngine.UI.Graphic graphic in Canvas.GetComponentsInChildren<UnityEngine.UI.Graphic>()) graphic.SetVerticesDirty();
+                UnityEngine.Canvas.ForceUpdateCanvases();
+                ScriptableRenderContext.EmitGeometryForCamera(UiCamera);
+            }
             var request = new RenderPipeline.StandardRequest { destination = thumbnail };
             if (!RenderPipeline.SupportsRenderRequest(camera, request)) return null;
             RenderPipeline.SubmitRenderRequest(camera, request);
@@ -156,6 +170,7 @@ public sealed class PlayerDisplayRig
         }
         finally
         {
+            if (Canvas != null) Canvas.renderMode = canvasMode;
             for (int i = 0; i < stack.Length; i++) if (stack[i] != null) stack[i].targetTexture = previous[i];
             if (output != null) output.CapturingPreview = wasCapturing;
             UnityEngine.Canvas.ForceUpdateCanvases();

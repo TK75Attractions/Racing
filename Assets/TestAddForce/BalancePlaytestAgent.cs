@@ -86,6 +86,9 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     private readonly float[] jumpNoticedAt = {-1,-1};
     private readonly RoadObservationBot[] fastBots = { new RoadObservationBot(), new RoadObservationBot() };
     private OnPlayUIManager[] driverUis;
+    private readonly float[] humanWheel = new float[2];
+    private readonly float[] humanPedal = new float[2];
+    private PlaytestVideoRecorder video;
 
     private IEnumerator Start()
     {
@@ -100,6 +103,8 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         if (float.TryParse(Environment.GetEnvironmentVariable("RACING_BALANCE_TIME_SCALE"),
             System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float configuredScale))
             scale = Mathf.Clamp(configuredScale, 1, 8);
+        bool recording = Environment.GetEnvironmentVariable("RACING_BALANCE_VIDEO") == "1";
+        if (recording) scale = 1;
         Time.timeScale = scale; Time.maximumDeltaTime = .5f; QualitySettings.vSyncCount = 0; Application.targetFrameRate = -1;
         previousRunInBackground = Application.runInBackground; Application.runInBackground = true;
         Application.logMessageReceived += LogError;
@@ -125,6 +130,8 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         if (skillSuite)
         {
             plans = new[] {
+                SkillPlan("human-fast-items-7101", 7101, 50, 48, true, "human", "human"),
+                SkillPlan("human-fast-control-7102", 7102, 50, 48, false, "human", "human"),
                 SkillPlan("skill-fast-pace", 6201, 50, 50, false, "fast", "fast"),
                 SkillPlan("skill-fast-pace-2", 6202, 50, 50, false, "fast", "fast"),
                 SkillPlan("skill-novice-expert", 6101, 12, 27, false, "novice", "expert"),
@@ -135,7 +142,8 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 SkillPlan("skill-disconnect-rejoin", 6105, 22, 22, false, "intermediate", "intermediate"),
                 SkillPlan("skill-operator-stop", 6106, 18, 18, false, "cautious", "cautious")
             };
-            suite.methodology = "Actual SampleScene and production cars/CPUs/items. Course-following input agents approximate novice, cautious, intermediate, expert and aggressive control using distinct speed, reaction intervals, steering noise and jump anticipation; they are not human usability subjects. Includes a 12-second stop, 5-second input disconnection and operator result action. Drivers use InputManager and production input gates; never force vehicle pose, velocity, laps or outcomes. An agent responds to the public pedal-release notice after 0.35 seconds with 0.3 seconds of neutral input. Novice/cautious agents respond to a visible jump notice after 0.35 seconds by targeting 24m/s; understanding that cue is an assumed response, not a human-study result. Preparation is bypassed. Random seeds do not guarantee deterministic physics. Official and physics clocks are recorded separately.";
+            foreach (RunRecord plan in plans) if (plan.p1Profile == "human") plan.resetAssistance = true;
+            suite.methodology = "Actual SampleScene and production cars/CPUs/items. Human profiles decide every 0.18/0.22 seconds, slew the physical wheel at up to 360 degrees/second and pedal at 3/second, observe forward traffic, and use the fast road-speed planner with small steering noise. Course-following input agents also approximate novice, cautious, intermediate, expert and aggressive control using distinct speed, reaction intervals, steering noise and jump anticipation; they are not human usability subjects. Includes a 12-second stop, 5-second input disconnection and operator result action. Drivers use InputManager and production input gates; never force vehicle pose, velocity, laps or outcomes. An agent responds to the public pedal-release notice after 0.35 seconds with 0.3 seconds of neutral input. Novice/cautious agents respond to a visible jump notice after 0.35 seconds by targeting 24m/s; understanding that cue is an assumed response, not a human-study result. Preparation is bypassed. Random seeds do not guarantee deterministic physics. Official and physics clocks are recorded separately.";
             var sources = (IDriveInputSource[])typeof(InputManager).GetField("inputSources", Private).GetValue(manager.IManager);
             for (int i = 0; i < 2; i++) sources[i] = inputs[i];
         }
@@ -170,6 +178,11 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         run = plan; run.goalLaps = laps.GoalLap;
         suite.runs.Add(run);
         string folder = Path.Combine(output, run.name); Directory.CreateDirectory(folder);
+        if (Environment.GetEnvironmentVariable("RACING_BALANCE_VIDEO") == "1")
+        {
+            video = gameObject.AddComponent<PlaytestVideoRecorder>();
+            video.Begin(manager, folder);
+        }
         trace = new StreamWriter(Path.Combine(folder, "trace.csv"));
         trace.WriteLine("time,car,x,y,z,speed,progress,lap,checkpoint,position,pedal,steering,grounded,offCourse,rocket,confuse,oil,spin,cpuTargetSpeed,cpuRival,connected,needsRelease,recoveries,recoveryBlocked,appliedSteering,assistCorrection");
         events = new StreamWriter(Path.Combine(folder, "events.csv")); events.WriteLine("time,car,event,detail,x,y,z");
@@ -177,6 +190,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         for (int i = 0; i < 2; i++) { inputs[i].IsConnected = true; nextDecisionAt[i] = 0; heldDecision[i] = DriveInputState.Neutral; releaseRequestedAt[i]=releaseUntil[i]=jumpNoticedAt[i]=-1; }
         assistStressStarted = -1f;
         foreach (var bot in fastBots) bot.Clear();
+        Array.Clear(humanWheel, 0, 2); Array.Clear(humanPedal, 0, 2);
         if (Environment.GetEnvironmentVariable("RACING_P2_AUTO") == "1")
         {
             while (!manager.CanUseDashboardControls) yield return null;
@@ -254,11 +268,17 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         float waitStarted = Time.realtimeSinceStartup;
         while ((run.raceEnded && manager.state != Gmanager.State.Result) || !manager.CanUseDashboardControls)
         {
-            if (Time.realtimeSinceStartup - waitStarted > 20)
+            if (Time.realtimeSinceStartup - waitStarted > (video != null ? 120 : 20))
             { suite.error = "Result transition failed to settle after " + run.name; break; }
             yield return null;
         }
         if(skillSuite) {Capture(folder,"result-p1",0); Capture(folder,"result-p2",1);}
+        if (video != null)
+        {
+            float resultUntil = Time.time + 2f;
+            while (Time.time < resultUntil) yield return null;
+            video.Finish(); Destroy(video); video = null;
+        }
         if (manager.state == Gmanager.State.Result)
         {
             var results = (ResultUIManager[])typeof(Gmanager).GetField("resultUIManagers", Private).GetValue(manager);
@@ -392,6 +412,28 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     {
         float sign = manager.CourseProgressSign;
         string fastProfile = entry.Index == 0 ? run.p1Profile : run.p2Profile;
+        if (fastProfile == "human")
+        {
+            int i = entry.Index;
+            float cruise = RaceSpeedPlanner.Enabled ? (i == 0 ? run.p1TargetSpeed : run.p2TargetSpeed) : 24f;
+            float cap = cruise, humanLane = i == 0 ? 1.8f : -1.8f;
+            // A familiar-course driver looks at visible traffic and lifts behind a close car.
+            // No access to future opponent controls or modifications of vehicle motion.
+            foreach (RaceParticipant other in manager.Participants)
+            {
+                if (other == entry || !other.IsRacing) continue;
+                Vector3 local = Quaternion.Inverse(entry.Body.rotation) * (other.Body.position - entry.Body.position);
+                if (local.z <= 0 || local.z > 35 || Mathf.Abs(local.y) > 2.5f || Mathf.Abs(local.x) > 2.2f) continue;
+                if (local.z < Mathf.Max(10f, speed * .65f))
+                    cap = Mathf.Min(cap, Mathf.Max(0, other.Body.linearVelocity.magnitude - Mathf.Max(0, 8f - local.z)));
+            }
+            DriveInputState request = fastBots[i].Decide(manager.course, entry.Body, sign, grounded, run.physicsSeconds,
+                cruise, humanLane, reaction: i == 0 ? .18f : .22f, noise: .45f, speedCap: cap, vehicle: run.cars[i].mover);
+            // Hand movement is bounded to 360 physical degrees/sec (game units use divisor 6.5).
+            humanWheel[i] = Mathf.MoveTowards(humanWheel[i], request.steering, 360f / 6.5f * Time.fixedDeltaTime);
+            humanPedal[i] = Mathf.MoveTowards(humanPedal[i], request.pedal, 3f * Time.fixedDeltaTime);
+            return new DriveInputState { steering = humanWheel[i], pedal = humanPedal[i], resetPressed = reset };
+        }
         if (fastProfile == "fast")
         {
             DriveInputState fast = fastBots[entry.Index].Decide(manager.course, entry.Body, sign, grounded, run.physicsSeconds,
@@ -485,6 +527,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     }
     private void OnDestroy()
     {
+        if (video != null) video.Finish();
         Application.logMessageReceived -= LogError;
         trace?.Dispose(); events?.Dispose();
         Time.timeScale = previousScale; Time.maximumDeltaTime = previousMaximumDelta;
