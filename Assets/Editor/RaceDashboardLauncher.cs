@@ -176,7 +176,7 @@ public sealed class RaceDashboardWindow : EditorWindow
         string operators = EditorPrefs.GetString(RaceDashboardLauncher.OperatorsKey, "");
         string selected = EditorGUILayout.TextField("操作担当者（任意）", operators);
         if (selected != operators) EditorPrefs.SetString(RaceDashboardLauncher.OperatorsKey, selected);
-        EditorGUILayout.LabelField("空欄ではこのPCのTailscaleユーザーを使用。複数人はカンマ区切り。", EditorStyles.wordWrappedMiniLabel);
+        EditorGUILayout.LabelField("招待した人も全員操作する場合は *。空欄ではこのPCのTailscaleユーザーのみ。個別指定はカンマ区切り。", EditorStyles.wordWrappedMiniLabel);
         EditorGUILayout.HelpBox("UnityをPlayして「ダッシュボードを開く」を押してください。別端末ではTailscaleを接続し、下のURLを開きます。", MessageType.Info);
         using (new EditorGUI.DisabledScope(RaceDashboardLauncher.Busy))
             if (GUILayout.Button("ダッシュボードを開く", GUILayout.Height(34))) RaceDashboardLauncher.Start(true);

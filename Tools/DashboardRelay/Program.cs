@@ -89,7 +89,9 @@ app.Run(async context =>
     bool mutation = context.Request.Method != "GET" && context.Request.Method != "HEAD";
     if ((mutation || context.WebSockets.IsWebSocketRequest || origin.Length > 0) && origin != expectedOrigin)
     { context.Response.StatusCode = 403; return; }
-    bool canControl = local || operators.Contains(identity);
+    // Wildcard includes shared users admitted by Tailscale. Remote identity and
+    // Host/Origin checks above still apply before granting any control access.
+    bool canControl = local || operators.Contains("*") || operators.Contains(identity);
     string path = context.Request.Path.Value ?? "/";
     if (path == "/api/connection")
     {

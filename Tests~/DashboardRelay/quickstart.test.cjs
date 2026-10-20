@@ -9,7 +9,7 @@ const root=path.resolve(__dirname,'../..');
 const dll=path.join(root,'Tools/DashboardRelay/bin/Debug/net10.0/DashboardRelay.dll');
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(check){const end=Date.now()+20000;while(Date.now()<end){const result=check();if(result)return result;await wait(20);}throw new Error('Launcher timed out');}
-function get(headers={}){return new Promise((resolve,reject)=>{const request=http.get({hostname:'127.0.0.1',port:8766,path:'/api/connection',headers},response=>{let text='';response.on('data',data=>text+=data);response.on('end',()=>resolve({status:response.statusCode,json:JSON.parse(text)}));});request.on('error',reject);});}
+function get(headers={}){return new Promise((resolve,reject)=>{const request=http.get({hostname:'127.0.0.1',port:8766,path:'/api/connection',headers},response=>{let text='';response.on('data',data=>text+=data);response.on('end',()=>{let json;try{json=JSON.parse(text);}catch{}resolve({status:response.statusCode,json});});});request.on('error',reject);});}
 function start(env){const child=spawn('dotnet',[dll,'--auto','--no-browser','--managed'],{cwd:root,env:{...process.env,RACING_DASHBOARD_ORIGIN:'',...env}});child.output='';child.stdout.on('data',data=>child.output+=data);child.stderr.on('data',data=>child.output+=data);return child;}
 async function ready(child){return until(()=>{const line=child.output.split('\n').find(line=>line.startsWith('RACING_DASHBOARD_READY '));if(line)return JSON.parse(line.slice('RACING_DASHBOARD_READY '.length));if(child.exitCode!==null)throw new Error(child.output);});}
 async function stop(child){if(child.exitCode!==null)return;child.stdin.write('stop\n');await until(()=>child.exitCode!==null);assert.equal(child.exitCode,0,child.output);}
@@ -66,6 +66,18 @@ if(args[0]==='status'){
    rmSync(path.join(temp,'served'),{force:true});active=start({RACING_TAILSCALE_CLI:cli,FAKE_MODE:'running',FAKE_DIR:temp,RACING_DASHBOARD_OPERATORS:'staff@example.com'});await ready(active);
    assert.equal((await get({Host:'race.demo.ts.net','Tailscale-User-Login':'staff@example.com'})).json.canControl,true);
    assert.equal((await get({Host:'race.demo.ts.net','Tailscale-User-Login':'owner@example.com'})).json.canControl,false);await stop(active);
+  });
+  await t.test('wildcard permits invitees but still requires Serve identity and matching host/origin',async()=>{
+   active=start({RACING_TAILSCALE_CLI:cli,FAKE_MODE:'running',FAKE_DIR:temp,RACING_DASHBOARD_OPERATORS:' * '});await ready(active);
+   for(const Host of ['race.demo.ts.net','127.0.0.1:8766']){
+    const invitee=await get({Host,'Tailscale-User-Login':'invitee@example.com'});
+    assert.equal(invitee.status,200);assert.equal(invitee.json.canControl,true);assert.equal(invitee.json.remote,true);
+    assert.equal((await get({Host,'X-Forwarded-For':'100.100.100.100'})).status,403);
+   }
+   assert.equal((await get({Host:'race.demo.ts.net'})).status,403);
+   assert.equal((await get({Host:'evil.example','Tailscale-User-Login':'invitee@example.com'})).status,403);
+   assert.equal((await get({Host:'race.demo.ts.net',Origin:'https://evil.example','Tailscale-User-Login':'invitee@example.com'})).status,403);
+   await stop(active);
   });
   await t.test('stopping during initial setup cancels the owned CLI too',async()=>{
    active=configure('slow');await until(()=>existsSync(path.join(temp,'calls'))&&readFileSync(path.join(temp,'calls'),'utf8').includes('status'));

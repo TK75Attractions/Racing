@@ -105,6 +105,40 @@ test('dashboard remains an HTML page when Unity is stopped and reconnects after 
   }
 });
 
+test('shared invitees can control races with wildcard while request and game guards remain active', {timeout:30000}, async()=>{
+  const bridge=spawn('mono',[path.join(root,'Temp/DashboardRelay/BridgeHarness.exe'),path.join(root,'Assets/StreamingAssets')],{cwd:root});
+  const relay=spawn('dotnet',[path.join(root,'Tools/DashboardRelay/bin/Debug/net10.0/DashboardRelay.dll')],{cwd:root,env:{...process.env,RACING_DASHBOARD_ORIGIN:'https://race.test.ts.net',RACING_DASHBOARD_OPERATORS:'*'}});
+  let output='';
+  for(const child of [bridge,relay]){child.stdout.on('data',data=>output+=data);child.stderr.on('data',data=>output+=data);}
+  const remote={host:'race.test.ts.net',origin:'https://race.test.ts.net',user:'invitee@example.com'};
+  try{
+    await waitFor(async()=>{if(bridge.exitCode!==null||relay.exitCode!==null)throw new Error(output);try{return output.includes('BRIDGE_READY')&&(await request('/api/connection')).status===200;}catch{return false;}});
+    assert.equal((await request('/api/connection',remote)).json.canControl,true);
+    const command=async(action,headers=remote)=>{
+      const snapshot=(await request('/api/status',remote)).json;
+      return request('/api/action/'+action,{...headers,method:'POST',body:{id:crypto.randomUUID(),targetSession:snapshot.sessionId,
+        expectedState:snapshot.state,stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime}});
+    };
+    assert.equal((await command('start',{...remote,user:undefined})).status,403);
+    assert.equal((await command('start',{...remote,origin:'https://evil.example'})).status,403);
+    assert.equal((await command('start',{...remote,host:'evil.example'})).status,403);
+    assert.equal((await command('start')).status,200);
+    assert.equal((await request('/api/status',remote)).json.state,'Countdown');
+    // A repeated start is inapplicable; being an invitee does not bypass Unity's guards.
+    assert.equal((await command('start')).status,409);
+    bridge.stdin.write('state:Game\n');await waitFor(async()=>(await request('/api/status',remote)).json.state==='Game');
+    assert.equal((await command('result',{...remote,host:'127.0.0.1:8766'})).status,200);
+    assert.equal((await request('/api/status',remote)).json.state,'Result');
+    const snapshot=(await request('/api/status',remote)).json;
+    const serial=await request('/api/action/serial',{...remote,method:'POST',body:{id:crypto.randomUUID(),targetSession:snapshot.sessionId,
+      expectedState:snapshot.state,stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime,command:'CALIBRATE',args:['ALL']}});
+    assert.equal(serial.status,409);assert.equal(serial.json.reason,'serial_disconnected');
+  }finally{
+    bridge.stdin.write('quit\n');relay.kill('SIGTERM');
+    await waitFor(()=>bridge.exitCode!==null&&relay.exitCode!==null).catch(()=>{bridge.kill('SIGKILL');relay.kill('SIGKILL');});
+  }
+});
+
 test('production bridge → relay → WebSocket integration', {timeout:90000}, async t=>{
   const bridge=spawn('mono',[path.join(root,'Temp/DashboardRelay/BridgeHarness.exe'),path.join(root,'Assets/StreamingAssets')],{cwd:root,stdio:['pipe','pipe','pipe']});
   let relay=spawn('dotnet',[path.join(root,'Tools/DashboardRelay/bin/Debug/net10.0/DashboardRelay.dll')],{cwd:root,env:{...process.env,RACING_DASHBOARD_ORIGIN:'https://race.test.ts.net',RACING_DASHBOARD_OPERATORS:'operator@example.com'},stdio:['ignore','pipe','pipe']});

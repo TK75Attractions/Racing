@@ -36,7 +36,7 @@ HTTPの画面・API・JPEGとWebSocketを同じURLにまとめる。中継アプ
 2. `Racing → Dashboard`で「ダッシュボードを開く」を押す。
 3. 別端末では、表示された「別端末用URL」をコピーして開く。ダッシュボード上部の「URLをコピー」も使える。
 
-ターミナルや環境変数の編集は不要。操作担当者は、既定ではゲームPCにログイン中のTailscaleユーザーを自動取得する。別アカウントも操作担当にする場合は、画面の「操作担当者（任意）」へTailscaleログイン名をカンマ区切りで入力して起動し直す。空欄に戻すと自動取得へ戻る。
+ターミナルや環境変数の編集は不要。操作担当者は、既定ではゲームPCにログイン中のTailscaleユーザーを自動取得する。**招待した人も全員操作できるようにするには、画面の「操作担当者（任意）」へ `*` を入力し、中継を再起動する。** この設定ではTailscaleの接続許可を持ち、Serve経由で本人確認できた利用者がレース進行・装置操作を行える。個別に絞る場合はTailscaleログイン名をカンマ区切りで指定し、空欄に戻すと自動取得へ戻る。
 
 Play終了時・スクリプト再読み込み時・Editor終了時には、Editorが起動した補助ブリッジを停止する。既に別の場所で動いているブリッジは再利用し、そのプロセスは停止しない。自動起動は同じ画面のチェックで切り替えられる。設定はEditorPrefsに保存し、シーンは変更しない。
 
@@ -53,7 +53,7 @@ UnityのPlayまたはゲームの起動後に、次のファイルをダブル�
 
 `Tools/DashboardRelay/Install Dashboard Service.command`を一度実行すると、ログイン時に中継を自動起動する。起動が失敗した場合もlaunchdが再起動し、インストール時にVPNの接続先と操作担当者を検証して保存し、常駐時はその設定で起動する。Tailscaleの起動が遅れても、中継は起動済みの状態でVPN接続を待つ。Macを起動・ログインしてインターネットとTailscaleを接続しておけば、UnityをPlayする前にスマホで管理画面を開ける。Macがスリープ・電源オフの間は接続できない。
 
-常駐アプリと予備の画面は`~/Library/Application Support/RacingDashboard`へコピーし、`~/Library/LaunchAgents/com.racing.dashboard.plist`へ登録する。プロジェクトが残っていればその画面ファイルを読み、削除・移動された場合は同梱の画面を使う。中継コードの更新、TailscaleアカウントやPC名の変更時は同じインストーラーを再実行する。macOSのTailscale呼出しは`TAILSCALE_BE_CLI=1`を指定し、ターミナルのない常駐環境でもCLIとして実行する（[公式仕様](https://tailscale.com/docs/reference/tailscale-cli?tab=macos)）。操作担当者を追加する場合は`RACING_DASHBOARD_OPERATORS`を指定して再インストールする。既存の中継が起動済みの場合、Unityはそれを再利用する。
+常駐アプリと予備の画面は`~/Library/Application Support/RacingDashboard`へコピーし、`~/Library/LaunchAgents/com.racing.dashboard.plist`へ登録する。プロジェクトが残っていればその画面ファイルを読み、削除・移動された場合は同梱の画面を使う。中継コードの更新、TailscaleアカウントやPC名の変更時は同じインストーラーを再実行する。macOSのTailscale呼出しは`TAILSCALE_BE_CLI=1`を指定し、ターミナルのない常駐環境でもCLIとして実行する（[公式仕様](https://tailscale.com/docs/reference/tailscale-cli?tab=macos)）。操作担当者を追加する場合は`RACING_DASHBOARD_OPERATORS`を指定して再インストールする。招待した人全員に操作を許可する場合は、プロジェクトのルートから `RACING_DASHBOARD_OPERATORS='*' sh 'Tools/DashboardRelay/Install Dashboard Service.command'` を実行する。常駐中継が起動済みの場合、Unityはそれを再利用するため、Unityの操作担当者欄の変更だけでは常駐側に反映されない。
 
 解除は`Tools/DashboardRelay/Uninstall Dashboard Service.command`。ログは`~/Library/Logs/RacingDashboard/relay.log`と`relay-error.log`。Tailscale Serveは引き続き同じVPN内だけに公開し、Funnelは使わない。
 
@@ -71,7 +71,7 @@ Tailscaleが利用可能なら、PCのHTTPSアドレスとログイン名を取�
 
 ### 従来の設定を指定する場合
 
-`run.sh`は従来どおり`relay.env`を、`run.ps1`は`relay.env.ps1`を読み込める。`RACING_DASHBOARD_ORIGIN`と`RACING_DASHBOARD_OPERATORS`を指定すると、その値を優先する。これらのファイルはGit管理対象外。Unityからの起動では、環境変数と設定画面の操作担当者欄を使う。
+`run.sh`は従来どおり`relay.env`を、`run.ps1`は`relay.env.ps1`を読み込める。`RACING_DASHBOARD_ORIGIN`と`RACING_DASHBOARD_OPERATORS`を指定すると、その値を優先する。`RACING_DASHBOARD_OPERATORS='*'` は、Tailscaleから接続を許可された本人確認済みの利用者全員（端末共有の招待者を含む）に操作を許可する。個別ログイン名の設定も引き続き利用できる。これらのファイルはGit管理対象外。Unityからの起動では、環境変数と設定画面の操作担当者欄を使う。
 
 閲覧者の接続許可はTailscaleのアクセスルールで制限する。操作担当者は各自のTailscaleアカウントで接続する。タグ付き端末にはログインユーザーの認証情報が付かないため、操作担当者の自動取得は行わない。
 
