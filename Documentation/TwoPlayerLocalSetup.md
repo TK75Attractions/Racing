@@ -68,6 +68,8 @@ Unityを開いたまま設定を更新する場合は `Racing > Validation > Ena
 
 ## キーボード確認
 
+P1のハンドルだけ実機で試す場合は、[P1ハンドルテスト](P1SteeringTest.md)を使います。F8からペダルをW/Sまたはレース中の一定入力へ切り替えられます。
+
 Unity Editorで `InputManager > Is Debug Mode` を有効にすると、ESP32なしでも確認できます。
 
 - P1: WASD / Space / Enter
