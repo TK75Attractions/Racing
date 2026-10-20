@@ -17,6 +17,14 @@ public class InputManager : MonoBehaviour
         "This mode takes priority over the keyboard-only debug mode.")]
     public bool isP1SerialP2KeyboardDebugMode = false;
 
+    [Header("P1 Steering Test (ESP32 wheel only)")]
+    [Tooltip("P1のハンドルはESP32、ペダルはW/Sまたはレース中の一定入力。F8から走行中にも変更できます。")]
+    [SerializeField] private P1SteeringTestMode p1SteeringTestMode = P1SteeringTestMode.Normal;
+    [SerializeField, Range(0f, 1f)] private float p1ConstantPedal = 1f;
+    public P1SteeringTestMode SteeringTestMode => p1SteeringTestMode;
+    public float ConstantTestPedal => p1ConstantPedal;
+    private P1SteeringTestInputSource steeringTestSource;
+
     [Header("ESP32 USB Serial (P1 + P2)")]
     [SerializeField] private Esp32SerialConfiguration esp32Serial = new Esp32SerialConfiguration();
 
@@ -46,7 +54,8 @@ public class InputManager : MonoBehaviour
     }
 
     public bool IsSerialDebugDisplayVisible => serialDebugMode && serialDebugDisplayVisible;
-    public bool IsAnyDebugMode => !backgroundBeforeSimulator.HasValue && (isDebugMode || isP1SerialP2KeyboardDebugMode);
+    public bool IsAnyDebugMode => p1SteeringTestMode != P1SteeringTestMode.Normal ||
+        (!backgroundBeforeSimulator.HasValue && (isDebugMode || isP1SerialP2KeyboardDebugMode));
     public TwoPlayerSerialInputSource SharedSerialInputSource => sharedSerialInputSource;
     public string InputModeLabel => GetInputModeLabel();
     public event Action<string, string> SerialLineProcessed;
@@ -71,7 +80,7 @@ public class InputManager : MonoBehaviour
             sharedSerialInputSource.LineProcessed += OnSharedSerialLineProcessed;
             for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
                 inputSources[playerIndex] = new SharedPlayerDriveInputSource(sharedSerialInputSource, playerIndex);
-            initialized = true;
+            CompleteInputInitialization();
             Debug.Log($"ESP32 simulator: {simulatorPort}, steering divisor {simulatorDivisor}. Both players use the PTY stream.");
             return;
         }
@@ -82,7 +91,7 @@ public class InputManager : MonoBehaviour
             inputSources[0] = new SharedPlayerDriveInputSource(sharedSerialInputSource, 0);
             inputSources[1] = new KeyboardDriveInputSource(1);
 
-            initialized = true;
+            CompleteInputInitialization();
             Debug.Log(
                 "InputManager is in P1 serial / P2 keyboard debug mode. " +
                 "Player 1 uses ESP32 USB serial and Player 2 uses arrow keys / Slash (or Right Ctrl) / Right Shift.");
@@ -96,7 +105,7 @@ public class InputManager : MonoBehaviour
                 inputSources[playerIndex] = new KeyboardDriveInputSource(playerIndex);
             }
 
-            initialized = true;
+            CompleteInputInitialization();
             Debug.Log(
                 "InputManager is in debug mode. " +
                 "Player 1 uses WASD/Space/Enter and Player 2 uses arrow keys / Slash (or Right Ctrl) / Right Shift.");
@@ -111,7 +120,50 @@ public class InputManager : MonoBehaviour
                 sharedSerialInputSource, playerIndex);
         }
 
+        CompleteInputInitialization();
+    }
+
+    private void CompleteInputInitialization()
+    {
+        IDriveInputSource normal = inputSources[0];
+        steeringTestSource = new P1SteeringTestInputSource(normal, normal as KeyboardDriveInputSource ?? new KeyboardDriveInputSource(0));
+        inputSources[0] = steeringTestSource;
         initialized = true;
+        ApplySteeringTestSettings();
+    }
+
+    public void SetP1SteeringTestMode(P1SteeringTestMode mode)
+    {
+        if (mode < P1SteeringTestMode.Normal || mode > P1SteeringTestMode.ConstantPedal) return;
+        p1SteeringTestMode = mode;
+        ApplySteeringTestSettings();
+    }
+
+    public void SetP1ConstantPedal(float value)
+    {
+        if (float.IsNaN(value) || float.IsInfinity(value)) return;
+        p1ConstantPedal = Mathf.Clamp01(value);
+        ApplySteeringTestSettings();
+    }
+
+    private void ApplySteeringTestSettings()
+    {
+        if (!initialized || steeringTestSource == null) return;
+        if (p1SteeringTestMode != P1SteeringTestMode.Normal && sharedSerialInputSource == null)
+            InitializeSharedSerialInput(playerOneOnly: true);
+        if (sharedSerialInputSource != null && steeringTestSource.Serial == null)
+            steeringTestSource.Serial = new SharedPlayerDriveInputSource(sharedSerialInputSource, 0);
+        bool changed = steeringTestSource.Mode != p1SteeringTestMode;
+        steeringTestSource.Mode = p1SteeringTestMode;
+        steeringTestSource.ConstantPedal = p1ConstantPedal;
+        Gmanager race = Gmanager.Control;
+        steeringTestSource.IsRacing = race != null && race.state == Gmanager.State.Game && race.GetParticipant(0)?.IsRacing == true;
+        if (changed && race != null)
+        {
+            // A live change keeps the existing pause/reconnect gate and requires a real release.
+            GameObject car = race.GetParticipant(0)?.Car ?? race.GetComponent<DrivingTutorialController>()?.GetPlayerCar(0);
+            if (car?.GetComponent<DebugMover>()?.InputSource is PlayerDriveInputGate gate) gate.RequirePedalRelease();
+        }
     }
 
     public void UpdateInput(float deltaTime)
@@ -122,6 +174,7 @@ public class InputManager : MonoBehaviour
             return;
         }
 
+        ApplySteeringTestSettings();
         sharedSerialInputSource?.UpdateInput(deltaTime);
         foreach (IDriveInputSource source in inputSources) source?.UpdateInput(deltaTime);
 
@@ -233,7 +286,7 @@ public class InputManager : MonoBehaviour
     {
         SerialLineProcessed?.Invoke(status, line);
         string players = sharedSerialInputSource != null && backgroundBeforeSimulator.HasValue ? "P1/P2" :
-            isP1SerialP2KeyboardDebugMode ? "P1" : "P1/P2";
+            isP1SerialP2KeyboardDebugMode || (isDebugMode && p1SteeringTestMode != P1SteeringTestMode.Normal) ? "P1" : "P1/P2";
         AddSerialDebugLog($"{players} {status}", line);
     }
 
@@ -358,9 +411,17 @@ public class InputManager : MonoBehaviour
 
     private string GetInputModeLabel()
     {
+        if (p1SteeringTestMode != P1SteeringTestMode.Normal)
+        {
+            string wheel = backgroundBeforeSimulator.HasValue ? "Simulator" : "ESP32";
+            string pedal = p1SteeringTestMode == P1SteeringTestMode.KeyboardPedal ? "W/S pedal" : $"constant {p1ConstantPedal:P0} (race only; S releases)";
+            string p2 = backgroundBeforeSimulator.HasValue || (!isDebugMode && !isP1SerialP2KeyboardDebugMode) ? "Serial" : "Keyboard";
+            return $"P1 {wheel} wheel + {pedal} / P2 {p2} (debug)";
+        }
         if (backgroundBeforeSimulator.HasValue) return "Serial Simulator P1/P2 (macOS PTY)";
         if (isP1SerialP2KeyboardDebugMode) return "P1 Serial / P2 Keyboard (debug)";
-        return isDebugMode ? "Keyboard P1/P2 (debug; serial disabled)" : "Serial P1/P2";
+        return isDebugMode ? (sharedSerialInputSource != null ? "Keyboard P1/P2 (debug; ESP32 standby)" :
+            "Keyboard P1/P2 (debug; serial disabled)") : "Serial P1/P2";
     }
 
     private void DisposeInputSources()
@@ -377,6 +438,8 @@ public class InputManager : MonoBehaviour
             inputSources[index]?.Dispose();
             inputSources[index] = null;
         }
+
+        steeringTestSource = null;
 
         initialized = false;
         if (backgroundBeforeSimulator.HasValue)

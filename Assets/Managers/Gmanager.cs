@@ -409,7 +409,7 @@ public class Gmanager : MonoBehaviour
 
     private void OnGUI()
     {
-        if (IManager == null || !IManager.IsAnyDebugMode)
+        if (IManager == null || !IManager.IsAnyDebugMode || Features?.PanelVisible == true)
         {
             return;
         }
