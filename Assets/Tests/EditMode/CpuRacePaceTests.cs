@@ -2,6 +2,24 @@ using NUnit.Framework;
 
 public sealed class CpuRacePaceTests
 {
+    [Test] public void FastCpuDoesNotEscapeForeverOnceItLeadsByMoreThanThirtyFiveMetres()
+    {
+        Assert.Less(CpuRacePace.FastRequest(31, -100, 0, 2, 50), 31);
+        Assert.Greater(CpuRacePace.FastRequest(31, -100, 0, 3, 50), 31);
+        Assert.AreEqual(50, CpuRacePace.FastRequest(31, 100, 0, 2, 50));
+    }
+    [Test] public void LeadingCpuRemainsFastDuringAnItemHitAndDoesNotParkForAStoppedPlayer()
+    {
+        Assert.AreEqual(28, CpuRacePace.FastRequest(10, -200, 0, 2, 50));
+        Assert.AreEqual(32, CpuRacePace.FastRequest(10, -200, 0, 3, 50));
+        Assert.AreEqual(50, CpuRacePace.FastRequest(0, -200, 0, 2, 50));
+    }
+    [Test] public void FastNearbyRivalsStillHaveAttackAndCounterattackWindows()
+    {
+        Assert.Greater(CpuRacePace.FastRequest(42, -10, 0, 2, 50), 42);
+        Assert.Less(CpuRacePace.FastRequest(42, -10, 7, 2, 50), 42);
+        Assert.LessOrEqual(CpuRacePace.FastRequest(80, 20, 0, 2, 50), 52);
+    }
     [Test] public void MaintainingTheTargetNeedsEnoughPedalToBalanceTheActualCarResistance()
     {
         Assert.AreEqual(.4f, CpuRacePace.Pedal(20, 20, .4f));
