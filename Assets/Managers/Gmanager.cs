@@ -784,6 +784,8 @@ public class Gmanager : MonoBehaviour
             if (raceVisuals != null) collisionSparks.Impact += raceVisuals.AddImpact;
             if (player.car.GetComponent<TireEffectsVisual>() == null)
                 player.car.AddComponent<TireEffectsVisual>();
+            CarNightGlow nightGlow = player.car.GetComponent<CarNightGlow>() ?? player.car.AddComponent<CarNightGlow>();
+            nightGlow.Configure(playerIndex);
             if (player.car.GetComponent<CarWallCollisionResponse>() == null)
                 player.car.AddComponent<CarWallCollisionResponse>();
             player.chargeVisual = player.car.GetComponent<DriftChargeVisual>();
@@ -833,6 +835,8 @@ public class Gmanager : MonoBehaviour
             int index = PlayerCount + cpu;
             GameObject vehicle = Instantiate(carPrefab, position - rotation * Vector3.forward * 7f + right * startGridSpacing * (cpu == 0 ? -.5f : .5f), rotation);
             vehicle.name = $"CPU{cpu + 1}_Car";
+            CarNightGlow nightGlow = vehicle.GetComponent<CarNightGlow>() ?? vehicle.AddComponent<CarNightGlow>();
+            nightGlow.Configure(index);
             // CPUs borrow the vehicle physics/visuals, never a player display or input device.
             foreach (Camera camera in vehicle.GetComponentsInChildren<Camera>(true)) camera.enabled = false;
             foreach (AudioListener listener in vehicle.GetComponentsInChildren<AudioListener>(true)) listener.enabled = false;

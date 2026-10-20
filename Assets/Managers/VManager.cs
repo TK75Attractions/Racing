@@ -18,7 +18,7 @@ public class VManager : MonoBehaviour
     [SerializeField, Min(0f)] private float boostFadeOutSeconds = 0.25f;
     [Tooltip("満チャージ時に通常設定へ加算する各エフェクトの強さ。")]
     [SerializeField, Min(0f)] private float boostBloom = 0.5f;
-    [SerializeField, Range(0f, 1f)] private float boostMotionBlur = 0.4f;
+    [SerializeField, Range(0f, 1f)] private float boostMotionBlur = 0f;
     [SerializeField, Range(-1f, 1f)] private float boostLensDistortion = -0.12f;
     [SerializeField, Range(0f, 1f)] private float boostChromaticAberration = 0.15f;
     [SerializeField, Range(0f, 1f)] private float boostVignette = 0.12f;
@@ -53,8 +53,8 @@ public class VManager : MonoBehaviour
 
     [Header("Race Speed Post Processing")]
     [SerializeField] private bool raceSpeedEffectsEnabled = true;
-    [SerializeField, Range(0f, 1f)] private float speedMotionBlurLow = 0.08f;
-    [SerializeField, Range(0f, 1f)] private float speedMotionBlurHigh = 0.30f;
+    [SerializeField, Range(0f, 1f)] private float speedMotionBlurLow = 0f;
+    [SerializeField, Range(0f, 1f)] private float speedMotionBlurHigh = 0f;
     [SerializeField, Range(0f, 10f)] private float speedBloomLow = 0.20f;
     [SerializeField, Range(0f, 10f)] private float speedBloomHigh = 0.35f;
     [SerializeField, Range(0f, 10f)] private float speedBloomThreshold = 1f;

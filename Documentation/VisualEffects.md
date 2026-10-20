@@ -8,6 +8,26 @@
 - **HDR カラーグレーディング**：`Assets/Settings/PC_RPAsset.asset` の `Grading Mode` を High Dynamic Range にしています。トーンマッピングが白飛び前の値を受け取れるようにするためです。
 - **アンチエイリアス**：`SampleScene` の `BackImageCamera` に SMAA（High）を設定しています。URP のカメラスタックでは、アンチエイリアスは Base カメラの設定がスタック全体（`MainCamera` などの Overlay を含む）に使われます。そのため Overlay の `MainCamera` 側で設定しても効きません。2 人目の画面は `CManager` を複製して作るので、同じ設定になります。TAA は Overlay カメラを重ねる構成では使えません。
 
+## 夜の縁日ネオン化（第 1 段）
+
+`NightEnnichiVisualBuilder` が次の変更をアセットと `SampleScene` に保存します。再実行しても同じ割り当て・設定になります。
+
+- 校舎 FBX の木 15 本は、LOD0 のサブメッシュの三角形数が多い方を葉、少ない方を幹として、桜色の弱い発光とこげ茶に変更します。既存の LOD と `meshLodSelectionBias` は維持します。
+- `TubeInterior.mat` を暗い紺・Smoothness 0.55 にし、FBX の `地下チューブ` も同じマテリアルへ remap します。
+- シーンの `VManager` の `speedMotionBlurLow` / `speedMotionBlurHigh` / `boostMotionBlur` を 0 にします。コード既定値も 0 です。速度感は既存の FOV 変化とスピードラインで表現し、ブーストの色収差・歪み・露出などは維持します。
+- `RaceEnvironment` を夜（1）・晴れ（0）に設定します。照明と空は再生時に既存コントローラーが反映します。
+- ガラス系 6 マテリアルを、不透明の暖色発光による窓明かりへ remap します。
+
+木・窓の新規 URP/Lit マテリアルは `Assets/Art/NightEnnichi/` に作ります。FBX の割り当ては `ModelImporter.AddRemap` → `SaveAndReimport` で行い、シーンの Renderer 上書きは追加しません。
+
+実行は Unity メニューの `Racing > Visual > Apply Night Ennichi Look`、または Unity 6000.3.9f1 で次を使用します（`<project-path>` はプロジェクトの絶対パス）。メニュー実行時は先に `SampleScene` の編集中の変更を保存してください。
+
+```text
+Unity -batchmode -nographics -projectPath "<project-path>" -executeMethod NightEnnichiVisualBuilder.Run -quit -logFile "NightEnnichi.log"
+```
+
+成功時は `[NightEnnichi]` の要約 5 行を出力します。必要なアセット・木の構造・コンポーネントなどが見つからない場合は例外で失敗します。適用後の画面確認は Game ビューで行ってください。
+
 ## タイヤ痕とタイヤスモーク
 
 `Gmanager` がレース開始時に各車へ `TireEffectsVisual` を追加します。タイヤごとに滑りの強さ（0〜1）を求め、一定以上で路面に痕を残し、白煙を出します。

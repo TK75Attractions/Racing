@@ -365,7 +365,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -3350101853002094637, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_Mesh
-      value:
+      value: 
       objectReference: {fileID: 4300000, guid: c14a0588f302f41569eae40b4071a322, type: 2}
     - target: {fileID: -2036472721373001367, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
@@ -373,7 +373,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -1398540048242649291, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_Mesh
-      value:
+      value: 
       objectReference: {fileID: 4300000, guid: 9265db2d7a4a84a658b3889e9b96342c, type: 2}
     - target: {fileID: -1393781089802967949, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
@@ -385,7 +385,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 490939697822461851, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value:
+      value: 
       objectReference: {fileID: 2100000, guid: 754426768b24045198a202f82a3b73c9, type: 2}
     - target: {fileID: 749727992793697501, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
@@ -417,7 +417,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4876933053422263863, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_Mesh
-      value:
+      value: 
       objectReference: {fileID: 4300000, guid: 8aa170a99f4124bba86a5d55983c0b42, type: 2}
     - target: {fileID: 6500614012991000065, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
@@ -4533,6 +4533,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -7255184609126306877, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &84472120
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 84472121}
+  - component: {fileID: 84472122}
+  m_Layer: 0
+  m_Name: Andon 019
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &84472121
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 84472120}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.00020445057, y: 0.9987779, z: 0.0041463026, w: 0.049248867}
+  m_LocalPosition: {x: 258.28424, y: 4.840817, z: 592.0837}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &84472122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 84472120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &92599419
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -4680,6 +4754,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 1853148614486920952, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &116384294
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 116384295}
+  - component: {fileID: 116384296}
+  m_Layer: 0
+  m_Name: Andon 005
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &116384295
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 116384294}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.6905327, z: -0, w: 0.72330123}
+  m_LocalPosition: {x: 390.9531, y: 3.15, z: 813.957}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &116384296
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 116384294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &119182284
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -4768,6 +4916,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -4602774236559547980, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &132296132
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 132296133}
+  - component: {fileID: 132296134}
+  m_Layer: 0
+  m_Name: Andon 022
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &132296133
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 132296132}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.071966894, y: -0.58190435, z: 0.051802814, w: 0.80840874}
+  m_LocalPosition: {x: 538.48254, y: 14.34183, z: 582.0659}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &132296134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 132296132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!1 &132301914
 GameObject:
   m_ObjectHideFlags: 0
@@ -5099,6 +5321,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 8717828419849874836, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &153060575
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 153060576}
+  - component: {fileID: 153060577}
+  m_Layer: 0
+  m_Name: Andon 023
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &153060576
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 153060575}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.071966894, y: -0.58190435, z: 0.051802814, w: 0.80840874}
+  m_LocalPosition: {x: 552.0511, y: 14.34183, z: 622.6357}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &153060577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 153060575}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &155529375
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -5121,6 +5417,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 1063810422152280197, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &156012764
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 156012765}
+  - component: {fileID: 156012766}
+  m_Layer: 0
+  m_Name: Andon 002
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &156012765
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 156012764}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.6905327, z: -0, w: 0.72330123}
+  m_LocalPosition: {x: 428.74237, y: 3.15, z: 765.37427}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &156012766
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 156012764}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!1 &165928641
 GameObject:
   m_ObjectHideFlags: 0
@@ -5200,6 +5570,7 @@ MonoBehaviour:
   goMessageSeconds: 0.75
   lapManager: {fileID: 0}
   secondPlaceTimeoutSeconds: 40
+  maximumHumanFinishGraceSeconds: 180
   carSelectionTimeLimitSeconds: 30
   tutorialTimeLimitSeconds: 60
   npcCount: 2
@@ -5451,6 +5822,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2751401539027991076, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &192407909
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 192407910}
+  - component: {fileID: 192407911}
+  m_Layer: 0
+  m_Name: Andon 025
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &192407910
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 192407909}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.08578736, y: -0.37515497, z: 0.034893975, w: 0.92232406}
+  m_LocalPosition: {x: 527.2307, y: 4.988001, z: 635.32324}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &192407911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 192407909}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &193402945
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -5500,6 +5945,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4932170253921981256, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &202508306
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 202508307}
+  - component: {fileID: 202508308}
+  m_Layer: 0
+  m_Name: Andon 007
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &202508307
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 202508306}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.69051796, z: -0, w: 0.72331524}
+  m_LocalPosition: {x: 350.99612, y: 3.15, z: 815.8104}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &202508308
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 202508306}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &203480248
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -7481,6 +8000,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 5168297368661204189, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &395768016
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 395768017}
+  - component: {fileID: 395768018}
+  m_Layer: 0
+  m_Name: Andon 018
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &395768017
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 395768016}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.00020445057, y: 0.9987779, z: 0.0041463026, w: 0.049248867}
+  m_LocalPosition: {x: 298.1881, y: 4.840817, z: 596.02893}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &395768018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 395768016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &396180762
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -7821,6 +8414,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2963840947304508246, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &445048536
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 445048537}
+  - component: {fileID: 445048538}
+  m_Layer: 0
+  m_Name: Andon 010
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &445048537
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 445048536}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.00020447109, y: 0.9987778, z: 0.00414655, w: 0.049250867}
+  m_LocalPosition: {x: 285.01047, y: 3.512332, z: 755.501}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &445048538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 445048536}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!1 &450948466 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -9109349182298022382, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -7848,6 +8515,69 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4583407886439279732, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &452183776
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 452183777}
+  m_Layer: 0
+  m_Name: Lanterns
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &452183777
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 452183776}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1658894437}
+  - {fileID: 1884007682}
+  - {fileID: 156012765}
+  - {fileID: 1415938514}
+  - {fileID: 1219187279}
+  - {fileID: 116384295}
+  - {fileID: 554671983}
+  - {fileID: 202508307}
+  - {fileID: 479875616}
+  - {fileID: 728864456}
+  - {fileID: 445048537}
+  - {fileID: 559294928}
+  - {fileID: 963761596}
+  - {fileID: 2120873451}
+  - {fileID: 1093617822}
+  - {fileID: 1637819407}
+  - {fileID: 593268845}
+  - {fileID: 1989749775}
+  - {fileID: 395768017}
+  - {fileID: 84472121}
+  - {fileID: 1883552404}
+  - {fileID: 870994077}
+  - {fileID: 132296133}
+  - {fileID: 153060576}
+  - {fileID: 1999018356}
+  - {fileID: 192407910}
+  - {fileID: 1223218036}
+  - {fileID: 1734554781}
+  - {fileID: 1070099637}
+  - {fileID: 1495490549}
+  - {fileID: 1516158813}
+  - {fileID: 1582355566}
+  m_Father: {fileID: 1541913938}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &454137349 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -6935884120399792924, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -8302,6 +9032,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 5964094183441045825, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &479875615
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 479875616}
+  - component: {fileID: 479875617}
+  m_Layer: 0
+  m_Name: Andon 008
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &479875616
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 479875615}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.69053304, z: -0, w: 0.7233008}
+  m_LocalPosition: {x: 308.8712, y: 3.15, z: 770.9347}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &479875617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 479875615}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!1 &480574182 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -8778691915536501916, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -9272,6 +10076,154 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 128941105459499960, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &554671982
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 554671983}
+  - component: {fileID: 554671984}
+  m_Layer: 0
+  m_Name: Andon 006
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &554671983
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 554671982}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.69051796, z: -0, w: 0.72331524}
+  m_LocalPosition: {x: 348.8279, y: 3.15, z: 769.0812}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &554671984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 554671982}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
+--- !u!1 &559294927
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 559294928}
+  - component: {fileID: 559294929}
+  m_Layer: 0
+  m_Name: Andon 011
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &559294928
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 559294927}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.00020447109, y: 0.9987778, z: 0.00414655, w: 0.049250867}
+  m_LocalPosition: {x: 239.9768, y: 3.512332, z: 751.04834}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &559294929
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 559294927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &560846497
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -9404,6 +10356,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 8495914320622197145, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &593268844
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 593268845}
+  - component: {fileID: 593268846}
+  m_Layer: 0
+  m_Name: Andon 016
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &593268845
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 593268844}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.00020448377, y: 0.99877775, z: 0.0041466383, w: 0.04925287}
+  m_LocalPosition: {x: 294.90332, y: 4.5086956, z: 635.898}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &593268846
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 593268844}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &597685705
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -9760,7 +10786,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8e4571e0f1e4b0e90a36f1b0e33f06d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CheckpointSensor
-  lapManager: {fileID: 0}
   checkpointIndex: 0
 --- !u!65 &647429397
 BoxCollider:
@@ -10760,6 +11785,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 6750382564028958556, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &728864455
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 728864456}
+  - component: {fileID: 728864457}
+  m_Layer: 0
+  m_Name: Andon 009
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &728864456
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 728864455}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.69053304, z: -0, w: 0.7233008}
+  m_LocalPosition: {x: 311.03915, y: 3.15, z: 817.66394}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &728864457
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 728864455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &730819335
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -11731,7 +12830,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8e4571e0f1e4b0e90a36f1b0e33f06d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CheckpointSensor
-  lapManager: {fileID: 0}
   checkpointIndex: 2
 --- !u!65 &835309375
 BoxCollider:
@@ -12059,6 +13157,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -742490733656812717, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &870994076
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 870994077}
+  - component: {fileID: 870994078}
+  m_Layer: 0
+  m_Name: Andon 021
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &870994077
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 870994076}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.04206644, y: -0.74436563, z: -0.04710256, w: 0.66477937}
+  m_LocalPosition: {x: 620.5474, y: 8.766178, z: 621.80615}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &870994078
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 870994076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!1 &876247408
 GameObject:
   m_ObjectHideFlags: 0
@@ -12798,6 +13970,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -3959075476843439929, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &963761595
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 963761596}
+  - component: {fileID: 963761597}
+  m_Layer: 0
+  m_Name: Andon 012
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &963761596
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963761595}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.00020451272, y: 0.99877733, z: 0.0041465405, w: 0.04926099}
+  m_LocalPosition: {x: 288.29916, y: 3.8444533, z: 715.6323}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &963761597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963761595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &966215919
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -13527,6 +14773,72 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -8751192112428474927, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1001 &1028352386
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1911937256}
+    m_Modifications:
+    - target: {fileID: 810072451222865334, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_Name
+      value: CircuitFinishGate
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.000091552734
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+--- !u!4 &1028352387 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+  m_PrefabInstance: {fileID: 1028352386}
+  m_PrefabAsset: {fileID: 0}
 --- !u!64 &1030647955
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -13850,6 +15162,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 6593217175389860584, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1070099636
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1070099637}
+  - component: {fileID: 1070099638}
+  m_Layer: 0
+  m_Name: Andon 028
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1070099637
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1070099636}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 472.61023, y: 3.15, z: 695.2315}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1070099638
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1070099636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &1073280006
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -13953,6 +15339,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 1353746659569323740, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1093617821
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1093617822}
+  - component: {fileID: 1093617823}
+  m_Layer: 0
+  m_Name: Andon 014
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1093617822
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093617821}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.00020445838, y: 0.9987779, z: 0.0041464614, w: 0.049248867}
+  m_LocalPosition: {x: 291.60178, y: 4.176574, z: 675.7651}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1093617823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093617821}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &1093966633
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -14995,6 +16455,154 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -7945053023609533861, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1219187278
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1219187279}
+  - component: {fileID: 1219187280}
+  m_Layer: 0
+  m_Name: Andon 004
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1219187279
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1219187278}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.6905327, z: -0, w: 0.72330123}
+  m_LocalPosition: {x: 388.7849, y: 3.15, z: 767.2277}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1219187280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1219187278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
+--- !u!1 &1223218035
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1223218036}
+  - component: {fileID: 1223218037}
+  m_Layer: 0
+  m_Name: Andon 026
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1223218036
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1223218035}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.0001628996, z: -0, w: 1}
+  m_LocalPosition: {x: 472.61023, y: 3.15, z: 655.22723}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1223218037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1223218035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!1 &1227813713 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -170779839176976631, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -16730,6 +18338,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -9015379427867700606, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1415938513
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1415938514}
+  - component: {fileID: 1415938515}
+  m_Layer: 0
+  m_Name: Andon 003
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1415938514
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1415938513}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.6905327, z: -0, w: 0.72330123}
+  m_LocalPosition: {x: 430.90973, y: 3.15, z: 812.1035}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1415938515
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1415938513}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!1 &1416127730 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1048160797358887608, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -17337,6 +19019,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 9166935846335527078, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1495490548
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1495490549}
+  - component: {fileID: 1495490550}
+  m_Layer: 0
+  m_Name: Andon 029
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1495490549
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1495490548}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 519.3898, y: 3.15, z: 695.2315}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1495490550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1495490548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &1502524593
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -17452,6 +19208,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -2019133585180362250, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1516158812
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1516158813}
+  - component: {fileID: 1516158814}
+  m_Layer: 0
+  m_Name: Andon 030
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1516158813
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1516158812}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.30508953, z: -0, w: 0.9523237}
+  m_LocalPosition: {x: 470.6787, y: 3.15, z: 760.7516}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1516158814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1516158812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!1 &1521964815 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4222657208646682785, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -17572,6 +19402,38 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2298331476977032147, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1541913937
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1541913938}
+  m_Layer: 0
+  m_Name: NightEnnichi
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1541913938
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1541913937}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 452183777}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1542907370 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8916319836897805901, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -18007,6 +19869,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 70948873267775455, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1582355565
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1582355566}
+  - component: {fileID: 1582355567}
+  m_Layer: 0
+  m_Name: Andon 031
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1582355566
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1582355565}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.30508953, z: -0, w: 0.9523237}
+  m_LocalPosition: {x: 509.1232, y: 3.15, z: 787.397}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1582355567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1582355565}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!1 &1583205339 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4167168615360857055, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -18310,6 +20246,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 9066533519686134248, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1637819406
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1637819407}
+  - component: {fileID: 1637819408}
+  m_Layer: 0
+  m_Name: Andon 015
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1637819407
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637819406}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.00020445838, y: 0.9987779, z: 0.0041464614, w: 0.049248867}
+  m_LocalPosition: {x: 249.12805, y: 4.176574, z: 671.56586}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1637819408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637819406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &1639704956
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -18506,6 +20516,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2033176353797091144, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1658894436
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1658894437}
+  - component: {fileID: 1658894438}
+  m_Layer: 0
+  m_Name: Andon 000
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1658894437
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1658894436}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.6378355, z: -0, w: 0.77017266}
+  m_LocalPosition: {x: 465.1333, y: 3.15, z: 763.33307}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1658894438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1658894436}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &1661929628
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -19159,6 +21243,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 5548951344508217473, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1734554780
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1734554781}
+  - component: {fileID: 1734554782}
+  m_Layer: 0
+  m_Name: Andon 027
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1734554781
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1734554780}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.0001628996, z: -0, w: 1}
+  m_LocalPosition: {x: 519.3898, y: 3.15, z: 655.2358}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1734554782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1734554780}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!1 &1740367324 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3896614486005445867, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -20737,7 +22895,7 @@ MonoBehaviour:
   boostFadeInSeconds: 0.08
   boostFadeOutSeconds: 0.25
   boostBloom: 0.5
-  boostMotionBlur: 0.4
+  boostMotionBlur: 0
   boostLensDistortion: -0.12
   boostChromaticAberration: 0.15
   boostVignette: 0.12
@@ -20756,8 +22914,8 @@ MonoBehaviour:
   lightningFlashBloom: 1.5
   lightningFlashFadeSeconds: 0.35
   raceSpeedEffectsEnabled: 1
-  speedMotionBlurLow: 0.08
-  speedMotionBlurHigh: 0.3
+  speedMotionBlurLow: 0
+  speedMotionBlurHigh: 0
   speedBloomLow: 0.2
   speedBloomHigh: 0.35
   speedBloomThreshold: 1
@@ -21126,6 +23284,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -1130884983420687143, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1883552403
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1883552404}
+  - component: {fileID: 1883552405}
+  m_Layer: 0
+  m_Name: Andon 020
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1883552404
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1883552403}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.04206644, y: -0.74436563, z: -0.04710256, w: 0.66477937}
+  m_LocalPosition: {x: 625.58484, y: 8.766178, z: 576.4189}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1883552405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1883552403}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &1883687281
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -21148,6 +23380,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -7072886892360822341, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1884007681
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1884007682}
+  - component: {fileID: 1884007683}
+  m_Layer: 0
+  m_Name: Andon 001
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1884007682
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1884007681}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.6378355, z: -0, w: 0.77017266}
+  m_LocalPosition: {x: 474.3146, y: 3.15, z: 809.199}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1884007683
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1884007681}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &1884580650
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -21216,7 +23522,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   weather: 0
-  timeOfDay: 0
+  timeOfDay: 1
   directionalLights:
   - {fileID: 410087040}
   - {fileID: 989017261}
@@ -21508,7 +23814,6 @@ MonoBehaviour:
   - {fileID: 647429396}
   - {fileID: 2059898390}
   autoFindCheckpoints: 1
-  allowLapWithoutCheckpoints: 1
   goalLap: 2
   respawnWhenOffCourse: 0
   offCourseRespawnDelay: 2
@@ -21973,6 +24278,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 3613567641014311022, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1989749774
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1989749775}
+  - component: {fileID: 1989749776}
+  m_Layer: 0
+  m_Name: Andon 017
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1989749775
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1989749774}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.00020448377, y: 0.99877775, z: 0.0041466383, w: 0.04925287}
+  m_LocalPosition: {x: 253.69774, y: 4.5086956, z: 631.8238}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1989749776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1989749774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!1 &1995262044
 GameObject:
   m_ObjectHideFlags: 0
@@ -22037,6 +24416,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -7084056868559125198, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &1999018355
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1999018356}
+  - component: {fileID: 1999018357}
+  m_Layer: 0
+  m_Name: Andon 024
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1999018356
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1999018355}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.08578736, y: -0.37515497, z: 0.034893975, w: 0.92232406}
+  m_LocalPosition: {x: 494.57178, y: 4.988001, z: 603.8204}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1999018357
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1999018355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!1 &2001375628 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 393890890879264382, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -22568,7 +25021,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8e4571e0f1e4b0e90a36f1b0e33f06d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CheckpointSensor
-  lapManager: {fileID: 0}
   checkpointIndex: 1
 --- !u!65 &2059898391
 BoxCollider:
@@ -23324,6 +25776,80 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 5230259630339725765, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1 &2120873450
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2120873451}
+  - component: {fileID: 2120873452}
+  m_Layer: 0
+  m_Name: Andon 013
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2120873451
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2120873450}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.00020451272, y: 0.99877733, z: 0.0041465405, w: 0.04926099}
+  m_LocalPosition: {x: 244.5594, y: 3.8444533, z: 711.30786}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 452183777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2120873452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2120873450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NeonAndonLight
+  height: 1.75
+  width: 1.05
+  sideSegments: 48
+  cornerSharpness: 4
+  cornerPosts: 1
+  midRail: 1
+  paperBottomColor: {r: 1, g: 0.18, b: 0.55, a: 1}
+  paperTopColor: {r: 0.12, g: 0.85, b: 1, a: 1}
+  neonTubeColor: {r: 0.42, g: 1, b: 1, a: 1}
+  frameColor: {r: 0.07, g: 0.075, b: 0.095, a: 1}
+  paperGlow: 1.7
+  neonGlow: 3.2
+  lightFlow: 0.15
+  daytimeGlowScale: 0.55
+  hoverRing: 1
+  bobHeight: 0.07
+  bobSeconds: 5
+  spinSpeed: 5
+  hoverRingSpinSpeed: -30
+  mode: 0
+  createRealtimeLight: 0
+  lampShape: 0
+  lightIntensity: 14
+  lightRange: 22
+  spotAngle: 110
+  overrideLightColor: 0
+  lightColor: {r: 1, g: 0.72, b: 0.86, a: 1}
+  castShadows: 0
+  fadeSeconds: 0.4
+  lampBlend: 1
 --- !u!64 &2122595835
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -23697,72 +26223,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -6466179566686067123, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
---- !u!1001 &1028352386
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1911937256}
-    m_Modifications:
-    - target: {fileID: 810072451222865334, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_Name
-      value: CircuitFinishGate
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 1.25
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0.000091552734
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
---- !u!4 &1028352387 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-  m_PrefabInstance: {fileID: 1028352386}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -23780,3 +26240,4 @@ SceneRoots:
   - {fileID: 681897073}
   - {fileID: 139766892}
   - {fileID: 15590328}
+  - {fileID: 1541913938}

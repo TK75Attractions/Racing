@@ -37,6 +37,9 @@ public sealed class RaceEnvironmentController : MonoBehaviour
     private readonly List<Camera> staleCameras = new List<Camera>();
     private readonly List<LightState> lightStates = new List<LightState>();
     private Material skyMaterial, rainMaterial, originalSky;
+    private GameObject skylineRoot;
+    private Mesh skylineMesh;
+    private Material skylineMaterial;
     private Color originalAmbient, originalFogColor;
     private AmbientMode originalAmbientMode;
     private FogMode originalFogMode;
@@ -105,7 +108,7 @@ public sealed class RaceEnvironmentController : MonoBehaviour
         bool night = timeOfDay == TimeOfDay.Night;
         float cloud = weather == Weather.Sunny ? 0.12f : weather == Weather.Cloudy ? 0.8f : 1f;
         float lightFactor = weather == Weather.Sunny ? 1f : weather == Weather.Cloudy ? 0.6f : 0.4f;
-        Color horizon = night ? new Color(0.035f, 0.05f, 0.09f) : Color.Lerp(new Color(0.65f, 0.8f, 0.95f), new Color(0.38f, 0.43f, 0.49f), cloud);
+        Color horizon = night ? new Color(0.16f, 0.105f, 0.24f) : Color.Lerp(new Color(0.65f, 0.8f, 0.95f), new Color(0.38f, 0.43f, 0.49f), cloud);
         foreach (LightState state in lightStates)
         {
             if (state.light == null) continue;
@@ -125,15 +128,79 @@ public sealed class RaceEnvironmentController : MonoBehaviour
         if (skyMaterial == null && skyShader != null) skyMaterial = new Material(skyShader) { hideFlags = HideFlags.HideAndDontSave };
         if (skyMaterial != null)
         {
-            skyMaterial.SetColor("_TopColor", night ? new Color(0.004f, 0.008f, 0.025f) : new Color(0.08f, 0.36f, 0.75f));
+            skyMaterial.SetColor("_TopColor", night ? new Color(0.012f, 0.025f, 0.075f) : new Color(0.08f, 0.36f, 0.75f));
             skyMaterial.SetColor("_HorizonColor", horizon);
             skyMaterial.SetFloat("_CloudCover", cloud);
             skyMaterial.SetFloat("_Night", night ? 1f : 0f);
             RenderSettings.skybox = skyMaterial;
         }
+        UpdateSkyline(night);
         RefreshRainCameras();
         foreach (ParticleSystem system in rainSystems.Values) ConfigureRain(system);
         dirty = false;
+    }
+
+    private void UpdateSkyline(bool night)
+    {
+        if (night && skylineRoot == null)
+        {
+            RaceCourse course = null;
+            foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+            {
+                course = root.GetComponentInChildren<RaceCourse>();
+                if (course != null) break;
+            }
+            Shader shader = Resources.Load<Shader>("NightSkyline");
+            if (course == null || !course.HasValidPath || shader == null) return;
+            Bounds bounds = new Bounds();
+            bool first = true;
+            // Include both road edges, not only the centre line, in the enclosing circle.
+            for (float d = 0f; d <= course.TotalLength + 5f; d += 5f)
+            {
+                if (!course.TryGetSampleAtProgress(Mathf.Min(d, course.TotalLength), out var sample)) continue;
+                if (first) { bounds = new Bounds(sample.position, Vector3.zero); first = false; }
+                bounds.Encapsulate(sample.leftEdge);
+                bounds.Encapsulate(sample.rightEdge);
+            }
+            Vector3 center = new Vector3(bounds.center.x, bounds.min.y - 80f, bounds.center.z);
+            float radius = new Vector2(bounds.extents.x, bounds.extents.z).magnitude + 120f;
+            float height = bounds.size.y + 180f;
+            const int segments = 256;
+            var vertices = new Vector3[(segments + 1) * 2];
+            var uv = new Vector2[vertices.Length];
+            var triangles = new int[segments * 6];
+            for (int i = 0; i <= segments; i++)
+            {
+                float angle = (float)i / segments * Mathf.PI * 2f;
+                Vector3 radial = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
+                vertices[i * 2] = radial;
+                vertices[i * 2 + 1] = radial + Vector3.up * height;
+                uv[i * 2] = new Vector2((float)i / segments, 0f);
+                uv[i * 2 + 1] = new Vector2((float)i / segments, height);
+                if (i == segments) continue;
+                int v = i * 2, t = i * 6;
+                triangles[t] = v; triangles[t + 1] = v + 1; triangles[t + 2] = v + 2;
+                triangles[t + 3] = v + 1; triangles[t + 4] = v + 3; triangles[t + 5] = v + 2;
+            }
+            skylineMesh = new Mesh { name = "Night Skyline Ring", hideFlags = HideFlags.HideAndDontSave };
+            skylineMesh.vertices = vertices; skylineMesh.uv = uv; skylineMesh.triangles = triangles;
+            skylineMesh.RecalculateBounds();
+            skylineMaterial = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+            skylineRoot = new GameObject("Night Skyline (generated)") { hideFlags = HideFlags.DontSave };
+            skylineRoot.transform.SetParent(transform, false);
+            skylineRoot.transform.SetPositionAndRotation(center, Quaternion.identity);
+            // Keep dimensions in world metres even when the environment parent is scaled.
+            skylineRoot.transform.localScale = new Vector3(1f / transform.lossyScale.x,
+                1f / transform.lossyScale.y, 1f / transform.lossyScale.z);
+            skylineRoot.AddComponent<MeshFilter>().sharedMesh = skylineMesh;
+            var renderer = skylineRoot.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = skylineMaterial;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.lightProbeUsage = LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        }
+        if (skylineRoot != null) skylineRoot.SetActive(night);
     }
 
     private void CaptureOriginalState()
@@ -256,6 +323,12 @@ public sealed class RaceEnvironmentController : MonoBehaviour
         lightStates.Clear();
         Release(skyMaterial);
         Release(rainMaterial);
+        Release(skylineRoot);
+        Release(skylineMesh);
+        Release(skylineMaterial);
+        skylineRoot = null;
+        skylineMesh = null;
+        skylineMaterial = null;
         skyMaterial = rainMaterial = null;
         captured = false;
     }

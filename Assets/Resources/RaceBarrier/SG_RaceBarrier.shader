@@ -11,6 +11,9 @@ Shader "Racing/Race Barrier Hex Frost"
         _CellOpacity ("Frost opacity", Range(0, 1)) = 0.88
         _BlurRadius ("Background blur (pixels)", Range(0, 8)) = 3
         _GridTiling ("Grid tiling", Range(0.02, 2)) = 1
+        [HDR] _EdgeGlowColor ("Edge glow color", Color) = (0.05, 1.5, 2, 1)
+        _EdgeGlowIntensity ("Edge glow intensity", Range(0, 8)) = 1
+        _EdgeLineWidth ("Edge line width (meters)", Range(0.01, 0.2)) = 0.08
     }
     SubShader
     {
@@ -43,18 +46,23 @@ Shader "Racing/Race Barrier Hex Frost"
                 half _CellOpacity;
                 float _BlurRadius;
                 float _GridTiling;
+                half4 _EdgeGlowColor;
+                half _EdgeGlowIntensity;
+                float _EdgeLineWidth;
             CBUFFER_END
 
             struct Attributes
             {
                 float4 positionOS : POSITION;
                 float2 uv : TEXCOORD0;
+                float2 uv1 : TEXCOORD1;
             };
 
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
+                float2 edgeDistances : TEXCOORD1;
             };
 
             Varyings Vert(Attributes input)
@@ -62,6 +70,7 @@ Shader "Racing/Race Barrier Hex Frost"
                 Varyings output;
                 output.positionCS = GetVertexPositionInputs(input.positionOS.xyz).positionCS;
                 output.uv = input.uv;
+                output.edgeDistances = input.uv1;
                 return output;
             }
 
@@ -91,6 +100,12 @@ Shader "Racing/Race Barrier Hex Frost"
                 frosted = lerp(frosted, _CellTint.rgb, _CellTintAmount);
                 half3 color = lerp(frosted, _GridColor.rgb * _GridBrightness, hexLineMask);
                 half alpha = lerp(_CellOpacity, _GridOpacity, hexLineMask);
+                float edgeDistance = min(input.edgeDistances.x, input.edgeDistances.y);
+                float edgeAA = max(fwidth(edgeDistance), 0.001);
+                half edgeMask = 1.0h - smoothstep(_EdgeLineWidth - edgeAA,
+                    _EdgeLineWidth + edgeAA, edgeDistance);
+                color += _EdgeGlowColor.rgb * (_EdgeGlowIntensity * edgeMask);
+                alpha = max(alpha, edgeMask);
                 return half4(color, alpha);
             }
             ENDHLSL

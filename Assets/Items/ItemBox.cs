@@ -29,10 +29,9 @@ public sealed class ItemBox : RaceItemPickup
         return true;
     }
 
-    protected override Mesh CreateVisualMesh() => ItemVisualFactory.CreateBox(boxSize);
+    protected override Mesh CreateVisualMesh() => ItemVisualFactory.CreateItemBox(boxSize);
 
-    protected override Material CreateVisualMaterial() =>
-        ItemVisualFactory.CreateEmissiveMaterial("ItemBoxMaterial", Color.white, 1.4f, 0.8f);
+    protected override Material CreateVisualMaterial() => ItemVisualFactory.CreateItemBoxMaterial();
 
     // 角を下にして傾けると、どの向きからでも箱だと分かりやすくなります。
     protected override Quaternion GetVisualTilt() => Quaternion.Euler(35f, 0f, 45f);
@@ -40,6 +39,6 @@ public sealed class ItemBox : RaceItemPickup
     protected override void AnimateVisual(float time)
     {
         Color color = Color.HSVToRGB(Mathf.Repeat(time / hueCycleSeconds, 1f), 0.55f, 1f);
-        ItemVisualFactory.SetEmissiveColor(VisualMaterial, color, 1.4f);
+        ItemVisualFactory.SetItemBoxHue(VisualMaterial, color);
     }
 }
