@@ -1,0 +1,33 @@
+{
+  "source": "Logs/HumanPlaytest/Final/human-fast-items-7101/gameplay-p1.mp4",
+  "revision": "080224e98950db7c4d882a74d417258538ff9b66",
+  "videoSeconds": [
+    [
+      0,
+      12
+    ],
+    [
+      22,
+      35
+    ],
+    [
+      70,
+      86
+    ],
+    [
+      111,
+      122
+    ],
+    [
+      135,
+      142
+    ],
+    [
+      153,
+      159
+    ]
+  ],
+  "fps": 24,
+  "audio": false,
+  "method": "Unretouched real gameplay frames, joined in chronological order at normal game-clock speed."
+}
