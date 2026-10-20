@@ -77,7 +77,9 @@ public static class RacingHUDStyle
     }
     public static void Secondary(Transform target)
     {
-        CanvasGroup group = target.GetComponent<CanvasGroup>() ?? target.gameObject.AddComponent<CanvasGroup>();
+        // Editor の GetComponent は見つからないと「偽の null」を返し ?? を素通りするため、明示的に判定する。
+        CanvasGroup group = target.GetComponent<CanvasGroup>();
+        if (group == null) group = target.gameObject.AddComponent<CanvasGroup>();
         group.alpha = SecondaryOpacity;
         group.blocksRaycasts = false;
     }
