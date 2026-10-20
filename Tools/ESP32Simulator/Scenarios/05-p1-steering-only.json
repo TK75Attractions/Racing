@@ -1,0 +1,8 @@
+{
+  "name": "P1 wheel only, no ADS pedals or P2, loss and recovery",
+  "steps": [
+    { "duration": 1.5, "p1": { "steering": 78, "accelUnavailable": true, "brakeUnavailable": true }, "p2": { "steeringUnavailable": true, "accelUnavailable": true, "brakeUnavailable": true } },
+    { "duration": 0.5, "p1": { "steeringUnavailable": true, "accelUnavailable": true, "brakeUnavailable": true }, "p2": { "steeringUnavailable": true, "accelUnavailable": true, "brakeUnavailable": true } },
+    { "duration": 30, "p1": { "steering": 78, "accelUnavailable": true, "brakeUnavailable": true }, "p2": { "steeringUnavailable": true, "accelUnavailable": true, "brakeUnavailable": true } }
+  ]
+}

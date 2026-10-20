@@ -79,8 +79,72 @@ public static class P1SteeringTestValidation
     public static void RunAll()
     {
         Run();
+        string wheelPort = Environment.GetEnvironmentVariable("RACING_WHEEL_ONLY_TEST_PTY");
+        if (!string.IsNullOrEmpty(wheelPort)) ValidateWheelOnly(wheelPort);
         SkillGameplayValidation.Run();
         RaceFeatureValidation.Run();
+    }
+
+    private static void ValidateWheelOnly(string port)
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        bool enabled = SessionState.GetBool(SerialSimulatorSession.EnabledKey, false);
+        string oldPort = SessionState.GetString(SerialSimulatorSession.PortKey, "");
+        float oldDivisor = SessionState.GetFloat(SerialSimulatorSession.DivisorKey, 6.5f);
+        Gmanager previous = Gmanager.Control;
+        GameObject root = new GameObject("Wheel-only QA"); root.SetActive(false);
+        Keyboard keyboard = InputSystem.AddDevice<Keyboard>(); keyboard.MakeCurrent();
+        InputManager input = null;
+        try
+        {
+            SessionState.SetBool(SerialSimulatorSession.EnabledKey, true); SessionState.SetString(SerialSimulatorSession.PortKey, port);
+            SessionState.SetFloat(SerialSimulatorSession.DivisorKey, 6.5f);
+            Gmanager race = root.AddComponent<Gmanager>(); Gmanager.Control = race;
+            input = root.AddComponent<InputManager>(); race.IManager = input;
+            input.isP1SerialP2KeyboardDebugMode = true;
+            input.SetP1SteeringTestMode(P1SteeringTestMode.Normal);
+            var car = new GameObject("Wheel-only input target", typeof(Rigidbody)); car.transform.SetParent(root.transform);
+            var entries = (List<RaceParticipant>)typeof(Gmanager).GetField("participants", Private).GetValue(race);
+            entries.Add(new RaceParticipant { Index = 0, Car = car, Body = car.GetComponent<Rigidbody>() });
+            race.state = Gmanager.State.Game;
+            System.IO.File.WriteAllText(Environment.GetEnvironmentVariable("RACING_WHEEL_ONLY_TEST_START"), "start");
+            input.Init();
+            DateTime deadline = DateTime.UtcNow.AddSeconds(6);
+            while (!input.IsPlayerConnected(0) && DateTime.UtcNow < deadline) { input.UpdateInput(.01f); Thread.Sleep(10); }
+            input.SharedSerialInputSource.TrySendCommand("GET_STATUS", Array.Empty<string>(), out _, out _);
+            while (input.SharedSerialInputSource.Session.AdsStatus != "Fault" && DateTime.UtcNow < deadline)
+            { input.UpdateInput(.01f); Thread.Sleep(10); }
+            Step(input, keyboard, Key.W, Key.UpArrow, Key.RightArrow);
+            Debug.Log($"P1_WHEEL_ONLY_STATE: status={DriveInputStatus.Of(input.GetPlayerInputSource(0))} mode={input.SharedSerialInputSource.Session.InputMode} ADS={input.SharedSerialInputSource.Session.AdsStatus} p1={input.GetInputState(0).steering}/{input.GetInputState(0).pedal} p2={input.GetInputState(1).steering}/{input.GetInputState(1).pedal}");
+            Require(input.SteeringTestMode == P1SteeringTestMode.KeyboardPedal && input.IsPlayerConnected(0) && input.GetInputState(0).steering == 12 && input.GetInputState(0).pedal == 1 &&
+                input.GetInputState(1).steering == 10 && input.GetInputState(1).pedal == 1 && input.SharedSerialInputSource.Session.AdsStatus == "Fault",
+                "With both ESP32 pedals and P2 unavailable, P1 wheel/W and P2 keyboard must work without inventing ADS health.");
+            input.SetP1SteeringTestMode(P1SteeringTestMode.ConstantPedal); input.SetP1ConstantPedal(.65f);
+            var gate = new PlayerDriveInputGate(input.GetPlayerInputSource(0)); _ = gate.CurrentState;
+            Require(gate.CurrentState.pedal == .65f && gate.CurrentState.steering == 12, "Constant pedal must also work in wheel-only mode.");
+            bool stopped = false, reconnected = false; deadline = DateTime.UtcNow.AddSeconds(6);
+            while (DateTime.UtcNow < deadline)
+            {
+                Step(input, keyboard, Key.UpArrow);
+                if (!input.IsPlayerConnected(0)) stopped |= gate.CurrentState.pedal == 0 && gate.NeedsPedalRelease;
+                else if (stopped)
+                {
+                    reconnected = gate.CurrentState.pedal == 0 && gate.NeedsPedalRelease;
+                    break;
+                }
+                Thread.Sleep(10);
+            }
+            Require(stopped && reconnected && input.GetInputState(1).pedal == 1, "P1 loss/reconnect must keep its gate latched and leave P2 keyboard available.");
+            input.ResumeP1ConstantPedal(); _ = gate.CurrentState;
+            Require(gate.CurrentState.pedal == .65f, "Explicit resume must restore the wheel-only constant pedal after recovery.");
+            Debug.Log("P1_STEERING_TEST_WHEEL_ONLY_PASS: real PTY, ADS/pedals/P2 absent, W/S and constant input, P2 keyboard, actual P1 outage, held-input reconnect latch and F8 resume.");
+        }
+        finally
+        {
+            input?.SharedSerialInputSource?.Dispose(); InputSystem.RemoveDevice(keyboard); UnityEngine.Object.DestroyImmediate(root);
+            Gmanager.Control = previous; SessionState.SetBool(SerialSimulatorSession.EnabledKey, enabled); SessionState.SetString(SerialSimulatorSession.PortKey, oldPort);
+            SessionState.SetFloat(SerialSimulatorSession.DivisorKey, oldDivisor);
+        }
     }
 
     private static void ValidateNotices()
@@ -281,6 +345,18 @@ public static class P1SteeringTestValidation
             input.SetP1SteeringTestMode(P1SteeringTestMode.Normal); Step(input, keyboard, Key.W, Key.A);
             Require(input.GetInputState(0).steering == -10f && input.GetInputState(0).pedal == 1f, "Normal restores the original keyboard source after live activation.");
             Debug.Log("P1_STEERING_TEST_KEYBOARD_START_PASS: lazy serial opening, stable adapters, P2 keyboard unchanged and original keyboard restored.");
+
+            SessionState.SetBool(SerialSimulatorSession.EnabledKey, true);
+            input.isP1SerialP2KeyboardDebugMode = true;
+            input.Init(); input.SetP1SteeringTestMode(P1SteeringTestMode.KeyboardPedal);
+            transport = input.SharedSerialInputSource;
+            deadline = DateTime.UtcNow.AddSeconds(6);
+            while (!input.IsPlayerConnected(0) && DateTime.UtcNow < deadline) { input.UpdateInput(.01f); Thread.Sleep(10); }
+            Step(input, keyboard, Key.W, Key.UpArrow, Key.RightArrow);
+            Require(input.IsPlayerConnected(0) && input.GetInputState(0).steering == 12f && input.GetInputState(0).pedal == 1f &&
+                input.GetInputState(1).steering == 10f && input.GetInputState(1).pedal == 1f && transport.Session.InputMode == "P1_STEERING",
+                "P1 serial/P2 keyboard must also hold with an explicit PTY session and negotiate wheel-only mode.");
+            Debug.Log("P1_STEERING_TEST_ROUTING_PASS: P1 ESP32 wheel and W/S, P2 keyboard, explicit steering-only negotiation; default two-serial routing verified above.");
         }
         finally
         {

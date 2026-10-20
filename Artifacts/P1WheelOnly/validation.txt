@@ -1,0 +1,22 @@
+HUD_FONT_BUILD_PASS: static medium and bold, 354 characters.
+P1_STEERING_TEST_NOTICE_PASS: status-specific messages, optional keyboard, explicit resume, zero/pause settings, blocked/finished/unused-source suppression and static font coverage.
+P1_STEERING_TEST_LOGIC_PASS: independent axes, normal restore, constant race-only, bounds, keyboard optional, pause, disconnect and explicit neutral-acknowledged resume.
+P1_STEERING_TEST_PTY_PASS: real RGP input, keyboard W/S and ignored A/D, P2 unchanged, preparation neutral, live switching/release, S priority, F8 release/resume, no keyboard device, production physics distance=16.84m heading=75.93deg speed=18.36m/s, normal restore and port closure.
+P1_STEERING_TEST_KEYBOARD_START_PASS: lazy serial opening, stable adapters, P2 keyboard unchanged and original keyboard restored.
+P1_STEERING_TEST_ROUTING_PASS: P1 ESP32 wheel and W/S, P2 keyboard, explicit steering-only negotiation; default two-serial routing verified above.
+P1_WHEEL_ONLY_STATE: status=Ready mode=P1_STEERING ADS=Fault p1=12/1 p2=10/1
+P1_STEERING_TEST_WHEEL_ONLY_PASS: real PTY, ADS/pedals/P2 absent, W/S and constant input, P2 keyboard, actual P1 outage, held-input reconnect latch and F8 resume.
+SKILL_GAMEPLAY_RULES_PASS
+RACE_FEATURE_VALIDATION_PASS: presets, live switches, coaching, anti-chain protection, steering assist, landing rewards, tube lines and fonts.
+SWIFT_RGP_TESTS_PASS: 107 assertions
+CLI_START_GATE_PASS: HELLO before gate, no early TEL, six-value frame, clean SIGTERM
+SERIAL_PROTOCOL_REGRESSION_PASS: 18 existing NUnit cases
+MONO_RGP_PTY_RECEIVER_PASS: hitches (both players keep their held pedals)
+MONO_RGP_PTY_RECEIVER_PASS: queued-stale (real outage, held-pedal block, release and repress)
+MONO_RGP_PTY_RECEIVER_PASS: timeout
+MONO_RGP_PTY_RECEIVER_PASS: fragments
+MONO_INTEGRATION_TESTS_PASS
+Tools/Validate-Rgp.sh: Tests: 101 passed, 0 failed
+Firmware C++: 510 protocol assertions; both=78, p1=30, p2=30, none=4, steering-only=21; merged filter/diagnostics=536
+Firmware IMU identity regression: 8 supported identities, 16 assertions each
+PlatformIO esp32dev build: SUCCESS; firmware.bin 395744 bytes; physical flash/playtest not performed

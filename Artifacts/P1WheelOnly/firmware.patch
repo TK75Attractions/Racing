@@ -1,0 +1,291 @@
+From a94f1b5b054e237372422b175ec94fceae500d7f Mon Sep 17 00:00:00 2001
+From: Kentuc322 <kenichirowada0322@gmail.com>
+Date: Wed, 21 Oct 2026 00:20:34 +0900
+Subject: [PATCH] feat: support negotiated P1 steering-only input without
+ pedals
+
+---
+ README.md              | 11 +++++++++++
+ src/main.cpp           | 37 ++++++++++++++++++++++++-------------
+ src/rgp_protocol.cpp   | 20 +++++++++++++++-----
+ src/rgp_protocol.hpp   |  4 ++++
+ test/firmware_test.cpp | 29 +++++++++++++++++++++++++++++
+ test/run_tests.py      |  2 +-
+ 6 files changed, 84 insertions(+), 19 deletions(-)
+
+diff --git a/README.md b/README.md
+index 0a7f581..29784cd 100644
+--- a/README.md
++++ b/README.md
+@@ -152,3 +152,14 @@ IMUは2台・P1のみ・P2のみ・0台の各構成で、校正・ANGLE_ZERO・T
+ ## 配線資料・過去の実機診断
+ 
+ `hardware/Rev8`、`hardware/Rev9`、`hardware/Rev10` に図面、工程表、生成スクリプトを収録しています。現行の配線はこのREADME冒頭を優先してください。`diagnostics/2026-10-09-findings.md` と同日のログは旧CSVファームウェアで測定した履歴であり、現行ファームウェアの実測結果ではありません。
++
++
++## P1ハンドルだけのデバッグ入力
++
++ゲームから `SET_INPUT_MODE,P1_STEERING` を受けた場合に限り、P1の0x68のハンドルだけを校正・角度基準・READY判定の対象とします。ADS1115・両アクセル・P2ハンドルは不要。GET_STATUSのADS_OKは実際の接続状態を維持し、不在を正常と偽りません。TELは6項目を維持しますが、この明示的なモードではP1ハンドル以外の5項目を0にします。ゲーム側がペダルとP2入力をキーボードまたは常時ペダルで補います。
++
++`SET_INPUT_MODE,ALL` または新しいOPEN_SESSIONで通常の接続条件へ戻ります。INPUT_MODEはGET_CONFIG末尾とCONFIG_CHANGEDで通知します。変更はACK成功後に反映し、新しいTELを待ってください。未対応のホストは従来どおりALLで動きます。
++
++GET_STATUSの成功ACK後に、接続中の各ハンドルをSYS DEVICEで、未接続の各スロットをEVT IMU_LOST,0x68/0x69で通知します。ゲームが起動時通知を逃してもP1/P2を特定できるようにする拡張です。
++
++`python3 test/run_tests.py`には、P1のみ・ADSなし・ペダルなしでの起動、モード交渉、実際の校正処理、TELの割当、未使用P2の追加、P1切断と復旧、通常モード復帰、新セッションの通常条件復帰を追加しています。ハードウェアと角度推定はテスト用の代替実装であり、実ESP32への書き込み・操作試験とは区別します。
+diff --git a/src/main.cpp b/src/main.cpp
+index ee5b4d9..68eb8f6 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -102,6 +102,7 @@ public:
+   void setBeta(float value) override;
+   void calibrate(uint32_t origin, const std::string& target) override;
+   void scan(uint32_t origin) override;
++  void reportInputDevices(uint32_t now) override;
+ };
+ FirmwareDevice device;
+ rgp::Protocol protocol(device);
+@@ -350,14 +351,22 @@ static void updatePedals() {
+   }
+ }
+ 
++void FirmwareDevice::reportInputDevices(uint32_t now) {
++  for (auto& h : handles) {
++    if (h.online) protocol.send("SYS", "DEVICE,IMU," + addressText(h.address) + "," + addressText(h.imu.getWhoAmI()), now);
++    else protocol.event("IMU_LOST," + addressText(h.address), now);
++  }
++}
+ rgp::Status FirmwareDevice::status() const {
+   rgp::Status s;
+   s.ads = adsOnline;
+   for (size_t i = 0; i < PEDAL_COUNT; ++i) s.ads = s.ads && pedalConnected[i] && pedalSampled[i];
+-  s.imu = anyHandleOnline();
++  s.imu = protocol.p1SteeringOnly() ? handles[0].online : anyHandleOnline();
+   s.angle = s.imu;
+   s.calibrated = s.imu && validPedalCalibration() && !calibration.active;
+-  for (const auto& h : handles) {
++  for (size_t i = 0; i < 2; ++i) {
++    if (protocol.p1SteeringOnly() && i != 0) continue;
++    const auto& h = handles[i];
+     if (!h.online) continue;
+     s.angle = s.angle && !h.settling && h.refLocked && isfinite(h.angleDeg) && fabsf(h.angleDeg) <= 3600;
+     s.calibrated = s.calibrated && h.calib.valid;
+@@ -365,10 +374,12 @@ rgp::Status FirmwareDevice::status() const {
+   return s;
+ }
+ bool FirmwareDevice::zeroAngles() {
+-  if (!anyHandleOnline()) return false;
+-  for (auto& h : handles)
+-    if (h.online && (h.settling || !h.orientation.hasAbsoluteShaftReference())) return false;
+-  for (auto& h : handles) {
++  if (protocol.p1SteeringOnly() ? !handles[0].online : !anyHandleOnline()) return false;
++  for (size_t i = 0; i < 2; ++i)
++    if ((!protocol.p1SteeringOnly() || i == 0) && handles[i].online && (handles[i].settling || !handles[i].orientation.hasAbsoluteShaftReference())) return false;
++  for (size_t i = 0; i < 2; ++i) {
++    if (protocol.p1SteeringOnly() && i != 0) continue;
++    auto& h = handles[i];
+     if (!h.online) continue;
+     h.orientation.restartAngleTracking();
+     h.refLocked = true;
+@@ -388,7 +399,7 @@ void FirmwareDevice::calibrate(uint32_t origin, const std::string& target) {
+   calibration.active = true;
+   // Freeze the target set: an absent slot is optional, but losing a target
+   // during calibration must fail rather than silently claiming success.
+-  for (size_t i = 0; i < 2; ++i) calibration.targets[i] = handles[i].online;
++  for (size_t i = 0; i < 2; ++i) calibration.targets[i] = handles[i].online && (!protocol.p1SteeringOnly() || i == 0);
+   while (calibration.handle < 2 && !calibration.targets[calibration.handle]) ++calibration.handle;
+   calibration.origin = origin;
+   calibration.target = target;
+@@ -509,7 +520,7 @@ static void updateScan() {
+ static void updateState() {
+   if (protocol.state() == rgp::State::Fatal || scanJob.active) return;
+   const uint32_t now = millis();
+-  const bool busOnline = adsOnline && anyHandleOnline();
++  const bool busOnline = protocol.p1SteeringOnly() ? handles[0].online : adsOnline && anyHandleOnline();
+   if (!busOnline && !busFailureReported) {
+     protocol.error("ERROR,I2C,CONNECTION_LOST", now);
+     protocol.event("I2C_LOST", now);
+@@ -530,13 +541,13 @@ static void updateState() {
+   bool knownDisconnected = false;
+   for (size_t i = 0; i < PEDAL_COUNT; ++i)
+     knownDisconnected = knownDisconnected || (pedalChecked[i] && (!pedalConnected[i] || !pedalSampled[i]));
+-  if (!busOnline || knownDisconnected) {
++  if (!busOnline || (knownDisconnected && !protocol.p1SteeringOnly())) {
+     connectionWasLost = true;
+     protocol.setState(rgp::State::Recovering, now);
+-  } else if (s.ads && s.imu && s.angle && s.calibrated) {
++  } else if (protocol.inputsReady(s)) {
+     protocol.setState(rgp::State::Ready, now);
+     connectionWasLost = false;
+-  } else if (!connectionWasLost || s.ads) protocol.setState(rgp::State::WaitAngle, now);
++  } else if (!connectionWasLost || s.ads || protocol.p1SteeringOnly()) protocol.setState(rgp::State::WaitAngle, now);
+ }
+ static void outputLatestInputs() {
+   const uint32_t nowUs = micros();
+@@ -552,8 +563,8 @@ static void outputLatestInputs() {
+   // Preserve player/address mapping and the six RGP/1 fields. An absent handle
+   // has a neutral value; never forward its last angle or mirror the other IMU.
+   const rgp::Inputs snapshot = {{handles[0].online ? handles[0].angleDeg : 0.0f,
+-    handles[1].online ? handles[1].angleDeg : 0.0f},
+-    {pedals[0], pedals[1]}, {0.0f, 0.0f}};
++    !protocol.p1SteeringOnly() && handles[1].online ? handles[1].angleDeg : 0.0f},
++    {protocol.p1SteeringOnly() ? 0.0f : pedals[0], protocol.p1SteeringOnly() ? 0.0f : pedals[1]}, {0.0f, 0.0f}};
+   protocol.telemetry(snapshot, millis());
+ }
+ // Register diagnostics use RGP DBG frames; never interleave legacy CSV/raw logs.
+diff --git a/src/rgp_protocol.cpp b/src/rgp_protocol.cpp
+index 8f628bb..bac9cb0 100644
+--- a/src/rgp_protocol.cpp
++++ b/src/rgp_protocol.cpp
+@@ -190,8 +190,7 @@ void Protocol::receive(uint8_t byte, uint32_t now) {
+ void Protocol::tick(uint32_t now) { decoder.expire(now); }
+ bool Protocol::telemetry(const Inputs& inputs, uint32_t now) {
+   const Status s = device.status();
+-  if (currentState != State::Ready || !telStream || busy() || !s.ads || !s.imu ||
+-      !s.angle || !s.calibrated || !validInputs(inputs)) return false;
++  if (currentState != State::Ready || !telStream || busy() || !inputsReady(s) || !validInputs(inputs)) return false;
+   send("TEL", fixed(inputs.handle[0], 2) + "," + fixed(inputs.accel[0], 3) + "," +
+        fixed(inputs.brake[0], 3) + "," + fixed(inputs.handle[1], 2) + "," +
+        fixed(inputs.accel[1], 3) + "," + fixed(inputs.brake[1], 3), now);
+@@ -224,6 +223,9 @@ void Protocol::command(const Message& m, uint32_t now) {
+     expected = 2;
+     if (arg(0) != "TEL" && arg(0) != "IMU" && arg(0) != "DBG") invalid = 1;
+     else if (arg(1) != "0" && arg(1) != "1") invalid = 2;
++  } else if (name == "SET_INPUT_MODE") {
++    expected = 1;
++    if (arg(0) != "ALL" && arg(0) != "P1_STEERING") invalid = 1;
+   } else if (name == "CALIBRATE") {
+     expected = 1;
+     if (arg(0) != "GYRO" && arg(0) != "MAG" && arg(0) != "ALL") invalid = 1;
+@@ -260,13 +262,15 @@ void Protocol::command(const Message& m, uint32_t now) {
+   else if (!known || (name == "CALIBRATE" && arg(0) == "MAG") ||
+            (name == "SET_RATE" && arg(0) != "TEL") ||
+            (name == "SET_STREAM" && arg(0) == "IMU")) result = "UNSUPPORTED";
+-  else if (busy() && (name == "CALIBRATE" || name == "SCAN_I2C"))
++  else if (busy() && (name == "CALIBRATE" || name == "SCAN_I2C" || name == "SET_INPUT_MODE"))
+     result = "BUSY," + activeCommand + "," + number(activeOrigin);
+   else if ((name == "ANGLE_ZERO" || name == "SET_BETA" || name == "CALIBRATE") &&
+            currentState != State::Ready && currentState != State::WaitAngle)
+     result = "NOT_READY," + std::string(stateName(currentState));
+   else if (name == "OPEN_SESSION") {
+     session = arg(0);
++    // A new host never inherits a previous host's reduced hardware requirements.
++    if (newSession) steeringOnly = false;
+     result = "OK," + session;
+   } else if (name == "PING") result = "OK,PONG";
+   else if (name == "GET_STATUS") {
+@@ -275,7 +279,12 @@ void Protocol::command(const Message& m, uint32_t now) {
+       (s.imu ? "1" : "0") + "," + (s.angle ? "1" : "0") + "," + (s.calibrated ? "1" : "0");
+   } else if (name == "GET_CONFIG") {
+     result = "OK,TEL_RATE," + number(telRate) + ",IMU_RATE,20,TEL_STREAM," + (telStream ? "1" : "0") +
+-      ",IMU_STREAM,0,DBG_STREAM," + (dbgStream ? "1" : "0") + ",BETA," + fixed(currentBeta, 3);
++      ",IMU_STREAM,0,DBG_STREAM," + (dbgStream ? "1" : "0") + ",BETA," + fixed(currentBeta, 3) +
++      ",INPUT_MODE," + (steeringOnly ? "P1_STEERING" : "ALL");
++  } else if (name == "SET_INPUT_MODE") {
++    steeringOnly = arg(0) == "P1_STEERING";
++    changed = "INPUT_MODE," + arg(0);
++    result = "OK," + arg(0);
+   } else if (name == "ANGLE_ZERO") {
+     zeroed = device.zeroAngles();
+     result = zeroed ? "OK" : "FAILED,ANGLE_REFERENCE_INVALID";
+@@ -306,6 +315,7 @@ void Protocol::command(const Message& m, uint32_t now) {
+   ++processed;
+   receipts.push_back({m.seq, now, processed, m.body, result});
+   ack(result);
++  if (name == "GET_STATUS" && result.compare(0, 3, "OK,") == 0) device.reportInputDevices(now);
+   if (!changed.empty()) event("CONFIG_CHANGED," + changed, now);
+   if (name == "ANGLE_ZERO" && result == "FAILED,ANGLE_REFERENCE_INVALID")
+     error("WARN,HANDLE,ANGLE_REFERENCE_INVALID", now);
+@@ -313,7 +323,7 @@ void Protocol::command(const Message& m, uint32_t now) {
+     event("ANGLE_RESET", now);
+     event("ANGLE_LOCKED", now);
+     const Status s = device.status();
+-    if (s.ads && s.imu && s.angle && s.calibrated) setState(State::Ready, now);
++    if (inputsReady(s)) setState(State::Ready, now);
+   }
+   if (startCal) device.calibrate(m.seq, arg(0));
+   if (startScan) device.scan(m.seq);
+diff --git a/src/rgp_protocol.hpp b/src/rgp_protocol.hpp
+index 523e405..3fc23de 100644
+--- a/src/rgp_protocol.hpp
++++ b/src/rgp_protocol.hpp
+@@ -57,6 +57,7 @@ public:
+   // These only schedule work; serial input must keep being serviced.
+   virtual void calibrate(uint32_t origin, const std::string& target) = 0;
+   virtual void scan(uint32_t origin) = 0;
++  virtual void reportInputDevices(uint32_t) {}
+ };
+ 
+ class Protocol {
+@@ -74,6 +75,8 @@ public:
+   uint32_t telemetryPeriodUs() const { return 1000000U / telRate; }
+   bool telemetryEnabled() const { return telStream; }
+   bool diagnosticsEnabled() const { return dbgStream; }
++  bool p1SteeringOnly() const { return steeringOnly; }
++  bool inputsReady(const Status& s) const { return (steeringOnly || s.ads) && s.imu && s.angle && s.calibrated; }
+   float beta() const { return currentBeta; }
+   bool busy() const { return !activeCommand.empty(); }
+   void finishOperation() { activeCommand.clear(); }
+@@ -94,6 +97,7 @@ private:
+   float currentBeta = 0.2f;
+   bool telStream = true;
+   bool dbgStream = false;
++  bool steeringOnly = false;
+   std::string session;
+   std::vector<Receipt> receipts;
+   std::string activeCommand;
+diff --git a/test/firmware_test.cpp b/test/firmware_test.cpp
+index 310702f..f9bc932 100644
+--- a/test/firmware_test.cpp
++++ b/test/firmware_test.cpp
+@@ -121,6 +121,35 @@ static void singleHandleScenario(size_t player) {
+ int main(int argc, char** argv) {
+   try {
+     const std::string mode = argc > 1 ? argv[1] : "both";
++    if (mode == "steering-only") {
++      mockDevices[0x68] = true; mockPedals[0] = mockPedals[1] = false;
++      setup(); run(5100);
++      require(protocol.state() == rgp::State::Recovering && output("TEL").empty(), "ALL mode must not invent absent pedals");
++      command(0, "OPEN_SESSION,0123456789ABCDEF"); command(1, "SET_INPUT_MODE,P1_STEERING");
++      run(20);
++      require(protocol.state() == rgp::State::WaitAngle && !device.status().ads, "P1 steering mode needs real calibration but not ADS");
++      command(2, "CALIBRATE,ALL"); run(11000);
++      require(protocol.state() == rgp::State::Ready && handles[0].calib.valid && !device.status().ads, "P1 alone calibrates and becomes ready without either pedal or ADS");
++      handles[0].angleDeg = 78; pedals[0] = pedals[1] = .9f;
++      Serial.output.clear(); delay(10); outputLatestInputs(); auto tel = output("TEL");
++      require(tel.size() == 1 && tel[0].fields[3] == "78.00", "P1 physical angle reaches TEL");
++      for (size_t i = 4; i < 9; ++i) require(std::stof(tel[0].fields[i]) == 0, "unused axes are neutral only in explicit steering mode");
++      command(3, "GET_STATUS");
++      require(contains("ACK", "3,GET_STATUS,OK,READY,0,1,1,1"), "ADS absence remains honestly reported");
++      require(contains("EVT", "IMU_LOST,0x69"), "status queries identify the unused P2 slot after missed boot");
++      mockDevices[0x69] = true; run(1500);
++      require(protocol.state() == rgp::State::Ready && !handles[1].calib.valid, "an unused newly attached P2 must not interrupt P1");
++      mockDevices[0x68] = false; Serial.output.clear(); run(30);
++      require(protocol.state() == rgp::State::Recovering && output("TEL").empty(), "P2 can never substitute for the missing P1 wheel");
++      mockDevices[0x68] = true; run(2400);
++      require(protocol.state() == rgp::State::Ready, "P1 reference settles after reconnection");
++      command(4, "SET_INPUT_MODE,ALL"); run(20);
++      require(protocol.state() == rgp::State::Recovering, "switching back restores real pedal requirements");
++      command(5, "SET_INPUT_MODE,P1_STEERING"); run(20);
++      command(0, "OPEN_SESSION,FEDCBA9876543210"); run(20);
++      require(!protocol.p1SteeringOnly() && protocol.state() == rgp::State::Recovering, "a new session cannot inherit steering-only mode");
++      std::cout << "STEERING_ONLY_FIRMWARE_PASS " << assertions << " assertions\n"; return 0;
++    }
+     if (mode == "p1" || mode == "p2") {
+       singleHandleScenario(mode == "p1" ? 0 : 1);
+       std::cout << "PASS: " << mode << "-only firmware simulation, " << assertions << " assertions.\n";
+diff --git a/test/run_tests.py b/test/run_tests.py
+index 7d5626d..93b0c7f 100644
+--- a/test/run_tests.py
++++ b/test/run_tests.py
+@@ -24,7 +24,7 @@ with tempfile.TemporaryDirectory(prefix="rgp-tests-") as temporary:
+         str(ROOT / "src/rgp_protocol.cpp"), str(ROOT / "test/firmware_test.cpp"),
+         "-o", str(firmware),
+     ], check=True)
+-    for mode in ("both", "p1", "p2", "none"):
++    for mode in ("both", "p1", "p2", "none", "steering-only"):
+         subprocess.run([str(firmware), mode], check=True)
+ 
+     merged = Path(temporary) / "merged_features_test"
+-- 
+2.50.1 (Apple Git-155)
+

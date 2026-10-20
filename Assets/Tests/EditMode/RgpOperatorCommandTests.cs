@@ -109,6 +109,62 @@ public sealed class RgpOperatorCommandTests
         Assert.That(session.Imus[0].Status,Is.EqualTo("Ok"));
         Assert.That(session.Imus[1].Status,Is.EqualTo("Unknown"));
     }
+    [Test] public void PlayerSlotsFollowAddressesAndAnUnusedLostWheelCannotDisableTheOther()
+    {
+        var session = Ready(out _);
+        session.Receive(Frame("SYS,8,0,DEVICE,IMU,0x68,0x68"), 10);
+        Assert.That(session.IsPlayerSteeringAvailable(0), Is.True);
+        Assert.That(session.IsPlayerSteeringAvailable(1), Is.False);
+        session.Receive(Frame("SYS,9,0,DEVICE,IMU,0x69,0x68"), 11);
+        Assert.That(session.IsPlayerSteeringAvailable(1), Is.True);
+        session.Receive(Frame("EVT,10,0,IMU_LOST,0x68"), 12);
+        Assert.That(session.IsPlayerSteeringAvailable(0), Is.False);
+        Assert.That(session.IsPlayerSteeringAvailable(1), Is.True);
+        session.TryCommand("GET_STATUS", null, 13, out uint status, out _);
+        session.Receive(Frame("ACK,11,0," + status + ",GET_STATUS,OK,READY,1,1,1,1"), 14);
+        Assert.That(session.IsPlayerSteeringAvailable(0), Is.False, "Aggregate READY cannot revive a known disconnected player.");
+        session.Receive(Frame("SYS,12,0,DEVICE,IMU,0x68,0x68"), 15);
+        Assert.That(session.IsPlayerSteeringAvailable(0), Is.True);
+    }
+    [Test] public void SteeringOnlyModeNeedsAMatchedAcknowledgementAndNewTelemetryButNoPedals()
+    {
+        var session = Ready(out var sent);
+        session.RequestInputMode(true); session.Tick(10);
+        SerialInputProtocol.TryParse(sent[sent.Count - 1], out RgpFrame mode);
+        Assert.That(mode.Data[0], Is.EqualTo("SET_INPUT_MODE"));
+        session.Receive(Frame("ACK,8,0,999,SET_INPUT_MODE,OK,P1_STEERING"), 11);
+        Assert.That(session.InputModeReady, Is.False);
+        Assert.That(session.Receive(Frame("TEL,9,0,78,0,0,0,0,0"), 12), Is.EqualTo("NOT_READY"));
+        session.Receive(Frame("ACK,10,0," + mode.Sequence + ",SET_INPUT_MODE,OK,P1_STEERING"), 13);
+        session.TryCommand("GET_STATUS", null, 14, out uint status, out _);
+        session.Receive(Frame("ACK,11,0," + status + ",GET_STATUS,OK,READY,0,1,1,1"), 15);
+        Assert.That(session.AdsStatus, Is.EqualTo("Fault"));
+        Assert.That(session.State, Is.EqualTo("READY"));
+        Assert.That(session.IsFresh(15), Is.False);
+        Assert.That(session.Receive(Frame("TEL,12,0,78,0,0,0,0,0"), 16), Is.EqualTo("OK"));
+        Assert.That(session.IsFresh(16), Is.True);
+        session.RequestInputMode(false);
+        Assert.That(session.IsFresh(17), Is.False);
+        session.Tick(18); SerialInputProtocol.TryParse(sent[sent.Count - 1], out mode);
+        session.Receive(Frame("ACK,13,0," + mode.Sequence + ",SET_INPUT_MODE,OK,ALL"), 19);
+        session.TryCommand("GET_STATUS", null, 20, out status, out _);
+        session.Receive(Frame("ACK,14,0," + status + ",GET_STATUS,OK,READY,0,1,1,1"), 21);
+        Assert.That(session.State, Is.EqualTo("NOT_READY"), "Normal mode must restore real pedal requirements.");
+    }
+    [Test] public void LegacyFirmwareCannotSilentlyPretendToEnableSteeringOnly()
+    {
+        var session = Ready(out var sent);
+        session.RequestInputMode(true); session.Tick(10);
+        SerialInputProtocol.TryParse(sent[sent.Count - 1], out RgpFrame mode);
+        session.Receive(Frame("ACK,8,0," + mode.Sequence + ",SET_INPUT_MODE,UNSUPPORTED"), 11);
+        Assert.That(session.InputModeUnsupported, Is.True);
+        Assert.That(session.IsFresh(12), Is.False);
+        int count = sent.Count; session.Tick(5000); session.Tick(6000);
+        Assert.That(sent.Count, Is.EqualTo(count), "Unsupported firmware cannot trigger an endless command loop.");
+        session.Start(7000);
+        Assert.That(session.InputMode, Is.EqualTo("ALL"));
+        Assert.That(session.InputModeUnsupported, Is.False);
+    }
     [Test] public void OperatorResultsMatchRequestsAndWaitForAsyncCompletion()
     {
         var session=Ready(out _);

@@ -13,8 +13,8 @@ public class InputManager : MonoBehaviour
     [Tooltip("Use two keyboard layouts instead of the ESP32 USB serial input.")]
     public bool isDebugMode = false;
 
-    [Tooltip("Debug with Player 1 on ESP32 USB serial and Player 2 on the keyboard. " +
-        "This mode takes priority over the keyboard-only debug mode.")]
+    [Tooltip("P1 uses only its ESP32 wheel, with W/S pedal by default or Constant pedal from F8. " +
+        "P2 uses the keyboard. No ESP32 pedals or P2 wheel are required. Takes priority over keyboard-only mode.")]
     public bool isP1SerialP2KeyboardDebugMode = false;
 
     [Header("P1 Steering Test (ESP32 wheel only)")]
@@ -77,12 +77,15 @@ public class InputManager : MonoBehaviour
             backgroundBeforeSimulator = Application.runInBackground;
             Application.runInBackground = true;
             sharedSerialInputSource = new TwoPlayerSerialInputSource(
-                esp32Serial.WithSimulatorPort(simulatorPort, simulatorDivisor), simulatorPort);
+                esp32Serial.WithSimulatorPort(simulatorPort, simulatorDivisor), simulatorPort, isP1SerialP2KeyboardDebugMode);
             sharedSerialInputSource.LineProcessed += OnSharedSerialLineProcessed;
             for (int playerIndex = 0; playerIndex < SupportedPlayerCount; playerIndex++)
-                inputSources[playerIndex] = new SharedPlayerDriveInputSource(sharedSerialInputSource, playerIndex);
+                inputSources[playerIndex] = playerIndex == 1 && isP1SerialP2KeyboardDebugMode
+                    ? (IDriveInputSource)new KeyboardDriveInputSource(1)
+                    : new SharedPlayerDriveInputSource(sharedSerialInputSource, playerIndex);
             CompleteInputInitialization();
-            Debug.Log($"ESP32 simulator: {simulatorPort}, steering divisor {simulatorDivisor}. Both players use the PTY stream.");
+            Debug.Log($"ESP32 simulator: {simulatorPort}, steering divisor {simulatorDivisor}. " +
+                (isP1SerialP2KeyboardDebugMode ? "P1 serial / P2 keyboard." : "Both players use the PTY stream."));
             return;
         }
 
@@ -126,6 +129,8 @@ public class InputManager : MonoBehaviour
 
     private void CompleteInputInitialization()
     {
+        if (isP1SerialP2KeyboardDebugMode && p1SteeringTestMode == P1SteeringTestMode.Normal)
+            p1SteeringTestMode = P1SteeringTestMode.KeyboardPedal;
         IDriveInputSource normal = inputSources[0];
         steeringTestSource = new P1SteeringTestInputSource(normal, normal as KeyboardDriveInputSource ?? new KeyboardDriveInputSource(0));
         inputSources[0] = steeringTestSource;
@@ -136,6 +141,7 @@ public class InputManager : MonoBehaviour
     public void SetP1SteeringTestMode(P1SteeringTestMode mode)
     {
         if (mode < P1SteeringTestMode.Normal || mode > P1SteeringTestMode.ConstantPedal) return;
+        if (isP1SerialP2KeyboardDebugMode && mode == P1SteeringTestMode.Normal) mode = P1SteeringTestMode.KeyboardPedal;
         p1SteeringTestMode = mode;
         ApplySteeringTestSettings();
         if (mode == P1SteeringTestMode.ConstantPedal) ResumeP1ConstantPedal();
@@ -162,6 +168,7 @@ public class InputManager : MonoBehaviour
             InitializeSharedSerialInput(playerOneOnly: true);
         if (sharedSerialInputSource != null && steeringTestSource.Serial == null)
             steeringTestSource.Serial = new SharedPlayerDriveInputSource(sharedSerialInputSource, 0);
+        sharedSerialInputSource?.SetP1SteeringOnly(p1SteeringTestMode != P1SteeringTestMode.Normal);
         bool changed = steeringTestSource.Mode != p1SteeringTestMode;
         steeringTestSource.Mode = p1SteeringTestMode;
         steeringTestSource.ConstantPedal = p1ConstantPedal;
