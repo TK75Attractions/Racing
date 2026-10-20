@@ -41,7 +41,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         [NonSerialized] public Vector3 previousPosition;
         [NonSerialized] public float stall, offCourseStreak, resetCooldown, speedSum;
         [NonSerialized] public int samples;
-        [NonSerialized] public bool wasAirborne, wasOffCourse;
+        [NonSerialized] public bool wasAirborne, wasOffCourse, retiredChecked;
     }
     [Serializable] public sealed class RunRecord
     {
@@ -328,6 +328,15 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             record.maxRecoveryRollbackMeters=Mathf.Max(record.maxRecoveryRollbackMeters,entry.Driver?.LastRecoveryRollbackMeters??0f);
             if (!entry.IsRacing)
             {
+                var finish = entry.Car.GetComponent<FinishRunController>();
+                if (!record.retiredChecked && manager.state == Gmanager.State.Game && RaceFeatureController.Enabled(RaceFeature.FinishRun) &&
+                    finish != null && !finish.IsActive && finish.ElapsedSeconds >= FinishRunController.Duration)
+                {
+                    if (!finish.IsRetiredFromView) throw new InvalidOperationException("A stopped finisher remained visible on the road.");
+                    foreach (Renderer mesh in entry.Car.GetComponentsInChildren<Renderer>(true))
+                        if (mesh.enabled) throw new InvalidOperationException("A retired finisher still rendered a mesh or identity label.");
+                    record.retiredChecked = true; Event(entry.Index, "finish-car-retired", "winning run complete; no parked meshes or labels");
+                }
                 if (entry.Index < 2 && entry.Result?.didFinish == true && run.firstHumanFinish < 0) run.firstHumanFinish = now;
                 continue;
             }

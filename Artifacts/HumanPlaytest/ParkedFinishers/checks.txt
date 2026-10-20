@@ -1,0 +1,1 @@
+FINISH_CAR_VISIBILITY_PASS: visible winning run, parked meshes/labels retire, live OFF/ON, original disabled child preserved, official result unchanged.
