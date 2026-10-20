@@ -33,6 +33,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     public event Action<string, string> LineProcessed;
     public RgpSerialJournal Monitor { get; } = new RgpSerialJournal();
     public RgpHostSession Session => session;
+    public void SetP1SteeringOnly(bool enabled) => session.RequestInputMode(playerOneOnly && enabled);
     public bool HasFreshTelemetry
     {
         get
@@ -100,7 +101,10 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         if (playerIndex < 0 || playerIndex >= (playerOneOnly ? 1 : 2)) return DriveConnectionState.Unavailable;
         if (!portIsOpen) return DriveConnectionState.SerialDisconnected;
         if (!session.Compatible) return DriveConnectionState.ProtocolMismatch;
+        if (!session.InputModeReady) return session.InputModeUnsupported
+            ? DriveConnectionState.FirmwareUpdateRequired : DriveConnectionState.SerialPreparing;
         if (!session.SessionOpen || session.State != "READY") return DriveConnectionState.SerialPreparing;
+        if (!session.IsPlayerSteeringAvailable(playerIndex)) return DriveConnectionState.SteeringMissing;
         if (!session.TelemetryEnabled) return DriveConnectionState.TelemetryDisabled;
         if (!session.IsFresh(clock.Elapsed.TotalMilliseconds)) return FirstUsableInputMilliseconds < 0
             ? DriveConnectionState.TelemetryWaiting : DriveConnectionState.TelemetryStale;

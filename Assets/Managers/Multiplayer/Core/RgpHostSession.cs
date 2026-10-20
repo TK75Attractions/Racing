@@ -40,6 +40,18 @@ public sealed class RgpHostSession
     private double lastTelemetryAt;
     private string sessionId;
     private bool automaticCalibrationAttempted, automaticAngleZeroAttempted;
+    public string InputMode { get; private set; } = "ALL";
+    public string RequestedInputMode { get; private set; } = "ALL";
+    public bool InputModeReady => InputMode == RequestedInputMode;
+    public bool InputModeUnsupported { get; private set; }
+    private bool inputModeAttempted;
+    public void RequestInputMode(bool p1SteeringOnly)
+    {
+        string requested = p1SteeringOnly ? "P1_STEERING" : "ALL";
+        if (RequestedInputMode == requested) return;
+        RequestedInputMode = requested; inputModeAttempted = false; InputModeUnsupported = false;
+        Invalidate();
+    }
     public event Action<string> CommandTimedOut;
     public bool Compatible { get; private set; } = true;
     public bool SessionOpen { get; private set; }
@@ -58,6 +70,21 @@ public sealed class RgpHostSession
     public bool Calibrated { get; private set; }
     public int PendingCommands => pending.Count;
 
+    // The current controller firmware assigns AD0 low/high to P1/P2. Legacy
+    // RGP devices without address announcements retain the aggregate READY contract.
+    public bool IsPlayerSteeringAvailable(int playerIndex)
+    {
+        if (playerIndex < 0 || playerIndex > 1) return false;
+        string address = playerIndex == 0 ? "0x68" : "0x69";
+        bool identified = false;
+        foreach (ImuDevice imu in Imus)
+        {
+            identified |= imu.Address == "0x68" || imu.Address == "0x69";
+            if (imu.Address == address) return imu.Status == "Ok";
+        }
+        return !identified;
+    }
+
     // All operator commands share the setup session's SEQ, ACK matching and bounded retry policy.
     public bool TryCommand(string command, string[] args, double now, out uint sequence, out string reason)
     {
@@ -68,6 +95,7 @@ public sealed class RgpHostSession
         {
             case "PING": case "GET_STATUS": case "GET_CONFIG": case "ANGLE_ZERO": case "SCAN_I2C": valid = args.Length == 0; break;
             case "CALIBRATE": valid = args.Length == 1 && (args[0] == "GYRO" || args[0] == "MAG" || args[0] == "ALL"); break;
+            case "SET_INPUT_MODE": valid = args.Length == 1 && (args[0] == "ALL" || args[0] == "P1_STEERING"); break;
             case "SET_BETA": valid = args.Length == 1 && args[0] != null && SerialInputProtocol.Numeric(args[0], .010m, 1m); break;
             case "SET_STREAM": valid = args.Length == 2 && (args[0] == "TEL" || args[0] == "IMU" || args[0] == "DBG") && (args[1] == "0" || args[1] == "1"); break;
             case "SET_RATE": valid = args.Length == 2 && (args[0] == "TEL" || args[0] == "IMU") && args[1] != null &&
@@ -105,7 +133,7 @@ public sealed class RgpHostSession
     private void InvalidateImus()
     { foreach (ImuDevice imu in Imus) imu.Status = "Unknown"; }
     public double StaleAfterMilliseconds => Math.Max(3000.0 / TelemetryRate, 100);
-    public bool IsFresh(double now) => Compatible && SessionOpen && State == "READY" && TelemetryEnabled &&
+    public bool IsFresh(double now) => Compatible && SessionOpen && InputModeReady && State == "READY" && TelemetryEnabled &&
         hasTelemetry && now - lastTelemetryAt <= StaleAfterMilliseconds;
 
     public RgpHostSession(Action<string> send) { this.send = send ?? throw new ArgumentNullException(nameof(send)); }
@@ -114,6 +142,7 @@ public sealed class RgpHostSession
         Generation++; commandResults.Clear();
         pending.Clear(); nextSequence = 0; hasTelSequence = false;
         automaticCalibrationAttempted = automaticAngleZeroAttempted = false;
+        InputMode = "ALL"; inputModeAttempted = InputModeUnsupported = false;
         SessionOpen = false; State = "UNKNOWN"; Compatible = true; ResetHardware();
         TelemetryRate = 100; TelemetryEnabled = true; Invalidate();
         byte[] random = new byte[8];
@@ -155,6 +184,7 @@ public sealed class RgpHostSession
                 if (request.RequiredForSetup && (request.Command == "OPEN_SESSION" || request.Command == "GET_STATUS" || request.Command == "GET_CONFIG"))
                 { SessionOpen = false; Invalidate(); }
                 if (request.Command == "GET_STATUS") { AdsStatus = ImuStatus = "Unknown"; InvalidateImus(); }
+                if (request.Command == "SET_INPUT_MODE") InputModeUnsupported = true;
                 CommandTimedOut?.Invoke(request.Command);
                 continue;
             }
@@ -163,7 +193,9 @@ public sealed class RgpHostSession
         foreach (CommandResult result in commandResults)
             if (result.Status == "ACCEPTED" && now - result.UpdatedAt >= 120000)
             { result.Status = "TIMEOUT"; result.UpdatedAt = now; }
-        PrepareHardwareAutomatically(now);
+        if (SessionOpen && !InputModeReady && !inputModeAttempted && State != "CALIBRATING")
+            inputModeAttempted = TryCommand("SET_INPUT_MODE", new[] { RequestedInputMode }, now, out _, out _);
+        if (InputModeReady) PrepareHardwareAutomatically(now);
     }
 
     private void PrepareHardwareAutomatically(double now)
@@ -171,7 +203,7 @@ public sealed class RgpHostSession
         // Hardware status is the prerequisite. PING/config/diagnostic ACK latency must
         // not hold angle preparation behind their one-second retry cycle.
         // Each operation gets one SEQ per session; Tick only retries that exact wire on timeout.
-        if (!SessionOpen || AdsStatus != "Ok" || ImuStatus != "Ok" ||
+        if (!SessionOpen || (InputMode != "P1_STEERING" && AdsStatus != "Ok") || ImuStatus != "Ok" ||
             (State != "WAIT_ANGLE" && State != "READY")) return;
         if (!Calibrated && !automaticCalibrationAttempted)
         {
@@ -201,6 +233,8 @@ public sealed class RgpHostSession
     }
     private void ApplyConfig(string name, string value)
     {
+        if (name == "INPUT_MODE" && (value == "ALL" || value == "P1_STEERING") && InputMode != value)
+        { InputMode = value; Invalidate(); }
         if (name == "TEL_RATE") TelemetryRate = int.Parse(value, CultureInfo.InvariantCulture);
         if (name == "TEL_STREAM")
         {
@@ -225,7 +259,7 @@ public sealed class RgpHostSession
         switch (frame.Type)
         {
             case "TEL":
-                if (!SessionOpen || State != "READY" || !TelemetryEnabled) return "NOT_READY";
+                if (!SessionOpen || !InputModeReady || State != "READY" || !TelemetryEnabled) return "NOT_READY";
                 uint delta = unchecked(frame.Sequence - lastTelSequence);
                 if (hasTelSequence && (delta == 0 || delta > 0x7FFFFFFF)) return "OLD_TEL";
                 PlayerOne = frame.Player(0); PlayerTwo = frame.Player(1);
@@ -239,6 +273,11 @@ public sealed class RgpHostSession
                     ImuStatus = "Ok";
                     ImuDevice imu = d.Length > 1 ? FindImu(d[1]) : null;
                     if (imu != null) imu.Status = "Ok";
+                }
+                if (d[0] == "IMU_LOST" && d.Length > 1)
+                {
+                    ImuDevice imu = FindImu(d[1]);
+                    if (imu != null) imu.Status = "Disconnected";
                 }
                 if (d[0] == "ANGLE_LOCKED") AngleLocked = true;
                 if (d[0] == "ANGLE_UNLOCKED") AngleLocked = false;
@@ -320,6 +359,7 @@ public sealed class RgpHostSession
             request.Result.Data = d; request.Result.UpdatedAt = now;
         }
         LastCommandResult = d[1] + ": " + d[2];
+        if (d[1] == "SET_INPUT_MODE" && d[2] != "OK") InputModeUnsupported = true;
         if (d[2] != "OK" && d[2] != "ACCEPTED")
         {
             if (request.RequiredForSetup && (d[1] == "OPEN_SESSION" || d[1] == "GET_STATUS" || d[1] == "GET_CONFIG"))
@@ -337,16 +377,17 @@ public sealed class RgpHostSession
                 case "GET_STATUS":
                     AdsStatus = d[4] == "1" ? "Ok" : "Fault"; ImuStatus = d[5] == "1" ? "Ok" : "Fault";
                     if (ImuStatus == "Ok")
-                        foreach (ImuDevice imu in Imus) { if (imu.Address.Length > 0) imu.Status = "Ok"; }
+                        foreach (ImuDevice imu in Imus) { if (imu.Address.Length > 0 && imu.Status != "Disconnected") imu.Status = "Ok"; }
                     else
                         foreach (ImuDevice imu in Imus) { if (imu.Status == "Ok") imu.Status = "Unknown"; }
                     AngleLocked = d[6] == "1"; Calibrated = d[7] == "1";
-                    SetState(d[3] == "READY" && (d[4] != "1" || d[5] != "1" || d[6] != "1" || d[7] != "1") ? "NOT_READY" : d[3]);
+                    SetState(d[3] == "READY" && ((InputMode != "P1_STEERING" && d[4] != "1") || d[5] != "1" || d[6] != "1" || d[7] != "1") ? "NOT_READY" : d[3]);
                     break;
                 case "GET_CONFIG":
                     for (int i = 3; i + 1 < d.Length; i += 2) ApplyConfig(d[i], d[i + 1]);
                     break;
                 case "SET_STREAM": ApplyConfig(d[3] + "_STREAM", d[4]); break;
+                case "SET_INPUT_MODE": ApplyConfig("INPUT_MODE", d[3]); break;
                 case "SET_RATE": ApplyConfig(d[3] + "_RATE", d[4]); break;
             }
         }

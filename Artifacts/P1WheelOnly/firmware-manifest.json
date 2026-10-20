@@ -1,0 +1,14 @@
+{
+  "firmwareRepository": "https://github.com/Kentuc322/handlefastimu",
+  "base": "e17082d",
+  "commit": "a94f1b5b054e237372422b175ec94fceae500d7f",
+  "branch": "codex/p1-steering-only",
+  "board": "esp32dev",
+  "framework": "Arduino ESP32 3.3.9",
+  "FlashTest": "Not flashed; hardware operation not verified",
+  "sha256": {
+    "firmware.bin": "e6b2bbcefd3f15348808d40c4020998771a04573d0c50f1558518f1db95affe9",
+    "firmware.factory.bin": "217849aa7f95e172417387ce6fa3682452bfaa4ad676379dc58bafdee2e2c0c4",
+    "firmware.patch": "55c59f5a8f862b9e77f9cd5dec1441f9ce81492707d8e5d0850fce38ed152b4f"
+  }
+}

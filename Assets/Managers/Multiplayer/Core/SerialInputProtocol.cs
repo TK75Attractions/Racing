@@ -185,6 +185,7 @@ public static class SerialInputProtocol
             case "IMU_RATE": return UInt(value, out uint imu) && imu >= 1 && imu <= 50;
             case "TEL_STREAM": case "IMU_STREAM": case "DBG_STREAM": return Bool(value);
             case "BETA": return Numeric(value, 0.010m, 1);
+            case "INPUT_MODE": return value == "ALL" || value == "P1_STEERING";
             default: return true;
         }
     }
@@ -213,6 +214,7 @@ public static class SerialInputProtocol
                     case "SET_STREAM": return n >= 5 && (d[3] == "TEL" || d[3] == "IMU" || d[3] == "DBG") && Bool(d[4]);
                     case "SET_RATE": return n >= 5 && (d[3] == "TEL" || d[3] == "IMU") && ConfigPair(d[3] + "_RATE", d[4]);
                     case "SET_BETA": return n >= 4 && Numeric(d[3], 0.010m, 1);
+                    case "SET_INPUT_MODE": return n >= 4 && ConfigPair("INPUT_MODE", d[3]);
                     default: return true;
                 }
             default: return true; // Unknown status completes its pending request as a failure.

@@ -8,11 +8,13 @@ public static class DriverInputNotice
             case DriveConnectionState.Ready: return "";
             case DriveConnectionState.KeyboardMissing: return "キーボードの接続を確認してください";
             case DriveConnectionState.SerialDisconnected: return "ESP32の接続を確認してください";
+            case DriveConnectionState.SteeringMissing: return "P" + (source.PlayerIndex + 1) + "のハンドル接続を確認してください";
             case DriveConnectionState.SerialPreparing: return "ESP32の準備を待っています";
             case DriveConnectionState.TelemetryWaiting: return "ハンドル入力を待っています";
             case DriveConnectionState.TelemetryStale: return "ハンドルの通信を待っています";
             case DriveConnectionState.TelemetryDisabled: return "ESP32の入力送信が停止中です";
             case DriveConnectionState.ProtocolMismatch: return "ESP32の通信形式を確認してください";
+            case DriveConnectionState.FirmwareUpdateRequired: return "ESP32の更新・入力モードを確認してください";
             default: return "接続を確認してください";
         }
     }

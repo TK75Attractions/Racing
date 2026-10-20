@@ -31,7 +31,13 @@ READY以外への状態遷移、TEL_STREAM停止通知、ERROR/FATAL、角度基
 
 ## デバッグモード
 
-`Is P1 Serial P2 Keyboard Debug Mode` はP1をRGP/1、P2を従来のキーボードに割り当てます。受信するTELはこのモードでも2人分の6項目をすべて検証します。P2シリアル値は車両入力に使いません。キーボードのみの `Is Debug Mode` より優先します。
+`Is P1 Serial P2 Keyboard Debug Mode` はP1のハンドルをRGP/1、P1ペダルをW/S（F8でConstant pedalへ変更可能）、P2を従来のキーボードに割り当てます。Serial Labでも同じ割当です。受信するTELはこのモードでも6項目すべてを検証します。P1のESP32ペダルとP2シリアル値は車両入力に使いません。キーボードのみの `Is Debug Mode` より優先します。
+
+この構成では拡張CMD `SET_INPUT_MODE,P1_STEERING` を送り、成功ACKで有効化を確認してからREADY・新しいTELを待ちます。対応ファームはP1ハンドルの校正・角度基準だけを必須とし、ADS_OK=0でもP1ハンドルを送信します。ほかの5項目は明示的な未使用入力として0です。通常の `ALL` では従来のペダル条件を維持します。GET_CONFIG末尾とCONFIG_CHANGEDのINPUT_MODEで現在値を通知します。モード変更・セッション更新では旧TELを破棄します。未知コマンドやタイムアウトを成功扱いせず、更新・入力モードの案内を表示します。
+
+現在のコントローラーファームは0x68=P1、0x69=P2です。SYS DEVICEとEVT IMU_LOST,ADDRESSで各ハンドルを区別し、個別に未接続の入力を止めます。GET_STATUSの集約IMU_OKだけで、既に未接続と確認したスロットを復活させません。更新ファームはGET_STATUS後にも両スロットの情報を再通知します。個別情報のない旧RGP装置の通常モードは、従来の集約READY契約を維持します。
+
+ファーム更新用のパッチ・ESP32向けバイナリ・検証記録は[P1WheelOnly](../Artifacts/P1WheelOnly/README.md)を参照してください。
 
 シリアルモニターでは `HELLO`、`ACK_OK`、`EVENT`、`OK`、`OLD_TEL`、`NOT_READY`、`INVALID` などを表示します。開始前の生ログは入力フレームとして記録されません。
 

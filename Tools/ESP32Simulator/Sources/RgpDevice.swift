@@ -72,6 +72,7 @@ final class RgpDevice {
     private var beta = "0.200"
     private var adsOK = true
     private var imuOK = true
+    private var inputMode = "ALL"
 
     func emit(_ type: String, _ data: [String], time: UInt64) -> String {
         let body = ([type, String(sequence), String(UInt32(truncatingIfNeeded: time))] + data).joined(separator: ",")
@@ -80,7 +81,7 @@ final class RgpDevice {
     }
     func boot() -> [String] {
         cache.removeAll(); order = 0; sequence = 0; sessionID = nil; state = "READY"
-        telRate = 100; telStream = true; beta = "0.200"; adsOK = true; imuOK = true
+        telRate = 100; telStream = true; beta = "0.200"; adsOK = true; imuOK = true; inputMode = "ALL"
         return [emit("SYS", ["HELLO", "RGP", "1.0", "SERIAL-LAB-2.0"], time: 0),
             emit("EVT", ["BOOT"], time: 0), emit("EVT", ["STATE", "BOOTING"], time: 0),
             emit("EVT", ["STATE", "INITIALIZING"], time: 0), emit("EVT", ["STATE", "CALIBRATING"], time: 0),
@@ -96,8 +97,8 @@ final class RgpDevice {
     }
     func availability(_ frame: InputFrame, time: UInt64) -> [String] {
         adsOK = !frame.p1.accelUnavailable && !frame.p1.brakeUnavailable && !frame.p2.accelUnavailable && !frame.p2.brakeUnavailable
-        imuOK = !frame.p1.steeringUnavailable && !frame.p2.steeringUnavailable
-        let next = !adsOK ? "RECOVERING" : !imuOK ? "WAIT_ANGLE" : "READY"
+        imuOK = !frame.p1.steeringUnavailable && (inputMode == "P1_STEERING" || !frame.p2.steeringUnavailable)
+        let next = inputMode != "P1_STEERING" && !adsOK ? "RECOVERING" : !imuOK ? "WAIT_ANGLE" : "READY"
         guard state != next else { return [] }
         let previous = state; state = next
         var frames = [String]()
@@ -112,8 +113,9 @@ final class RgpDevice {
         frames.append(emit("EVT", ["STATE", next], time: time)); return frames
     }
     func telemetry(_ frame: InputFrame, time: UInt64) -> String? {
-        guard frame.available, state == "READY", telStream else { return nil }
-        return emit("TEL", frame.fields, time: time)
+        guard (inputMode == "P1_STEERING" ? !frame.p1.steeringUnavailable : frame.available), state == "READY", telStream else { return nil }
+        let selected = inputMode == "P1_STEERING" ? InputFrame(p1: PlayerInput(steering: frame.p1.steering)) : frame
+        return emit("TEL", selected.fields, time: time)
     }
 
     func handle(_ frame: Rgp.Frame, time: UInt64) -> [String] {
@@ -129,7 +131,7 @@ final class RgpDevice {
         var response = "UNSUPPORTED"
         var follow = [(String, [String])]()
         let counts = ["OPEN_SESSION":1, "PING":0, "GET_STATUS":0, "GET_CONFIG":0, "ANGLE_ZERO":0,
-                      "SET_BETA":1, "SET_RATE":2, "SET_STREAM":2, "CALIBRATE":1, "SCAN_I2C":0]
+                      "SET_BETA":1, "SET_RATE":2, "SET_STREAM":2, "SET_INPUT_MODE":1, "CALIBRATE":1, "SCAN_I2C":0]
         var invalid: Int?
         if let expected = counts[command], args.count != expected { invalid = min(args.count, expected) + 1 }
         if invalid == nil, let empty = args.firstIndex(of: "") { invalid = empty + 1 }
@@ -144,19 +146,23 @@ final class RgpDevice {
                 if !["TEL", "IMU", "DBG"].contains(args[0]) { invalid = 1 }
                 else if !["0", "1"].contains(args[1]) { invalid = 2 }
             case "CALIBRATE": if !["GYRO", "MAG", "ALL"].contains(args[0]) { invalid = 1 }
+            case "SET_INPUT_MODE": if !["ALL", "P1_STEERING"].contains(args[0]) { invalid = 1 }
             default: break
             }
         }
         if let invalid = invalid { response = "INVALID_ARG,\(invalid)" }
         else if command == "OPEN_SESSION" {
-            if sessionID != args[0] { cache.removeAll(); sessionID = args[0] }
+            if sessionID != args[0] { cache.removeAll(); sessionID = args[0]; inputMode = "ALL" }
             response = "OK,\(args[0])"
         } else if sessionID == nil { response = "NOT_READY,\(state)" }
         else {
             switch command {
             case "PING": response = "OK,PONG"
             case "GET_STATUS": response = "OK,\(state),\(adsOK ? 1 : 0),\(imuOK ? 1 : 0),\(imuOK ? 1 : 0),1"
-            case "GET_CONFIG": response = "OK,TEL_RATE,\(telRate),IMU_RATE,20,TEL_STREAM,\(telStream ? 1 : 0),IMU_STREAM,0,DBG_STREAM,0,BETA,\(beta)"
+            case "GET_CONFIG": response = "OK,TEL_RATE,\(telRate),IMU_RATE,20,TEL_STREAM,\(telStream ? 1 : 0),IMU_STREAM,0,DBG_STREAM,0,BETA,\(beta),INPUT_MODE,\(inputMode)"
+            case "SET_INPUT_MODE":
+                inputMode = args[0]; response = "OK,\(inputMode)"
+                follow = [("EVT", ["CONFIG_CHANGED", "INPUT_MODE", inputMode])]
             case "ANGLE_ZERO", "SET_BETA":
                 if !["READY", "WAIT_ANGLE"].contains(state) { response = "NOT_READY,\(state)" }
                 else if command == "ANGLE_ZERO" {

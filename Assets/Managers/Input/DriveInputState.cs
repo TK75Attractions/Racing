@@ -24,7 +24,7 @@ public interface IDriveInputSource : IDisposable
 public enum DriveConnectionState
 {
     Ready, Unavailable, KeyboardMissing, SerialDisconnected, SerialPreparing,
-    TelemetryWaiting, TelemetryStale, TelemetryDisabled, ProtocolMismatch
+    TelemetryWaiting, TelemetryStale, TelemetryDisabled, ProtocolMismatch, SteeringMissing, FirmwareUpdateRequired
 }
 
 public interface IDriveInputStatusSource
