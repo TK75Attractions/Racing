@@ -14,7 +14,7 @@ public static class DrivingTutorialValidation
 {
     private const string PreviewKey = "Racing.TutorialPreview", ValidationKey = "Racing.TutorialValidation";
     private const BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
-    private static float began, maximumVerticalSpeed;
+    private static float began, maximumVerticalSpeed, peakSpeed;
     private static bool bound, capturedTurn, capturedStop, capturedDriving;
     private static StubInput[] inputs;
     private static IList practices;
@@ -80,16 +80,18 @@ public static class DrivingTutorialValidation
                 {
                     inputs[i] = new StubInput { PlayerIndex = i };
                     Set(practices[i], "input", inputs[i]);
-                    Get<DebugMover>(practices[i], "mover").SetInputSource(inputs[i]);
+                    Get<PlayerDriveInputGate>(practices[i], "driveGate").SwitchSource(inputs[i]);
                 }
                 ValidateRoad();
+                ValidateContinuousStages(tutorial);
                 bound = true; began = Time.time;
                 Capture(manager, 0, "01-accelerate-p1.png"); Capture(manager, 1, "01-accelerate-p2.png");
             }
             if (Time.time - began > 55f) throw new Exception("The real practice drive did not reach the race countdown within 55 seconds.");
             if (manager.state == Gmanager.State.Countdown || manager.state == Gmanager.State.Game)
             {
-                Debug.Log($"TUTORIAL_QA_PASSED: both private courses, actual accelerate/turn/stop, countdown. Maximum vertical speed after settling: {maximumVerticalSpeed:0.000} m/s");
+                Require(peakSpeed > 10.5f, "Practice must accelerate beyond the old 10 m/s velocity clamp.");
+                Debug.Log($"TUTORIAL_QA_PASSED: continuous stage transition, production input gates, actual accelerate/turn/stop, countdown. Peak speed: {peakSpeed:0.000} m/s. Maximum vertical speed after settling: {maximumVerticalSpeed:0.000} m/s");
                 SessionState.SetBool(ValidationKey, false);
                 if (Application.isBatchMode) EditorApplication.Exit(0);
                 return;
@@ -100,6 +102,7 @@ public static class DrivingTutorialValidation
                 var lesson = Get<DrivingTutorialProgress>(practice, "lesson");
                 Rigidbody body = Get<Rigidbody>(practice, "body");
                 Vector3 local = body.position - Get<GameObject>(practice, "world").transform.position;
+                peakSpeed = Mathf.Max(peakSpeed, Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up).magnitude);
                 if (Time.time - began > 2f && local.z < -15f && lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate)
                     maximumVerticalSpeed = Mathf.Max(maximumVerticalSpeed, Mathf.Abs(body.linearVelocity.y));
                 if (i == 0 && !capturedDriving && Time.time - began > .9f && lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate)
@@ -122,6 +125,39 @@ public static class DrivingTutorialValidation
         {
             Debug.LogException(error); SessionState.SetBool(ValidationKey, false);
             if (Application.isBatchMode) EditorApplication.Exit(1);
+        }
+    }
+
+    private static void ValidateContinuousStages(DrivingTutorialController tutorial)
+    {
+        foreach (object practice in practices)
+        {
+            Rigidbody body = Get<Rigidbody>(practice, "body");
+            int index = Get<int>(practice, "playerIndex");
+            Vector3 position = body.position, velocity = body.linearVelocity;
+            Quaternion rotation = body.rotation;
+            var lesson = Get<DrivingTutorialProgress>(practice, "lesson");
+            lesson.Tick(.01f, true, 0f, 0f, 0f, 0f);
+            lesson.Tick(.59f, true, .65f, 0f, 5f, 0f);
+            body.rotation = Quaternion.Euler(0f, 11f, 0f);
+            body.linearVelocity = body.rotation * Vector3.forward * 5f;
+            Vector3 beforeVelocity = body.linearVelocity;
+            Quaternion beforeRotation = body.rotation;
+            inputs[index].CurrentState = new DriveInputState { pedal = .65f };
+            tutorial.Tick(.02f);
+            Require(lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer, "The acceleration task must advance to steering.");
+            Require(Vector3.Distance(body.position, position) < .001f && Quaternion.Angle(body.rotation, beforeRotation) < .01f,
+                "STEP 1 -> 2 must preserve position and heading.");
+            Require(Vector3.Distance(body.linearVelocity, beforeVelocity) < .001f,
+                "STEP 1 -> 2 must preserve momentum.");
+            Require(Mathf.Abs(Mathf.DeltaAngle(Get<float>(practice, "startYaw"), 11f)) < .01f,
+                "The steering lesson measures heading from its actual entry orientation.");
+            Debug.Log($"TUTORIAL_CONTINUITY_PASS: P{index + 1} position, heading, velocity and steering reference preserved.");
+            body.position = position; body.rotation = rotation; body.linearVelocity = velocity;
+            Set(practice, "startYaw", rotation.eulerAngles.y);
+            Set(practice, "lesson", new DrivingTutorialProgress());
+            inputs[index].CurrentState = DriveInputState.Neutral;
+            var gate = Get<PlayerDriveInputGate>(practice, "driveGate"); gate.Reset(); gate.SetBlocked(true);
         }
     }
 
@@ -158,7 +194,7 @@ public static class DrivingTutorialValidation
     }
     private static void Capture(Gmanager manager, int player, string filename)
     {
-        string directory = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts/Tutorial"); Directory.CreateDirectory(directory);
+        string directory = Environment.GetEnvironmentVariable("RACING_TUTORIAL_QA_OUTPUT") ?? Path.Combine(Directory.GetCurrentDirectory(), "Artifacts/Tutorial"); Directory.CreateDirectory(directory);
         PlayerDisplayRig[] rigs = (PlayerDisplayRig[])typeof(Gmanager).GetField("displayRigs", Fields).GetValue(manager);
         PlayerDisplayRig rig = rigs[player];
         Camera camera = rig.BackImageCamera;

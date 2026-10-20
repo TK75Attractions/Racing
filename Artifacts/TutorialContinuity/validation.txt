@@ -1,0 +1,4 @@
+TUTORIAL_CONTINUITY_PASS: P1 position, heading, velocity and steering reference preserved.
+TUTORIAL_CONTINUITY_PASS: P2 position, heading, velocity and steering reference preserved.
+TUTORIAL_QA_PASSED: continuous stage transition, production input gates, actual accelerate/turn/stop, countdown. Peak speed: 25.562 m/s. Maximum vertical speed after settling: 0.000 m/s
+Core tests: 98 passed, 0 failed
