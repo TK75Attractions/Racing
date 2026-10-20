@@ -67,3 +67,17 @@ RACING_BALANCE_OUTPUT="$PWD/Artifacts/SkillPlaytest/Recheck" Tools/RunBalancePla
 初心者・慎重派は、画面にジャンプ案内が表示された場合に0.35秒後に助走するモデルです。再接続・復帰後はペダル解放案内に応じて0.3秒間中立にします。これは案内を理解することを仮定した入力であり、人による理解度の検証ではありません。
 
 試走結果、改善途中の失敗、21項目の修正、通常速度の追加確認は [レベル別試走レポート](../Artifacts/SkillPlaytest/README.md) を参照してください。保存済み最終6条件の不変条件は `python3 Tools/VerifySkillPlaytest.py Artifacts/SkillPlaytest/After` で検証できます。
+
+
+## 高速・人間に近い入力での録画試走
+
+`human-fast-items-7101` と `human-fast-control-7102` は、高速化後の通常2周を実車4台で走る。P1/P2は0.18/0.22秒ごとに車体位置・向き・速度・前方車両を観測し、最大360度/秒のハンドル操作と3/秒のペダル変化で入力する。操舵には小さな揺れを加える。コースを知っている運転であり、人の認知や楽しさを再現したものではない。前方100mの道路形状から制動を判断し、直線の目標は50/48m/s。車両の位置・速度は直接変えない。逸脱・停止が4秒続けば通常の復帰入力を送る。
+
+```sh
+RACING_BALANCE_SKILL_SUITE=1 \
+RACING_BALANCE_RUN=human-fast-items-7101,human-fast-control-7102 \
+RACING_BALANCE_VIDEO=1 \
+RACING_BALANCE_OUTPUT="$PWD/Logs/HumanPlaytest/After" bash Tools/RunBalancePlaytest.sh
+```
+
+`RACING_BALANCE_VIDEO=1` は通常のP1カメラとHUDを1280×720・24fps・無音のMP4へ保存する。`RACING_FFMPEG` でffmpegのパスを指定できる。動画とゲーム時計を合わせるため `Time.captureFramerate=24`、時間倍率1に固定してオフライン収録する。動画は実際の物理走行だが、実時間のフレームレート測定ではない。開始準備は省略する。フレームと公式時計の対応は `video-timeline.csv` に保存する。大きい動画はLogs以下に置き、Gitへは集計と抜粋を保存する。
