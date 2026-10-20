@@ -91,9 +91,20 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         // Catch-up FixedUpdate runs before Gmanager.Update after a slow frame. The
         // reader may already have fresh TEL queued: apply it before checking its age,
         // otherwise a render hitch permanently latches the car's pedal-release gate.
+        return GetConnectionState(playerIndex) == DriveConnectionState.Ready;
+    }
+
+    public DriveConnectionState GetConnectionState(int playerIndex)
+    {
         ProcessReceivedFrames();
-        return playerIndex >= 0 && playerIndex < (playerOneOnly ? 1 : 2) && portIsOpen &&
-            session.IsFresh(clock.Elapsed.TotalMilliseconds);
+        if (playerIndex < 0 || playerIndex >= (playerOneOnly ? 1 : 2)) return DriveConnectionState.Unavailable;
+        if (!portIsOpen) return DriveConnectionState.SerialDisconnected;
+        if (!session.Compatible) return DriveConnectionState.ProtocolMismatch;
+        if (!session.SessionOpen || session.State != "READY") return DriveConnectionState.SerialPreparing;
+        if (!session.TelemetryEnabled) return DriveConnectionState.TelemetryDisabled;
+        if (!session.IsFresh(clock.Elapsed.TotalMilliseconds)) return FirstUsableInputMilliseconds < 0
+            ? DriveConnectionState.TelemetryWaiting : DriveConnectionState.TelemetryStale;
+        return DriveConnectionState.Ready;
     }
 
     public void UpdateInput(float deltaTime)
@@ -283,13 +294,14 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 }
 
 // The cars use one logical input source each, while both adapters read the same port.
-public sealed class SharedPlayerDriveInputSource : IDriveInputSource
+public sealed class SharedPlayerDriveInputSource : IDriveInputSource, IDriveInputStatusSource
 {
     private readonly TwoPlayerSerialInputSource sharedSource;
 
     public int PlayerIndex { get; }
     public string DeviceId => $"P{PlayerIndex + 1}";
     public bool IsConnected => sharedSource.IsConnected(PlayerIndex);
+    public DriveConnectionState ConnectionState => sharedSource.GetConnectionState(PlayerIndex);
     public DriveInputState CurrentState
     {
         get

@@ -1,5 +1,7 @@
 # P1 ESP32ハンドル＋代替ペダル（2026-10-20）
 
+これは初回実装時の記録。Constant pedalのキーボード不要化・F8再開・接続案内の修正は[追加の検証記録](../ConstantPedalFix/README.md)を参照。
+
 ## 確認した条件
 
 Unity 6000.3.9f1、本番の`InputManager`、RGP受信処理、`PlayerDriveInputGate`、`car2.prefab`のタイヤ物理・姿勢制御・PhysXを使用した。実PTYへ100Hz設定でP1ハンドル78度・アクセル0・ブレーキ0、P2ハンドル-39度・アクセル0.5・ブレーキ0を送信。Steering Divisorは6.5で、ゲーム側のハンドル値はP1=12、P2=-6になる。

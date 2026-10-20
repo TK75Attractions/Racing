@@ -70,7 +70,7 @@ public sealed class DrivingTutorialUI
         message.textWrappingMode = TextWrappingModes.Normal;
     }
 
-    public void Update(DrivingTutorialProgress lesson, DriveInputState input, float metersPerSecond, bool connected)
+    public void Update(DrivingTutorialProgress lesson, DriveInputState input, float metersPerSecond, bool connected, string connectionNotice = null)
     {
         timer.Update(lesson.TimeRemaining, lesson.TimeLimitSeconds);
         int degrees=Mathf.RoundToInt(input.steering);
@@ -82,7 +82,7 @@ public sealed class DrivingTutorialUI
         if(shownPedal!=percent){pedal.SetText("{0}<size=58%>%</size>",percent);shownPedal=percent;}
         meter.Pressure = pressure;
         int stage = lesson.HasTimedOut ? 4 : (int)lesson.CurrentStage;
-        string prompt=lesson.HasTimedOut ? "TIME UP\nもう一人を待っています" : lesson.IsComplete ? "練習完了！\nもう一人を待っています" : !connected ? "コントローラーの\n接続を確認してください" : !lesson.PedalReleased ? "まずペダルから\n足を離そう" : stage == 0 ? "ペダルを踏んで\n加速しよう" : stage == 1 ? "ハンドルを回して\n角を曲がってみよう" : "ペダルから足を離して\n停車しよう";
+        string prompt=lesson.HasTimedOut ? "TIME UP\nもう一人を待っています" : lesson.IsComplete ? "練習完了！\nもう一人を待っています" : !connected ? connectionNotice ?? "コントローラーの\n接続を確認してください" : !lesson.PedalReleased ? "まずペダルから\n足を離そう" : stage == 0 ? "ペダルを踏んで\n加速しよう" : stage == 1 ? "ハンドルを回して\n角を曲がってみよう" : "ペダルから足を離して\n停車しよう";
         if(shownMessage!=prompt)
         {
             message.text=prompt;shownMessage=prompt;popupTime=0f;

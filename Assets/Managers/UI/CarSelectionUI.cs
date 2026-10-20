@@ -264,7 +264,7 @@ public sealed class CarSelectionUI : MonoBehaviour
     public void ApplyToCar(GameObject car) => catalog.Apply(car, committedVehicle, committedPaint);
 
     // Short pedal taps cycle vehicle -> paint -> actions. A long hold commits the focused action.
-    public void TickInput(DriveInputState input, bool connected, float dt)
+    public void TickInput(DriveInputState input, bool connected, float dt, string connectionNotice = null)
     {
         if (!IsOpen || selectionLocked) return;
         bool expired = countdown.Tick(dt);
@@ -272,7 +272,7 @@ public sealed class CarSelectionUI : MonoBehaviour
         if (expired) { Confirm(); return; }
         if (!connected)
         {
-            ResetHold(); steeringLatched = true; pedalHint.text = "コントローラーの接続を待っています"; return;
+            ResetHold(); steeringLatched = true; pedalHint.text = connectionNotice ?? "コントローラーの接続を待っています"; return;
         }
         float steering = Mathf.Abs(input.steering);
         if (steering < 2f) steeringLatched = false;

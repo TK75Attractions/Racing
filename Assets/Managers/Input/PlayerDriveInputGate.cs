@@ -2,7 +2,7 @@
 /// 車両へ渡す入力をプレイヤー単位で停止し、ペダルの前進・後退方向を切り替えます。
 /// 元の入力ソースの更新と破棄は InputManager が所有します。
 /// </summary>
-public sealed class PlayerDriveInputGate : IDriveInputSource
+public sealed class PlayerDriveInputGate : IDriveInputSource, IDriveInputStatusSource
 {
     private IDriveInputSource source;
     public IDriveInputSource Source => source;
@@ -10,6 +10,7 @@ public sealed class PlayerDriveInputGate : IDriveInputSource
     public int PlayerIndex => source?.PlayerIndex ?? -1;
     public string DeviceId => source?.DeviceId ?? string.Empty;
     public bool IsConnected => source != null && source.IsConnected;
+    public DriveConnectionState ConnectionState => DriveInputStatus.Of(source);
     public bool IsBlocked { get; private set; }
     public bool IsReverse { get; private set; }
     public bool NeedsPedalRelease { get; private set; }
@@ -25,9 +26,11 @@ public sealed class PlayerDriveInputGate : IDriveInputSource
             if (IsBlocked) return DriveInputState.Neutral;
 
             DriveInputState state = source.CurrentState;
+            bool released = System.Math.Abs(state.pedal) <= .05f;
+            if (released) (source as IDrivePedalReleaseObserver)?.PedalReleaseObserved();
             if (NeedsPedalRelease)
             {
-                if (System.Math.Abs(state.pedal) <= .05f) NeedsPedalRelease = false;
+                if (released) NeedsPedalRelease = false;
                 return DriveInputState.Neutral;
             }
             if (IsReverse) state.pedal = -state.pedal;

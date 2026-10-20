@@ -269,7 +269,8 @@ public class Gmanager : MonoBehaviour
             {
                 for (int i = 0; i < PlayerCount; i++)
                     if (players[i]?.preparationState == State.CarSelection && screenTransitions[i]?.IsTransitioning != true)
-                        players[i].carSelection?.TickInput(IManager.GetInputState(i), IManager.IsPlayerConnected(i), Time.unscaledDeltaTime);
+                        players[i].carSelection?.TickInput(IManager.GetInputState(i), IManager.IsPlayerConnected(i), Time.unscaledDeltaTime,
+                            DriverInputNotice.Connection(IManager.GetPlayerInputSource(i)));
                 UpdateTitleStartInput(dt);
                 UpdateTitlePedalUI();
             }

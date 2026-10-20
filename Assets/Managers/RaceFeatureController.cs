@@ -73,6 +73,10 @@ public sealed class RaceFeatureController : MonoBehaviour
     }
     private void DrawPanel(int id)
     {
+        DrawSteeringTest();
+        if (manager != null && (manager.state == Gmanager.State.Title || manager.state == Gmanager.State.Result))
+            if (GUILayout.Button("Start test race - P1 manual / P2 AUTO")) manager.StartAutodriveTestRace();
+        GUILayout.Space(6);
         GUILayout.Label("Feature switches apply immediately (both players).");
         for (int i = 0; i < Features.Length; i++)
         {
@@ -80,9 +84,6 @@ public sealed class RaceFeatureController : MonoBehaviour
             bool next = GUILayout.Toggle(current, Labels[i]);
             if (current != next) SetFeature(Features[i], next);
         }
-        DrawSteeringTest();
-        if (manager != null && (manager.state == Gmanager.State.Title || manager.state == Gmanager.State.Result))
-            if (GUILayout.Button("Start test race - P1 manual / P2 AUTO")) manager.StartAutodriveTestRace();
         GUILayout.Space(8);
         GUILayout.Label("Rules now: " + Settings.ActivePreset + " / " + (manager != null ? manager.GoalLap : 2) + " lap(s)");
         GUILayout.Label(Settings.RulesLocked ? "Lap/time preset below applies to the NEXT race." : "Choose rules before either player starts.");
@@ -119,11 +120,16 @@ public sealed class RaceFeatureController : MonoBehaviour
         if (GUILayout.Button("Constant pedal")) input.SetP1SteeringTestMode(P1SteeringTestMode.ConstantPedal);
         GUILayout.EndHorizontal();
         GUILayout.Label(input.InputModeLabel);
+        GUILayout.Label("P1 input status: " + DriveInputStatus.Of(input.GetPlayerInputSource(0)));
         if (input.SteeringTestMode == P1SteeringTestMode.ConstantPedal)
         {
             float amount = GUILayout.HorizontalSlider(input.ConstantTestPedal, 0f, 1f);
             if (!Mathf.Approximately(amount, input.ConstantTestPedal)) input.SetP1ConstantPedal(amount);
-            GUILayout.Label("Constant pedal is race-only. Hold S to release/resume gate.");
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Release constant pedal")) input.PauseP1ConstantPedal();
+            if (GUILayout.Button("Resume constant pedal")) input.ResumeP1ConstantPedal();
+            GUILayout.EndHorizontal();
+            GUILayout.Label("Constant pedal is race-only; keyboard optional. S or F8 resumes a latched gate.");
         }
         if (input.SteeringTestMode != P1SteeringTestMode.Normal)
             GUILayout.Label("W/S in menus and practice. Space reset, Enter ready. P2 unchanged.");
