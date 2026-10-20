@@ -12,6 +12,7 @@ public static class BoostVolumeValidation
     [MenuItem("Racing/Validate Boost Volumes")]
     public static void Run()
     {
+        LightningValidation.EnsureVolumeManagerInitialized();
         GameObject root = new GameObject("Boost volume validation");
         VolumeProfile shared = ScriptableObject.CreateInstance<VolumeProfile>();
         VolumeStack stack = VolumeManager.instance.CreateStack();
@@ -82,6 +83,8 @@ public static class BoostVolumeValidation
             manager.ConfigurePlayerCameras(cameras);
             // 通常Volume 1個と、プレイヤーごとの加速・速度・チャージ・稲妻の光 Volume 4個ずつ。
             Require(root.GetComponentsInChildren<Volume>().Length == 9, "Reconfiguration must not leak player visual volumes.");
+            // Edit-mode MonoBehaviours do not necessarily receive OnDestroy.
+            typeof(VManager).GetMethod("OnDestroy", PrivateInstance).Invoke(manager, null);
             UnityEngine.Object.DestroyImmediate(manager);
             Require(p1Data.volumeLayerMask.value == 1 && !p1Data.renderPostProcessing,
                 "Disposal must restore the camera configuration.");

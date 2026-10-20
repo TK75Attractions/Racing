@@ -210,19 +210,20 @@ public static class CarSelectionValidation
         foreach (ScreenTransitionController transition in transitions) transition.ApplyStateImmediate(Gmanager.State.Countdown);
     }
 
-    private static void BuildFont()
+    public static void BuildFont()
     {
         const string path = "Assets/Resources/UI/CarSelectionFont.asset";
         string corpus = File.ReadAllText("Assets/Resources/UI/CarSelectionCatalog.asset");
         foreach (string source in Directory.GetFiles("Assets/Managers/UI", "CarSelection*.cs")) corpus += File.ReadAllText(source);
         corpus += File.ReadAllText("Assets/Managers/UI/NeonUI.cs");
+        corpus += File.ReadAllText("Assets/Managers/UI/PreparationTimerUI.cs");
         string characters = new string(System.Linq.Enumerable.ToArray(System.Linq.Enumerable.OrderBy(
             System.Linq.Enumerable.Distinct(System.Linq.Enumerable.Where(corpus, c => c >= 32)), c => c)));
         TMP_FontAsset existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
         if (existing != null && existing.HasCharacters(characters)) return;
         Font sourceFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/MPLUS1-HUD-Bold.ttf");
         TMP_FontAsset font = TMP_FontAsset.CreateFontAsset(sourceFont, 80, 8,
-            UnityEngine.TextCore.LowLevel.GlyphRenderMode.SDFAA, 2048, 2048, AtlasPopulationMode.Dynamic, false);
+            UnityEngine.TextCore.LowLevel.GlyphRenderMode.SDFAA, 2048, 2048, AtlasPopulationMode.Dynamic, true);
         Require(font.TryAddCharacters(characters, out string missing), "Font coverage: " + missing);
         font.name = "Car Selection Bold"; font.atlasPopulationMode = AtlasPopulationMode.Static;
         font.material.name = "Car Selection Bold Material";

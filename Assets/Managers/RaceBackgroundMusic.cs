@@ -50,8 +50,12 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
 
     private void Update()
     {
+        Tick(Time.unscaledDeltaTime);
+    }
+
+    private void Tick(float dt)
+    {
         if (gameManager == null) return;
-        float dt = Time.unscaledDeltaTime;
         for (int player = 0; player < sources.Length; player++)
         {
             AudioSource source = sources[player];

@@ -52,37 +52,41 @@ public static class PlayerAudioValidation
             AudioSource[] sources = (AudioSource[])Get(music, "sources");
             Require(sources.Length == 2 && sources[0] != sources[1], "Each player needs an independent source.");
             manager.state = Gmanager.State.Title;
-            Call(music, "Update");
+            AdvanceMusic(music);
             Require(sources.All(s => s.clip != null && s.clip.name == "TachibanaMoroe"), "Title music must remain intact.");
             manager.state = Gmanager.State.Countdown;
-            Call(music, "Update");
+            typeof(RaceBackgroundMusic).GetMethod("Tick", Private).Invoke(music, new object[] { 0f });
+            Require(sources.All(s => s.clip.name == "TachibanaMoroe"), "Track changes must fade out before replacing the current clip.");
+            AdvanceMusic(music);
             Require(sources.All(s => s.clip.name == "racegame_v3"), "Countdown must use the new race track.");
             manager.state = Gmanager.State.Game;
             Require(laps.GoalLap == 2, "The default race must be two laps.");
-            Call(music, "Update");
+            AdvanceMusic(music);
             Require(sources[0].clip.name == "racegame_v3", "The first lap must use normal race music.");
             laps.DebugAdvanceLap(bodies[0], false);
-            Call(music, "Update");
+            AdvanceMusic(music);
             Require(sources[0].clip.name == "racegame_v3_final lap", "P1 must switch on entering lap two.");
             Require(sources[1].clip.name == "racegame_v3", "P1 final lap must not change P2 music.");
             laps.DebugAdvanceLap(bodies[1], false);
-            Call(music, "Update");
+            AdvanceMusic(music);
             Require(sources[1].clip.name == "racegame_v3_final lap", "P2 must switch independently.");
             laps.GetCarData(bodies[1]).lapCount = 0;
             Set(players.GetValue(0), "isSpectating", true);
-            Call(music, "Update");
+            AdvanceMusic(music);
             Require(manager.GetAudioViewedPlayer(0) == 1 && sources[0].clip == sources[1].clip,
                 "Spectator music must follow the watched player.");
             manager.state = Gmanager.State.Result;
-            Call(music, "Update");
+            AdvanceMusic(music);
             Require(sources.All(s => s.clip.name == "TachibanaMoroe"), "Results must restore menu music.");
             laps.ResetRace();
             for (int i = 0; i < 2; i++) { laps.RegisterCar(bodies[i]); Set(players.GetValue(i), "isSpectating", false); }
             manager.state = Gmanager.State.Countdown;
-            Call(music, "Update");
+            typeof(RaceBackgroundMusic).GetMethod("Tick", Private).Invoke(music, new object[] { 0f });
+            Require(sources.All(s => s.clip.name == "TachibanaMoroe"), "Track changes must fade out before replacing the current clip.");
+            AdvanceMusic(music);
             Require(sources.All(s => s.clip.name == "racegame_v3"), "Retry must restore normal race music.");
             Set(laps, "goalLap", 1);
-            Call(music, "Update");
+            AdvanceMusic(music);
             Require(sources.All(s => s.clip.name == "racegame_v3_final lap"), "Single-lap races start on the final lap.");
             Set(laps, "goalLap", 0);
             Require(!manager.IsPlayerOnFinalLap(0) && !manager.IsPlayerOnFinalLap(-1), "Unlimited or invalid laps must not be final.");
@@ -126,6 +130,13 @@ public static class PlayerAudioValidation
         {
             UnityEngine.Object.DestroyImmediate(root);
         }
+    }
+
+    private static void AdvanceMusic(RaceBackgroundMusic music)
+    {
+        // Advance the real fade deterministically; edit-mode Update has no reliable frame delta.
+        MethodInfo tick = typeof(RaceBackgroundMusic).GetMethod("Tick", Private);
+        for (int frame = 0; frame < 20; frame++) tick.Invoke(music, new object[] { .05f });
     }
 
     private static GameObject Child(Transform parent, string name)

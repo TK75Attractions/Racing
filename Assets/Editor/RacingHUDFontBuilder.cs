@@ -29,7 +29,8 @@ public static class RacingHUDFontBuilder
             importer.maxTextureSize = 2048;
             importer.SaveAndReimport();
         }
-        string[] sources = Directory.GetFiles("Assets/Managers/UI", "*.cs", SearchOption.AllDirectories);
+        string[] sources = Directory.GetFiles("Assets/Managers/UI", "*.cs", SearchOption.AllDirectories)
+            .Concat(new[] { "Assets/Managers/Gmanager.cs" }).ToArray();
         string corpus = new string(Enumerable.Range(32, 95).Select(c => (char)c).ToArray());
         foreach (string source in sources)
             foreach (Match match in Regex.Matches(File.ReadAllText(source), "\"([^\"\\r\\n]*)\""))
@@ -43,7 +44,8 @@ public static class RacingHUDFontBuilder
             if (existing != null && existing.material != null && existing.atlasTextures.All(t => t != null) && existing.HasCharacters(characters)) continue;
             Font source = AssetDatabase.LoadAssetAtPath<Font>(weight == "Tutorial" ? "Assets/Resources/UI/TutorialBold.ttf" : "Assets/Fonts/MPLUS1-HUD-" + weight + ".ttf");
             if (source == null) throw new InvalidOperationException("Missing static HUD font: " + weight);
-            TMP_FontAsset font = TMP_FontAsset.CreateFontAsset(source, weight == "Tutorial" ? 90 : 80, weight == "Tutorial" ? 12 : 8, GlyphRenderMode.SDFAA, 2048, 2048, AtlasPopulationMode.Dynamic, false);
+            // New copy can exceed one page. Bake every page now, then freeze the asset below.
+            TMP_FontAsset font = TMP_FontAsset.CreateFontAsset(source, weight == "Tutorial" ? 90 : 80, weight == "Tutorial" ? 12 : 8, GlyphRenderMode.SDFAA, 2048, 2048, AtlasPopulationMode.Dynamic, true);
             font.name = weight == "Tutorial" ? "Tutorial ExtraBold" : "MPLUS HUD " + weight;
             if (!font.TryAddCharacters(characters, out string missing))
                 throw new InvalidOperationException("HUD atlas is missing: " + missing);

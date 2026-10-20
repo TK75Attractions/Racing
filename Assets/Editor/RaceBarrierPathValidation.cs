@@ -120,7 +120,10 @@ public static class RaceBarrierPathValidation
             path.Rebuild();
             Require(previousRoot == null && duplicate == null,
                 "Stale generated roots survived a rebuild after reference loss.");
-            Require(root.GetComponentsInChildren<MeshFilter>(true).Length == 1,
+            MeshFilter[] rebuiltVisuals = root.GetComponentsInChildren<MeshFilter>(true);
+            Require(rebuiltVisuals.Length == 2 &&
+                    Array.FindAll(rebuiltVisuals, f => f.sharedMesh != null && f.sharedMesh.name == "RaceBarrierVisualMesh").Length == 1 &&
+                    Array.FindAll(rebuiltVisuals, f => f.sharedMesh != null && f.sharedMesh.name == "RaceBarrierSolidFrame").Length == 1,
                 "Multiple visual walls remain after rebuilding.");
             Require(root.GetComponentsInChildren<MeshCollider>(true).Length == 1,
                 "Multiple collision walls remain after rebuilding.");
