@@ -28,6 +28,7 @@ public static class CourseVisualTour
         public Vector3 cameraPosition;
         public Quaternion cameraRotation;
         public float speedMetersPerSecond;
+        public List<CourseResolutionComparison.Image> images = new List<CourseResolutionComparison.Image>();
     }
 
     [Serializable] private sealed class Manifest
@@ -39,6 +40,9 @@ public static class CourseVisualTour
         public float courseLengthMeters, spacingMeters, directionSign;
         public bool complete;
         public string error;
+        public List<Vector2Int> resolutions = new List<Vector2Int>();
+        public float captureRenderScale;
+        public string resolutionSheet;
         public List<Frame> frames = new List<Frame>();
     }
 
@@ -87,6 +91,10 @@ public static class CourseVisualTour
                 mode = ReadOption("RACING_VISUAL_TOUR_MODE", "tour", "tour", "fixed"),
                 variant = ReadOption("RACING_VISUAL_VARIANT", "full", "day", "night-base", "full")
             };
+            manifest.resolutions = CourseResolutionComparison.ReadResolutions();
+            if (manifest.resolutions.Count > 1 && manifest.mode != "fixed")
+                throw new ArgumentException("Multiple RACING_VISUAL_RESOLUTIONS require fixed mode.");
+            manifest.captureRenderScale = CourseResolutionComparison.ReadScale();
             PersistManifest();
             pending = null;
             renderedFrame = -1;
@@ -261,7 +269,7 @@ public static class CourseVisualTour
             RenderPlayer(manager, camera);
             renderedFrame = Time.frameCount;
             if (Time.time - placedTime < SettleSeconds || Time.frameCount - placedFrame < 6) return;
-            SavePng(Path.Combine(SessionState.GetString(Key + "Output", ""), pending.file));
+            SaveFrame(manager, pending);
             pending.actualDistanceMeters = course.GetProgressDistance(body.position);
             pending.position = body.position;
             pending.rotation = body.rotation;
@@ -438,11 +446,11 @@ public static class CourseVisualTour
             if (camera == null || renderedFrame == Time.frameCount) return;
             RenderPlayer(manager, camera);
             renderedFrame = Time.frameCount;
-            SavePng(Path.Combine(SessionState.GetString(Key + "Output", ""), file));
+
             var photographedCar = stage == 5 ? manager.GetComponent<DrivingTutorialController>()?.GetPlayerCar(0)?.transform : manager.GetPlayerCarTransform(0);
             var photographedBody = photographedCar != null ? photographedCar.GetComponent<Rigidbody>() : null;
             var view = manager.GetPlayerViewCamera(0);
-            manifest.frames.Add(new Frame
+            var extra = new Frame
             {
                 file = file, location = stage == 5 ? "practice" : "result", state = manager.state.ToString(),
                 position = photographedCar != null ? photographedCar.position : Vector3.zero,
@@ -450,7 +458,9 @@ public static class CourseVisualTour
                 speedMetersPerSecond = photographedBody != null ? photographedBody.linearVelocity.magnitude : 0f,
                 cameraPosition = view != null ? view.transform.position : Vector3.zero,
                 cameraRotation = view != null ? view.transform.rotation : Quaternion.identity
-            });
+            };
+            SaveFrame(manager, extra);
+            manifest.frames.Add(extra);
             PersistManifest();
         }
         catch (Exception exception)
@@ -480,67 +490,53 @@ public static class CourseVisualTour
         if (mover != null) mover.enabled = false;
     }
 
-    private static void RenderPlayer(Gmanager manager, Camera camera)
+    private static PlayerDisplayRig GetRig(Gmanager manager)
     {
-        if (target == null)
-        {
-            target = new RenderTexture(1600, 900, 24, RenderTextureFormat.ARGBHalf) { hideFlags = HideFlags.DontSave };
-            target.Create();
-        }
-        var request = new RenderPipeline.StandardRequest { destination = target };
-        if (!RenderPipeline.SupportsRenderRequest(camera, request))
-            throw new InvalidOperationException("The P1 camera stack does not support StandardRequest.");
-        // Match the runtime preview: give base and overlays the same output size, then restore them.
-        var stack = new List<Camera> { camera };
-        var data = camera.GetUniversalAdditionalCameraData();
-        if (data.renderType == CameraRenderType.Base && data.cameraStack != null) stack.AddRange(data.cameraStack);
         var rigs = (PlayerDisplayRig[])typeof(Gmanager).GetField("displayRigs", Private)?.GetValue(manager);
-        var rig = rigs != null && rigs.Length > 0 ? rigs[0] : null;
-        if (rig?.Canvas == null || rig.UiCamera == null || !stack.Contains(rig.UiCamera))
-            throw new InvalidOperationException("P1 HUD canvas / UI camera stack is unavailable.");
-        Canvas canvas = rig.Canvas;
-        var oldMode = canvas.renderMode;
-        var oldCamera = canvas.worldCamera;
-        int oldDisplay = canvas.targetDisplay;
-        var rect = (RectTransform)canvas.transform;
-        Vector3 oldPosition = rect.position, oldScale = rect.localScale;
-        Quaternion oldRotation = rect.rotation;
-        Vector2 oldSize = rect.sizeDelta;
-        var previous = new RenderTexture[stack.Count];
-        for (int i = 0; i < stack.Count; i++) if (stack[i] != null) previous[i] = stack[i].targetTexture;
-        try
-        {
-            for (int i = 0; i < stack.Count; i++) if (stack[i] != null) stack[i].targetTexture = target;
-            canvas.targetDisplay = 0;
-            canvas.worldCamera = rig.UiCamera;
-            Canvas.ForceUpdateCanvases();
-            foreach (var label in canvas.GetComponentsInChildren<TMPro.TMP_Text>()) label.ForceMeshUpdate();
-            // Same batch-mode HUD geometry workaround as DrivingTutorialValidation.
-            Vector3 position = rect.position, scale = rect.localScale;
-            Quaternion rotation = rect.rotation;
-            Vector2 size = rect.rect.size;
-            canvas.renderMode = RenderMode.WorldSpace;
-            rect.SetPositionAndRotation(position, rotation);
-            rect.localScale = scale;
-            rect.sizeDelta = size;
-            foreach (var graphic in canvas.GetComponentsInChildren<UnityEngine.UI.Graphic>()) graphic.SetVerticesDirty();
-            Canvas.ForceUpdateCanvases();
-            ScriptableRenderContext.EmitGeometryForCamera(rig.UiCamera);
-            RenderPipeline.SubmitRenderRequest(camera, request);
-        }
-        finally
-        {
-            for (int i = 0; i < stack.Count; i++) if (stack[i] != null) stack[i].targetTexture = previous[i];
-            canvas.renderMode = oldMode;
-            canvas.worldCamera = oldCamera;
-            canvas.targetDisplay = oldDisplay;
-            rect.SetPositionAndRotation(oldPosition, oldRotation);
-            rect.localScale = oldScale;
-            rect.sizeDelta = oldSize;
-            Canvas.ForceUpdateCanvases();
-        }
+        if (rigs == null || rigs.Length == 0) throw new InvalidOperationException("P1 display rig is unavailable.");
+        return rigs[0];
     }
 
+    private static void RenderPlayer(Gmanager manager, Camera camera)
+    {
+        RenderAtSize(manager, manifest.resolutions[0]);
+    }
+
+    private static void RenderAtSize(Gmanager manager, Vector2Int size)
+    {
+        if (target == null || target.width != size.x || target.height != size.y)
+        {
+            ReleaseTarget();
+            target = new RenderTexture(size.x, size.y, 24, RenderTextureFormat.ARGB32) { hideFlags = HideFlags.DontSave };
+            target.Create();
+        }
+        var pipeline = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+        float scale = pipeline != null ? pipeline.renderScale : 1f;
+        try
+        {
+            if (pipeline != null && manifest.captureRenderScale > 0f) pipeline.renderScale = manifest.captureRenderScale;
+            GetRig(manager).RenderToTarget(target);
+        }
+        finally { if (pipeline != null) pipeline.renderScale = scale; }
+    }
+
+    private static void SaveFrame(Gmanager manager, Frame frame)
+    {
+        // No player/physics/UI update between these synchronous renders: pose and HUD values match.
+        for (int i = 0; i < manifest.resolutions.Count; i++)
+        {
+            Vector2Int size = manifest.resolutions[i];
+            RenderAtSize(manager, size);
+            string file = i == 0 ? frame.file : Path.GetFileNameWithoutExtension(frame.file) + "-" + size.x + "x" + size.y + ".png";
+            SavePng(Path.Combine(SessionState.GetString(Key + "Output", ""), file));
+            var pipeline = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            frame.images.Add(new CourseResolutionComparison.Image
+            {
+                file = file, width = size.x, height = size.y,
+                worldRenderScale = manifest.captureRenderScale > 0f ? manifest.captureRenderScale : pipeline != null ? pipeline.renderScale : 1f
+            });
+        }
+    }
     private static void SavePng(string path)
     {
         var pixels = new Texture2D(target.width, target.height, TextureFormat.RGB24, false);
@@ -615,7 +611,17 @@ public static class CourseVisualTour
             if (manifest == null) manifest = JsonUtility.FromJson<Manifest>(SessionState.GetString(Key + "Manifest", ""));
             if (manifest != null)
             {
-                try { CreateContactSheet(); }
+                try
+                {
+                    CreateContactSheet();
+                    if (manifest.resolutions.Count > 1)
+                    {
+                        var rows = new List<List<CourseResolutionComparison.Image>>();
+                        foreach (var frame in manifest.frames) rows.Add(frame.images);
+                        CourseResolutionComparison.CreateSheet(SessionState.GetString(Key + "Output", ""), manifest.resolutions, rows);
+                        manifest.resolutionSheet = "resolution-sheet.png";
+                    }
+                }
                 catch (Exception exception) { success = false; message = "Contact sheet: " + exception.Message; }
                 manifest.complete = success;
                 manifest.error = success ? null : message;

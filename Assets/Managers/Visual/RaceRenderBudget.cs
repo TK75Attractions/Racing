@@ -2,16 +2,26 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-/// <summary>Keep the two player views within a 60 fps rendering budget.</summary>
+/// <summary>Adjust the shared world render scale. NativeResolutionUI scopes UI rendering to 1x.</summary>
 public sealed class RaceRenderBudget : MonoBehaviour
 {
     private const float MinimumScale = .5f;
+    private const string PresetKey = "Racing.QualityPreset";
+    private const string ManualKey = "Racing.QualityPresetManual";
+    public enum QualityPreset { Low, Medium, High }
+    public static RaceRenderBudget Instance { get; private set; }
+    public QualityPreset CurrentPreset { get; private set; }
     private UniversalRenderPipelineAsset pipeline;
     private Gmanager manager;
     private float originalScale;
     private float averageMilliseconds;
     private float nextAdjustment;
     private float fastSeconds;
+
+    public float AverageFrameMilliseconds => averageMilliseconds;
+    public float CurrentScale => pipeline != null ? pipeline.renderScale : 1f;
+    public bool IsAutomatic => automatic;
+    private bool automatic = true;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Install()
@@ -24,9 +34,12 @@ public sealed class RaceRenderBudget : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
         pipeline = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
         if (pipeline == null) { enabled = false; return; }
         originalScale = pipeline.renderScale;
+        CurrentPreset = (QualityPreset)Mathf.Clamp(PlayerPrefs.GetInt(PresetKey, (int)QualityPreset.Medium), 0, 2);
+        automatic = PlayerPrefs.GetInt(ManualKey, 0) == 0;
     }
 
     private void OnEnable()
@@ -37,7 +50,36 @@ public sealed class RaceRenderBudget : MonoBehaviour
         fastSeconds = 0f;
         nextAdjustment = Time.unscaledTime + 3f;
         // Start with headroom for the expensive tree-lined starting grid.
+        if (automatic) pipeline.renderScale = Mathf.Min(.8f, MaximumScale());
+        else ApplyPresetScale();
+    }
+
+    public void SelectPreset(QualityPreset preset)
+    {
+        CurrentPreset = preset;
+        PlayerPrefs.SetInt(PresetKey, (int)preset);
+        PlayerPrefs.SetInt(ManualKey, 1);
+        PlayerPrefs.Save();
+        automatic = false;
+        ApplyPresetScale();
+    }
+
+    public void EnableAutomaticScale()
+    {
+        if (pipeline == null) return;
+        automatic = true;
+        PlayerPrefs.SetInt(ManualKey, 0);
+        PlayerPrefs.Save();
         pipeline.renderScale = Mathf.Min(.8f, MaximumScale());
+        nextAdjustment = Time.unscaledTime + 1f;
+    }
+
+    private float PresetScale => CurrentPreset == QualityPreset.Low ? .55f :
+        CurrentPreset == QualityPreset.High ? .85f : .70f;
+
+    private void ApplyPresetScale()
+    {
+        if (pipeline != null) pipeline.renderScale = Mathf.Min(PresetScale, MaximumScale());
     }
 
     private float Minimum => Mathf.Min(MinimumScale, originalScale);
@@ -57,7 +99,7 @@ public sealed class RaceRenderBudget : MonoBehaviour
         }
         if (width == 0 || height == 0) { width = Screen.width; height = Screen.height; }
         // Avoid accidentally rendering two Retina/4K views at desktop resolution.
-        // URP keeps the native output dimensions and upscales the completed stack.
+        // URP upscales the world; NativeResolutionUI composites the HUD afterwards at 1x.
         return Mathf.Clamp(Mathf.Min(originalScale, 1920f / Mathf.Max(1, width),
             1080f / Mathf.Max(1, height)), Minimum, 1f);
     }
@@ -66,7 +108,7 @@ public sealed class RaceRenderBudget : MonoBehaviour
     {
         if (pipeline == null) return;
         if (manager == null) manager = FindFirstObjectByType<Gmanager>();
-        if (Time.unscaledTime < nextAdjustment) return;
+        if (!automatic || Time.unscaledTime < nextAdjustment) return;
         float maximum = MaximumScale();
         if (pipeline.renderScale > maximum)
         {
@@ -110,5 +152,6 @@ public sealed class RaceRenderBudget : MonoBehaviour
     private void OnDestroy()
     {
         if (pipeline != null) pipeline.renderScale = originalScale;
+        if (Instance == this) Instance = null;
     }
 }

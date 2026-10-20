@@ -129,3 +129,7 @@ D3D11計測の最大停止はGO後21.13秒（1183ms）。生成数・GCだけで
 ### 2026-10-21: 41 / 42 / 43 / 44 / 45 / 48 UI実装
 
 夜の実コースからタイトル背景を生成するEditorビルダー、下部の練習カードとカーブ投影矢印、準備／相手待ち／接続待ちの文言・アイコン、車の短い性能説明と構図、本人を中心とした結果、観戦の残り猶予と次の遷移案内を追加。撮影・背景PNG生成・静的フォント再生成・Unity検証・2画面性能計測はリード担当で未実施。手順は [ModernUI.md](ModernUI.md) と [CarSelection.md](CarSelection.md) を参照。
+
+### 2026-10-21: 35 / 40 等倍UI・解像度比較
+
+3Dの縮小出力を背面RTとして、既存UIカメラで1x合成する `NativeResolutionUI` を追加。P1ネイティブ／P2既存RT転送を維持。定点撮影に `RACING_VISUAL_RESOLUTIONS` と原寸切り出し付き比較一覧を追加。設定・確認は [ModernUI.md](ModernUI.md)、追加メモリと描画費用は [StandalonePerformance.md](StandalonePerformance.md)。外部C#コンパイルのみ成功。Unity検証・両画面撮影・実機性能・実走での桁増加確認はリード担当で未実施。

@@ -108,7 +108,7 @@ public static class EngineAudioPlaythroughValidation
         try
         {
             target.Create(); Canvas.ForceUpdateCanvases();
-            RenderPipeline.SubmitRenderRequest(camera, new RenderPipeline.StandardRequest { destination = target });
+            camera.GetComponentInParent<NativeResolutionUI>().RenderToTarget(target);
             RenderTexture.active = target; image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0); image.Apply();
             File.WriteAllBytes(Path.Combine(output, "gameplay-tunnel.png"), image.EncodeToPNG());
         }

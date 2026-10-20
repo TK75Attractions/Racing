@@ -46,3 +46,30 @@ The legacy scene objects are retained and hidden during initialization; no scene
 - 結果は本人ラベル・順位・総タイム／DNF・実際の達成を右側に集約。メダルとタイトル装飾を縮小し、下部の再挑戦・メニュー操作から間隔を取る。記録なしでは完走扱いにしない。
 - `SpectatorOverlayUI` は観戦対象に加え、`Gmanager.SecondPlaceTimeRemaining` の切り上げ秒数、操作不要・終了後に結果へ自動遷移することを表示する。猶予が未確定なら残り秒数を作らず「終了を確認中」とする。
 - リード確認: まず **Racing > UI > Build HUD Fonts** と **Validate and Capture Car Selection** で新しい日本語の静的アトラスを更新する。その後 **Validate Modern UI**、**RacingPolishValidation**、**DrivingTutorialValidation**、**CarSelectionPlayModeValidation**、**ViewportAndTireValidation** を実行する。既存の練習文言検証は新しい右カーブ案内と完了待ち文へ更新済み。`CourseVisualTour` の固定撮影と両画面720p/1080p/Retinaで、矢印位置、前方視界、文字欠け、長いDNF進捗・達成文、片側接続断、相手待ちから結果への遷移を確認する。Unity実行・撮影・性能計測は未実施。通常のdotnet buildはWindows SDKのアクセス制限で停止したが、既存csprojの参照DLLと定義を用いたRoslyn直接コンパイルでRuntime／Editor（新ビルダーを含む）はエラー0を確認した。
+
+## 2026-10-21: UI の等倍合成・解像度比較（35 / 40）
+
+`PlayerDisplayRig` は `NativeResolutionUI` を追加し、BackImage → Main → Front の3Dスタックを出力サイズの中間RTへ描く。既存 UICamera は独立Baseにし、その描画中だけ共有URPのrenderScaleを1へ変更・直後に復元する。中間RTを背面のRawImageで表示し、その上に既存のScreen Space Camera Canvasを描く。P1はネイティブ出力、P2は従来の `RenderGraphDisplayOutput` のRT／別窓転送を維持する。HUDの内容・レイアウトと追従カメラは変更しない。UIへのポスト処理・AA・影・動的解像度は無効。既存Rendererの機能自体は保持するため、そのUIパスでの費用は計測が必要。
+
+撮影APIは `PlayerDisplayRig.RenderToTarget`。3Dだけの `StandardRequest` にはUIが入らなくなったため、サムネイルと既存の `DrivingTutorialValidation` / `ViewportAndTireValidation` / `EngineAudioPlaythroughValidation` / `RocketJumpFixValidation` は2段合成へ更新。`MultiDisplayValidation` の構成前提も独立UIへ変更した。独自ツールでHUD込みの画像が必要なら、このAPIを使う（UIなしの `TitleBackgroundBuilder` は従来の3Dリクエストのまま）。
+
+リードの固定撮影（グラフィックス有効、`-nographics` / `-quit` なし）:
+
+```powershell
+$env:RACING_VISUAL_TOUR_MODE = 'fixed'
+$env:RACING_VISUAL_VARIANT = 'full' # 保存された夜の既定環境
+$env:RACING_VISUAL_RESOLUTIONS = '1280x720,1920x1080,2560x1440'
+$env:RACING_VISUAL_RENDER_SCALE = '0.55' # 別出力フォルダで 1.0 と比較
+$env:RACING_VISUAL_TOUR_OUTPUT = '<absolute-output-directory>'
+# Unity 6000.3.9f1 -batchmode -projectPath <project> -executeMethod CourseVisualTour.RunBatch -logFile <log>
+# 終了後は上記 RACING_VISUAL_* 環境変数を解除する。
+```
+
+`RACING_VISUAL_RESOLUTIONS` は最大3個、各640〜3840 × 360〜2160。未指定は従来の1600×900。複数指定はfixed専用。`RACING_VISUAL_RENDER_SCALE` は0.5〜1、未指定は現在値。各地点の停止／移動・練習・結果で、物理やHUDの更新を挟まず各解像度を描く。カメラ追従は通常どおり整定させ、撮影時に変更しない。時系列ポスト処理の履歴まで同一になる保証はない。
+
+出力は原寸PNG、`manifest.json`（各画像の寸法・3D scale）、従来の `contact-sheet.png` に加え、`resolution-sheet.png` と `resolution-index.html`。列は指定解像度順、行はmanifestのフレーム順（番号を画像にも記載）。各セルは384×216の全景と、上段左／中央／右・下段左／中央／右の128×128原寸切り出し。欠け・細線は切り出しと原寸リンクを100%表示で確認する。縮小した全景だけで鮮明さを判定しない。桁増加はHUDを書き換えないため、リードが実走の99→100 km/h・分繰上がり・大きい周回数も別途確認する。練習／結果が未成立の場合は `skipped` に記録されるので、`complete` だけで全画面撮影済みと判断しない。
+
+Unity未起動。ローカルの既存Unity参照DLLとcsproj定義によるRuntime／Editorの外部C#コンパイル成功のみ確認済み。リードは既存のDisplay Outputs・Viewport Resize・Driving Tutorial・Modern UI検証、P1/P2の異なるサイズ／窓リサイズ／練習→レース→結果／サムネイル後の復帰、0.55と1.0の文字・色・縦反転・レターボックスを確認する。費用は [StandalonePerformance.md](StandalonePerformance.md) を参照。
+
+実装根拠: 同梱URP 17.3の `UniversalRenderPipeline.RenderCameraStack` はBaseの `beginCameraRendering` 後にカメラデータを生成し、OverlayはBaseの縮小descriptorを継承する。`UniversalRendererRenderGraph.ImportBackBuffers` は独立Base出力の色保持を保証しないため、3Dを背面画像として明示合成した。[Unityのカメラ描画前イベント](https://docs.unity3d.com/6000.3/Documentation/ScriptReference/Rendering.RenderPipelineManager-beginCameraRendering.html)。URP更新時はこの順序を再確認する。
+合成用の "NativeUIWorld" シェーダーは3D出力のRGBを不透明に描き、空のAlphaが0でも背景を欠落させない。新規シェーダーのUnityインポート／実機コンパイルは未確認。
