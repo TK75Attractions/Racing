@@ -1,0 +1,114 @@
+{
+    "finishes": [
+        {
+            "trial": 0,
+            "index": 1,
+            "rank": 1,
+            "time": 58.79427719116211,
+            "speedAtFinish": 38.24217224121094,
+            "distanceAfterFinish": 54.44651794433594,
+            "duration": 3.5199968814849855,
+            "stopped": true,
+            "droveInGoal": true
+        },
+        {
+            "trial": 0,
+            "index": 3,
+            "rank": 2,
+            "time": 58.79427719116211,
+            "speedAtFinish": 36.52920913696289,
+            "distanceAfterFinish": 53.24599838256836,
+            "duration": 3.5199968814849855,
+            "stopped": true,
+            "droveInGoal": true
+        },
+        {
+            "trial": 0,
+            "index": 0,
+            "rank": 3,
+            "time": 59.79427719116211,
+            "speedAtFinish": 32.3331298828125,
+            "distanceAfterFinish": 52.66178512573242,
+            "duration": 3.5199968814849855,
+            "stopped": true,
+            "droveInGoal": true
+        },
+        {
+            "trial": 1,
+            "index": 1,
+            "rank": 1,
+            "time": 49.30699920654297,
+            "speedAtFinish": 38.23641586303711,
+            "distanceAfterFinish": 21.000486373901368,
+            "duration": 0.7199994921684265,
+            "stopped": true,
+            "droveInGoal": false
+        },
+        {
+            "trial": 1,
+            "index": 3,
+            "rank": 2,
+            "time": 53.54190444946289,
+            "speedAtFinish": 0.0,
+            "distanceAfterFinish": 0.0,
+            "duration": 0.0,
+            "stopped": true,
+            "droveInGoal": false
+        },
+        {
+            "trial": 1,
+            "index": 0,
+            "rank": 3,
+            "time": 62.29409408569336,
+            "speedAtFinish": 0.0,
+            "distanceAfterFinish": 0.0,
+            "duration": 0.0,
+            "stopped": true,
+            "droveInGoal": false
+        },
+        {
+            "trial": 2,
+            "index": 1,
+            "rank": 1,
+            "time": 48.86979675292969,
+            "speedAtFinish": 0.0,
+            "distanceAfterFinish": 0.0,
+            "duration": 0.0,
+            "stopped": true,
+            "droveInGoal": false
+        },
+        {
+            "trial": 2,
+            "index": 3,
+            "rank": 2,
+            "time": 52.44415283203125,
+            "speedAtFinish": 0.0,
+            "distanceAfterFinish": 0.0,
+            "duration": 0.0,
+            "stopped": true,
+            "droveInGoal": false
+        },
+        {
+            "trial": 2,
+            "index": 2,
+            "rank": 3,
+            "time": 58.381961822509769,
+            "speedAtFinish": 0.0,
+            "distanceAfterFinish": 0.0,
+            "duration": 0.0,
+            "stopped": true,
+            "droveInGoal": false
+        },
+        {
+            "trial": 2,
+            "index": 0,
+            "rank": 4,
+            "time": 62.02401351928711,
+            "speedAtFinish": 0.0,
+            "distanceAfterFinish": 0.0,
+            "duration": 0.0,
+            "stopped": true,
+            "droveInGoal": false
+        }
+    ]
+}

@@ -303,7 +303,7 @@ public class DebugMover : MonoBehaviour
     {
         if (inputSource == null ||
             Gmanager.Control == null ||
-            !Gmanager.Control.IsDrivingEnabled)
+            !Gmanager.Control.CanDriveVehicle(rb))
         {
             ClearUserInput();
             ResetBoosts();

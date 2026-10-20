@@ -1,0 +1,29 @@
+FINISH_RUN_TRIAL_START: 0
+FINISH_RUN_CROSSING: trial=0 index=1 speed=38.24m/s time=58.79
+FINISH_RUN_CROSSING: trial=0 index=3 speed=36.53m/s time=58.79
+FINISH_RUN_CROSSING: trial=0 index=0 speed=32.33m/s time=59.79
+FINISH_RUN_STOP_PASS: trial=0 index=1 travel=54.45m duration=3.52s
+FINISH_RUN_STOP_PASS: trial=0 index=3 travel=53.25m duration=3.52s
+FINISH_RUN_STOP_PASS: trial=0 index=0 travel=52.66m duration=3.52s
+FINISH_RUN_DNF_PASS: trial=0 index=2
+FINISH_RUN_TRIAL_START: 1
+FINISH_RUN_CROSSING: trial=1 index=1 speed=38.24m/s time=49.31
+FINISH_RUN_LIVE_OFF_PASS
+FINISH_RUN_STOP_PASS: trial=1 index=1 travel=21.00m duration=0.72s
+FINISH_RUN_CROSSING: trial=1 index=3 speed=0.00m/s time=53.54
+FINISH_RUN_CROSSING: trial=1 index=0 speed=0.00m/s time=62.29
+FINISH_RUN_DNF_PASS: trial=1 index=2
+FINISH_RUN_TRIAL_START: 2
+FINISH_RUN_CROSSING: trial=2 index=1 speed=0.00m/s time=48.87
+FINISH_RUN_CROSSING: trial=2 index=3 speed=0.00m/s time=52.44
+FINISH_RUN_CROSSING: trial=2 index=2 speed=0.00m/s time=58.38
+FINISH_RUN_CROSSING: trial=2 index=0 speed=0.00m/s time=62.02
+FINISH_RUN_VALIDATION_PASS: three physical one-lap races, human/CPU finishes, preserved finish speed, post-finish travel, final Goal driving, official time/rank unchanged, live OFF and pre-race OFF.
+PLAYER_AUTODRIVE_VALIDATION_PASS: real observations, connected gated source, manual handover, pedal release and pause preservation.
+LANDING_REWARD_VALIDATION_PASS: designated gap/reverse geometry, contact-flight-stable landing, independent live boost/feedback OFF.
+STEERING_ASSIST_VALIDATION_PASS: grounded edge prediction, live OFF, wall, air and disconnect.
+SLIPSTREAM_VALIDATION_PASS: real ground queries, pursuit, live OFF, stacked roads, occlusion, disconnect, reverse direction.
+TUBE_CHARGE_LINE_VALIDATION_PASS: actual tube/ground geometry, entry=579.00, laneOffset=3.20, continuous contact sequence, 25% reward, no repeat farming, live OFF/ON.
+RESULT_HIGHLIGHT_VALIDATION_PASS: per-player snapshot, factual fallback, DNF, AUTO label, live OFF/ON, 720p/1080p renders.
+RACE_FEATURE_VALIDATION_PASS: presets, live switches, coaching, anti-chain protection, steering assist, landing rewards, tube lines and fonts.
+Tests: 98 passed, 0 failed

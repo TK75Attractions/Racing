@@ -169,8 +169,11 @@ public class Gmanager : MonoBehaviour
     public bool IsDrivingEnabled => state == State.Game || ((state == State.CarSelection || state == State.Tutorial) &&
         !finishingPreparation && drivingTutorial != null && drivingTutorial.HasAnyStarted);
     public bool CanUseDashboardControls => !IsScreenTransitioning();
+    public bool CanDriveVehicle(Rigidbody body) => IsDrivingEnabled ||
+        (body != null && body.GetComponent<FinishRunController>()?.IsActive == true);
     public bool IsEngineAudioActive(Rigidbody body)
     {
+        if (body != null && body.GetComponent<FinishRunController>()?.IsActive == true) return true;
         if (state != State.Countdown && state != State.Game && state != State.Tutorial && state != State.CarSelection)
             return false;
         RaceParticipant participant = FindParticipant(body);
@@ -1056,9 +1059,11 @@ public class Gmanager : MonoBehaviour
         }
         if (entry.IsCpu)
         {
-            FreezeCpu(entry); UpdateParticipantOrder(); return;
+            if (!StartFinishRun(entry)) FreezeCpu(entry);
+            UpdateParticipantOrder(); return;
         }
-        player.result = result; FreezePlayer(player, disableCollisions: true);
+        player.result = result;
+        if (!StartFinishRun(entry)) FreezePlayer(player, disableCollisions: true);
         if (registration == RaceFinishRegistration.RaceComplete) { CompleteRace(latestSessionResult, player); return; }
         latestResult = latestSessionResult.GetResultAtPosition(1);
         PlayPlayerGoal(player, () => BeginSpectating(player.playerIndex));
@@ -1107,8 +1112,17 @@ public class Gmanager : MonoBehaviour
         return result;
     }
 
+    private bool StartFinishRun(RaceParticipant entry)
+    {
+        if (!RaceFeatureController.Enabled(RaceFeature.FinishRun) || course == null || !course.HasValidPath) return false;
+        var run = entry.Car.GetComponent<FinishRunController>() ?? entry.Car.AddComponent<FinishRunController>();
+        run.Begin(this, entry);
+        return true;
+    }
+
     private static void FreezeCpu(RaceParticipant entry)
     {
+        if (entry.Car.GetComponent<FinishRunController>()?.IsActive == true) return;
         entry.Driver?.SetDriving(false);
         foreach (Collider collider in entry.Car.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
         SetBehaviourEnabled<DebugMover>(entry.Car, false);
@@ -1521,6 +1535,7 @@ public class Gmanager : MonoBehaviour
     private static void FreezePlayer(PlayerRuntime player, bool disableCollisions)
     {
         if (player?.car == null) return;
+        if (player.car.GetComponent<FinishRunController>()?.IsActive == true) return;
         SetBehaviourEnabled<DebugMover>(player.car, false);
         SetBehaviourEnabled<CarStabilityController>(player.car, false);
         SetBehaviourEnabled<CarResetter>(player.car, false);

@@ -25,6 +25,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
     }
     public void ApplySwitch()
     {
+        if (own?.Result != null) return;
         bool next = own != null && own.Index == 1 && RaceFeatureController.Enabled(RaceFeature.PlayerTwoAutodrive);
         if (next == IsActive || gate == null) return;
         CurrentState = DriveInputState.Neutral; bot.Clear();

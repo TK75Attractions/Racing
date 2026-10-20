@@ -10,6 +10,7 @@ public sealed class RaceFeatureSettingsTests
         Assert.IsTrue(settings.IsEnabled(RaceFeature.ResultHighlights));
         Assert.IsTrue(settings.IsEnabled(RaceFeature.HighSpeedCornering));
         Assert.IsTrue(settings.IsEnabled(RaceFeature.FastAiPace));
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.FinishRun));
     }
     [Test] public void FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked()
     {

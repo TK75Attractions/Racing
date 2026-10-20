@@ -6,10 +6,10 @@ using UnityEngine.InputSystem;
 public sealed class RaceFeatureController : MonoBehaviour
 {
     private static readonly RaceFeature[] Features = {
-        RaceFeature.ExperienceItems, RaceFeature.DriftCoaching, RaceFeature.HitProtection, RaceFeature.Slipstream, RaceFeature.SteeringAssist, RaceFeature.HighSpeedCornering, RaceFeature.FastAiPace, RaceFeature.LandingFeedback, RaceFeature.LandingBoost, RaceFeature.TubeChargeLines, RaceFeature.PlayerTwoAutodrive, RaceFeature.CpuRacing, RaceFeature.ResultHighlights
+        RaceFeature.ExperienceItems, RaceFeature.DriftCoaching, RaceFeature.HitProtection, RaceFeature.Slipstream, RaceFeature.SteeringAssist, RaceFeature.HighSpeedCornering, RaceFeature.FastAiPace, RaceFeature.LandingFeedback, RaceFeature.LandingBoost, RaceFeature.TubeChargeLines, RaceFeature.PlayerTwoAutodrive, RaceFeature.CpuRacing, RaceFeature.ResultHighlights, RaceFeature.FinishRun
     };
     private static readonly string[] Labels = {
-        "Gentle items (shield / rocket only)", "Drift coaching", "Anti-chain hit protection", "Slipstream boost", "Course edge steering assist", "High-speed cornering + turn braking", "Fast AI pace (2 laps / 120s target)", "Landing success feedback", "Safe landing reward boost", "Tube side charge lines", "P2 test autodrive (manual on OFF)", "CPU overtaking / counterattack", "Result achievement highlight"
+        "Gentle items (shield / rocket only)", "Drift coaching", "Anti-chain hit protection", "Slipstream boost", "Course edge steering assist", "High-speed cornering + turn braking", "Fast AI pace (2 laps / 120s target)", "Landing success feedback", "Safe landing reward boost", "Tube side charge lines", "P2 test autodrive (manual on OFF)", "CPU overtaking / counterattack", "Result achievement highlight", "Short winning run after finish"
     };
     public RaceFeatureSettings Settings { get; } = new RaceFeatureSettings();
     public bool PanelVisible { get; set; }
@@ -46,6 +46,7 @@ public sealed class RaceFeatureController : MonoBehaviour
         {
             foreach (RaceParticipant entry in manager.Participants)
             {
+                if (!Settings.IsEnabled(RaceFeature.FinishRun)) entry.Car?.GetComponent<FinishRunController>()?.Stop();
                 entry.Effects?.ApplyFeatureSwitches();
                 entry.Car?.GetComponent<PlayerAutodrive>()?.ApplySwitch();
                 entry.Car?.GetComponent<LandingRewardController>()?.ApplySwitches();
