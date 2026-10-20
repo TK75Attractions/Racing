@@ -8,6 +8,8 @@ internal static class ReceiverProbe
     {
         try
         {
+            if (args[1] == "hitches") return ValidateFrameHitches(args[0]);
+            if (args[1] == "queued-stale") return ValidateQueuedStaleTelemetry(args[0]);
             if (MacPseudoTerminalLineReader.IsSupportedPath("/dev/ttyUSB0") ||
                 MacPseudoTerminalLineReader.IsSupportedPath("/dev/ttys000/../x") ||
                 !MacPseudoTerminalLineReader.IsSupportedPath(args[0])) throw new Exception("PTY path validation failed.");
@@ -51,5 +53,87 @@ internal static class ReceiverProbe
             Console.WriteLine("MONO_RGP_PTY_RECEIVER_PASS: "+args[1]); return 0;
         }
         catch (Exception error) { Console.Error.WriteLine(error); return 1; }
+    }
+
+    private static int ValidateFrameHitches(string port)
+    {
+        using (var source = new TwoPlayerSerialInputSource(new Esp32SerialConfiguration().WithSimulatorPort(port, 6.5f), port))
+        {
+            var p1 = new PlayerDriveInputGate(new SharedPlayerDriveInputSource(source, 0));
+            var p2 = new PlayerDriveInputGate(new SharedPlayerDriveInputSource(source, 1));
+            var timer = Stopwatch.StartNew();
+            while (timer.Elapsed.TotalSeconds < 4)
+            {
+                source.UpdateInput(.005f);
+                if (source.IsConnected(0) && Math.Abs(source.GetInputState(0).pedal - .75f) < .001f) break;
+                Thread.Sleep(5);
+            }
+            if (!source.IsConnected(0)) throw new Exception("Hitch test did not reach READY.");
+            foreach (int milliseconds in new[] { 150, 350, 650 })
+            {
+                source.UpdateInput(.005f);
+                long before = source.LinesReceived;
+                // Unity runs catch-up FixedUpdate before the next Gmanager.Update after a slow frame.
+                // USB reception continues on its thread while the main thread is busy.
+                Thread.Sleep(milliseconds);
+                int queued = source.PendingLineCount;
+                DriveInputState a = p1.CurrentState, b = p2.CurrentState;
+                source.UpdateInput(.005f);
+                bool latched = p1.NeedsPedalRelease || p2.NeedsPedalRelease;
+                Console.WriteLine($"HITCH {milliseconds}ms: queued={queued} received={source.LinesReceived-before} pedal={a.pedal}/{b.pedal} releaseRequired={latched} parseErrors={source.ParseErrorCount}");
+                if (queued == 0 || source.LinesReceived <= before || source.ParseErrorCount != 0 ||
+                    Math.Abs(a.pedal - .75f) > .001f || Math.Abs(b.pedal - .5f) > .001f || latched ||
+                    Math.Abs(p1.CurrentState.pedal - .75f) > .001f)
+                    throw new Exception("Normal queued telemetry falsely latched the pedal-release gate after a slow frame.");
+            }
+        }
+        Console.WriteLine("MONO_RGP_PTY_RECEIVER_PASS: hitches (both players keep their held pedals)");
+        return 0;
+    }
+
+    private static int ValidateQueuedStaleTelemetry(string port)
+    {
+        using (var source = new TwoPlayerSerialInputSource(new Esp32SerialConfiguration().WithSimulatorPort(port, 6.5f), port))
+        {
+            var p1 = new PlayerDriveInputGate(new SharedPlayerDriveInputSource(source, 0));
+            var p2 = new PlayerDriveInputGate(new SharedPlayerDriveInputSource(source, 1));
+            bool paused = false, heldBlocked = false, released = false, resumed = false;
+            var timer = Stopwatch.StartNew();
+            while (timer.Elapsed.TotalSeconds < 5)
+            {
+                source.UpdateInput(.005f);
+                bool connected = source.IsConnected(0);
+                float raw = source.GetInputState(0).pedal;
+                if (!paused && connected && Math.Abs(raw - .65f) < .001f)
+                {
+                    Thread.Sleep(650);
+                    int queued = source.PendingLineCount;
+                    DriveInputState a = p1.CurrentState, b = p2.CurrentState;
+                    if (queued == 0 || source.IsConnected(0) || a.pedal != 0 || b.pedal != 0 ||
+                        !p1.NeedsPedalRelease || !p2.NeedsPedalRelease)
+                        throw new Exception("Processing old queued TEL must not make a real outage fresh.");
+                    Console.WriteLine($"QUEUED_STALE: queued={queued} pedal={a.pedal}/{b.pedal} releaseRequired=True");
+                    paused = true;
+                }
+                else if (paused && connected)
+                {
+                    DriveInputState a = p1.CurrentState, b = p2.CurrentState;
+                    if (Math.Abs(raw - .65f) < .001f)
+                        heldBlocked |= a.pedal == 0 && b.pedal == 0 && p1.NeedsPedalRelease && p2.NeedsPedalRelease;
+                    if (heldBlocked && raw == 0)
+                        released |= !p1.NeedsPedalRelease && !p2.NeedsPedalRelease;
+                    if (released && Math.Abs(raw - .75f) < .001f)
+                    {
+                        resumed = Math.Abs(a.pedal - .75f) < .001f && Math.Abs(b.pedal - .5f) < .001f;
+                        break;
+                    }
+                }
+                Thread.Sleep(5);
+            }
+            if (!paused || !heldBlocked || !released || !resumed || source.ParseErrorCount != 0)
+                throw new Exception("Real outage must keep both held pedals blocked until release and repress.");
+        }
+        Console.WriteLine("MONO_RGP_PTY_RECEIVER_PASS: queued-stale (real outage, held-pedal block, release and repress)");
+        return 0;
     }
 }

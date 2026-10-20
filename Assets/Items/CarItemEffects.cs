@@ -67,6 +67,56 @@ public sealed class CarItemEffects : MonoBehaviour
     [Tooltip("ハンドルが左右反転する時間（秒）。")]
     [SerializeField, Min(0f)] private float confuseDuration = 2.5f;
 
+    private readonly HitProtectionWindow hitProtection = new HitProtectionWindow();
+    private bool lastProtectionEnabled, lastGentleEnabled;
+    public float HitProtectionRemaining => hitProtection.ProtectionRemaining;
+
+    public void ApplyFeatureSwitches()
+    {
+        bool protect = RaceFeatureController.Enabled(RaceFeature.HitProtection);
+        bool gentle = RaceFeatureController.Enabled(RaceFeature.ExperienceItems);
+        if (protect != lastProtectionEnabled)
+        {
+            hitProtection.Clear();
+            if (protect)
+            {
+                float active = Mathf.Max(oilTimeRemaining, Mathf.Max(confuseTimeRemaining, spinTimeRemaining));
+                if (active > 0f)
+                {
+                    hitProtection.TryBegin(active);
+                    oilTimeRemaining = Mathf.Min(oilTimeRemaining, HitProtectionWindow.MaximumEffectSeconds);
+                    confuseTimeRemaining = Mathf.Min(confuseTimeRemaining, HitProtectionWindow.MaximumEffectSeconds);
+                    spinTimeRemaining = Mathf.Min(spinTimeRemaining, HitProtectionWindow.MaximumEffectSeconds);
+                }
+            }
+        }
+        if (gentle && !lastGentleEnabled) { ClearHarmfulEffects(); hitProtection.Clear(); }
+        lastProtectionEnabled = protect; lastGentleEnabled = gentle;
+    }
+    public void ClearHarmfulEffects()
+    {
+        if (spinTimeRemaining > 0f && body != null && !body.isKinematic)
+        {
+            Vector3 angular = body.angularVelocity; angular.y = 0f; body.angularVelocity = angular;
+        }
+        oilTimeRemaining = confuseTimeRemaining = spinTimeRemaining = 0f;
+        oilDropTimeRemaining = -1f;
+        if (body != null) body.maxAngularVelocity = originalMaxAngularVelocity;
+    }
+    private bool AcceptAffliction(float duration)
+    {
+        ApplyFeatureSwitches();
+        if (RaceFeatureController.Enabled(RaceFeature.ExperienceItems)) return false;
+        if (!RaceFeatureController.Enabled(RaceFeature.HitProtection)) return true;
+        Gmanager race = Gmanager.Control;
+        if (race != null && race.course != null &&
+            (race.course.IsJumpAhead(transform.position, race.CourseProgressSign) ||
+            mover != null && !mover.HasGroundedWheels)) return false;
+        return hitProtection.TryBegin(duration);
+    }
+    private float AfflictionDuration(float seconds) => RaceFeatureController.Enabled(RaceFeature.HitProtection)
+        ? Mathf.Min(seconds, HitProtectionWindow.MaximumEffectSeconds) : seconds;
+
     private Rigidbody body;
     private DebugMover mover;
     private float shieldTimeRemaining;
@@ -152,7 +202,9 @@ public sealed class CarItemEffects : MonoBehaviour
             return;
         }
 
+        ApplyFeatureSwitches();
         float dt = Time.fixedDeltaTime;
+        hitProtection.Tick(dt);
         recoveryProtectionRemaining = Mathf.Max(0f, recoveryProtectionRemaining - dt);
         shieldTimeRemaining = Mathf.Max(0f, shieldTimeRemaining - dt);
         oilTimeRemaining = Mathf.Max(0f, oilTimeRemaining - dt);
@@ -175,6 +227,8 @@ public sealed class CarItemEffects : MonoBehaviour
     /// <summary>アイテムボックスから引いたアイテムを発動します。相手に作用するものは opponent を使います。</summary>
     public void UseItem(RaceItemType item, CarItemEffects opponent)
     {
+        if (RaceFeatureController.Enabled(RaceFeature.ExperienceItems) &&
+            (item == RaceItemType.Oil || item == RaceItemType.Confuse)) return;
         switch (item)
         {
             case RaceItemType.Shield:
@@ -210,7 +264,8 @@ public sealed class CarItemEffects : MonoBehaviour
         if (!IsReceptive) return false;
         if (IsShieldActive || IsRocketActive) return true;
 
-        oilTimeRemaining = oilDuration;
+        if (!AcceptAffliction(oilDuration)) return false;
+        oilTimeRemaining = AfflictionDuration(oilDuration);
         if (body != null && !body.isKinematic)
         {
             float direction = UnityEngine.Random.value < 0.5f ? -1f : 1f;
@@ -224,7 +279,8 @@ public sealed class CarItemEffects : MonoBehaviour
     public bool ApplyConfuse()
     {
         if (!IsReceptive || IsShieldActive) return false;
-        confuseTimeRemaining = confuseDuration;
+        if (!AcceptAffliction(confuseDuration)) return false;
+        confuseTimeRemaining = AfflictionDuration(confuseDuration);
         Afflicted?.Invoke(RaceItemType.Confuse);
         return true;
     }
@@ -239,7 +295,8 @@ public sealed class CarItemEffects : MonoBehaviour
         float side = Vector3.Cross(forward, Vector3.ProjectOnPlane(hitDirection, Vector3.up)).y;
         float direction = side >= 0f ? 1f : -1f;
 
-        spinTimeRemaining = spinDuration;
+        if (!AcceptAffliction(spinDuration)) return false;
+        spinTimeRemaining = AfflictionDuration(spinDuration);
         // 線形に減衰させたとき、総回転角が設定回転数になる初速です。
         spinStartRate = direction * 2f * spinRevolutions * Mathf.PI * 2f / Mathf.Max(0.1f, spinDuration);
         body.maxAngularVelocity = Mathf.Max(originalMaxAngularVelocity, Mathf.Abs(spinStartRate) + 1f);
@@ -257,6 +314,7 @@ public sealed class CarItemEffects : MonoBehaviour
 
     public void ClearAll()
     {
+        hitProtection.Clear();
         recoveryProtectionRemaining = 0f;
         shieldTimeRemaining = 0f;
         rocketTimeRemaining = 0f;

@@ -1,0 +1,3 @@
+SLIPSTREAM_VALIDATION_PASS: real ground queries, pursuit, live OFF, stacked roads, occlusion, disconnect, reverse direction.
+HUD_FONT_BUILD_PASS: static medium and bold, 327 characters.
+RACE_FEATURE_VALIDATION_PASS: presets, live switches, coaching, anti-chain protection and fonts.

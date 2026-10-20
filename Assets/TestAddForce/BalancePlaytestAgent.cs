@@ -31,6 +31,10 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         public float finishTime, progress, distanceDriven, meanSpeed, maxSpeed, maxStall, offCourseSeconds, maxTilt, nearbyHumanSeconds, racingSeconds;
         public int takeoffs, landings, humanRecoveries, automaticRecoveries;
         public string recoveryBlockedReason;
+        public float steeringAssistSeconds;
+        public float corneringBrakeSeconds, maxCorneringBrake;
+        public int landingRewards;
+        public bool usedAutodrive;
         public float maxRecoveryRollbackMeters;
         [NonSerialized] public TireForce[] tires;
         [NonSerialized] public DebugMover mover;
@@ -73,15 +77,19 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     private string output;
     private StreamWriter trace, events;
     private bool skillSuite;
+    private bool challengePlaytest;
+    private float assistStressStarted = -1f;
     private readonly float[] nextDecisionAt = new float[2];
     private readonly DriveInputState[] heldDecision = new DriveInputState[2];
     private readonly float[] releaseRequestedAt = {-1,-1};
     private readonly float[] releaseUntil = {-1,-1};
     private readonly float[] jumpNoticedAt = {-1,-1};
+    private readonly RoadObservationBot[] fastBots = { new RoadObservationBot(), new RoadObservationBot() };
     private OnPlayUIManager[] driverUis;
 
     private IEnumerator Start()
     {
+        challengePlaytest = Environment.GetEnvironmentVariable("RACING_CHALLENGE_PLAYTEST") == "1";
         output = Environment.GetEnvironmentVariable("RACING_BALANCE_OUTPUT") ?? Path.GetFullPath("Artifacts/BalancePlaytest");
         Directory.CreateDirectory(output);
         suite.startedUtc = DateTime.UtcNow.ToString("o"); suite.unityVersion = Application.unityVersion;
@@ -104,17 +112,23 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             suite.observationWindowSeconds = Mathf.Clamp(window, 0, 360);
         foreach (var publisher in FindObjectsByType<RaceRemoteFirebasePublisher>(FindObjectsSortMode.None)) publisher.enabled = false;
         var plans = new[] {
+            SkillPlan("fast-control-101", 6201, 50, 50, false, "fast", "fast"),
             Plan("equal-control-101", 101, 25, 25, false), Plan("equal-control-102", 102, 25, 25, false),
             Plan("split-fast-p1", 201, 27, 13, false), Plan("split-fast-p2", 202, 13, 27, false),
             Plan("both-slow", 301, 12, 12, false),
             Plan("items-401", 401, 25, 25, true), Plan("items-402", 402, 25, 25, true),
             Plan("items-reset-assisted", 401, 25, 25, true, true), Plan("temporary-stop-p2", 501, 25, 25, false)
         };
+        // The default pace benchmark uses the production observation driver. Explicit
+        // novice/slow profiles remain available for usability and regression scenarios.
         skillSuite = Environment.GetEnvironmentVariable("RACING_BALANCE_SKILL_SUITE") == "1";
         if (skillSuite)
         {
             plans = new[] {
+                SkillPlan("skill-fast-pace", 6201, 50, 50, false, "fast", "fast"),
+                SkillPlan("skill-fast-pace-2", 6202, 50, 50, false, "fast", "fast"),
                 SkillPlan("skill-novice-expert", 6101, 12, 27, false, "novice", "expert"),
+                SkillPlan("skill-rivalry", 6107, 22, 22, false, "intermediate", "intermediate"),
                 SkillPlan("skill-club-expert", 6102, 20, 28, true, "intermediate", "expert"),
                 SkillPlan("skill-aggressive-items", 6103, 32, 22, true, "aggressive", "intermediate"),
                 SkillPlan("skill-stop-rejoin", 6104, 24, 16, false, "intermediate", "cautious"),
@@ -157,11 +171,18 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         suite.runs.Add(run);
         string folder = Path.Combine(output, run.name); Directory.CreateDirectory(folder);
         trace = new StreamWriter(Path.Combine(folder, "trace.csv"));
-        trace.WriteLine("time,car,x,y,z,speed,progress,lap,checkpoint,position,pedal,steering,grounded,offCourse,rocket,confuse,oil,spin,cpuTargetSpeed,cpuRival,connected,needsRelease,recoveries,recoveryBlocked");
+        trace.WriteLine("time,car,x,y,z,speed,progress,lap,checkpoint,position,pedal,steering,grounded,offCourse,rocket,confuse,oil,spin,cpuTargetSpeed,cpuRival,connected,needsRelease,recoveries,recoveryBlocked,appliedSteering,assistCorrection");
         events = new StreamWriter(Path.Combine(folder, "events.csv")); events.WriteLine("time,car,event,detail,x,y,z");
         inputs[0].CurrentState = inputs[1].CurrentState = DriveInputState.Neutral;
         for (int i = 0; i < 2; i++) { inputs[i].IsConnected = true; nextDecisionAt[i] = 0; heldDecision[i] = DriveInputState.Neutral; releaseRequestedAt[i]=releaseUntil[i]=jumpNoticedAt[i]=-1; }
-        Invoke("StartGameWhenScreenCovered"); Invoke("CompleteGameStart");
+        assistStressStarted = -1f;
+        foreach (var bot in fastBots) bot.Clear();
+        if (Environment.GetEnvironmentVariable("RACING_P2_AUTO") == "1")
+        {
+            while (!manager.CanUseDashboardControls) yield return null;
+            manager.StartAutodriveTestRace();
+        }
+        else { Invoke("StartGameWhenScreenCovered"); Invoke("CompleteGameStart"); }
         foreach (ScreenTransitionController transition in FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
             transition.ApplyStateImmediate(Gmanager.State.Countdown);
         while (manager.state != Gmanager.State.Game) yield return null;
@@ -171,7 +192,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             var record = new CarRecord { label = entry.Label, tires = entry.Car.GetComponentsInChildren<TireForce>(),
                 mover = entry.Car.GetComponent<DebugMover>(), previousPosition = entry.Body.position };
             run.cars.Add(record);
-            if (!entry.IsCpu && !skillSuite)
+            if (!entry.IsCpu && !skillSuite && !(entry.Index == 1 && manager.Features.Settings.IsEnabled(RaceFeature.PlayerTwoAutodrive)))
             {
                 record.mover.SetInputSource(inputs[entry.Index]);
                 entry.Car.GetComponent<CarResetter>()?.SetInputSource(inputs[entry.Index]);
@@ -214,6 +235,9 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             record.recoveryBlockedReason=entry.Driver?.RecoveryBlockedReason ?? "";
             CarResetter resetter=entry.Car.GetComponent<CarResetter>();
             if(!entry.IsCpu) {record.humanRecoveries=resetter?.RecoveryCount??0; record.automaticRecoveries=resetter?.AutomaticRecoveryCount??0;}
+            record.steeringAssistSeconds = entry.Car.GetComponent<CourseSteeringAssist>()?.ActiveSeconds ?? 0f;
+            record.landingRewards = entry.Car.GetComponent<LandingRewardController>()?.RewardBoosts ?? 0;
+            record.usedAutodrive = entry.Car.GetComponent<PlayerAutodrive>()?.WasUsed ?? false;
             record.meanSpeed = record.samples > 0 ? record.speedSum / record.samples : 0;
             if (entry.Index < 2 && record.finished) finishedHumans++;
             Event(entry.Index, entry.Result == null ? "still-racing" : record.finished ? "finished" : "dnf", "position=" + record.position + ";laps=" + record.laps);
@@ -235,6 +259,23 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             yield return null;
         }
         if(skillSuite) {Capture(folder,"result-p1",0); Capture(folder,"result-p2",1);}
+        if (manager.state == Gmanager.State.Result)
+        {
+            var results = (ResultUIManager[])typeof(Gmanager).GetField("resultUIManagers", Private).GetValue(manager);
+            string observed = "";
+            for (int i = 0; i < 2; i++)
+            {
+                RaceResultRecord local = results[i].CurrentSessionResult?.GetPlayerResult(i);
+                if (local?.achievements == null || results[i].AchievementText != ResultUIManager.FormatHighlight(local))
+                { suite.error = "Actual result achievement snapshot/UI mismatch for P" + (i + 1); break; }
+                observed += "P" + (i + 1) + ": " + results[i].AchievementText + "\n";
+            }
+            bool originalHighlight = manager.Features.Settings.IsEnabled(RaceFeature.ResultHighlights);
+            manager.Features.SetFeature(RaceFeature.ResultHighlights, false);
+            if (results[0].AchievementText.Length > 0 || results[1].AchievementText.Length > 0) suite.error = "Result highlight live OFF failed.";
+            manager.Features.SetFeature(RaceFeature.ResultHighlights, originalHighlight);
+            File.WriteAllText(Path.Combine(folder, "result-highlights.txt"), observed);
+        }
         yield return null;
     }
 
@@ -271,10 +312,13 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 continue;
             }
             float speed = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up).magnitude;
+            record.maxCorneringBrake = Mathf.Max(record.maxCorneringBrake, record.mover.CorneringBrakingAcceleration);
+            if (record.mover.CorneringBrakingAcceleration > .1f) record.corneringBrakeSeconds += dt;
             float raw = manager.course.GetProgressDistance(body.position);
             manager.course.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample here);
             int grounded = 0; foreach (TireForce tire in record.tires) if (tire.IsGrounded) grounded++;
-            bool offCourse = !manager.course.IsPointInsideCourse(body.position) || body.position.y < here.position.y - 6;
+            bool offCourse = !manager.course.IsPointInsideDrivingArea(body.position) ||
+                (body.position.y < here.position.y - 4f && !manager.course.IsPointInsideTube(body.position));
             record.offCourseStreak = offCourse ? record.offCourseStreak + dt : 0;
             if (offCourse) record.offCourseSeconds += dt;
             if (offCourse != record.wasOffCourse) { Event(entry.Index, offCourse ? "off-course" : "on-course", ""); record.wasOffCourse = offCourse; }
@@ -327,9 +371,9 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             if (write)
             {
                 var data = laps.GetCarData(body); var effects = entry.Effects;
-                var input = entry.IsCpu ? entry.Driver.CurrentState : inputs[entry.Index].CurrentState;
+                var input = entry.IsCpu ? entry.Driver.CurrentState : record.mover.InputSource.CurrentState;
                 var gate=record.mover.InputSource as PlayerDriveInputGate;
-                trace.WriteLine(FormattableString.Invariant($"{now:F2},{entry.Label},{body.position.x:F3},{body.position.y:F3},{body.position.z:F3},{speed:F3},{laps.GetRaceProgressDistance(body):F3},{data.lapCount},{data.lastCheckpointIndex},{entry.Position},{input.pedal:F3},{input.steering:F3},{grounded},{offCourse},{effects.IsRocketActive},{effects.IsConfused},{effects.IsOiled},{effects.IsSpinning},{(entry.Driver?.TargetSpeed ?? 0):F3},{(entry.Driver?.RivalIndex ?? -1)},{inputs[Mathf.Min(entry.Index,1)].IsConnected},{gate?.NeedsPedalRelease??false},{(entry.IsCpu?entry.Driver.RecoveryCount:entry.Car.GetComponent<CarResetter>().RecoveryCount)},{entry.Driver?.RecoveryBlockedReason??""}"));
+                trace.WriteLine(FormattableString.Invariant($"{now:F2},{entry.Label},{body.position.x:F3},{body.position.y:F3},{body.position.z:F3},{speed:F3},{laps.GetRaceProgressDistance(body):F3},{data.lapCount},{data.lastCheckpointIndex},{entry.Position},{input.pedal:F3},{input.steering:F3},{grounded},{offCourse},{effects.IsRocketActive},{effects.IsConfused},{effects.IsOiled},{effects.IsSpinning},{(entry.Driver?.TargetSpeed ?? 0):F3},{(entry.Driver?.RivalIndex ?? -1)},{(entry.IsCpu || record.mover.InputSource.IsConnected)},{gate?.NeedsPedalRelease??false},{(entry.IsCpu?entry.Driver.RecoveryCount:entry.Car.GetComponent<CarResetter>().RecoveryCount)},{entry.Driver?.RecoveryBlockedReason??""},{record.mover.AppliedSteeringAngle:F3},{(entry.Car.GetComponent<CourseSteeringAssist>()?.CorrectionDegrees ?? 0f):F3}"));
             }
         }
         if (manager.GetParticipant(0).IsRacing && manager.GetParticipant(1).IsRacing &&
@@ -347,6 +391,14 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     private DriveInputState Drive(RaceParticipant entry, int grounded, float speed, float raw, bool reset)
     {
         float sign = manager.CourseProgressSign;
+        string fastProfile = entry.Index == 0 ? run.p1Profile : run.p2Profile;
+        if (fastProfile == "fast")
+        {
+            DriveInputState fast = fastBots[entry.Index].Decide(manager.course, entry.Body, sign, grounded, run.physicsSeconds,
+                RaceSpeedPlanner.Enabled ? RaceSpeedPlanner.Cruise : 24f, entry.Index == 0 ? 1.8f : -1.8f,
+                reaction: .06f, noise: .1f, vehicle: entry.Car.GetComponent<DebugMover>());
+            fast.resetPressed = reset; return fast;
+        }
         manager.course.TryGetSampleAtProgress(raw + sign * Mathf.Clamp(5 + speed * .4f, 8, 17), out RaceCourse.CourseSample target);
         manager.course.TryGetSampleAtProgress(raw + sign * 25, out RaceCourse.CourseSample far);
         float requested = entry.Index == 0 ? run.p1TargetSpeed : run.p2TargetSpeed;
@@ -367,8 +419,31 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         if (run.name == "skill-stop-rejoin" && entry.Index == 1 && run.physicsSeconds >= 45 && run.physicsSeconds < 57) requested = 0;
         if (run.name == "temporary-stop-p2" && entry.Index == 1 && manager.time >= 45 && manager.time < 60) requested = 0;
         float lane = jumpAhead ? 0 : entry.Index == 0 ? 2 : -2;
+        if (challengePlaytest)
+        {
+            TubeChargeLineLayout line = entry.Car.GetComponent<TubeChargeLineController>()?.Layout;
+            if (line != null && line.Available)
+            {
+                float distance = line.DistanceFromEntry(raw);
+                if (distance >= -35f && distance <= TubeLineChallenge.Length + 6f)
+                {
+                    lane = entry.Index == 0 ? line.LaneOffset : -line.LaneOffset;
+                    requested = Mathf.Min(requested, 12f);
+                }
+            }
+        }
         Vector3 aim = Quaternion.Inverse(entry.Body.rotation) * (target.position + target.right * lane - entry.Body.position);
         float steering = Mathf.Clamp(Mathf.Atan2(aim.x, aim.z) * Mathf.Rad2Deg * 1.5f - entry.Body.angularVelocity.y * 8, -30, 30);
+        if (entry.Index == 0 && Environment.GetEnvironmentVariable("RACING_ASSIST_STRESS") == "1")
+        {
+            manager.course.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample here);
+            manager.course.TryGetSampleAtProgress(raw + sign * 50f, out RaceCourse.CourseSample distant);
+            if (assistStressStarted < 0f && !entry.Effects.IsRocketActive && !entry.Car.GetComponent<DebugMover>().IsInputSuppressed && run.physicsSeconds > 15f && grounded >= 2 && speed > 8f && here.width >= 16f &&
+                Vector3.Angle(here.forward, distant.forward) < 10f && !manager.course.IsPointInsideTube(entry.Body.position) &&
+                !manager.course.IsJumpAhead(entry.Body.position, sign, 80f))
+            { assistStressStarted = run.physicsSeconds; Event(entry.Index, "outward-steering-stress", "30-degree input for 1.6 seconds; no state writes"); }
+            if (assistStressStarted >= 0f && run.physicsSeconds - assistStressStarted < 1.6f) steering = 30f;
+        }
         if (skillSuite)
         {
             float reaction = profile == "expert" ? .06f : profile == "intermediate" ? .14f : profile == "aggressive" ? .18f : .35f;

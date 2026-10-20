@@ -43,6 +43,22 @@ public class Gmanager : MonoBehaviour
     }
 
     public static Gmanager Control = null;
+    public RaceFeatureController Features { get; private set; }
+    private RaceRuleSet activeRules;
+    private int standardGoalLaps;
+    private float RaceMaximumSeconds => activeRules?.MaximumSeconds ?? maximumRaceSeconds;
+    private float RaceGraceSeconds => activeRules?.GraceSeconds ?? secondPlaceTimeoutSeconds;
+    private float RaceMaximumGraceSeconds => activeRules?.MaximumGraceSeconds ?? maximumHumanFinishGraceSeconds;
+
+    public void ApplyFeatureRules()
+    {
+        if (Features == null || lapManager == null) return;
+        activeRules = new RaceRuleSet(Features.Settings.ActivePreset, standardGoalLaps, maximumRaceSeconds,
+            secondPlaceTimeoutSeconds, maximumHumanFinishGraceSeconds);
+        lapManager.SetGoalLaps(activeRules.GoalLaps);
+        foreach (ScreenTransitionController transition in screenTransitions) transition?.RefreshLapTotal();
+        foreach (OnPlayUIManager ui in onPlayUIManagers) ui?.Lap.SetTotalLaps(activeRules.GoalLaps);
+    }
     [SerializeField] public InputManager IManager = null;
     [SerializeField] public VManager VManager = null;
     public CinemachineCamera VCamera;
@@ -153,8 +169,11 @@ public class Gmanager : MonoBehaviour
     public bool IsDrivingEnabled => state == State.Game || ((state == State.CarSelection || state == State.Tutorial) &&
         !finishingPreparation && drivingTutorial != null && drivingTutorial.HasAnyStarted);
     public bool CanUseDashboardControls => !IsScreenTransitioning();
+    public bool CanDriveVehicle(Rigidbody body) => IsDrivingEnabled ||
+        (body != null && body.GetComponent<FinishRunController>()?.IsActive == true);
     public bool IsEngineAudioActive(Rigidbody body)
     {
+        if (body != null && body.GetComponent<FinishRunController>()?.IsActive == true) return true;
         if (state != State.Countdown && state != State.Game && state != State.Tutorial && state != State.CarSelection)
             return false;
         RaceParticipant participant = FindParticipant(body);
@@ -214,6 +233,10 @@ public class Gmanager : MonoBehaviour
         IManager = GetComponent<InputManager>();
         IManager?.Init();
         ResolveLapManager();
+        standardGoalLaps = lapManager != null ? lapManager.GoalLap : LapManager.DefaultGoalLaps;
+        Features = GetComponent<RaceFeatureController>() ?? gameObject.AddComponent<RaceFeatureController>();
+        Features.Configure(this);
+        ApplyFeatureRules();
         EnsureSpeedScenery();
         if (lapManager != null)
         {
@@ -467,6 +490,8 @@ public class Gmanager : MonoBehaviour
         if (!IsPreparing || playerIndex < 0 || playerIndex >= PlayerCount) return;
         PlayerRuntime player = players[playerIndex];
         if (player.preparationState != State.Title || screenTransitions[playerIndex]?.IsTransitioning == true) return;
+        if (Features != null && !Features.Settings.RulesLocked)
+        { Features.Settings.BeginPreparation(); ApplyFeatureRules(); }
         soundEffects?.Play(RaceSoundCue.Ready, playerIndex);
         TransitionPlayer(playerIndex, State.CarSelection, () =>
         {
@@ -524,7 +549,10 @@ public class Gmanager : MonoBehaviour
             player.titleInputArmed = false; player.titleReleaseTimer = player.readyHoldTimer = 0f;
             bool allTitle = true;
             foreach (PlayerRuntime participant in players) allTitle &= participant.preparationState == State.Title;
-            if (allTitle) state = State.Title;
+            if (allTitle)
+            {
+                state = State.Title; Features?.Settings.UnlockAtTitle(); ApplyFeatureRules();
+            }
         });
     }
 
@@ -548,7 +576,7 @@ public class Gmanager : MonoBehaviour
         if (resultRecord == null)
         {
             // Operator stop classifies the current standings; it does not award P1 a finish.
-            if (raceSession == null) raceSession = new RaceParticipantSession(PlayerCount, 0, 0f, maximumRaceSeconds);
+            if (raceSession == null) raceSession = new RaceParticipantSession(PlayerCount, 0, 0f, RaceMaximumSeconds);
             if (participants.Count == 0)
                 for (int i = 0; i < PlayerCount; i++) raceSession.CloseParticipant(i, CreateFallbackResult(i, false, i + 1));
             CompleteRace(raceSession.Result, null);
@@ -567,7 +595,7 @@ public class Gmanager : MonoBehaviour
             CompleteRace(raceSession.Result,null);
             return;
         }
-        raceSession = new RaceParticipantSession(PlayerCount, 0, 0f, maximumRaceSeconds);
+        raceSession = new RaceParticipantSession(PlayerCount, 0, 0f, RaceMaximumSeconds);
         raceSession.Start();
         raceSession.RegisterFinish(0, first);
         raceSession.Tick(0f);
@@ -609,6 +637,8 @@ public class Gmanager : MonoBehaviour
         Action covered = () =>
         {
             ClearCurrentRaceObjects();
+            Features?.Settings.BeginPreparation();
+            ApplyFeatureRules();
             StartGameWhenScreenCovered();
         };
         if (primary == null)
@@ -728,8 +758,19 @@ public class Gmanager : MonoBehaviour
         StartGameWhenScreenCovered();
     }
 
+    public void StartAutodriveTestRace()
+    {
+        if ((state != State.Title && state != State.Result) || IsScreenTransitioning()) return;
+        Features.SetFeature(RaceFeature.PlayerTwoAutodrive, true);
+        ClearCurrentRaceObjects(); Features.Settings.BeginPreparation(); ApplyFeatureRules();
+        StartGameWhenScreenCovered(); CompleteGameStart();
+        foreach (ScreenTransitionController transition in screenTransitions) transition?.ApplyStateImmediate(State.Countdown);
+    }
+
     private void StartGameWhenScreenCovered()
     {
+        if (Features != null && !Features.Settings.RulesLocked)
+        { Features.Settings.BeginPreparation(); ApplyFeatureRules(); }
         Transform spawnPoint = GetStartPoint();
         Vector3 basePosition = spawnPoint != null ? spawnPoint.position : Vector3.zero;
         Quaternion spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
@@ -741,7 +782,7 @@ public class Gmanager : MonoBehaviour
         RaceItemPickup.ResetAll();
         raceLightning?.ResetRace();
         participants.Clear(); orderedParticipants.Clear();
-        raceSession = new RaceParticipantSession(PlayerCount, Mathf.Clamp(npcCount, 0, 2), secondPlaceTimeoutSeconds, maximumRaceSeconds);
+        raceSession = new RaceParticipantSession(PlayerCount, Mathf.Clamp(npcCount, 0, 2), RaceGraceSeconds, RaceMaximumSeconds);
         raceSession.Start();
         countdownTimeRemaining = Mathf.Max(0f, raceCountdownSeconds);
         lastCountdownSound = -1;
@@ -804,9 +845,16 @@ public class Gmanager : MonoBehaviour
             player.withdrewFromRace = false;
             player.displayedRacePosition = playerIndex + 1;
             AssignPlayerInput(player.car, playerIndex);
+            player.car.AddComponent<DriftCoachingUI>().Configure(this, player.mover, playerIndex);
             lapManager?.RegisterCar(player.rigidbody, spawnPoint);
-            participants.Add(new RaceParticipant { Index = playerIndex, Car = player.car, Body = player.rigidbody,
-                Effects = player.itemEffects, Position = playerIndex + 1 });
+            RaceParticipant participant = new RaceParticipant { Index = playerIndex, Car = player.car, Body = player.rigidbody,
+                Effects = player.itemEffects, Position = playerIndex + 1 };
+            participants.Add(participant);
+            player.car.AddComponent<SlipstreamController>().Configure(this, participant);
+            player.car.AddComponent<CourseSteeringAssist>().Configure(this, participant);
+            player.car.AddComponent<LandingRewardController>().Configure(this, participant);
+            player.car.AddComponent<TubeChargeLineController>().Configure(this, participant);
+            if (playerIndex == 1) player.car.AddComponent<PlayerAutodrive>().Configure(this, participant);
 
             player.cameraController.SetCar(player.car.transform);
             player.displayRig.RaceCamera.Follow = player.cameraController.CameraTarget;
@@ -993,6 +1041,7 @@ public class Gmanager : MonoBehaviour
         if (entry == null || entry.Result != null) return;
         PlayerRuntime player = entry.IsCpu ? null : players[entry.Index];
         result.carName = player?.carSelection?.SelectedVehicleName ?? result.carName;
+        if (!entry.IsCpu) result.achievements = CaptureAchievements(entry);
         RaceFinishRegistration registration = raceSession.RegisterFinish(entry.Index, result);
         if (registration == RaceFinishRegistration.Ignored) return;
         entry.Result = result; latestSessionResult = raceSession.Result;
@@ -1005,14 +1054,16 @@ public class Gmanager : MonoBehaviour
                 float pace = Mathf.Max(0f, progress) / Mathf.Max(1f, time);
                 raceSession.ExtendHumanGrace(HumanFinishGrace.Estimate(
                     lapManager.GoalLap * course.TotalLength - progress, pace,
-                    secondPlaceTimeoutSeconds, maximumHumanFinishGraceSeconds));
+                    RaceGraceSeconds, RaceMaximumGraceSeconds));
             }
         }
         if (entry.IsCpu)
         {
-            FreezeCpu(entry); UpdateParticipantOrder(); return;
+            if (!StartFinishRun(entry)) FreezeCpu(entry);
+            UpdateParticipantOrder(); return;
         }
-        player.result = result; FreezePlayer(player, disableCollisions: true);
+        player.result = result;
+        if (!StartFinishRun(entry)) FreezePlayer(player, disableCollisions: true);
         if (registration == RaceFinishRegistration.RaceComplete) { CompleteRace(latestSessionResult, player); return; }
         latestResult = latestSessionResult.GetResultAtPosition(1);
         PlayPlayerGoal(player, () => BeginSpectating(player.playerIndex));
@@ -1061,8 +1112,17 @@ public class Gmanager : MonoBehaviour
         return result;
     }
 
+    private bool StartFinishRun(RaceParticipant entry)
+    {
+        if (!RaceFeatureController.Enabled(RaceFeature.FinishRun) || course == null || !course.HasValidPath) return false;
+        var run = entry.Car.GetComponent<FinishRunController>() ?? entry.Car.AddComponent<FinishRunController>();
+        run.Begin(this, entry);
+        return true;
+    }
+
     private static void FreezeCpu(RaceParticipant entry)
     {
+        if (entry.Car.GetComponent<FinishRunController>()?.IsActive == true) return;
         entry.Driver?.SetDriving(false);
         foreach (Collider collider in entry.Car.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
         SetBehaviourEnabled<DebugMover>(entry.Car, false);
@@ -1172,6 +1232,8 @@ public class Gmanager : MonoBehaviour
     {
         state = State.Title;
         ClearCurrentRaceObjects();
+        Features?.Settings.ResetForNextGroup();
+        ApplyFeatureRules();
         SwitchCameraForState(State.Title);
         ResetTitleStartInputGate();
         Debug.Log("Two-player game reset");
@@ -1384,7 +1446,8 @@ public class Gmanager : MonoBehaviour
             ui.UpdateParticipants(participants);
             ui.UpdateDriverNotice(player.inputGate, player.car.GetComponent<CarResetter>(),
                 state == State.Game && player.result == null && !player.withdrewFromRace,
-                course != null && course.IsJumpAhead(player.rigidbody.position,CourseProgressSign));
+                course != null && course.IsJumpAhead(player.rigidbody.position,CourseProgressSign),
+                player.car.GetComponent<DriftCoachingUI>()?.Notice ?? "", mover != null && mover.IsSlipstreamBoosting, player.car.GetComponent<LandingRewardController>()?.Notice ?? "", player.car.GetComponent<TubeChargeLineController>()?.Notice ?? "", player.car.GetComponent<PlayerAutodrive>()?.IsActive == true);
         }
     }
 
@@ -1472,6 +1535,7 @@ public class Gmanager : MonoBehaviour
     private static void FreezePlayer(PlayerRuntime player, bool disableCollisions)
     {
         if (player?.car == null) return;
+        if (player.car.GetComponent<FinishRunController>()?.IsActive == true) return;
         SetBehaviourEnabled<DebugMover>(player.car, false);
         SetBehaviourEnabled<CarStabilityController>(player.car, false);
         SetBehaviourEnabled<CarResetter>(player.car, false);
@@ -1640,6 +1704,22 @@ public class Gmanager : MonoBehaviour
         foreach (ScreenTransitionController transition in screenTransitions) transition?.ClearRaceStatus();
     }
 
+    public void RefreshResultHighlights()
+    { foreach (ResultUIManager ui in resultUIManagers) ui?.RefreshHighlight(); }
+
+    private static RaceAchievementSnapshot CaptureAchievements(RaceParticipant entry)
+    {
+        if (entry == null || entry.Car == null) return new RaceAchievementSnapshot();
+        return new RaceAchievementSnapshot {
+            driftReleases = entry.Car.GetComponent<DriftCoachingUI>()?.SuccessfulReleases ?? 0,
+            landings = entry.Car.GetComponent<LandingRewardController>()?.SuccessfulLandings ?? 0,
+            tubeLines = entry.Car.GetComponent<TubeChargeLineController>()?.SuccessfulLines ?? 0,
+            slipstreamBoosts = entry.Car.GetComponent<SlipstreamController>()?.SuccessfulBoosts ?? 0,
+            verifiedProgress = Mathf.Max(0f, entry.Progress),
+            usedAutodrive = entry.Car.GetComponent<PlayerAutodrive>()?.WasUsed ?? false
+        };
+    }
+
     private RaceResultRecord CreateFallbackResult(int playerIndex, bool didFinish, int finishPosition)
     {
         PlayerRuntime player = players[playerIndex];
@@ -1647,7 +1727,7 @@ public class Gmanager : MonoBehaviour
         float currentLapTime = data != null ? data.currentLapTime : time;
         float totalRaceTime = data != null ? data.totalRaceTime + data.currentLapTime : time;
         float bestLapTime = data != null && data.bestLapTime < float.MaxValue ? data.bestLapTime : 0f;
-        return new RaceResultRecord
+        var record = new RaceResultRecord
         {
             playerNumber = playerIndex + 1,
             finishPosition = finishPosition,
@@ -1659,6 +1739,8 @@ public class Gmanager : MonoBehaviour
             finalLapTime = currentLapTime,
             bestLapTime = bestLapTime
         };
+        record.achievements = CaptureAchievements(GetParticipant(playerIndex));
+        return record;
     }
 
     /// <summary>

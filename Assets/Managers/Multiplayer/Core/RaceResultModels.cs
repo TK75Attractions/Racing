@@ -14,6 +14,7 @@ public class RaceResultRecord
     public float totalRaceTime;
     public float finalLapTime;
     public float bestLapTime;
+    public RaceAchievementSnapshot achievements;
 }
 
 [Serializable]

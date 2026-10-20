@@ -1,0 +1,1286 @@
+[
+  {
+    "trial": "legacy",
+    "completed": true,
+    "runs": [
+      {
+        "name": "skill-club-expert",
+        "cars": [
+          {
+            "label": "P1",
+            "vehicleContacts": 2,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "P2",
+            "vehicleContacts": 0,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 1",
+            "vehicleContacts": 9,
+            "offCourseSeconds": 1.7199985980987549,
+            "maxStall": 0.2999998927116394,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 1
+          },
+          {
+            "label": "CPU 2",
+            "vehicleContacts": 9,
+            "offCourseSeconds": 3.779996633529663,
+            "maxStall": 0.2999998927116394,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 1
+          }
+        ]
+      }
+    ],
+    "battleAnalysis": {
+      "method": "Progress changes must clear +/-3m, be within 40m in world space, on the same height, moving forward, with no recovery. Five-second debounce per pair. These are observed order changes, not a human enjoyment score.",
+      "runtimeErrors": [],
+      "runs": [
+        {
+          "name": "skill-club-expert",
+          "events": [
+            {
+              "time": 43.02,
+              "human": "P1",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 174.98,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 234.69,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            }
+          ],
+          "cpuPasses": 3,
+          "humanPasses": 0,
+          "cars": [
+            {
+              "label": "P1",
+              "finished": true,
+              "position": 3,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 2,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "P2",
+              "finished": true,
+              "position": 1,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 0,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 1",
+              "finished": false,
+              "position": 4,
+              "maxStall": 0.2999998927116394,
+              "offCourseSeconds": 1.7199985980987549,
+              "vehicleContacts": 9,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 1
+            },
+            {
+              "label": "CPU 2",
+              "finished": true,
+              "position": 2,
+              "maxStall": 0.2999998927116394,
+              "offCourseSeconds": 3.779996633529663,
+              "vehicleContacts": 9,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 1
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "trial": "battle",
+    "completed": true,
+    "runs": [
+      {
+        "name": "skill-club-expert",
+        "cars": [
+          {
+            "label": "P1",
+            "vehicleContacts": 1,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "P2",
+            "vehicleContacts": 0,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 1",
+            "vehicleContacts": 9,
+            "offCourseSeconds": 2.979997396469116,
+            "maxStall": 0.2999998927116394,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 1
+          },
+          {
+            "label": "CPU 2",
+            "vehicleContacts": 10,
+            "offCourseSeconds": 6.3799943923950195,
+            "maxStall": 1.899998426437378,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 1
+          }
+        ]
+      }
+    ],
+    "battleAnalysis": {
+      "method": "Progress changes must clear +/-3m, be within 40m in world space, on the same height, moving forward, with no recovery. Five-second debounce per pair. These are observed order changes, not a human enjoyment score.",
+      "runtimeErrors": [],
+      "runs": [
+        {
+          "name": "skill-club-expert",
+          "events": [
+            {
+              "time": 40.32,
+              "human": "P1",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 224.29,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 230.69,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            }
+          ],
+          "cpuPasses": 2,
+          "humanPasses": 1,
+          "cars": [
+            {
+              "label": "P1",
+              "finished": true,
+              "position": 3,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 1,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "P2",
+              "finished": true,
+              "position": 1,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 0,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 1",
+              "finished": false,
+              "position": 4,
+              "maxStall": 0.2999998927116394,
+              "offCourseSeconds": 2.979997396469116,
+              "vehicleContacts": 9,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 1
+            },
+            {
+              "label": "CPU 2",
+              "finished": true,
+              "position": 2,
+              "maxStall": 1.899998426437378,
+              "offCourseSeconds": 6.3799943923950195,
+              "vehicleContacts": 10,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 1
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "trial": "battle-final",
+    "completed": true,
+    "runs": [
+      {
+        "name": "skill-club-expert",
+        "cars": [
+          {
+            "label": "P1",
+            "vehicleContacts": 3,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "P2",
+            "vehicleContacts": 0,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 1",
+            "vehicleContacts": 8,
+            "offCourseSeconds": 1.3199989795684814,
+            "maxStall": 0.2999998927116394,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 1
+          },
+          {
+            "label": "CPU 2",
+            "vehicleContacts": 7,
+            "offCourseSeconds": 8.079994201660156,
+            "maxStall": 1.1799991130828857,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 2
+          }
+        ]
+      }
+    ],
+    "battleAnalysis": {
+      "method": "Progress changes must clear +/-3m, be within 40m in world space, on the same height, moving forward, with no recovery. Five-second debounce per pair. These are observed order changes, not a human enjoyment score.",
+      "runtimeErrors": [],
+      "runs": [
+        {
+          "name": "skill-club-expert",
+          "events": [
+            {
+              "time": 39.32,
+              "human": "P1",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 223.79,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 237.59,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            }
+          ],
+          "cpuPasses": 3,
+          "humanPasses": 0,
+          "cars": [
+            {
+              "label": "P1",
+              "finished": true,
+              "position": 4,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 3,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "P2",
+              "finished": true,
+              "position": 1,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 0,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 1",
+              "finished": true,
+              "position": 3,
+              "maxStall": 0.2999998927116394,
+              "offCourseSeconds": 1.3199989795684814,
+              "vehicleContacts": 8,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 1
+            },
+            {
+              "label": "CPU 2",
+              "finished": true,
+              "position": 2,
+              "maxStall": 1.1799991130828857,
+              "offCourseSeconds": 8.079994201660156,
+              "vehicleContacts": 7,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 2
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "trial": "final",
+    "completed": true,
+    "runs": [
+      {
+        "name": "skill-club-expert",
+        "cars": [
+          {
+            "label": "P1",
+            "vehicleContacts": 3,
+            "offCourseSeconds": 1.1199991703033447,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "P2",
+            "vehicleContacts": 1,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 1",
+            "vehicleContacts": 3,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 2",
+            "vehicleContacts": 3,
+            "offCourseSeconds": 2.01999831199646,
+            "maxStall": 0.2999998927116394,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 1
+          }
+        ]
+      }
+    ],
+    "battleAnalysis": {
+      "method": "Progress changes must clear +/-3m, be within 40m in world space, on the same height, moving forward, with no recovery. Five-second debounce per pair. These are observed order changes, not a human enjoyment score.",
+      "runtimeErrors": [],
+      "runs": [
+        {
+          "name": "skill-club-expert",
+          "events": [
+            {
+              "time": 3.92,
+              "human": "P1",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 31.62,
+              "human": "P1",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 211.09,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 217.49,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 225.59,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            }
+          ],
+          "cpuPasses": 4,
+          "humanPasses": 1,
+          "cars": [
+            {
+              "label": "P1",
+              "finished": true,
+              "position": 4,
+              "maxStall": 0.0,
+              "offCourseSeconds": 1.1199991703033447,
+              "vehicleContacts": 3,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "P2",
+              "finished": true,
+              "position": 1,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 1,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 1",
+              "finished": true,
+              "position": 3,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 3,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 2",
+              "finished": true,
+              "position": 2,
+              "maxStall": 0.2999998927116394,
+              "offCourseSeconds": 2.01999831199646,
+              "vehicleContacts": 3,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 1
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "trial": "safe-final",
+    "completed": true,
+    "runs": [
+      {
+        "name": "skill-club-expert",
+        "cars": [
+          {
+            "label": "P1",
+            "vehicleContacts": 2,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "P2",
+            "vehicleContacts": 1,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 1",
+            "vehicleContacts": 1,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 2",
+            "vehicleContacts": 2,
+            "offCourseSeconds": 2.01999831199646,
+            "maxStall": 0.3199998736381531,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 1
+          }
+        ]
+      }
+    ],
+    "battleAnalysis": {
+      "method": "Progress changes must clear +/-3m, be within 40m in world space, on the same height, moving forward, with no recovery. Five-second debounce per pair. These are observed order changes, not a human enjoyment score.",
+      "runtimeErrors": [],
+      "runs": [
+        {
+          "name": "skill-club-expert",
+          "events": [
+            {
+              "time": 3.92,
+              "human": "P1",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            }
+          ],
+          "cpuPasses": 1,
+          "humanPasses": 0,
+          "cars": [
+            {
+              "label": "P1",
+              "finished": true,
+              "position": 3,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 2,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "P2",
+              "finished": true,
+              "position": 1,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 1,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 1",
+              "finished": false,
+              "position": 4,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 1,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 2",
+              "finished": true,
+              "position": 2,
+              "maxStall": 0.3199998736381531,
+              "offCourseSeconds": 2.01999831199646,
+              "vehicleContacts": 2,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 1
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "trial": "release",
+    "completed": true,
+    "runs": [
+      {
+        "name": "skill-rivalry",
+        "cars": [
+          {
+            "label": "P1",
+            "vehicleContacts": 2,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "P2",
+            "vehicleContacts": 1,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 1",
+            "vehicleContacts": 11,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 2",
+            "vehicleContacts": 10,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          }
+        ]
+      },
+      {
+        "name": "skill-club-expert",
+        "cars": [
+          {
+            "label": "P1",
+            "vehicleContacts": 1,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "P2",
+            "vehicleContacts": 1,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 1",
+            "vehicleContacts": 1,
+            "offCourseSeconds": 2.4799978733062744,
+            "maxStall": 2.199998140335083,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 1
+          },
+          {
+            "label": "CPU 2",
+            "vehicleContacts": 1,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          }
+        ]
+      }
+    ],
+    "battleAnalysis": {
+      "method": "Progress changes must clear +/-3m, be within 40m in world space, on the same height, moving forward, with no recovery. Five-second debounce per pair. These are observed order changes, not a human enjoyment score.",
+      "runtimeErrors": [],
+      "runs": [
+        {
+          "name": "skill-rivalry",
+          "events": [
+            {
+              "time": 35.32,
+              "human": "P1",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            }
+          ],
+          "cpuPasses": 1,
+          "humanPasses": 0,
+          "cars": [
+            {
+              "label": "P1",
+              "finished": true,
+              "position": 3,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 2,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "P2",
+              "finished": true,
+              "position": 1,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 1,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 1",
+              "finished": false,
+              "position": 4,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 11,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 2",
+              "finished": true,
+              "position": 2,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 10,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            }
+          ]
+        },
+        {
+          "name": "skill-club-expert",
+          "events": [
+            {
+              "time": 4.02,
+              "human": "P1",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 206.99,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 217.19,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            }
+          ],
+          "cpuPasses": 2,
+          "humanPasses": 1,
+          "cars": [
+            {
+              "label": "P1",
+              "finished": true,
+              "position": 4,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 1,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "P2",
+              "finished": true,
+              "position": 1,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 1,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 1",
+              "finished": true,
+              "position": 3,
+              "maxStall": 2.199998140335083,
+              "offCourseSeconds": 2.4799978733062744,
+              "vehicleContacts": 1,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 1
+            },
+            {
+              "label": "CPU 2",
+              "finished": true,
+              "position": 2,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 1,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "trial": "verified",
+    "completed": true,
+    "runs": [
+      {
+        "name": "skill-rivalry",
+        "cars": [
+          {
+            "label": "P1",
+            "vehicleContacts": 6,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "P2",
+            "vehicleContacts": 5,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 1",
+            "vehicleContacts": 16,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 2",
+            "vehicleContacts": 17,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          }
+        ]
+      },
+      {
+        "name": "skill-club-expert",
+        "cars": [
+          {
+            "label": "P1",
+            "vehicleContacts": 5,
+            "offCourseSeconds": 2.139998197555542,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "P2",
+            "vehicleContacts": 1,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 1",
+            "vehicleContacts": 5,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          },
+          {
+            "label": "CPU 2",
+            "vehicleContacts": 1,
+            "offCourseSeconds": 0.0,
+            "maxStall": 0.0,
+            "humanRecoveries": 0,
+            "cpuRecoveries": 0
+          }
+        ]
+      }
+    ],
+    "battleAnalysis": {
+      "method": "Progress changes must clear +/-3m, be within 40m in world space, on the same height, moving forward, with no recovery. Five-second debounce per pair. These are observed order changes, not a human enjoyment score.",
+      "runtimeErrors": [],
+      "runs": [
+        {
+          "name": "skill-rivalry",
+          "events": [
+            {
+              "time": 3.72,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 3.82,
+              "human": "P1",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 4.02,
+              "human": "P2",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 4.22,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 34.42,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 37.62,
+              "human": "P1",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 43.22,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 49.02,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 49.42,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 57.92,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 61.62,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 72.42,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 74.94,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 78.9,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 86.7,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 90.42,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 93.78,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 96.3,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 100.26,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 105.65,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 108.41,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 120.89,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 126.17,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 135.07,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 143.97,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 144.77,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 153.28,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 158.88,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 160.28,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 172.68,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 182.68,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 188.58,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 190.98,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 198.99,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 200.99,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 209.29,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            }
+          ],
+          "cpuPasses": 21,
+          "humanPasses": 15,
+          "cars": [
+            {
+              "label": "P1",
+              "finished": true,
+              "position": 4,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 6,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "P2",
+              "finished": true,
+              "position": 1,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 5,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 1",
+              "finished": true,
+              "position": 3,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 16,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 2",
+              "finished": true,
+              "position": 2,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 17,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            }
+          ]
+        },
+        {
+          "name": "skill-club-expert",
+          "events": [
+            {
+              "time": 3.22,
+              "human": "P1",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 4.02,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 12.22,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 29.92,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 43.22,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 74.58,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 76.74,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 84.3,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 90.66,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 95.82,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 142.37,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 158.28,
+              "human": "P2",
+              "cpu": "CPU 2",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 159.08,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            },
+            {
+              "time": 171.18,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 209.49,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "human-passed-cpu"
+            },
+            {
+              "time": 224.09,
+              "human": "P1",
+              "cpu": "CPU 1",
+              "event": "cpu-passed-human"
+            }
+          ],
+          "cpuPasses": 9,
+          "humanPasses": 7,
+          "cars": [
+            {
+              "label": "P1",
+              "finished": true,
+              "position": 4,
+              "maxStall": 0.0,
+              "offCourseSeconds": 2.139998197555542,
+              "vehicleContacts": 5,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "P2",
+              "finished": true,
+              "position": 1,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 1,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 1",
+              "finished": true,
+              "position": 3,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 5,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            },
+            {
+              "label": "CPU 2",
+              "finished": true,
+              "position": 2,
+              "maxStall": 0.0,
+              "offCourseSeconds": 0.0,
+              "vehicleContacts": 1,
+              "humanRecoveries": 0,
+              "cpuRecoveries": 0
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

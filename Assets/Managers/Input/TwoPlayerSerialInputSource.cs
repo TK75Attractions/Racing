@@ -28,15 +28,23 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     private volatile bool portIsOpen;
     private long linesReceived;
     private bool inputWasFresh;
+    private bool processingReceivedFrames;
 
     public event Action<string, string> LineProcessed;
     public RgpSerialJournal Monitor { get; } = new RgpSerialJournal();
     public RgpHostSession Session => session;
-    public bool HasFreshTelemetry => portIsOpen && session.IsFresh(clock.Elapsed.TotalMilliseconds);
+    public bool HasFreshTelemetry
+    {
+        get
+        {
+            ProcessReceivedFrames();
+            return portIsOpen && session.IsFresh(clock.Elapsed.TotalMilliseconds);
+        }
+    }
     public bool InvalidTelemetry { get; private set; }
     public bool HasRecentDeviceData => portIsOpen && clock.Elapsed.TotalMilliseconds - lastDeviceDataAt < 3000;
     private double lastDeviceDataAt = double.NegativeInfinity;
-    private double nextStatusAt = 2000;
+    private double nextStatusAt = 250;
     public bool TrySendCommand(string command, string[] args, out uint sequence, out string reason)
     {
         sequence = 0; reason = "serial_disconnected";
@@ -54,6 +62,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     public string LastSerialLine { get; private set; } = "-";
     public string LastParseResult { get; private set; } = "Waiting for input";
     public float LastSerialLineTime { get; private set; } = -1f;
+    public double FirstUsableInputMilliseconds { get; private set; } = -1;
 
     public TwoPlayerSerialInputSource(
         Esp32SerialConfiguration configuration,
@@ -79,6 +88,10 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 
     public bool IsConnected(int playerIndex)
     {
+        // Catch-up FixedUpdate runs before Gmanager.Update after a slow frame. The
+        // reader may already have fresh TEL queued: apply it before checking its age,
+        // otherwise a render hitch permanently latches the car's pedal-release gate.
+        ProcessReceivedFrames();
         return playerIndex >= 0 && playerIndex < (playerOneOnly ? 1 : 2) && portIsOpen &&
             session.IsFresh(clock.Elapsed.TotalMilliseconds);
     }
@@ -86,40 +99,61 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     public void UpdateInput(float deltaTime)
     {
         FlushDiagnostics();
-        if (!portIsOpen)
-        {
-            session.Disconnect();
-            inputWasFresh = false;
-            while (receivedLines.TryDequeue(out _)) { }
-            return;
-        }
-        while (receivedLines.TryDequeue(out ReceivedFrame received))
-        {
-            LinesProcessed++;
-            LastSerialLine = received.Wire.TrimEnd('\r', '\n');
-            LastSerialLineTime = Time.realtimeSinceStartup;
-            if (!SerialInputProtocol.TryParse(received.Wire, out RgpFrame frame))
-            {
-                if (LastSerialLine.StartsWith("@TEL,", StringComparison.Ordinal)) InvalidTelemetry = true;
-                ParseErrorCount++;
-                RecordParseResult("INVALID", LastSerialLine);
-                continue;
-            }
-            lastDeviceDataAt = received.ReceivedAt;
-            string result = session.Receive(frame, received.ReceivedAt);
-            if (frame.Type == "TEL" && result == "OK") InvalidTelemetry = false;
-            RecordParseResult(result, LastSerialLine);
-        }
+        ProcessReceivedFrames();
+        if (!portIsOpen) return;
         session.Tick(clock.Elapsed.TotalMilliseconds);
         if (clock.Elapsed.TotalMilliseconds >= nextStatusAt)
         {
-            nextStatusAt = clock.Elapsed.TotalMilliseconds + 2000;
+            // Startup/recovery needs prompt status verification; steady-state diagnostics stay at 2s.
+            nextStatusAt = clock.Elapsed.TotalMilliseconds + (session.State == "READY" ? 2000 : 250);
             session.TryCommand("GET_STATUS", Array.Empty<string>(), clock.Elapsed.TotalMilliseconds, out _, out _);
         }
         bool fresh = session.IsFresh(clock.Elapsed.TotalMilliseconds);
         if (inputWasFresh && !fresh && portIsOpen && session.State == "READY" && session.TelemetryEnabled)
             RecordParseResult("STALE", "TEL");
         inputWasFresh = fresh;
+    }
+
+    // Called on the main thread only; the read thread still owns byte I/O alone.
+    // Keep each frame's original receive timestamp so old queued data cannot hide a real outage.
+    private void ProcessReceivedFrames()
+    {
+        if (processingReceivedFrames) return; // LineProcessed subscribers may inspect input.
+        processingReceivedFrames = true;
+        try
+        {
+            if (!portIsOpen)
+            {
+                session.Disconnect();
+                inputWasFresh = false;
+                while (receivedLines.TryDequeue(out _)) { }
+                return;
+            }
+            while (receivedLines.TryDequeue(out ReceivedFrame received))
+            {
+                LinesProcessed++;
+                LastSerialLine = received.Wire.TrimEnd('\r', '\n');
+                LastSerialLineTime = Time.realtimeSinceStartup;
+                if (!SerialInputProtocol.TryParse(received.Wire, out RgpFrame frame))
+                {
+                    if (LastSerialLine.StartsWith("@TEL,", StringComparison.Ordinal)) InvalidTelemetry = true;
+                    ParseErrorCount++;
+                    RecordParseResult("INVALID", LastSerialLine);
+                    continue;
+                }
+                lastDeviceDataAt = received.ReceivedAt;
+                string result = session.Receive(frame, received.ReceivedAt);
+                if (frame.Type == "TEL" && result == "OK") InvalidTelemetry = false;
+                if (frame.Type == "TEL" && result == "OK" && FirstUsableInputMilliseconds < 0 &&
+                    session.IsFresh(clock.Elapsed.TotalMilliseconds))
+                {
+                    FirstUsableInputMilliseconds = clock.Elapsed.TotalMilliseconds;
+                    Monitor.Diagnostic("INPUT_READY", "startup_ms=" + FirstUsableInputMilliseconds.ToString("F0", System.Globalization.CultureInfo.InvariantCulture));
+                }
+                RecordParseResult(result, LastSerialLine);
+            }
+        }
+        finally { processingReceivedFrames = false; }
     }
 
     private void Send(string wire)

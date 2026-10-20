@@ -12,6 +12,7 @@ public sealed class RacingSteeringIndicator : MaskableGraphic
     private TMP_Text caption;
     private float requested, applied, allowed = 1f;
     private bool limited;
+    private bool turnBraking;
     public float AllowedFraction => allowed;
     public float AppliedFraction => applied;
     public float RequestedFraction => requested;
@@ -55,9 +56,13 @@ public sealed class RacingSteeringIndicator : MaskableGraphic
             SetVerticesDirty();
         }
         bool nextLimited = allowed < .98f;
-        if (caption != null && (limited != nextLimited || string.IsNullOrEmpty(caption.text)))
-            caption.text = nextLimited ? "高速時は操舵角を制限 / 暗い範囲は上限外" : "ハンドル / 中央が直進";
+        bool nextTurnBraking = RaceFeatureController.Enabled(RaceFeature.HighSpeedCornering);
+        if (caption != null && (limited != nextLimited || turnBraking != nextTurnBraking || string.IsNullOrEmpty(caption.text)))
+            caption.text = !nextLimited ? "ハンドル / 中央が直進" : nextTurnBraking
+                ? "高速時は深く切ると減速 / 暗い範囲は切れ角上限"
+                : "高速時は操舵角を制限 / 暗い範囲は上限外";
         limited = nextLimited;
+        turnBraking = nextTurnBraking;
     }
 
     protected override void OnPopulateMesh(VertexHelper vh)

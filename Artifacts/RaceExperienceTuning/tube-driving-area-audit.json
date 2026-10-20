@@ -1,0 +1,272 @@
+{
+    "trace": "/private/tmp/racing-tuning-verified/skill-club-expert/trace.csv",
+    "oldBandOutsideSamples": 22,
+    "legalTubeSamples": 22,
+    "outsideProductionSamples": 0,
+    "samples": [
+        {
+            "player": "P1",
+            "time": 143.6699981689453,
+            "position": {
+                "x": 722.9979858398438,
+                "y": 2.99399995803833,
+                "z": 544.3400268554688
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 143.77000427246095,
+            "position": {
+                "x": 724.1320190429688,
+                "y": 2.5269999504089357,
+                "z": 540.1190185546875
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 143.8699951171875,
+            "position": {
+                "x": 725.1439819335938,
+                "y": 1.875,
+                "z": 535.9459838867188
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 143.97000122070313,
+            "position": {
+                "x": 726.2009887695313,
+                "y": 1.0540000200271607,
+                "z": 531.7979736328125
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 144.07000732421876,
+            "position": {
+                "x": 727.3060302734375,
+                "y": 0.0989999994635582,
+                "z": 527.8790283203125
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 144.1699981689453,
+            "position": {
+                "x": 728.2100219726563,
+                "y": -0.5640000104904175,
+                "z": 524.2540283203125
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 144.27000427246095,
+            "position": {
+                "x": 728.8049926757813,
+                "y": -1.1779999732971192,
+                "z": 521.0700073242188
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 144.3699951171875,
+            "position": {
+                "x": 729.177001953125,
+                "y": -1.8589999675750733,
+                "z": 518.2990112304688
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 144.47000122070313,
+            "position": {
+                "x": 729.4099731445313,
+                "y": -2.571000099182129,
+                "z": 515.8699951171875
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 144.57000732421876,
+            "position": {
+                "x": 729.5650024414063,
+                "y": -3.3889999389648439,
+                "z": 513.7440185546875
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 144.6699981689453,
+            "position": {
+                "x": 729.5989990234375,
+                "y": -4.318999767303467,
+                "z": 511.8599853515625
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 144.77000427246095,
+            "position": {
+                "x": 729.4849853515625,
+                "y": -5.361999988555908,
+                "z": 510.135986328125
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 144.8699951171875,
+            "position": {
+                "x": 729.239013671875,
+                "y": -6.538000106811523,
+                "z": 508.531005859375
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 144.97000122070313,
+            "position": {
+                "x": 729.0549926757813,
+                "y": -7.489999771118164,
+                "z": 506.9339904785156
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 145.07000732421876,
+            "position": {
+                "x": 728.8670043945313,
+                "y": -8.35200023651123,
+                "z": 505.3590087890625
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 145.1699981689453,
+            "position": {
+                "x": 728.5609741210938,
+                "y": -9.145000457763672,
+                "z": 503.84100341796877
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 145.27000427246095,
+            "position": {
+                "x": 728.0260009765625,
+                "y": -9.967000007629395,
+                "z": 502.4830017089844
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 145.3699951171875,
+            "position": {
+                "x": 727.2849731445313,
+                "y": -10.821000099182129,
+                "z": 501.27301025390627
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 145.47000122070313,
+            "position": {
+                "x": 726.3369750976563,
+                "y": -11.550999641418457,
+                "z": 500.1369934082031
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 145.57000732421876,
+            "position": {
+                "x": 725.2689819335938,
+                "y": -12.11299991607666,
+                "z": 498.8389892578125
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 145.6699981689453,
+            "position": {
+                "x": 724.1439819335938,
+                "y": -12.793000221252442,
+                "z": 497.2489929199219
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        },
+        {
+            "player": "P1",
+            "time": 145.77000427246095,
+            "position": {
+                "x": 723.0490112304688,
+                "y": -13.564000129699707,
+                "z": 495.3789978027344
+            },
+            "insideTube": true,
+            "insideDrivingArea": true,
+            "outsideProductionArea": false
+        }
+    ]
+}

@@ -114,6 +114,7 @@ public sealed class AccelerationPad : MonoBehaviour
             : null;
         if (mover == null) mover = other.GetComponentInParent<DebugMover>();
         if (mover == null) return;
+        if (mover.GetComponent<FinishRunController>()?.IsActive == true) return;
 
         Vector3 direction = Vector3.ProjectOnPlane(transform.forward, transform.up).normalized;
         mover.StartAccelerationPadBoost(acceleration, boostDuration, instantSpeedBonus, direction);

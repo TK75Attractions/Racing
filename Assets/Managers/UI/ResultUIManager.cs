@@ -12,9 +12,11 @@ public class ResultUIManager
     private readonly TMP_Text[] ranks=new TMP_Text[4],drivers=new TMP_Text[4],cars=new TMP_Text[4],times=new TMP_Text[4],gaps=new TMP_Text[4];
     private readonly RacingPanelGraphic[] rowSurfaces=new RacingPanelGraphic[4];
     private readonly RacingIconGraphic[] carIcons=new RacingIconGraphic[4];
-    private TMP_Text winnerLabel,medalNumber,ordinal,bestLap,lastLap,completedLaps,menuHint;
+    private TMP_Text winnerLabel,medalNumber,ordinal,bestLap,lastLap,completedLaps,menuHint,achievement;
     private RawImage medalImage;
+    private RectTransform achievementPanel;
     private ResultMenuAnimator menuAnimator;
+    public string AchievementText=>achievement!=null ? achievement.text : "";
     public RaceResultRecord CurrentResult=>currentResult;
     public RaceSessionResult CurrentSessionResult=>currentSessionResult;
 
@@ -68,6 +70,8 @@ public class ResultUIManager
         ordinal=NeonUI.Text(ribbon,"Ordinal","1ST",new Vector2(.04f,.23f),new Vector2(.96f,.98f),113f,TextAlignmentOptions.Center,true);
         NeonUI.GlowText(ordinal,NeonUI.Pink);
         completedLaps=NeonUI.Text(ribbon,"Completed","1 位 / FINISH",new Vector2(.04f,.03f),new Vector2(.96f,.30f),22f,TextAlignmentOptions.Center);
+        achievementPanel=NeonUI.Panel(card,"AchievementBackdrop",new Vector2(.665f,.153f),new Vector2(.97f,.205f));
+        achievement=NeonUI.Text(card,"Achievement","",new Vector2(.665f,.153f),new Vector2(.97f,.205f),25f,TextAlignmentOptions.Center,true,NeonUI.Cyan);
         BuildMenu(card);
     }
     private void BuildCourseCard(Transform parent)
@@ -144,9 +148,34 @@ public class ResultUIManager
             ? $"未完走 / {Mathf.Clamp(local.completedLaps,0,local.goalLap)} / {local.goalLap} 周" : "未完走 / DID NOT FINISH";
         bestLap.text=local!=null&&local.bestLapTime>0&&local.bestLapTime<float.MaxValue?FormatTime(local.bestLapTime):"--'--.---";
         lastLap.text=local!=null&&local.didFinish&&local.finalLapTime>0?FormatTime(local.finalLapTime):"--'--.---";
+        RefreshHighlight();
         SetMenuState(0,0);
         SetPedalConfirmationReady(false);
     }
+    public void RefreshHighlight()
+    {
+        if (achievement == null) return;
+        achievement.text = RaceFeatureController.Enabled(RaceFeature.ResultHighlights)
+            ? FormatHighlight(currentSessionResult?.GetPlayerResult(localPlayerNumber-1)) : "";
+        if (achievementPanel != null) achievementPanel.gameObject.SetActive(achievement.text.Length > 0);
+    }
+    public static string FormatHighlight(RaceResultRecord local)
+    {
+        if (local == null) return "";
+        RaceAchievementSnapshot facts = local.achievements;
+        string text;
+        switch (RaceAchievementSelection.Select(facts))
+        {
+            case RaceAchievementKind.AutodriveTest: return "自動運転テストの記録";
+            case RaceAchievementKind.TubeLine: text=$"ライン達成 {facts.tubeLines}回！"; break;
+            case RaceAchievementKind.Landing: text=$"着地成功 {facts.landings}回！"; break;
+            case RaceAchievementKind.Drift: text=$"ドリフト加速 {facts.driftReleases}回！"; break;
+            case RaceAchievementKind.Slipstream: text=$"追走加速 {facts.slipstreamBoosts}回！"; break;
+            default: text=local.completedLaps>0 ? $"{local.completedLaps}周を走行！" : $"走行進捗 {Mathf.Max(0f,facts?.verifiedProgress ?? 0f):F0}m"; break;
+        }
+        return local.didFinish ? text : "未完走 / " + text;
+    }
+
     private void ApplyRow(int index,RaceResultRecord result,float winnerTime)
     {
         bool local=result!=null&&result.playerNumber==localPlayerNumber;

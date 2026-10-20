@@ -63,6 +63,7 @@ public class LapManager : MonoBehaviour
     private float progressStartDistance;
 
     public int GoalLap => goalLap;
+    public void SetGoalLaps(int value) { goalLap = Mathf.Max(1, value); }
     /// <summary>
     /// レースの進行方向が RaceCourse の waypoint 順と逆かどうかです。スタート地点の向きから決まります。
     /// </summary>
