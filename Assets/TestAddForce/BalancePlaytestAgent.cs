@@ -32,6 +32,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         public int takeoffs, landings, humanRecoveries, automaticRecoveries;
         public string recoveryBlockedReason;
         public float steeringAssistSeconds;
+        public float corneringBrakeSeconds, maxCorneringBrake;
         public int landingRewards;
         public bool usedAutodrive;
         public float maxRecoveryRollbackMeters;
@@ -304,6 +305,8 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 continue;
             }
             float speed = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up).magnitude;
+            record.maxCorneringBrake = Mathf.Max(record.maxCorneringBrake, record.mover.CorneringBrakingAcceleration);
+            if (record.mover.CorneringBrakingAcceleration > .1f) record.corneringBrakeSeconds += dt;
             float raw = manager.course.GetProgressDistance(body.position);
             manager.course.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample here);
             int grounded = 0; foreach (TireForce tire in record.tires) if (tire.IsGrounded) grounded++;
