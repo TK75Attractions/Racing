@@ -6,7 +6,8 @@ public sealed class RaceParticipantSession
     private readonly int humanCount, participantCount;
     private readonly float graceSeconds, maximumSeconds;
     private int finishedCount;
-    private float elapsed;
+    private float elapsed, humanGraceElapsed;
+    private bool finishApproachExtended;
     public RaceSessionResult Result { get; private set; }
     public bool IsComplete { get; private set; }
     public bool HasTimedOut { get; private set; }
@@ -24,7 +25,7 @@ public sealed class RaceParticipantSession
     }
     public void Start()
     {
-        Result = new RaceSessionResult(participantCount); finishedCount = 0; elapsed = 0;
+        Result = new RaceSessionResult(participantCount); finishedCount = 0; elapsed = humanGraceElapsed = 0; finishApproachExtended = false;
         IsComplete = HasTimedOut = WaitingForSecondPlace = false; SecondPlaceTimeRemaining = 0;
     }
     public RaceFinishRegistration RegisterFinish(int index, RaceResultRecord record)
@@ -42,7 +43,7 @@ public sealed class RaceParticipantSession
     {
         if (IsComplete || HasTimedOut) return false;
         dt = Math.Max(0, dt); elapsed += dt;
-        if (WaitingForSecondPlace) SecondPlaceTimeRemaining = Math.Max(0, SecondPlaceTimeRemaining - dt);
+        if (WaitingForSecondPlace) { humanGraceElapsed += dt; SecondPlaceTimeRemaining = Math.Max(0, SecondPlaceTimeRemaining - dt); }
         if (elapsed < maximumSeconds && (!WaitingForSecondPlace || SecondPlaceTimeRemaining > 0)) return false;
         HasTimedOut = true; WaitingForSecondPlace = false; return true;
     }
@@ -51,6 +52,18 @@ public sealed class RaceParticipantSession
     {
         if (!WaitingForSecondPlace || IsComplete || HasTimedOut || float.IsNaN(seconds) || float.IsInfinity(seconds)) return;
         SecondPlaceTimeRemaining = Math.Min(Math.Max(0, maximumSeconds - elapsed), Math.Max(SecondPlaceTimeRemaining, seconds));
+    }
+    public bool TryExtendFinishApproach(float remainingMeters, float forwardSpeed, float maximumGrace)
+    {
+        if (!WaitingForSecondPlace || IsComplete || HasTimedOut || finishApproachExtended || SecondPlaceTimeRemaining > 1f ||
+            float.IsNaN(remainingMeters) || float.IsInfinity(remainingMeters) || float.IsNaN(forwardSpeed) || float.IsInfinity(forwardSpeed) ||
+            float.IsNaN(maximumGrace) || float.IsInfinity(maximumGrace) || remainingMeters <= 0f || remainingMeters > 100f || forwardSpeed < 3f) return false;
+        float before = SecondPlaceTimeRemaining;
+        // One short chance to cross the nearby line; never move either deadline.
+        float requested = Math.Min(12f, Math.Max(3f, remainingMeters / forwardSpeed + 2f));
+        ExtendHumanGrace(Math.Min(requested, Math.Max(0f, maximumGrace - humanGraceElapsed)));
+        finishApproachExtended = SecondPlaceTimeRemaining > before;
+        return finishApproachExtended;
     }
     public bool RegisterWithdrawal(int index, RaceResultRecord record) => RecordDnf(index, record);
     // Called in progress order at human completion or timeout to classify remaining CPUs/DNFs.
