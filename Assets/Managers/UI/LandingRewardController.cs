@@ -14,6 +14,7 @@ public sealed class LandingRewardController : MonoBehaviour
     private RaceCourse.JumpSection activeJump;
     private int recoveryCount;
     private float previousProgress, boostPendingUntil;
+    private ParticleSystem landingBurst;
     public DriverNoticeSignal Notices { get; } = new DriverNoticeSignal();
     private bool hasProgress;
     public int SuccessfulLandings { get; private set; }
@@ -69,13 +70,31 @@ public sealed class LandingRewardController : MonoBehaviour
         bool landing = course.HasRoadAtProgress(raw) && afterLanding >= 0f && afterLanding <= 60f && stable;
         if (!challenge.Tick(true, contacts, !course.HasRoadAtProgress(raw), landing, dt)) return;
         SuccessfulLandings++;
+        EmitLandingBurst();
         if (RaceFeatureController.Enabled(RaceFeature.LandingFeedback))
-        { Notices.Publish("着地成功！", DriverNoticePriority.Success, 1.8f); RaceSoundEffects.PlayForPlayer(RaceSoundCue.Ready, own.Index); }
+        { Notices.Publish("着地成功！", DriverNoticePriority.Success, 1.8f); RaceSoundEffects.PlayForPlayer(RaceSoundCue.Confirm, own.Index); }
         if (RaceFeatureController.Enabled(RaceFeature.LandingBoost))
         {
             if (mover.StartLandingBoost()) RewardBoosts++;
             else boostPendingUntil = Time.time + .9f; // A front-axle touchdown may precede stable rear-wheel contact.
         }
+    }
+    private void EmitLandingBurst()
+    {
+        if (landingBurst == null)
+        {
+            GameObject effect = new GameObject("Landing Success Halo");
+            effect.transform.SetParent(transform, false);
+            landingBurst = effect.AddComponent<ParticleSystem>();
+            var main = landingBurst.main; main.loop = false; main.playOnAwake = false;
+            main.startLifetime = .3f; main.startSpeed = 1.8f; main.startSize = .14f;
+            main.startColor = new Color(1f, .65f, .18f, .9f); main.maxParticles = 20;
+            var shape = landingBurst.shape; shape.shapeType = ParticleSystemShapeType.Circle; shape.radius = .65f;
+            var emission = landingBurst.emission; emission.enabled = false;
+            var renderer = landingBurst.GetComponent<ParticleSystemRenderer>(); renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
+        landingBurst.transform.SetPositionAndRotation(transform.position + Vector3.up * .25f, transform.rotation);
+        landingBurst.Emit(14);
     }
     private float DirectedDelta(float from, float to, RaceCourse course)
     {

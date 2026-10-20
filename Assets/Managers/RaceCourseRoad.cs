@@ -460,7 +460,7 @@ public static class RaceCourseRoad
             int first = positions.Count;
             foreach (Vertex vertex in polygon)
             {
-                positions.Add(owner.InverseTransformPoint(vertex.position + Vector3.up * PaintOffset));
+                positions.Add(owner.InverseTransformPoint(vertex.position + Vector3.up * (side == 0 ? PaintOffset : 0.12f)));
                 uv.Add(new Vector2(vertex.side, vertex.distance));
             }
             for (int i = 1; i < polygon.Count - 1; i++)
@@ -470,6 +470,19 @@ public static class RaceCourseRoad
                 triangles[material].Add(first);
                 triangles[material].Add(first + i);
                 triangles[material].Add(first + i + 1);
+            }
+            if (side == 0) return;
+            // Closed fascia, with no wheel-catching colliders or change to the road surface.
+            for (int i = 0; i < polygon.Count; i++)
+            {
+                Vertex aEdge = polygon[i], bEdge = polygon[(i + 1) % polygon.Count];
+                int v = positions.Count;
+                positions.Add(owner.InverseTransformPoint(aEdge.position + Vector3.up * PaintOffset));
+                positions.Add(owner.InverseTransformPoint(bEdge.position + Vector3.up * PaintOffset));
+                positions.Add(owner.InverseTransformPoint(aEdge.position + Vector3.up * 0.12f));
+                positions.Add(owner.InverseTransformPoint(bEdge.position + Vector3.up * 0.12f));
+                for (int n = 0; n < 4; n++) uv.Add(new Vector2(n % 2, n / 2));
+                triangles[material].AddRange(new[] { v, v + 1, v + 2, v + 1, v + 3, v + 2 });
             }
         }
 

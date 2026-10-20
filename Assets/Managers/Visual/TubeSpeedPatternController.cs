@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-/// <summary>One wall overlay with distance/curvature data; never changes tube topology or collision.</summary>
+/// <summary>One ring-grid wall overlay with distance/curvature data; never changes the source or collision.</summary>
 [ExecuteAlways, DisallowMultipleComponent]
 public sealed class TubeSpeedPatternController : MonoBehaviour
 {
@@ -99,8 +99,9 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
         Clear();
     }
 
-    // Same UV ring grouping as TubeCoursePreparation.ReadRings. UV2 stores actual
-    // distance, outer-wall emphasis, signed turn and curvature; no vertices are added.
+    // The imported triangles contain duplicate faces and span distant rings/profile
+    // samples. Rebuild ONLY the visual overlay from the authored UV grid so distance
+    // and profile coordinates interpolate locally, including the ceiling seam.
     private Mesh BuildWallMetadata(Mesh source, out Vector3[] centers, out float length, out bool reverse)
     {
         Vector3[] vertices = source.vertices;
@@ -157,11 +158,75 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
             float turn = Mathf.Sign(Vector3.Dot(Vector3.Cross(incoming, outgoing), Vector3.up)) * bend * (reverse ? -1f : 1f);
             metadata.Add(new Vector4(reverse ? length - distances[r] : distances[r], outer, turn, bend));
         }
-        Mesh mesh = Instantiate(source);
-        mesh.name = "Tube wall distance and curvature (unchanged topology)";
-        mesh.hideFlags = HideFlags.DontSave;
-        mesh.SetUVs(1, metadata);
+        var grid = new SortedDictionary<int, SortedDictionary<int, int>>();
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            int ringKey = Mathf.RoundToInt(uv[i].x * 1000000f);
+            if (!grid.TryGetValue(ringKey, out var profile))
+                grid.Add(ringKey, profile = new SortedDictionary<int, int>());
+            profile[Mathf.RoundToInt(uv[i].y * 1000000f)] = i;
+        }
+        var positions = new List<Vector3>();
+        var normals = new List<Vector3>();
+        var coordinates = new List<Vector2>();
+        var wallData = new List<Vector4>();
+        var triangles = new List<int>();
+        SortedDictionary<int, int> previous = null;
+        int ringIndex = 0;
+        foreach (var ring in grid.Values)
+        {
+            var current = new SortedDictionary<int, int>();
+            foreach (var sample in ring)
+            {
+                int i = sample.Value;
+                current.Add(sample.Key, positions.Count);
+                positions.Add(vertices[i]);
+                Vector3 radial = (tube.transform.TransformPoint(vertices[i]) - centers[ringIndex]).normalized;
+                // A single radial normal per grid sample avoids cracks from imported
+                // hard-normal splits when the shader offsets the overlay inward.
+                normals.Add(tube.transform.localToWorldMatrix.transpose.MultiplyVector(radial).normalized);
+                coordinates.Add(uv[i]);
+                wallData.Add(metadata[i]);
+            }
+            if (previous != null)
+            {
+                if (previous.Count != current.Count)
+                    throw new System.InvalidOperationException("Tube overlay requires matching UV profiles in every ring.");
+                int lastKey = -1;
+                foreach (int key in current.Keys)
+                {
+                    if (!previous.ContainsKey(key))
+                        throw new System.InvalidOperationException("Tube overlay UV profile is incomplete.");
+                    if (lastKey >= 0)
+                    {
+                        AddWallTriangle(triangles, positions, normals, previous[lastKey], current[lastKey], current[key]);
+                        AddWallTriangle(triangles, positions, normals, previous[lastKey], current[key], previous[key]);
+                    }
+                    lastKey = key;
+                }
+            }
+            previous = current;
+            ringIndex++;
+        }
+        var mesh = new Mesh { name = "Tube wall local UV ring grid", hideFlags = HideFlags.DontSave,
+            indexFormat = positions.Count > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16 };
+        mesh.SetVertices(positions);
+        mesh.SetNormals(normals);
+        mesh.SetUVs(0, coordinates);
+        mesh.SetUVs(1, wallData);
+        mesh.SetTriangles(triangles, 0);
+        mesh.RecalculateBounds();
         return mesh;
+    }
+
+    private static void AddWallTriangle(List<int> triangles, List<Vector3> positions, List<Vector3> normals, int a, int b, int c)
+    {
+        // Cull Front renders the interior, so every overlay face must face outward.
+        if (Vector3.Dot(Vector3.Cross(positions[b] - positions[a], positions[c] - positions[a]), normals[a]) < 0f)
+        {
+            int swap = b; b = c; c = swap;
+        }
+        triangles.Add(a); triangles.Add(b); triangles.Add(c);
     }
 
 #if UNITY_EDITOR

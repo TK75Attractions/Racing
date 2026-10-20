@@ -64,7 +64,7 @@ public sealed class NeonTitleMenu : MonoBehaviour
                 action.onClick.AddListener(() => { AudioListener.volume=AudioListener.volume>.01f?0f:1f; SetSoundText(); }); break;
             default:
                 heading.text="遊び方 / HOW TO PLAY";
-                body.text="1. ペダルを踏んで準備完了\n2. 2 人の準備ができたらスタート\n3. ハンドルで曲がり、ペダルで加速\n4. コースを周回してゴール！\n\nEsc キーでレース中のメニュー";
+                body.text="1. ペダル長押しで車の選択へ\n2. 車を決めたら、あなたの練習へ\n3. 2 人の練習が終わるとレース開始\n4. ハンドルで曲がり、ペダルで加速\n\nEsc キーでレース中のメニュー";
                 caption="わかった！"; action.onClick.AddListener(Close); break;
         }
         action.transform.Find("Label").GetComponent<TMP_Text>().text=caption;

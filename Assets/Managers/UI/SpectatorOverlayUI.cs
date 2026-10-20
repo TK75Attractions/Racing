@@ -8,6 +8,8 @@ public sealed class SpectatorOverlayUI : MonoBehaviour
 {
     private static readonly Color FrameColor = RacingPanelGraphic.Alpha(RacingHUDStyle.Teal, .60f);
     private TMP_Text playerLabel;
+    private TMP_Text remainingLabel;
+    private int shownSeconds = int.MinValue;
 
     public static SpectatorOverlayUI Create(Transform canvasRoot, TMP_FontAsset font)
     {
@@ -32,12 +34,28 @@ public sealed class SpectatorOverlayUI : MonoBehaviour
     {
         playerLabel.text = $"プレイヤー {Mathf.Clamp(watchedPlayerIndex, 0, 1) + 1} を観戦中";
         gameObject.SetActive(true);
+        Update();
         transform.SetAsLastSibling();
     }
 
     public void Hide()
     {
         gameObject.SetActive(false);
+    }
+
+    private void Update()
+    {
+        Gmanager manager = Gmanager.Control;
+        SetRemaining(manager != null && manager.WaitingForSecondPlace ? manager.SecondPlaceTimeRemaining : -1f);
+    }
+
+    public void SetRemaining(float seconds)
+    {
+        int value = seconds < 0f ? -1 : Mathf.CeilToInt(Mathf.Max(0f, seconds));
+        if (shownSeconds == value) return;
+        shownSeconds = value;
+        RacingHUDStyle.SetText(remainingLabel, value < 0 ? "終了を確認中 / 操作不要・結果へ自動で進みます"
+            : $"残り猶予 {value} 秒 / 操作不要・終了後は結果へ");
     }
 
     private void Build(TMP_FontAsset font)
@@ -57,12 +75,13 @@ public sealed class SpectatorOverlayUI : MonoBehaviour
         caption.characterSpacing = 2f;
         playerLabel = RacingHUDStyle.Label(plate, "PlayerLabel", "プレイヤー 2 を観戦中", .07f, .13f, .93f, .54f,
             28f, RacingHUDStyle.Text, bold: true);
-        RectTransform footer = RacingUITheme.Rect(transform, "FinishStatus", new Vector2(0.32f, 0.025f), new Vector2(0.68f, 0.087f));
+        RectTransform footer = RacingUITheme.Rect(transform, "FinishStatus", new Vector2(0.27f, 0.025f), new Vector2(0.73f, 0.12f));
         RacingHUDStyle.Surface(footer, RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
-        RacingHUDStyle.Label(footer, "Status", "ゴール済み / レース終了を待っています", .05f, .37f, .95f, .92f,
+        RacingHUDStyle.Label(footer, "Status", "ゴール済み / 相手のゴール待ち", .05f, .45f, .95f, .92f,
             20f, RacingHUDStyle.Text, TextAlignmentOptions.Center);
-        RacingHUDStyle.Label(footer, "EnglishStatus", "FINISHED / WAITING FOR RACE END", .05f, .04f, .95f, .39f,
-            12f, RacingHUDStyle.Muted, TextAlignmentOptions.Center);
+        remainingLabel = RacingHUDStyle.Label(footer, "EnglishStatus", "", .05f, .04f, .95f, .43f,
+            18f, RacingHUDStyle.Muted, TextAlignmentOptions.Center);
+        shownSeconds = int.MinValue;
     }
 
     private void CreateCorner(string name, Vector2 anchor, Vector2 size)

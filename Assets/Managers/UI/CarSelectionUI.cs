@@ -122,6 +122,16 @@ public sealed class CarSelectionUI : MonoBehaviour
         if (font != null) { text.font = font; text.fontSharedMaterial = font.material; }
     }
 
+    private static string PerformanceSummary(CarSelectionCatalog.Vehicle vehicle)
+    {
+        // Compare actual tuning, including custom catalogs, rather than relying on vehicle order.
+        if (vehicle.handling > vehicle.topSpeed && vehicle.handling > 1.02f)
+            return "曲がりやすい / カーブが得意";
+        if (vehicle.topSpeed > vehicle.handling && vehicle.topSpeed > 1.02f)
+            return "直線で伸びる / カーブは早めに減速";
+        return "バランス型 / 速さと曲がりやすさを両立";
+    }
+
     private void BuildPerformance()
     {
         RectTransform panel = NeonUI.Panel(sheet, "Performance", new Vector2(.692f, .354f), new Vector2(.973f, .85f));
@@ -272,7 +282,7 @@ public sealed class CarSelectionUI : MonoBehaviour
         if (expired) { Confirm(); return; }
         if (!connected)
         {
-            ResetHold(); steeringLatched = true; pedalHint.text = "コントローラーの接続を待っています"; return;
+            ResetHold(); steeringLatched = true; pedalHint.text = "接続待ち / 係員に知らせてください"; return;
         }
         float steering = Mathf.Abs(input.steering);
         if (steering < 2f) steeringLatched = false;
@@ -330,7 +340,7 @@ public sealed class CarSelectionUI : MonoBehaviour
     {
         CarSelectionCatalog.Vehicle vehicle = catalog.vehicles[draftVehicle];
         modelName.text = vehicle.displayName; grade.text = "TSUKUKOMA MOTORS  /  " + vehicle.grade;
-        description.text = vehicle.description; bodyType.text = vehicle.bodyType + "   /   ゲーム内性能・10段階評価";
+        description.text = PerformanceSummary(vehicle); bodyType.text = vehicle.bodyType + "   /   ゲーム内性能・10段階評価";
         colorName.text = CarSelectionCatalog.PaintNames[draftPaint]; count.text = $"0{draftVehicle + 1} / 0{catalog.vehicles.Length}     SELECT YOUR MACHINE";
         float[] values = { vehicle.SpeedRating, vehicle.AccelerationRating, vehicle.HandlingRating, vehicle.DriftRating };
         for (int i = 0; i < values.Length; i++) { ratings[i].text = values[i].ToString("0.0"); bars[i].anchorMax = new Vector2(values[i] / 10f, 1); }

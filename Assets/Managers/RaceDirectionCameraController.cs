@@ -43,6 +43,11 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
     [SerializeField, Min(0f)] private float heightSmoothTime = .25f;
     [SerializeField, Min(1f)] private float teleportDistance = 12f;
 
+    [Header("Post-goal framing")]
+    [SerializeField, Min(0f)] private float finishPullback = 2.2f;
+    [SerializeField, Range(0f, 35f)] private float finishOrbitDegrees = 12f;
+    [SerializeField, Min(0.1f)] private float finishCameraSmoothTime = .8f;
+
     private float smoothedHeight;
     private float heightVelocity;
     private Vector3 lastCarPosition;
@@ -190,6 +195,11 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
         Vector3 anchorPosition = new Vector3(car.position.x, smoothedHeight, car.position.z);
         float targetYaw = Mathf.Atan2(carDirection.x, carDirection.z) * Mathf.Rad2Deg;
         float speed = carBody != null ? carBody.linearVelocity.magnitude : 0f;
+        FinishRunController finishRun = car.GetComponent<FinishRunController>();
+        float finish01 = finishRun != null
+            ? Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(finishRun.ElapsedSeconds / FinishRunController.Duration))
+            : 0f;
+        targetYaw += finishOrbitDegrees * finish01;
         float targetFraming = Mathf.Clamp01(speed / Mathf.Max(1f, framingSpeedMps));
         if (immediately)
         {
@@ -219,7 +229,7 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
                 cameraTarget.eulerAngles.y,
                 targetYaw,
                 ref yawVelocity,
-                rotationSmoothTime,
+                finish01 > 0f ? finishCameraSmoothTime : rotationSmoothTime,
                 Mathf.Infinity,
                 deltaTime);
         }
@@ -227,7 +237,7 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
         // Road pitch only: banking and airborne body rotation must not roll or whip the view.
         Quaternion cameraRotation = Quaternion.Euler(smoothedPitch, yaw, 0f);
         Vector3 cameraPosition = anchorPosition
-            - cameraRotation * Vector3.forward * Mathf.Max(0.01f, cameraDistance)
+            - cameraRotation * Vector3.forward * (Mathf.Max(0.01f, cameraDistance) + finishPullback * finish01)
             + Vector3.up * (Mathf.Max(0f, cameraHeight) + highSpeedHeight * framing01);
 
         // Move inward immediately; only the return to the normal distance is damped.

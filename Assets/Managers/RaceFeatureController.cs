@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>F8 controls are available in player builds and never save debugging state to disk.</summary>
+/// <summary>F8 controls are available in player builds; feature switches reset, quality choice persists.</summary>
 [DisallowMultipleComponent]
 public sealed class RaceFeatureController : MonoBehaviour
 {
@@ -16,7 +16,7 @@ public sealed class RaceFeatureController : MonoBehaviour
     public event System.Action FeaturesChanged;
     private Gmanager manager;
     private int appliedRevision = -1;
-    private Rect panel = new Rect(16, 16, 550, 560);
+    private Rect panel = new Rect(16, 16, 550, 700);
 
     public static bool Enabled(RaceFeature feature) => Gmanager.Control != null &&
         Gmanager.Control.Features != null && Gmanager.Control.Features.Settings.IsEnabled(feature);
@@ -90,6 +90,25 @@ public sealed class RaceFeatureController : MonoBehaviour
         if (GUILayout.Button("Experience: 1 lap")) SelectPreset(RacePreset.Experience);
         GUILayout.EndHorizontal();
         GUILayout.Label("Next preset: " + Settings.SelectedPreset);
+        GUILayout.Space(8);
+        GUILayout.Label("Rendering quality (saved):");
+        RaceRenderBudget budget = RaceRenderBudget.Instance;
+        GUILayout.BeginHorizontal();
+        if (budget != null)
+        {
+            if (GUILayout.Button("Low")) budget.SelectPreset(RaceRenderBudget.QualityPreset.Low);
+            if (GUILayout.Button("Medium")) budget.SelectPreset(RaceRenderBudget.QualityPreset.Medium);
+            if (GUILayout.Button("High")) budget.SelectPreset(RaceRenderBudget.QualityPreset.High);
+            if (GUILayout.Button("Auto")) budget.EnableAutomaticScale();
+        }
+        else GUILayout.Label("Available in standalone race");
+        GUILayout.EndHorizontal();
+        if (budget != null)
+        {
+            string mode = budget.IsAutomatic ? "Auto" : budget.CurrentPreset.ToString();
+            GUILayout.Label("Render: " + mode + " / scale " + budget.CurrentScale.ToString("F2") +
+                " / frame " + budget.AverageFrameMilliseconds.ToString("F1") + " ms");
+        }
         if (GUILayout.Button("All added features OFF (legacy comparison)")) SetFeature(RaceFeature.All, false);
         if (manager != null)
             foreach (RaceParticipant entry in manager.Participants)
@@ -102,7 +121,7 @@ public sealed class RaceFeatureController : MonoBehaviour
         if (manager != null)
             foreach (RaceParticipant entry in manager.Participants)
                 if (!entry.IsCpu && entry.Car != null) GUILayout.Label(entry.Label + "  landings: " + (entry.Car.GetComponent<LandingRewardController>()?.SuccessfulLandings ?? 0) + "  tube lines: " + (entry.Car.GetComponent<TubeChargeLineController>()?.SuccessfulLines ?? 0));
-        GUILayout.Label("Debug choices reset on application restart.");
+        GUILayout.Label("Feature switches reset on restart; quality preset is saved.");
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
     }
 }

@@ -51,7 +51,8 @@ public static class TubeWallVisualPreparation
             AssetDatabase.SaveAssets();
             EditorSceneManager.MarkSceneDirty(scene);
             if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Could not save the tube wall scene references.");
-            Debug.Log($"TUBE_WALL_VISUAL_PREPARATION_PASS: {centers.Length} rings, {length:F1}m; FBX importer unchanged.");
+            Debug.Log($"TUBE_WALL_VISUAL_PREPARATION_PASS: {centers.Length} rings, {length:F1}m; " +
+                $"local UV grid: {wallAsset.vertexCount} vertices, {wallAsset.triangles.Length / 3} triangles; FBX importer unchanged.");
         }
         finally
         {

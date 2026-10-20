@@ -145,7 +145,8 @@ public static class RaceCourseRoadValidation
         }
         Mesh paint = Paint(course);
         Vector3[] vertices = paint.vertices;
-        int[] indices = paint.triangles;
+        // Raised curb tops/fascias do not lie on the original road plane.
+        int[] indices = paint.GetTriangles(0);
         for (int i = 0; i < indices.Length; i += 3)
         {
             Vector3 local = (vertices[indices[i]] + vertices[indices[i + 1]] + vertices[indices[i + 2]]) / 3f;

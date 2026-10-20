@@ -32,6 +32,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
     private CanvasGroup fadeCanvasGroup;
     private RectTransform fadeOverlay;
     private TMP_Text titlePrompt;
+    private RacingIconGraphic titleStateIcon;
     private readonly PedalButtonFeedback[] titleButtonFeedback = new PedalButtonFeedback[2];
     private GameObject countdownStatusRoot;
     private GameObject finishWarningRoot;
@@ -158,9 +159,14 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     public void SetTitlePrompt(string promptText)
     {
+        if (promptText == "WAITING FOR THE OTHER PLAYER TO RETURN")
+        {
+            promptText = "相手の結果操作待ち\n相手が戻ると次の準備へ・操作不要";
+            if (titleStateIcon != null) { titleStateIcon.symbol = RacingIconGraphic.Icon.Success; titleStateIcon.SetVerticesDirty(); }
+        }
         if (titlePrompt != null && titlePrompt.text != promptText)
         {
-            titlePrompt.text = promptText;
+            RacingHUDStyle.SetText(titlePrompt, promptText, true);
         }
     }
 
@@ -416,13 +422,20 @@ public sealed class ScreenTransitionController : MonoBehaviour
         Image background = title.GetComponent<Image>() ?? title.gameObject.AddComponent<Image>();
         background.color = Color.black; background.raycastTarget = false;
         NeonUI.Background(title, "TitleBackground", "UI/Neon/TitleBackground");
+        NeonUI.Text(title, "TitleBrand", "TSUKUKOMA CIRCUIT",
+            new Vector2(.035f,.82f), new Vector2(.64f,.95f), 68f, italic:true);
+        NeonUI.Text(title, "TitleSetting", "夜の学校 × 縁日ネオン",
+            new Vector2(.04f,.77f), new Vector2(.63f,.82f), 24f, tint:NeonUI.Cyan);
+        NeonUI.Panel(title, "PreparationBackdrop", new Vector2(.66f,.285f), new Vector2(.985f,.59f));
         TMP_Text playerBadge = NeonUI.Text(title, "PlayerBadge", $"PLAYER 0{displayPlayerIndex + 1}  /  プレイヤー {displayPlayerIndex + 1}",
             new Vector2(.69f,.90f), new Vector2(.97f,.955f), 21f, TextAlignmentOptions.Right, tint: NeonUI.Cyan);
         foreach(Button legacy in title.GetComponentsInChildren<Button>(true)) legacy.gameObject.SetActive(false);
         Transform oldSheet=title.Find("MenuSheet"); if(oldSheet!=null)oldSheet.gameObject.SetActive(false);
         BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(.678f,.41f), new Vector2(.970f,.56f), NeonUI.Pink);
         titlePrompt = NeonUI.Text(title, "StartPrompt", promptText,
-            new Vector2(.66f,.31f), new Vector2(.985f,.385f), 18f, TextAlignmentOptions.Center);
+            new Vector2(.715f,.31f), new Vector2(.985f,.395f), 20f, TextAlignmentOptions.Center);
+        titleStateIcon = NeonUI.Icon(title, "PreparationState", RacingIconGraphic.Icon.Pedal,
+            new Vector2(.675f,.325f), new Vector2(.71f,.38f));
         RectTransform news = NeonUI.Panel(title, "News", new Vector2(.02f,.035f), new Vector2(.977f,.078f));
         NeonUI.Text(news,"Tag","NEWS",new Vector2(.018f,0),new Vector2(.07f,1),19f,TextAlignmentOptions.Center);
         NeonUI.Text(news,"Welcome","ようこそ、ツクコマ・サーキットへ！",new Vector2(.09f,0),new Vector2(.78f,1),18f);
@@ -544,9 +557,14 @@ public sealed class ScreenTransitionController : MonoBehaviour
         titleButtonFeedback[playerIndex].SetConfirmed(ready);
         if (titlePrompt != null)
         {
-            titlePrompt.text = !armed
-                ? "ペダルを離して準備してください"
-                : ready ? "準備完了  /  相手の準備を待っています" : "長押しで車の選択へ / ペダルを踏み込む";
+            InputManager input = Gmanager.Control != null ? Gmanager.Control.IManager : null;
+            bool connected = input == null || input.IsPlayerConnected(playerIndex);
+            titlePrompt.text = !connected ? "接続待ち / 操作できません\n係員に知らせてください" : !armed
+                ? "準備 / あなたが操作\nペダルを離すと選択できます"
+                : ready ? "準備完了 / 相手待ち\nそろうまで操作不要" : "準備 / あなたが操作\nペダル長押しで車の選択へ";
+            RacingIconGraphic.Icon icon = !connected ? RacingIconGraphic.Icon.Warning : ready ? RacingIconGraphic.Icon.Success : RacingIconGraphic.Icon.Pedal;
+            if (titleStateIcon.symbol != icon) { titleStateIcon.symbol = icon; titleStateIcon.SetVerticesDirty(); }
+            RacingHUDStyle.SetText(titlePrompt, titlePrompt.text, true);
         }
     }
 

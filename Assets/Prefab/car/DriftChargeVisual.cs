@@ -76,7 +76,10 @@ public sealed class DriftChargeVisual : MonoBehaviour
         else if (wasDrifting && !isDrifting && previousTier > 0)
         {
             // 解放の瞬間は、直前まで溜めていた段階の色で大きく弾けさせる。
-            EmitBurst(releaseBurst * previousTier, GetTierColor(previousTier), 1.8f);
+            // Release reads as a short, rearward fan rather than another tier-up pop.
+            EmitBurst(releaseBurst * previousTier, GetTierColor(previousTier), 1.8f, true);
+            RaceParticipant participant = GetComponent<RaceParticipant>();
+            if (participant != null && !participant.IsCpu) RaceSoundEffects.PlayForPlayer(RaceSoundCue.Confirm, participant.Index);
         }
 
         if (isDrifting)
@@ -101,7 +104,7 @@ public sealed class DriftChargeVisual : MonoBehaviour
         }
 
         float rate = sparksPerSecondPerWheel * (1f + tier * Mathf.Max(0f, tierEmissionBonus));
-        if (mover.IsDriftChargeFull && fullChargePulseHz > 0f)
+        if (mover.IsDriftChargeFull && fullChargePulseHz > 0f && RaceEffectsSettings.StrongFlashes)
         {
             // 満チャージは量の脈動で「解放できる」ことを伝える。
             rate *= 1f + 0.45f * Mathf.Sin(Time.time * fullChargePulseHz * Mathf.PI * 2f);
@@ -118,17 +121,17 @@ public sealed class DriftChargeVisual : MonoBehaviour
         EmitAtWheels(count, GetTierColor(tier), 1f);
     }
 
-    private void EmitBurst(int countPerWheel, Color color, float sizeScale)
+    private void EmitBurst(int countPerWheel, Color color, float sizeScale, bool release = false)
     {
         if (countPerWheel <= 0)
         {
             return;
         }
 
-        EmitAtWheels(countPerWheel, color, sizeScale);
+        EmitAtWheels(countPerWheel, color, sizeScale, release);
     }
 
-    private void EmitAtWheels(int countPerWheel, Color color, float sizeScale)
+    private void EmitAtWheels(int countPerWheel, Color color, float sizeScale, bool release = false)
     {
         if (rearWheels == null || rearWheels.Length == 0)
         {
@@ -144,14 +147,14 @@ public sealed class DriftChargeVisual : MonoBehaviour
             if (wheel == null) continue;
             for (int index = 0; index < countPerWheel; index++)
             {
-                Vector3 direction = -transform.forward * Random.Range(0.4f, 1.2f) +
+                Vector3 direction = -transform.forward * Random.Range(release ? 1.2f : 0.4f, release ? 2f : 1.2f) +
                     transform.right * Random.Range(-0.9f, 0.9f) +
                     Vector3.up * Random.Range(0.2f, 1f);
                 ParticleSystem.EmitParams particle = new ParticleSystem.EmitParams
                 {
-                    position = wheel.position + Vector3.up * 0.05f,
+                    position = wheel.position + Vector3.up * (release ? 0.16f : 0.05f),
                     velocity = direction.normalized * Random.Range(1.5f, 4.5f) + inheritedVelocity,
-                    startLifetime = Random.Range(0.18f, 0.42f),
+                    startLifetime = Random.Range(release ? 0.12f : 0.18f, release ? 0.24f : 0.42f),
                     startSize = Random.Range(0.03f, 0.07f) * Mathf.Max(0.1f, sizeScale),
                     startColor = color
                 };

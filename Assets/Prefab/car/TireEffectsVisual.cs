@@ -57,6 +57,7 @@ public sealed class TireEffectsVisual : MonoBehaviour
         public float lastAlpha;
         public float smokeAccumulator;
         public float slip;
+        public float smokeContactSeconds;
         public Collider surfaceCollider;
         public int surfaceType;
     }
@@ -202,11 +203,15 @@ public sealed class TireEffectsVisual : MonoBehaviour
         if (!smokeEnabled || wheel.slip <= 0f || wheel.slip < smokeThreshold)
         {
             wheel.smokeAccumulator = 0f;
+            wheel.smokeContactSeconds = 0f;
             return;
         }
 
         float strength = Mathf.InverseLerp(smokeThreshold, 1f, wheel.slip);
-        wheel.smokeAccumulator += smokePerSecondPerWheel * Mathf.Lerp(0.35f, 1f, strength) * Mathf.Max(0f, deltaTime);
+        wheel.smokeContactSeconds += Mathf.Max(0f, deltaTime);
+        float speed = body != null ? body.linearVelocity.magnitude : velocity.magnitude;
+        float speedFactor = Mathf.InverseLerp(minimumSpeed, 18f, speed);
+        wheel.smokeAccumulator += smokePerSecondPerWheel * Mathf.Lerp(0.35f, 1f, strength) * speedFactor * Mathf.Max(0f, deltaTime);
         int count = Mathf.FloorToInt(wheel.smokeAccumulator);
         if (count <= 0) return;
         wheel.smokeAccumulator -= count;
@@ -214,7 +219,9 @@ public sealed class TireEffectsVisual : MonoBehaviour
 
         Vector3 origin = wheel.tire.transform.position + Vector3.up * 0.15f;
         Color color = smokeColor;
-        color.a = smokeOpacity * Mathf.Lerp(0.5f, 1f, strength);
+        // Long scrapes continue producing particles but gradually get lighter to preserve sightlines.
+        float persistence = Mathf.Lerp(1f, .48f, Mathf.InverseLerp(.5f, 2.5f, wheel.smokeContactSeconds));
+        color.a = smokeOpacity * Mathf.Lerp(0.5f, 1f, strength) * speedFactor * persistence;
         for (int index = 0; index < count; index++)
         {
             Vector3 drift = Random.insideUnitSphere * 0.8f;
@@ -223,8 +230,8 @@ public sealed class TireEffectsVisual : MonoBehaviour
             {
                 position = origin + Random.insideUnitSphere * 0.15f,
                 velocity = velocity * 0.12f + Vector3.up * Random.Range(0.4f, 1.1f) + drift,
-                startLifetime = smokeLifetime * Random.Range(0.8f, 1.2f),
-                startSize = smokeStartSize * Random.Range(0.8f, 1.2f),
+                startLifetime = smokeLifetime * Mathf.Lerp(.55f, 1f, speedFactor) * persistence * Random.Range(0.8f, 1.2f),
+                startSize = smokeStartSize * Mathf.Lerp(.45f, 1f, speedFactor) * Random.Range(0.8f, 1.2f),
                 rotation = Random.Range(0f, 360f),
                 angularVelocity = Random.Range(-45f, 45f),
                 startColor = color

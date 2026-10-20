@@ -7,6 +7,7 @@ using System.Reflection;
 using Unity.Profiling;
 using Unity.Profiling.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
@@ -35,6 +36,20 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
         public List<CounterReading> previousFrameCounters = new List<CounterReading>();
     }
     [Serializable] private sealed class CounterReading { public string name; public double value; }
+    [Serializable] private sealed class CycleSnapshot
+    {
+        public int cycle, gameObjects, audioSources, textures, renderTextures, residualNotifications, settingsResidue;
+        public long totalUsedMemoryBytes, monoHeapBytes;
+        public long totalUsedMemoryDeltaBytes, monoHeapDeltaBytes;
+        public int gameObjectsDelta, audioSourcesDelta, texturesDelta, renderTexturesDelta;
+        public string settings;
+    }
+    [Serializable] private sealed class CycleReport
+    {
+        public int requestedCycles;
+        public List<CycleSnapshot> cycles = new List<CycleSnapshot>();
+        public List<string> warnings = new List<string>();
+    }
     private struct RaceFrame
     {
         public double elapsed, ms;
@@ -95,6 +110,8 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
     private string phase;
     private bool sampling;
     private int focusedFrames;
+    private int requestedCycles = 1;
+    private readonly CycleReport cycleReport = new CycleReport();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Install()
@@ -112,6 +129,13 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
         output = Environment.GetEnvironmentVariable("RACING_PERFORMANCE_OUTPUT");
         if (AutorunEnabled && string.IsNullOrEmpty(output))
             output = Path.Combine(Application.temporaryCachePath, "RacingPerformance", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff"));
+        if (AutorunEnabled)
+        {
+            int parsed;
+            if (int.TryParse(Environment.GetEnvironmentVariable("RACING_PERFORMANCE_CYCLES"), out parsed))
+                requestedCycles = Mathf.Clamp(parsed, 1, 100);
+        }
+        cycleReport.requestedCycles = requestedCycles;
         if (string.IsNullOrEmpty(output)) { enabled = false; return; }
         Directory.CreateDirectory(output);
         Application.runInBackground = true;
@@ -170,7 +194,7 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
             StartCounters();
             report.race = new RaceSummary();
             raceFrames.Capacity = 131072;
-            yield return Autorun();
+            yield return AutorunCycles();
             yield break;
         }
         typeof(Gmanager).GetMethod("StartGameWhenScreenCovered",Private).Invoke(manager,null);
@@ -284,20 +308,162 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
             }
         }
     }
-    private IEnumerator Autorun()
+    private IEnumerator AutorunCycles()
     {
-        // Use production transitions; allow each preparation screen to render before advancing.
-        while (!finished && !raceStarted)
+        for (int cycle = 1; cycle <= requestedCycles && !finished; cycle++)
         {
-            if (manager != null && manager.CanUseDashboardControls)
+            double cycleStart = Time.realtimeSinceStartupAsDouble;
+            bool raceSummaryWritten = false;
+            Gmanager.State observedState = manager != null ? manager.state : Gmanager.State.Title;
+            double stateSince = Time.realtimeSinceStartupAsDouble;
+            raceStarted = false;
+            previousFrameRacing = false;
+            raceFrames.Clear();
+            report.race = new RaceSummary();
+            while (!finished && Time.realtimeSinceStartupAsDouble - cycleStart < 600)
             {
-                File.WriteAllText(Path.Combine(output, "status.txt"), "Autorun " + manager.state);
-                if (manager.state == Gmanager.State.Title) manager.StartGame();
-                else if (manager.state == Gmanager.State.CarSelection) manager.AdvanceDashboardToTutorial();
-                else if (manager.state == Gmanager.State.Tutorial) manager.AdvanceDashboardToCountdown();
+                if (manager == null) { yield return null; continue; }
+                if (manager.state != observedState)
+                {
+                    observedState = manager.state;
+                    stateSince = Time.realtimeSinceStartupAsDouble;
+                }
+                File.WriteAllText(Path.Combine(output, "status.txt"), "Autorun cycle " + cycle + ": " + manager.state);
+                if (manager.CanUseDashboardControls)
+                {
+                    if (manager.state == Gmanager.State.Title && raceSummaryWritten)
+                    {
+                        // Reset completes after the result transition; sample only after deferred destroys settle.
+                        yield return null;
+                        yield return null;
+                        CaptureCycle(cycle);
+                        break;
+                    }
+                    else if (Time.realtimeSinceStartupAsDouble - stateSince >= 3 && manager.state == Gmanager.State.Title) manager.StartGame();
+                    else if (Time.realtimeSinceStartupAsDouble - stateSince >= 3 && manager.state == Gmanager.State.CarSelection) manager.AdvanceDashboardToTutorial();
+                    else if (Time.realtimeSinceStartupAsDouble - stateSince >= 3 && manager.state == Gmanager.State.Tutorial) manager.AdvanceDashboardToCountdown();
+                    else if (manager.state == Gmanager.State.Result)
+                    {
+                        if (!raceSummaryWritten)
+                        {
+                            FinishRace(GetRaceEndReason(), false);
+                            raceSummaryWritten = true;
+                            yield return new WaitForSecondsRealtime(3f);
+                        }
+                        else
+                        {
+                            manager.SelectResultOption(0, 1);
+                            manager.SelectResultOption(1, 1);
+                        }
+                    }
+                }
+                yield return new WaitForSecondsRealtime(1f);
             }
-            yield return new WaitForSecondsRealtime(3f);
+            if (!raceSummaryWritten && manager != null && manager.state == Gmanager.State.Result)
+            {
+                FinishRace(GetRaceEndReason(), false);
+                raceSummaryWritten = true;
+            }
+            if (!raceSummaryWritten)
+            {
+                report.errors.Add("Autorun cycle " + cycle + " did not reach results within 600 seconds.");
+                break;
+            }
+            if (cycle < requestedCycles)
+            {
+                // Allow title transitions to settle before beginning the next group.
+                while (manager != null && manager.state != Gmanager.State.Title && Time.realtimeSinceStartupAsDouble - cycleStart < 600)
+                    yield return new WaitForSecondsRealtime(.25f);
+            }
         }
+        WriteCycleReport();
+        Finish();
+    }
+
+    private void CaptureCycle(int cycle)
+    {
+        long totalMemory = Profiler.GetTotalAllocatedMemoryLong();
+        foreach (var counter in counters)
+            if (counter.Name == "Total Used Memory" && counter.Recorder.Valid)
+                totalMemory = counter.Recorder.LastValue;
+        var snapshot = new CycleSnapshot {
+            cycle = cycle, totalUsedMemoryBytes = totalMemory, monoHeapBytes = Profiler.GetMonoUsedSizeLong(),
+            gameObjects = FindObjectsByType<GameObject>(FindObjectsSortMode.None).Length,
+            audioSources = FindObjectsByType<AudioSource>(FindObjectsSortMode.None).Length,
+            textures = Resources.FindObjectsOfTypeAll<Texture>().Length,
+            renderTextures = Resources.FindObjectsOfTypeAll<RenderTexture>().Length,
+            residualNotifications = CountResidualNotifications(),
+            settingsResidue = manager.Features != null && (manager.Features.Settings.RulesLocked || manager.Features.Settings.HasQueuedPreset) ? 1 : 0,
+            settings = manager.Features == null ? "unavailable" : manager.Features.Settings.Enabled + "/" + manager.Features.Settings.SelectedPreset + "/" + manager.Features.Settings.ActivePreset
+        };
+        if (cycleReport.cycles.Count > 0)
+        {
+            CycleSnapshot previous = cycleReport.cycles[cycleReport.cycles.Count - 1];
+            snapshot.totalUsedMemoryDeltaBytes = snapshot.totalUsedMemoryBytes - previous.totalUsedMemoryBytes;
+            snapshot.monoHeapDeltaBytes = snapshot.monoHeapBytes - previous.monoHeapBytes;
+            snapshot.gameObjectsDelta = snapshot.gameObjects - previous.gameObjects;
+            snapshot.audioSourcesDelta = snapshot.audioSources - previous.audioSources;
+            snapshot.texturesDelta = snapshot.textures - previous.textures;
+            snapshot.renderTexturesDelta = snapshot.renderTextures - previous.renderTextures;
+        }
+        cycleReport.cycles.Add(snapshot);
+        WriteCycleReport(true);
+    }
+
+    private string GetRaceEndReason()
+    {
+        bool allFinished = manager != null && manager.Participants.Count > 0;
+        if (manager != null) foreach (var entry in manager.Participants) allFinished &= entry.Result?.didFinish == true;
+        return allFinished ? "all-finished" : "race-timeout-or-dnf";
+    }
+
+    private int CountResidualNotifications()
+    {
+        int count = 0;
+        var field = typeof(Gmanager).GetField("onPlayUIManagers", Private);
+        var uis = field != null ? field.GetValue(manager) as OnPlayUIManager[] : null;
+        if (uis != null) foreach (var ui in uis) if (ui != null && !string.IsNullOrEmpty(ui.DriverNotice)) count++;
+        return count;
+    }
+
+    private void WriteCycleReport(bool logWarnings = false)
+    {
+        cycleReport.warnings.Clear();
+        var cycles = cycleReport.cycles;
+        if (cycles.Count >= 3)
+        {
+            for (int i = 2; i < cycles.Count; i++)
+            {
+                WarnIfIncreasing(cycles, i, "totalUsedMemoryBytes", x => x.totalUsedMemoryBytes);
+                WarnIfIncreasing(cycles, i, "monoHeapBytes", x => x.monoHeapBytes);
+                WarnIfIncreasing(cycles, i, "gameObjects", x => x.gameObjects);
+                WarnIfIncreasing(cycles, i, "audioSources", x => x.audioSources);
+                WarnIfIncreasing(cycles, i, "textures", x => x.textures);
+                WarnIfIncreasing(cycles, i, "renderTextures", x => x.renderTextures);
+            }
+        }
+        foreach (CycleSnapshot snapshot in cycles)
+        {
+            if (snapshot.residualNotifications > 0) cycleReport.warnings.Add("Cycle " + snapshot.cycle + ": " + snapshot.residualNotifications + " driver notification(s) remained at title.");
+            if (snapshot.settingsResidue > 0) cycleReport.warnings.Add("Cycle " + snapshot.cycle + ": race settings remained locked or queued at title.");
+        }
+        File.WriteAllText(Path.Combine(output, "cycles.json"), JsonUtility.ToJson(cycleReport, true));
+        if (logWarnings)
+            foreach (string warning in cycleReport.warnings) Debug.LogWarning("PERFORMANCE_CYCLE_LEAK_SUSPECT: " + warning);
+    }
+
+    private void WarnIfIncreasing(List<CycleSnapshot> cycles, int index, string metric, Func<CycleSnapshot, long> read)
+    {
+        if (index < 2) return;
+        long a = read(cycles[index - 2]), b = read(cycles[index - 1]), c = read(cycles[index]);
+        if (a < b && b < c) cycleReport.warnings.Add("Cycle " + cycles[index - 2].cycle + " to " + cycles[index].cycle + ": " + metric + " increased monotonically (" + a + " -> " + b + " -> " + c + ").");
+    }
+
+    private void WarnIfIncreasing(List<CycleSnapshot> cycles, int index, string metric, Func<CycleSnapshot, int> read)
+    {
+        if (index < 2) return;
+        int a = read(cycles[index - 2]), b = read(cycles[index - 1]), c = read(cycles[index]);
+        if (a < b && b < c) cycleReport.warnings.Add("Cycle " + cycles[index - 2].cycle + " to " + cycles[index].cycle + ": " + metric + " increased monotonically (" + a + " -> " + b + " -> " + c + ").");
     }
 
     private void LateUpdate()
@@ -348,16 +514,16 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
         previousFrameRacing = racing;
         foreach (var counter in counters)
             if (counter.Recorder.Valid) counter.PreviousValue = counter.Recorder.LastValue * counter.Scale;
-        if (raceStarted && !racing)
+        if (raceStarted && !racing && !AutorunEnabled)
         {
             bool allFinished = manager.Participants.Count > 0;
             foreach (var entry in manager.Participants) allFinished &= entry.Result?.didFinish == true;
             FinishRace(allFinished ? "all-finished" : "race-timeout-or-dnf");
         }
-        else if (raceStarted && now - installedAt >= 240) FinishRace("240-second-limit");
+        else if (raceStarted && !AutorunEnabled && now - raceStart >= 240) FinishRace("240-second-limit");
     }
 
-    private void FinishRace(string reason)
+    private void FinishRace(string reason, bool finalize = true)
     {
         if (finished) return;
         var summary = report.race ?? (report.race = new RaceSummary());
@@ -390,7 +556,7 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
                     frame.elapsed, frame.ms, frame.speed, frame.distance, frame.gc0, frame.gc1, frame.gc2, frame.allocatedBytes));
         }
         File.WriteAllText(Path.Combine(output, "status.txt"), "Finished: " + reason);
-        Finish();
+        if (finalize) Finish();
     }
 
     private void Finish()
@@ -426,10 +592,11 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
     {
         if (AutorunEnabled)
         {
-            if (!finished && !raceStarted && Time.realtimeSinceStartupAsDouble - installedAt >= 240)
+            if (!finished && Time.realtimeSinceStartupAsDouble - installedAt >= requestedCycles * 600.0)
             {
-                report.errors.Add("Autorun did not reach the race before the 240 second deadline.");
-                FinishRace("240-second-limit");
+                report.errors.Add("Autorun exceeded the overall cycle deadline.");
+                WriteCycleReport(true);
+                Finish();
             }
             return;
         }

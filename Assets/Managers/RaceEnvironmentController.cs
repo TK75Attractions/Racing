@@ -11,7 +11,7 @@ public sealed class RaceEnvironmentController : MonoBehaviour
 
     [Header("シチュエーション（再生中も変更できます）")]
     [SerializeField] private Weather weather = Weather.Sunny;
-    [SerializeField] private TimeOfDay timeOfDay = TimeOfDay.Day;
+    [SerializeField] private TimeOfDay timeOfDay = TimeOfDay.Night;
     [Header("シーン参照")]
     [Tooltip("景観を照らす方向ライトをすべて登録してください。")]
     [SerializeField] private Light[] directionalLights = new Light[0];
@@ -25,9 +25,9 @@ public sealed class RaceEnvironmentController : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float nightAmbientBrightness = 0.16f;
     [Header("霧")]
     [SerializeField] private bool enableFog = true;
-    [SerializeField, Range(0f, 0.05f)] private float sunnyFogDensity = 0.0005f;
-    [SerializeField, Range(0f, 0.05f)] private float cloudyFogDensity = 0.002f;
-    [SerializeField, Range(0f, 0.05f)] private float rainyFogDensity = 0.005f;
+    [SerializeField, Range(0f, 0.05f)] private float sunnyFogDensity = 0.00018f;
+    [SerializeField, Range(0f, 0.05f)] private float cloudyFogDensity = 0.00035f;
+    [SerializeField, Range(0f, 0.05f)] private float rainyFogDensity = 0.0006f;
     [Header("雨（各カメラの周囲に生成）")]
     [SerializeField, Range(0f, 3000f)] private float rainRate = 1000f;
     [SerializeField, Range(10f, 60f)] private float rainAreaSize = 40f;
@@ -40,6 +40,7 @@ public sealed class RaceEnvironmentController : MonoBehaviour
     private GameObject skylineRoot;
     private Mesh skylineMesh;
     private Material skylineMaterial;
+    private Material skylineDepthMaterial;
     private Color originalAmbient, originalFogColor;
     private AmbientMode originalAmbientMode;
     private FogMode originalFogMode;
@@ -108,7 +109,7 @@ public sealed class RaceEnvironmentController : MonoBehaviour
         bool night = timeOfDay == TimeOfDay.Night;
         float cloud = weather == Weather.Sunny ? 0.12f : weather == Weather.Cloudy ? 0.8f : 1f;
         float lightFactor = weather == Weather.Sunny ? 1f : weather == Weather.Cloudy ? 0.6f : 0.4f;
-        Color horizon = night ? new Color(0.16f, 0.105f, 0.24f) : Color.Lerp(new Color(0.65f, 0.8f, 0.95f), new Color(0.38f, 0.43f, 0.49f), cloud);
+        Color horizon = night ? new Color(0.11f, 0.075f, 0.20f) : Color.Lerp(new Color(0.65f, 0.8f, 0.95f), new Color(0.38f, 0.43f, 0.49f), cloud);
         foreach (LightState state in lightStates)
         {
             if (state.light == null) continue;
@@ -124,7 +125,9 @@ public sealed class RaceEnvironmentController : MonoBehaviour
         RenderSettings.fog = enableFog;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         RenderSettings.fogColor = horizon;
-        RenderSettings.fogDensity = weather == Weather.Sunny ? sunnyFogDensity : weather == Weather.Cloudy ? cloudyFogDensity : rainyFogDensity;
+        // Keep distant silhouettes atmospheric while leaving jumps and fast corners readable.
+        float fogDensity = weather == Weather.Sunny ? sunnyFogDensity : weather == Weather.Cloudy ? cloudyFogDensity : rainyFogDensity;
+        RenderSettings.fogDensity = night ? Mathf.Min(fogDensity, 0.0006f) : fogDensity;
         if (skyMaterial == null && skyShader != null) skyMaterial = new Material(skyShader) { hideFlags = HideFlags.HideAndDontSave };
         if (skyMaterial != null)
         {
@@ -199,6 +202,23 @@ public sealed class RaceEnvironmentController : MonoBehaviour
             renderer.receiveShadows = false;
             renderer.lightProbeUsage = LightProbeUsage.Off;
             renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            Shader depthShader = Resources.Load<Shader>("NightSkylineDepth");
+            if (depthShader != null)
+            {
+                // One extra static ring per view; reuse the mesh and avoid lights or shadow passes.
+                skylineDepthMaterial = new Material(depthShader) { hideFlags = HideFlags.HideAndDontSave, renderQueue = 2899 };
+                var depth = new GameObject("Distant skyline layer", typeof(MeshFilter), typeof(MeshRenderer));
+                depth.transform.SetParent(skylineRoot.transform, false);
+                depth.transform.localScale = new Vector3(1.3f, 1.25f, 1.3f);
+                depth.transform.localRotation = Quaternion.Euler(0f, 23f, 0f);
+                depth.GetComponent<MeshFilter>().sharedMesh = skylineMesh;
+                var depthRenderer = depth.GetComponent<MeshRenderer>();
+                depthRenderer.sharedMaterial = skylineDepthMaterial;
+                depthRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                depthRenderer.receiveShadows = false;
+                depthRenderer.lightProbeUsage = LightProbeUsage.Off;
+                depthRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            }
         }
         if (skylineRoot != null) skylineRoot.SetActive(night);
     }
@@ -326,6 +346,8 @@ public sealed class RaceEnvironmentController : MonoBehaviour
         Release(skylineRoot);
         Release(skylineMesh);
         Release(skylineMaterial);
+        Release(skylineDepthMaterial);
+        skylineDepthMaterial = null;
         skylineRoot = null;
         skylineMesh = null;
         skylineMaterial = null;

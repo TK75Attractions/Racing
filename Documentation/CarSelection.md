@@ -59,3 +59,7 @@ Unity -batchmode -projectPath /path/to/Racing -executeMethod CarSelectionValidat
 1920×1080 screenshots go to `Artifacts/CarSelection`; other sizes go to the temporary `RacingCarSelectionCaptures` directory. The command updates the dedicated static M PLUS Bold atlas when new text is added.
 
 **Racing > UI > Validate Car Selection in Play Mode** tests P2-first start, a held start pedal, visible hold progress, independent tutorial entry, driving while P1 selects, confirmation pedal release, tutorial timeout stopping the car, and synchronized race spawning. It simulates one completed lesson and times out the other for the final race gate; it is an integration smoke test, not a full driving playthrough. Use `-executeMethod CarSelectionPlayModeValidation.Run` without `-quit` in batch mode. **Racing > Tutorial > Validate and Capture** additionally exercises the real driving lessons; its editor driver chooses the saved/default cars automatically to reach practice.
+
+## 2026-10-21: 車の特徴と構図（44）
+
+性能説明は設定済みの最高速・ハンドリング倍率の比較から「曲がりやすい / カーブが得意」「直線で伸びる / カーブは早めに減速」「バランス型 / 速さと曲がりやすさを両立」を表示する。数値評価と併記し、倍率そのものは変更しない。プレビューは注視点を車体の高さへ戻して画角を38度へ広げ、回転中も車が収まりやすくした（サムネイルは26度を維持）。接続待ちは係員への案内を表示する。新文言は既存の **Validate and Capture Car Selection** のフォント収集対象。リードは同コマンドでアトラスを再生成し、全車・全塗装・回転中・両プレイヤーで文字と車体の重なりを確認する。Unityでの実画面確認は未実施。

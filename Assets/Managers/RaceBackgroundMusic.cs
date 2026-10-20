@@ -12,6 +12,9 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
     private Gmanager gameManager;
     private readonly AudioSource[] sources = new AudioSource[2];
     private readonly RaceSoundEffectsMixer[] mixers = new RaceSoundEffectsMixer[2];
+    private readonly AudioClip[] requestedClips = new AudioClip[2];
+    private readonly float[] transitionGains = { 1f, 1f };
+    private readonly bool[] switching = new bool[2];
     private AudioClip menuClip, raceClip, finalLapClip;
     private AudioClip silentClip;
 
@@ -48,18 +51,40 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
     private void Update()
     {
         if (gameManager == null) return;
+        float dt = Time.unscaledDeltaTime;
         for (int player = 0; player < sources.Length; player++)
         {
             AudioSource source = sources[player];
-            mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm * RaceAudioSettings.NotificationDuck);
             int viewedPlayer = gameManager.GetAudioViewedPlayer(player);
             bool menu = gameManager.state == Gmanager.State.Result ||
                 (gameManager.IsPreparing && gameManager.GetPlayerPreparationState(player) != Gmanager.State.Tutorial);
             AudioClip desired = (menu ? menuClip : gameManager.IsPlayerOnFinalLap(viewedPlayer) ? finalLapClip : raceClip) ?? silentClip;
-            if (source.clip == desired && source.isPlaying) continue;
-            source.Stop();
-            source.clip = desired;
-            if (desired != null && source.isActiveAndEnabled) source.Play();
+            if (source.clip == null)
+            {
+                source.clip = desired;
+                requestedClips[player] = desired;
+                if (desired != null && source.isActiveAndEnabled) source.Play();
+            }
+            else if (requestedClips[player] != desired)
+            {
+                requestedClips[player] = desired;
+                switching[player] = true;
+            }
+
+            if (switching[player])
+            {
+                transitionGains[player] = Mathf.MoveTowards(transitionGains[player], 0f, dt / .35f);
+                if (transitionGains[player] <= 0f)
+                {
+                    source.clip = requestedClips[player];
+                    source.time = 0f;
+                    if (source.isActiveAndEnabled) source.Play();
+                    switching[player] = false;
+                }
+            }
+            else
+                transitionGains[player] = Mathf.MoveTowards(transitionGains[player], 1f, dt / .55f);
+            mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm * RaceAudioSettings.NotificationDuck * transitionGains[player]);
         }
     }
     private void OnDestroy()

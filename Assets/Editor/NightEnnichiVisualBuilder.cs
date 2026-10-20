@@ -133,6 +133,7 @@ public static class NightEnnichiVisualBuilder
             environmentSettings.ApplyModifiedPropertiesWithoutUndo();
             RecordPrefabChanges(environment);
             BuildLanterns(scene, course);
+            BuildEnvironmentFinish(scene, course, environment);
             // The controller applies lighting/sky at runtime; do not persist its temporary sky material.
             EditorSceneManager.MarkSceneDirty(scene);
             Require(EditorSceneManager.SaveScene(scene), "Failed to save SampleScene.");
@@ -207,7 +208,7 @@ public static class NightEnnichiVisualBuilder
         parent.transform.SetParent(owner.transform, false);
         int count = 0, skipped = 0;
         float first = -1f, last = -1f, minOffset = float.PositiveInfinity, maxOffset = 0f;
-        for (float distance = 20f; distance < course.TotalLength; distance += 40f)
+        for (float distance = 20f; distance < course.TotalLength; distance += 64f)
         {
             if (!course.TryGetSampleAtProgress(distance, out var sample)) continue;
             bool excluded = RaceCourseBarriers.IsInsideTube(sample.position, sample.right, tube);
@@ -246,8 +247,170 @@ public static class NightEnnichiVisualBuilder
             }
         }
         Debug.Log($"[NightEnnichi] Lanterns: {count}, progress {first:F1}..{last:F1} / {course.TotalLength:F1} m, " +
-            $"40 m spacing, both sides, 1.8 m outside barrier envelope; edge offsets " +
+            $"64 m spacing, both sides, 1.8 m outside barrier envelope; edge offsets " +
             $"{(count > 0 ? minOffset : 0f):F1}..{maxOffset:F1} m; excluded stations {skipped}; realtime lights disabled.");
+    }
+
+    private static void BuildEnvironmentFinish(Scene scene, RaceCourse course, RaceEnvironmentController environment)
+    {
+        Require(course.ClosedLoop, "Environment interval bake expects the closed school course.");
+        var transition = environment.GetComponent<RaceTubeEnvironmentTransition>();
+        if (transition == null) transition = environment.gameObject.AddComponent<RaceTubeEnvironmentTransition>();
+        transition.Bake(course);
+        Require(transition.Intervals.Count > 0, "No tube intervals found. Prepare tube terrain before this builder.");
+        RecordPrefabChanges(transition);
+        foreach (GameObject root in scene.GetRootGameObjects())
+        foreach (SakuraPetalController petals in root.GetComponentsInChildren<SakuraPetalController>(true))
+        {
+            var settings = new SerializedObject(petals);
+            Property(settings, "petalRate").floatValue = 100f;
+            Property(settings, "maxPetals").intValue = 1800;
+            Property(settings, "speedCompensation").floatValue = .35f;
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            RecordPrefabChanges(petals);
+        }
+        GameObject owner = null;
+        var walls = new List<MeshFilter>();
+        float sign = 1f, gateProgress = 0f;
+        bool foundGate = false;
+        Transform school = null;
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            if (root.name == "NightEnnichi") owner = root;
+            foreach (LapManager laps in root.GetComponentsInChildren<LapManager>(true)) sign = laps.IsProgressReversed ? -1f : 1f;
+            foreach (GoalSensor goal in root.GetComponentsInChildren<GoalSensor>(true))
+            { gateProgress = course.GetProgressDistance(goal.transform.position); foundGate = true; }
+            foreach (Transform item in root.GetComponentsInChildren<Transform>(true))
+                if (item.name.StartsWith("1016こうしゃ", StringComparison.Ordinal)) school = item;
+            foreach (RaceBarrierPath barrier in root.GetComponentsInChildren<RaceBarrierPath>(true))
+                if (barrier.isActiveAndEnabled)
+                    foreach (MeshFilter filter in barrier.GetComponentsInChildren<MeshFilter>(true))
+                        if (filter.sharedMesh != null && filter.sharedMesh.name == "RaceBarrierVisualMesh") walls.Add(filter);
+        }
+        Require(owner != null && school != null && foundGate, "NightEnnichi owner, school or goal reference missing.");
+        Transform old = owner.transform.Find("Landmarks");
+        if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+        var landmarks = new GameObject("Landmarks");
+        landmarks.transform.SetParent(owner.transform, false);
+        Renderer[] schoolRenderers = school.GetComponentsInChildren<Renderer>(true);
+        Require(schoolRenderers.Length > 0, "School bounds missing.");
+        Bounds bounds = schoolRenderers[0].bounds;
+        foreach (Renderer renderer in schoolRenderers) bounds.Encapsulate(renderer.bounds);
+        var tube = transition.Intervals[0];
+        foreach (var interval in transition.Intervals) if (interval.length > tube.length) tube = interval;
+        float entry = sign > 0f ? tube.start : tube.start + tube.length;
+        var jumps = new List<RaceCourse.JumpSection>();
+        course.CopyJumpSections(jumps, sign);
+        Require(jumps.Count > 0, "Jump section missing.");
+        jumps.Sort((a,b) => Mathf.Repeat(sign*(a.takeoff-gateProgress), course.TotalLength)
+            .CompareTo(Mathf.Repeat(sign*(b.takeoff-gateProgress), course.TotalLength)));
+        float schoolProgress = 0f, schoolDistance = float.PositiveInfinity;
+        for (float d = 0f; d < course.TotalLength; d += 5f)
+        {
+            if (!course.HasRoadAtProgress(d) || !course.TryGetSampleAtProgress(d, out var candidate) ||
+                course.IsPointInsideTube(candidate.position + candidate.up)) continue;
+            float distance = (candidate.position-bounds.center).sqrMagnitude;
+            if (distance >= schoolDistance) continue;
+            schoolDistance = distance; schoolProgress = d;
+        }
+        Require(!float.IsPositiveInfinity(schoolDistance), "No outdoor school-front section found.");
+        float[] stations = { gateProgress + sign*18f, schoolProgress, entry-sign*24f, jumps[0].takeoff-sign*28f };
+        string[] names = { "School gate - vermilion lantern arch", "School front - cyan crest", "Gym tube approach - violet clock tower", "Jump approach - gold chevrons" };
+        Material material = Resources.Load<Material>("RaceBarrier/M_EnvironmentSolid");
+        Require(material != null, "Environment solid material missing.");
+        for (int i = 0; i < stations.Length; i++)
+        {
+            Require(course.TryGetSampleAtProgress(stations[i], out var sample), "Cannot sample landmark station.");
+            Vector3 outward = Vector3.ProjectOnPlane(sample.right, Vector3.up).normalized;
+            Require(TryBarrierOutside(sample.rightEdge, sample.forward, outward, walls, out float outside), "No safe barrier envelope for " + names[i]);
+            Vector3 position = sample.rightEdge + outward * Mathf.Max(12f, outside+7f);
+            Require(!course.IsPointInsideTube(position), "Landmark intersects tube: " + names[i]);
+            var geometry = LandmarkGeometry(i);
+            Mesh generated = geometry.ToMesh(names[i]);
+            string path = Folder + "/Landmark_" + i + ".asset";
+            Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (mesh == null) { mesh = generated; AssetDatabase.CreateAsset(mesh, path); }
+            else { EditorUtility.CopySerialized(generated, mesh); UnityEngine.Object.DestroyImmediate(generated); EditorUtility.SetDirty(mesh); }
+            var marker = new GameObject(names[i], typeof(MeshFilter), typeof(MeshRenderer));
+            marker.transform.SetParent(landmarks.transform, false);
+            marker.transform.SetPositionAndRotation(position, Quaternion.LookRotation(Vector3.ProjectOnPlane(sample.forward*sign, Vector3.up), Vector3.up));
+            marker.GetComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = marker.GetComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.lightProbeUsage = LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            // Refuse a course edit that places a roadside marker over another road leg.
+            for (int x = -5; x <= 5; x++)
+            for (int z = -2; z <= 2; z++)
+                Require(!course.IsPointInsideCourse(marker.transform.TransformPoint(new Vector3(x,0,z))), "Landmark overlaps another road leg: " + names[i]);
+        }
+        Debug.Log("[NightEnnichi] Built 4 section landmarks, baked camera-local 24 m tube transitions; petals 100/s, cap 1800, speed compensation 0.35. No new realtime lights.");
+    }
+
+    private static RaceEnvironmentMeshBuilder LandmarkGeometry(int kind)
+    {
+        var mesh = new RaceEnvironmentMeshBuilder();
+        Color body = new Color(.035f,.055f,.085f), red = new Color(.65f,.075f,.065f);
+        Color amber = new Color(1.7f,.65f,.18f), cyan = new Color(.08f,1.2f,1.45f);
+        Color violet = new Color(.65f,.32f,1.3f), gold = new Color(1.5f,1.05f,.12f);
+        // Raise the identifying silhouette above the tall curled barriers; retain a grounded pedestal.
+        Vector3 lift = Vector3.up * (kind == 3 ? 8f : 6f);
+        mesh.Box(lift*.5f, Vector3.right*3.8f, lift, Vector3.forward*3.8f, body);
+        void Box(Vector3 p, Vector3 size, Color color) => mesh.Box(p+lift, Vector3.right*size.x, Vector3.up*size.y, Vector3.forward*size.z, color);
+        Box(new Vector3(0,.3f,0), new Vector3(10,.6f,4), body);
+        if (kind == 0)
+        {
+            foreach (float side in new[] { -1f, 1f }) Box(new Vector3(side*4,5.5f,0), new Vector3(.8f,11,1), red);
+            Box(new Vector3(0,11,0), new Vector3(10,1,1.5f), red);
+            Box(new Vector3(0,11.7f,0), new Vector3(10.5f,.35f,2), body);
+            for (int n = -2; n <= 2; n++)
+            {
+                Box(new Vector3(n*1.6f,9.2f,0), new Vector3(1.1f,2,1.1f), amber);
+                foreach (float h in new[] {8.2f,10.2f}) Box(new Vector3(n*1.6f,h,0), new Vector3(1.2f,.15f,1.2f), body);
+            }
+        }
+        else if (kind == 1)
+        {
+            Box(new Vector3(0,3,0), new Vector3(1,6,1), body);
+            Box(new Vector3(0,7,0), new Vector3(6,5,.8f), body);
+            Vector3 diagonal = new Vector3(1,1,0).normalized;
+            mesh.Box(new Vector3(0,7,0)+lift, diagonal*3.8f, new Vector3(-1,1,0).normalized*3.8f, Vector3.forward, cyan);
+            Box(new Vector3(0,7,0), new Vector3(.5f,2,1.1f), body);
+            Box(new Vector3(0,7,0), new Vector3(2,.5f,1.1f), body);
+        }
+        else if (kind == 2)
+        {
+            Box(new Vector3(0,5.5f,0), new Vector3(3,11,3), body);
+            Box(new Vector3(0,10,0), new Vector3(4.4f,4.4f,3.2f), body);
+            for (int n = 0; n < 12; n++)
+            {
+                float angle = n*Mathf.PI/6f;
+                Vector3 radial = new Vector3(Mathf.Sin(angle),Mathf.Cos(angle),0);
+                foreach (float face in new[] { -1.7f,1.7f })
+                    mesh.Box(new Vector3(0,10,face)+lift+radial*1.8f, Vector3.Cross(radial,Vector3.forward)*.4f, radial*.16f, Vector3.forward*.16f, violet);
+            }
+            foreach (float face in new[] {-1.8f,1.8f})
+            {
+                Box(new Vector3(0,10.65f,face), new Vector3(.15f,1.3f,.14f), violet);
+                Box(new Vector3(.5f,10,face), new Vector3(1,.15f,.14f), violet);
+            }
+            Box(new Vector3(0,12.6f,0), new Vector3(4.8f,.4f,3.6f), violet);
+        }
+        else
+        {
+            foreach (float side in new[] {-1f,1f})
+            {
+                Box(new Vector3(side*2.4f,3.4f,0), new Vector3(.5f,6.8f,.8f), body);
+                for (int n = 0; n < 2; n++)
+                {
+                    Vector3 diagonal = new Vector3(side,1,0).normalized;
+                    mesh.Box(new Vector3(side*1.2f,5.2f+n*1.9f,0)+lift, diagonal*.45f, new Vector3(-side,1,0).normalized*3.4f, Vector3.forward*.65f, gold);
+                }
+            }
+        }
+        return mesh;
     }
 
     private static bool TryBarrierOutside(Vector3 edge, Vector3 forward, Vector3 outward,

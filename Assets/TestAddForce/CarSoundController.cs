@@ -56,9 +56,11 @@ public class CarSoundController : MonoBehaviour
         float pedal = mover != null && mover.isActiveAndEnabled ? mover.PedalInput : 0f;
         float throttle = Mathf.Clamp01(IsReverse ? -pedal : pedal);
         float boost = mover != null ? mover.BoostVisualIntensity : 0f;
+        FinishRunController finishRun = GetComponentInParent<FinishRunController>();
+        float finishGain = finishRun != null ? finishRun.EngineAudioGain : 1f;
         gearbox.Step(Time.deltaTime, Vector3.Dot(carRigidbody.linearVelocity, transform.forward), throttle, grounded, boost);
         currentGear = gearbox.Gear; currentRpm = gearbox.Rpm;
-        audioCore.SetEngineState(currentRpm, gearbox.Load, Mathf.Clamp01(masterVolume) * RaceAudioSettings.Engine * RaceAudioSettings.NotificationDuck *
+        audioCore.SetEngineState(currentRpm, gearbox.Load, Mathf.Clamp01(masterVolume) * finishGain * RaceAudioSettings.Engine * RaceAudioSettings.NotificationDuck *
             (Time.timeScale > 0f ? 1f : 0f), gearbox.Combustion, gearbox.ShiftSerial, boost, tunnelAmount);
     }
 

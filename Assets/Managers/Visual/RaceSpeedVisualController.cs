@@ -350,9 +350,9 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
 
     private void ApplyCamera(float speed01, float boost01, float kick01)
     {
-        float targetFov = Mathf.Lerp(normalFov, highSpeedFov, speed01)
-            + boostFovAdd * boost01
-            + boostFovKick * kick01;
+        float fovScale = RaceEffectsSettings.FieldOfView ? 1f : 0f;
+        float targetFov = normalFov + (Mathf.Lerp(normalFov, highSpeedFov, speed01) - normalFov) * fovScale
+            + (boostFovAdd * boost01 + boostFovKick * kick01) * fovScale;
         targetFov = Mathf.Clamp(targetFov, 1f, maximumFov);
 
         if (raceCamera != null)
@@ -375,7 +375,7 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
         if (visualEffectPivot == null) return;
 
         float pullback = highSpeedPullback * speed01 + boostPullback * boost01;
-        float shakeStrength = enableDrivingCameraShake
+        float shakeStrength = enableDrivingCameraShake && RaceEffectsSettings.CameraShake
             ? highSpeedShakePosition * speed01 + boostShakePosition * boost01 : 0f;
         float frequency = Mathf.Lerp(minShakeFrequency, maxShakeFrequency, speed01);
         float time = Time.time * frequency;
@@ -394,12 +394,12 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
             + pullbackOffset
             + new Vector3(noiseX, noiseY, 0f) * shakeStrength;
 
-        float rotationStrength = enableDrivingCameraShake
+        float rotationStrength = enableDrivingCameraShake && RaceEffectsSettings.CameraShake
             ? highSpeedShakeRotation * speed01 + boostShakeRotation * boost01 : 0f;
         Vector3 rotationShake = new Vector3(noiseY, noiseX, noiseZ) * rotationStrength;
 
         // 衝突の揺れは強さの2乗で効かせ、軽い接触では控えめに、強い衝突ではしっかり揺らします。
-        float trauma = impact01 * impact01;
+        float trauma = impact01 * impact01 * (RaceEffectsSettings.CameraShake ? 1f : 0f);
         if (trauma > 0f)
         {
             float impactTime = Time.time * impactShakeFrequency;
@@ -415,6 +415,7 @@ public sealed class RaceSpeedVisualController : MonoBehaviour
 
     private void UpdateSpeedLines(float speed01, float boost01)
     {
+        if (!RaceEffectsSettings.SpeedLines) { if (speedLines != null && speedLines.isPlaying) speedLines.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); return; }
         if (speedLines == null) return;
 
         float lineStrength = Mathf.InverseLerp(speedLinesStart, 1f, speed01);

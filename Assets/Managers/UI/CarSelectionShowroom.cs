@@ -150,10 +150,10 @@ public sealed class CarSelectionShowroom : MonoBehaviour
         if (!thumbnail)
         {
             // Offset the focal point to leave the right side free for the performance panel.
-            Vector3 focal = world.transform.position + new Vector3(0, .05f, 0) + previewCamera.transform.right * 1.2f;
+            Vector3 focal = world.transform.position + new Vector3(0, .7f, 0) + previewCamera.transform.right * 1.2f;
             previewCamera.transform.LookAt(focal);
         }
-        previewCamera.fieldOfView = thumbnail ? 26f : 34f;
+        previewCamera.fieldOfView = thumbnail ? 26f : 38f;
     }
 
     private Material Material(string name, Color color, bool neon)

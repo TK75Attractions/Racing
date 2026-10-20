@@ -16,12 +16,18 @@ public sealed class DrivingTutorialUI
     private readonly DrivingTutorialControlGraphic instructionIcon;
     private readonly RectTransform instructionCard;
     private readonly PreparationTimerUI timer;
+    private readonly RectTransform turnCue;
+    private readonly RacingIconGraphic stateIcon;
+    private readonly DrivingTutorialController tutorial;
+    private readonly int playerIndex;
     private float popupTime;
     private int shownAngle=int.MinValue,shownPedal=-1,shownStage=-1;
     private string shownMessage;
 
     public DrivingTutorialUI(Transform canvas, int playerIndex)
     {
+        this.playerIndex = playerIndex;
+        tutorial = Object.FindFirstObjectByType<DrivingTutorialController>();
         RectTransform rect = RacingUITheme.Rect(canvas, "DrivingTutorial", Vector2.zero, Vector2.one);
         root = rect.gameObject;
         rect.SetAsFirstSibling();
@@ -30,7 +36,7 @@ public sealed class DrivingTutorialUI
 
         RacingUITheme.Rule(rect,"PlayerUnderline",new Vector2(.855f,.898f),new Vector2(.965f,.901f),Pink);
         timer = new PreparationTimerUI(rect, new Vector2(.78f, .765f), new Vector2(.965f, .885f), true);
-        RectTransform steering = Panel(rect, "Steering", new Vector2(.028f, .33f), new Vector2(.329f, .757f), Cyan);
+        RectTransform steering = Panel(rect, "Steering", new Vector2(.028f, .025f), new Vector2(.255f, .315f), Cyan);
         wheel = Icon(steering, "Wheel", new Vector2(.065f, .72f), new Vector2(.29f, .975f), DrivingTutorialControlGraphic.Kind.WheelHeader);
         Label(steering, "Title", "ハンドル", new Vector2(.347f, .815f), new Vector2(.97f, .98f), 43f, Color.white);
         Label(steering, "English", "STEERING", new Vector2(.35f, .73f), new Vector2(.96f, .82f), 25f, Cyan, true).characterSpacing = 5f;
@@ -43,7 +49,7 @@ public sealed class DrivingTutorialUI
         Label(steeringGlass, "Center", "0°", new Vector2(.37f, .18f), new Vector2(.63f, .34f), 30f, Cyan).alignment = TextAlignmentOptions.Center;
         Label(steeringGlass, "Right", "+90°", new Vector2(.69f, .085f), new Vector2(.94f, .225f), 29f, Cyan).alignment = TextAlignmentOptions.Right;
 
-        RectTransform accelerator = Panel(rect, "Accelerator", new Vector2(.687f, .325f), new Vector2(.972f, .757f), Pink);
+        RectTransform accelerator = Panel(rect, "Accelerator", new Vector2(.745f, .025f), new Vector2(.972f, .315f), Pink);
         Icon(accelerator, "PedalIcon", new Vector2(.08f, .735f), new Vector2(.26f, .97f), DrivingTutorialControlGraphic.Kind.PedalHeader);
         Label(accelerator, "Title", "アクセル", new Vector2(.345f, .815f), new Vector2(.975f, .98f), 43f, Color.white);
         Label(accelerator, "English", "ACCELERATOR", new Vector2(.345f, .73f), new Vector2(.985f, .82f), 25f, Pink, true).characterSpacing = 3f;
@@ -61,13 +67,19 @@ public sealed class DrivingTutorialUI
         Label(pedalGlass, "Full", "100%", new Vector2(.83f, .83f), new Vector2(.99f, .98f), 27f, Color.white);
         Label(pedalGlass, "Empty", "0%", new Vector2(.83f, .025f), new Vector2(.99f, .17f), 27f, Color.white);
 
-        instructionCard = Panel(rect, "CurrentInstruction", new Vector2(.34f, .65f), new Vector2(.675f, .88f), Cyan);
+        instructionCard = Panel(rect, "CurrentInstruction", new Vector2(.275f, .035f), new Vector2(.725f, .215f), Cyan);
         instructionIcon = Icon(instructionCard, "ActionIcon", new Vector2(.045f, .14f), new Vector2(.26f, .77f), DrivingTutorialControlGraphic.Kind.PressPedal);
         status = Label(instructionCard, "Status", "STEP 1 / 3", new Vector2(.28f, .75f), new Vector2(.95f, .94f), 19f, Cyan);
         status.alignment = TextAlignmentOptions.Center;
         message = Label(instructionCard, "Message", "", new Vector2(.28f, .10f), new Vector2(.96f, .74f), 31f, Color.white);
         message.alignment = TextAlignmentOptions.Center;
         message.textWrappingMode = TextWrappingModes.Normal;
+        stateIcon = NeonUI.Icon(instructionCard, "StateIcon", RacingIconGraphic.Icon.Success,
+            new Vector2(.045f, .18f), new Vector2(.23f, .72f));
+        turnCue = Panel(rect, "TurnCue", new Vector2(.43f, .48f), new Vector2(.63f, .58f), Cyan);
+        NeonUI.Icon(turnCue, "Arrow", RacingIconGraphic.Icon.Chevron, new Vector2(.02f, .15f), new Vector2(.23f, .85f));
+        Label(turnCue, "Direction", "右カーブ\nハンドルを右へ", new Vector2(.25f, .08f), new Vector2(.96f, .92f), 23f, Color.white);
+        turnCue.gameObject.SetActive(false);
     }
 
     public void Update(DrivingTutorialProgress lesson, DriveInputState input, float metersPerSecond, bool connected)
@@ -82,7 +94,8 @@ public sealed class DrivingTutorialUI
         if(shownPedal!=percent){pedal.SetText("{0}<size=58%>%</size>",percent);shownPedal=percent;}
         meter.Pressure = pressure;
         int stage = lesson.HasTimedOut ? 4 : (int)lesson.CurrentStage;
-        string prompt=lesson.HasTimedOut ? "TIME UP\nもう一人を待っています" : lesson.IsComplete ? "練習完了！\nもう一人を待っています" : !connected ? "コントローラーの\n接続を確認してください" : !lesson.PedalReleased ? "まずペダルから\n足を離そう" : stage == 0 ? "ペダルを踏んで\n加速しよう" : stage == 1 ? "ハンドルを回して\n角を曲がってみよう" : "ペダルから足を離して\n停車しよう";
+        string prompt=lesson.HasTimedOut ? "時間終了 / 相手の準備待ち\n操作不要・そろうとレースへ" : lesson.IsComplete ? "準備完了 / 相手の準備待ち\n操作不要・そろうとレースへ" : !connected ? "接続待ち / 操作できません\n係員に知らせてください" : !lesson.PedalReleased ? "まずペダルから\n足を離そう" : stage == 0 ? "ペダルを踏んで\n加速しよう" : stage == 1 ? "右カーブでハンドルを右へ\n矢印に沿って曲がろう" : "ペダルから足を離して\n停車しよう";
+        UpdateTurnCue(connected && !lesson.IsFinished && stage == 1);
         if(shownMessage!=prompt)
         {
             message.text=prompt;shownMessage=prompt;popupTime=0f;
@@ -90,7 +103,9 @@ public sealed class DrivingTutorialUI
                 ? DrivingTutorialControlGraphic.Kind.ReleasePedal : stage == 1
                 ? DrivingTutorialControlGraphic.Kind.TurnWheel : DrivingTutorialControlGraphic.Kind.PressPedal);
             instructionIcon.gameObject.SetActive(connected && !lesson.IsFinished);
-            message.rectTransform.anchorMin = new Vector2(connected && !lesson.IsFinished ? .28f : .06f, .10f);
+            stateIcon.gameObject.SetActive(!connected || lesson.IsFinished);
+            stateIcon.symbol = !connected && !lesson.IsFinished ? RacingIconGraphic.Icon.Warning : RacingIconGraphic.Icon.Success;
+            stateIcon.SetVerticesDirty();
         }
         popupTime = Mathf.Min(1f, popupTime + Time.unscaledDeltaTime * 5f);
         instructionCard.localScale = Vector3.one * Mathf.Lerp(.94f, 1f, Mathf.SmoothStep(0f, 1f, popupTime));
@@ -103,6 +118,27 @@ public sealed class DrivingTutorialUI
     {
         if (root != null) { root.SetActive(false); Object.Destroy(root); }
         if (logoMaterial != null) Object.Destroy(logoMaterial);
+    }
+
+    private void UpdateTurnCue(bool visible)
+    {
+        GameObject car = tutorial != null ? tutorial.GetPlayerCar(playerIndex) : null;
+        Camera camera = Gmanager.Control != null ? Gmanager.Control.GetPlayerViewCamera(playerIndex) : null;
+        if (visible && car != null && camera != null)
+        {
+            // The practice road has one right-hand quarter circle; mark its actual entry.
+            DrivingTutorialRoad.Sample(80f, out Vector3 point, out _);
+            Vector3 view = camera.WorldToViewportPoint(car.transform.parent.TransformPoint(point + Vector3.up * 1.8f));
+            visible = view.z > 0f && view.x > .1f && view.x < .9f && view.y > .32f && view.y < .8f;
+            if (visible)
+            {
+                Vector2 center = new Vector2(view.x, view.y);
+                turnCue.anchorMin = center - new Vector2(.10f, .05f);
+                turnCue.anchorMax = center + new Vector2(.10f, .05f);
+            }
+        }
+        else visible = false;
+        turnCue.gameObject.SetActive(visible);
     }
 
     private void BuildBrand(Transform parent)
