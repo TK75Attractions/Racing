@@ -1074,6 +1074,18 @@ public class Gmanager : MonoBehaviour
     private void UpdateSecondPlaceTimeout(float dt)
     {
         if (raceSession == null) return;
+        if (RaceFeatureController.Enabled(RaceFeature.FinishApproachGrace) && raceSession.WaitingForSecondPlace &&
+            raceSession.SecondPlaceTimeRemaining <= 1f && course != null && lapManager != null)
+        {
+            RaceParticipant remaining = GetParticipant(raceSession.UnfinishedPlayerIndex);
+            if (remaining?.IsRacing == true && lapManager.GetCarData(remaining.Body)?.isOffCourse == false &&
+                course.TryGetNearestRoadSample(remaining.Body.position, out var road))
+            {
+                float distance = lapManager.GoalLap * course.TotalLength - lapManager.GetRaceProgressDistance(remaining.Body);
+                float forward = Vector3.Dot(remaining.Body.linearVelocity, road.forward) * CourseProgressSign;
+                raceSession.TryExtendFinishApproach(distance, forward, RaceMaximumGraceSeconds);
+            }
+        }
         if (raceSession.Tick(dt)) CompleteRaceAfterTimeout();
         else UpdateSecondPlaceDisplay();
     }

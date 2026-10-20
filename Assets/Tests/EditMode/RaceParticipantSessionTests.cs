@@ -2,6 +2,36 @@ using NUnit.Framework;
 
 public class RaceParticipantSessionTests
 {
+    [Test] public void APlayerTenMetresFromTheLineCanFinishInsteadOfLosingTheRaceToTheGraceClock()
+    {
+        var s = Create(); s.Tick(113); s.RegisterFinish(0, new RaceResultRecord()); s.Tick(39.2f);
+        Assert.IsTrue(s.TryExtendFinishApproach(10, 28, 180));
+        Assert.IsFalse(s.Tick(1));
+        Assert.AreEqual(RaceFinishRegistration.RaceComplete, s.RegisterFinish(1, new RaceResultRecord()));
+    }
+    [Test] public void TheFinishApproachChanceIsOnceOnlyAndCannotTurnWaitingIntoAnUnlimitedRace()
+    {
+        var s = Create(); s.RegisterFinish(0, new RaceResultRecord()); s.Tick(39.2f);
+        Assert.IsTrue(s.TryExtendFinishApproach(90, 4, 180));
+        s.Tick(11.2f); Assert.IsFalse(s.TryExtendFinishApproach(20, 4, 180));
+        Assert.IsTrue(s.Tick(1)); Assert.IsFalse(s.TryExtendFinishApproach(10, 4, 180));
+    }
+    [Test] public void FinishApproachGraceDoesNotRewardStoppingReversingOrBeingFarAway()
+    {
+        var s = Create(); s.RegisterFinish(0, new RaceResultRecord()); s.Tick(39.2f);
+        Assert.IsFalse(s.TryExtendFinishApproach(10, 0, 180));
+        Assert.IsFalse(s.TryExtendFinishApproach(10, -10, 180));
+        Assert.IsFalse(s.TryExtendFinishApproach(101, 20, 180));
+        Assert.IsFalse(s.TryExtendFinishApproach(float.NaN, 20, 180));
+        Assert.IsTrue(s.Tick(1));
+    }
+    [Test] public void FinishApproachNeverBypassesTheOverallOrMaximumHumanGraceDeadline()
+    {
+        var s = Create(40); s.RegisterFinish(0, new RaceResultRecord()); s.Tick(39.2f);
+        s.TryExtendFinishApproach(10, 20, 180); Assert.IsTrue(s.Tick(1));
+        s = Create(); s.RegisterFinish(0, new RaceResultRecord()); s.Tick(39.2f);
+        Assert.IsFalse(s.TryExtendFinishApproach(10, 20, 40)); Assert.IsTrue(s.Tick(1));
+    }
     private static RaceParticipantSession Create(float maximum = 300) => new RaceParticipantSession(2, 2, 40, maximum);
     [Test] public void CpuFinishesDoNotStartHumanTimeout()
     {
