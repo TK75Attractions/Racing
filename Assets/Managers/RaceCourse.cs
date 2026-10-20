@@ -276,6 +276,34 @@ public class RaceCourse : MonoBehaviour
         return cachedRoadSegments[low];
     }
 
+    public struct JumpSection
+    {
+        public int id;
+        public float takeoff, landing, length;
+    }
+    /// <summary>Actual generated-road gaps, including a gap across the closed-loop seam.</summary>
+    public void CopyJumpSections(List<JumpSection> output, float directionSign)
+    {
+        output.Clear(); EnsureCache();
+        int count = cachedRoadSegments.Count;
+        for (int i = 0; i < count; i++)
+        {
+            if (cachedRoadSegments[i] || (i > 0 ? !cachedRoadSegments[i - 1] : closedLoop && !cachedRoadSegments[count - 1])) continue;
+            float length = 0f; int j = i;
+            do
+            {
+                length += cachedCumulativeDistances[j + 1] - cachedCumulativeDistances[j];
+                j++;
+                if (j == count) { if (!closedLoop) break; j = 0; }
+            } while (j != i && !cachedRoadSegments[j]);
+            if (j == i || (!closedLoop && (i == 0 || j == count))) continue;
+            float start = cachedCumulativeDistances[i];
+            float end = closedLoop ? Mathf.Repeat(start + length, TotalLength) : start + length;
+            output.Add(new JumpSection { id = i, length = length,
+                takeoff = directionSign < 0 ? end : start, landing = directionSign < 0 ? start : end });
+        }
+    }
+
     /// <summary>進行方向の路面切れを予告する。逆走設定にも対応。</summary>
     public bool IsJumpAhead(Vector3 worldPosition, float directionSign, float lookAhead = 45f)
     {

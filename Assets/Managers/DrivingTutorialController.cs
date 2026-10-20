@@ -116,7 +116,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
             {
                 RaceSoundEffects.PlayForPlayer(player.lesson.IsComplete ? RaceSoundCue.Confirm : RaceSoundCue.Ready, player.input.PlayerIndex);
                 if (player.lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer)
-                    Recover(player); // Start the corner exercise with enough road in front of the car.
+                    player.startYaw = player.body.rotation.eulerAngles.y;
             }
             if (player.lesson.IsFinished && !player.body.isKinematic)
             {
@@ -134,19 +134,6 @@ public sealed class DrivingTutorialController : MonoBehaviour
         readyTimer = complete ? readyTimer + dt : 0f;
     }
 
-    private void FixedUpdate()
-    {
-        // Keep the small practice course approachable without replacing the production tire physics.
-        foreach (Practice player in players)
-        {
-            if (player.body == null || player.body.isKinematic) continue;
-            Vector3 velocity = player.body.linearVelocity;
-            Vector3 planar = Vector3.ProjectOnPlane(velocity, Vector3.up);
-            if (planar.magnitude > 10f)
-                player.body.linearVelocity = planar.normalized * 10f + Vector3.up * velocity.y;
-        }
-    }
-
     private static void Recover(Practice player)
     {
         bool first = player.lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate;
@@ -157,9 +144,6 @@ public sealed class DrivingTutorialController : MonoBehaviour
         player.startYaw = 0f;
         player.recoveryTimer = 0f;
         player.lesson.ResetCurrentAttempt();
-        // A stop recovery must still require movement before it can complete the stopping lesson.
-        if (player.lesson.CurrentStage == DrivingTutorialProgress.Stage.Stop)
-            player.body.linearVelocity = Vector3.forward * 4f;
         player.mover.SuppressInputAfterRespawn();
     }
 

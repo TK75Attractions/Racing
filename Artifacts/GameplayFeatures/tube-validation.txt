@@ -1,0 +1,1 @@
+TUBE_CHARGE_LINE_VALIDATION_PASS: actual tube/ground geometry, entry=579.00, laneOffset=3.20, continuous contact sequence, 25% reward, no repeat farming, live OFF/ON.

@@ -1,0 +1,5 @@
+2026-10-19 / Unity 6000.3.9f1
+STEERING_ASSIST_VALIDATION_PASS: grounded edge prediction, live OFF, wall, air and disconnect.
+SLIPSTREAM_VALIDATION_PASS: real ground queries, pursuit, live OFF, stacked roads, occlusion, disconnect, reverse direction.
+RACE_FEATURE_VALIDATION_PASS: presets, live switches, coaching, anti-chain protection and fonts.
+Core tests: 73 passed, 0 failed

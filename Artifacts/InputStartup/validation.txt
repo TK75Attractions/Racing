@@ -1,0 +1,14 @@
+Before fix:
+SlowDiagnosticAckCannotDelayVerifiedStartupAnglePreparation: FAILED (ANGLE_ZERO was not sent)
+
+After fix:
+Tests: 98 passed, 0 failed
+HITCH 150ms: queued=16 received=16 pedal=0.75/0.5 releaseRequired=False parseErrors=0
+HITCH 350ms: queued=36 received=36 pedal=0.75/0.5 releaseRequired=False parseErrors=0
+HITCH 650ms: queued=66 received=66 pedal=0.75/0.5 releaseRequired=False parseErrors=0
+MONO_RGP_PTY_RECEIVER_PASS: hitches (both players keep their held pedals)
+QUEUED_STALE: queued=14 pedal=0/0 releaseRequired=True
+MONO_RGP_PTY_RECEIVER_PASS: queued-stale (real outage, held-pedal block, release and repress)
+MONO_RGP_PTY_RECEIVER_PASS: timeout
+MONO_RGP_PTY_RECEIVER_PASS: fragments
+MONO_INTEGRATION_TESTS_PASS

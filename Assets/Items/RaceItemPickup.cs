@@ -126,7 +126,8 @@ public abstract class RaceItemPickup : MonoBehaviour
         if (mover == null || !mover.isActiveAndEnabled) return;
         if (body == null) body = mover.GetComponent<Rigidbody>();
         // Rehearsal CPUs drive and can receive human attacks, but never consume pickups.
-        if (Gmanager.Control.FindParticipant(body)?.IsCpu == true) return;
+        RaceParticipant participant = Gmanager.Control.FindParticipant(body);
+        if (participant != null && (participant.IsCpu || !participant.IsRacing)) return;
         CarItemEffects effects = mover.GetComponent<CarItemEffects>();
 
         // 車体の複数の Collider が同じフレームに触れても、最初の1回で消えるため二重取得になりません。

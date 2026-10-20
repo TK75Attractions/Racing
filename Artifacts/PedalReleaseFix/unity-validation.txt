@@ -1,0 +1,11 @@
+PLAYER_AUTODRIVE_VALIDATION_PASS: real observations, connected gated source, manual handover, pedal release and pause preservation.
+LANDING_REWARD_VALIDATION_PASS: designated gap/reverse geometry, contact-flight-stable landing, independent live boost/feedback OFF.
+STEERING_ASSIST_VALIDATION_PASS: grounded edge prediction, live OFF, wall, air and disconnect.
+SLIPSTREAM_VALIDATION_PASS: real ground queries, pursuit, live OFF, stacked roads, occlusion, disconnect, reverse direction.
+HUD_FONT_BUILD_PASS: static medium and bold, 340 characters.
+TUBE_CHARGE_LINE_VALIDATION_PASS: actual tube/ground geometry, entry=579.00, laneOffset=3.20, continuous contact sequence, 25% reward, no repeat farming, live OFF/ON.
+HUD_FONT_BUILD_PASS: static medium and bold, 340 characters.
+HUD_FONT_BUILD_PASS: static medium and bold, 340 characters.
+RESULT_HIGHLIGHT_VALIDATION_PASS: per-player snapshot, factual fallback, DNF, AUTO label, live OFF/ON, 720p/1080p renders.
+RACE_FEATURE_VALIDATION_PASS: presets, live switches, coaching, anti-chain protection, steering assist, landing rewards, tube lines and fonts.
+SKILL_GAMEPLAY_RULES_PASS

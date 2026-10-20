@@ -72,6 +72,8 @@ Builds/ESP32Simulator/esp32-simulator-cli --duration 15 --scenario Tools/ESP32Si
 
 検査は共通CRC vectors、CMDの引数エラーvectors、重複・SEQ再使用・新セッション、フレーム再同期、実PTYの双方向ACK、送信停止・分割キャンセル、輻輳を確認します。さらにUnity付属Monoで本番の受信コードをコンパイルし、Swift CLIとの実PTY接続でセッション確立・独立ペダル・両者の同時停止・stale・復帰・CRC拒否・300ms分割を検査します。
 
+描画が詰まった直後の物理更新も検査します。正常なTEL受信を続けたままメインスレッドを150／350／650ms停止し、次の通常入力更新より前に両者の本番入力ゲートを読みます。受信済みキューを先に反映するため、通信が正常ならペダル解除待ちには入りません。`04-queued-stale.json`では同じ停止中にTELも止め、古い受信キューを処理してもstaleのままで、両者がペダルを離して踏み直すまで再開しないことを確認します。鮮度の期限は処理時刻でなく受信時刻を基準にします。修正前後の記録は [PedalReleaseFix](../Artifacts/PedalReleaseFix/README.md) を参照してください。
+
 Unityのゲームビルドでも使う場合は、`Racing > Build > ESP32 Simulator Player` で新しいDevelopment Buildを作ってください。起動引数は `--esp32-simulator-port /dev/ttys000 --esp32-simulator-divisor 6.5`。任意の `python3 Tools/ESP32Simulator/Tests/standalone_smoke.py` は、その更新済みビルドを検査します。旧CSV用のビルドは利用できません。
 
 macOS PTYはDTR/RTS操作に対応しないため、明示的なシミュレーターセッションだけPOSIXのopen/poll/read/writeを使います。byte取得後はUSB実機と同じRGPデコーダー・セッション・stale判定・ゲーム変換を通します。USB列挙、実機リセット、115200bpsの物理転送速度、電圧校正は再現しません。自動で別ポートを開き直すこともありません。

@@ -45,6 +45,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         public float maxYawRate;
         public float maxSteeringAngle;
         public float maxSteeringLimitExcess;
+        public float maxCorneringBrake;
         public float minimumSpeed = float.MaxValue;
         public float initialSpeed;
         public float maximumRise;
@@ -131,6 +132,10 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         // 専用路面ではコース外リスポーンを停止し、姿勢復元がワープで置き換わらないようにします。
         var lapManager = UnityEngine.Object.FindFirstObjectByType<LapManager>();
         if (lapManager != null) lapManager.enabled = false;
+        // Dedicated surfaces are outside the race course. Disabling lap counting alone
+        // no longer stops CarResetter's independent off-course timer from interrupting trials.
+        var resetter = car.GetComponent<CarResetter>();
+        if (resetter != null) resetter.enabled = false;
 
         // 平坦な広い路面で飛行と着地を分離して検証します。
         // 実際のコースの障害物やアイテムが着地だけの比較へ混ざらないよう、同じシーンに検証路面を作ります。
@@ -270,7 +275,9 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             yield return WaitForPhysicsSeconds(1.5f);
             End();
         }
-        yield return Place(floor, Quaternion.identity);
+        // Launch over the actual edge, as on a course gap. An upward impulse in
+        // the middle of continuous road is intentionally absorbed as a seam jolt.
+        yield return Place(floor + Vector3.forward * 148f, Quaternion.identity);
         yield return WaitForPhysicsSeconds(.35f);
         body.linearVelocity = new Vector3(0f, 5f, 15f);
         Begin("road-takeoff");
@@ -348,7 +355,8 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
                 failures.Add(result.name + ": drift entry, release, or controlled slide regression");
             if (result.name.StartsWith("spin-guard-") &&
                 (result.maxSlipAngle > 20f || result.finalSlipAngle > 5f || result.maxYawRate > 2f ||
-                 result.minimumSpeed < result.initialSpeed * .8f || result.finalForwardSpeed < result.initialSpeed * .9f))
+                 result.minimumSpeed < (result.maxCorneringBrake > 0f ? Mathf.Min(20f, result.initialSpeed * .8f) : result.initialSpeed * .8f) ||
+                 result.finalForwardSpeed < (result.maxCorneringBrake > 0f ? Mathf.Min(20f, result.initialSpeed * .9f) : result.initialSpeed * .9f)))
                 failures.Add(result.name + ": excessive slip/spin or lost forward motion");
             if (result.name.StartsWith("air-glide-") &&
                 (result.airSeconds < 1.9f || result.groundedWheels != 0 || result.maxDriveWhileAirborne > .001f ||
@@ -463,6 +471,8 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
         trial.maxYawRate = Mathf.Max(trial.maxYawRate, Mathf.Abs(Vector3.Dot(body.angularVelocity, Vector3.up)));
         trial.maxSteeringAngle = Mathf.Max(trial.maxSteeringAngle, Mathf.Abs(mover.AppliedSteeringAngle));
         trial.maxSteeringLimitExcess = Mathf.Max(trial.maxSteeringLimitExcess, Mathf.Abs(mover.AppliedSteeringAngle) - mover.SteeringAngleLimit);
+        // Deliberate turn braking now trades speed for steering; it must still keep useful forward motion.
+        trial.maxCorneringBrake = Mathf.Max(trial.maxCorneringBrake, mover.CorneringBrakingAcceleration);
         trial.minimumSpeed = Mathf.Min(trial.minimumSpeed, planarVelocity.magnitude);
         trial.enteredDrift |= mover.IsDrifting;
         trial.releasedBoost |= mover.IsDriftBoosting;

@@ -1,0 +1,12 @@
+{
+    "completedPhases": 3,
+    "driftReleases": 1,
+    "slipstreamBoosts": 0,
+    "successfulLandings": 4,
+    "landingBoosts": 0,
+    "successfulTubeLines": 4,
+    "steeringAssistSeconds": 0.0,
+    "tubeLayoutAvailable": true,
+    "passed": true,
+    "error": ""
+}

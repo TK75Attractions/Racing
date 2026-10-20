@@ -4,7 +4,8 @@
 /// </summary>
 public sealed class PlayerDriveInputGate : IDriveInputSource
 {
-    private readonly IDriveInputSource source;
+    private IDriveInputSource source;
+    public IDriveInputSource Source => source;
 
     public int PlayerIndex => source?.PlayerIndex ?? -1;
     public string DeviceId => source?.DeviceId ?? string.Empty;
@@ -37,6 +38,11 @@ public sealed class PlayerDriveInputGate : IDriveInputSource
     public PlayerDriveInputGate(IDriveInputSource source)
     {
         this.source = source;
+    }
+
+    public void SwitchSource(IDriveInputSource next)
+    {
+        source = next; IsReverse = false; RequirePedalRelease();
     }
 
     public void SetBlocked(bool blocked)

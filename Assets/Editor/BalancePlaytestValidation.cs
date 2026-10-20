@@ -18,6 +18,9 @@ public static class BalancePlaytestValidation
         if (model == null || model.GetComponentInChildren<MeshFilter>(true) == null)
             throw new InvalidOperationException("The course model is not imported. Materialize Git LFS assets before playtesting.");
         if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        if (Environment.GetEnvironmentVariable("RACING_VALIDATE_FEATURES") == "1") RaceFeatureValidation.Run();
+        else if (Environment.GetEnvironmentVariable("RACING_VALIDATE_RESULT_UI") == "1") ResultHighlightValidation.Run();
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RACING_GEOMETRY_AUDIT_TRACE"))) RaceExperienceGeometryAudit.Run();
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
         SessionState.SetBool(Key, true);
         Resume();
@@ -56,6 +59,16 @@ public static class BalancePlaytestValidation
         if (EditorApplication.timeSinceStartup - started > 1800) { Finish(false, "Balance playtest wall-clock timeout; inspect partial report."); return; }
         if (!EditorApplication.isPlaying || Gmanager.Control == null) return;
         DisablePublishing();
+        if (Environment.GetEnvironmentVariable("RACING_CPU_RACING") == "off" && !Gmanager.Control.Features.Settings.RulesLocked)
+            Gmanager.Control.Features.SetFeature(RaceFeature.CpuRacing, false);
+        if (Environment.GetEnvironmentVariable("RACING_P2_AUTO") == "1" && !Gmanager.Control.Features.Settings.RulesLocked)
+            Gmanager.Control.Features.SetFeature(RaceFeature.PlayerTwoAutodrive, true);
+        if (Environment.GetEnvironmentVariable("RACING_FEATURE_PRESET") == "experience" &&
+            !Gmanager.Control.Features.Settings.RulesLocked)
+            Gmanager.Control.Features.SelectPreset(RacePreset.Experience);
+        if (Environment.GetEnvironmentVariable("RACING_FEATURE_PLAYTEST") == "1" &&
+            UnityEngine.Object.FindFirstObjectByType<GameplayFeaturePlaytestProbe>() == null)
+            Gmanager.Control.gameObject.AddComponent<GameplayFeaturePlaytestProbe>();
         if (UnityEngine.Object.FindFirstObjectByType<BalancePlaytestAgent>() == null)
             new GameObject("Balance playtest agent").AddComponent<BalancePlaytestAgent>();
     }

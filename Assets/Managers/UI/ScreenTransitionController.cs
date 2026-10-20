@@ -171,6 +171,12 @@ public sealed class ScreenTransitionController : MonoBehaviour
         UpdateTitlePedal(displayPlayerIndex, value, ready, armed);
     }
 
+    public void RefreshLapTotal()
+    {
+        TMP_Text total = onPlayRoot != null ? onPlayRoot.transform.Find("CountdownLap/Total")?.GetComponent<TMP_Text>() : null;
+        if (total != null) total.text = "/ " + (Gmanager.Control != null ? Gmanager.Control.GoalLap : LapManager.DefaultGoalLaps);
+    }
+
     public void ShowCountdown(int seconds)
     {
         SetStatusVisibility(showCountdown: true, showWarning: false);
