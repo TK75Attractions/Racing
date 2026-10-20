@@ -51,3 +51,51 @@ open -n -W -a "$PWD/Builds/StandalonePerformance/Race.app" \
 生データと確認画像は`Artifacts/StandalonePerformance`に保存。
 
 参考: [Unity Mesh LOD生成](https://docs.unity.com/en-us/engine/6000.3/manual/analysis/graphics-performance-profiling/lod/mesh-lod/mesh-lod-generate-lods)、[LOD品質設定](https://docs.unity.com/en-us/engine/6000.3/manual/analysis/graphics-performance-profiling/lod/mesh-lod/mesh-lod-quality)。
+
+## Windows: 無人で 1 レースを計測（項目 57 / 61）
+
+Unity 6000.3.9f1 の Windows Build Support を用意する。Unity Editor を閉じ、保存済みのプロジェクトから PowerShell でビルドする。`BuildWindows()` はシーンを開いたり保存したりせず、描画アセット・PlayerSettings も変更しない。Development Build / StandaloneWindows64 / SampleScene を使用する。
+
+```powershell
+$unity = 'C:\Program Files\Unity\Hub\Editor\6000.3.9f1\Editor\Unity.exe'
+$project = (Get-Location).Path
+$env:RACING_PERFORMANCE_BUILD = Join-Path $env:TEMP 'RacingPerformance\Windows\Race.exe'
+& $unity -batchmode -projectPath $project -buildTarget Win64 `
+  -executeMethod StandalonePerformanceValidation.BuildWindows -quit `
+  -logFile (Join-Path $env:TEMP 'racing-performance-build.log')
+```
+
+`RACING_PERFORMANCE_BUILD` は `.exe` パス、または出力フォルダ。未指定ならプロジェクト外の一時フォルダに一意のサブフォルダを作る。実際の出力先はビルドログの `STANDALONE_PERFORMANCE_BUILD_PASS` で確認する。Mac 用の既存 `Build()` は従来どおり。
+
+```powershell
+$env:RACING_PERFORMANCE_AUTORUN = '1'
+$env:RACING_PERFORMANCE_OUTPUT = Join-Path $env:TEMP ('RacingPerformance\Run-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+$run = Start-Process -FilePath $env:RACING_PERFORMANCE_BUILD -ArgumentList @(
+  '-screen-fullscreen', '0', '-screen-width', '1920', '-screen-height', '1080',
+  '-logFile', ('"' + (Join-Path $env:TEMP 'racing-performance-player.log') + '"')
+) -PassThru -Wait
+$run.ExitCode
+Get-Content (Join-Path $env:RACING_PERFORMANCE_OUTPUT 'report.json')
+# 終了後、同じシェルから通常起動する前に解除する。
+Remove-Item Env:RACING_PERFORMANCE_AUTORUN
+Remove-Item Env:RACING_PERFORMANCE_OUTPUT
+Remove-Item Env:RACING_PERFORMANCE_BUILD
+```
+
+Development Build の `RACING_PERFORMANCE_AUTORUN=1` だけで有効になる。出力先省略時は `Application.temporaryCachePath/RacingPerformance/<UTC日時>`。環境変数がなければ通常プレイのまま。Editor・非 Development Build では自動実行しない。旧 `RACING_PERFORMANCE_DRIVE` / `BASELINE` / `SINGLE_SAMPLE` はこのモードでは使わない。
+
+タイトル → 車選択（保存済みの選択を確定）→ 練習画面 → カウントダウンを既存の遷移で進める。各準備画面には約 3 秒ずつ滞在し、練習課題は既存の管理用スキップ経路で終了する。P1 / P2 は `PlayerAutodrive` を既存入力ゲート経由で使用する。入力初期化時にシリアル・シミュレータを選ばずキーボードを用意するので、シリアル機器は不要。CPU 2 台はシーン設定どおりの通常ドライバー。計測モードだけは人間 2 人の完走後も CPU を待ち、全員完走、レースの時間切れ、または起動から 240 秒で保存・終了する。外部 Firebase 送信は既存プローブと同様に停止する。
+
+P1 はネイティブ表示、P2 は既存の RenderTexture スタックを使用する。物理画面が 1 枚の場合は既存プローブと同様に P2 を 1920×1080 のオフスクリーン出力で描画・転送する。`report.json` の `outputMode`、画面サイズと機器情報を比較条件として保存する。自動レースでは本番の `RaceRenderBudget`・vSync・FPS 設定を維持するため、上記の旧 Mac 計測値（vSync 無効）とは条件が異なる。
+
+出力の読み方:
+
+- `report.json` の `race`: `meanMs` / `medianMs` / `p95Ms` / `p99Ms` / `maxMs`、`over33_3ms` / `over50ms`、`first10SecondsMaxMs`。ウォームアップを捨てず、レース開始を観測したフレームから次のフレーム境界で記録する。準備・カウントダウンの時間は統計に含めない。中央値は中央 2 値の平均、p95/p99 は nearest rank。最初の 10 秒に重なるフレームは初回最大値の対象。
+- `frames.csv`: レース開始からの経過秒、フレーム時間 ms、P1 速度 m/s、コース開始点からの位置 m（周回時に戻る）、世代別 GC 回数差分、GC Alloc bytes。座標・速度は観測時点の値で、GC 差分は前回観測以降。小数点は常に `.`。フレーム時間は `Time.unscaledDeltaTime` のため、vSync・待ち時間も含む。
+- `race.spikes`: 50ms 超の時刻・位置・速度・GC 差分と、その時点および直前フレームの ProfilerRecorder 値。時間カウンターは ms、GC Alloc / メモリは bytes、描画数・オブジェクト数は個数。`availableCounters` に実機で利用可能なものだけを列挙し、未対応カウンターは省略する。CSV の GC Alloc `-1` は取得不可。
+- GC Alloc、Game Object Count / Object Count、Total Used Memory の前後差で生成・メモリ増加の手がかりを得る。これらは生成されたオブジェクトの名前や呼び出し元を特定するものではない。原因の確定には該当時刻・コース位置で Unity Profiler の追加採取が必要。
+- `endReason`: `all-finished` / `race-timeout-or-dnf` / `240-second-limit`。240 秒終了は未完走でも正常な計測終了。レース未到達・0 フレーム・収集した Unity エラーがあれば終了コード 1、その他は 0。`errors` と `status.txt` も確認する。
+
+CSV はメモリに蓄積して終了後に書き、レース中の毎フレームの文字列整形・ディスク I/O を避ける。遅いフレームの診断スナップショットには小量の割り当てがあり、その影響が次のフレームに現れる可能性がある。強制終了・クラッシュでは最終ファイルは保証しない。バックグラウンドでも動くが、比較時はフォーカス・解像度・画面枚数を揃え、`focusedFrames` も確認する。
+
+この追記時点では Unity の Windows ビルド・実行は未検証。リードが実機で、無入力遷移、両プレイヤーの移動、2 本の描画スタック、完走／240 秒終了、JSON / CSV の生成と終了コードを確認する。

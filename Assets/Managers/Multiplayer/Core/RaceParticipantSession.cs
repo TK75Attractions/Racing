@@ -5,6 +5,7 @@ public sealed class RaceParticipantSession
 {
     private readonly int humanCount, participantCount;
     private readonly float graceSeconds, maximumSeconds;
+    private readonly bool waitForAllFinish;
     private int finishedCount;
     private float elapsed;
     public RaceSessionResult Result { get; private set; }
@@ -16,8 +17,9 @@ public sealed class RaceParticipantSession
     {
         get { for (int i = 0; i < humanCount; i++) if (Result.GetPlayerResult(i) == null) return i; return -1; }
     }
-    public RaceParticipantSession(int humans, int cpus, float grace, float maximum)
+    public RaceParticipantSession(int humans, int cpus, float grace, float maximum, bool waitForAllFinish = false)
     {
+        this.waitForAllFinish = waitForAllFinish;
         humanCount = Math.Max(1, humans); participantCount = humanCount + Math.Max(0, cpus);
         graceSeconds = Math.Max(0, grace); maximumSeconds = Math.Max(1, maximum);
         Start();
@@ -33,8 +35,8 @@ public sealed class RaceParticipantSession
         record.playerNumber = index + 1; record.isCpu = index >= humanCount;
         record.finishPosition = ++finishedCount; record.didFinish = true;
         Result.SetPlayerResult(index, record); ReorderDnf();
-        if (UnfinishedPlayerIndex < 0) { IsComplete = true; WaitingForSecondPlace = false; SecondPlaceTimeRemaining = 0; return RaceFinishRegistration.RaceComplete; }
-        if (index < humanCount && !WaitingForSecondPlace)
+        if (waitForAllFinish ? finishedCount == participantCount : UnfinishedPlayerIndex < 0) { IsComplete = true; WaitingForSecondPlace = false; SecondPlaceTimeRemaining = 0; return RaceFinishRegistration.RaceComplete; }
+        if (!waitForAllFinish && index < humanCount && !WaitingForSecondPlace)
         { WaitingForSecondPlace = true; SecondPlaceTimeRemaining = graceSeconds; return RaceFinishRegistration.FirstPlace; }
         return RaceFinishRegistration.Recorded;
     }

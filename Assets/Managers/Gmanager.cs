@@ -782,7 +782,8 @@ public class Gmanager : MonoBehaviour
         RaceItemPickup.ResetAll();
         raceLightning?.ResetRace();
         participants.Clear(); orderedParticipants.Clear();
-        raceSession = new RaceParticipantSession(PlayerCount, Mathf.Clamp(npcCount, 0, 2), RaceGraceSeconds, RaceMaximumSeconds);
+        raceSession = new RaceParticipantSession(PlayerCount, Mathf.Clamp(npcCount, 0, 2), RaceGraceSeconds, RaceMaximumSeconds,
+            RacingStandalonePerformanceProbe.AutorunEnabled);
         raceSession.Start();
         countdownTimeRemaining = Mathf.Max(0f, raceCountdownSeconds);
         lastCountdownSound = -1;
@@ -856,7 +857,8 @@ public class Gmanager : MonoBehaviour
             player.car.AddComponent<CourseSteeringAssist>().Configure(this, participant);
             player.car.AddComponent<LandingRewardController>().Configure(this, participant);
             player.car.AddComponent<TubeChargeLineController>().Configure(this, participant);
-            if (playerIndex == 1) player.car.AddComponent<PlayerAutodrive>().Configure(this, participant);
+            if (playerIndex == 1 || RacingStandalonePerformanceProbe.AutorunEnabled)
+                player.car.AddComponent<PlayerAutodrive>().Configure(this, participant);
 
             player.cameraController.SetCar(player.car.transform);
             player.displayRig.RaceCamera.Follow = player.cameraController.CameraTarget;
@@ -1064,7 +1066,9 @@ public class Gmanager : MonoBehaviour
         if (entry.IsCpu)
         {
             if (!StartFinishRun(entry)) FreezeCpu(entry);
-            UpdateParticipantOrder(); return;
+            UpdateParticipantOrder();
+            if (registration == RaceFinishRegistration.RaceComplete) CompleteRace(latestSessionResult, null);
+            return;
         }
         player.result = result;
         if (!StartFinishRun(entry)) FreezePlayer(player, disableCollisions: true);

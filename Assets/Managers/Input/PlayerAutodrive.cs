@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>Opt-in P2 test driver in normal builds, retaining the normal pause/recovery/input gate.</summary>
+/// <summary>Opt-in player test driver, retaining the normal pause/recovery/input gate.</summary>
 [DefaultExecutionOrder(-150)]
 public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
 {
@@ -14,7 +14,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
     public bool IsActive { get; private set; }
     public bool WasUsed { get; private set; }
     public int PlayerIndex => own?.Index ?? 1;
-    public string DeviceId => "P2 test autodrive";
+    public string DeviceId => PlayerIndex == 0 ? "P1 test autodrive" : "P2 test autodrive";
     public bool IsConnected => true;
     public DriveInputState CurrentState { get; private set; }
     public void Configure(Gmanager race, RaceParticipant participant)
@@ -26,7 +26,8 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
     public void ApplySwitch()
     {
         if (own?.Result != null) return;
-        bool next = own != null && own.Index == 1 && RaceFeatureController.Enabled(RaceFeature.PlayerTwoAutodrive);
+        bool next = own != null && (RacingStandalonePerformanceProbe.AutorunEnabled ||
+            (own.Index == 1 && RaceFeatureController.Enabled(RaceFeature.PlayerTwoAutodrive)));
         if (next == IsActive || gate == null) return;
         CurrentState = DriveInputState.Neutral; bot.Clear();
         gate.SwitchSource(next ? this : manual); IsActive = next; WasUsed |= next;

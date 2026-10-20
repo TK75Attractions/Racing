@@ -62,6 +62,13 @@ public class InputManager : MonoBehaviour
         DisposeInputSources();
         esp32Serial ??= new Esp32SerialConfiguration();
 
+        if (RacingStandalonePerformanceProbe.AutorunEnabled)
+        {
+            for (int i = 0; i < SupportedPlayerCount; i++) inputSources[i] = new KeyboardDriveInputSource(i);
+            initialized = true;
+            return;
+        }
+
         if (SerialSimulatorSession.TryGetConfiguration(out string simulatorPort, out float simulatorDivisor))
         {
             backgroundBeforeSimulator = Application.runInBackground;

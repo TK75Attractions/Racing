@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Globalization;
 using System.Reflection;
 using Unity.Profiling;
 using Unity.Profiling.LowLevel.Unsafe;
@@ -9,9 +10,43 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-/// <summary>Opt-in standalone benchmark: set RACING_PERFORMANCE_OUTPUT before launching a Development Build.</summary>
+/// <summary>Opt-in Development Build benchmark: RACING_PERFORMANCE_OUTPUT or RACING_PERFORMANCE_AUTORUN=1.</summary>
 public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
 {
+    public static bool AutorunEnabled { get; } =
+#if DEVELOPMENT_BUILD
+        !Application.isEditor && Environment.GetEnvironmentVariable("RACING_PERFORMANCE_AUTORUN") == "1";
+#else
+        false;
+#endif
+    [Serializable] private sealed class RaceSummary
+    {
+        public int frames, focusedFrames, over33_3ms, over50ms;
+        public double seconds, meanMs, medianMs, p95Ms, p99Ms, maxMs, first10SecondsMaxMs;
+        public string endReason;
+        public List<Spike> spikes = new List<Spike>();
+    }
+    [Serializable] private sealed class Spike
+    {
+        public double elapsedSeconds, frameMs;
+        public float p1SpeedMps, p1CourseDistanceMetres;
+        public int gc0Delta, gc1Delta, gc2Delta;
+        public List<CounterReading> counters = new List<CounterReading>();
+        public List<CounterReading> previousFrameCounters = new List<CounterReading>();
+    }
+    [Serializable] private sealed class CounterReading { public string name; public double value; }
+    private struct RaceFrame
+    {
+        public double elapsed, ms;
+        public float speed, distance;
+        public int gc0, gc1, gc2;
+        public long allocatedBytes;
+    }
+    // Keep disk I/O/CSV formatting out of the measured race. Preallocate for >500 fps over 240 s.
+    private readonly List<RaceFrame> raceFrames = new List<RaceFrame>();
+    private bool raceStarted, previousFrameRacing, finished;
+    private double raceStart;
+    private int previousGc0, previousGc1, previousGc2;
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
     [Serializable] private sealed class Metric { public string name; public double median, p95; }
     [Serializable] private sealed class Sample { public string phase; public int frames, focusedFrames; public float seconds; public List<Metric> metrics = new List<Metric>(); }
@@ -19,10 +54,13 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
     {
         public string unity, gpu, device, renderGraph, outputMode;
         public int physicalDisplays, windowWidth, windowHeight;
+        public int vSyncCount, targetFrameRate;
         public float meshLodThreshold;
         public float[] drivenMetres;
         public List<Sample> samples = new List<Sample>();
         public List<string> errors = new List<string>();
+        public RaceSummary race;
+        public List<string> availableCounters = new List<string>();
     }
     private sealed class Input : IDriveInputSource
     {
@@ -42,7 +80,7 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
     private readonly List<Driver> drivers = new List<Driver>();
     private readonly Dictionary<Rigidbody, RigidbodyConstraints> constraints = new Dictionary<Rigidbody, RigidbodyConstraints>();
     private bool driving;
-    private sealed class Counter { public string Name; public ProfilerRecorder Recorder; public List<double> Values = new List<double>(); public double Scale; }
+    private sealed class Counter { public string Name; public ProfilerRecorder Recorder; public List<double> Values = new List<double>(); public double Scale, PreviousValue; }
     private readonly List<Counter> counters = new List<Counter>();
     private readonly List<double> focusedTimes = new List<double>();
     private readonly List<double> scales = new List<double>();
@@ -62,7 +100,7 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
     private static void Install()
     {
 #if DEVELOPMENT_BUILD
-        if (Application.isEditor || string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RACING_PERFORMANCE_OUTPUT"))) return;
+        if (Application.isEditor || (!AutorunEnabled && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RACING_PERFORMANCE_OUTPUT")))) return;
         var root = new GameObject("Standalone performance probe");
         DontDestroyOnLoad(root);
         root.AddComponent<RacingStandalonePerformanceProbe>();
@@ -72,6 +110,8 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
     {
         installedAt = Time.realtimeSinceStartupAsDouble;
         output = Environment.GetEnvironmentVariable("RACING_PERFORMANCE_OUTPUT");
+        if (AutorunEnabled && string.IsNullOrEmpty(output))
+            output = Path.Combine(Application.temporaryCachePath, "RacingPerformance", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff"));
         if (string.IsNullOrEmpty(output)) { enabled = false; return; }
         Directory.CreateDirectory(output);
         Application.runInBackground = true;
@@ -91,12 +131,14 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
         File.WriteAllText(Path.Combine(output,"status.txt"),"Scene ready");
         manager = Gmanager.Control;
         foreach (var publisher in UnityEngine.Object.FindObjectsByType<RaceRemoteFirebasePublisher>(FindObjectsSortMode.None)) publisher.enabled = false;
-        Application.runInBackground = true; Application.targetFrameRate = -1; QualitySettings.vSyncCount = 0;
+        Application.runInBackground = true;
+        if (!AutorunEnabled) { Application.targetFrameRate = -1; QualitySettings.vSyncCount = 0; }
         report.unity = Application.unityVersion; report.gpu = SystemInfo.graphicsDeviceName; report.device = SystemInfo.processorType;
         var budget = FindFirstObjectByType<RaceRenderBudget>();
-        if (budget != null) budget.enabled = false;
+        if (budget != null && !AutorunEnabled) budget.enabled = false;
         report.physicalDisplays = Display.displays.Length;
         report.windowWidth = Screen.width; report.windowHeight = Screen.height;
+        report.vSyncCount = QualitySettings.vSyncCount; report.targetFrameRate = Application.targetFrameRate;
         report.meshLodThreshold = QualitySettings.meshLodThreshold;
         Debug.developerConsoleVisible = false;
         report.renderGraph = (!GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode).ToString();
@@ -123,6 +165,14 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
         }
         if (presenter != null) presentationCallback = (Action<ScriptableRenderContext,List<Camera>>)Delegate.CreateDelegate(
             typeof(Action<ScriptableRenderContext,List<Camera>>),presenter,typeof(RenderGraphDisplayOutput).GetMethod("Present",Private));
+        if (AutorunEnabled)
+        {
+            StartCounters();
+            report.race = new RaceSummary();
+            raceFrames.Capacity = 131072;
+            yield return Autorun();
+            yield break;
+        }
         typeof(Gmanager).GetMethod("StartGameWhenScreenCovered",Private).Invoke(manager,null);
         typeof(Gmanager).GetMethod("CompleteGameStart",Private).Invoke(manager,null);
         typeof(Gmanager).GetMethod("StartRaceAfterCountdown",Private).Invoke(manager,null);
@@ -139,21 +189,7 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
             entry.Body.position=position; entry.Body.rotation=entry.Car.transform.rotation;
         }
         Physics.SyncTransforms();
-        var available = new List<ProfilerRecorderHandle>(); ProfilerRecorderHandle.GetAvailable(available);
-        foreach(var handle in available)
-        {
-            var description=ProfilerRecorderHandle.GetDescription(handle);
-            if (description.Name=="Main Thread" || description.Name=="Render Thread" || description.Name=="GPU Frame Time" ||
-                description.Name=="CPU Main Thread Frame Time" || description.Name=="CPU Render Thread Frame Time" ||
-                description.Name=="Gfx.WaitForPresentOnGfxThread" || description.Name=="Gfx.WaitForRenderThread" ||
-                description.Name=="Draw Calls Count" || description.Name=="Triangles Count" || description.Name=="GC Allocated In Frame" ||
-                description.Name=="Racing.Display.Present")
-            {
-                var recorder=ProfilerRecorder.StartNew(description.Category,description.Name,1);
-                counters.Add(new Counter { Name=description.Name, Recorder=recorder,
-                    Scale=description.UnitType==ProfilerMarkerDataUnit.TimeNanoseconds?1e-6:1 });
-            }
-        }
+        StartCounters();
         yield return new WaitForSecondsRealtime(2f);
         bool baseline = Environment.GetEnvironmentVariable("RACING_PERFORMANCE_BASELINE") == "1";
         bool single = Environment.GetEnvironmentVariable("RACING_PERFORMANCE_SINGLE_SAMPLE") == "1";
@@ -228,8 +264,139 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
         }
         Finish();
     }
+    private void StartCounters()
+    {
+        var available = new List<ProfilerRecorderHandle>(); ProfilerRecorderHandle.GetAvailable(available);
+        foreach(var handle in available)
+        {
+            var description=ProfilerRecorderHandle.GetDescription(handle);
+            if (description.Name=="Main Thread" || description.Name=="Render Thread" || description.Name=="GPU Frame Time" ||
+                description.Name=="CPU Main Thread Frame Time" || description.Name=="CPU Render Thread Frame Time" ||
+                description.Name=="Gfx.WaitForPresentOnGfxThread" || description.Name=="Gfx.WaitForRenderThread" ||
+                description.Name=="Draw Calls Count" || description.Name=="Triangles Count" || description.Name=="GC Allocated In Frame" ||
+                description.Name=="Racing.Display.Present" || description.Name=="Game Object Count" ||
+                description.Name=="Object Count" || description.Name=="Total Used Memory")
+            {
+                var recorder=ProfilerRecorder.StartNew(description.Category,description.Name,1);
+                counters.Add(new Counter { Name=description.Name, Recorder=recorder,
+                    Scale=description.UnitType==ProfilerMarkerDataUnit.TimeNanoseconds?1e-6:1 });
+                if (recorder.Valid) report.availableCounters.Add(description.Name);
+            }
+        }
+    }
+    private IEnumerator Autorun()
+    {
+        // Use production transitions; allow each preparation screen to render before advancing.
+        while (!finished && !raceStarted)
+        {
+            if (manager != null && manager.CanUseDashboardControls)
+            {
+                File.WriteAllText(Path.Combine(output, "status.txt"), "Autorun " + manager.state);
+                if (manager.state == Gmanager.State.Title) manager.StartGame();
+                else if (manager.state == Gmanager.State.CarSelection) manager.AdvanceDashboardToTutorial();
+                else if (manager.state == Gmanager.State.Tutorial) manager.AdvanceDashboardToCountdown();
+            }
+            yield return new WaitForSecondsRealtime(3f);
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (!AutorunEnabled || finished || manager == null || report.race == null) return;
+        double now = Time.realtimeSinceStartupAsDouble;
+        // deltaTime and recorder LastValue describe the frame preceding this observation.
+        // Keep the last racing frame even if Gmanager transitioned to Goal in this Update.
+        if (previousFrameRacing)
+        {
+            var p1 = manager.GetParticipant(0);
+            int gc0 = GC.CollectionCount(0), gc1 = GC.CollectionCount(1), gc2 = GC.CollectionCount(2);
+            long allocated = -1;
+            foreach (var counter in counters)
+                if (counter.Name == "GC Allocated In Frame" && counter.Recorder.Valid) allocated = counter.Recorder.LastValue;
+            var frame = new RaceFrame {
+                elapsed = now - raceStart, ms = Time.unscaledDeltaTime * 1000.0,
+                speed = p1?.Body != null ? p1.Body.linearVelocity.magnitude : 0f,
+                distance = p1?.Body != null && manager.course != null ? manager.course.GetProgressDistance(p1.Body.position) : 0f,
+                gc0 = gc0 - previousGc0, gc1 = gc1 - previousGc1, gc2 = gc2 - previousGc2,
+                allocatedBytes = allocated
+            };
+            raceFrames.Add(frame);
+            previousGc0 = gc0; previousGc1 = gc1; previousGc2 = gc2;
+            if (Application.isFocused) report.race.focusedFrames++;
+            if (frame.ms > 50)
+            {
+                var spike = new Spike { elapsedSeconds = frame.elapsed, frameMs = frame.ms,
+                    p1SpeedMps = frame.speed, p1CourseDistanceMetres = frame.distance,
+                    gc0Delta = frame.gc0, gc1Delta = frame.gc1, gc2Delta = frame.gc2 };
+                foreach (var counter in counters)
+                    if (counter.Recorder.Valid)
+                    {
+                        spike.counters.Add(new CounterReading {
+                            name = counter.Name, value = counter.Recorder.LastValue * counter.Scale });
+                        spike.previousFrameCounters.Add(new CounterReading {
+                            name = counter.Name, value = counter.PreviousValue });
+                    }
+                report.race.spikes.Add(spike);
+            }
+        }
+        bool racing = manager.state == Gmanager.State.Game;
+        if (racing && !raceStarted)
+        {
+            raceStarted = true; raceStart = now;
+            previousGc0 = GC.CollectionCount(0); previousGc1 = GC.CollectionCount(1); previousGc2 = GC.CollectionCount(2);
+        }
+        previousFrameRacing = racing;
+        foreach (var counter in counters)
+            if (counter.Recorder.Valid) counter.PreviousValue = counter.Recorder.LastValue * counter.Scale;
+        if (raceStarted && !racing)
+        {
+            bool allFinished = manager.Participants.Count > 0;
+            foreach (var entry in manager.Participants) allFinished &= entry.Result?.didFinish == true;
+            FinishRace(allFinished ? "all-finished" : "race-timeout-or-dnf");
+        }
+        else if (raceStarted && now - installedAt >= 240) FinishRace("240-second-limit");
+    }
+
+    private void FinishRace(string reason)
+    {
+        if (finished) return;
+        var summary = report.race ?? (report.race = new RaceSummary());
+        summary.endReason = reason; summary.frames = raceFrames.Count;
+        summary.seconds = raceStarted ? Time.realtimeSinceStartupAsDouble - raceStart : 0;
+        var times = new List<double>(raceFrames.Count);
+        double total = 0;
+        foreach (var frame in raceFrames)
+        {
+            times.Add(frame.ms); total += frame.ms;
+            summary.maxMs = Math.Max(summary.maxMs, frame.ms);
+            if (frame.elapsed - frame.ms / 1000 < 10) summary.first10SecondsMaxMs = Math.Max(summary.first10SecondsMaxMs, frame.ms);
+            if (frame.ms > 33.3) summary.over33_3ms++;
+            if (frame.ms > 50) summary.over50ms++;
+        }
+        times.Sort();
+        if (times.Count > 0)
+        {
+            summary.meanMs = total / times.Count;
+            summary.medianMs = (times[(times.Count - 1) / 2] + times[times.Count / 2]) / 2;
+            summary.p95Ms = times[Math.Max(0, (int)Math.Ceiling(times.Count * .95) - 1)];
+            summary.p99Ms = times[Math.Max(0, (int)Math.Ceiling(times.Count * .99) - 1)];
+        }
+        else report.errors.Add("No racing frames captured.");
+        using (var writer = new StreamWriter(Path.Combine(output, "frames.csv")))
+        {
+            writer.WriteLine("elapsed_seconds,frame_ms,p1_speed_mps,p1_course_distance_metres,gc0_delta,gc1_delta,gc2_delta,gc_allocated_bytes");
+            foreach (var frame in raceFrames)
+                writer.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0:F6},{1:F6},{2:F4},{3:F4},{4},{5},{6},{7}",
+                    frame.elapsed, frame.ms, frame.speed, frame.distance, frame.gc0, frame.gc1, frame.gc2, frame.allocatedBytes));
+        }
+        File.WriteAllText(Path.Combine(output, "status.txt"), "Finished: " + reason);
+        Finish();
+    }
+
     private void Finish()
     {
+        if (finished) return;
+        finished = true;
         foreach(var counter in counters)counter.Recorder.Dispose(); counters.Clear();
         File.WriteAllText(Path.Combine(output,"report.json"),JsonUtility.ToJson(report,true));
         Debug.Log("STANDALONE_PERFORMANCE_PASS: "+output);
@@ -257,6 +424,15 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
     }
     private void Update()
     {
+        if (AutorunEnabled)
+        {
+            if (!finished && !raceStarted && Time.realtimeSinceStartupAsDouble - installedAt >= 240)
+            {
+                report.errors.Add("Autorun did not reach the race before the 240 second deadline.");
+                FinishRace("240-second-limit");
+            }
+            return;
+        }
         if (Time.realtimeSinceStartupAsDouble - installedAt > 180)
         { File.WriteAllText(Path.Combine(output,"timeout.txt"),"Preparation/run timeout: " + phase); Application.Quit(1); }
         if (Time.realtimeSinceStartupAsDouble-phaseStart>90 && !string.IsNullOrEmpty(phase))

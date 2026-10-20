@@ -23530,8 +23530,8 @@ MonoBehaviour:
   skyShader: {fileID: 4800000, guid: efbba3f7903b486984008e28da08b002, type: 3}
   rainShader: {fileID: 4800000, guid: efbba3f7903b486984008e28da08b003, type: 3}
   dayLightIntensity: 2
-  nightLightIntensity: 0.18
-  nightAmbientBrightness: 0.16
+  nightLightIntensity: 0.7
+  nightAmbientBrightness: 0.42
   enableFog: 1
   sunnyFogDensity: 0.0005
   cloudyFogDensity: 0.002
