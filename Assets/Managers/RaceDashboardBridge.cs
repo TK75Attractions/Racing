@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -26,7 +27,9 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     private volatile string liveSnapshot;
     private volatile RgpSerialJournal liveJournal = new RgpSerialJournal();
     private long stateRevision;
-    private string observedState;
+    private string observedState, observedSettings;
+    private long settingsRevision;
+    private TwoPlayerSerialInputSource observedSerial;
     private float nextSnapshotAt;
     private int streamClients;
     private volatile bool stopping;
@@ -38,7 +41,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     [Serializable] private sealed class ActionRequest
     {
         public string id, targetSession, expectedState;
-        public long stateRevision, observedAt;
+        public long stateRevision, observedAt, settingsRevision;
         public string command;
         public string[] args;
     }
@@ -128,10 +131,20 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public bool contactGrace;
     }
 
+    [Serializable] private sealed class SettingsSnapshot
+    {
+        public float master, bgm, engine, effects, constantPedal;
+        public string inputMode, steeringMode;
+        public bool inputAvailable, serialDebug, featurePanel, constantPaused, audioRefreshAvailable;
+        public string[] deviceNames, deviceKeys, outputStatus, selectedDevices;
+        public bool[] outputAvailable;
+    }
+
     [Serializable] private sealed class DashboardSnapshot
     {
         public string sessionId;
-        public long stateRevision, serverTime;
+        public long stateRevision, serverTime, settingsRevision;
+        public SettingsSnapshot settings;
         public SerialEntry telemetry;
         public RawEntry[] rawLines;
         public HardwareSnapshot hardware;
@@ -207,8 +220,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     private void Update()
     {
         ObserveState();
-        RgpSerialJournal journal = input?.SharedSerialInputSource?.Monitor;
-        if (journal != null) liveJournal = journal;
+        SyncSerialSource();
         if (Time.realtimeSinceStartup >= nextSnapshotAt)
         {
             DashboardSnapshot snapshot = BuildSnapshot();
@@ -318,8 +330,90 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         response.Close();
     }
 
+    private void SyncSerialSource()
+    {
+        TwoPlayerSerialInputSource source = input?.SharedSerialInputSource;
+        if (source == observedSerial) return;
+        observedSerial = source;
+        liveJournal = source?.Monitor ?? new RgpSerialJournal();
+        serialLines.Clear(); serialAlerts.Clear(); latestTelemetry = null;
+    }
+
+    private SettingsSnapshot BuildSettings()
+    {
+        RaceAudioOutput output = RaceAudioOutput.Instance;
+        string[] keys = output?.DeviceKeys ?? Array.Empty<string>();
+        var selected = new string[2];
+        for (int i = 0; i < 2; i++)
+        {
+            int device = output?.GetSelectedDevice(i) ?? -1;
+            selected[i] = device >= 0 && device < keys.Length ? keys[device] : "";
+        }
+        return new SettingsSnapshot {
+            master = RaceAudioSettings.Master, bgm = RaceAudioSettings.Bgm,
+            engine = RaceAudioSettings.Engine, effects = RaceAudioSettings.Effects,
+            inputAvailable = input != null, inputMode = input?.InputMode ?? "",
+            steeringMode = input?.SteeringTestMode.ToString() ?? "Normal",
+            constantPedal = input?.ConstantTestPedal ?? 1f, constantPaused = input?.ConstantTestPedalPaused ?? false,
+            serialDebug = input?.IsSerialDebugDisplayVisible ?? false, featurePanel = race?.Features?.PanelVisible ?? false,
+            audioRefreshAvailable = output?.CanRefreshDevices ?? false,
+            deviceNames = output?.DeviceNames ?? Array.Empty<string>(), deviceKeys = keys, selectedDevices = selected,
+            outputStatus = new[] { output?.GetDeviceLabel(0) ?? "未接続", output?.GetDeviceLabel(1) ?? "未接続" },
+            outputAvailable = new[] { output?.CanSelectDevice(0, -1) ?? false, output?.CanSelectDevice(1, -1) ?? false }
+        };
+    }
+
+    private bool ApplySettings(ActionRequest request, out string reason)
+    {
+        reason = "invalid_setting";
+        string[] args = request.args ?? Array.Empty<string>();
+        if (request.command == "refreshDevices" && args.Length == 0)
+        { if (RaceAudioOutput.Instance?.CanRefreshDevices != true) return false; RaceAudioOutput.Instance.RefreshDevices(); return true; }
+        if (request.command == "volume" && args.Length == 2 &&
+            float.TryParse(args[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float volume) &&
+            !float.IsNaN(volume) && !float.IsInfinity(volume) && volume >= 0f && volume <= 1f)
+        {
+            switch (args[0]) {
+                case "master": RaceAudioSettings.SetMaster(volume); break;
+                case "bgm": RaceAudioSettings.SetBgm(volume); break;
+                case "engine": RaceAudioSettings.SetEngine(volume); break;
+                case "effects": RaceAudioSettings.SetEffects(volume); break;
+                default: return false;
+            }
+            PlayerPrefs.Save(); return true;
+        }
+        if (request.command == "device" && args.Length == 2 && (args[0] == "0" || args[0] == "1"))
+        {
+            RaceAudioOutput output = RaceAudioOutput.Instance;
+            if (output == null) return false;
+            int device = string.IsNullOrEmpty(args[1]) ? -1 : Array.IndexOf(output.DeviceKeys, args[1]);
+            if (device < 0 && !string.IsNullOrEmpty(args[1])) return false;
+            reason = "audio_unavailable";
+            return output.SelectDevice(args[0] == "0" ? 0 : 1, device);
+        }
+        if (args.Length != 1) return false;
+        if (request.command == "inputMode") return input != null && input.SetInputMode(args[0]);
+        if (request.command == "steeringMode" && input != null &&
+            (args[0] == "Normal" || args[0] == "KeyboardPedal" || args[0] == "ConstantPedal"))
+        { input.SetP1SteeringTestMode((P1SteeringTestMode)Enum.Parse(typeof(P1SteeringTestMode), args[0])); return true; }
+        if (request.command == "constantPedal" && input != null &&
+            float.TryParse(args[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float pedal) &&
+            !float.IsNaN(pedal) && !float.IsInfinity(pedal) && pedal >= 0f && pedal <= 1f)
+        { input.SetP1ConstantPedal(pedal); return true; }
+        if (args[0] != "true" && args[0] != "false") return false;
+        bool enabled = args[0] == "true";
+        switch (request.command) {
+            case "serialDebug": if (input == null) return false; input.SerialDebugMode = enabled; input.SetSerialDebugDisplayVisible(enabled); return true;
+            case "featurePanel": if (race?.Features == null) return false; race.Features.PanelVisible = enabled; return true;
+            case "constantPaused": if (input == null) return false; if (enabled) input.PauseP1ConstantPedal(); else input.ResumeP1ConstantPedal(); return true;
+            default: return false;
+        }
+    }
+
     private DashboardSnapshot BuildSnapshot()
     {
+        SyncSerialSource();
+        ObserveState();
         TwoPlayerSerialInputSource serial = input?.SharedSerialInputSource;
         PlayerSnapshot[] players = new PlayerSnapshot[2];
         for (int i = 0; i < players.Length; i++)
@@ -337,6 +431,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         return new DashboardSnapshot
         {
             sessionId = liveSession, stateRevision = stateRevision, serverTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            settingsRevision = settingsRevision, settings = BuildSettings(),
             telemetry = latestTelemetry,
             rawLines = Array.ConvertAll((serial?.Monitor ?? liveJournal).LatestRaw(), entry => new RawEntry
                 { id = entry.Id, time = entry.Time, direction = entry.Direction, line = entry.Line }),
@@ -545,6 +640,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     {
         string current = race != null ? race.state.ToString() : "Unknown";
         if (current != observedState) { observedState = current; stateRevision++; }
+        string settings = JsonUtility.ToJson(BuildSettings());
+        if (settings != observedSettings) { observedSettings = settings; settingsRevision++; }
     }
 
     private void HandleAction(HttpListenerContext context, string action, string origin)
@@ -578,12 +675,18 @@ public sealed class RaceDashboardBridge : MonoBehaviour
                 reason = "serial_disconnected";
                 accepted = source != null && source.TrySendCommand(request.command, request.args, out serialSeq, out reason);
             }
+            else if (action == "settings")
+            {
+                reason = "settings_changed";
+                accepted = request.settingsRevision == settingsRevision && ApplySettings(request, out reason);
+            }
             else accepted = TryApplyRemoteAction(action, request.expectedState);
         }
         ObserveState();
         string result = "{\"id\":" + RgpSerialJournal.Quote(request.id) + ",\"ok\":" + (accepted ? "true" : "false") +
             ",\"reason\":" + RgpSerialJournal.Quote(accepted ? "" : reason) +
-            ",\"serialSequence\":" + serialSeq + "}";
+            ",\"serialSequence\":" + serialSeq +
+            (action == "settings" ? ",\"settingsRevision\":" + settingsRevision + ",\"settings\":" + JsonUtility.ToJson(BuildSettings()) : "") + "}";
         commandResults.Add(request.id, result); commandRequests.Add(request.id, signature); commandOrder.Enqueue(request.id);
         if (commandOrder.Count > 256) { string old = commandOrder.Dequeue(); commandResults.Remove(old); commandRequests.Remove(old); }
         nextSnapshotAt = 0;

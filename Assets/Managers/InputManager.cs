@@ -64,7 +64,12 @@ public class InputManager : MonoBehaviour
     private readonly IDriveInputSource[] inputSources =
         new IDriveInputSource[SupportedPlayerCount];
     private TwoPlayerSerialInputSource sharedSerialInputSource;
-    private bool initialized;
+    // Cars and tutorials keep these handles across runtime reconfiguration.
+    private readonly LiveDriveInputSource[] liveInputs = {
+        new LiveDriveInputSource(0), new LiveDriveInputSource(1)
+    };
+    private bool appliedDebugMode, appliedMixedMode;
+    private bool initialized, hasInitialized;
     private bool? backgroundBeforeSimulator;
 
     public void Init()
@@ -127,6 +132,21 @@ public class InputManager : MonoBehaviour
         CompleteInputInitialization();
     }
 
+    public string InputMode => isP1SerialP2KeyboardDebugMode ? "mixed" : isDebugMode ? "keyboard" : "serial";
+
+    public bool SetInputMode(string mode)
+    {
+        if (mode != "serial" && mode != "keyboard" && mode != "mixed") return false;
+        isDebugMode = mode == "keyboard";
+        isP1SerialP2KeyboardDebugMode = mode == "mixed";
+        if (!initialized || appliedDebugMode != isDebugMode || appliedMixedMode != isP1SerialP2KeyboardDebugMode)
+        {
+            p1SteeringTestMode = P1SteeringTestMode.Normal;
+            Init();
+        }
+        return true;
+    }
+
     private void CompleteInputInitialization()
     {
         if (isP1SerialP2KeyboardDebugMode && p1SteeringTestMode == P1SteeringTestMode.Normal)
@@ -136,6 +156,15 @@ public class InputManager : MonoBehaviour
         inputSources[0] = steeringTestSource;
         initialized = true;
         ApplySteeringTestSettings();
+        appliedDebugMode = isDebugMode;
+        appliedMixedMode = isP1SerialP2KeyboardDebugMode;
+        // Sample held keys before publishing a replacement: default neutral state is not a physical release.
+        foreach (IDriveInputSource source in inputSources) source?.UpdateInput(0f);
+        for (int i = 0; i < SupportedPlayerCount; i++)
+        {
+            liveInputs[i].SwitchSource(inputSources[i], hasInitialized);
+        }
+        hasInitialized = true;
     }
 
     public void SetP1SteeringTestMode(P1SteeringTestMode mode)
@@ -184,6 +213,8 @@ public class InputManager : MonoBehaviour
 
     public void UpdateInput(float deltaTime)
     {
+        if (initialized && (appliedDebugMode != isDebugMode || appliedMixedMode != isP1SerialP2KeyboardDebugMode))
+            SetInputMode(InputMode);
         UpdateSerialDebugDisplayToggle();
         if (!initialized)
         {
@@ -201,7 +232,7 @@ public class InputManager : MonoBehaviour
 
     public IDriveInputSource GetPlayerInputSource(int playerIndex)
     {
-        return IsValidPlayerIndex(playerIndex) ? inputSources[playerIndex] : null;
+        return IsValidPlayerIndex(playerIndex) ? liveInputs[playerIndex] : null;
     }
 
     public DriveInputState GetInputState(int playerIndex)
@@ -442,6 +473,7 @@ public class InputManager : MonoBehaviour
 
     private void DisposeInputSources()
     {
+        foreach (LiveDriveInputSource handle in liveInputs) handle.SwitchSource(null, true);
         if (sharedSerialInputSource != null)
         {
             sharedSerialInputSource.LineProcessed -= OnSharedSerialLineProcessed;

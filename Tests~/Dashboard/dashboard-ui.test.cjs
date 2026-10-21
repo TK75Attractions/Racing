@@ -20,8 +20,13 @@ class Element {
 function fixture() {
   const elements = new Map([...html.matchAll(/id="([^"]+)"/g)].map(match=>[match[1],new Element()]));
   const buttons = [...html.matchAll(/data-action="([^"]+)"/g)].map(match=>Object.assign(new Element(),{dataset:{action:match[1]}}));
+  const settingControls = [...html.matchAll(/<(input|select|button) id="([^"]+)"[^>]*data-setting="([^"]+)"([^>]*)>/g)].map(match => {
+    const control = elements.get(match[2]); control.dataset.setting = match[3];
+    control.dataset.settingArg = /data-setting-arg="([^"]+)"/.exec(match[4])?.[1];
+    return control;
+  });
   const document = { getElementById(id) { assert.ok(elements.has(id), `Missing UI element ${id}`); return elements.get(id); },
-    createElement(){return new Element();}, querySelectorAll(selector){return selector==='[data-action]'?buttons:[];} };
+    createElement(){return new Element();}, querySelectorAll(selector){return selector==='[data-action]'?buttons:selector==='[data-setting]'?settingControls:[];} };
   let now = 100000;
   class ClockDate extends Date { static now() { return now; } }
   const context = vm.createContext({Date:ClockDate,document,location:{origin:'http://127.0.0.1:8765'},URL:{revokeObjectURL(){}}});
@@ -414,4 +419,79 @@ test('Closed raw dialog buffers recent frames without rebuilding its contents',(
   ui.render({...base,rawLines:raw});assert.equal(ui.elements.get('raw-log').children.length,0);
   ui.elements.get('raw-dialog').open=true;vm.runInContext('renderRaw(rawPending,rawGap,true)',ui.context);
   assert.equal(ui.elements.get('raw-log').children[0].children[2].textContent,raw[0].line);
+});
+
+const settings = {master:.8,bgm:.6,engine:.35,effects:.9,inputAvailable:true,inputMode:'keyboard',steeringMode:'Normal',
+  constantPedal:.7,constantPaused:false,serialDebug:true,featurePanel:false,
+  deviceNames:['USB <script>','HDMI'],deviceKeys:['usb','hdmi'],selectedDevices:['usb','hdmi'],
+  outputStatus:['USB','HDMI'],audioRefreshAvailable:true,outputAvailable:[true,true]};
+test('Settings mirror Unity, use stable device keys, prevent duplicate outputs and disable viewers',()=>{
+  const ui=fixture();ui.render({...base,settings});
+  assert.equal(ui.elements.get('settings-master').value,80);
+  assert.equal(ui.elements.get('settings-engine-value').textContent,'35%');
+  assert.equal(ui.elements.get('settings-inputMode').value,'keyboard');
+  assert.equal(ui.elements.get('settings-serialDebug').checked,true);
+  const output=ui.elements.get('settings-output-0');
+  assert.equal(output.value,'usb');assert.equal(output.children[2].disabled,true);
+  assert.equal(output.children[1].textContent,'USB <script>');
+  assert.equal(ui.elements.get('settings-master').disabled,false);
+  assert.equal(ui.elements.get('settings-constantPedal').disabled,true);
+  ui.render({...base,settings},{canControl:false});
+  assert.equal(ui.elements.get('settings-inputMode').disabled,true);
+  assert.equal(ui.elements.get('settings-master').disabled,true);
+  ui.render({...base,settings:{...settings,outputAvailable:[false,false]}});
+  assert.equal(ui.elements.get('settings-output-0').disabled,true);
+  assert.equal(ui.elements.get('settings-refresh').disabled,false);
+  ui.render({...base,settings:{...settings,steeringMode:'ConstantPedal',constantPaused:true}});
+  assert.equal(ui.elements.get('settings-constantPedal').disabled,false);
+  assert.equal(ui.elements.get('settings-constantPaused').checked,true);
+  ui.context.setConnection(false);
+  assert.equal(ui.elements.get('settings-output-0').disabled,true);
+  assert.equal(ui.elements.get('settings-serialDebug').checked,false);
+});
+test('Old Unity snapshots leave settings disabled and active slider drafts survive polling',()=>{
+  const ui=fixture();ui.render(base);
+  assert.equal(ui.elements.get('settings-inputMode').disabled,true);
+  const slider=ui.elements.get('settings-bgm');slider.value=25;
+  vm.runInContext("document.activeElement = document.getElementById('settings-bgm')",ui.context);
+  ui.render({...base,settings});assert.equal(slider.value,25);
+  vm.runInContext('document.activeElement = null',ui.context);
+  ui.render({...base,settings:{...settings,bgm:.45}});assert.equal(slider.value,45);
+});
+test('Acknowledged settings survive late snapshots and reset with a new Unity session',()=>{
+  const ui=fixture();
+  ui.render({...base,sessionId:'one',settingsRevision:2,settings});
+  ui.render({...base,sessionId:'one',settingsRevision:1,settings:{...settings,master:.1}});
+  assert.equal(ui.elements.get('settings-master').value,80);
+  ui.render({...base,sessionId:'two',settingsRevision:1,settings:{...settings,master:.2}});
+  assert.equal(ui.elements.get('settings-master').value,20);
+});
+test('HTTP settings use guarded requests, display acknowledged values and query lost responses without replay',async()=>{
+  const ui=fixture();ui.context.AbortSignal=AbortSignal;
+  ui.context.crypto={randomUUID:require('node:crypto').randomUUID};
+  ui.context.poll=async()=>{};
+  ui.render({...base,sessionId:'one',settingsRevision:2,stateRevision:4,serverTime:123,settings});
+  const slider=ui.elements.get('settings-master');slider.value=49;slider.blur=()=>{};
+  const calls=[];
+  ui.context.apiFetch=async(route,options)=>{
+    calls.push([route,options]);
+    return {json:async()=>({ok:true,settingsRevision:3,settings:{...settings,master:.49}})};
+  };
+  await ui.context.submitSetting(slider);
+  const request=JSON.parse(calls[0][1].body);
+  assert.equal(calls[0][0],'/api/action/settings');assert.equal(request.targetSession,'one');
+  assert.equal(request.stateRevision,4);assert.equal(request.settingsRevision,2);
+  assert.deepEqual(request.args,['master','0.49']);assert.equal(slider.value,49);
+  assert.match(ui.elements.get('settings-status').textContent,/反映しました/);
+  ui.render({...base,sessionId:'one',settingsRevision:2,settings});assert.equal(slider.value,49);
+  calls.length=0;slider.value=50;
+  ui.context.apiFetch=async(route,options)=>{
+    calls.push([route,options]);
+    if(options?.method==='POST')throw new Error('response lost');
+    return {ok:false};
+  };
+  await ui.context.submitSetting(slider);
+  assert.equal(calls.filter(([,options])=>options?.method==='POST').length,1);
+  assert.match(calls[1][0],/^\/api\/command\//);
+  assert.match(ui.elements.get('settings-status').textContent,/操作は再送していません/);
 });
