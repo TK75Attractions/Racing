@@ -30,7 +30,7 @@ public static class MultiplayerPlayModeValidation
     private static int holdClicks;
     private static TestInput[] inputs;
     private static Vector3 driveStart;
-    private static readonly int[,] soundCounts = new int[2,9];
+    private static readonly int[,] soundCounts = new int[2,RaceSoundBank.CueCount];
     private static int pressBefore, confirmBefore, confirmBeforeRetry;
 
     private sealed class TestInput : IDriveInputSource

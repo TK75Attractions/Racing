@@ -49,7 +49,6 @@ public sealed class TubeChargeLineController : MonoBehaviour
         if (!mover.AddDriftCharge(.25f)) return; // Full charge gets no false success notification.
         SuccessfulLines++; noticeUntil = Time.time + 1.5f;
         own.Effects?.NotifyChargeCollected();
-        RaceSoundEffects.PlayForPlayer(RaceSoundCue.Ready, own.Index);
     }
     private bool CanDrive() => manager != null && manager.state == Gmanager.State.Game && Layout != null && Layout.Available &&
         own != null && !own.IsCpu && own.IsRacing && RaceFeatureController.Enabled(RaceFeature.TubeChargeLines) &&
