@@ -12,7 +12,7 @@ public sealed class CampusAtmospherePlaytestProbe : MonoBehaviour
     [Serializable] private sealed class Report
     {
         public bool passed; public string error, mode;
-        public int replacedTreeVertices, generatedVertices, trees, houses;
+        public int replacedTreeVertices, generatedVertices, trees, houses, startGroveTrees, startGroveVertices;
         public float originalShadowDistance, introShadowDistance, restoredShadowDistance;
         public int originalShadowResolution, introShadowResolution, restoredShadowResolution;
         public bool liveOffOn, rainNightDay, disableEnable, collidersUnchanged;
@@ -51,6 +51,7 @@ public sealed class CampusAtmospherePlaytestProbe : MonoBehaviour
                 foreach(var c in GameObject.Find("1016こうしゃ").GetComponentsInChildren<Collider>())
                     if(!c.name.StartsWith("tree",StringComparison.OrdinalIgnoreCase))courseColliders.Add(c,(c.enabled,(c as MeshCollider)?.sharedMesh));
                 report.replacedTreeVertices=campus.ReplacedTreeVertices;report.generatedVertices=campus.GeneratedVertices;report.trees=campus.TreeCount;report.houses=campus.HouseCount;
+                report.startGroveTrees=campus.StartGroveTrees; report.startGroveVertices=campus.StartGroveVertices;
                 weather=RaceEnvironmentController.Active.CurrentWeather;timeOfDay=RaceEnvironmentController.Active.CurrentTimeOfDay;
             }
             if(stage==0)
