@@ -69,6 +69,9 @@ public static class BalancePlaytestValidation
         if (Environment.GetEnvironmentVariable("RACING_FEATURE_PLAYTEST") == "1" &&
             UnityEngine.Object.FindFirstObjectByType<GameplayFeaturePlaytestProbe>() == null)
             Gmanager.Control.gameObject.AddComponent<GameplayFeaturePlaytestProbe>();
+        if (Environment.GetEnvironmentVariable("RACING_COURSE_INTRO_CHECK") == "1" &&
+            UnityEngine.Object.FindFirstObjectByType<CourseIntroPlaytestProbe>() == null)
+            Gmanager.Control.gameObject.AddComponent<CourseIntroPlaytestProbe>();
         if (UnityEngine.Object.FindFirstObjectByType<BalancePlaytestAgent>() == null)
             new GameObject("Balance playtest agent").AddComponent<BalancePlaytestAgent>();
     }

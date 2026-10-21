@@ -138,6 +138,8 @@ public class Gmanager : MonoBehaviour
     public float SecondPlaceTimeRemaining => raceSession?.SecondPlaceTimeRemaining ?? 0f;
     public bool WaitingForSecondPlace => raceSession != null && raceSession.WaitingForSecondPlace;
     public float CountdownTimeRemaining => countdownTimeRemaining;
+    public bool IsCourseIntroPlaying => courseIntro != null && courseIntro.IsPlaying;
+    private CourseIntroDirector courseIntro;
     public bool IsPreparing => state == State.Title || state == State.CarSelection || state == State.Tutorial;
     public State GetPlayerPreparationState(int index) => index >= 0 && index < PlayerCount ? players[index]?.preparationState ?? State.Title : state;
     public void GetPlayerDashboardProgress(int index, out string playerState, out string carName,
@@ -872,6 +874,9 @@ public class Gmanager : MonoBehaviour
         time = 0f;
         resultReturnInputDelayTimer = 0f;
         UpdateOnPlayUI();
+        courseIntro = GetComponent<CourseIntroDirector>();
+        if (courseIntro == null) courseIntro = gameObject.AddComponent<CourseIntroDirector>();
+        courseIntro.Begin(this, displayRigs);
         Debug.Log("Two-player game start");
     }
 
@@ -953,6 +958,7 @@ public class Gmanager : MonoBehaviour
     {
         finishingPreparation = false;
         state = State.Countdown;
+        if (IsCourseIntroPlaying) return;
         UpdateCountdownDisplay();
         if (countdownTimeRemaining <= 0f)
         {
@@ -962,6 +968,16 @@ public class Gmanager : MonoBehaviour
 
     private void UpdateRaceCountdown(float dt)
     {
+        if (IsCourseIntroPlaying)
+        {
+            courseIntro.Advance(dt);
+            if (!IsCourseIntroPlaying)
+            {
+                if (countdownTimeRemaining <= 0f) StartRaceAfterCountdown();
+                else UpdateCountdownDisplay();
+            }
+            return;
+        }
         countdownTimeRemaining = Mathf.Max(0f, countdownTimeRemaining - Mathf.Max(0f, dt));
         if (countdownTimeRemaining <= 0f)
         {
@@ -1254,6 +1270,7 @@ public class Gmanager : MonoBehaviour
 
     private void ClearCurrentRaceObjects()
     {
+        courseIntro?.Stop();
         drivingTutorial?.End();
         finishingPreparation = false;
         ResetResultPlayerInputs();
