@@ -857,6 +857,7 @@ public class Gmanager : MonoBehaviour
             RaceParticipant participant = new RaceParticipant { Index = playerIndex, Car = player.car, Body = player.rigidbody,
                 Effects = player.itemEffects, Position = playerIndex + 1 };
             participants.Add(participant);
+            player.car.AddComponent<RaceDrivingSoundEffects>().Configure(this, participant);
             player.car.AddComponent<SlipstreamController>().Configure(this, participant);
             player.car.AddComponent<CourseSteeringAssist>().Configure(this, participant);
             player.car.AddComponent<LandingRewardController>().Configure(this, participant);

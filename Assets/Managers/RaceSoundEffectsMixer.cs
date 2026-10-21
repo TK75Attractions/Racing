@@ -26,7 +26,7 @@ public sealed class RaceSoundEffectsMixer : MonoBehaviour
     /// <summary>Main thread is the sole producer; a full queue drops excess UI requests.</summary>
     public bool Enqueue(RaceSoundClip clip)
     {
-        if (clip == null) return false;
+        if (clip == null || clip.Frames < 2) return false;
         int next=(write+1)%QueueSize;
         if (next==Volatile.Read(ref read)) return false;
         queue[write]=clip;
@@ -48,22 +48,38 @@ public sealed class RaceSoundEffectsMixer : MonoBehaviour
             Volatile.Write(ref read,(read+1)%QueueSize);
         }
         float music=musicGain, effects=effectsGain;
-        double step=(double)RaceSoundClip.SampleRate/System.Math.Max(1,outputSampleRate);
         for (int offset=0;offset+channels<=data.Length;offset+=channels)
         {
-            float effect=0f;
+            float left=0f, right=0f;
             for (int voice=0;voice<voices.Length;voice++)
             {
                 RaceSoundClip clip=voices[voice].clip;
                 if (clip==null) continue;
                 int index=(int)voices[voice].cursor;
-                if (index>=clip.Samples.Length-1) { voices[voice].clip=null; continue; }
+                if (index>=clip.Frames) { voices[voice].clip=null; continue; }
                 float fraction=(float)(voices[voice].cursor-index);
-                effect += clip.Samples[index]+(clip.Samples[index+1]-clip.Samples[index])*fraction;
-                voices[voice].cursor+=step;
+                int first=index*clip.Channels;
+                int second=System.Math.Min(index+1,clip.Frames-1)*clip.Channels;
+                int r=clip.Channels-1;
+                left += clip.Samples[first]+(clip.Samples[second]-clip.Samples[first])*fraction;
+                right += clip.Samples[first+r]+(clip.Samples[second+r]-clip.Samples[first+r])*fraction;
+                voices[voice].cursor+=(double)clip.Frequency/System.Math.Max(1,outputSampleRate);
             }
             for (int channel=0;channel<channels;channel++)
-                data[offset+channel]=data[offset+channel]*music+effect*effects;
+            {
+                float effect=channels==1 || channel>1 ? (left+right)*.5f : channel==0 ? left : right;
+                data[offset+channel]=Limit(data[offset+channel]*music+effect*effects);
+            }
         }
+    }
+
+    // Transparent below -0.9 dBFS; softly contain overlapping fanfares/impacts above that.
+    private static float Limit(float sample)
+    {
+        float magnitude=System.Math.Abs(sample);
+        if (magnitude<=.9f) return sample;
+        float excess=magnitude-.9f;
+        float limited=.9f+.1f*excess/(.1f+excess);
+        return sample<0f ? -limited : limited;
     }
 }

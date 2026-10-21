@@ -69,7 +69,7 @@ public sealed class LandingRewardController : MonoBehaviour
         if (!challenge.Tick(true, contacts, !course.HasRoadAtProgress(raw), landing, dt)) return;
         SuccessfulLandings++;
         if (RaceFeatureController.Enabled(RaceFeature.LandingFeedback))
-        { noticeUntil = Time.time + 1.8f; RaceSoundEffects.PlayForPlayer(RaceSoundCue.Ready, own.Index); }
+        { noticeUntil = Time.time + 1.8f; RaceSoundEffects.PlayForPlayer(RaceSoundCue.Landing, own.Index); }
         if (RaceFeatureController.Enabled(RaceFeature.LandingBoost))
         {
             if (mover.StartLandingBoost()) RewardBoosts++;

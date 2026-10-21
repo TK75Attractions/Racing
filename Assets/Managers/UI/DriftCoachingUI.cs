@@ -28,7 +28,6 @@ public sealed class DriftCoachingUI : MonoBehaviour
         SuccessfulReleases++;
         if (!RaceFeatureController.Enabled(RaceFeature.DriftCoaching)) return;
         Show("ドリフト加速！", 1.2f);
-        RaceSoundEffects.PlayForPlayer(RaceSoundCue.Ready, playerIndex);
     }
     private void Show(string text, float seconds)
     {

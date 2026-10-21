@@ -1,54 +1,65 @@
 using System;
 using UnityEngine;
 
-public enum RaceSoundCue { Select, Press, Confirm, Cancel, Ready, Countdown, Go, Finish, Results }
+// Keep the original values: existing scene/UI references depend on their order.
+public enum RaceSoundCue
+{
+    Select, Press, Confirm, Cancel, Ready, Countdown, Go, Finish, Results,
+    TireSkid, DriftCharge, DriftBoost, Boost, Landing, Charge, ItemPickup, Shield, Impact, FinalLap
+}
 
-/// <summary>Immutable mono PCM; all cues are synthesized once, without external audio assets.</summary>
+/// <summary>Decoded, interleaved PCM, shared by all players without Unity access on the audio thread.</summary>
 public sealed class RaceSoundClip
 {
     public const int SampleRate = 48000;
     public float[] Samples { get; }
-    public RaceSoundClip(float[] samples) { Samples = samples; }
+    public int Channels { get; }
+    public int Frequency { get; }
+    public int Frames => Samples.Length / Channels;
+
+    public RaceSoundClip(float[] samples, int channels = 1, int frequency = SampleRate)
+    {
+        if (samples == null || channels < 1 || channels > 2 || frequency <= 0 || samples.Length % channels != 0)
+            throw new ArgumentException("Expected mono or stereo PCM with a valid sample rate.");
+        Samples = samples; Channels = channels; Frequency = frequency;
+    }
 }
 
 public static class RaceSoundBank
 {
+    public static readonly int CueCount = Enum.GetValues(typeof(RaceSoundCue)).Length;
     private static RaceSoundClip[] clips;
+    public static string ResourcePath(RaceSoundCue cue) => "Audio/SFX/" + cue;
+
+    /// <summary>Call on the main thread. Audio files are decoded once, never synthesized at runtime.</summary>
     public static RaceSoundClip Get(RaceSoundCue cue)
     {
-        if (clips == null) clips = Build(); // Main-thread initialization, never from the DSP callback.
+        if ((uint)(int)cue >= (uint)CueCount) return null;
+        if (clips == null) clips = Load();
         return clips[(int)cue];
     }
 
-    private static RaceSoundClip[] Build() => new[] {
-        Tone(.055f,.10f,880f),
-        Tone(.045f,.15f,520f),
-        Tone(.18f,.22f,660f,990f),
-        Tone(.15f,.17f,660f,440f),
-        Tone(.26f,.23f,523.25f,659.25f,783.99f),
-        Tone(.13f,.25f,740f),
-        Tone(.48f,.27f,740f,987.77f,1480f),
-        Tone(.85f,.25f,523.25f,659.25f,783.99f,1046.5f,1318.5f),
-        Tone(.42f,.19f,783.99f,659.25f,1046.5f)
-    };
-
-    private static RaceSoundClip Tone(float duration,float gain,params float[] notes)
+    private static RaceSoundClip[] Load()
     {
-        float[] pcm = new float[Mathf.CeilToInt(duration * RaceSoundClip.SampleRate)];
-        double phase = 0;
-        float noteSeconds = duration / notes.Length;
-        for (int i=0;i<pcm.Length;i++)
+        var result = new RaceSoundClip[CueCount];
+        foreach (RaceSoundCue cue in Enum.GetValues(typeof(RaceSoundCue)))
         {
-            float time=(float)i/RaceSoundClip.SampleRate;
-            int note=Math.Min(notes.Length-1,(int)(time/noteSeconds));
-            float local=time-note*noteSeconds;
-            float attack=Mathf.Clamp01(local/.004f);
-            float release=Mathf.Clamp01((noteSeconds-local)/.025f);
-            float decay=Mathf.Exp(-local*5f);
-            phase += 2*Math.PI*notes[note]/RaceSoundClip.SampleRate;
-            pcm[i]=(float)(Math.Sin(phase)+.16*Math.Sin(phase*2)) * gain * attack * release * decay / 1.16f;
+            AudioClip asset = Resources.Load<AudioClip>(ResourcePath(cue));
+            if (asset == null || asset.channels < 1 || asset.channels > 2 ||
+                asset.loadType != AudioClipLoadType.DecompressOnLoad ||
+                asset.loadState != AudioDataLoadState.Loaded && !asset.LoadAudioData())
+            {
+                Debug.LogError($"RaceSoundBank: {ResourcePath(cue)} must be a preloaded mono/stereo audio file (Decompress On Load).");
+                continue;
+            }
+            float[] pcm = new float[asset.samples * asset.channels];
+            if (!asset.GetData(pcm, 0))
+            {
+                Debug.LogError($"RaceSoundBank: could not decode {ResourcePath(cue)}.");
+                continue;
+            }
+            result[(int)cue] = new RaceSoundClip(pcm, asset.channels, asset.frequency);
         }
-        pcm[0]=pcm[pcm.Length-1]=0f;
-        return new RaceSoundClip(pcm);
+        return result;
     }
 }
