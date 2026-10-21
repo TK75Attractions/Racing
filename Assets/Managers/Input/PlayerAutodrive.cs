@@ -11,6 +11,9 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
     private IDriveInputSource manual;
     private GroundCheck[] wheels;
     private DebugMover mover;
+    private RaceHumanPace humanPace;
+    private float paceCruise=18f;
+    public float PaceCruise => paceCruise;
     public bool IsActive { get; private set; }
     public bool WasUsed { get; private set; }
     public int PlayerIndex => own?.Index ?? 1;
@@ -20,6 +23,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
     public void Configure(Gmanager race, RaceParticipant participant)
     {
         manager = race; own = participant; mover = GetComponent<DebugMover>();
+        humanPace=RaceHumanPace.For(race);
         gate = mover.InputSource as PlayerDriveInputGate; manual = gate?.Source;
         wheels = GetComponentsInChildren<GroundCheck>(); ApplySwitch();
     }
@@ -29,6 +33,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
         bool next = own != null && own.Index == 1 && RaceFeatureController.Enabled(RaceFeature.PlayerTwoAutodrive);
         if (next == IsActive || gate == null) return;
         CurrentState = DriveInputState.Neutral; bot.Clear();
+        paceCruise=18f;
         gate.SwitchSource(next ? this : manual); IsActive = next; WasUsed |= next;
         mover.SetInputSource(gate); GetComponent<CarResetter>()?.SetInputSource(gate);
     }
@@ -40,6 +45,14 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
         int contacts = 0; foreach (GroundCheck wheel in wheels) if (wheel.CheckNow()) contacts++;
         float cruise = RaceSpeedPlanner.Enabled ? RaceSpeedPlanner.Cruise : 24f;
         float cap = cruise;
+        var partner=manager.GetParticipant(0);
+        if (RaceHumanPace.Enabled && RaceHumanPace.ManualRacer(partner))
+        {
+            float wanted=CpuRacePace.CompanionRequest(humanPace.Pace(0),partner.Progress-own.Progress,cruise);
+            paceCruise=Mathf.MoveTowards(paceCruise,wanted,Time.fixedDeltaTime*(wanted<paceCruise?4f:6f));
+            cap=paceCruise;
+            if(manager.course.IsJumpAhead(own.Body.position,manager.CourseProgressSign,60f))cap=Mathf.Max(cap,24f);
+        }
         if (manager.course.IsJumpAhead(own.Body.position, manager.CourseProgressSign, 90f))
             foreach (RaceParticipant other in manager.Participants)
             {
