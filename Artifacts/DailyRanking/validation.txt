@@ -1,0 +1,1 @@
+PASS: restart, both seats, per-play history, duplicate callbacks, midnight, sticky test exclusion, lap separation, backup recovery, corrupt-file preservation, save failure; 720p/1080p P1/P2 renders, local rank beyond top five, live OFF/ON, static Japanese glyphs, DNF/auto/error states.

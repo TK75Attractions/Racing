@@ -15,11 +15,14 @@ public class RaceResultRecord
     public float finalLapTime;
     public float bestLapTime;
     public RaceAchievementSnapshot achievements;
+    public bool dailyRankingExcluded;
+    public string dailyRankingDay;
 }
 
 [Serializable]
 public class RaceSessionResult
 {
+    [NonSerialized] public DailyRankingView dailyRanking;
     public const int PlayerCount = 2;
     public RaceResultRecord[] playerResults = new RaceResultRecord[PlayerCount];
 

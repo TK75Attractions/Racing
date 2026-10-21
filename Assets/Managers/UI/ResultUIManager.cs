@@ -16,6 +16,7 @@ public class ResultUIManager
     private RawImage medalImage;
     private RectTransform achievementPanel;
     private ResultMenuAnimator menuAnimator;
+    private DailyRankingPanel dailyRankingPanel;
     public string AchievementText=>achievement!=null ? achievement.text : "";
     public RaceResultRecord CurrentResult=>currentResult;
     public RaceSessionResult CurrentSessionResult=>currentSessionResult;
@@ -61,17 +62,18 @@ public class ResultUIManager
         bestLap=NeonUI.Text(summary,"Best","--'--.---",new Vector2(.01f,.05f),new Vector2(.46f,.62f),36f,italic:true);
         NeonUI.Text(summary,"LastLabel","最終ラップ / LAST LAP",new Vector2(.50f,.62f),new Vector2(.98f,.97f),18f,tint:new Color(.6f,.83f,1));
         lastLap=NeonUI.Text(summary,"Last","--'--.---",new Vector2(.50f,.05f),new Vector2(.94f,.62f),36f,italic:true);
-        RectTransform medal=RacingUITheme.Rect(card,"Medal",new Vector2(.665f,.315f),new Vector2(.96f,.79f));
+        RectTransform medal=RacingUITheme.Rect(card,"Medal",new Vector2(.665f,.60f),new Vector2(.96f,.80f));
         RectTransform artwork=RacingUITheme.Rect(medal,"Artwork",Vector2.zero,Vector2.one);
         medalImage=artwork.GetComponent<RawImage>() ?? artwork.gameObject.AddComponent<RawImage>();medalImage.raycastTarget=false;
         AspectRatioFitter fit=artwork.GetComponent<AspectRatioFitter>() ?? artwork.gameObject.AddComponent<AspectRatioFitter>();fit.aspectMode=AspectRatioFitter.AspectMode.FitInParent;fit.aspectRatio=1f;
-        medalNumber=NeonUI.Text(medal,"Number","1",new Vector2(.20f,.34f),new Vector2(.80f,.78f),234f,TextAlignmentOptions.Center,true,new Color(1,.94f,.73f));
-        RectTransform ribbon=NeonUI.Panel(card,"PlacementRibbon",new Vector2(.665f,.215f),new Vector2(.97f,.37f),true);
-        ordinal=NeonUI.Text(ribbon,"Ordinal","1ST",new Vector2(.04f,.23f),new Vector2(.96f,.98f),113f,TextAlignmentOptions.Center,true);
+        medalNumber=NeonUI.Text(medal,"Number","1",new Vector2(.20f,.34f),new Vector2(.80f,.78f),98f,TextAlignmentOptions.Center,true,new Color(1,.94f,.73f));
+        RectTransform ribbon=NeonUI.Panel(card,"PlacementRibbon",new Vector2(.665f,.505f),new Vector2(.97f,.60f),true);
+        ordinal=NeonUI.Text(ribbon,"Ordinal","1ST",new Vector2(.04f,.23f),new Vector2(.96f,.98f),67f,TextAlignmentOptions.Center,true);
         NeonUI.GlowText(ordinal,NeonUI.Pink);
         completedLaps=NeonUI.Text(ribbon,"Completed","1 位 / FINISH",new Vector2(.04f,.03f),new Vector2(.96f,.30f),22f,TextAlignmentOptions.Center);
         achievementPanel=NeonUI.Panel(card,"AchievementBackdrop",new Vector2(.665f,.153f),new Vector2(.97f,.205f));
         achievement=NeonUI.Text(card,"Achievement","",new Vector2(.665f,.153f),new Vector2(.97f,.205f),25f,TextAlignmentOptions.Center,true,NeonUI.Cyan);
+        dailyRankingPanel=new DailyRankingPanel(card);
         BuildMenu(card);
     }
     private void BuildCourseCard(Transform parent)
@@ -149,6 +151,7 @@ public class ResultUIManager
         bestLap.text=local!=null&&local.bestLapTime>0&&local.bestLapTime<float.MaxValue?FormatTime(local.bestLapTime):"--'--.---";
         lastLap.text=local!=null&&local.didFinish&&local.finalLapTime>0?FormatTime(local.finalLapTime):"--'--.---";
         RefreshHighlight();
+        RefreshDailyRanking();
         SetMenuState(0,0);
         SetPedalConfirmationReady(false);
     }
@@ -159,6 +162,8 @@ public class ResultUIManager
             ? FormatHighlight(currentSessionResult?.GetPlayerResult(localPlayerNumber-1)) : "";
         if (achievementPanel != null) achievementPanel.gameObject.SetActive(achievement.text.Length > 0);
     }
+    public void RefreshDailyRanking() => dailyRankingPanel?.Refresh(currentSessionResult?.dailyRanking,
+        currentSessionResult?.GetPlayerResult(localPlayerNumber-1),localPlayerNumber);
     public static string FormatHighlight(RaceResultRecord local)
     {
         if (local == null) return "";

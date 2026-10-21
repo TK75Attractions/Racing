@@ -1,0 +1,1 @@
+PASS: natural 2-lap human finishes; CPU excluded; both result screens; millisecond timings; duplicate prevention; restart persistence.
