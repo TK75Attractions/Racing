@@ -73,3 +73,5 @@ Unity未起動。ローカルの既存Unity参照DLLとcsproj定義によるRunt
 
 実装根拠: 同梱URP 17.3の `UniversalRenderPipeline.RenderCameraStack` はBaseの `beginCameraRendering` 後にカメラデータを生成し、OverlayはBaseの縮小descriptorを継承する。`UniversalRendererRenderGraph.ImportBackBuffers` は独立Base出力の色保持を保証しないため、3Dを背面画像として明示合成した。[Unityのカメラ描画前イベント](https://docs.unity3d.com/6000.3/Documentation/ScriptReference/Rendering.RenderPipelineManager-beginCameraRendering.html)。URP更新時はこの順序を再確認する。
 合成用の "NativeUIWorld" シェーダーは3D出力のRGBを不透明に描き、空のAlphaが0でも背景を欠落させない。新規シェーダーのUnityインポート／実機コンパイルは未確認。
+
+無人生成はグラフィックス有効で Unity.exe -batchmode -projectPath <project> -executeMethod TitleBackgroundBuilder.RunBatch -logFile <log> を実行する（-quit / -nographics は付けない）。完了時にツールが終了コード 0/1 で終了し、Assets/Resources/UI/Neon/TitleBackground.png を上書きする。
