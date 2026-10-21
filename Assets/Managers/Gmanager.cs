@@ -305,7 +305,9 @@ public class Gmanager : MonoBehaviour
         }
 
 #if UNITY_EDITOR
-        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame && course != null && test != null)
+        // キーボードデバッグでは Space が P1 のリセットなので、コース内判定のログは出しません。
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame && course != null && test != null &&
+            (IManager == null || !IManager.isDebugMode))
         {
             Debug.Log(course.IsPointInsideCourse(test.position));
         }
@@ -414,9 +416,9 @@ public class Gmanager : MonoBehaviour
             return;
         }
 
-        GUILayout.BeginArea(new Rect(16f, 16f, 340f, 300f), GUI.skin.box);
+        GUILayout.BeginArea(new Rect(16f, 16f, 340f, 320f), GUI.skin.box);
         GUILayout.Label("DEBUG RACE CONTROLS");
-        GUILayout.Label($"State: {state}");
+        GUILayout.Label($"State: {state}    P2 view: Game view Display {playerTwoDisplay}");
         bool previousGuiEnabled = GUI.enabled;
 
         for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)

@@ -38,6 +38,15 @@ public static class KeyboardDebugPlaythroughValidation
     private static readonly List<string> errors = new List<string>();
     private static readonly PlayerDriver[] drivers = { new PlayerDriver(0), new PlayerDriver(1) };
     private static int round;
+    private static int phaseOf;
+    private static double escapeAt;
+    private static readonly List<string> trace = new List<string>();
+
+    private static void Trace(string line)
+    {
+        if (trace.Count == 0 || trace[trace.Count - 1] != line) trace.Add(line);
+        if (trace.Count > 40) trace.RemoveAt(0);
+    }
 
     static KeyboardDebugPlaythroughValidation()
     {
@@ -72,6 +81,8 @@ public static class KeyboardDebugPlaythroughValidation
         if (type != LogType.Error && type != LogType.Exception && type != LogType.Assert) return;
         if (message.StartsWith(Prefix, StringComparison.Ordinal)) return;
         foreach (string ignored in IgnoredErrors) if (message.Contains(ignored)) return;
+        // エディタ起動直後の検索インデックス作成など、ゲームのコードを通らないエディタ内部の例外は除外します。
+        if (stackTrace != null && stackTrace.Contains("UnityEditor.Search.")) return;
         string firstFrame = stackTrace?.Split('\n')[0] ?? "";
         errors.Add($"[{step}] {type}: {message} @ {firstFrame}");
     }
@@ -126,7 +137,7 @@ public static class KeyboardDebugPlaythroughValidation
                 drivers[1].TitleWithPedalHold(age);
                 if (drivers[0].PreparationIs(Gmanager.State.CarSelection) && drivers[1].PreparationIs(Gmanager.State.CarSelection))
                 { Log("both players reached car selection"); To(Step.CarSelection); }
-                else if (age > 15) throw new InvalidOperationException($"Title start failed: P1 {manager.GetPlayerPreparationState(0)}, P2 {manager.GetPlayerPreparationState(1)}");
+                else if (age > 15) throw new InvalidOperationException($"Title start failed: P1 {manager.GetPlayerPreparationState(0)}, P2 {manager.GetPlayerPreparationState(1)}; {InputDiagnostics(manager)}");
                 break;
 
             case Step.CarSelection:
@@ -175,17 +186,16 @@ public static class KeyboardDebugPlaythroughValidation
 
             case Step.RaceEscape:
                 // Esc で中断メニューを開き、もう一度 Esc で閉じます。
-                if (age < .15) Hold(Key.Escape);
-                else if (age > .5 && age < .65)
+                Trace($"frame={Time.frameCount} esc={keyboard.escapeKey.isPressed}/{keyboard.escapeKey.wasPressedThisFrame} transitioning={manager.IsTransitioning()} menu={drivers[0].MenuOpen}/{drivers[1].MenuOpen} state={manager.state}");
+                if (phaseOf == 0)
                 {
-                    Require(drivers[0].MenuOpen && drivers[1].MenuOpen, "Escape opens the interruption menu");
-                    Hold(Key.Escape);
+                    if (age > .3 && age < .45) Hold(Key.Escape);
+                    if (drivers[0].MenuOpen && drivers[1].MenuOpen) { phaseOf = 1; escapeAt = age; }
+                    else if (age > 2.0) throw new InvalidOperationException("Escape opens the interruption menu\n  " + string.Join("\n  ", trace));
                 }
-                else if (age > 1.0)
-                {
-                    Require(!drivers[0].MenuOpen && !drivers[1].MenuOpen, "Escape closes the interruption menu");
-                    To(Step.RaceGoal);
-                }
+                else if (age > escapeAt + .3 && age < escapeAt + .45) Hold(Key.Escape);
+                else if (age > escapeAt + .45 && !drivers[0].MenuOpen && !drivers[1].MenuOpen) { Log("escape opens and closes the menu"); To(Step.RaceGoal); }
+                else if (age > escapeAt + 2.0) throw new InvalidOperationException("Escape closes the interruption menu\n  " + string.Join("\n  ", trace));
                 break;
 
             case Step.RaceGoal:
@@ -279,11 +289,27 @@ public static class KeyboardDebugPlaythroughValidation
         }
     }
 
+    private static string InputDiagnostics(Gmanager manager)
+    {
+        Keyboard current = Keyboard.current;
+        string keys = current == null ? "Keyboard.current=null" :
+            $"current={(current == keyboard ? "injected" : current.name)} W={current.wKey.isPressed} Up={current.upArrowKey.isPressed} Enter={current.enterKey.isPressed} injectedUp={keyboard?.upArrowKey.isPressed}";
+        string states = "";
+        for (int i = 0; i < 2; i++)
+        {
+            DriveInputState state = manager.IManager.GetInputState(i);
+            states += $" P{i + 1}(connected={manager.IManager.IsPlayerConnected(i)} pedal={state.pedal} {manager.TitleDiagnostics(i)} transitioning={manager.IsPlayerTransitioning(i)})";
+        }
+        return $"{keys} focus={Application.isFocused} editorBehavior={InputSystem.settings.editorInputBehaviorInPlayMode} frame={Time.frameCount} dt={Time.deltaTime:F3}{states}";
+    }
+
     private static double Age => Time.realtimeSinceStartupAsDouble - stepBegan;
 
     private static void To(Step next)
     {
         step = next;
+        phaseOf = 0;
+        trace.Clear();
         stepBegan = Time.realtimeSinceStartupAsDouble;
         foreach (PlayerDriver driver in drivers) driver.BeginStep();
     }
@@ -510,6 +536,8 @@ internal static class GmanagerPlaythroughProbe
     public static CarSelectionUI GetPlayerCarSelection(this Gmanager manager, int index) => PlayerField<CarSelectionUI>(manager, index, "carSelection");
     public static bool IsInterruptionMenuOpen(this Gmanager manager, int index) => PlayerField<InterruptionMenuUI>(manager, index, "interruptionMenu")?.IsOpen == true;
     public static bool IsPlayerReturnedToTitle(this Gmanager manager, int index) => PlayerField<bool>(manager, index, "returnedToTitle");
+    public static string TitleDiagnostics(this Gmanager manager, int index) =>
+        $"armed={PlayerField<bool>(manager, index, "titleInputArmed")} release={PlayerField<float>(manager, index, "titleReleaseTimer"):F2} hold={PlayerField<float>(manager, index, "readyHoldTimer"):F2}";
     // Gmanager.OnGUI の GOAL ボタンと同じ処理です。
     public static void DebugAdvanceLapForValidation(this Gmanager manager, int index) => AdvanceDebugLapMethod.Invoke(manager, new object[] { index, true });
     // デバッグパネルの ALL PLAYERS ボタンを、表示中のラベルを確かめてから押します。

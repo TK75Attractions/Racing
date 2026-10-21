@@ -8,6 +8,23 @@
 
 現在の保存済み `SampleScene` は両者をキーボードで操作する検証設定です（`Is Debug Mode` ON、`Is P1 Serial P2 Keyboard Debug Mode` OFF）。P1はEnterまたはWを0.25秒押し、P2はRight Shiftまたは上矢印を0.25秒押すと、それぞれ車種選択へ進みます。車種を確定して両者の練習が完了するとレースが始まります。P1/P2ともESP32で操作する実機対戦では、両方のデバッグ設定を無効にしてください。
 
+## キーボードデバッグ（Input Mode: Debug）
+
+`Is Debug Mode` ON で Play すると、左上に `DEBUG RACE CONTROLS` が出ます。キーはGameビューをクリックしてフォーカスしてから押してください（フォーカスが外れているとキーはゲームに届きません）。
+
+| 操作 | P1 | P2 |
+|---|---|---|
+| ペダル（アクセル／ブレーキ・後退） | W / S | ↑ / ↓ |
+| ハンドル | A / D | ← / → |
+| タイトルの開始 | Enter または W 長押し | Right Shift または ↑ 長押し |
+| リセット | Space | / または Right Ctrl |
+| 中断メニュー（両者） | Esc | Esc |
+
+- ペダル系の操作は「一度離してから押す」が必要です（タイトル、車種決定、練習開始、リセット後、リザルト）。車種選択は短押しで項目移動、0.65秒長押しで決定。リザルトは左右で「もう一度／タイトルへ」を選び、1秒長押しで決定します。
+- パネルには P1/P2 の進行状況と、P2 を映すGameビューの Display 番号（`Player Two Display`、現在のシーンでは 3）を表示します。
+- 1人でデバッグするときは `ALL PLAYERS` ボタンで、操作していないプレイヤーを待たずに進めます（START → CONFIRM CAR → SKIP TUTORIAL、リザルトでは RETURN TO TITLE）。`RETRY RACE` でリザルトから再レース、`GOAL` / `+1 LAP` で周回を進められます。
+- `Racing > Debug > Validate Keyboard Debug Playthrough` は、キーボード入力を模擬して、タイトル → 車種選択 → 練習 → レース走行・リセット・中断メニュー → ゴール → リトライ → タイトル → 1人デバッグの周回までを通し、途中のエラーも失敗にします。バッチ実行は `-batchmode -executeMethod KeyboardDebugPlaythroughValidation.Run`（`-quit` なし）。2026-10-21、Windows on ARM（Unity 6000.3.9f1 ARM64）で合格を確認しました。
+
 ## P1・P2を通常ウィンドウで表示する
 
 StandaloneはP1/P2ともタイトルバー付きの移動・リサイズ可能なウィンドウで表示します。初期サイズは960×540（macOSでは画面の作業領域に収まるよう調整）です。以前のビルドで保存されたフルスクリーン設定も起動時にウィンドウへ切り替えます。フォーカスが外れてもゲーム進行とESP32入力を継続します。

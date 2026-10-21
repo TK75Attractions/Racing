@@ -58,7 +58,7 @@ macOS (Intel/Apple Silicon) とWindows x64用のプラグインを `Assets/Plugi
 再ビルド:
 
 - macOS: `sh Native~/RaceAudio/build-macos.sh`
-- Windows: Visual Studioの「x64 Native Tools Command Prompt」で `Native~\RaceAudio\build-windows.cmd` を実行します（C++デスクトップ開発ワークロードが必要）。
+- Windows: Visual Studioの「x64 Native Tools Command Prompt」で `Native~\RaceAudio\build-windows.cmd` を実行します（C++デスクトップ開発ワークロードが必要）。Windows on ARM（ARM64 版 Unity エディタ）では `vcvarsarm64.bat` の環境で同じスクリプトを実行すると `Assets/Plugins/RaceAudio/WindowsArm64` に出力します。x64 版 DLL は ARM64 エディタでは読み込めず、「ネイティブ音声プラグインを読み込めません」と出ます。
 - オフライン音声ミキサーテスト: `clang++ -std=c++17 -O2 Native~/RaceAudio/test-mixer.cpp -framework CoreFoundation -framework CoreAudio -framework AudioToolbox -lpthread -o /tmp/race-audio-test && /tmp/race-audio-test`
 - Unity動作検証: `Racing > Validate Player Audio` または `-batchmode -executeMethod PlayerAudioValidation.Run -quit`。
 
