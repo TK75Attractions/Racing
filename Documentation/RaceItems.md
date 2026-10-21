@@ -56,3 +56,7 @@ Unity メニューの `Racing > Items` から作成します。
 ## 検証
 
 `Racing > Validate Race Items`（または `Unity -batchmode -executeMethod RaceItemValidation.Run -quit`）で、抽選表、コース中心線上の距離→座標変換、チャージ加算、各効果の付与・無効化、ロケットの発進速度を確認します。
+
+## 命中した相手の表示
+
+発動者側へ、実際に妨害が成立した相手の名前を通知する。設置オイル・シールドのスピン・ハンドル反転と、反転中の実際の壁接触に対応する。防御や自己被弾は成功通知に含めない。接近演出・F8設定・検証方法は [RivalFeedback](RivalFeedback.md) を参照。

@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+public enum ItemImpactKind { OilSlip, ShieldSpin, SteeringReversed, ConfusedWallContact }
+
 /// <summary>
 /// 車両ごとのアイテム効果（シールド、ロケット、オイル、コンフューズ、スピン）の状態を持ちます。
 /// 走行入力やタイヤ力への反映は DebugMover がこのコンポーネントを参照して行います。
@@ -100,6 +102,8 @@ public sealed class CarItemEffects : MonoBehaviour
             Vector3 angular = body.angularVelocity; angular.y = 0f; body.angularVelocity = angular;
         }
         oilTimeRemaining = confuseTimeRemaining = spinTimeRemaining = 0f;
+        confuseSource = null;
+        confuseWallReported = false;
         oilDropTimeRemaining = -1f;
         if (body != null) body.maxAngularVelocity = originalMaxAngularVelocity;
     }
@@ -141,10 +145,14 @@ public sealed class CarItemEffects : MonoBehaviour
     /// Oil はオイルを踏んだ、Confuse はハンドル反転、Shield はシールドに弾かれてスピンしたことを表します。
     /// </summary>
     public event Action<RaceItemType> Afflicted;
+    /// <summary>この車が発動した妨害が実際に成立した相手と結果。防御・自己被弾は含みません。</summary>
+    public event Action<CarItemEffects, ItemImpactKind> AttackLanded;
     /// <summary>ドリフトチャージを拾った瞬間を知らせます。</summary>
     public event Action ChargeCollected;
 
     public int PlayerIndex { get; private set; } = -1;
+    private CarItemEffects confuseSource;
+    private bool confuseWallReported;
     public bool IsShieldActive => shieldTimeRemaining > 0f;
     public bool IsRocketActive => rocketTimeRemaining > 0f;
     public bool IsOiled => oilTimeRemaining > 0f;
@@ -209,6 +217,7 @@ public sealed class CarItemEffects : MonoBehaviour
         shieldTimeRemaining = Mathf.Max(0f, shieldTimeRemaining - dt);
         oilTimeRemaining = Mathf.Max(0f, oilTimeRemaining - dt);
         confuseTimeRemaining = Mathf.Max(0f, confuseTimeRemaining - dt);
+        if (confuseTimeRemaining <= 0f) confuseSource = null;
         rocketExitGraceRemaining = Mathf.Max(0f, rocketExitGraceRemaining - dt);
         if (rocketTimeRemaining > 0f)
         {
@@ -241,7 +250,7 @@ public sealed class CarItemEffects : MonoBehaviour
                 oilDropTimeRemaining = oilDropDelay;
                 break;
             case RaceItemType.Confuse:
-                if (opponent != null && opponent != this) opponent.ApplyConfuse();
+                if (opponent != null && opponent != this) opponent.ApplyConfuse(this);
                 break;
             default:
                 return;
@@ -259,7 +268,7 @@ public sealed class CarItemEffects : MonoBehaviour
     /// オイルに触れたときに呼びます。油だまりを消費する場合に true を返します。
     /// シールド中・ロケット中は滑りませんが、油だまりは消費します。
     /// </summary>
-    public bool ApplyOil()
+    public bool ApplyOil(CarItemEffects source = null)
     {
         if (!IsReceptive) return false;
         if (IsShieldActive || IsRocketActive) return true;
@@ -272,21 +281,25 @@ public sealed class CarItemEffects : MonoBehaviour
             body.angularVelocity += Vector3.up * oilYawKick * direction;
         }
         Afflicted?.Invoke(RaceItemType.Oil);
+        if (IsOiled) ReportAttack(source, ItemImpactKind.OilSlip);
         return true;
     }
 
     /// <summary>相手からのコンフューズです。シールド中は無効です。</summary>
-    public bool ApplyConfuse()
+    public bool ApplyConfuse(CarItemEffects source = null)
     {
         if (!IsReceptive || IsShieldActive) return false;
         if (!AcceptAffliction(confuseDuration)) return false;
         confuseTimeRemaining = AfflictionDuration(confuseDuration);
+        confuseSource = source;
+        confuseWallReported = false;
         Afflicted?.Invoke(RaceItemType.Confuse);
+        if (IsConfused) ReportAttack(source, ItemImpactKind.SteeringReversed);
         return true;
     }
 
     /// <summary>シールド中の相手に当たったときのスピンです。シールド中・ロケット中・スピン中は無効です。</summary>
-    public bool ApplySpin(Vector3 hitDirection)
+    public bool ApplySpin(Vector3 hitDirection, CarItemEffects source = null)
     {
         if (!IsReceptive || IsShieldActive || IsRocketActive || IsSpinning || body == null) return false;
 
@@ -309,7 +322,14 @@ public sealed class CarItemEffects : MonoBehaviour
 
         mover?.CancelDrift();
         Afflicted?.Invoke(RaceItemType.Shield);
+        ReportAttack(source, ItemImpactKind.ShieldSpin);
         return true;
+    }
+
+    private void ReportAttack(CarItemEffects source, ItemImpactKind kind)
+    {
+        if (source != null && source != this && source.isActiveAndEnabled)
+            source.AttackLanded?.Invoke(this, kind);
     }
 
     public void ClearAll()
@@ -323,6 +343,8 @@ public sealed class CarItemEffects : MonoBehaviour
         oilTimeRemaining = 0f;
         oilDropTimeRemaining = -1f;
         confuseTimeRemaining = 0f;
+        confuseSource = null;
+        confuseWallReported = false;
         spinTimeRemaining = 0f;
         if (body != null) body.maxAngularVelocity = originalMaxAngularVelocity;
         UpdateShieldVisual();
@@ -506,12 +528,27 @@ public sealed class CarItemEffects : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
+        // Report only an observed wall impact during the effect, not an assumed human mistake.
+        if (IsConfused && !confuseWallReported && confuseSource != null &&
+            (collision.rigidbody == null || collision.rigidbody.isKinematic) &&
+            (collision.rigidbody == null || collision.rigidbody.GetComponent<CarItemEffects>() == null) &&
+            !TubeDriveSurface.Contains(collision.collider) &&
+            collision.relativeVelocity.sqrMagnitude >= 9f)
+        {
+            for (int i = 0; i < collision.contactCount; i++)
+                if (Mathf.Abs(Vector3.Dot(collision.GetContact(i).normal, Vector3.up)) < .2f)
+                {
+                    confuseWallReported = true;
+                    ReportAttack(confuseSource, ItemImpactKind.ConfusedWallContact);
+                    break;
+                }
+        }
         if (!IsShieldActive || collision.rigidbody == null || collision.rigidbody == body) return;
         CarItemEffects other = collision.rigidbody.GetComponent<CarItemEffects>();
         if (other == null || other == this) return;
 
         Vector3 hitDirection = other.transform.position - transform.position;
-        if (other.ApplySpin(hitDirection) && consumeShieldOnHit)
+        if (other.ApplySpin(hitDirection, this) && consumeShieldOnHit)
         {
             shieldTimeRemaining = 0f;
         }

@@ -6,16 +6,17 @@ using UnityEngine.InputSystem;
 public sealed class RaceFeatureController : MonoBehaviour
 {
     private static readonly RaceFeature[] Features = {
-        RaceFeature.ExperienceItems, RaceFeature.DriftCoaching, RaceFeature.HitProtection, RaceFeature.Slipstream, RaceFeature.SteeringAssist, RaceFeature.HighSpeedCornering, RaceFeature.FastAiPace, RaceFeature.LandingFeedback, RaceFeature.LandingBoost, RaceFeature.TubeChargeLines, RaceFeature.PlayerTwoAutodrive, RaceFeature.CpuRacing, RaceFeature.ResultHighlights, RaceFeature.FinishRun, RaceFeature.FinishApproachGrace, RaceFeature.ClearSpeedPresentation, RaceFeature.CourseIntro, RaceFeature.CampusAtmosphere
+        RaceFeature.ExperienceItems, RaceFeature.DriftCoaching, RaceFeature.HitProtection, RaceFeature.Slipstream, RaceFeature.SteeringAssist, RaceFeature.HighSpeedCornering, RaceFeature.FastAiPace, RaceFeature.LandingFeedback, RaceFeature.LandingBoost, RaceFeature.TubeChargeLines, RaceFeature.PlayerTwoAutodrive, RaceFeature.CpuRacing, RaceFeature.ResultHighlights, RaceFeature.FinishRun, RaceFeature.FinishApproachGrace, RaceFeature.ClearSpeedPresentation, RaceFeature.CourseIntro, RaceFeature.CampusAtmosphere, RaceFeature.RivalProximity, RaceFeature.ItemHitFeedback
     };
     private static readonly string[] Labels = {
-        "Gentle items (shield / rocket only)", "Drift coaching", "Anti-chain hit protection", "Slipstream boost", "Course edge steering assist", "High-speed cornering + turn braking", "Fast AI pace (2 laps / 120s target)", "Landing success feedback", "Safe landing reward boost", "Tube side charge lines", "P2 test autodrive (manual on OFF)", "CPU overtaking / counterattack", "Result achievement highlight", "Short winning run after finish", "One short grace near the finish line", "Clear high-speed view (reduced blur / distortion)", "Pre-race drone course preview", "Campus lighting / landscaping / town"
+        "Gentle items (shield / rocket only)", "Drift coaching", "Anti-chain hit protection", "Slipstream boost", "Course edge steering assist", "High-speed cornering + turn braking", "Fast AI pace (2 laps / 120s target)", "Landing success feedback", "Safe landing reward boost", "Tube side charge lines", "P2 test autodrive (manual on OFF)", "CPU overtaking / counterattack", "Result achievement highlight", "Short winning run after finish", "One short grace near the finish line", "Clear high-speed view (reduced blur / distortion)", "Pre-race drone course preview", "Campus lighting / landscaping / town", "Rival proximity: 3D arrow / rear red edges", "Named outgoing item hit confirmations"
     };
     public RaceFeatureSettings Settings { get; } = new RaceFeatureSettings();
     public bool PanelVisible { get; set; }
     public event System.Action FeaturesChanged;
     private Gmanager manager;
     private int appliedRevision = -1;
+    private Vector2 scroll;
     private Rect panel = new Rect(16, 16, 550, 560);
 
     public static bool Enabled(RaceFeature feature) => Gmanager.Control != null &&
@@ -71,11 +72,13 @@ public sealed class RaceFeatureController : MonoBehaviour
         float scale = Mathf.Clamp(Screen.height / 900f, .75f, 1.5f);
         Matrix4x4 previous = GUI.matrix;
         GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+        panel.height = Mathf.Min(800f, Screen.height / scale - 32f);
         panel = GUILayout.Window(GetInstanceID(), panel, DrawPanel, "Racing debug - F8 to close");
         GUI.matrix = previous;
     }
     private void DrawPanel(int id)
     {
+        scroll = GUILayout.BeginScrollView(scroll, GUILayout.Height(Mathf.Max(200f, panel.height - 45f)));
         DrawSteeringTest();
         if (manager != null && (manager.state == Gmanager.State.Title || manager.state == Gmanager.State.Result))
             if (GUILayout.Button("Start test race - P1 manual / P2 AUTO")) manager.StartAutodriveTestRace();
@@ -108,6 +111,7 @@ public sealed class RaceFeatureController : MonoBehaviour
             foreach (RaceParticipant entry in manager.Participants)
                 if (!entry.IsCpu && entry.Car != null) GUILayout.Label(entry.Label + "  landings: " + (entry.Car.GetComponent<LandingRewardController>()?.SuccessfulLandings ?? 0) + "  tube lines: " + (entry.Car.GetComponent<TubeChargeLineController>()?.SuccessfulLines ?? 0));
         GUILayout.Label("Debug choices reset on application restart.");
+        GUILayout.EndScrollView();
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
     }
 

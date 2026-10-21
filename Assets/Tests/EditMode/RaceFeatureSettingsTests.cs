@@ -15,6 +15,8 @@ public sealed class RaceFeatureSettingsTests
         Assert.IsTrue(settings.IsEnabled(RaceFeature.ClearSpeedPresentation));
         Assert.IsTrue(settings.IsEnabled(RaceFeature.CourseIntro));
         Assert.IsTrue(settings.IsEnabled(RaceFeature.CampusAtmosphere));
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.RivalProximity));
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.ItemHitFeedback));
     }
     [Test] public void FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked()
     {
