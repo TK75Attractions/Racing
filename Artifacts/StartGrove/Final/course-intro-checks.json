@@ -1,0 +1,33 @@
+{
+    "mode": "normal",
+    "passed": true,
+    "error": "",
+    "observedIntroSeconds": 8.999995231628418,
+    "countdownAtEntry": 3.0,
+    "maximumRaceTimeDuringIntro": 0.0,
+    "maximumGridMovement": 0.0,
+    "introFrames": 217,
+    "sawCountdownAfterIntro": true,
+    "cameraSamples": [
+        {
+            "x": 362.56048583984377,
+            "y": 257.05206298828127,
+            "z": 1027.412841796875
+        },
+        {
+            "x": 427.0046691894531,
+            "y": 155.50390625,
+            "z": 946.8413696289063
+        },
+        {
+            "x": 474.9004211425781,
+            "y": 29.059473037719728,
+            "z": 831.293212890625
+        },
+        {
+            "x": 426.58709716796877,
+            "y": 7.138339996337891,
+            "z": 791.1636352539063
+        }
+    ]
+}
