@@ -240,6 +240,9 @@ public class Gmanager : MonoBehaviour
         Features.Configure(this);
         ApplyFeatureRules();
         EnsureSpeedScenery();
+        var campusAtmosphere = GetComponent<CampusAtmosphereController>();
+        if (campusAtmosphere == null) campusAtmosphere = gameObject.AddComponent<CampusAtmosphereController>();
+        campusAtmosphere.Configure(this, course);
         if (lapManager != null)
         {
             lapManager.ResetRace();

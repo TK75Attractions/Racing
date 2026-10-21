@@ -15,6 +15,8 @@ F8の **Pre-race drone course preview** でOFFにすると紹介を省略でき�
 
 上空で地面モデルの矩形の端が空に浮いて見えないよう、紹介中だけ既存の地面Materialを使う背景Planeを足す。Colliderは無効で、紹介終了・中断時に削除する。ゲーム中の地形・衝突形状やMaterial資産は変更しない。
 
+校舎の照明・配色・植栽・周辺の街並みは [CampusAtmosphere](CampusAtmosphere.md) で追加する。F8の別スイッチで比較でき、紹介中だけ遠景用の影設定を使う。
+
 ## 動画と確認
 
 `Artifacts/CourseIntro/Final/course-intro.mp4` は実際のP1カメラを24fps・無音で収録したもの。ゲーム時計に合わせたオフライン収録であり、描画性能の測定ではない。通常の開始フローから撮影し、テスト用に準備画面だけ省略する。

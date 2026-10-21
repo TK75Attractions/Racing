@@ -1,0 +1,19 @@
+{
+    "passed": true,
+    "error": "",
+    "mode": "checks",
+    "replacedTreeVertices": 5766840,
+    "generatedVertices": 69688,
+    "trees": 109,
+    "houses": 156,
+    "originalShadowDistance": 50.0,
+    "introShadowDistance": 650.0,
+    "restoredShadowDistance": 50.0,
+    "originalShadowResolution": 2048,
+    "introShadowResolution": 4096,
+    "restoredShadowResolution": 2048,
+    "liveOffOn": true,
+    "rainNightDay": true,
+    "disableEnable": true,
+    "collidersUnchanged": true
+}

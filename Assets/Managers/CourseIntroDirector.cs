@@ -127,6 +127,14 @@ public sealed class CourseIntroDirector : MonoBehaviour
         var renderer = backdrop.GetComponent<Renderer>(); renderer.sharedMaterial = source.sharedMaterial;
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
     }
+    public void RefreshBackdropMaterial()
+    {
+        if (backdrop == null) return;
+        var campus = GameObject.Find("1016こうしゃ");
+        var ground = campus != null ? campus.transform.Find("Plane") : null;
+        var source = ground != null ? ground.GetComponent<Renderer>() : null;
+        if (source != null) backdrop.GetComponent<Renderer>().sharedMaterial = source.sharedMaterial;
+    }
     private static CanvasGroup CreateOverlay(PlayerDisplayRig rig, int laps, int drivers)
     {
         var root = RacingUITheme.Rect(rig.CanvasRoot.transform, "CourseIntro", Vector2.zero, Vector2.one);
