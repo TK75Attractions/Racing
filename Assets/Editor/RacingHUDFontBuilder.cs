@@ -40,7 +40,7 @@ public static class RacingHUDFontBuilder
         {
             string path = directory + (weight == "Tutorial" ? "/Tutorial ExtraBold.asset" : "/MPLUS HUD " + weight + ".asset");
             TMP_FontAsset existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
-            if (existing != null && existing.material != null && existing.atlasTextures.All(t => t != null) && existing.HasCharacters(characters)) continue;
+            if (Environment.GetEnvironmentVariable("RACING_REBUILD_HUD_FONTS") != "1" && existing != null && existing.material != null && existing.atlasTextures.All(t => t != null) && existing.HasCharacters(characters)) continue;
             Font source = AssetDatabase.LoadAssetAtPath<Font>(weight == "Tutorial" ? "Assets/Resources/UI/TutorialBold.ttf" : "Assets/Fonts/MPLUS1-HUD-" + weight + ".ttf");
             if (source == null) throw new InvalidOperationException("Missing static HUD font: " + weight);
             TMP_FontAsset font = TMP_FontAsset.CreateFontAsset(source, weight == "Tutorial" ? 90 : 80, weight == "Tutorial" ? 12 : 8, GlyphRenderMode.SDFAA, 2048, 2048, AtlasPopulationMode.Dynamic, false);
@@ -56,7 +56,11 @@ public static class RacingHUDFontBuilder
                 foreach (UnityEngine.Object child in AssetDatabase.LoadAllAssetsAtPath(path))
                     if (child != existing) UnityEngine.Object.DestroyImmediate(child, true);
                 EditorUtility.CopySerialized(font, existing);
-                // The temporary TMP asset owns its atlas/material; retain it until editor teardown.
+                // Ownership moves to the persistent asset. TMP.OnDestroy would otherwise try to
+                // destroy those persistent textures/material when the transient font is unloaded.
+                font.atlasTextures = Array.Empty<Texture2D>();
+                font.material = null;
+                UnityEngine.Object.DestroyImmediate(font);
                 font = existing;
             }
             AssetDatabase.AddObjectToAsset(font.material, font);

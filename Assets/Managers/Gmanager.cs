@@ -713,6 +713,7 @@ public class Gmanager : MonoBehaviour
                 () => TogglePlayerDirection(capturedPlayerIndex),
                 () => RestartPlayerFromStart(capturedPlayerIndex));
             player.itemHud = PlayerItemHUD.Create(rig.CanvasRoot.transform);
+            rig.CanvasRoot.AddComponent<RivalFeedbackHUD>().Configure(this, playerIndex, rig);
         }
 
         VCamera = displayRigs[0].RaceCamera;

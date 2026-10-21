@@ -18,6 +18,7 @@ public static class BalancePlaytestValidation
         if (model == null || model.GetComponentInChildren<MeshFilter>(true) == null)
             throw new InvalidOperationException("The course model is not imported. Materialize Git LFS assets before playtesting.");
         if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        if (Environment.GetEnvironmentVariable("RACING_RIVAL_FEEDBACK_CHECK") == "1") RacingHUDFontBuilder.Build();
         if (Environment.GetEnvironmentVariable("RACING_VALIDATE_FEATURES") == "1") RaceFeatureValidation.Run();
         else if (Environment.GetEnvironmentVariable("RACING_VALIDATE_RESULT_UI") == "1") ResultHighlightValidation.Run();
         if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RACING_GEOMETRY_AUDIT_TRACE"))) RaceExperienceGeometryAudit.Run();
@@ -69,6 +70,9 @@ public static class BalancePlaytestValidation
         if (Environment.GetEnvironmentVariable("RACING_FEATURE_PLAYTEST") == "1" &&
             UnityEngine.Object.FindFirstObjectByType<GameplayFeaturePlaytestProbe>() == null)
             Gmanager.Control.gameObject.AddComponent<GameplayFeaturePlaytestProbe>();
+        if (Environment.GetEnvironmentVariable("RACING_RIVAL_FEEDBACK_CHECK") == "1" &&
+            UnityEngine.Object.FindFirstObjectByType<RivalFeedbackPlaytestProbe>() == null)
+            Gmanager.Control.gameObject.AddComponent<RivalFeedbackPlaytestProbe>();
         if (Environment.GetEnvironmentVariable("RACING_CAMPUS_ATMOSPHERE_CHECK") == "1" &&
             UnityEngine.Object.FindFirstObjectByType<CampusAtmospherePlaytestProbe>() == null)
             Gmanager.Control.gameObject.AddComponent<CampusAtmospherePlaytestProbe>();

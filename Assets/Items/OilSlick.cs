@@ -90,7 +90,7 @@ public sealed class OilSlick : MonoBehaviour
         if (consumed || (effects == owner && age < OwnerGraceSeconds)) return;
 
         // 車体の複数の Collider が同じ物理フレームに触れても、効果は1回だけにします。
-        if (!effects.ApplyOil()) return;
+        if (!effects.ApplyOil(owner)) return;
         consumed = true;
         Destroy(gameObject);
     }
