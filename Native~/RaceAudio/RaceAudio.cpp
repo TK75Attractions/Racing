@@ -20,7 +20,7 @@
 // Each Unity source is a single producer. Each device callback is a single consumer.
 // Native callbacks allocate nothing and never take a lock.
 constexpr int StreamCount = 5; // BGM + two human engines + two CPU engines, per output device.
-constexpr ma_uint32 RingFrames = 16384;
+constexpr ma_uint32 RingFrames = 32768;
 constexpr ma_uint32 MixChunkFrames = 256;
 struct Stream {
     ma_pcm_rb ring{};
@@ -30,13 +30,14 @@ struct Stream {
     float filteredFrames = 0;
     float lastLeft = 0, lastRight = 0;
     float fade = 0;
-    ma_uint64 underruns = 0;
+    std::atomic<ma_uint64> underruns{0};
 };
 struct Output {
     std::mutex producerMutex;
     ma_device device{};
     Stream streams[StreamCount]{};
     ma_uint32 sampleRate = 48000;
+    std::atomic<ma_uint32> minimumBufferMilliseconds{50};
     bool open = false;
 };
 static ma_context context;
@@ -44,7 +45,7 @@ static bool initialized = false;
 static std::vector<ma_device_info> devices;
 static Output outputs[2];
 
-static bool InitStream(Stream& stream, ma_uint32 sampleRate) {
+static bool InitStream(Stream& stream, ma_uint32 sampleRate, ma_uint32 minimumBufferMilliseconds = 50) {
     if (ma_pcm_rb_init(ma_format_f32, 2, RingFrames, nullptr, nullptr, &stream.ring) != MA_SUCCESS) return false;
     auto config = ma_linear_resampler_config_init(ma_format_f32, 2, sampleRate, sampleRate);
     config.lpfOrder = 0; // Only compensate small independent device clock differences.
@@ -52,12 +53,20 @@ static bool InitStream(Stream& stream, ma_uint32 sampleRate) {
         ma_pcm_rb_uninit(&stream.ring);
         return false;
     }
-    stream.targetFrames.store(std::min(RingFrames / 2, sampleRate / 20));
+    stream.targetFrames.store(std::min(RingFrames / 2, sampleRate * minimumBufferMilliseconds / 1000));
     stream.primed = false;
     stream.fade = 0;
     stream.lastLeft = stream.lastRight = 0;
     stream.underruns = 0;
     return true;
+}
+
+// Both threads may raise this watermark. The producer must never undo the
+// consumer's learned protection on the very next DSP block.
+static void RaiseTarget(Stream& stream, ma_uint32 frames) {
+    ma_uint32 current = stream.targetFrames.load(std::memory_order_relaxed);
+    while (current < frames && !stream.targetFrames.compare_exchange_weak(
+        current, frames, std::memory_order_relaxed)) {}
 }
 
 static void UninitStream(Stream& stream) {
@@ -106,6 +115,11 @@ static void Mix(Output& output, float* data, ma_uint32 frames) {
             }
             if (offset < frames) {
                 ++stream.underruns;
+                // A 3-block queue does not cover Editor/OS scheduling stalls.
+                // Learn from starvation, without growing unbounded latency or
+                // trying to disguise a missing block by slowing music down.
+                RaiseTarget(stream, std::min(RingFrames / 2,
+                    std::min(output.sampleRate / 5, target + output.sampleRate / 25)));
                 stream.primed = false; // Refill once, instead of alternating PCM/silence every callback.
                 stream.fade = 0;
             }
@@ -171,6 +185,20 @@ EXPORT const char* ra_device_key(int index) {
 #endif
 }
 
+EXPORT void ra_set_min_buffer_milliseconds(int player, int milliseconds) {
+    if (player < 0 || player > 1) return;
+    outputs[player].minimumBufferMilliseconds.store(
+        static_cast<ma_uint32>(std::max(50, std::min(150, milliseconds))), std::memory_order_relaxed);
+}
+
+EXPORT ma_uint64 ra_get_underruns(int player) {
+    if (player < 0 || player > 1) return 0;
+    ma_uint64 count = 0;
+    for (auto& stream : outputs[player].streams)
+        count += stream.underruns.load(std::memory_order_relaxed);
+    return count;
+}
+
 EXPORT int ra_open(int player, int deviceIndex, int sampleRate) {
     if (player < 0 || player > 1 || !initialized || deviceIndex < 0 ||
         deviceIndex >= static_cast<int>(devices.size()) || sampleRate <= 0) return -1;
@@ -180,7 +208,7 @@ EXPORT int ra_open(int player, int deviceIndex, int sampleRate) {
     output.sampleRate = static_cast<ma_uint32>(sampleRate);
     int ringCount = 0;
     for (auto& stream : output.streams) {
-        if (!InitStream(stream, output.sampleRate)) {
+        if (!InitStream(stream, output.sampleRate, output.minimumBufferMilliseconds.load(std::memory_order_relaxed))) {
             for (int i = 0; i < ringCount; ++i) UninitStream(output.streams[i]);
             return -2;
         }
@@ -222,8 +250,9 @@ EXPORT void ra_push(int player, int streamIndex, const float* data, int frames, 
     auto& state = output.streams[streamIndex];
     // Keep at least three Unity DSP blocks, within a bounded latency budget.
     ma_uint32 target = std::min(RingFrames / 2,
-        std::max(output.sampleRate / 20, static_cast<ma_uint32>(std::min(frames, static_cast<int>(RingFrames)) * 3)));
-    state.targetFrames.store(target, std::memory_order_relaxed);
+        std::max(output.sampleRate * output.minimumBufferMilliseconds.load(std::memory_order_relaxed) / 1000,
+            static_cast<ma_uint32>(std::min(frames, static_cast<int>(RingFrames)) * 3)));
+    RaiseTarget(state, target);
     auto& stream = state.ring;
     int offset = 0;
     while (offset < frames) {

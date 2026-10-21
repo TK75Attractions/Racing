@@ -1,0 +1,19 @@
+2026-10-21 / Unity 6000.3.9f1 / macOS arm64
+Original plugin mixer reproduction: repeated 80ms DSP delivery stalls; first underrun at 2.59611s.
+Original plugin existing 600s clock/jitter tests passed; they did not cover these Editor-sized stalls.
+Updated exact native mixer: AddressSanitizer + UndefinedBehaviorSanitizer; exit 0; no sanitizer diagnostics.
+600s clock +1500ppm: zero underruns, queue 1167..3271 frames
+600s clock -1500ppm: zero underruns, queue 844..3803 frames
+60s Editor 44100Hz P1: repeated 80ms stalls, zero underruns, tone=220.036Hz
+60s Editor 44100Hz P2: repeated 80ms stalls, zero underruns, tone=220.006Hz
+60s Editor 48000Hz P1: repeated 80ms stalls, zero underruns, tone=220.006Hz
+60s Editor 48000Hz P2: repeated 80ms stalls, zero underruns, tone=219.961Hz
+60s Editor 96000Hz P1: repeated 80ms stalls, zero underruns, tone=220.006Hz
+60s Editor 96000Hz P2: repeated 80ms stalls, zero underruns, tone=219.941Hz
+PASS: stereo/device/CPU isolation, mono, clipping, priming, starvation/recovery, clock drift, DSP jitter, bounded concurrent queues
+Current complete game and Editor source compile against installed Unity/package assemblies: exit 0.
+AUDIO_BUFFERING_VALIDATION_PASS: predecoded title 44100Hz/2ch; native buffer/diagnostic entry points loaded; no output device opened.
+Unity validation used an isolated project with the production RaceAudioOutput, rebuilt universal plugin and actual title MP3/import metadata.
+No physical output device was opened. The user hardware symptom has not been measured or listened to directly.
+macOS arm64 + x86_64 dylib rebuilt; Windows DLL remains unchanged and requires its documented Windows build.
+Unity Editor must restart to unload any previously loaded plugin.
