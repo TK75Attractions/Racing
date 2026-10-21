@@ -76,8 +76,12 @@ public sealed class LightningEffects : MonoBehaviour
         // x が幹方向の距離（m）、y と z が幹に垂直な2方向のずれ（m）です。
         public readonly Vector3[] frame = new Vector3[MaxPathPoints];
         public Vector3[] world;
+        // Each subdivision count has a fixed size. Keep these arrays when a
+        // strand is returned to the pool instead of reallocating on each strike.
+        public readonly Vector3[][] worldBySubdivision = new Vector3[MaxSubdivisions + 1][];
         public int count;
         public float widthScale;
+        public bool isTrunk;
     }
 
     private sealed class Bolt
@@ -89,7 +93,7 @@ public sealed class LightningEffects : MonoBehaviour
         public float age;
         public float nextRegenerateAge;
         public float flicker = 1f;
-        public readonly List<Strand> strands = new List<Strand>(4);
+        public readonly List<Strand> strands = new List<Strand>(9);
         public Light light;
     }
 
@@ -100,6 +104,8 @@ public sealed class LightningEffects : MonoBehaviour
 
     private readonly List<Bolt> activeBolts = new List<Bolt>();
     private readonly Stack<Strand> strandPool = new Stack<Strand>();
+    private readonly Stack<Strand> trunkPool = new Stack<Strand>();
+    private readonly Stack<Bolt> boltPool = new Stack<Bolt>();
     private readonly Stack<Light> lightPool = new Stack<Light>();
     private Material boltMaterial;
     private AnimationCurve trunkWidth;
@@ -216,13 +222,12 @@ public sealed class LightningEffects : MonoBehaviour
         style.duration = Mathf.Max(0.01f, style.duration);
         style.subdivisions = Mathf.Clamp(style.subdivisions, 1, MaxSubdivisions);
         style.branchCount = Mathf.Clamp(style.branchCount, 0, 8);
-        Bolt bolt = new Bolt
-        {
-            start = start,
-            end = end,
-            style = style,
-            generatedLength = length
-        };
+        Bolt bolt = boltPool.Count > 0 ? boltPool.Pop() : new Bolt();
+        bolt.start = start;
+        bolt.end = end;
+        bolt.style = style;
+        bolt.generatedLength = length;
+        bolt.age = 0f;
 
         for (int index = 0; index <= style.branchCount; index++)
         {
@@ -262,9 +267,13 @@ public sealed class LightningEffects : MonoBehaviour
             branch.widthScale = Random.Range(0.3f, 0.55f);
         }
 
-        foreach (Strand strand in bolt.strands)
+        for (int index = 0; index < bolt.strands.Count; index++)
         {
-            if (strand.world == null || strand.world.Length != strand.count) strand.world = new Vector3[strand.count];
+            Strand strand = bolt.strands[index];
+            int subdivision = index == 0 ? style.subdivisions : style.subdivisions - 1;
+            if (strand.worldBySubdivision[subdivision] == null)
+                strand.worldBySubdivision[subdivision] = new Vector3[strand.count];
+            strand.world = strand.worldBySubdivision[subdivision];
         }
 
         // 最初は必ず最大の明るさで光らせ、以降はときどき暗く落として明滅させます。
@@ -319,7 +328,9 @@ public sealed class LightningEffects : MonoBehaviour
 
     private Strand RentStrand(bool isTrunk)
     {
-        Strand strand = strandPool.Count > 0 ? strandPool.Pop() : CreateStrand();
+        Stack<Strand> pool = isTrunk ? trunkPool : strandPool;
+        Strand strand = pool.Count > 0 ? pool.Pop() : CreateStrand();
+        strand.isTrunk = isTrunk;
         strand.line.widthCurve = isTrunk ? trunkWidth : branchWidth;
         strand.line.enabled = true;
         return strand;
@@ -372,7 +383,7 @@ public sealed class LightningEffects : MonoBehaviour
             if (strand.line == null) continue;
             strand.line.positionCount = 0;
             strand.line.enabled = false;
-            strandPool.Push(strand);
+            (strand.isTrunk ? trunkPool : strandPool).Push(strand);
         }
 
         bolt.strands.Clear();
@@ -382,6 +393,9 @@ public sealed class LightningEffects : MonoBehaviour
             lightPool.Push(bolt.light);
             bolt.light = null;
         }
+        bolt.start = default;
+        bolt.end = default;
+        boltPool.Push(bolt);
     }
 
     private void ReleaseAllBolts()

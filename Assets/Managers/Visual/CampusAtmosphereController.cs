@@ -12,7 +12,8 @@ public sealed class CampusAtmosphereController : MonoBehaviour
     private readonly List<Vegetation> vegetation=new List<Vegetation>();
     private readonly List<Material> owned=new List<Material>();
     private readonly Dictionary<string,Material> variants=new Dictionary<string,Material>();
-    private Gmanager manager; private RaceCourse course; private GameObject root; private Mesh mesh;
+    private Gmanager manager; private RaceCourse course; private GameObject root;
+    private readonly List<Mesh> meshes = new List<Mesh>();
     private Material[] palette; private bool applied, configured, night;
     private UniversalRenderPipelineAsset pipeline; private float shadowDistance; private int shadowResolution;
     private bool introShadows;
@@ -21,7 +22,7 @@ public sealed class CampusAtmosphereController : MonoBehaviour
     public int HouseCount { get; private set; }
     public int StartGroveTrees { get; private set; }
     public int StartGroveVertices { get; private set; }
-    public int GeneratedVertices => mesh!=null?mesh.vertexCount:0;
+    public int GeneratedVertices { get; private set; }
     public bool IsApplied => applied;
     public bool IntroShadowQualityActive => introShadows;
     private static readonly Color grass=new Color(.22f,.30f,.19f);
@@ -79,7 +80,15 @@ public sealed class CampusAtmosphereController : MonoBehaviour
         }
         BuildGround(builder); BuildSportsField(builder); BuildTown(builder); BuildGreenBelt(builder); BuildCourtyard(builder); BuildStartUndergrowth(builder);
         root=new GameObject("Campus atmosphere scenery");root.transform.SetParent(transform,false);root.transform.SetPositionAndRotation(Vector3.zero,Quaternion.identity);
-        mesh=builder.Build();root.AddComponent<MeshFilter>().sharedMesh=mesh;root.AddComponent<MeshRenderer>().sharedMaterials=palette;
+        meshes.AddRange(builder.BuildChunks());
+        GeneratedVertices = builder.VertexCount;
+        foreach (Mesh chunk in meshes)
+        {
+            var region = new GameObject(chunk.name);
+            region.transform.SetParent(root.transform, false);
+            region.AddComponent<MeshFilter>().sharedMesh = chunk;
+            region.AddComponent<MeshRenderer>().sharedMaterials = palette;
+        }
         ApplySwitch();
     }
     private Material Make(string name,Color color,float smoothness=.08f)
@@ -304,6 +313,9 @@ public sealed class CampusAtmosphereController : MonoBehaviour
             if(tree.renderer!=null)tree.renderer.enabled=tree.visible;
             for(int i=0;i<tree.colliders.Length;i++)if(tree.colliders[i]!=null)tree.colliders[i].enabled=tree.collision[i];
         }
-        if(root!=null)Destroy(root);if(mesh!=null)Destroy(mesh);foreach(var material in owned)if(material!=null)Destroy(material);
+        if(root!=null)Destroy(root);
+        foreach(var mesh in meshes)if(mesh!=null)Destroy(mesh);
+        meshes.Clear();
+        foreach(var material in owned)if(material!=null)Destroy(material);
     }
 }

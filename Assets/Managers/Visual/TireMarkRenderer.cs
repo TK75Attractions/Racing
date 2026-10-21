@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -25,6 +24,8 @@ public sealed class TireMarkRenderer : MonoBehaviour
     private int nextSegment;
     private int segmentCount;
     private bool dirty;
+    private int dirtyStart;
+    private int dirtySegments;
     private bool initialized;
 
     public int SegmentCount => segmentCount;
@@ -63,6 +64,8 @@ public sealed class TireMarkRenderer : MonoBehaviour
     {
         if (!Initialize()) return;
 
+        if (dirtySegments == 0) dirtyStart = nextSegment;
+        dirtySegments = Mathf.Min(dirtySegments + 1, maxSegments);
         int vertex = nextSegment * 4;
         vertices[vertex] = fromLeft;
         vertices[vertex + 1] = fromRight;
@@ -88,10 +91,9 @@ public sealed class TireMarkRenderer : MonoBehaviour
     public void Clear()
     {
         if (!initialized) return;
-        Array.Clear(vertices, 0, vertices.Length);
-        Array.Clear(colors, 0, colors.Length);
         nextSegment = 0;
         segmentCount = 0;
+        dirtySegments = 0;
         hasBounds = false;
         dirty = true;
     }
@@ -99,10 +101,25 @@ public sealed class TireMarkRenderer : MonoBehaviour
     private void LateUpdate()
     {
         if (!dirty || mesh == null) return;
-        mesh.SetVertices(vertices);
-        mesh.SetColors(colors);
+        // Only the new ribbon sections changed. Preserve the GPU buffer and
+        // upload at most two ranges when the ring wraps around.
+        int first = Mathf.Min(dirtySegments, maxSegments - dirtyStart);
+        UploadSegments(dirtyStart, first);
+        UploadSegments(0, dirtySegments - first);
         mesh.bounds = hasBounds ? bounds : new Bounds(Vector3.zero, Vector3.zero);
+        mesh.SetSubMesh(0, new SubMeshDescriptor(0, segmentCount * 6) {
+            bounds = mesh.bounds, vertexCount = segmentCount * 4
+        }, MeshUpdateFlags.DontRecalculateBounds);
+        dirtySegments = 0;
         dirty = false;
+    }
+
+    private void UploadSegments(int start, int count)
+    {
+        if (count <= 0) return;
+        int vertex = start * 4;
+        mesh.SetVertexBufferData(vertices, vertex, vertex, count * 4, 0);
+        mesh.SetVertexBufferData(colors, vertex, vertex, count * 4, 1);
     }
 
     private bool Initialize()
@@ -138,11 +155,17 @@ public sealed class TireMarkRenderer : MonoBehaviour
         mesh = new Mesh { name = "TireMarks", hideFlags = HideFlags.DontSave };
         mesh.indexFormat = vertexCount > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16;
         mesh.MarkDynamic();
-        mesh.SetVertices(vertices);
-        mesh.SetColors(colors);
-        mesh.SetUVs(0, uvs);
+        // Keep positions, colours and immutable UVs in independent streams.
+        mesh.SetVertexBufferParams(vertexCount,
+            new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3, 0),
+            new VertexAttributeDescriptor(VertexAttribute.Color, VertexAttributeFormat.UNorm8, 4, 1),
+            new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2, 2));
+        mesh.SetVertexBufferData(vertices, 0, 0, vertexCount, 0);
+        mesh.SetVertexBufferData(colors, 0, 0, vertexCount, 1);
+        mesh.SetVertexBufferData(uvs, 0, 0, vertexCount, 2);
         mesh.SetTriangles(triangles, 0, false);
         mesh.bounds = new Bounds(Vector3.zero, Vector3.zero);
+        mesh.SetSubMesh(0, new SubMeshDescriptor(0, 0), MeshUpdateFlags.DontRecalculateBounds);
 
         MeshFilter filter = gameObject.AddComponent<MeshFilter>();
         filter.sharedMesh = mesh;
