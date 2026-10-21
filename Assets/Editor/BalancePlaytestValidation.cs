@@ -60,6 +60,8 @@ public static class BalancePlaytestValidation
         if (EditorApplication.timeSinceStartup - started > 1800) { Finish(false, "Balance playtest wall-clock timeout; inspect partial report."); return; }
         if (!EditorApplication.isPlaying || Gmanager.Control == null) return;
         DisablePublishing();
+        if (Environment.GetEnvironmentVariable("RACING_ADAPTIVE_PACE") == "off")
+            Gmanager.Control.Features.SetFeature(RaceFeature.AdaptiveAiPace,false);
         if (Environment.GetEnvironmentVariable("RACING_DAILY_RANKING_CHECK") == "1" &&
             UnityEngine.Object.FindFirstObjectByType<DailyRankingPlaytestProbe>() == null)
             Gmanager.Control.gameObject.AddComponent<DailyRankingPlaytestProbe>();
