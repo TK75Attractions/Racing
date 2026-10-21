@@ -82,7 +82,7 @@ public sealed class CampusAtmospherePlaytestProbe : MonoBehaviour
                 else if(stage==3&&elapsed>3.3f)
                 {
                     Require(RenderSettings.ambientMode==AmbientMode.Trilight&&RaceEnvironmentController.Active.CurrentWeather==RaceEnvironmentController.Weather.Rainy,"Weather changes must retain the styled lighting.");
-                    bool glow=false;foreach(var m in GameObject.Find("Campus atmosphere scenery").GetComponent<Renderer>().sharedMaterials)
+                    bool glow=false;foreach(var m in GameObject.Find("Campus atmosphere scenery").GetComponentInChildren<Renderer>().sharedMaterials)
                         if(m.HasProperty("_EmissionColor")&&m.GetColor("_EmissionColor").maxColorComponent>1)glow=true;
                     Require(glow,"Night windows must light up.");
                     RaceEnvironmentController.Active.SetSituation(weather,timeOfDay);report.rainNightDay=true;stage=4;

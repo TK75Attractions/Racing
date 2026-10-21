@@ -67,4 +67,44 @@ public sealed class CampusSceneryMesh
         for(int i=0;i<triangles.Length;i++)mesh.SetTriangles(triangles[i],i);
         mesh.RecalculateBounds();return mesh;
     }
+
+    /// <summary>Keep the same quads/materials, but let Unity cull scenery by region.
+    /// Large ground faces get their own batch so their bounds cannot keep a
+    /// whole neighbourhood visible. Faces crossing a cell edge remain intact.</summary>
+    public List<Mesh> BuildChunks(float cellSize = 96f)
+    {
+        cellSize = Mathf.Max(1f, cellSize);
+        var chunks = new Dictionary<Vector2Int, CampusSceneryMesh>();
+        for (int material = 0; material < triangles.Length; material++)
+        {
+            List<int> indices = triangles[material];
+            for (int index = 0; index < indices.Count; index += 6)
+            {
+                int start = indices[index];
+                Vector3 a = vertices[start], b = vertices[start + 1];
+                Vector3 c = vertices[start + 2], d = vertices[start + 3];
+                Vector3 min = Vector3.Min(Vector3.Min(a, b), Vector3.Min(c, d));
+                Vector3 max = Vector3.Max(Vector3.Max(a, b), Vector3.Max(c, d));
+                Vector3 center = (min + max) * .5f;
+                Vector2Int cell = max.x - min.x > cellSize || max.z - min.z > cellSize
+                    ? new Vector2Int(int.MinValue, int.MinValue)
+                    : new Vector2Int(Mathf.FloorToInt(center.x / cellSize), Mathf.FloorToInt(center.z / cellSize));
+                if (!chunks.TryGetValue(cell, out CampusSceneryMesh chunk))
+                {
+                    chunk = new CampusSceneryMesh(triangles.Length);
+                    chunks.Add(cell, chunk);
+                }
+                chunk.Quad(a, b, c, d, material);
+            }
+        }
+
+        var meshes = new List<Mesh>(chunks.Count);
+        foreach (var pair in chunks)
+        {
+            Mesh mesh = pair.Value.Build();
+            mesh.name = $"Campus scenery ({pair.Key.x}, {pair.Key.y})";
+            meshes.Add(mesh);
+        }
+        return meshes;
+    }
 }
