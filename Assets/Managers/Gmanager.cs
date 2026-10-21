@@ -128,6 +128,7 @@ public class Gmanager : MonoBehaviour
     public RaceParticipant FindParticipant(Rigidbody body) => participants.Find(entry => entry.Body == body);
     private RaceResultRecord latestResult;
     private RaceSessionResult latestSessionResult;
+    private DailyRaceRanking dailyRanking;
     private RaceLightningDirector raceLightning;
     private DrivingTutorialController drivingTutorial;
     private RaceSoundEffects soundEffects;
@@ -269,6 +270,8 @@ public class Gmanager : MonoBehaviour
         if (IManager != null)
         {
             IManager.UpdateInput(dt);
+            if (state == State.Game && IManager.SteeringTestMode == P1SteeringTestMode.ConstantPedal)
+                dailyRanking?.ExcludePlayer(1);
             UpdateInterruptionMenuInput();
             if (IsPreparing)
             {
@@ -791,6 +794,13 @@ public class Gmanager : MonoBehaviour
         participants.Clear(); orderedParticipants.Clear();
         raceSession = new RaceParticipantSession(PlayerCount, Mathf.Clamp(npcCount, 0, 2), RaceGraceSeconds, RaceMaximumSeconds);
         raceSession.Start();
+        if (dailyRanking == null) dailyRanking = new DailyRaceRanking(System.IO.Path.Combine(Application.persistentDataPath, "DailyRankings"));
+        bool allowDailyRecording = !Application.isBatchMode;
+#if UNITY_EDITOR
+        allowDailyRecording &= FindFirstObjectByType<BalancePlaytestAgent>() == null;
+#endif
+        dailyRanking.BeginRace(DailyRaceRanking.BoardKey(course, GoalLap, CourseProgressSign, Features.Settings.ActivePreset),
+            GoalLap, CourseProgressSign < 0, Features.Settings.ActivePreset == RacePreset.Experience, allowDailyRecording);
         countdownTimeRemaining = Mathf.Max(0f, raceCountdownSeconds);
         lastCountdownSound = -1;
         goMessageTimeRemaining = 0f;
@@ -1066,6 +1076,7 @@ public class Gmanager : MonoBehaviour
         RaceFinishRegistration registration = raceSession.RegisterFinish(entry.Index, result);
         if (registration == RaceFinishRegistration.Ignored) return;
         entry.Result = result; latestSessionResult = raceSession.Result;
+        if (!entry.IsCpu) dailyRanking?.RecordFinish(result);
         if (registration == RaceFinishRegistration.FirstPlace && lapManager != null && course != null)
         {
             RaceParticipant remaining = GetParticipant(raceSession.UnfinishedPlayerIndex);
@@ -1253,6 +1264,7 @@ public class Gmanager : MonoBehaviour
         soundEffects?.PlayForAll(RaceSoundCue.Results);
         ResetResultPlayerInputs();
         resultReturnInputDelayTimer = 0f;
+        if (latestSessionResult != null) latestSessionResult.dailyRanking = dailyRanking?.Snapshot();
         foreach (ResultUIManager manager in resultUIManagers) manager?.ShowResults(latestSessionResult);
         foreach (ScreenTransitionController transition in screenTransitions)
         {
@@ -1605,6 +1617,11 @@ public class Gmanager : MonoBehaviour
 
     private void UpdateResultReturnInput(float dt)
     {
+        if (dailyRanking != null && latestSessionResult != null && dailyRanking.DayChanged(latestSessionResult.dailyRanking))
+        {
+            latestSessionResult.dailyRanking = dailyRanking.Snapshot();
+            foreach (ResultUIManager ui in resultUIManagers) ui?.RefreshDailyRanking();
+        }
         if (resultReturnInputDelayTimer < resultReturnInputDelaySeconds)
         {
             resultReturnInputDelayTimer += dt;
@@ -1739,7 +1756,7 @@ public class Gmanager : MonoBehaviour
     }
 
     public void RefreshResultHighlights()
-    { foreach (ResultUIManager ui in resultUIManagers) ui?.RefreshHighlight(); }
+    { foreach (ResultUIManager ui in resultUIManagers) { ui?.RefreshHighlight(); ui?.RefreshDailyRanking(); } }
 
     private static RaceAchievementSnapshot CaptureAchievements(RaceParticipant entry)
     {
