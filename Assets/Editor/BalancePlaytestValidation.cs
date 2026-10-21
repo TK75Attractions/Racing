@@ -69,6 +69,9 @@ public static class BalancePlaytestValidation
         if (Environment.GetEnvironmentVariable("RACING_FEATURE_PLAYTEST") == "1" &&
             UnityEngine.Object.FindFirstObjectByType<GameplayFeaturePlaytestProbe>() == null)
             Gmanager.Control.gameObject.AddComponent<GameplayFeaturePlaytestProbe>();
+        if (Environment.GetEnvironmentVariable("RACING_CAMPUS_ATMOSPHERE_CHECK") == "1" &&
+            UnityEngine.Object.FindFirstObjectByType<CampusAtmospherePlaytestProbe>() == null)
+            Gmanager.Control.gameObject.AddComponent<CampusAtmospherePlaytestProbe>();
         if (Environment.GetEnvironmentVariable("RACING_COURSE_INTRO_CHECK") == "1" &&
             UnityEngine.Object.FindFirstObjectByType<CourseIntroPlaytestProbe>() == null)
             Gmanager.Control.gameObject.AddComponent<CourseIntroPlaytestProbe>();

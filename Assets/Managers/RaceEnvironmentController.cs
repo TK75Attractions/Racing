@@ -37,7 +37,7 @@ public sealed class RaceEnvironmentController : MonoBehaviour
     private readonly List<Camera> staleCameras = new List<Camera>();
     private readonly List<LightState> lightStates = new List<LightState>();
     private Material skyMaterial, rainMaterial, originalSky;
-    private Color originalAmbient, originalFogColor;
+    private Color originalAmbient, originalFogColor, originalSkyAmbient, originalEquatorAmbient, originalGroundAmbient;
     private AmbientMode originalAmbientMode;
     private FogMode originalFogMode;
     private bool originalFog, captured, dirty = true;
@@ -48,6 +48,7 @@ public sealed class RaceEnvironmentController : MonoBehaviour
         public Light light;
         public Color color;
         public float intensity, shadowStrength;
+        public LightShadows shadows;
         public bool temperature;
         public Quaternion rotation;
     }
@@ -106,17 +107,34 @@ public sealed class RaceEnvironmentController : MonoBehaviour
         float cloud = weather == Weather.Sunny ? 0.12f : weather == Weather.Cloudy ? 0.8f : 1f;
         float lightFactor = weather == Weather.Sunny ? 1f : weather == Weather.Cloudy ? 0.6f : 0.4f;
         Color horizon = night ? new Color(0.035f, 0.05f, 0.09f) : Color.Lerp(new Color(0.65f, 0.8f, 0.95f), new Color(0.38f, 0.43f, 0.49f), cloud);
+        var presentation = Gmanager.Control != null ? Gmanager.Control.GetComponent<CampusAtmosphereController>() : null;
+        bool styled = RaceFeatureController.Enabled(RaceFeature.CampusAtmosphere) && presentation != null && presentation.isActiveAndEnabled;
+        int lightIndex = 0;
         foreach (LightState state in lightStates)
         {
             if (state.light == null) continue;
-            state.light.intensity = (night ? nightLightIntensity : dayLightIntensity) * lightFactor;
+            bool key = lightIndex++ == 0;
+            state.light.intensity = (night ? nightLightIntensity : dayLightIntensity) * lightFactor * (styled && !key ? .16f : 1f);
             state.light.color = night ? new Color(0.55f, 0.68f, 1f) : new Color(1f, 0.96f, 0.88f);
             state.light.useColorTemperature = false;
             state.light.shadowStrength = Mathf.Lerp(state.shadowStrength, 0.25f, cloud);
-            state.light.transform.rotation = night ? Quaternion.Euler(35f, -145f, 0f) : state.rotation;
+            state.light.transform.rotation = night ? Quaternion.Euler(35f, -145f, 0f) : styled ? Quaternion.Euler(key ? 42f : 65f, key ? 145f : -40f, 0f) : state.rotation;
+            state.light.shadows = styled && !key ? LightShadows.None : state.shadows;
+            if (styled)
+            {
+                state.light.color = night ? new Color(.55f,.68f,1f) : key ? new Color(1f,.89f,.73f) : new Color(.63f,.77f,1f);
+                state.light.shadowStrength = Mathf.Lerp(.86f,.35f,cloud);
+            }
         }
         RenderSettings.ambientMode = AmbientMode.Flat;
         RenderSettings.ambientLight = night ? new Color(0.5f, 0.65f, 1f) * nightAmbientBrightness : Color.Lerp(new Color(0.65f, 0.7f, 0.8f), new Color(0.38f, 0.42f, 0.48f), cloud);
+        if (styled)
+        {
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = night ? new Color(.35f,.50f,.85f)*nightAmbientBrightness : Color.Lerp(new Color(.32f,.43f,.60f),new Color(.40f,.45f,.52f),cloud);
+            RenderSettings.ambientEquatorColor = night ? new Color(.20f,.30f,.50f)*nightAmbientBrightness : new Color(.27f,.31f,.35f);
+            RenderSettings.ambientGroundColor = night ? new Color(.06f,.09f,.15f)*nightAmbientBrightness : new Color(.11f,.13f,.14f);
+        }
         RenderSettings.reflectionIntensity = night ? 0.12f : Mathf.Lerp(1f, 0.45f, cloud);
         RenderSettings.fog = enableFog;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
@@ -142,6 +160,9 @@ public sealed class RaceEnvironmentController : MonoBehaviour
         originalSky = RenderSettings.skybox;
         originalAmbientMode = RenderSettings.ambientMode;
         originalAmbient = RenderSettings.ambientLight;
+        originalSkyAmbient = RenderSettings.ambientSkyColor;
+        originalEquatorAmbient = RenderSettings.ambientEquatorColor;
+        originalGroundAmbient = RenderSettings.ambientGroundColor;
         originalFog = RenderSettings.fog;
         originalFogMode = RenderSettings.fogMode;
         originalFogColor = RenderSettings.fogColor;
@@ -151,7 +172,7 @@ public sealed class RaceEnvironmentController : MonoBehaviour
         {
             if (light == null || lightStates.Exists(s => s.light == light)) continue;
             lightStates.Add(new LightState { light = light, color = light.color, intensity = light.intensity,
-                shadowStrength = light.shadowStrength, temperature = light.useColorTemperature, rotation = light.transform.rotation });
+                shadowStrength = light.shadowStrength, shadows = light.shadows, temperature = light.useColorTemperature, rotation = light.transform.rotation });
         }
         captured = true;
     }
@@ -236,6 +257,9 @@ public sealed class RaceEnvironmentController : MonoBehaviour
             RenderSettings.skybox = originalSky;
             RenderSettings.ambientMode = originalAmbientMode;
             RenderSettings.ambientLight = originalAmbient;
+            RenderSettings.ambientSkyColor = originalSkyAmbient;
+            RenderSettings.ambientEquatorColor = originalEquatorAmbient;
+            RenderSettings.ambientGroundColor = originalGroundAmbient;
             RenderSettings.fog = originalFog;
             RenderSettings.fogMode = originalFogMode;
             RenderSettings.fogColor = originalFogColor;
@@ -247,6 +271,7 @@ public sealed class RaceEnvironmentController : MonoBehaviour
                 state.light.color = state.color;
                 state.light.intensity = state.intensity;
                 state.light.shadowStrength = state.shadowStrength;
+                state.light.shadows = state.shadows;
                 state.light.useColorTemperature = state.temperature;
                 state.light.transform.rotation = state.rotation;
             }
