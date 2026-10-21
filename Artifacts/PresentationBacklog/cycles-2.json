@@ -1,0 +1,42 @@
+{
+    "requestedCycles": 2,
+    "cycles": [
+        {
+            "cycle": 1,
+            "gameObjects": 957,
+            "audioSources": 5,
+            "textures": 185,
+            "renderTextures": 42,
+            "residualNotifications": 0,
+            "settingsResidue": 0,
+            "totalUsedMemoryBytes": 1461157283,
+            "monoHeapBytes": 30777344,
+            "totalUsedMemoryDeltaBytes": 0,
+            "monoHeapDeltaBytes": 0,
+            "gameObjectsDelta": 0,
+            "audioSourcesDelta": 0,
+            "texturesDelta": 0,
+            "renderTexturesDelta": 0,
+            "settings": "DriftCoaching, HitProtection, Slipstream, SteeringAssist, LandingFeedback, LandingBoost, TubeChargeLines, CpuRacing, ResultHighlights, HighSpeedCornering, FastAiPace, FinishRun/Standard/Standard"
+        },
+        {
+            "cycle": 2,
+            "gameObjects": 957,
+            "audioSources": 5,
+            "textures": 186,
+            "renderTextures": 42,
+            "residualNotifications": 0,
+            "settingsResidue": 0,
+            "totalUsedMemoryBytes": 1468639023,
+            "monoHeapBytes": 31621120,
+            "totalUsedMemoryDeltaBytes": 7481740,
+            "monoHeapDeltaBytes": 843776,
+            "gameObjectsDelta": 0,
+            "audioSourcesDelta": 0,
+            "texturesDelta": 1,
+            "renderTexturesDelta": 0,
+            "settings": "DriftCoaching, HitProtection, Slipstream, SteeringAssist, LandingFeedback, LandingBoost, TubeChargeLines, CpuRacing, ResultHighlights, HighSpeedCornering, FastAiPace, FinishRun/Standard/Standard"
+        }
+    ],
+    "warnings": []
+}
