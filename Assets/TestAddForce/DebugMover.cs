@@ -798,12 +798,40 @@ public class DebugMover : MonoBehaviour
         return Mathf.Atan(GetDriftYawLimit(velocity.magnitude) * wheelbase / forwardSpeed) * Mathf.Rad2Deg;
     }
 
+    private bool UseSteeringStability => RaceFeatureController.Enabled(RaceFeature.SteeringStability);
+    private bool CanStabilizeSteering => !IsInputSuppressed && inputSource != null && inputSource.IsConnected &&
+        !(inputSource is PlayerDriveInputGate gate && (gate.IsBlocked || gate.NeedsPedalRelease)) &&
+        (itemEffects == null || !(itemEffects.IsOiled || itemEffects.IsSpinning || itemEffects.IsRocketActive || itemEffects.BlocksDriverInput));
+
+    private void ApplySteeringStability(float deltaTime)
+    {
+        if (!CanStabilizeSteering || !HasDriftGroundContact()) return;
+        Vector3 up = GetDrivingUp();
+        Vector3 forward = Vector3.ProjectOnPlane(rb.rotation * Vector3.forward,up).normalized;
+        Vector3 velocity = Vector3.ProjectOnPlane(rb.linearVelocity,up);
+        float forwardSpeed = Vector3.Dot(velocity,forward), speed = velocity.magnitude;
+        if (forwardSpeed < 3f) return;
+        float yawLimit = Mathf.Min(driftMaxYawRate,GetSteeringLateralAcceleration(speed) / Mathf.Max(1f,speed));
+        float desiredYaw = forwardSpeed * Mathf.Tan(appliedSteeringAngle * Mathf.Deg2Rad) / Mathf.Max(.5f,wheelbase);
+        float slip = Vector3.SignedAngle(velocity,forward,up);
+        desiredYaw = Mathf.Clamp(desiredYaw - SteeringTraction.ExcessSlip(slip) * Mathf.Deg2Rad * SteeringTraction.YawResponse,-yawLimit,yawLimit);
+        rb.AddTorque(up * SteeringTraction.YawAcceleration(Vector3.Dot(rb.angularVelocity,up),desiredYaw),ForceMode.Acceleration);
+        float recovery = SteeringTraction.RecoveryDegrees(slip,speed,deltaTime);
+        if (Mathf.Abs(recovery) > .001f)
+        {
+            // Redirect only excess road-plane slip. Normal velocity and the planar speed are preserved.
+            Vector3 corrected = Quaternion.AngleAxis(recovery,up) * velocity;
+            rb.AddForce(corrected - velocity,ForceMode.VelocityChange);
+        }
+    }
+
     private void ApplyDriftSpinProtection(float deltaTime)
     {
         if (isDrifting || driftStartTime > 0f || driftGripBlend > .001f || driftBoostTimeRemaining > 0f)
             driftRecoveryTimeRemaining = driftRecoverySeconds;
         else
             driftRecoveryTimeRemaining = Mathf.Max(0f, driftRecoveryTimeRemaining - deltaTime);
+        if (UseSteeringStability) { ApplySteeringStability(deltaTime); return; }
         if (!ShouldProtectDrift || !HasDriftGroundContact()) return;
 
         Vector3 up = GetDrivingUp();
@@ -850,6 +878,7 @@ public class DebugMover : MonoBehaviour
                 : rearCorneringStiffness;
             float gripMultiplier = !tire.IsFrontWheel
                 && enableDriftDynamics && enableDriftRearGripReduction
+                && !(UseSteeringStability && CanStabilizeSteering)
                 ? Mathf.Lerp(1f, Mathf.Max(0f, driftRearGripMultiplier), driftGripBlend)
                 : 1f;
             // オイルやスピンによるグリップ低下を重ねます。
