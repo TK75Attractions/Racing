@@ -1,0 +1,18 @@
+{
+    "passed": true,
+    "isolatedAttribution": true,
+    "realOilTrigger": true,
+    "realShieldCollision": true,
+    "realConfusedWallContact": true,
+    "cameraIsolation": true,
+    "liveSwitches": true,
+    "notificationsNamed": true,
+    "error": "",
+    "frontFrames": 215,
+    "rearFrames": 255,
+    "cameraChecks": 1944,
+    "itemEvents": [
+        "P1 -> 2: SteeringReversed",
+        "P2 -> 0: SteeringReversed"
+    ]
+}
