@@ -414,10 +414,25 @@ public class Gmanager : MonoBehaviour
             return;
         }
 
-        GUILayout.BeginArea(new Rect(16f, 16f, 300f, 184f), GUI.skin.box);
+        GUILayout.BeginArea(new Rect(16f, 16f, 340f, 300f), GUI.skin.box);
         GUILayout.Label("DEBUG RACE CONTROLS");
         GUILayout.Label($"State: {state}");
         bool previousGuiEnabled = GUI.enabled;
+
+        for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
+        {
+            // P2 の画面はエディタでは Display 2 にあるため、進行状況をここにも出します。
+            GetPlayerDashboardProgress(playerIndex, out string phase, out _, out string step, out float remaining, out _);
+            GUILayout.Label($"P{playerIndex + 1}: {phase}{(step.Length > 0 ? " / " + step : "")}{(remaining > 0f ? $" ({remaining:F0}s)" : "")}");
+        }
+
+        // 1 人でデバッグするときに、操作していないプレイヤーを待たずに次の段階へ進めます。
+        string allPlayersStep = GetDebugAllPlayersStepLabel();
+        GUI.enabled = allPlayersStep != null;
+        if (GUILayout.Button(allPlayersStep ?? "ALL PLAYERS: -")) AdvanceDebugAllPlayers();
+        GUI.enabled = state == State.Result && !IsScreenTransitioning();
+        if (GUILayout.Button("RETRY RACE")) RetryGame();
+        GUI.enabled = previousGuiEnabled;
 
         for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
         {
@@ -443,6 +458,43 @@ public class Gmanager : MonoBehaviour
         GUI.enabled = previousGuiEnabled;
 
         GUILayout.EndArea();
+    }
+
+    private string GetDebugAllPlayersStepLabel()
+    {
+        if (IsScreenTransitioning() || finishingPreparation) return null;
+        if (state == State.Result)
+        {
+            foreach (PlayerRuntime player in players) if (player != null && !player.returnedToTitle) return "ALL PLAYERS: RETURN TO TITLE";
+            return null;
+        }
+        if (!IsPreparing) return null;
+        bool anyTitle = false, anySelection = false;
+        foreach (PlayerRuntime player in players)
+        {
+            anyTitle |= player.preparationState == State.Title;
+            anySelection |= player.preparationState == State.CarSelection;
+        }
+        return anyTitle ? "ALL PLAYERS: START" : anySelection ? "ALL PLAYERS: CONFIRM CAR" : "ALL PLAYERS: SKIP TUTORIAL";
+    }
+
+    private void AdvanceDebugAllPlayers()
+    {
+        if (state == State.Result)
+        {
+            for (int index = 0; index < PlayerCount; index++)
+                if (!players[index].returnedToTitle) ReturnPlayerToTitle(index);
+            return;
+        }
+        bool anyTitle = false, anySelection = false;
+        foreach (PlayerRuntime player in players)
+        {
+            anyTitle |= player.preparationState == State.Title;
+            anySelection |= player.preparationState == State.CarSelection;
+        }
+        if (anyTitle) StartGame();
+        else if (anySelection) AdvanceDashboardToTutorial();
+        else AdvanceDashboardToCountdown();
     }
 
     public void DebugPreviewResult()
