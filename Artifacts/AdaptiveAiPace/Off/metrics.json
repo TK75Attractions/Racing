@@ -1,0 +1,84 @@
+[
+  {
+    "scenario": "adaptive-auto-7204",
+    "window_seconds": 110.89340209960938,
+    "metrics": {
+      "P2": {
+        "reference": "P1",
+        "samples": 694,
+        "mean_lead_m": 1309.6792824207494,
+        "mean_absolute_gap_m": 1309.6792824207494,
+        "within_40m_percent": 0.0,
+        "ahead_more_than_80m_percent": 100.0,
+        "minimum_lead_m": 551.044,
+        "maximum_lead_m": 2175.227,
+        "mean_kph": 137.94724731445314,
+        "peak_kph": 179.2602493286133,
+        "off_course_seconds": 0.0,
+        "recoveries": 0
+      },
+      "CPU 1": {
+        "reference": "P1",
+        "samples": 781,
+        "mean_lead_m": 634.0841472471191,
+        "mean_absolute_gap_m": 634.0841472471191,
+        "within_40m_percent": 0.0,
+        "ahead_more_than_80m_percent": 100.0,
+        "minimum_lead_m": 237.038,
+        "maximum_lead_m": 1072.2659999999998,
+        "mean_kph": 97.20822601318359,
+        "peak_kph": 146.79221649169924,
+        "off_course_seconds": 0.0,
+        "recoveries": 0
+      },
+      "CPU 2": {
+        "reference": "P1",
+        "samples": 728,
+        "mean_lead_m": 1288.5354642857142,
+        "mean_absolute_gap_m": 1288.5354642857142,
+        "within_40m_percent": 0.0,
+        "ahead_more_than_80m_percent": 100.0,
+        "minimum_lead_m": 496.808,
+        "maximum_lead_m": 2098.066,
+        "mean_kph": 133.5579071044922,
+        "peak_kph": 179.12465057373046,
+        "off_course_seconds": 0.0,
+        "recoveries": 0
+      }
+    }
+  },
+  {
+    "scenario": "adaptive-slow-7201",
+    "window_seconds": 113.93289184570312,
+    "metrics": {
+      "CPU 1": {
+        "reference": "assigned human",
+        "samples": 807,
+        "mean_lead_m": -11.995851301115241,
+        "mean_absolute_gap_m": 11.995851301115241,
+        "within_40m_percent": 100.0,
+        "ahead_more_than_80m_percent": 0.0,
+        "minimum_lead_m": -19.682000000000016,
+        "maximum_lead_m": -9.060999999999979,
+        "mean_kph": 63.722021484375,
+        "peak_kph": 119.19129180908203,
+        "off_course_seconds": 0.0,
+        "recoveries": 0
+      },
+      "CPU 2": {
+        "reference": "assigned human",
+        "samples": 807,
+        "mean_lead_m": -16.674109045848823,
+        "mean_absolute_gap_m": 16.674109045848823,
+        "within_40m_percent": 100.0,
+        "ahead_more_than_80m_percent": 0.0,
+        "minimum_lead_m": -26.94900000000007,
+        "maximum_lead_m": -2.97199999999998,
+        "mean_kph": 64.09711532592773,
+        "peak_kph": 128.0780776977539,
+        "off_course_seconds": 0.0,
+        "recoveries": 0
+      }
+    }
+  }
+]

@@ -142,6 +142,12 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 SkillPlan("skill-disconnect-rejoin", 6105, 22, 22, false, "intermediate", "intermediate"),
                 SkillPlan("skill-operator-stop", 6106, 18, 18, false, "cautious", "cautious")
             };
+            if(Environment.GetEnvironmentVariable("RACING_ADAPTIVE_PACE_SUITE")=="1")
+                plans=new[]{
+                    SkillPlan("adaptive-slow-7201",7201,18,18,false,"human","human"),
+                    SkillPlan("adaptive-split-7202",7202,16,30,false,"human","human"),
+                    SkillPlan("adaptive-fast-7203",7203,50,48,false,"human","human"),
+                    SkillPlan("adaptive-auto-7204",7204,18,18,false,"human","human")};
             foreach (RunRecord plan in plans) if (plan.p1Profile == "human") plan.resetAssistance = true;
             suite.methodology = "Actual SampleScene and production cars/CPUs/items. Human profiles decide every 0.18/0.22 seconds, slew the physical wheel at up to 360 degrees/second and pedal at 3/second, observe forward traffic, and use the fast road-speed planner with small steering noise. Course-following input agents also approximate novice, cautious, intermediate, expert and aggressive control using distinct speed, reaction intervals, steering noise and jump anticipation; they are not human usability subjects. Includes a 12-second stop, 5-second input disconnection and operator result action. Drivers use InputManager and production input gates; never force vehicle pose, velocity, laps or outcomes. An agent responds to the public pedal-release notice after 0.35 seconds with 0.3 seconds of neutral input. Novice/cautious agents respond to a visible jump notice after 0.35 seconds by targeting 24m/s; understanding that cue is an assumed response, not a human-study result. Preparation is bypassed. Random seeds do not guarantee deterministic physics. Official and physics clocks are recorded separately.";
             var sources = (IDriveInputSource[])typeof(InputManager).GetField("inputSources", Private).GetValue(manager.IManager);
@@ -191,7 +197,10 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         assistStressStarted = -1f;
         foreach (var bot in fastBots) bot.Clear();
         Array.Clear(humanWheel, 0, 2); Array.Clear(humanPedal, 0, 2);
-        if (Environment.GetEnvironmentVariable("RACING_P2_AUTO") == "1")
+        bool autoPlan=Environment.GetEnvironmentVariable("RACING_ADAPTIVE_PACE_SUITE")=="1" && run.name=="adaptive-auto-7204";
+        if(Environment.GetEnvironmentVariable("RACING_ADAPTIVE_PACE_SUITE")=="1")
+            manager.Features.SetFeature(RaceFeature.PlayerTwoAutodrive,autoPlan);
+        if (Environment.GetEnvironmentVariable("RACING_P2_AUTO") == "1" && !autoPlan)
         {
             while (!manager.CanUseDashboardControls) yield return null;
             manager.StartAutodriveTestRace();
@@ -200,6 +209,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         foreach (ScreenTransitionController transition in FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))
             transition.ApplyStateImmediate(Gmanager.State.Countdown);
         while (manager.state != Gmanager.State.Game) yield return null;
+        if(manager.Participants.Count<2)throw new InvalidOperationException("Playtest race did not spawn its human participants.");
         run.npcCount = manager.Participants.Count - 2;
         foreach (RaceParticipant entry in manager.Participants)
         {
