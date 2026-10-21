@@ -1,0 +1,21 @@
+{
+    "passed": true,
+    "error": "",
+    "mode": "normal",
+    "replacedTreeVertices": 5766840,
+    "generatedVertices": 127464,
+    "trees": 124,
+    "houses": 156,
+    "startGroveTrees": 15,
+    "startGroveVertices": 57776,
+    "originalShadowDistance": 50.0,
+    "introShadowDistance": 650.0,
+    "restoredShadowDistance": 50.0,
+    "originalShadowResolution": 2048,
+    "introShadowResolution": 4096,
+    "restoredShadowResolution": 2048,
+    "liveOffOn": false,
+    "rainNightDay": false,
+    "disableEnable": false,
+    "collidersUnchanged": true
+}

@@ -19,6 +19,8 @@ public sealed class CampusAtmosphereController : MonoBehaviour
     public int ReplacedTreeVertices { get; private set; }
     public int TreeCount { get; private set; }
     public int HouseCount { get; private set; }
+    public int StartGroveTrees { get; private set; }
+    public int StartGroveVertices { get; private set; }
     public int GeneratedVertices => mesh!=null?mesh.vertexCount:0;
     public bool IsApplied => applied;
     public bool IntroShadowQualityActive => introShadows;
@@ -32,7 +34,8 @@ public sealed class CampusAtmosphereController : MonoBehaviour
             Make("Trunks",new Color(.23f,.17f,.12f)),Make("Warm paving",new Color(.53f,.51f,.44f)),Make("Town asphalt",new Color(.17f,.21f,.24f)),
             Make("Track clay",new Color(.51f,.27f,.18f)),Make("Court lines",new Color(.84f,.83f,.71f)),Make("Roof slate",new Color(.22f,.29f,.32f)),
             Make("Town ivory",new Color(.70f,.67f,.57f)),Make("Town blue grey",new Color(.45f,.53f,.56f)),Make("Town brick",new Color(.55f,.40f,.31f)),
-            Make("Window blue",new Color(.16f,.31f,.39f),.65f),Make("Roof equipment",new Color(.64f,.67f,.64f))};
+            Make("Window blue",new Color(.16f,.31f,.39f),.65f),Make("Roof equipment",new Color(.64f,.67f,.64f)),
+            Make("Grove deep foliage",new Color(.08f,.19f,.105f)),Make("Grove leaf tips",new Color(.25f,.41f,.16f))};
         var builder=new CampusSceneryMesh(palette.Length);
         foreach(var renderer in campus.GetComponentsInChildren<MeshRenderer>())
         {
@@ -42,7 +45,11 @@ public sealed class CampusAtmosphereController : MonoBehaviour
                 var colliders=renderer.GetComponents<Collider>();var states=new bool[colliders.Length];for(int i=0;i<states.Length;i++)states[i]=colliders[i].enabled;
                 vegetation.Add(new Vegetation{renderer=renderer,visible=renderer.enabled,colliders=colliders,collision=states});
                 ReplacedTreeVertices+=renderer.GetComponent<MeshFilter>()?.sharedMesh?.vertexCount??0;
-                // The imported trees overhang the starting grid and walls. Replant in the designed green belts below.
+                // Retain the old start-side woodland's anchors and irregular silhouette, with new green geometry.
+                // Fit the narrow planting strip between the school facade and the starting straight.
+                Bounds treeBounds = renderer.bounds;
+                if (treeBounds.center.z > 760f && treeBounds.center.z < 800f)
+                    BuildStartGroveTree(builder, treeBounds);
                 continue;
             }
             if(name.StartsWith("Bézier")||name.Contains("Tube")||name.Contains("Armco"))continue;
@@ -70,7 +77,7 @@ public sealed class CampusAtmosphereController : MonoBehaviour
                 }
             }
         }
-        BuildGround(builder); BuildSportsField(builder); BuildTown(builder); BuildGreenBelt(builder); BuildCourtyard(builder);
+        BuildGround(builder); BuildSportsField(builder); BuildTown(builder); BuildGreenBelt(builder); BuildCourtyard(builder); BuildStartUndergrowth(builder);
         root=new GameObject("Campus atmosphere scenery");root.transform.SetParent(transform,false);root.transform.SetPositionAndRotation(Vector3.zero,Quaternion.identity);
         mesh=builder.Build();root.AddComponent<MeshFilter>().sharedMesh=mesh;root.AddComponent<MeshRenderer>().sharedMaterials=palette;
         ApplySwitch();
@@ -96,6 +103,67 @@ public sealed class CampusAtmosphereController : MonoBehaviour
         b.Ellipsoid(p+Vector3.up*(height*.69f),new Vector3(radius,height*.36f,radius*.88f),1+index%2,index*.87f);
         b.Ellipsoid(p+new Vector3(radius*.45f,height*.57f,0),new Vector3(radius*.65f,height*.25f,radius*.67f),1+(index+1)%2,index*.57f);
         TreeCount++;
+    }
+    private void BuildStartGroveTree(CampusSceneryMesh b, Bounds original)
+    {
+        int before = b.VertexCount;
+        var random = new System.Random(18073 + StartGroveTrees * 97);
+        float Next(float min, float max) => Mathf.Lerp(min, max, (float)random.NextDouble());
+        bool besideFacade = original.center.x > 350f && original.center.x < 480f;
+        // Facade front is z=777.27, kerb z≈778.4: trunks belong in that strip,
+        // while the raised crown can overhang the kerb without planting trees on the asphalt.
+        Vector3 p = new Vector3(original.center.x, Mathf.Max(0f,original.min.y),
+            besideFacade ? 777.95f : original.center.x < 350f ? 773.5f : original.center.z);
+        float height = Mathf.Clamp(original.size.y * .95f, 10f, 23f);
+        float spread = Mathf.Clamp(height * .32f, 3.6f, 5.2f);
+        Vector3 crown = p + new Vector3(Next(-.5f,.5f),height * .72f,Next(-.2f,.2f));
+        b.Branch(p,crown,.36f * height / 13f,.13f,3);
+        for (int layer = 0; layer < 3; layer++)
+        {
+            for (int lobe = 0; lobe < 6; lobe++)
+            {
+                float angle = lobe * Mathf.PI / 3f + layer * .5f + Next(-.22f,.22f);
+                float reach = spread * (layer == 2 ? .45f : .75f) * Next(.8f,1.08f);
+                Vector3 center = p + new Vector3(Mathf.Cos(angle) * reach,
+                    height * (.48f + .16f * layer) + Next(-.45f,.45f), Mathf.Sin(angle) * reach * (besideFacade ? .30f : .55f));
+                Vector3 radius = new Vector3(spread * Next(.42f,.57f),height * Next(.13f,.18f),spread * (besideFacade ? Next(.18f,.23f) : Next(.35f,.46f)));
+                if (besideFacade) center.z = Mathf.Max(center.z,777.85f + radius.z);
+                int material = layer == 0 ? 14 : (lobe + layer) % 3 == 0 ? 1 : 2;
+                b.Ellipsoid(center,radius,material,Next(0f,Mathf.PI));
+                if (lobe % 2 == 0) b.Branch(p + Vector3.up * height * .34f,center,.13f,.045f,3);
+                // Individual leaf sprays break up the rounded canopy silhouette at driving distance.
+                for (int leaf = 0; leaf < 6; leaf++)
+                {
+                    float a = Next(0f,Mathf.PI * 2f), y = Next(-.65f,.7f);
+                    Vector3 outward = new Vector3(Mathf.Cos(a),y,Mathf.Sin(a)).normalized;
+                    Vector3 at = center + Vector3.Scale(radius,outward) * Next(.9f,1.08f);
+                    Vector3 stem = (outward + Vector3.up * .5f).normalized * Next(.25f,.5f);
+                    Vector3 across = Vector3.Cross(stem,Vector3.up).normalized * Next(.11f,.23f);
+                    Vector3 tip = at + stem, left = at + stem * .5f - across, right = at + stem * .5f + across;
+                    if (besideFacade)
+                    {
+                        at.z = Mathf.Clamp(at.z,777.85f,781.2f); tip.z = Mathf.Clamp(tip.z,777.85f,781.2f);
+                        left.z = Mathf.Clamp(left.z,777.85f,781.2f); right.z = Mathf.Clamp(right.z,777.85f,781.2f);
+                    }
+                    int tint = leaf % 3 == 0 ? 15 : material;
+                    b.Quad(at,left,tip,right,tint); b.Quad(right,tip,left,at,tint);
+                }
+            }
+        }
+        StartGroveTrees++; TreeCount++;
+        StartGroveVertices += b.VertexCount - before;
+    }
+    private void BuildStartUndergrowth(CampusSceneryMesh b)
+    {
+        int before = b.VertexCount;
+        var random = new System.Random(24691);
+        for (int i = 0; i < 26; i++)
+        {
+            Vector3 p = new Vector3(349f + i * 4.8f,1.2f + (float)random.NextDouble() * .4f,777.95f);
+            b.Ellipsoid(p,new Vector3(3.0f,1.5f,.35f),i % 3 == 0 ? 14 : 2,i * .73f);
+            b.Ellipsoid(p + new Vector3(1.5f,.4f,-.1f),new Vector3(2.4f,1.9f,.3f),i % 2 == 0 ? 1 : 14,i * .31f);
+        }
+        StartGroveVertices += b.VertexCount - before;
     }
     private void BuildGround(CampusSceneryMesh b)
     {
