@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "day": "2026-10-21",
+  "entries": [
+    {
+      "raceId": "a39c8a90a3cb4053978d64383b49f36a",
+      "boardKey": "ac628c92bcad1d7890a5afa6fc3625e012aab38f5df5582ed13679ea66c33023",
+      "finishedAt": "17:33",
+      "playNumber": 1,
+      "playerNumber": 1,
+      "milliseconds": 109012
+    },
+    {
+      "raceId": "a39c8a90a3cb4053978d64383b49f36a",
+      "boardKey": "ac628c92bcad1d7890a5afa6fc3625e012aab38f5df5582ed13679ea66c33023",
+      "finishedAt": "17:33",
+      "playNumber": 1,
+      "playerNumber": 2,
+      "milliseconds": 151012
+    }
+  ]
+}
