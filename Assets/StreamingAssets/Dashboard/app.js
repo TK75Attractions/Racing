@@ -40,6 +40,7 @@ function setConnection(isConnected) {
     $('game-state').textContent = '接続待機';
     $('state-detail').textContent = localMode ? 'Unity を起動してください' : '遠隔データを待っています';
     $('race-time').textContent = '00:00.0';
+    renderPerformance(null);
     setGoalLap('--');
     $('serial-count').textContent = '--';
     $('parse-errors').textContent = '--';
@@ -118,6 +119,13 @@ function updateActions(snapshot, canControl) {
     ['Countdown', 'Goal'].includes(snapshot.state) ? '◷ 自動で次の画面へ進みます' : '現在、進行操作はありません';
 }
 
+function renderPerformance(performance) {
+  const valid = Number.isFinite(performance?.fps) && performance.fps > 0 &&
+    Number.isFinite(performance?.frameTimeMs) && performance.frameTimeMs > 0;
+  $('fps').textContent = valid ? performance.fps.toFixed(1) : '--';
+  $('frame-time').textContent = valid ? `${performance.frameTimeMs.toFixed(1)} ms / frame · 約0.5秒平均` : 'Unity全体 · 計測待ち';
+}
+
 function render(snapshot, { canControl = localMode } = {}) {
   setConnection(true);
   latestSnapshot = snapshot;
@@ -127,6 +135,7 @@ function render(snapshot, { canControl = localMode } = {}) {
   $('game-state').textContent = labels[snapshot.state] || snapshot.state;
   $('state-detail').textContent = snapshot.state === 'Countdown' ? `あと ${Math.ceil(snapshot.countdown)} 秒` : (details[snapshot.state] || '状態を確認中');
   $('race-time').textContent = formatTime(snapshot.raceTime);
+  renderPerformance(snapshot.performance);
   setGoalLap(snapshot.goalLap || '--');
   $('serial-count').textContent = (snapshot.serial.received ?? 0).toLocaleString('ja-JP');
   $('parse-errors').textContent = (snapshot.serial.errors ?? 0).toLocaleString('ja-JP');

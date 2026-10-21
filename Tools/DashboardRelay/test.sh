@@ -8,7 +8,7 @@ DOTNET_CLI_TELEMETRY_OPTOUT=1 dotnet build DashboardRelay.csproj --nologo -v:q
 cd "$relay_root"
 mcs -langversion:latest -define:UNITY_STANDALONE_OSX -r:System.Web.Extensions \
   -out:Temp/DashboardRelay/BridgeHarness.exe 'Tests~/DashboardRelay/BridgeHarness.cs' \
-  Assets/Managers/RaceDashboardBridge.cs Assets/Managers/Multiplayer/Core/SerialInputProtocol.cs \
+  Assets/Managers/RaceDashboardBridge.cs Assets/Managers/Multiplayer/Core/FrameRateCounter.cs Assets/Managers/Multiplayer/Core/SerialInputProtocol.cs \
   Assets/Managers/Multiplayer/Core/RgpHostSession.cs Assets/Managers/Multiplayer/Core/RgpSerialJournal.cs \
   Assets/Managers/Input/TwoPlayerSerialInputSource.cs Assets/Managers/Input/MacPseudoTerminalLineReader.cs \
   Assets/Managers/Input/Esp32SerialConfiguration.cs Assets/Managers/Input/DriveInputState.cs

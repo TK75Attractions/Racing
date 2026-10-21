@@ -33,6 +33,28 @@ function fixture() {
 const base = {state:'Game',goalLap:2,players:[{number:1},{number:2}],serial:{lines:[]},participantCount:4,
   participants:Array.from({length:4},(_,index)=>({number:index+1,isCpu:index>=2,position:4-index,lap:1,
     status:'Driving',speed:72,targetSpeed:90,progress:100, rivalNumber:index>=2?index-1:0,gap:-20,recoveries:2}))};
+test('Unity FPS and frame time update and clear on disconnect',()=>{
+  const ui=fixture();
+  ui.render({...base,performance:{fps:59.94,frameTimeMs:1000/59.94}});
+  assert.equal(ui.elements.get('fps').textContent,'59.9');
+  assert.match(ui.elements.get('frame-time').textContent,/16.7 ms \/ frame/);
+  ui.render({...base,performance:{fps:24,frameTimeMs:1000/24}});
+  assert.equal(ui.elements.get('fps').textContent,'24.0');
+  assert.match(ui.elements.get('frame-time').textContent,/41.7 ms/);
+  ui.context.setConnection(false);
+  assert.equal(ui.elements.get('fps').textContent,'--');
+  assert.match(ui.elements.get('frame-time').textContent,/計測待ち/);
+});
+test('Missing, warming up or invalid FPS never shows a stale measurement',()=>{
+  const ui=fixture();
+  for(const performance of [undefined,null,{}, {fps:0,frameTimeMs:0}, {fps:NaN,frameTimeMs:16.7},
+      {fps:60,frameTimeMs:Infinity}, {fps:-1,frameTimeMs:-1}, {fps:'60',frameTimeMs:16.7}]){
+    ui.render({...base,performance:{fps:60,frameTimeMs:16.7}});
+    ui.render({...base,performance});
+    assert.equal(ui.elements.get('fps').textContent,'--');
+    assert.match(ui.elements.get('frame-time').textContent,/計測待ち/);
+  }
+});
 test('Four standings include CPU diagnostics and preserve two player feeds',()=>{
   const ui=fixture();ui.render(base);
   const rows=ui.elements.get('participant-rows').children;

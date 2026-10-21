@@ -34,6 +34,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     private readonly Dictionary<string, string> commandRequests = new Dictionary<string, string>();
     private readonly Queue<string> commandOrder = new Queue<string>();
     private SerialEntry latestTelemetry;
+    private readonly FrameRateCounter frameRate = new FrameRateCounter();
 
     [Serializable] private sealed class ActionRequest
     {
@@ -128,6 +129,11 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public bool contactGrace;
     }
 
+    [Serializable] private sealed class PerformanceSnapshot
+    {
+        public float fps, frameTimeMs;
+    }
+
     [Serializable] private sealed class DashboardSnapshot
     {
         public string sessionId;
@@ -138,6 +144,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public PlayerProgressSnapshot[] playerProgress;
         public string state;
         public float raceTime;
+        public PerformanceSnapshot performance;
         public float countdown;
         public int goalLap;
         public string inputMode;
@@ -162,6 +169,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public ParticipantSnapshot[] participants;
         public SerialSnapshot serial;
     }
+
+    private void OnEnable() => frameRate.Reset();
 
     private void Start()
     {
@@ -206,6 +215,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
 
     private void Update()
     {
+        frameRate.RecordFrame(Time.realtimeSinceStartupAsDouble);
         ObserveState();
         RgpSerialJournal journal = input?.SharedSerialInputSource?.Monitor;
         if (journal != null) liveJournal = journal;
@@ -362,6 +372,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             playerProgress = BuildPlayerProgress(),
             state = race != null ? race.state.ToString() : "Unknown",
             raceTime = race != null ? race.time : 0f,
+            performance = new PerformanceSnapshot { fps = frameRate.FramesPerSecond, frameTimeMs = frameRate.FrameMilliseconds },
             countdown = race != null ? race.CountdownTimeRemaining : 0f,
             goalLap = race != null ? race.GoalLap : 0,
             inputMode = input != null ? input.InputModeLabel : "Unavailable",

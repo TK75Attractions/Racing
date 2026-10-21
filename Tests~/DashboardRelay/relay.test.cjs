@@ -152,6 +152,12 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       assert.equal((await request('/live.js')).status,200);
       const camera=await request('/api/player/1/frame');assert.equal(camera.status,503); // Harness has no GPU camera.
       const snapshot=await request('/api/status');assert.ok(snapshot.json.sessionId);assert.equal(snapshot.json.state,'Title');
+      const performance=await waitFor(async()=>{
+        const current=(await request('/api/status')).json?.performance;
+        return current?.fps>0 ? current : false;
+      });
+      assert.ok(performance.fps<1000 && performance.frameTimeMs>0);
+      assert.ok(Math.abs(performance.fps*performance.frameTimeMs-1000)<.1);
       assert.equal((await request('/api/connection')).json.canControl,true);
     });
     const remote={host:'race.test.ts.net',origin:'https://race.test.ts.net',user:'viewer@example.com'};
@@ -168,6 +174,9 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
     });
     const first=await open('/api/events',remote);
     await waitFor(()=>first.packets.some(packet=>packet.snapshot));
+    await t.test('FPS measurements reach WebSocket viewers',async()=>{
+      await waitFor(()=>first.packets.some(packet=>packet.snapshot?.performance?.fps>0));
+    });
     await t.test('TEL latest only, outbound command and all non-TEL history',async()=>{
       send('tx:'+wire('CMD,1,0,PING'));
       await waitFor(()=>first.packets.some(packet=>packet.rawLines?.some(line=>line.direction==='TX')));

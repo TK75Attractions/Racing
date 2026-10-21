@@ -2,6 +2,12 @@
 
 `Assets/StreamingAssets/Dashboard/index.html` は Unity ビルドに同梱される画面で、同じファイルを GitHub Pages にも公開します。Unity の `RaceDashboardBridge` が `127.0.0.1:8765` で画面・状態・カメラ画像・シリアルログを配信します。ブラウザは USB シリアルポートを直接開きません。ESP32 のポートは引き続き Unity が占有します。
 
+## FPS表示
+
+ローカル管理画面とDashboard Relay経由の共有画面は、上部にUnity全体の現在のFPSと平均フレーム時間（ms/frame）を表示します。各プレイヤーのカメラやブラウザーのFPSではなく、UnityのUpdate間隔を `Time.realtimeSinceStartupAsDouble` で計測した約0.5秒ごとの平均です。一時停止中の `timeScale` に影響されず、処理の停止時間も含めます。追加の画面キャプチャやHTTPポーリングは行いません。
+
+計測開始前・未対応のUnity・接続切断時は `--` に戻します。Firebaseの従来の遠隔スナップショット形式は変更していないため、Firebase経由ではFPSは計測待ちになります。
+
 ## 起動
 
 1. Unity で `Assets/Scenes/SampleScene.unity` を開き、Play またはビルドを実行します。`Gmanager` がブリッジを自動起動します。
