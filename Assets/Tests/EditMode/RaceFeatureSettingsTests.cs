@@ -13,6 +13,7 @@ public sealed class RaceFeatureSettingsTests
         Assert.IsTrue(settings.IsEnabled(RaceFeature.FinishRun));
         Assert.IsTrue(settings.IsEnabled(RaceFeature.FinishApproachGrace));
         Assert.IsTrue(settings.IsEnabled(RaceFeature.ClearSpeedPresentation));
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.CourseIntro));
     }
     [Test] public void FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked()
     {

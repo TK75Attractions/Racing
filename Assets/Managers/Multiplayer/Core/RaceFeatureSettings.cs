@@ -22,13 +22,14 @@ public enum RaceFeature
     FinishRun = 8192,
     FinishApproachGrace = 16384,
     ClearSpeedPresentation = 32768,
-    All = ExperienceItems | DriftCoaching | HitProtection | Slipstream | SteeringAssist | LandingFeedback | LandingBoost | TubeChargeLines | PlayerTwoAutodrive | CpuRacing | ResultHighlights | HighSpeedCornering | FastAiPace | FinishRun | FinishApproachGrace | ClearSpeedPresentation
+    CourseIntro = 65536,
+    All = ExperienceItems | DriftCoaching | HitProtection | Slipstream | SteeringAssist | LandingFeedback | LandingBoost | TubeChargeLines | PlayerTwoAutodrive | CpuRacing | ResultHighlights | HighSpeedCornering | FastAiPace | FinishRun | FinishApproachGrace | ClearSpeedPresentation | CourseIntro
 }
 
 /// <summary>Session-local feature switches. Structural rules are frozen for a race.</summary>
 public sealed class RaceFeatureSettings
 {
-    public RaceFeature Enabled { get; private set; } = RaceFeature.DriftCoaching | RaceFeature.HitProtection | RaceFeature.Slipstream | RaceFeature.SteeringAssist | RaceFeature.LandingFeedback | RaceFeature.LandingBoost | RaceFeature.TubeChargeLines | RaceFeature.CpuRacing | RaceFeature.ResultHighlights | RaceFeature.HighSpeedCornering | RaceFeature.FastAiPace | RaceFeature.FinishRun | RaceFeature.FinishApproachGrace | RaceFeature.ClearSpeedPresentation;
+    public RaceFeature Enabled { get; private set; } = RaceFeature.DriftCoaching | RaceFeature.HitProtection | RaceFeature.Slipstream | RaceFeature.SteeringAssist | RaceFeature.LandingFeedback | RaceFeature.LandingBoost | RaceFeature.TubeChargeLines | RaceFeature.CpuRacing | RaceFeature.ResultHighlights | RaceFeature.HighSpeedCornering | RaceFeature.FastAiPace | RaceFeature.FinishRun | RaceFeature.FinishApproachGrace | RaceFeature.ClearSpeedPresentation | RaceFeature.CourseIntro;
     public RacePreset SelectedPreset { get; private set; }
     public RacePreset ActivePreset { get; private set; }
     public bool RulesLocked { get; private set; }

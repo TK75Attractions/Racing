@@ -1,0 +1,18 @@
+{
+    "mode": "off",
+    "passed": true,
+    "error": "",
+    "observedIntroSeconds": 2.5017969608306886,
+    "countdownAtEntry": 3.0,
+    "maximumRaceTimeDuringIntro": 0.0,
+    "maximumGridMovement": 0.0,
+    "introFrames": 648,
+    "sawCountdownAfterIntro": true,
+    "cameraSamples": [
+        {
+            "x": 362.3649597167969,
+            "y": 257.28173828125,
+            "z": 1027.6123046875
+        }
+    ]
+}
