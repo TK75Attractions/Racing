@@ -19,6 +19,10 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     private RaceParticipant entry;
     private float targetSpeed = 25f, lane, desiredLane, nextDecision, stuck, reverseUntil, yieldUntil;
     private int rivalIndex;
+    private RaceHumanPace humanPace;
+    private float paceCruise=18f;
+    public float ReferencePace => humanPace?.Pace(rivalIndex) ?? 18f;
+    public float PaceCruise => paceCruise;
     private float landingLaneUntil;
     private bool driving;
     private int groundedTires;
@@ -53,6 +57,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     public void Configure(Gmanager race, LapManager lapManager, RaceParticipant participant)
     {
         manager = race; course = race.course; laps = lapManager; entry = participant;
+        humanPace=RaceHumanPace.For(race);
         body = GetComponent<Rigidbody>(); body.interpolation = RigidbodyInterpolation.Interpolate; ownColliders = GetComponentsInChildren<Collider>(); tires = GetComponentsInChildren<TireForce>();
         rivalIndex = entry.Index % 2; lane = desiredLane = entry.Index % 2 == 0 ? -2f : 2f;
         mover = GetComponent<DebugMover>(); mover.SetInputSource(this);
@@ -104,12 +109,14 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         {
             nextDecision = Time.time + 4f; // Hold opponent/lane decisions; no frame-by-frame switching.
             RaceParticipant first = manager.GetParticipant(0), second = manager.GetParticipant(1);
-            if (first?.IsRacing == true && second?.IsRacing == true)
+            bool firstActive=RaceHumanPace.Enabled ? RaceHumanPace.ManualRacer(first) : first?.IsRacing==true;
+            bool secondActive=RaceHumanPace.Enabled ? RaceHumanPace.ManualRacer(second) : second?.IsRacing==true;
+            if (firstActive && secondActive)
             {
                 bool split = Mathf.Abs(first.Progress - second.Progress) > 80f;
                 rivalIndex = split ? (entry.Index == 2 ? (first.Progress < second.Progress ? 0 : 1) : (first.Progress < second.Progress ? 1 : 0)) : entry.Index % 2;
             }
-            else rivalIndex = first?.IsRacing == true ? 0 : 1;
+            else rivalIndex = firstActive ? 0 : secondActive ? 1 : -1;
             RaceParticipant rival = manager.GetParticipant(rivalIndex);
             if (rival?.IsRacing == true)
             {
@@ -119,20 +126,35 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
             }
         }
         RaceParticipant opponent = manager.GetParticipant(rivalIndex);
+        if (RaceHumanPace.Enabled && !RaceHumanPace.ManualRacer(opponent))
+        {
+            opponent=RaceHumanPace.ManualRacer(manager.GetParticipant(0)) ? manager.GetParticipant(0) :
+                RaceHumanPace.ManualRacer(manager.GetParticipant(1)) ? manager.GetParticipant(1) : null;
+            rivalIndex=opponent?.Index??-1;
+        }
         float gap = opponent?.IsRacing == true ? opponent.Progress - laps.GetRaceProgressDistance(body) : 0;
         bool finalLap = laps.GetCarData(body)?.lapCount >= laps.GoalLap - 1;
         float contest = Mathf.Sin(Time.time * .22f + entry.Index * 2f) * (finalLap ? 8f : 16f);
         float partnerSpeed = opponent?.IsRacing == true ? opponent.Body.linearVelocity.magnitude : cruiseSpeed;
+        if (RaceHumanPace.Enabled && opponent!=null) partnerSpeed=humanPace.Pace(opponent.Index);
         float adjusted = Mathf.Clamp(Mathf.Clamp(partnerSpeed + (finalLap ? 5f : 3f), 5f, cruiseSpeed) + (gap - contest) * .14f,
             Mathf.Max(7f, cruiseSpeed - maximumSlowdown), cruiseSpeed + maximumCatchup);
         if (improved) adjusted = opponent?.IsRacing == true
             ? CpuRacePace.Request(partnerSpeed, gap, manager.time, entry.Index, cruiseSpeed, maximumCatchup) : cruiseSpeed;
         float requested = Mathf.Min(adjusted, bendLimit);
         bool fastPace = RaceSpeedPlanner.Enabled;
-        if (fastPace)
+        if (RaceHumanPace.Enabled)
+        {
+            float ceiling=fastPace?RaceSpeedPlanner.Cruise:cruiseSpeed+maximumCatchup;
+            float wanted=opponent!=null?CpuRacePace.FastRequest(partnerSpeed,gap,manager.time,entry.Index,ceiling):ceiling;
+            paceCruise=Mathf.MoveTowards(paceCruise,wanted,dt*(wanted<paceCruise?4f:6f));
+            requested=fastPace?RaceSpeedPlanner.Limit(course,raw,sign,paceCruise):Mathf.Min(paceCruise,bendLimit);
+        }
+        else if (fastPace)
             requested = RaceSpeedPlanner.Limit(course, raw, sign,
                 RaceSpeedPlanner.CpuCruise(partnerSpeed, gap, manager.time, entry.Index));
         if (improved) jumpAhead |= course.IsJumpAhead(body.position, sign, 45f);
+        if (RaceHumanPace.Enabled && jumpAhead) requested=Mathf.Max(requested,24f);
         if (jumpAhead) { requested = fastPace ? Mathf.Min(requested, RaceSpeedPlanner.JumpSpeed) : Mathf.Min(bendLimit, improved ? 24f : Mathf.Max(24f, requested)); desiredLane = 0; }
         if (improved && Time.time < landingLaneUntil) desiredLane = 0;
         if (improved && (jumpAhead || Time.time < landingLaneUntil))

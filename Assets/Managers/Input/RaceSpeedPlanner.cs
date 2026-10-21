@@ -31,6 +31,6 @@ public static class RaceSpeedPlanner
     public static float CpuCruise(float partnerSpeed, float gap, float time, int index)
     {
         return RaceFeatureController.Enabled(RaceFeature.CpuRacing)
-            ? CpuRacePace.FastRequest(partnerSpeed, gap, time, index, Cruise) : Cruise;
+            ? CpuRacePace.LegacyFastRequest(partnerSpeed, gap, time, index, Cruise) : Cruise;
     }
 }

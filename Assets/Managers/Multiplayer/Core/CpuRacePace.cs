@@ -3,10 +3,30 @@ using System;
 /// <summary>Bounded pace windows create attacks and room for a counterattack; never decide a winner.</summary>
 public static class CpuRacePace
 {
-    // A leading CPU used to revert to full cruise as soon as its rival was >35m
-    // away or below 30m/s. Keep one close rival and one more competitive rival,
-    // using physical throttle/brake only. A stopped player never parks the CPUs.
     public static float FastRequest(float partnerSpeed, float gap, float raceSeconds, int cpuIndex, float cruise)
+    {
+        if (!Finite(partnerSpeed) || !Finite(gap) || !Finite(raceSeconds) || !Finite(cruise)) return 18f;
+        float pace = Math.Max(8f, Math.Min(cruise, partnerSpeed > 0 ? partnerSpeed : 18f));
+        float phase = (Math.Max(0f, raceSeconds) + cpuIndex * 3f) % 16f;
+        float lead = cpuIndex % 2 == 0 ? 10f : 24f;
+        float window = phase < 10f || gap > 15f ? 2.5f : -1.5f;
+        float correction = (gap + lead) * .10f;
+        // Catch up through normal driving when behind, then ease off as the CPU gets ahead.
+        // Even a slow rival gets attack/counterattack windows, without a 28-38m/s floor.
+        float request = pace + window + correction;
+        return Math.Max(8f, Math.Min(cruise + 2f, request));
+    }
+    public static float CompanionRequest(float partnerSpeed, float gap, float cruise)
+    {
+        if (!Finite(partnerSpeed) || !Finite(gap) || !Finite(cruise)) return 18f;
+        float pace = Math.Max(8f, Math.Min(cruise, partnerSpeed > 0 ? partnerSpeed : 18f));
+        // P2 accompanies P1, targeting a small following distance instead of winning a solo time trial.
+        return Math.Max(8f, Math.Min(cruise, pace + (gap - 10f) * .10f));
+    }
+    private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+
+    // Retained behind the adaptive pace debug switch for a direct comparison.
+    public static float LegacyFastRequest(float partnerSpeed, float gap, float raceSeconds, int cpuIndex, float cruise)
     {
         if (float.IsNaN(partnerSpeed) || float.IsNaN(gap) || float.IsNaN(raceSeconds)) return cruise;
         if (partnerSpeed < 8f || gap > 35f) return cruise;
