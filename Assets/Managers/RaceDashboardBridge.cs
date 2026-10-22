@@ -137,6 +137,12 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public float fps, frameTimeMs;
     }
 
+    [Serializable] private sealed class FeatureSnapshot
+    {
+        public string id, label;
+        public bool enabled;
+    }
+
     [Serializable] private sealed class SettingsSnapshot
     {
         public float master, bgm, engine, effects, constantPedal;
@@ -144,6 +150,9 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public bool inputAvailable, serialDebug, featurePanel, constantPaused, audioRefreshAvailable;
         public string[] deviceNames, deviceKeys, outputStatus, selectedDevices;
         public bool[] outputAvailable;
+        public bool featuresAvailable, rulesLocked, hasQueuedPreset, canStartTestRace;
+        public string activePreset, selectedPreset;
+        public FeatureSnapshot[] features;
     }
 
     [Serializable] private sealed class DashboardSnapshot
@@ -349,8 +358,22 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         serialLines.Clear(); serialAlerts.Clear(); latestTelemetry = null;
     }
 
+    private FeatureSnapshot[] BuildFeatures(RaceFeatureSettings settings)
+    {
+        if (settings == null) return Array.Empty<FeatureSnapshot>();
+        var snapshots = new FeatureSnapshot[RaceDebugFeatureCatalog.Entries.Count];
+        for (int i = 0; i < snapshots.Length; i++)
+        {
+            RaceDebugFeatureCatalog.Entry entry = RaceDebugFeatureCatalog.Entries[i];
+            snapshots[i] = new FeatureSnapshot { id = entry.Feature.ToString(), label = entry.DashboardLabel,
+                enabled = settings.IsEnabled(entry.Feature) };
+        }
+        return snapshots;
+    }
+
     private SettingsSnapshot BuildSettings()
     {
+        RaceFeatureSettings features = race?.Features?.Settings;
         RaceAudioOutput output = RaceAudioOutput.Instance;
         string[] keys = output?.DeviceKeys ?? Array.Empty<string>();
         var selected = new string[2];
@@ -360,6 +383,11 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             selected[i] = device >= 0 && device < keys.Length ? keys[device] : "";
         }
         return new SettingsSnapshot {
+            featuresAvailable = features != null, features = BuildFeatures(features),
+            activePreset = features?.ActivePreset.ToString() ?? "", selectedPreset = features?.SelectedPreset.ToString() ?? "",
+            rulesLocked = features?.RulesLocked ?? false, hasQueuedPreset = features?.HasQueuedPreset ?? false,
+            canStartTestRace = features != null && race.CanUseDashboardControls &&
+                (race.state == Gmanager.State.Title || race.state == Gmanager.State.Result),
             master = RaceAudioSettings.Master, bgm = RaceAudioSettings.Bgm,
             engine = RaceAudioSettings.Engine, effects = RaceAudioSettings.Effects,
             inputAvailable = input != null, inputMode = input?.InputMode ?? "",
@@ -377,6 +405,18 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     {
         reason = "invalid_setting";
         string[] args = request.args ?? Array.Empty<string>();
+        RaceFeatureController features = race?.Features;
+        if (request.command == "feature" && args.Length == 2 && features != null &&
+            RaceDebugFeatureCatalog.TryFind(args[0], out RaceFeature feature) && (args[1] == "true" || args[1] == "false"))
+        { features.SetFeature(feature, args[1] == "true"); return true; }
+        if (request.command == "allFeaturesOff" && args.Length == 0 && features != null)
+        { features.SetFeature(RaceFeature.All, false); return true; }
+        if (request.command == "preset" && args.Length == 1 && features != null &&
+            (args[0] == "Standard" || args[0] == "Experience"))
+        { features.SelectPreset((RacePreset)Enum.Parse(typeof(RacePreset), args[0])); return true; }
+        if (request.command == "testRace" && args.Length == 0 && features != null && race.CanUseDashboardControls &&
+            (race.state == Gmanager.State.Title || race.state == Gmanager.State.Result))
+        { race.StartAutodriveTestRace(); return true; }
         if (request.command == "refreshDevices" && args.Length == 0)
         { if (RaceAudioOutput.Instance?.CanRefreshDevices != true) return false; RaceAudioOutput.Instance.RefreshDevices(); return true; }
         if (request.command == "volume" && args.Length == 2 &&

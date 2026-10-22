@@ -66,9 +66,10 @@ public class Gmanager
     public bool IsPreparing=>state==State.Title;
     public float time=>UnityEngine.Time.time;
     public float CountdownTimeRemaining=>0;
-    public int GoalLap=>2;
+    public int GoalLap=>Features.Settings.ActivePreset==RacePreset.Experience?1:2;
     public List<RaceParticipant> Participants=new List<RaceParticipant>();
-    public void StartGame(){state=State.Countdown;Harness.Applied++;}
+    public void StartAutodriveTestRace(){Features.SetFeature(RaceFeature.PlayerTwoAutodrive,true);Features.Settings.BeginPreparation();state=State.Countdown;Harness.Applied++;}
+    public void StartGame(){Features.Settings.BeginPreparation();state=State.Countdown;Harness.Applied++;}
     public bool AdvanceDashboardToTutorial(){if(state!=State.CarSelection)return false;state=State.Tutorial;Harness.Applied++;return true;}
     public bool AdvanceDashboardToCountdown(){if(state!=State.Tutorial)return false;state=State.Countdown;Harness.Applied++;return true;}
     public void ShowResult(){state=State.Result;Harness.Applied++;}
@@ -83,7 +84,12 @@ public class Gmanager
     public byte[] CapturePlayerFrame(int i)=>null;
 }
 public enum P1SteeringTestMode { Normal, KeyboardPedal, ConstantPedal }
-public class RaceFeatureController { public bool PanelVisible; }
+public class RaceFeatureController {
+    public bool PanelVisible;
+    public RaceFeatureSettings Settings = new RaceFeatureSettings();
+    public void SetFeature(RaceFeature feature, bool enabled)=>Settings.SetFeature(feature, enabled);
+    public void SelectPreset(RacePreset preset)=>Settings.SelectPreset(preset);
+}
 public class RaceAudioOutput {
     public static RaceAudioOutput Instance = new RaceAudioOutput();
     public bool CanRefreshDevices => true;
@@ -122,6 +128,9 @@ public static class Harness
             else if(line.StartsWith("tx:")) journal.RecordWire("TX",line.Substring(3)+"\n");
             else if(line.StartsWith("event:")) journal.Diagnostic("INFO",line.Substring(6));
             else if(line.StartsWith("state:")) race.state=(Gmanager.State)Enum.Parse(typeof(Gmanager.State),line.Substring(6));
+            else if(line=="rules:unlock") race.Features.Settings.UnlockAtTitle();
+            else if(line=="rules:lock") race.Features.Settings.BeginPreparation();
+            else if(line.StartsWith("feature:")) race.Features.SetFeature((RaceFeature)Enum.Parse(typeof(RaceFeature),line.Substring(8)),false);
             else if(line=="count") Console.WriteLine("APPLIED="+Applied);
         }}) {IsBackground=true}.Start();
         Console.WriteLine("BRIDGE_READY");

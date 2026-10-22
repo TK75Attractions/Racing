@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 /// <summary>Exercise the real two-player menu flow and capture the rendered course behind its UI.</summary>
 public static class MenuSceneryValidation
@@ -42,6 +43,8 @@ public static class MenuSceneryValidation
         started = changed = EditorApplication.timeSinceStartup;
         Application.logMessageReceived -= OnLog;
         Application.logMessageReceived += OnLog;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
         EditorApplication.update -= Tick;
         EditorApplication.update += Tick;
     }
@@ -118,6 +121,13 @@ public static class MenuSceneryValidation
         }
         catch (Exception error) { Finish(false, error.ToString()); }
     }
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Run before Start, so another checkout's dashboard listener is never displaced by this test.
+        foreach (var bridge in UnityEngine.Object.FindObjectsByType<RaceDashboardBridge>(FindObjectsSortMode.None)) bridge.enabled = false;
+        foreach (var publisher in UnityEngine.Object.FindObjectsByType<RaceRemoteFirebasePublisher>(FindObjectsSortMode.None)) publisher.enabled = false;
+        foreach (var output in UnityEngine.Object.FindObjectsByType<RaceAudioOutput>(FindObjectsSortMode.None)) output.enabled = false;
+    }
     private static void Next() { stage++; changed = EditorApplication.timeSinceStartup; }
     private static void OnLog(string message, string stack, LogType type)
     {
@@ -148,6 +158,7 @@ public static class MenuSceneryValidation
         SessionState.SetBool(Key, false);
         EditorApplication.update -= Tick;
         Application.logMessageReceived -= OnLog;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
         if (success) Debug.Log(message); else Debug.LogError(message);
         if (Application.isBatchMode) EditorApplication.Exit(success ? 0 : 1);
         else EditorApplication.isPlaying = false;

@@ -76,7 +76,17 @@
             <fieldset><legend>デバッグ表示</legend>
               <label class="setting-check"><input id="settings-serialDebug" type="checkbox" data-setting="serialDebug" disabled>シリアルモニターを表示</label>
               <label class="setting-check"><input id="settings-featurePanel" type="checkbox" data-setting="featurePanel" disabled>F8 デバッグパネルを表示</label>
-              <p class="control-note">F8パネルはゲーム画面に表示します。機能別の比較スイッチはパネル内で変更できます。</p>
+              <p class="control-note">F8パネルはゲーム画面に表示します。機能別のスイッチは下の「F8機能設定」からも変更できます。</p>
+            </fieldset>
+            <fieldset class="f8-settings"><legend>F8機能設定</legend>
+              <p id="settings-feature-count" class="control-note">F8設定の取得を待っています。</p>
+              <div class="feature-toolbar">
+                <div><label for="settings-preset">レースルールのプリセット</label><select id="settings-preset" data-setting="preset" disabled><option value="Standard">標準（シーンの周回・制限時間）</option><option value="Experience">体験（1周・180秒）</option></select></div>
+                <div><p id="settings-rules" role="status"></p><p id="settings-rule-help" class="control-note"></p></div>
+              </div>
+              <div id="settings-features" class="feature-grid" aria-label="F8の機能スイッチ"></div>
+              <div class="feature-actions"><button id="settings-all-off" type="button" data-setting="allFeaturesOff" disabled>追加機能をすべてOFF</button><button id="settings-test-race" type="button" data-setting="testRace" disabled>P1手動・P2自動のテストレースを開始</button></div>
+              <p class="control-note">機能スイッチは両プレイヤーに即時反映され、F8パネルと同期します。テストレースはタイトル・結果画面で使用でき、車選択と練習を省略します。設定はアプリ終了時にリセットされます。</p>
             </fieldset>
           </div>
           <p id="settings-status" class="control-note" role="status" aria-live="polite">Unity の接続を待っています。</p>

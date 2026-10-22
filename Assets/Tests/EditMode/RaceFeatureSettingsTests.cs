@@ -20,6 +20,7 @@ public sealed class RaceFeatureSettingsTests
         Assert.IsTrue(settings.IsEnabled(RaceFeature.SteeringStability));
         Assert.IsTrue(settings.IsEnabled(RaceFeature.DailyRanking));
         Assert.IsTrue(settings.IsEnabled(RaceFeature.AdaptiveAiPace));
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.MenuScenery));
     }
     [Test] public void FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked()
     {
@@ -68,5 +69,20 @@ public sealed class RaceFeatureSettingsTests
         Assert.AreEqual(1, experience.GoalLaps);
         Assert.AreEqual(180, experience.MaximumSeconds);
         Assert.AreEqual(90, experience.MaximumGraceSeconds);
+    }
+    [Test] public void DebugCatalogContainsEveryIndividualFeatureAndRejectsCompositeIds()
+    {
+        var found = new System.Collections.Generic.HashSet<RaceFeature>();
+        foreach (RaceDebugFeatureCatalog.Entry entry in RaceDebugFeatureCatalog.Entries)
+        {
+            Assert.IsTrue(found.Add(entry.Feature), "A debug switch must appear once.");
+            Assert.IsNotEmpty(entry.PanelLabel); Assert.IsNotEmpty(entry.DashboardLabel);
+            Assert.IsTrue(RaceDebugFeatureCatalog.TryFind(entry.Feature.ToString(), out RaceFeature parsed));
+            Assert.AreEqual(entry.Feature, parsed);
+        }
+        foreach (RaceFeature feature in System.Enum.GetValues(typeof(RaceFeature)))
+            if (feature != RaceFeature.None && feature != RaceFeature.All) Assert.IsTrue(found.Contains(feature));
+        foreach (string id in new[] { "All", "None", "1", "DriftCoaching, HitProtection", "driftcoaching", "FutureFeature", null })
+            Assert.IsFalse(RaceDebugFeatureCatalog.TryFind(id, out _));
     }
 }
