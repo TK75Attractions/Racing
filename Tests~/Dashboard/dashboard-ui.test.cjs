@@ -36,6 +36,7 @@ function fixture() {
   let now = 100000;
   class ClockDate extends Date { static now() { return now; } }
   const context = vm.createContext({Date:ClockDate,document,location:{origin:'http://127.0.0.1:8765'},URL:{revokeObjectURL(){}}});
+  vm.runInContext(readFileSync(resolve(dashboard,'diagnostics.js'),'utf8'),context);
   // Load the real render functions without timers, network polling or UI event handlers.
   vm.runInContext(script.slice(0,script.indexOf("document.querySelectorAll('[data-action]').forEach")),context);
   const render = (snapshot,options) => context.render(snapshot,options);

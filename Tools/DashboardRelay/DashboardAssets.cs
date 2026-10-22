@@ -5,6 +5,7 @@ internal static class DashboardAssets
     {
         ["/"] = ("index.html", "text/html; charset=utf-8"),
         ["/index.html"] = ("index.html", "text/html; charset=utf-8"),
+        ["/diagnostics.js"] = ("diagnostics.js", "application/javascript; charset=utf-8"),
         ["/app.js"] = ("app.js", "application/javascript; charset=utf-8"),
         ["/live.js"] = ("live.js", "application/javascript; charset=utf-8"),
         ["/remote.js"] = ("remote.js", "application/javascript; charset=utf-8"),

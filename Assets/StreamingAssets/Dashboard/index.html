@@ -8,6 +8,7 @@
   <title>RACING CONTROL | レース管理</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
+  <script src="diagnostics.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -179,5 +180,12 @@
       <footer><span>RACING CONTROL / OPERATOR VIEW</span><span id="footer-status">Unity との接続を確認中</span></footer>
     </main>
   </div>
+  <dialog id="diagnostics-dialog" aria-labelledby="diagnostics-title">
+    <div class="panel-heading"><h2 id="diagnostics-title">機器診断</h2><button id="diagnostics-close" type="button" class="secondary-button">閉じる</button></div>
+    <p id="diagnostics-progress" role="status" aria-live="polite"></p>
+    <h3>受信から確認できたこと</h3><ul id="diagnostics-facts"></ul>
+    <h3>原因の候補</h3><ul id="diagnostics-causes"></ul>
+    <h3>確認する箇所・次の操作</h3><ul id="diagnostics-checks"></ul>
+  </dialog>
 </body>
 </html>

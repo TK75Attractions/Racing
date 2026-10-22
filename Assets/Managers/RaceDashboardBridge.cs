@@ -79,7 +79,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public ImuSnapshot[] imus;
         public PedalSnapshot[] pedals;
         public CommandSnapshot[] commands;
-        public string state, ads, imu, adsAddress, imuAddress, imuIdentity;
+        public string state, ads, imu, adsAddress, imuAddress, imuIdentity, inputMode;
         public int pending;
         public string lastCommand;
     }
@@ -329,6 +329,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             case "/":
             case "/index.html": fileName = "index.html"; contentType = "text/html; charset=utf-8"; return true;
             case "/live.js": fileName = "live.js"; contentType = "application/javascript; charset=utf-8"; return true;
+            case "/diagnostics.js": fileName = "diagnostics.js"; contentType = "application/javascript; charset=utf-8"; return true;
             case "/app.js": fileName = "app.js"; contentType = "application/javascript; charset=utf-8"; return true;
             case "/style.css": fileName = "style.css"; contentType = "text/css; charset=utf-8"; return true;
             case "/favicon.svg": fileName = "favicon.svg"; contentType = "image/svg+xml"; return true;
@@ -557,7 +558,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             hardware = new HardwareSnapshot
             {
                 sessionOpen = serial?.Session.SessionOpen ?? false, recent = serial?.HasRecentDeviceData ?? false,
-                state = serial?.Session.State ?? "DISCONNECTED", ads = serial?.Session.AdsStatus ?? "Unknown",
+                state = serial?.Session.State ?? "DISCONNECTED", inputMode = serial?.Session.InputMode ?? "ALL", ads = serial?.Session.AdsStatus ?? "Unknown",
                 imu = serial?.Session.ImuStatus ?? "Unknown", adsAddress = serial?.Session.AdsAddress ?? "",
                 imuAddress = serial?.Session.ImuAddress ?? "", imuIdentity = serial?.Session.ImuIdentity ?? "",
                 angleLocked = serial?.Session.AngleLocked ?? false, calibrated = serial?.Session.Calibrated ?? false,

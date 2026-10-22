@@ -555,6 +555,7 @@ function renderHardware(snapshot) {
     ['ADS1115（I2C）', sensor(hardware?.ads), hardware?.adsAddress ? `アドレス ${hardware.adsAddress}` : 'ペダル用センサー / アドレス未確認'],
     ...[1, 2].map(n => [`P${n} ペダル`, ...pedal(n)])
   ];
+  cards.forEach((card,index)=>{if(snapshot&&!HardwareDiagnostics.required(snapshot,index)){card[1]=['unknown','この入力モードでは未使用'];card[2]='未接続でも現在の走行入力には影響しません';}});
   const faults = cards.filter(([, [level]]) => level === 'fault').length;
   const ready = cards.filter(([, [level]]) => level === 'ok').length;
   const keyboard = /keyboard/i.test(snapshot?.inputMode || '');
@@ -569,16 +570,63 @@ function renderHardware(snapshot) {
     chip.textContent = `${state === 'ok' ? '✓' : state === 'fault' ? '!' : '◷'} ${['USB', 'IMU 1', 'IMU 2', 'ADS', 'P1', 'P2'][index]}`;
     chip.setAttribute('aria-label', `${name}：${text}`);
     chip.title = `${name}：${text}`;
+    chip.onclick = () => openHardwareDiagnosis(index);chip.setAttribute('role','button');chip.tabIndex=0;chip.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openHardwareDiagnosis(index);}};
     return chip;
   }));
   $('hardware-state').className = 'mini-status ' + level;
-  $('hardware-grid').replaceChildren(...cards.map(([name, [level, state], detail]) => {
+  $('hardware-grid').replaceChildren(...cards.map(([name, [level, state], detail], index) => {
     const card = document.createElement('article'); card.className = 'hardware-card ' + level;
     const heading = document.createElement('h3'); heading.textContent = name;
     const value = document.createElement('strong'); value.textContent = state;
     const note = document.createElement('p'); note.textContent = detail;
-    card.append(heading, value, note); return card;
+    const inspect=document.createElement('button');inspect.type='button';inspect.className='secondary-button';inspect.textContent='原因を調べる';inspect.onclick=()=>openHardwareDiagnosis(index);
+    card.append(heading, value, note, inspect); return card;
   }));
+}
+let diagnosticGeneration=0, diagnosticKey=0, diagnosticScan=null;
+function renderHardwareDiagnosis(){
+  const report=HardwareDiagnostics.analyze(latestSnapshot,diagnosticKey,diagnosticScan);
+  $('diagnostics-title').textContent=report.title+' の診断';
+  for(const name of ['facts','causes','checks'])$('diagnostics-'+name).replaceChildren(...report[name].map(text=>{const item=document.createElement('li');item.textContent=text;return item;}));
+}
+async function openHardwareDiagnosis(key){
+  diagnosticKey=key;diagnosticScan=null;const generation=++diagnosticGeneration;
+  $('diagnostics-close').onclick=()=>{diagnosticGeneration++;$('diagnostics-dialog').close();};
+  if(!$('diagnostics-dialog').open)$('diagnostics-dialog').showModal();
+  renderHardwareDiagnosis();
+  const session=latestSnapshot?.sessionId,hardwareGeneration=latestSnapshot?.hardware?.generation;
+  if(!latestCanControl||!localMode||!canSendSerial){$('diagnostics-progress').textContent='現在の受信情報で診断しています。新しい照会には操作権限と装置の応答が必要です。';return;}
+  const commands=['GET_STATUS','GET_CONFIG'];
+  if(!['Game','Countdown','Goal'].includes(latestSnapshot.state))commands.push('SCAN_I2C');
+  $('diagnostics-progress').textContent='装置の最新状態を照会しています…';
+  try{
+    for(const command of commands){
+      if(generation!==diagnosticGeneration)return;
+      const snapshot=latestSnapshot;
+      if(snapshot?.sessionId!==session||snapshot?.hardware?.generation!==hardwareGeneration)throw new Error('接続セッションが変わりました');
+      const request={id:crypto.randomUUID(),targetSession:session,expectedState:snapshot.state,stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime,command,args:[]};
+      const response=await apiFetch('/api/action/serial',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request),signal:AbortSignal.timeout(3000)});
+      const outcome=await response.json();if(!outcome.ok)throw new Error('装置が照会を受け付けませんでした（'+outcome.reason+'）');
+      const end=Date.now()+5000;let done=false;
+      while(Date.now()<end&&generation===diagnosticGeneration){
+        await new Promise(resolve=>setTimeout(resolve,150));
+        const response=await apiFetch('/api/status',{signal:AbortSignal.timeout(2000)});if(!response.ok)throw new Error('Unityの応答がありません');
+        const fresh=await response.json();
+        if(fresh.sessionId!==session||fresh.hardware?.generation!==hardwareGeneration)throw new Error('装置が再接続されました');
+        render(fresh,{canControl:latestCanControl,canInput:latestInputAllowed});
+        const result=fresh.hardware?.commands?.find(x=>x.sequence===outcome.serialSequence&&x.command===command);
+        if(result&&['OK','DONE'].includes(result.status)&&!(command==='SCAN_I2C'&&result.status!=='DONE')){
+          if(command==='SCAN_I2C')diagnosticScan=result.devices||[];
+          done=true;break;
+        }
+        if(result&&!['SENT','ACCEPTED','OK'].includes(result.status))throw new Error(command+'：'+result.status);
+      }
+      if(generation!==diagnosticGeneration)return;
+      if(!done)throw new Error('照会の完了通知を確認できませんでした');
+      renderHardwareDiagnosis();
+    }
+    $('diagnostics-progress').textContent=commands.includes('SCAN_I2C')?'最新状態とI2C検索で診断しました。':'走行中は状態照会のみ実施しました。I2C検索は待機時に実行します。';
+  }catch(error){if(generation===diagnosticGeneration){renderHardwareDiagnosis();$('diagnostics-progress').textContent='新しい照会は未完了：'+error.message+'。以下は取得できた範囲の情報です。';}}
 }
 function setSerialControls(enabled) {
   canSendSerial = !!enabled;
