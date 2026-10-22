@@ -24,3 +24,11 @@ The input-driven test bot reads car/course state and supplies steering and pedal
 Native universal arm64/x86_64 build succeeded (`MULTI_DISPLAY_BUILD_PASS`). The standalone smoke test used the built application and an owned ESP32 simulator process; those processes were stopped afterward. These checks had one physical display. Three physical displays connected simultaneously were not available; automatic selection for two external displays is covered by the native matrix, while the movable third window was tested on the actual built-in display.
 
 Replays store vehicle mesh poses, appearance, and visibility in the current course; transient weather/item effects are not a complete historical world recording. User controls and reproducible commands are in `Documentation/RaceBroadcast.md`.
+
+## Integration with newer main
+
+Merged main's d504a00 (leased dashboard player controls) in cbc737d. The combined core suite passes 144/144, UI suite 41/41, and relay suite 28 passes / 1 environment-dependent PTY skip, including the new remote player input checks. The isolated relay suite requires local loopback access; a sandbox-restricted attempt timed out, its owned processes were stopped, and the same temporary-port suite passed with local communication permitted. The existing dashboard service was left running. See `merged-*` reports.
+
+The combined universal Mac build passed `MultiDisplayValidation.BuildMac` (`MULTI_DISPLAY_BUILD_PASS`).
+
+The combined built app also passed fresh PV and saved-history REPLAY startup: both 3360x2100 on the built-in screen, full screen bounds, and no collected rendering errors. See `merged-native-*-report.json`.

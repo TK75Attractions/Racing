@@ -1,0 +1,21 @@
+{
+    "unity": "6000.3.9f1",
+    "gpu": "Apple M1",
+    "device": "Apple M1",
+    "renderGraph": "True",
+    "outputMode": "Independent P1/P2 + movable broadcast window",
+    "physicalDisplays": 1,
+    "windowWidth": 1920,
+    "windowHeight": 1050,
+    "broadcastMode": "REPLAY",
+    "broadcastFrames": 459,
+    "broadcastRaces": 2,
+    "broadcastWidth": 3360,
+    "broadcastHeight": 2100,
+    "broadcastBuiltIn": true,
+    "broadcastFillsScreen": true,
+    "meshLodThreshold": 1.0,
+    "drivenMetres": [],
+    "samples": [],
+    "errors": []
+}

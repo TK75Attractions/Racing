@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "source": "production bridge and serial journal / scene and graphics stubs",
+  "network": "loopback with simulated Serve headers",
+  "tests": 13
+}
