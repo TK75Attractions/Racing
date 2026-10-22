@@ -52,7 +52,7 @@ public sealed class GameplayFeaturePlaytestProbe : MonoBehaviour
                 features.PanelVisible = false; keyboard.MakeCurrent();
                 _ = keyboard.f8Key.wasPressedThisFrame;
                 InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.F8));
-                features.SetFeature(RaceFeature.All, false);
+                features.SetValidationFeature(RaceFeature.All, false);
                 foreach (RaceParticipant entry in race.Participants)
                 {
                     Require(!entry.Car.GetComponent<DebugMover>().IsLandingBoosting, "OFF must stop landing boosts.");
@@ -74,7 +74,7 @@ public sealed class GameplayFeaturePlaytestProbe : MonoBehaviour
                 features.SelectPreset(originalPreset == RacePreset.Standard ? RacePreset.Experience : RacePreset.Standard);
                 Require(race.GoalLap == originalLaps && features.Settings.ActivePreset == originalPreset,
                     "A live preset selection must not alter current lap rules.");
-                features.SetFeature(RaceFeature.ExperienceItems, true);
+                features.SetValidationFeature(RaceFeature.ExperienceItems, true);
                 foreach (RaceParticipant entry in race.Participants)
                     Require(!entry.Effects.IsConfused && !entry.Effects.IsOiled && !entry.Effects.IsSpinning &&
                         !entry.Effects.ApplyConfuse(), "Gentle mode clears and blocks harmful effects for all participants.");
@@ -83,8 +83,8 @@ public sealed class GameplayFeaturePlaytestProbe : MonoBehaviour
             else if (phase == 2 && race.time > 12f)
             {
                 features.SelectPreset(originalPreset);
-                features.SetFeature(RaceFeature.All, false);
-                features.SetFeature(original, true);
+                features.SetValidationFeature(RaceFeature.All, false);
+                features.SetValidationFeature(original, true);
                 Require(features.Settings.Enabled == original && race.GoalLap == originalLaps, "Restoring switches preserves the active rules.");
                 CompletePhase(); report.passed = true; Save();
                 Debug.Log("GAMEPLAY_FEATURE_TOGGLE_PASS: live OFF, gentle items, queued rules and live restore during input-driven four-car racing.");

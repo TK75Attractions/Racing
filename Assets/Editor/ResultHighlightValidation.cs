@@ -33,9 +33,9 @@ public static class ResultHighlightValidation
             Require(ResultUIManager.FormatHighlight(dnf).StartsWith("未完走 / 走行進捗"),"DNF must retain its status and factual fallback.");
             TMP_Text highlight=root.transform.Find("ResultPresentation/ResultCard/Achievement").GetComponent<TMP_Text>();
             Require(highlight.font.HasCharacters(highlight.text),"Static font must contain the achievement text.");
-            flags.SetFeature(RaceFeature.ResultHighlights,false); ui.RefreshHighlight();
+            flags.SetValidationFeature(RaceFeature.ResultHighlights,false); ui.RefreshHighlight();
             Require(highlight.text=="","OFF must hide the result highlight immediately.");
-            flags.SetFeature(RaceFeature.ResultHighlights,true); ui.RefreshHighlight();
+            flags.SetValidationFeature(RaceFeature.ResultHighlights,true); ui.RefreshHighlight();
             Require(highlight.text.Contains("着地成功"),"ON restores the saved snapshot.");
             cameraObject=new GameObject("Result camera");
             Camera camera=cameraObject.AddComponent<Camera>(); camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Color.black;

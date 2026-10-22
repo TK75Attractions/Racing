@@ -80,14 +80,14 @@ public static class MenuSceneryValidation
                     foreach (var rig in rigs) Require(rig.MainCamera.GetComponent<CinemachineBrain>().ActiveVirtualCamera?.Name == "TitleCamera_P" + (rig.PlayerIndex + 1),
                         "The menu camera must drive each result display.");
                     Capture(0, "result"); Capture(1, "result-p2");
-                    manager.Features.SetFeature(RaceFeature.MenuScenery, false);
+                    manager.Features.SetValidationFeature(RaceFeature.MenuScenery, false);
                     Require(!director.IsShowing, "F8 OFF must release scenery cameras immediately.");
                     CheckArt(true);
                     Require(!GameObject.Find("MenuSceneryBackdrop"), "OFF must hide the temporary ground extension.");
                     Next(); break;
                 case 2:
                     if (elapsed < 1) return;
-                    manager.Features.SetFeature(RaceFeature.MenuScenery, true);
+                    manager.Features.SetValidationFeature(RaceFeature.MenuScenery, true);
                     Require(director.IsShowing, "F8 ON must restore scenery immediately.");
                     director.enabled = false;
                     Require(!director.IsShowing, "Disabling the component must restore legacy presentation.");

@@ -71,7 +71,7 @@ public static class HighSpeedCorneringValidation
                     "Small deliberate corrections must retain high-speed steering and shed excess speed too.");
             }
             ValidateIneligibleInput();
-            features.SetFeature(RaceFeature.HighSpeedCornering, false);
+            features.SetValidationFeature(RaceFeature.HighSpeedCornering, false);
             SteeringValidation.Run();
             DriftValidation.Run();
             Debug.Log("HIGH_SPEED_CORNERING_PASS: 31 production-car trials, boost, trajectory, +/-60 degree banks, small corrections, center noise, airborne, blocked, disconnect, live OFF and steering/drift regressions.");
@@ -85,7 +85,7 @@ public static class HighSpeedCorneringValidation
 
     private static Trial DriveBank(float bank, float speed, float handle, bool enabled)
     {
-        features.SetFeature(RaceFeature.HighSpeedCornering, enabled);
+        features.SetValidationFeature(RaceFeature.HighSpeedCornering, enabled);
         Quaternion rotation = Quaternion.AngleAxis(bank, Vector3.forward);
         Vector3 up = rotation * Vector3.up, forward = rotation * Vector3.forward;
         GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube), car = null;
@@ -125,7 +125,7 @@ public static class HighSpeedCorneringValidation
 
     private static void ValidateIneligibleInput()
     {
-        features.SetFeature(RaceFeature.HighSpeedCornering, true);
+        features.SetValidationFeature(RaceFeature.HighSpeedCornering, true);
         GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
         floor.transform.position = Origin - Vector3.up * .5f; floor.transform.localScale = new Vector3(100, 1, 100);
         GameObject car = CreateCar(Origin + Vector3.up * .36f, Quaternion.identity, out DebugMover mover, out Rigidbody body);
@@ -137,9 +137,9 @@ public static class HighSpeedCorneringValidation
             for (int i = 0; i < 20; i++) Call(mover, "ReadInput");
             Call(mover, "UpdateCorneringBrake");
             Require(mover.CorneringBrakingAcceleration > 4f, "Start with active turn braking on real ground.");
-            features.SetFeature(RaceFeature.HighSpeedCornering, false); Call(mover, "UpdateCorneringBrake");
+            features.SetValidationFeature(RaceFeature.HighSpeedCornering, false); Call(mover, "UpdateCorneringBrake");
             Require(mover.CorneringBrakingAcceleration == 0, "Live OFF must remove braking immediately.");
-            features.SetFeature(RaceFeature.HighSpeedCornering, true); Call(mover, "UpdateCorneringBrake");
+            features.SetValidationFeature(RaceFeature.HighSpeedCornering, true); Call(mover, "UpdateCorneringBrake");
             Require(mover.CorneringBrakingAcceleration > 4f, "Live ON must restore braking without a respawn.");
             car.transform.position += Vector3.up * 10; body.position = car.transform.position; Physics.SyncTransforms();
             Call(mover, "ReadInput"); Call(mover, "UpdateCorneringBrake");
@@ -213,7 +213,7 @@ public static class HighSpeedCorneringValidation
 
     private static Trial DriveTube(RaceCourse course, float start, float speed, float sign, bool enabled, StreamWriter trace)
     {
-        features.SetFeature(RaceFeature.HighSpeedCornering, enabled);
+        features.SetValidationFeature(RaceFeature.HighSpeedCornering, enabled);
         course.TryGetSampleAtProgress(start, out var entry);
         GameObject car = CreateCar(entry.position + entry.up * .36f, Quaternion.LookRotation(entry.forward * sign, entry.up),
             out DebugMover mover, out Rigidbody body);

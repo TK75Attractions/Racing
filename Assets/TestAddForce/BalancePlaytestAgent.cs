@@ -204,7 +204,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         Array.Clear(humanWheel, 0, 2); Array.Clear(humanPedal, 0, 2);
         bool autoPlan=Environment.GetEnvironmentVariable("RACING_ADAPTIVE_PACE_SUITE")=="1" && run.name=="adaptive-auto-7204";
         if(Environment.GetEnvironmentVariable("RACING_ADAPTIVE_PACE_SUITE")=="1")
-            manager.Features.SetFeature(RaceFeature.PlayerTwoAutodrive,autoPlan);
+            manager.Features.SetValidationFeature(RaceFeature.PlayerTwoAutodrive,autoPlan);
         if (Environment.GetEnvironmentVariable("RACING_P2_AUTO") == "1" && !autoPlan)
         {
             while (!manager.CanUseDashboardControls) yield return null;
@@ -312,9 +312,9 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 observed += "P" + (i + 1) + ": " + results[i].AchievementText + "\n";
             }
             bool originalHighlight = manager.Features.Settings.IsEnabled(RaceFeature.ResultHighlights);
-            manager.Features.SetFeature(RaceFeature.ResultHighlights, false);
+            manager.Features.SetValidationFeature(RaceFeature.ResultHighlights, false);
             if (results[0].AchievementText.Length > 0 || results[1].AchievementText.Length > 0) suite.error = "Result highlight live OFF failed.";
-            manager.Features.SetFeature(RaceFeature.ResultHighlights, originalHighlight);
+            manager.Features.SetValidationFeature(RaceFeature.ResultHighlights, originalHighlight);
             File.WriteAllText(Path.Combine(folder, "result-highlights.txt"), observed);
         }
         yield return null;

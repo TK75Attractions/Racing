@@ -41,7 +41,7 @@ public sealed class FinishRunValidationProbe : MonoBehaviour, IDriveInputSource
             {
                 launching = true; bound = false; switchedOff = false; bot.Clear();
                 manager.Features.SelectPreset(RacePreset.Experience);
-                manager.Features.SetFeature(RaceFeature.FinishRun, trial != 2);
+                manager.Features.SetValidationFeature(RaceFeature.FinishRun, trial != 2);
                 foreach (RaceItemPickup pickup in UnityEngine.Object.FindObjectsByType<RaceItemPickup>(FindObjectsSortMode.None)) pickup.gameObject.SetActive(false);
                 manager.StartAutodriveTestRace();
             }
@@ -67,7 +67,7 @@ public sealed class FinishRunValidationProbe : MonoBehaviour, IDriveInputSource
                     Require(!entry.Body.isKinematic && manager.CanDriveVehicle(entry.Body) && manager.IsEngineAudioActive(entry.Body), "Finishing must retain physical driving and engine audio.");
                     if (trial == 1 && !switchedOff && Time.time - sample.began > .5f)
                     {
-                        switchedOff = true; manager.Features.SetFeature(RaceFeature.FinishRun, false);
+                        switchedOff = true; manager.Features.SetValidationFeature(RaceFeature.FinishRun, false);
                         Require(!run.IsActive && entry.Body.isKinematic, "Live OFF must stop the winning run immediately.");
                         Debug.Log("FINISH_RUN_LIVE_OFF_PASS");
                     }

@@ -13,7 +13,7 @@ public static class RaceFeatureValidation
         settings.BeginPreparation();
         settings.SelectPreset(RacePreset.Standard);
         Require(settings.ActivePreset == RacePreset.Experience, "Live presets must not change lap rules.");
-        settings.SetFeature(RaceFeature.All, false);
+        settings.SetValidationFeature(RaceFeature.All, false);
         Require(settings.Enabled == RaceFeature.None, "All switches must be independently disabled during a race.");
         settings.BeginPreparation();
         Require(settings.ActivePreset == RacePreset.Standard, "Queued rules must apply at the next start.");
@@ -47,24 +47,24 @@ public static class RaceFeatureValidation
             CarItemEffects effects = car.AddComponent<CarItemEffects>();
             typeof(CarItemEffects).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(effects, null);
             root.SetActive(true);
-            features.SetFeature(RaceFeature.HitProtection, true);
+            features.SetValidationFeature(RaceFeature.HitProtection, true);
             Require(effects.ApplyOil(), "The first affliction must apply.");
             Require(!effects.ApplyConfuse(), "A second effect cannot stack or prolong the first.");
-            features.SetFeature(RaceFeature.HitProtection, false);
+            features.SetValidationFeature(RaceFeature.HitProtection, false);
             Require(effects.ApplyConfuse(), "Disabling protection restores legacy hit behavior immediately.");
-            features.SetFeature(RaceFeature.ExperienceItems, true);
+            features.SetValidationFeature(RaceFeature.ExperienceItems, true);
             effects.ApplyFeatureSwitches();
             Require(!effects.IsOiled && !effects.IsConfused && !effects.ApplyConfuse(), "Gentle mode must clear and reject harmful effects.");
             effects.GrantRecoveryProtection(2f);
-            features.SetFeature(RaceFeature.HitProtection, false); effects.ApplyFeatureSwitches();
+            features.SetValidationFeature(RaceFeature.HitProtection, false); effects.ApplyFeatureSwitches();
             Require(effects.IsRecoveryProtected, "Debugging hit protection must not remove recovery safety.");
             effects.ClearAll();
-            features.SetFeature(RaceFeature.ExperienceItems, false);
+            features.SetValidationFeature(RaceFeature.ExperienceItems, false);
             race.state = Gmanager.State.Game;
             DriftCoachingUI coach = car.AddComponent<DriftCoachingUI>(); coach.Configure(race, mover, 0);
             typeof(DebugMover).GetMethod("StartDriftBoost", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(mover, new object[] { 3f });
             Require(coach.SuccessfulReleases == 1 && coach.Notice.Length > 0, "An actual boost release must provide feedback.");
-            features.SetFeature(RaceFeature.DriftCoaching, false);
+            features.SetValidationFeature(RaceFeature.DriftCoaching, false);
             Require(coach.Notice.Length == 0, "Turning coaching off hides existing guidance immediately.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); Gmanager.Control = previous; }

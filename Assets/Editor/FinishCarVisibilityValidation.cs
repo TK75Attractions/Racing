@@ -26,10 +26,10 @@ public static class FinishCarVisibilityValidation
             run.Stop();
             Require(run.IsRetiredFromView && !car.GetComponent<Renderer>().enabled && !hiddenMesh.enabled,
                 "A parked finisher and its children must retire from the race view.");
-            features.SetFeature(RaceFeature.FinishRun, false);
+            features.SetValidationFeature(RaceFeature.FinishRun, false);
             Require(!run.IsRetiredFromView && car.GetComponent<Renderer>().enabled && !hiddenMesh.enabled,
                 "Live OFF must restore each renderer's original visibility.");
-            features.SetFeature(RaceFeature.FinishRun, true);
+            features.SetValidationFeature(RaceFeature.FinishRun, true);
             Require(run.IsRetiredFromView && !car.GetComponent<Renderer>().enabled, "Live ON must retire an already parked finisher again.");
             Require(entry.Result.totalRaceTime == 123 && entry.Result.finishPosition == 1 && body.isKinematic,
                 "Visibility must not modify finish results or resume motion.");

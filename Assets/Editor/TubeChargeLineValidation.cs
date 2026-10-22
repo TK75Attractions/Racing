@@ -72,10 +72,10 @@ public static class TubeChargeLineValidation
             var image = new Texture2D(1280, 720, TextureFormat.RGB24, false); image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0); image.Apply();
             System.IO.File.WriteAllBytes(System.IO.Path.Combine(output, "tube-lines.png"), image.EncodeToPNG());
             RenderTexture.active = old; camera.targetTexture = null; UnityEngine.Object.DestroyImmediate(target); UnityEngine.Object.DestroyImmediate(image);
-            features.SetFeature(RaceFeature.TubeChargeLines, false);
+            features.SetValidationFeature(RaceFeature.TubeChargeLines, false);
             Require(!layout.VisualsVisible && !controller.Pending && controller.Notice.Length == 0 && mover.NormalizedDriftCharge > .24f,
                 "OFF hides visuals and clears pending notices without deleting already-earned normal charge.");
-            features.SetFeature(RaceFeature.TubeChargeLines, true);
+            features.SetValidationFeature(RaceFeature.TubeChargeLines, true);
             Require(layout.VisualsVisible, "ON restores only the optional visual lines.");
             string result = "TUBE_CHARGE_LINE_VALIDATION_PASS: actual tube/ground geometry, entry=" + layout.EntryProgress.ToString("F2") +
                 ", laneOffset=" + layout.LaneOffset.ToString("F2") + ", continuous contact sequence, 25% reward, no repeat farming, live OFF/ON.";

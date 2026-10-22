@@ -105,13 +105,13 @@ public sealed class RivalFeedbackPlaytestProbe : MonoBehaviour
         { Shot("hit-player-p2",1); Shot("victim-p1",0); demoTwoShot = true; }
         if (!switchedOff && elapsed > 15)
         {
-            manager.Features.SetFeature(RaceFeature.RivalProximity | RaceFeature.ItemHitFeedback,false); switchedOff = true;
+            manager.Features.SetValidationFeature(RaceFeature.RivalProximity | RaceFeature.ItemHitFeedback,false); switchedOff = true;
         }
         if (switchedOff && !switchedBack && elapsed > 15.3f)
         {
             foreach (var display in hud)
                 Require(!display.FrontVisible&&!display.RearVisible&&display.HitNotice.Length==0&&!display.ArrowRenderer.gameObject.activeSelf,"OFF must clear warnings, meshes and pending hit messages.");
-            manager.Features.SetFeature(RaceFeature.RivalProximity | RaceFeature.ItemHitFeedback,true);
+            manager.Features.SetValidationFeature(RaceFeature.RivalProximity | RaceFeature.ItemHitFeedback,true);
             report.liveSwitches = true; switchedBack = true;
         }
         if (elapsed > 20)
@@ -146,7 +146,7 @@ public sealed class RivalFeedbackPlaytestProbe : MonoBehaviour
         var counts = new Dictionary<ItemImpactKind,int>();
         source.AttackLanded += (target,kind) => { Require(target == victim,"Hit attribution must preserve the victim instance."); counts[kind] = Count(counts,kind)+1; };
         bool protection = manager.Features.Settings.IsEnabled(RaceFeature.HitProtection);
-        manager.Features.SetFeature(RaceFeature.HitProtection,false);
+        manager.Features.SetValidationFeature(RaceFeature.HitProtection,false);
         try
         {
             victim.UseItem(RaceItemType.Shield,null);
@@ -160,10 +160,10 @@ public sealed class RivalFeedbackPlaytestProbe : MonoBehaviour
             victim.ClearAll(); victim.enabled=false;
             Require(!victim.ApplyConfuse(source),"Finished/disabled cars must not confirm hits."); victim.enabled=true;
             Require(victim.ApplyOil(victim)&&counts.Count==0,"Own oil cannot produce outgoing opponent feedback."); victim.ClearAll();
-            manager.Features.SetFeature(RaceFeature.HitProtection,true);
+            manager.Features.SetValidationFeature(RaceFeature.HitProtection,true);
             Require(victim.ApplyConfuse(source)&&!victim.ApplyOil(source),"Protection must reject a second affliction rather than confirm it.");
             Require(Count(counts,ItemImpactKind.SteeringReversed)==1&&Count(counts,ItemImpactKind.OilSlip)==0,"Only the accepted affliction can confirm.");
-            victim.ClearAll(); manager.Features.SetFeature(RaceFeature.HitProtection,false);
+            victim.ClearAll(); manager.Features.SetValidationFeature(RaceFeature.HitProtection,false);
             Require(victim.ApplySpin(Vector3.right,source)&&!victim.ApplySpin(Vector3.left,source),"Duplicate spin contacts must not confirm twice.");
             Require(Count(counts,ItemImpactKind.ShieldSpin)==1,"Exactly one spin confirmation is required."); victim.ClearAll();
             var slick = OilSlick.Spawn(victim.transform.position,Vector3.up,Vector3.forward,source);
@@ -174,7 +174,7 @@ public sealed class RivalFeedbackPlaytestProbe : MonoBehaviour
             report.isolatedAttribution=true;
         }
         catch (Exception error) { Fail(error); yield break; }
-        finally { manager.Features.SetFeature(RaceFeature.HitProtection,protection); }
+        finally { manager.Features.SetValidationFeature(RaceFeature.HitProtection,protection); }
 
         // Let actual trigger and contact callbacks run through Unity physics too.
         victim.ClearAll(); source.ClearAll();

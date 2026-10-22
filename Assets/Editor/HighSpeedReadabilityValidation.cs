@@ -40,11 +40,11 @@ public static class HighSpeedReadabilityValidation
             Require(stack.GetComponent<Bloom>().intensity.value > .8f, "Bloom and speed cues must remain present.");
             UpdateStack(stack, cameras[1]);
             Near(stack.GetComponent<MotionBlur>().intensity.value, .02f, "P1 boost must not change P2's volume stack.");
-            features.SetFeature(RaceFeature.ClearSpeedPresentation, false); visuals.TickDriftBoost(1);
+            features.SetValidationFeature(RaceFeature.ClearSpeedPresentation, false); visuals.TickDriftBoost(1);
             UpdateStack(stack, cameras[0]);
             Near(stack.GetComponent<MotionBlur>().intensity.value, .7f, "Live OFF must restore the authored full-speed boost blur.");
             Near(stack.GetComponent<LensDistortion>().intensity.value, -.14f, "Live OFF must restore authored distortion.");
-            features.SetFeature(RaceFeature.ClearSpeedPresentation, true); visuals.SetDriftBoost(0, 0);
+            features.SetValidationFeature(RaceFeature.ClearSpeedPresentation, true); visuals.SetDriftBoost(0, 0);
             visuals.SetDriftCharge(0, 1, Color.cyan, true); visuals.TickDriftBoost(1);
             UpdateStack(stack, cameras[0]);
             Require(stack.GetComponent<ChromaticAberration>().intensity.value <= .0401f, "Drift charge must not bypass the colour-separation bound.");

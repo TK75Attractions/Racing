@@ -78,7 +78,7 @@ public static class AbruptSteeringValidation
     }
     private static Trial Drive(float bank,float speed,float handle,string pattern,bool enabled)
     {
-        features.SetFeature(RaceFeature.SteeringStability,enabled);
+        features.SetValidationFeature(RaceFeature.SteeringStability,enabled);
         Quaternion rotation=Quaternion.AngleAxis(bank,Vector3.forward);
         Vector3 up=rotation*Vector3.up,forward=rotation*Vector3.forward;
         GameObject floor=Floor(rotation),car=null;
@@ -114,8 +114,8 @@ public static class AbruptSteeringValidation
     }
     private static void ValidateExclusions()
     {
-        features.SetFeature(RaceFeature.HitProtection,false);
-        features.SetFeature(RaceFeature.ExperienceItems,false);
+        features.SetValidationFeature(RaceFeature.HitProtection,false);
+        features.SetValidationFeature(RaceFeature.ExperienceItems,false);
         foreach(string condition in new[]{"air","spin","oil","disconnected","reverse"})
         {
             Vector3[] off=Exclusion(condition,false),on=Exclusion(condition,true);
@@ -126,9 +126,9 @@ public static class AbruptSteeringValidation
         GameObject car=Car(Origin+Vector3.up*.36f,Quaternion.identity,out var mover,out var body);
         try
         {
-            features.SetFeature(RaceFeature.SteeringStability,false);
+            features.SetValidationFeature(RaceFeature.SteeringStability,false);
             Require(!(bool)Get(mover,"UseSteeringStability"),"Live OFF must select legacy handling.");
-            features.SetFeature(RaceFeature.SteeringStability,true);
+            features.SetValidationFeature(RaceFeature.SteeringStability,true);
             Require((bool)Get(mover,"UseSteeringStability"),"Live ON must restore stability without respawn.");
             report.liveSwitch=true;
         }
@@ -136,7 +136,7 @@ public static class AbruptSteeringValidation
     }
     private static Vector3[] Exclusion(string condition,bool enabled)
     {
-        features.SetFeature(RaceFeature.SteeringStability,enabled);
+        features.SetValidationFeature(RaceFeature.SteeringStability,enabled);
         GameObject floor=Floor(Quaternion.identity),car=null;
         var random=UnityEngine.Random.state;
         try

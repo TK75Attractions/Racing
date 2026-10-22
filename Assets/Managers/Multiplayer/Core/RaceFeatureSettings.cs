@@ -41,6 +41,7 @@ public sealed class RaceFeatureSettings
     public const RaceFeature Configurable = RaceFeature.ExperienceItems | RaceFeature.SteeringAssist | RaceFeature.FastAiPace |
         RaceFeature.PlayerTwoAutodrive | RaceFeature.CampusAtmosphere | RaceFeature.AdaptiveAiPace;
     public const RaceFeature StandardFeatures = RaceFeature.All & ~Configurable;
+    private bool validationOverrides;
     public RaceFeature Enabled { get; private set; } = RaceFeature.DriftCoaching | RaceFeature.HitProtection | RaceFeature.Slipstream | RaceFeature.SteeringAssist | RaceFeature.LandingFeedback | RaceFeature.LandingBoost | RaceFeature.TubeChargeLines | RaceFeature.CpuRacing | RaceFeature.ResultHighlights | RaceFeature.HighSpeedCornering | RaceFeature.FastAiPace | RaceFeature.FinishRun | RaceFeature.FinishApproachGrace | RaceFeature.ClearSpeedPresentation | RaceFeature.CourseIntro | RaceFeature.CampusAtmosphere | RaceFeature.RivalProximity | RaceFeature.ItemHitFeedback | RaceFeature.SteeringStability | RaceFeature.DailyRanking | RaceFeature.AdaptiveAiPace | RaceFeature.MenuScenery | RaceFeature.BroadcastScreen | RaceFeature.RaceReplays;
     public RacePreset SelectedPreset { get; private set; }
     public RacePreset ActivePreset { get; private set; }
@@ -50,10 +51,15 @@ public sealed class RaceFeatureSettings
     public bool IsEnabled(RaceFeature feature) => feature != RaceFeature.None && (Enabled & feature) == feature;
     public void SetFeature(RaceFeature feature, bool enabled)
     {
-        feature &= Configurable;
-        RaceFeature next = (enabled ? Enabled | feature : Enabled & ~feature) | StandardFeatures;
+        feature &= validationOverrides ? RaceFeature.All : Configurable;
+        RaceFeature next = (enabled ? Enabled | feature : Enabled & ~feature) | (validationOverrides ? RaceFeature.None : StandardFeatures);
         if (next == Enabled) return;
         Enabled = next; Revision++;
+    }
+    [System.Diagnostics.Conditional("UNITY_EDITOR")]
+    public void SetValidationFeature(RaceFeature feature, bool enabled)
+    {
+        validationOverrides = true; SetFeature(feature, enabled);
     }
     public void SelectPreset(RacePreset preset)
     {

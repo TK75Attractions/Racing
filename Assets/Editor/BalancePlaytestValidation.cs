@@ -69,14 +69,14 @@ public static class BalancePlaytestValidation
             UnityEngine.Object.FindFirstObjectByType<BroadcastPlaytestProbe>() == null)
             Gmanager.Control.gameObject.AddComponent<BroadcastPlaytestProbe>();
         if (Environment.GetEnvironmentVariable("RACING_ADAPTIVE_PACE") == "off")
-            Gmanager.Control.Features.SetFeature(RaceFeature.AdaptiveAiPace,false);
+            Gmanager.Control.Features.SetValidationFeature(RaceFeature.AdaptiveAiPace,false);
         if (Environment.GetEnvironmentVariable("RACING_DAILY_RANKING_CHECK") == "1" &&
             UnityEngine.Object.FindFirstObjectByType<DailyRankingPlaytestProbe>() == null)
             Gmanager.Control.gameObject.AddComponent<DailyRankingPlaytestProbe>();
         if (Environment.GetEnvironmentVariable("RACING_CPU_RACING") == "off" && !Gmanager.Control.Features.Settings.RulesLocked)
-            Gmanager.Control.Features.SetFeature(RaceFeature.CpuRacing, false);
+            Gmanager.Control.Features.SetValidationFeature(RaceFeature.CpuRacing, false);
         if (Environment.GetEnvironmentVariable("RACING_P2_AUTO") == "1" && !Gmanager.Control.Features.Settings.RulesLocked)
-            Gmanager.Control.Features.SetFeature(RaceFeature.PlayerTwoAutodrive, true);
+            Gmanager.Control.Features.SetValidationFeature(RaceFeature.PlayerTwoAutodrive, true);
         if (Environment.GetEnvironmentVariable("RACING_FEATURE_PRESET") == "experience" &&
             !Gmanager.Control.Features.Settings.RulesLocked)
             Gmanager.Control.Features.SelectPreset(RacePreset.Experience);

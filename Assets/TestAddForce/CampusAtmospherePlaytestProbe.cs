@@ -31,10 +31,10 @@ public sealed class CampusAtmospherePlaytestProbe : MonoBehaviour
         // Menus now share the aerial shadow tier. Measure the driving baseline before comparing the intro.
         var features = Gmanager.Control?.Features;
         bool menuShowing = Gmanager.Control != null && Gmanager.Control.IsMenuSceneryPlaying;
-        if (menuShowing) features.SetFeature(RaceFeature.MenuScenery, false);
+        if (menuShowing) features.SetValidationFeature(RaceFeature.MenuScenery, false);
         pipeline=GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
         report.originalShadowDistance=pipeline.shadowDistance;report.originalShadowResolution=pipeline.mainLightShadowmapResolution;
-        if (menuShowing) features.SetFeature(RaceFeature.MenuScenery, true);
+        if (menuShowing) features.SetValidationFeature(RaceFeature.MenuScenery, true);
 
     }
     private void LateUpdate()
@@ -73,14 +73,14 @@ public sealed class CampusAtmospherePlaytestProbe : MonoBehaviour
             {
                 if(stage==0&&elapsed>1.5f)
                 {
-                    manager.Features.SetFeature(RaceFeature.CampusAtmosphere,false);
+                    manager.Features.SetValidationFeature(RaceFeature.CampusAtmosphere,false);
                     Require(!campus.IsApplied&&Mathf.Abs(pipeline.shadowDistance-report.originalShadowDistance)<.01f,"Live OFF must restore the road-level shadow distance.");
                     Require(GameObject.Find("Campus atmosphere scenery")==null,"OFF must hide generated scenery.");
                     stage=1;
                 }
                 else if(stage==1)
                 {
-                    manager.Features.SetFeature(RaceFeature.CampusAtmosphere,true);
+                    manager.Features.SetValidationFeature(RaceFeature.CampusAtmosphere,true);
                     Require(campus.IsApplied&&campus.IntroShadowQualityActive,"Live ON must restore the new look.");report.liveOffOn=true;stage=2;
                 }
                 else if(stage==2&&elapsed>3)

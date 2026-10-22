@@ -76,7 +76,7 @@ public sealed class CourseIntroPlaytestProbe : MonoBehaviour
             if (!intervened && intro.ElapsedSeconds > 2.5f && report.mode != "normal")
             {
                 intervened = true;
-                if (report.mode == "off") manager.Features.SetFeature(RaceFeature.CourseIntro, false);
+                if (report.mode == "off") manager.Features.SetValidationFeature(RaceFeature.CourseIntro, false);
                 else if (report.mode == "disable") intro.enabled = false;
                 else if (report.mode == "restart")
                 {

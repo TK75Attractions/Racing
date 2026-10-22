@@ -22,6 +22,11 @@ public sealed class RaceFeatureController : MonoBehaviour
         Settings.SetFeature(feature, enabled);
         ApplyChanges();
     }
+    [System.Diagnostics.Conditional("UNITY_EDITOR")]
+    public void SetValidationFeature(RaceFeature feature, bool enabled)
+    {
+        Settings.SetValidationFeature(feature, enabled); ApplyChanges();
+    }
     public void SelectPreset(RacePreset preset)
     {
         Settings.SelectPreset(preset);
