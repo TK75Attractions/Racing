@@ -776,11 +776,14 @@ public class Gmanager : MonoBehaviour
         StartGameWhenScreenCovered();
     }
 
-    public void StartAutodriveTestRace()
+    public bool BothPlayersAutodrive { get; private set; }
+
+    public void StartAutodriveTestRace(bool bothPlayers = false)
     {
         if ((state != State.Title && state != State.Result) || IsScreenTransitioning()) return;
         Features.SetFeature(RaceFeature.PlayerTwoAutodrive, true);
-        ClearCurrentRaceObjects(); Features.Settings.BeginPreparation(); ApplyFeatureRules();
+        ClearCurrentRaceObjects(); BothPlayersAutodrive = bothPlayers;
+        Features.Settings.BeginPreparation(); ApplyFeatureRules();
         StartGameWhenScreenCovered(); CompleteGameStart();
         foreach (ScreenTransitionController transition in screenTransitions) transition?.ApplyStateImmediate(State.Countdown);
     }
@@ -808,7 +811,7 @@ public class Gmanager : MonoBehaviour
         allowDailyRecording &= FindFirstObjectByType<BalancePlaytestAgent>() == null;
 #endif
         dailyRanking.BeginRace(DailyRaceRanking.BoardKey(course, GoalLap, CourseProgressSign, Features.Settings.ActivePreset),
-            GoalLap, CourseProgressSign < 0, Features.Settings.ActivePreset == RacePreset.Experience, allowDailyRecording);
+            GoalLap, CourseProgressSign < 0, Features.Settings.ActivePreset == RacePreset.Experience, allowDailyRecording && !BothPlayersAutodrive);
         countdownTimeRemaining = Mathf.Max(0f, raceCountdownSeconds);
         lastCountdownSound = -1;
         goMessageTimeRemaining = 0f;
@@ -880,7 +883,7 @@ public class Gmanager : MonoBehaviour
             player.car.AddComponent<CourseSteeringAssist>().Configure(this, participant);
             player.car.AddComponent<LandingRewardController>().Configure(this, participant);
             player.car.AddComponent<TubeChargeLineController>().Configure(this, participant);
-            if (playerIndex == 1) player.car.AddComponent<PlayerAutodrive>().Configure(this, participant);
+            player.car.AddComponent<PlayerAutodrive>().Configure(this, participant);
 
             player.cameraController.SetCar(player.car.transform);
             player.displayRig.RaceCamera.Follow = player.cameraController.CameraTarget;
@@ -1304,6 +1307,7 @@ public class Gmanager : MonoBehaviour
 
     private void ClearCurrentRaceObjects()
     {
+        BothPlayersAutodrive = false;
         courseIntro?.Stop();
         drivingTutorial?.End();
         finishingPreparation = false;

@@ -88,7 +88,7 @@ public class Gmanager
     public float CountdownTimeRemaining=>0;
     public int GoalLap=>Features.Settings.ActivePreset==RacePreset.Experience?1:2;
     public List<RaceParticipant> Participants=new List<RaceParticipant>();
-    public void StartAutodriveTestRace(){Features.SetFeature(RaceFeature.PlayerTwoAutodrive,true);Features.Settings.BeginPreparation();state=State.Countdown;Harness.Applied++;}
+    public void StartAutodriveTestRace(bool both=false){Features.SetFeature(RaceFeature.PlayerTwoAutodrive,true);Features.Settings.BeginPreparation();state=State.Countdown;Harness.Applied++;}
     public void StartGame(){Features.Settings.BeginPreparation();state=State.Countdown;Harness.Applied++;}
     public bool AdvanceDashboardToTutorial(){if(state!=State.CarSelection)return false;state=State.Tutorial;Harness.Applied++;return true;}
     public bool AdvanceDashboardToCountdown(){if(state!=State.Tutorial)return false;state=State.Countdown;Harness.Applied++;return true;}

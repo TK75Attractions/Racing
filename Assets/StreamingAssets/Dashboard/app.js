@@ -896,7 +896,8 @@ async function submitSetting(control) {
   if (command === 'feature') args = [control.dataset.settingArg, String(control.checked)];
   else if (command === 'volume') args = [control.dataset.settingArg, String(Number(control.value) / 100)];
   else if (command === 'device') args = [control.dataset.settingArg, control.value];
-  else if (['refreshDevices', 'allFeaturesOff', 'testRace'].includes(command)) args = [];
+  else if (command === 'testRace') args = control.dataset.settingArg === 'both' ? ['both'] : [];
+  else if (['refreshDevices', 'allFeaturesOff'].includes(command)) args = [];
   else if (command === 'constantPedal') args = [String(Number(control.value) / 100)];
   else args = [control.type === 'checkbox' ? String(control.checked) : control.value];
   const requestedSession = latestSnapshot.sessionId;

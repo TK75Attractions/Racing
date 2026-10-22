@@ -428,9 +428,9 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         if (request.command == "preset" && args.Length == 1 && features != null &&
             (args[0] == "Standard" || args[0] == "Experience"))
         { features.SelectPreset((RacePreset)Enum.Parse(typeof(RacePreset), args[0])); return true; }
-        if (request.command == "testRace" && args.Length == 0 && features != null && race.CanUseDashboardControls &&
+        if (request.command == "testRace" && (args.Length == 0 || args.Length == 1 && args[0] == "both") && features != null && race.CanUseDashboardControls &&
             (race.state == Gmanager.State.Title || race.state == Gmanager.State.Result))
-        { race.StartAutodriveTestRace(); return true; }
+        { race.StartAutodriveTestRace(args.Length == 1); return true; }
         if (request.command == "refreshDevices" && args.Length == 0)
         { if (RaceAudioOutput.Instance?.CanRefreshDevices != true) return false; RaceAudioOutput.Instance.RefreshDevices(); return true; }
         if (request.command == "volume" && args.Length == 2 &&

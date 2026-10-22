@@ -76,7 +76,11 @@ public sealed class RaceFeatureController : MonoBehaviour
         scroll = GUILayout.BeginScrollView(scroll, GUILayout.Height(Mathf.Max(200f, panel.height - 45f)));
         DrawSteeringTest();
         if (manager != null && (manager.state == Gmanager.State.Title || manager.state == Gmanager.State.Result))
+        {
             if (GUILayout.Button("Start test race - P1 manual / P2 AUTO")) manager.StartAutodriveTestRace();
+            if (GUILayout.Button("Start AUTO race - P1 AUTO vs P2 AUTO")) manager.StartAutodriveTestRace(true);
+        }
+        if (manager?.BothPlayersAutodrive == true) GUILayout.Label("P1 AUTO vs P2 AUTO / excluded from daily ranking");
         GUILayout.Space(6);
         GUILayout.Label("Feature switches apply immediately (both players).");
         for (int i = 0; i < RaceDebugFeatureCatalog.Entries.Count; i++)

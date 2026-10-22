@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>Opt-in P2 test driver in normal builds, retaining the normal pause/recovery/input gate.</summary>
+/// <summary>Input-driven test racers retain the production drivetrain, pause and recovery gates.</summary>
 [DefaultExecutionOrder(-150)]
 public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
 {
@@ -17,7 +17,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
     public bool IsActive { get; private set; }
     public bool WasUsed { get; private set; }
     public int PlayerIndex => own?.Index ?? 1;
-    public string DeviceId => "P2 test autodrive";
+    public string DeviceId => "P" + (PlayerIndex + 1) + " test autodrive";
     public bool IsConnected => true;
     public DriveInputState CurrentState { get; private set; }
     public void Configure(Gmanager race, RaceParticipant participant)
@@ -30,7 +30,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
     public void ApplySwitch()
     {
         if (own?.Result != null) return;
-        bool next = own != null && own.Index == 1 && RaceFeatureController.Enabled(RaceFeature.PlayerTwoAutodrive);
+        bool next = own != null && (manager.BothPlayersAutodrive || own.Index == 1 && RaceFeatureController.Enabled(RaceFeature.PlayerTwoAutodrive));
         if (next == IsActive || gate == null) return;
         CurrentState = DriveInputState.Neutral; bot.Clear();
         paceCruise=18f;
@@ -60,7 +60,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
                 cap = CpuJumpSpacing.Request(cap, other.Body.linearVelocity.magnitude, other.Progress - own.Progress);
             }
         DriveInputState decision = bot.Decide(manager.course, own.Body, manager.CourseProgressSign, contacts, Time.time,
-            cruise, -1.8f, reaction: .06f, speedCap: cap, vehicle: mover);
+            cruise, own.Index == 0 ? 1.8f : -1.8f, reaction: .06f + own.Index * .01f, speedCap: cap, vehicle: mover);
         foreach (RaceParticipant other in manager.Participants)
         {
             if (other == own || !other.IsRacing) continue;
