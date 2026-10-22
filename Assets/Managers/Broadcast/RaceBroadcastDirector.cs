@@ -32,6 +32,7 @@ public sealed class RaceBroadcastDirector : MonoBehaviour
     private float nextStandings;
     private string cachedStandings="";
     private string folder;
+    private int broadcastDisplay;
     public RenderTexture Feed { get; private set; }
     public Camera WorldCamera => world;
     public Camera PresentationCamera => presenter;
@@ -50,6 +51,7 @@ public sealed class RaceBroadcastDirector : MonoBehaviour
     public void Configure(Gmanager race,PlayerDisplayRig[] displays)
     {
         manager=race;assets=new RaceReplayAssets(manager.carPrefab);rig=new TracksideCameraRig(manager);
+        broadcastDisplay=RaceDisplayRouting.BroadcastDisplay(displays[0].DisplayIndex,displays[1].DisplayIndex);
         anchors=TracksideCameraRig.BuildAnchors(manager.course);
         folder=Environment.GetEnvironmentVariable("RACING_BROADCAST_HISTORY")??Path.Combine(Application.persistentDataPath,"BroadcastHighlights");
         if(Directory.Exists(folder))foreach(var file in new DirectoryInfo(folder).GetFiles("race-*.rpl").OrderByDescending(x=>x.LastWriteTimeUtc).Take(3))
@@ -68,9 +70,9 @@ public sealed class RaceBroadcastDirector : MonoBehaviour
         }
         presentationRoot=new GameObject("Broadcast display 3");presentationRoot.transform.SetParent(transform,false);
         presenter=presentationRoot.AddComponent<Camera>();presenter.clearFlags=CameraClearFlags.SolidColor;presenter.backgroundColor=Color.black;
-        presenter.orthographic=true;presenter.orthographicSize=5;presenter.nearClipPlane=.1f;presenter.farClipPlane=20;presenter.cullingMask=1<<UiLayer;presenter.depth=100;presenter.targetDisplay=2;
+        presenter.orthographic=true;presenter.orthographicSize=5;presenter.nearClipPlane=.1f;presenter.farClipPlane=20;presenter.cullingMask=1<<UiLayer;presenter.depth=100;presenter.targetDisplay=broadcastDisplay;
         var canvasObject=new GameObject("Broadcast canvas",typeof(RectTransform),typeof(Canvas),typeof(CanvasScaler));canvasObject.transform.SetParent(presentationRoot.transform,false);
-        var canvas=canvasObject.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceCamera;canvas.worldCamera=presenter;canvas.planeDistance=1;canvas.targetDisplay=2;
+        var canvas=canvasObject.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceCamera;canvas.worldCamera=presenter;canvas.planeDistance=1;canvas.targetDisplay=broadcastDisplay;
         var scaler=canvasObject.GetComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;scaler.referenceResolution=new Vector2(1920,1080);scaler.matchWidthOrHeight=.5f;
         hud=new RaceBroadcastHUD(canvasObject.transform,Feed);
         foreach(Transform child in canvasObject.GetComponentsInChildren<Transform>(true))child.gameObject.layer=UiLayer;
@@ -86,8 +88,8 @@ public sealed class RaceBroadcastDirector : MonoBehaviour
         presenter.enabled=wanted;
         if(!wanted){output.enabled=false;return;}
         if(RacePlayerWindows.UsesNativeWindow){output.enabled=true;if(!output.ConfigureBroadcast(presenter))output.enabled=false;}
-        else if(!Application.isEditor&&Display.displays.Length>2)
-        {Display.displays[2].Activate();output.enabled=true;output.Configure(new[]{presenter},2,presenter);}
+        else if(!Application.isEditor&&Display.displays.Length>broadcastDisplay)
+        {Display.displays[broadcastDisplay].Activate();output.enabled=true;output.Configure(new[]{presenter},broadcastDisplay,presenter);}
         else if(!Application.isEditor)Debug.LogWarning("The broadcast feed is available, but a floating broadcast window requires the macOS Metal plugin.");
     }
     private void LateUpdate()

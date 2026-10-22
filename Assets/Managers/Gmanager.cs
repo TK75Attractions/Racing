@@ -1215,6 +1215,13 @@ public class Gmanager : MonoBehaviour
         }
         if (finalFinisher != null)
         {
+            // Spectators keep watching this car: show its finish on their own display too.
+            foreach (PlayerRuntime viewer in players)
+                if (viewer != null && viewer != finalFinisher && viewer.isSpectating)
+                {
+                    viewer.isSpectating = false;
+                    PlayPlayerGoal(finalFinisher, null, viewer.playerIndex);
+                }
             PlayPlayerGoal(finalFinisher, ShowResultsAfterGoal);
         }
         else
@@ -1223,7 +1230,7 @@ public class Gmanager : MonoBehaviour
         }
     }
 
-    private void PlayPlayerGoal(PlayerRuntime player, Action onCompleted)
+    private void PlayPlayerGoal(PlayerRuntime player, Action onCompleted, int displayIndex = -1)
     {
         if (player == null)
         {
@@ -1231,12 +1238,13 @@ public class Gmanager : MonoBehaviour
             return;
         }
 
-        soundEffects?.Play(RaceSoundCue.Finish, player.playerIndex);
+        int outputIndex = displayIndex >= 0 ? displayIndex : player.playerIndex;
+        soundEffects?.Play(RaceSoundCue.Finish, outputIndex);
         string playerLabel = $"PLAYER {player.playerIndex + 1} FINISHED";
         string finishTime = player.result != null
             ? FormatRaceTime(player.result.totalRaceTime)
             : "--:--.---";
-        ScreenTransitionController transition = screenTransitions[player.playerIndex];
+        ScreenTransitionController transition = screenTransitions[outputIndex];
         if (transition == null || !transition.TryPlayGoal(playerLabel, finishTime, goalCelebrationSeconds, onCompleted))
         {
             onCompleted?.Invoke();
