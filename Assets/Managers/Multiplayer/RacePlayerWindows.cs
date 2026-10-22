@@ -32,6 +32,11 @@ public static class RacePlayerWindows
     [DllImport(Library)] private static extern void RaceWindows_Close();
     [DllImport(Library)] private static extern IntPtr RaceWindows_Frame(IntPtr texture);
     [DllImport(Library)] private static extern IntPtr RaceWindows_GetRenderEvent();
+    [DllImport(Library)] private static extern int RaceWindows_OpenBroadcast();
+    [DllImport(Library)] private static extern void RaceWindows_BroadcastSize(out int width, out int height);
+    [DllImport(Library)] private static extern int RaceWindows_BroadcastClosed();
+    [DllImport(Library)] private static extern void RaceWindows_CloseBroadcast();
+    [DllImport(Library)] private static extern IntPtr RaceWindows_BroadcastFrame(IntPtr texture);
 #endif
 
     public static bool Open(int preferredScreen)
@@ -90,7 +95,45 @@ public static class RacePlayerWindows
         }
     }
 
-    public static void Present(IntPtr texture)
+    public static bool OpenBroadcast()
+    {
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+        if (UsesNativeWindow)
+            try { return RaceWindows_OpenBroadcast() != 0; }
+            catch (Exception error) when (error is DllNotFoundException || error is EntryPointNotFoundException)
+            { Debug.LogError("Broadcast window plugin could not be loaded: " + error.Message); }
+#endif
+        return false;
+    }
+    public static Vector2Int BroadcastSize
+    {
+        get
+        {
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            RaceWindows_BroadcastSize(out int width,out int height); return new Vector2Int(width,height);
+#else
+            return Vector2Int.zero;
+#endif
+        }
+    }
+    public static bool BroadcastClosed
+    {
+        get
+        {
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            return RaceWindows_BroadcastClosed()!=0;
+#else
+            return false;
+#endif
+        }
+    }
+    public static void CloseBroadcast()
+    {
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+        RaceWindows_CloseBroadcast();
+#endif
+    }
+    public static void Present(IntPtr texture, bool broadcast = false)
     {
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
         // The native packet retains this frame's texture until its render-thread
@@ -98,7 +141,8 @@ public static class RacePlayerWindows
         var command = CommandBufferPool.Get("Racing P2 window");
         try
         {
-            command.IssuePluginEventAndData(RaceWindows_GetRenderEvent(), 0, RaceWindows_Frame(texture));
+            command.IssuePluginEventAndData(RaceWindows_GetRenderEvent(), broadcast ? 1 : 0,
+                broadcast ? RaceWindows_BroadcastFrame(texture) : RaceWindows_Frame(texture));
             Graphics.ExecuteCommandBuffer(command);
         }
         finally { CommandBufferPool.Release(command); }

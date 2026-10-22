@@ -17,6 +17,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
     private RenderTexture target;
     private Material presentation;
     private bool nativeWindow;
+    private bool broadcastWindow;
     private System.IntPtr nativeTexture;
     private float nextLayoutCheck;
     private static readonly int TextureId = Shader.PropertyToID("_BlitTexture");
@@ -63,13 +64,23 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
         RenderPipelineManager.endContextRendering += Present;
     }
 
+    public bool ConfigureBroadcast(Camera camera)
+    {
+        if (!RacePlayerWindows.OpenBroadcast()) return false;
+        nativeWindow = broadcastWindow = true;
+        cameras = new[] { camera }; stackBaseCamera = camera; displayIndex = 2;
+        lastPresentedFrame = -1;
+        RefreshTarget();
+        return true;
+    }
+
     private void OnDisable()
     {
         RenderPipelineManager.beginContextRendering -= BeginRendering;
         RenderPipelineManager.endContextRendering -= Present;
         ReleaseTarget();
-        if (nativeWindow) RacePlayerWindows.Close();
-        nativeWindow = false;
+        if (nativeWindow) { if (broadcastWindow) RacePlayerWindows.CloseBroadcast(); else RacePlayerWindows.Close(); }
+        nativeWindow = broadcastWindow = false;
         if (presentation != null) DestroyOwned(presentation);
         presentation = null;
     }
@@ -77,7 +88,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
     private void LateUpdate()
     {
         // Also correct a late Unity startup resize, and recover from monitor unplug/reconnect.
-        if (nativeWindow && Time.unscaledTime>=nextLayoutCheck)
+        if (nativeWindow && !broadcastWindow && Time.unscaledTime>=nextLayoutCheck)
         { nextLayoutCheck=Time.unscaledTime+.5f; RacePlayerWindows.UpdateLayout(); }
         RefreshTarget();
     }
@@ -91,8 +102,9 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
         if (cameras == null || Application.isEditor) return;
         if (nativeWindow)
         {
-            if (RacePlayerWindows.CloseRequested) { Application.Quit(); return; }
-            Vector2Int size = RacePlayerWindows.Size;
+            if (broadcastWindow && RacePlayerWindows.BroadcastClosed) { enabled = false; return; }
+            if (!broadcastWindow && RacePlayerWindows.CloseRequested) { Application.Quit(); return; }
+            Vector2Int size = broadcastWindow ? RacePlayerWindows.BroadcastSize : RacePlayerWindows.Size;
             ResizeTarget(size.x, size.y);
             return;
         }
@@ -128,7 +140,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
         if (!ShouldPresent(rendered, Time.frameCount)) return;
         if (nativeWindow)
         {
-            RacePlayerWindows.Present(nativeTexture);
+            RacePlayerWindows.Present(nativeTexture, broadcastWindow);
             lastPresentedFrame = Time.frameCount;
             PresentedFrames++;
             return;

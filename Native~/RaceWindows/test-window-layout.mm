@@ -56,6 +56,20 @@ int main()
         assert(secondary.styleMask&NSWindowStyleMaskTitled);
         [secondary close];
         playerWindow=nil;
+        RaceBroadcastWindow* broadcast=[[RaceBroadcastWindow alloc] initWithContentRect:initial
+            styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskResizable|NSWindowStyleMaskFullSizeContentView
+            backing:NSBackingStoreBuffered defer:NO];
+        broadcast.releasedWhenClosed=NO; broadcastWindow=broadcast;
+        PlaceBroadcastWindow(broadcast,NSScreen.mainScreen);
+        assert(NSEqualRects(broadcast.frame,NSScreen.mainScreen.frame));
+        assert(NSEqualSizes(broadcast.contentView.bounds.size,NSScreen.mainScreen.frame.size));
+        assert(broadcast.movableByWindowBackground && !broadcast.canBecomeKeyWindow);
+        assert(FindUnityWindow()==primary);
+        NSRect moved=NSMakeRect(initial.origin.x+25,initial.origin.y+35,800,450);
+        [broadcast setFrame:moved display:NO];
+        RefreshExternalLayout();
+        assert(NSEqualRects(broadcast.frame,moved)); // P1/P2 auto placement must never undo manual broadcast movement.
+        [broadcast close]; broadcastWindow=nil;
         [primary close];
         unityWindow=nil;
         std::cout<<"EXTERNAL_WINDOW_LAYOUT_PASS: production AppKit helpers; full content frames, portrait/negative coordinates, focus eligibility, idempotent sizing and original-window restoration. Windows remained hidden.\n";

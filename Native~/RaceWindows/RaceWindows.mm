@@ -14,6 +14,10 @@
 // render thread; all rendering/presentation uses Unity's own command buffer.
 static IUnityGraphicsMetalV2* metal;
 static NSWindow* playerWindow;
+static NSWindow* broadcastWindow;
+static CAMetalLayer* broadcastLayer;
+static std::atomic<int> broadcastWidth{0}, broadcastHeight{0};
+static std::atomic<bool> broadcastVisible{false}, broadcastClosed{false};
 static CAMetalLayer* outputLayer;
 static id<MTLRenderPipelineState> pipeline;
 static std::mutex outputMutex;
@@ -30,6 +34,9 @@ static void OnMain(dispatch_block_t action)
 
 @interface RacePlayerWindow : NSWindow <NSWindowDelegate>
 - (void)updateOutputSize;
+@end
+
+@interface RaceBroadcastWindow : RacePlayerWindow
 @end
 
 struct WindowPlacement {
@@ -106,10 +113,10 @@ static void RestoreWindow(NSWindow* window, WindowPlacement& placement)
 static NSWindow* FindUnityWindow()
 {
     NSWindow* candidate=NSApp.mainWindow ?: NSApp.keyWindow;
-    if (candidate && candidate!=playerWindow && ![candidate isKindOfClass:NSPanel.class]) return candidate;
+    if (candidate && candidate!=playerWindow && candidate!=broadcastWindow && ![candidate isKindOfClass:NSPanel.class]) return candidate;
     // Background launches can create the Unity window before it becomes main/key.
     for (NSWindow* window in NSApp.windows)
-        if (window!=playerWindow && ![window isKindOfClass:NSPanel.class] && window.contentView &&
+        if (window!=playerWindow && window!=broadcastWindow && ![window isKindOfClass:NSPanel.class] && window.contentView &&
             ((window.styleMask&NSWindowStyleMaskTitled) || [NSStringFromClass(window.class) containsString:@"Unity"])) return window;
     return nil;
 }
@@ -174,6 +181,69 @@ extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_ExternalFullscreen() { return 
     visible = self.visible && !self.miniaturized;
 }
 @end
+
+@implementation RaceBroadcastWindow
+- (BOOL)windowShouldClose:(NSWindow*)sender { broadcastClosed=true; [self orderOut:nil]; broadcastVisible=false; return NO; }
+- (void)windowDidMiniaturize:(NSNotification*)notification { broadcastVisible=false; }
+- (void)updateOutputSize
+{
+    NSSize size=[self.contentView convertSizeToBacking:self.contentView.bounds.size];
+    std::lock_guard<std::mutex> lock(outputMutex);
+    broadcastLayer.contentsScale=self.backingScaleFactor;
+    broadcastLayer.drawableSize=size;
+    broadcastWidth=(int)size.width; broadcastHeight=(int)size.height;
+    broadcastVisible=self.visible && !self.miniaturized;
+}
+@end
+
+static void PlaceBroadcastWindow(NSWindow* window, NSScreen* screen)
+{
+    window.title=@"RACING — BROADCAST";
+    window.titleVisibility=NSWindowTitleHidden;
+    window.titlebarAppearsTransparent=YES;
+    window.movableByWindowBackground=YES;
+    window.collectionBehavior=NSWindowCollectionBehaviorFullScreenNone;
+    window.contentMinSize=NSMakeSize(480,270);
+    // Fill once at startup. Subsequent movement/resizing is entirely under the user's control.
+    [window setFrame:screen.frame display:NO];
+}
+extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_OpenBroadcast()
+{
+    if (!metal) return 0;
+    __block int success=0;
+    OnMain(^{
+        if (broadcastWindow) { broadcastClosed=false; [broadcastWindow orderFront:nil]; [(RaceBroadcastWindow*)broadcastWindow updateOutputSize]; success=1; return; }
+        NSScreen* target=nil;
+        for (NSScreen* screen in NSScreen.screens)
+            if (CGDisplayIsBuiltin([screen.deviceDescription[@"NSScreenNumber"] unsignedIntValue])) { target=screen; break; }
+        if (!target) target=NSScreen.mainScreen;
+        if (!target) return;
+        RaceBroadcastWindow* window=[[RaceBroadcastWindow alloc] initWithContentRect:target.visibleFrame
+            styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable|NSWindowStyleMaskFullSizeContentView
+            backing:NSBackingStoreBuffered defer:NO screen:target];
+        window.releasedWhenClosed=NO; window.delegate=window;
+        PlaceBroadcastWindow(window,target);
+        CAMetalLayer* layer=[CAMetalLayer layer];
+        layer.device=metal->MetalDevice(); layer.pixelFormat=MTLPixelFormatBGRA8Unorm_sRGB;
+        layer.framebufferOnly=YES; layer.displaySyncEnabled=YES; layer.allowsNextDrawableTimeout=YES;
+        window.contentView.wantsLayer=YES; window.contentView.layer=layer;
+        { std::lock_guard<std::mutex> lock(outputMutex); broadcastWindow=window; broadcastLayer=layer; }
+        broadcastClosed=false;
+        [window orderFront:nil]; [window updateOutputSize]; success=1;
+    });
+    return success;
+}
+extern "C" void UNITY_INTERFACE_EXPORT RaceWindows_BroadcastSize(int* width,int* height) { *width=broadcastWidth; *height=broadcastHeight; }
+extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_BroadcastClosed() { return broadcastClosed?1:0; }
+extern "C" void UNITY_INTERFACE_EXPORT RaceWindows_CloseBroadcast()
+{
+    broadcastVisible=false;
+    OnMain(^{
+        NSWindow* window;
+        { std::lock_guard<std::mutex> lock(outputMutex); window=broadcastWindow; broadcastWindow=nil; broadcastLayer=nil; }
+        window.delegate=nil; [window close]; broadcastWidth=0; broadcastHeight=0;
+    });
+}
 
 extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API UnityPluginLoad(IUnityInterfaces* interfaces)
 {
@@ -242,11 +312,17 @@ struct Frame
 {
     __strong CAMetalLayer* layer;
     __strong id<MTLTexture> texture;
+    bool visible;
 };
 extern "C" void* UNITY_INTERFACE_EXPORT RaceWindows_Frame(void* texture)
 {
     std::lock_guard<std::mutex> lock(outputMutex);
-    return new Frame{outputLayer, (__bridge id<MTLTexture>)texture};
+    return new Frame{outputLayer, (__bridge id<MTLTexture>)texture,visible};
+}
+extern "C" void* UNITY_INTERFACE_EXPORT RaceWindows_BroadcastFrame(void* texture)
+{
+    std::lock_guard<std::mutex> lock(outputMutex);
+    return new Frame{broadcastLayer,(__bridge id<MTLTexture>)texture,broadcastVisible};
 }
 extern "C" void UNITY_INTERFACE_EXPORT RaceWindows_Close()
 {
@@ -272,7 +348,7 @@ static void UNITY_INTERFACE_API Present(int eventId, void* data)
 {
     @autoreleasepool {
         std::unique_ptr<Frame> frame(static_cast<Frame*>(data));
-        if (!metal || !visible) return;
+        if (!metal || !frame || !frame->visible) return;
         CAMetalLayer* layer = frame->layer;
         id<MTLTexture> texture = frame->texture;
         if (!layer || !texture) return;
@@ -310,7 +386,7 @@ static void UNITY_INTERFACE_API Present(int eventId, void* data)
         // during normal play. Unity RenderTextures have a bottom-left origin.
         static int renderedFrames = 0;
         const char* capturePath = getenv("RACING_WINDOW_CAPTURE");
-        if (++renderedFrames == 10 && capturePath) {
+        if (eventId==0 && ++renderedFrames == 10 && capturePath) {
             NSString* path = [NSString stringWithUTF8String:capturePath];
             NSUInteger width = drawable.texture.width, height = drawable.texture.height;
             NSUInteger rowBytes = (width * 4 + 255) & ~255UL;
