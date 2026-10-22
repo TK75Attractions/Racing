@@ -37,6 +37,7 @@ public static class RacePlayerWindows
     [DllImport(Library)] private static extern int RaceWindows_BroadcastClosed();
     [DllImport(Library)] private static extern void RaceWindows_CloseBroadcast();
     [DllImport(Library)] private static extern IntPtr RaceWindows_BroadcastFrame(IntPtr texture);
+    [DllImport(Library)] private static extern void RaceWindows_BroadcastPlacement(out int builtIn,out int fillsScreen);
 #endif
 
     public static bool Open(int preferredScreen)
@@ -132,6 +133,16 @@ public static class RacePlayerWindows
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
         RaceWindows_CloseBroadcast();
 #endif
+    }
+    public static (bool builtIn,bool fillsScreen) BroadcastPlacement
+    {
+        get
+        {
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            if(UsesNativeWindow){RaceWindows_BroadcastPlacement(out int builtIn,out int fillsScreen);return (builtIn!=0,fillsScreen!=0);}
+#endif
+            return (false,false);
+        }
     }
     public static void Present(IntPtr texture, bool broadcast = false)
     {

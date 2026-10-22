@@ -8,6 +8,7 @@ using Unity.Profiling.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 
 /// <summary>Opt-in standalone benchmark: set RACING_PERFORMANCE_OUTPUT before launching a Development Build.</summary>
 public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
@@ -19,6 +20,9 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
     {
         public string unity, gpu, device, renderGraph, outputMode;
         public int physicalDisplays, windowWidth, windowHeight;
+        public string broadcastMode;
+        public int broadcastFrames, broadcastRaces, broadcastWidth, broadcastHeight;
+        public bool broadcastBuiltIn, broadcastFillsScreen;
         public float meshLodThreshold;
         public float[] drivenMetres;
         public List<Sample> samples = new List<Sample>();
@@ -66,6 +70,13 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
         var root = new GameObject("Standalone performance probe");
         DontDestroyOnLoad(root);
         root.AddComponent<RacingStandalonePerformanceProbe>();
+        if(Environment.GetEnvironmentVariable("RACING_BROADCAST_SMOKE")=="1")
+            SceneManager.sceneLoaded+=(scene,mode)=>
+            {
+                foreach(var bridge in UnityEngine.Object.FindObjectsByType<RaceDashboardBridge>(FindObjectsSortMode.None))bridge.enabled=false;
+                foreach(var publisher in UnityEngine.Object.FindObjectsByType<RaceRemoteFirebasePublisher>(FindObjectsSortMode.None))publisher.enabled=false;
+                foreach(var audio in UnityEngine.Object.FindObjectsByType<RaceAudioOutput>(FindObjectsSortMode.None))audio.enabled=false;
+            };
 #endif
     }
     private void Awake()
@@ -76,6 +87,8 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
         Directory.CreateDirectory(output);
         Application.runInBackground = true;
         File.WriteAllText(Path.Combine(output,"status.txt"),"Awake");
+        if(Environment.GetEnvironmentVariable("RACING_BROADCAST_SMOKE")=="1")
+            File.WriteAllText(Path.Combine(output,"process-id.txt"),System.Diagnostics.Process.GetCurrentProcess().Id.ToString());
         Application.logMessageReceived += Log;
     }
     private void Log(string message, string stack, LogType type)
@@ -101,6 +114,21 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
         Debug.developerConsoleVisible = false;
         report.renderGraph = (!GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode).ToString();
         rigs = (PlayerDisplayRig[])typeof(Gmanager).GetField("displayRigs",Private).GetValue(manager);
+        if(Environment.GetEnvironmentVariable("RACING_BROADCAST_SMOKE")=="1")
+        {
+            phase="broadcast startup";
+            double until=Time.realtimeSinceStartupAsDouble+8;
+            while(Time.realtimeSinceStartupAsDouble<until)yield return null;
+            var broadcast=manager.Broadcast;
+            report.broadcastMode=broadcast.Mode;report.broadcastFrames=broadcast.PresentedFrames;report.broadcastRaces=broadcast.StoredRaces;
+            report.broadcastWidth=broadcast.WindowPixels.x;report.broadcastHeight=broadcast.WindowPixels.y;
+            var placement=RacePlayerWindows.BroadcastPlacement;report.broadcastBuiltIn=placement.builtIn;report.broadcastFillsScreen=placement.fillsScreen;
+            report.outputMode="Independent P1/P2 + movable broadcast window";
+            if(report.broadcastFrames<10||report.broadcastWidth<320||report.broadcastHeight<180)report.errors.Add("Broadcast native window did not present frames.");
+            if(broadcast.StoredRaces>0&&broadcast.Mode!="REPLAY")report.errors.Add("Saved history did not resume at startup.");
+            if(broadcast.StoredRaces==0&&broadcast.Mode!="COURSE PV")report.errors.Add("A fresh installation must show the course PV.");
+            Finish();yield break;
+        }
         if (RacePlayerWindows.UsesNativeWindow)
         {
             report.outputMode = RacePlayerWindows.ExternalFullscreenActive

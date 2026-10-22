@@ -23,6 +23,11 @@ public static class BalancePlaytestValidation
         else if (Environment.GetEnvironmentVariable("RACING_VALIDATE_RESULT_UI") == "1") ResultHighlightValidation.Run();
         if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RACING_GEOMETRY_AUDIT_TRACE"))) RaceExperienceGeometryAudit.Run();
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
+        if (Environment.GetEnvironmentVariable("RACING_BROADCAST_CHECK") == "1")
+        {
+            var input = UnityEngine.Object.FindFirstObjectByType<InputManager>();
+            input.isDebugMode = true; input.isP1SerialP2KeyboardDebugMode = false;
+        }
         SessionState.SetBool(Key, true);
         Resume();
         EditorApplication.isPlaying = true;
@@ -60,6 +65,9 @@ public static class BalancePlaytestValidation
         if (EditorApplication.timeSinceStartup - started > 1800) { Finish(false, "Balance playtest wall-clock timeout; inspect partial report."); return; }
         if (!EditorApplication.isPlaying || Gmanager.Control == null) return;
         DisablePublishing();
+        if (Environment.GetEnvironmentVariable("RACING_BROADCAST_CHECK") == "1" &&
+            UnityEngine.Object.FindFirstObjectByType<BroadcastPlaytestProbe>() == null)
+            Gmanager.Control.gameObject.AddComponent<BroadcastPlaytestProbe>();
         if (Environment.GetEnvironmentVariable("RACING_ADAPTIVE_PACE") == "off")
             Gmanager.Control.Features.SetFeature(RaceFeature.AdaptiveAiPace,false);
         if (Environment.GetEnvironmentVariable("RACING_DAILY_RANKING_CHECK") == "1" &&

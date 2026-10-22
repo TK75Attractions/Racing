@@ -151,9 +151,14 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             foreach (RunRecord plan in plans) if (plan.p1Profile == "human") plan.resetAssistance = true;
             suite.methodology = "Actual SampleScene and production cars/CPUs/items. Human profiles decide every 0.18/0.22 seconds, slew the physical wheel at up to 360 degrees/second and pedal at 3/second, observe forward traffic, and use the fast road-speed planner with small steering noise. Course-following input agents also approximate novice, cautious, intermediate, expert and aggressive control using distinct speed, reaction intervals, steering noise and jump anticipation; they are not human usability subjects. Includes a 12-second stop, 5-second input disconnection and operator result action. Drivers use InputManager and production input gates; never force vehicle pose, velocity, laps or outcomes. An agent responds to the public pedal-release notice after 0.35 seconds with 0.3 seconds of neutral input. Novice/cautious agents respond to a visible jump notice after 0.35 seconds by targeting 24m/s; understanding that cue is an assumed response, not a human-study result. Preparation is bypassed. Random seeds do not guarantee deterministic physics. Official and physics clocks are recorded separately.";
             var sources = (IDriveInputSource[])typeof(InputManager).GetField("inputSources", Private).GetValue(manager.IManager);
-            for (int i = 0; i < 2; i++) sources[i] = inputs[i];
+            for (int i = 0; i < 2; i++)
+            {
+                sources[i] = inputs[i];
+                (manager.IManager.GetPlayerInputSource(i) as LiveDriveInputSource)?.SwitchSource(inputs[i], false);
+            }
         }
         string filter = Environment.GetEnvironmentVariable("RACING_BALANCE_RUN");
+        if (Environment.GetEnvironmentVariable("RACING_BROADCAST_CHECK") == "1") yield return new WaitForSecondsRealtime(3);
         foreach (RunRecord plan in plans)
         {
             if (!string.IsNullOrEmpty(filter) && Array.IndexOf(filter.Split(','), plan.name) < 0) continue;
@@ -283,6 +288,12 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             yield return null;
         }
         if(skillSuite) {Capture(folder,"result-p1",0); Capture(folder,"result-p2",1);}
+        if (Environment.GetEnvironmentVariable("RACING_BROADCAST_CHECK") == "1")
+        {
+            var broadcast = FindFirstObjectByType<BroadcastPlaytestProbe>();
+            while (broadcast != null && !broadcast.Done) yield return null;
+            if (broadcast == null || !broadcast.Passed) suite.error = "Broadcast/replay validation failed.";
+        }
         if (video != null)
         {
             float resultUntil = Time.time + 2f;

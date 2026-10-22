@@ -18,6 +18,7 @@ static NSWindow* broadcastWindow;
 static CAMetalLayer* broadcastLayer;
 static std::atomic<int> broadcastWidth{0}, broadcastHeight{0};
 static std::atomic<bool> broadcastVisible{false}, broadcastClosed{false};
+static std::atomic<bool> broadcastBuiltIn{false}, broadcastFillsScreen{false};
 static CAMetalLayer* outputLayer;
 static id<MTLRenderPipelineState> pipeline;
 static std::mutex outputMutex;
@@ -183,6 +184,10 @@ extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_ExternalFullscreen() { return 
 @end
 
 @implementation RaceBroadcastWindow
+- (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen*)screen
+{
+    return frameRect; // A borderless movable broadcast must not be shortened to the work area.
+}
 - (BOOL)windowShouldClose:(NSWindow*)sender { broadcastClosed=true; [self orderOut:nil]; broadcastVisible=false; return NO; }
 - (void)windowDidMiniaturize:(NSNotification*)notification { broadcastVisible=false; }
 - (void)updateOutputSize
@@ -193,15 +198,23 @@ extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_ExternalFullscreen() { return 
     broadcastLayer.drawableSize=size;
     broadcastWidth=(int)size.width; broadcastHeight=(int)size.height;
     broadcastVisible=self.visible && !self.miniaturized;
+    NSScreen* screen=self.screen;
+    broadcastBuiltIn=screen && CGDisplayIsBuiltin([screen.deviceDescription[@"NSScreenNumber"] unsignedIntValue]);
+    broadcastFillsScreen=screen && NSEqualRects(self.frame,screen.frame);
 }
 @end
 
 static void PlaceBroadcastWindow(NSWindow* window, NSScreen* screen)
 {
+    window.styleMask=NSWindowStyleMaskBorderless|NSWindowStyleMaskResizable;
     window.title=@"RACING — BROADCAST";
     window.titleVisibility=NSWindowTitleHidden;
     window.titlebarAppearsTransparent=YES;
     window.movableByWindowBackground=YES;
+    // Keep a manually moved broadcast above the two cabinet player windows,
+    // while allowing Cmd-Tab to reveal other desktop applications normally.
+    window.level=NSMainMenuWindowLevel+2;
+    window.hidesOnDeactivate=YES;
     window.collectionBehavior=NSWindowCollectionBehaviorFullScreenNone;
     window.contentMinSize=NSMakeSize(480,270);
     // Fill once at startup. Subsequent movement/resizing is entirely under the user's control.
@@ -219,22 +232,29 @@ extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_OpenBroadcast()
         if (!target) target=NSScreen.mainScreen;
         if (!target) return;
         RaceBroadcastWindow* window=[[RaceBroadcastWindow alloc] initWithContentRect:target.visibleFrame
-            styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable|NSWindowStyleMaskFullSizeContentView
+            styleMask:NSWindowStyleMaskBorderless|NSWindowStyleMaskResizable
             backing:NSBackingStoreBuffered defer:NO screen:target];
         window.releasedWhenClosed=NO; window.delegate=window;
         PlaceBroadcastWindow(window,target);
         CAMetalLayer* layer=[CAMetalLayer layer];
         layer.device=metal->MetalDevice(); layer.pixelFormat=MTLPixelFormatBGRA8Unorm_sRGB;
-        layer.framebufferOnly=YES; layer.displaySyncEnabled=YES; layer.allowsNextDrawableTimeout=YES;
+        layer.framebufferOnly=getenv("RACING_BROADCAST_CAPTURE")==nullptr; layer.displaySyncEnabled=YES; layer.allowsNextDrawableTimeout=YES;
         window.contentView.wantsLayer=YES; window.contentView.layer=layer;
         { std::lock_guard<std::mutex> lock(outputMutex); broadcastWindow=window; broadcastLayer=layer; }
         broadcastClosed=false;
-        [window orderFront:nil]; [window updateOutputSize]; success=1;
+        [window orderFront:nil]; PlaceBroadcastWindow(window,target); [window updateOutputSize]; success=1;
     });
     return success;
 }
-extern "C" void UNITY_INTERFACE_EXPORT RaceWindows_BroadcastSize(int* width,int* height) { *width=broadcastWidth; *height=broadcastHeight; }
+extern "C" void UNITY_INTERFACE_EXPORT RaceWindows_BroadcastSize(int* width,int* height)
+{
+    // App activation can reveal a hidden-on-deactivate window without a resize notification.
+    OnMain(^{if(broadcastWindow)[(RaceBroadcastWindow*)broadcastWindow updateOutputSize];});
+    *width=broadcastWidth; *height=broadcastHeight;
+}
 extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_BroadcastClosed() { return broadcastClosed?1:0; }
+extern "C" void UNITY_INTERFACE_EXPORT RaceWindows_BroadcastPlacement(int* builtIn,int* fillsScreen)
+{ *builtIn=broadcastBuiltIn?1:0; *fillsScreen=broadcastFillsScreen?1:0; }
 extern "C" void UNITY_INTERFACE_EXPORT RaceWindows_CloseBroadcast()
 {
     broadcastVisible=false;
@@ -384,9 +404,10 @@ static void UNITY_INTERFACE_API Present(int eventId, void* data)
         [encoder endEncoding];
         // Opt-in render artifact for validation; no screen capture or CPU copy
         // during normal play. Unity RenderTextures have a bottom-left origin.
-        static int renderedFrames = 0;
-        const char* capturePath = getenv("RACING_WINDOW_CAPTURE");
-        if (eventId==0 && ++renderedFrames == 10 && capturePath) {
+        static int renderedFrames[2] = {0,0};
+        int slot=eventId==1?1:0;
+        const char* capturePath = getenv(slot==1?"RACING_BROADCAST_CAPTURE":"RACING_WINDOW_CAPTURE");
+        if (++renderedFrames[slot] == 10 && capturePath) {
             NSString* path = [NSString stringWithUTF8String:capturePath];
             NSUInteger width = drawable.texture.width, height = drawable.texture.height;
             NSUInteger rowBytes = (width * 4 + 255) & ~255UL;

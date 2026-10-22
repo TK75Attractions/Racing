@@ -62,8 +62,10 @@ int main()
         broadcast.releasedWhenClosed=NO; broadcastWindow=broadcast;
         PlaceBroadcastWindow(broadcast,NSScreen.mainScreen);
         assert(NSEqualRects(broadcast.frame,NSScreen.mainScreen.frame));
+        assert(NSEqualRects([broadcast constrainFrameRect:NSScreen.mainScreen.frame toScreen:NSScreen.mainScreen],NSScreen.mainScreen.frame));
         assert(NSEqualSizes(broadcast.contentView.bounds.size,NSScreen.mainScreen.frame.size));
         assert(broadcast.movableByWindowBackground && !broadcast.canBecomeKeyWindow);
+        assert(broadcast.level>NSMainMenuWindowLevel && broadcast.hidesOnDeactivate);
         assert(FindUnityWindow()==primary);
         NSRect moved=NSMakeRect(initial.origin.x+25,initial.origin.y+35,800,450);
         [broadcast setFrame:moved display:NO];
