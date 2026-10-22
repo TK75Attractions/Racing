@@ -29,3 +29,8 @@ test('P1 wheel-only mode does not diagnose deliberately absent pedals or P2 as f
  const only={...good,settings:{inputMode:'mixed',steeringMode:'ConstantPedal'},hardware:{...good.hardware,inputMode:'P1_STEERING',ads:'Fault',imus:[{status:'Ok'},{status:'Fault'}]}};
  for(const key of [2,3,4,5]){const result=analyze(only,key);assert.match(text(result.facts),/使用しません/);assert.equal(result.causes.length,0);}
 });
+
+test('Fully automated matches do not require physical sensors',()=>{
+ const automatic={...good,settings:{inputMode:'serial',bothPlayersAutodrive:true},serial:{portOpen:false}};
+ for(let key=0;key<6;key++)assert.equal(analyze(automatic,key).causes.length,0);
+});

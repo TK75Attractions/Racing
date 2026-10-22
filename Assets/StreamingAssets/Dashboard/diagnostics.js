@@ -1,6 +1,7 @@
 /* Explain measured facts separately from wiring hypotheses; no automatic calibration. */
 (function(root){
   function required(snapshot,key){
+    if(snapshot?.settings?.bothPlayersAutodrive)return false;
     const mode=(snapshot?.settings?.inputMode||snapshot?.inputMode||'serial').toLowerCase();
     if(mode==='keyboard')return false;
     const oneOnly=mode==='mixed'||snapshot?.hardware?.inputMode==='P1_STEERING';

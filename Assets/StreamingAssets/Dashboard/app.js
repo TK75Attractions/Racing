@@ -206,7 +206,8 @@ function renderParticipants(snapshot) {
       row.append(td); return td;
     };
     cell(`${entry.position} / ${count}`);
-    cell(driverLabel(entry.number), entry.isCpu ? 'CPU' : '人間');
+    const auto=snapshot.settings?.bothPlayersAutodrive || entry.number===2&&snapshot.settings?.features?.some(feature=>feature.id==='PlayerTwoAutodrive'&&feature.enabled);
+    cell(driverLabel(entry.number), entry.isCpu ? 'CPU' : auto ? '自動運転' : '人間');
     const status = cell(drivingLabels[entry.status] || '状態不明', entry.contactGrace ? '接触保護中' : null);
     if (entry.status === 'Finished') status.className = 'participant-finished';
     if (entry.status === 'Stalled' || entry.status === 'DNF') status.className = 'participant-warning';
@@ -560,11 +561,12 @@ function renderHardware(snapshot) {
   const ready = cards.filter(([, [level]]) => level === 'ok').length;
   const requiredCount = cards.filter((_,index)=>HardwareDiagnostics.required(snapshot,index)).length;
   const keyboard = snapshot?.settings?.inputMode === 'keyboard' || /^keyboard/i.test(snapshot?.inputMode || '');
+  const automatic = snapshot?.settings?.bothPlayersAutodrive;
   const summary = $('device-summary');
   const level = !snapshot || keyboard ? 'unknown' : faults ? 'fault' :
     requiredCount > 0 && ready === requiredCount && hardware?.state === 'READY' && hardware?.angleLocked && hardware?.calibrated ? 'ok' : 'unknown';
   summary.className = level;
-  summary.textContent = !snapshot ? '確認待ち' : keyboard ? '⌨ 機器入力は未使用' : faults ? `⚠ ${faults}件 要確認` :
+  summary.textContent = !snapshot ? '確認待ち' : automatic ? '自動運転 / 機器入力は未使用' : keyboard ? '⌨ 機器入力は未使用' : faults ? `⚠ ${faults}件 要確認` :
     level === 'ok' ? '✓ すべて正常' : '◷ 準備・確認中';
   $('device-summary-items').replaceChildren(...cards.map(([name, [state, text]], index) => {
     const chip = document.createElement('span'); chip.className = 'device-chip ' + state;
