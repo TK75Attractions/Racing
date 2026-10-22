@@ -1,0 +1,1 @@
+MENU_SCENERY_VALIDATION_PASS: live title/results, moving views, independent title return, live OFF/ON, disable/re-enable, intro/countdown/race camera handoff; real P1/P2 captures.
