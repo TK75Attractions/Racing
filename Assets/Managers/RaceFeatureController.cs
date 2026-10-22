@@ -74,7 +74,6 @@ public sealed class RaceFeatureController : MonoBehaviour
     private void DrawPanel(int id)
     {
         scroll = GUILayout.BeginScrollView(scroll, GUILayout.Height(Mathf.Max(200f, panel.height - 45f)));
-        DrawSteeringTest();
         if (manager != null && (manager.state == Gmanager.State.Title || manager.state == Gmanager.State.Result))
         {
             if (GUILayout.Button("Start test race - P1 manual / P2 AUTO")) manager.StartAutodriveTestRace();
@@ -91,54 +90,10 @@ public sealed class RaceFeatureController : MonoBehaviour
             if (current != next) SetFeature(entry.Feature, next);
         }
         GUILayout.Space(8);
-        GUILayout.Label("Rules now: " + Settings.ActivePreset + " / " + (manager != null ? manager.GoalLap : 2) + " lap(s)");
-        GUILayout.Label(Settings.RulesLocked ? "Lap/time preset below applies to the NEXT race." : "Choose rules before either player starts.");
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Standard: scene rules")) SelectPreset(RacePreset.Standard);
-        if (GUILayout.Button("Experience: 1 lap")) SelectPreset(RacePreset.Experience);
-        GUILayout.EndHorizontal();
-        GUILayout.Label("Next preset: " + Settings.SelectedPreset);
-        if (GUILayout.Button("All added features OFF (legacy comparison)")) SetFeature(RaceFeature.All, false);
-        if (manager != null)
-            foreach (RaceParticipant entry in manager.Participants)
-            {
-                if (entry.IsCpu || entry.Car == null) continue;
-                int drifts = entry.Car.GetComponent<DriftCoachingUI>()?.SuccessfulReleases ?? 0;
-                int drafts = entry.Car.GetComponent<SlipstreamController>()?.SuccessfulBoosts ?? 0;
-                GUILayout.Label(entry.Label + "  drift releases: " + drifts + "  draft boosts: " + drafts + "  assist(s): " + (entry.Car.GetComponent<CourseSteeringAssist>()?.ActiveSeconds ?? 0f).ToString("F1"));
-            }
-        if (manager != null)
-            foreach (RaceParticipant entry in manager.Participants)
-                if (!entry.IsCpu && entry.Car != null) GUILayout.Label(entry.Label + "  landings: " + (entry.Car.GetComponent<LandingRewardController>()?.SuccessfulLandings ?? 0) + "  tube lines: " + (entry.Car.GetComponent<TubeChargeLineController>()?.SuccessfulLines ?? 0));
+        GUILayout.Label("Other gameplay improvements are standard and always enabled.");
         GUILayout.Label("Debug choices reset on application restart.");
         GUILayout.EndScrollView();
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
     }
 
-    private void DrawSteeringTest()
-    {
-        InputManager input = manager?.IManager;
-        if (input == null) return;
-        GUILayout.Space(6);
-        GUILayout.Label("P1 steering test: ESP32 wheel + alternative pedal");
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Normal")) input.SetP1SteeringTestMode(P1SteeringTestMode.Normal);
-        if (GUILayout.Button("W/S pedal")) input.SetP1SteeringTestMode(P1SteeringTestMode.KeyboardPedal);
-        if (GUILayout.Button("Constant pedal")) input.SetP1SteeringTestMode(P1SteeringTestMode.ConstantPedal);
-        GUILayout.EndHorizontal();
-        GUILayout.Label(input.InputModeLabel);
-        GUILayout.Label("P1 input status: " + DriveInputStatus.Of(input.GetPlayerInputSource(0)));
-        if (input.SteeringTestMode == P1SteeringTestMode.ConstantPedal)
-        {
-            float amount = GUILayout.HorizontalSlider(input.ConstantTestPedal, 0f, 1f);
-            if (!Mathf.Approximately(amount, input.ConstantTestPedal)) input.SetP1ConstantPedal(amount);
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Release constant pedal")) input.PauseP1ConstantPedal();
-            if (GUILayout.Button("Resume constant pedal")) input.ResumeP1ConstantPedal();
-            GUILayout.EndHorizontal();
-            GUILayout.Label("Constant pedal is race-only; keyboard optional. S or F8 resumes a latched gate.");
-        }
-        if (input.SteeringTestMode != P1SteeringTestMode.Normal)
-            GUILayout.Label("W/S in menus and practice. Space reset, Enter ready. P2 unchanged.");
-    }
 }

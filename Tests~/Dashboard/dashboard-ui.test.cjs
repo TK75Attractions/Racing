@@ -524,12 +524,12 @@ test('HTTP settings use guarded requests, display acknowledged values and query 
   assert.match(ui.elements.get('settings-status').textContent,/操作は再送していません/);
 });
 const f8Settings={...settings,featuresAvailable:true,activePreset:'Standard',selectedPreset:'Experience',rulesLocked:true,
-  hasQueuedPreset:true,canStartTestRace:false,features:[{id:'Slipstream',label:'スリップストリーム加速',enabled:true},
+  hasQueuedPreset:true,canStartTestRace:false,features:[{id:'SteeringAssist',label:'スリップストリーム加速',enabled:true},
     {id:'PlayerTwoAutodrive',label:'P2自動 <script>',enabled:false}]};
 test('F8 controls show live switches and queued rules, synchronize without rebuilding, and disable on disconnect',()=>{
   const ui=fixture();ui.render({...base,settings:f8Settings});
   const rows=ui.elements.get('settings-features').children,slip=rows[0].children[0];
-  assert.equal(rows.length,2);assert.equal(slip.dataset.settingArg,'Slipstream');
+  assert.equal(rows.length,2);assert.equal(slip.dataset.settingArg,'SteeringAssist');
   assert.equal(slip.checked,true);assert.equal(slip.disabled,false);
   assert.equal(rows[1].children[1].textContent,'P2自動 <script>');
   assert.equal(ui.elements.get('settings-feature-count').textContent,'1 / 2 項目がON');
@@ -563,7 +563,7 @@ test('F8 feature, preset, all-off and test-start requests use the shared guarded
     await ui.context.submitSetting(control);
   }
   assert.deepEqual(calls.map(request=>[request.command,request.args]),
-    [['feature',['Slipstream','false']],['preset',['Experience']],['allFeaturesOff',[]],['testRace',[]]]);
+    [['feature',['SteeringAssist','false']],['preset',['Experience']],['allFeaturesOff',[]],['testRace',[]]]);
   assert.ok(calls.every(request=>request.settingsRevision===5&&request.targetSession==='current'));
   assert.match(ui.elements.get('settings-status').textContent,/テストレースを開始しました/);
 });

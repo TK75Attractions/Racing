@@ -211,19 +211,19 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       };
       const apply=body=>request('/api/action/settings',{method:'POST',origin:'http://127.0.0.1:8766',body});
       const initial=(await request('/api/status')).json.settings;
-      assert.equal(initial.features.length,26);assert.equal(initial.featuresAvailable,true);
+      assert.equal(initial.features.length,6);assert.equal(initial.featuresAvailable,true);
       assert.ok(initial.features.every(feature=>feature.id&&feature.label&&typeof feature.enabled==='boolean'));
-      const toggle=await make('feature',['Slipstream','false']);
+      const toggle=await make('feature',['SteeringAssist','false']);
       assert.equal((await request('/api/action/settings',{...remote,method:'POST',body:toggle})).status,403);
       assert.equal((await apply(toggle)).status,200);
       let settings=(await request('/api/status')).json.settings;
-      assert.equal(settings.features.find(feature=>feature.id==='Slipstream').enabled,false);
-      assert.equal(settings.features.find(feature=>feature.id==='HitProtection').enabled,true);
-      const stale=await make('feature',['Slipstream','true']);
-      send('feature:HitProtection');
-      await waitFor(async()=>!(await request('/api/status')).json.settings.features.find(feature=>feature.id==='HitProtection').enabled);
+      assert.equal(settings.features.find(feature=>feature.id==='SteeringAssist').enabled,false);
+      assert.equal(settings.features.find(feature=>feature.id==='CampusAtmosphere').enabled,true);
+      const stale=await make('feature',['SteeringAssist','true']);
+      send('feature:CampusAtmosphere');
+      await waitFor(async()=>!(await request('/api/status')).json.settings.features.find(feature=>feature.id==='CampusAtmosphere').enabled);
       assert.equal((await apply(stale)).json.reason,'settings_changed');
-      for(const args of [['All','false'],['None','true'],['1','true'],['Slipstream','1'],['Unknown','true'],['Slipstream'],['Slipstream, HitProtection','false']])
+      for(const args of [['All','false'],['None','true'],['1','true'],['SteeringAssist','1'],['Unknown','true'],['SteeringAssist'],['SteeringAssist, CampusAtmosphere','false']])
         assert.equal((await apply(await make('feature',args))).status,409);
       assert.equal((await apply(await make('allFeaturesOff',[]))).status,200);
       assert.ok((await request('/api/status')).json.settings.features.every(feature=>!feature.enabled));
@@ -237,7 +237,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       settings=(await request('/api/status')).json.settings;
       assert.equal(settings.activePreset,'Standard');assert.equal(settings.selectedPreset,'Experience');assert.equal(settings.hasQueuedPreset,true);
       assert.equal(settings.features.find(feature=>feature.id==='ExperienceItems').enabled,false);
-      assert.equal((await apply(await make('feature',['HitProtection','true']))).status,200);
+      assert.equal((await apply(await make('feature',['CampusAtmosphere','true']))).status,200);
       assert.equal((await apply(await make('preset',['2']))).status,409);
       send('rules:unlock');await waitFor(async()=>!(await request('/api/status')).json.settings.rulesLocked);
       assert.equal((await apply(await make('preset',['Standard']))).status,200);
@@ -457,11 +457,11 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         await page.waitForFunction(() => !document.querySelector('#settings-output-1 option[value="usb-key"]').disabled);
         await page.locator('#settings-refresh:enabled').click();
         await page.locator('#settings-status').filter({hasText:'設定を反映しました'}).waitFor();
-        assert.equal(await page.locator('#settings-features input').count(),26);
-        await page.locator('#settings-feature-Slipstream:enabled').uncheck();
-        await waitFor(async()=>!(await request('/api/status')).json.settings.features.find(feature=>feature.id==='Slipstream').enabled);
-        send('feature:HitProtection');
-        await page.waitForFunction(()=>!document.getElementById('settings-feature-HitProtection').checked);
+        assert.equal(await page.locator('#settings-features input').count(),6);
+        await page.locator('#settings-feature-SteeringAssist:enabled').uncheck();
+        await waitFor(async()=>!(await request('/api/status')).json.settings.features.find(feature=>feature.id==='SteeringAssist').enabled);
+        send('feature:CampusAtmosphere');
+        await page.waitForFunction(()=>!document.getElementById('settings-feature-CampusAtmosphere').checked);
         await page.locator('#settings-preset:enabled').selectOption('Experience');
         await page.locator('#settings-rules').filter({hasText:'予約済み'}).waitFor();
         assert.equal((await request('/api/status')).json.settings.activePreset,'Standard');
@@ -497,7 +497,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         assert.equal(await page.locator('[data-action="start"]').isDisabled(),true);
         assert.match(await page.locator('#live-detail').innerText(),/状態更新が停止/);
         assert.equal(await page.locator('#settings-master').isDisabled(),true);
-        assert.equal(await page.locator('#settings-feature-Slipstream').isDisabled(),true);
+        assert.equal(await page.locator('#settings-feature-SteeringAssist').isDisabled(),true);
         send('unfreeze');
         relay.kill('SIGKILL');await waitFor(()=>relay.exitCode!==null||relay.signalCode!==null);
         await page.locator('#connection.offline').waitFor();
