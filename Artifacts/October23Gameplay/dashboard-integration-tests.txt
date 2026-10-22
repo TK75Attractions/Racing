@@ -1,0 +1,61 @@
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.91
+PUSH_TESTS_PASS: 30 checks; real aes128gcm delivery request decrypted, VAPID signature verified, persistence, ownership, endpoint validation, incident debounce.
+Assets/Managers/RaceDashboardBridge.cs(44,23): warning CS0649: Field `RaceDashboardBridge.ActionRequest.id' is never assigned to, and will always have its default value `null'
+Assets/Managers/RaceDashboardBridge.cs(45,21): warning CS0649: Field `RaceDashboardBridge.ActionRequest.stateRevision' is never assigned to, and will always have its default value `0'
+Assets/Managers/RaceDashboardBridge.cs(46,23): warning CS0649: Field `RaceDashboardBridge.ActionRequest.command' is never assigned to, and will always have its default value `null'
+Assets/Managers/RaceDashboardBridge.cs(47,25): warning CS0649: Field `RaceDashboardBridge.ActionRequest.args' is never assigned to, and will always have its default value `null'
+Assets/Managers/RaceDashboardBridge.cs(44,27): warning CS0649: Field `RaceDashboardBridge.ActionRequest.targetSession' is never assigned to, and will always have its default value `null'
+Assets/Managers/RaceDashboardBridge.cs(44,42): warning CS0649: Field `RaceDashboardBridge.ActionRequest.expectedState' is never assigned to, and will always have its default value `null'
+Assets/Managers/RaceDashboardBridge.cs(45,36): warning CS0649: Field `RaceDashboardBridge.ActionRequest.observedAt' is never assigned to, and will always have its default value `0'
+Assets/Managers/RaceDashboardBridge.cs(45,48): warning CS0649: Field `RaceDashboardBridge.ActionRequest.settingsRevision' is never assigned to, and will always have its default value `0'
+Compilation succeeded - 8 warning(s)
+DASHBOARD_INPUT_PASS: real gate handover, independent button samples, expiry between frames, local release and owner replacement.
+LIVE_INPUT_PASS: startup, live car/practice routing, release gate, pause/reverse, disconnect, constant resume and ownership.
+✔ replayed history replaces duplicate IDs and retains chronological newest 500 (7.777125ms)
+✔ silent connection disables the screen immediately without waiting for a close handshake (17.788667ms)
+▶ one-click launcher: automatic Tailscale setup, fallbacks and process ownership
+  ✔ no Tailscale: local WebSocket starts with no environment file (285.795125ms)
+  ✔ DNS name and current operator are discovered and Serve is verified (1065.137125ms)
+  ✔ logged-out: local fallback and existing settings preserved (298.412708ms)
+  ✔ occupied: local fallback and existing settings preserved (334.847333ms)
+  ✔ funnel: local fallback and existing settings preserved (339.912459ms)
+  ✔ consent: local fallback and existing settings preserved (404.496875ms)
+  ✔ manual operator configuration is preserved (762.646667ms)
+  ✔ wildcard permits invitees but still requires Serve identity and matching host/origin (746.672458ms)
+  ✔ stopping during initial setup cancels the owned CLI too (194.751166ms)
+✔ one-click launcher: automatic Tailscale setup, fallbacks and process ownership (4435.836875ms)
+✔ dashboard remains an HTML page when Unity is stopped and reconnects after Play (4360.350083ms)
+✔ shared invitees can control races with wildcard while request and game guards remain active (2247.909042ms)
+▶ production bridge → relay → WebSocket integration
+  ✔ same screen, camera endpoints and transport capabilities (497.962667ms)
+  ✔ Serve identity, strict host/origin and operator authorization (4.864ms)
+  ✔ push subscription endpoints require operator identity, scoped ownership and valid browser keys (36.143083ms)
+  ✔ live settings validate values, permissions, revisions and idempotent requests (697.214458ms)
+  ✔ F8 switches share the catalog, synchronize external changes and queue locked presets (698.163334ms)
+  ✔ player keyboard input is leased, independent, ordered and cleared across phases (1990.691416ms)
+  ✔ FPS measurements reach WebSocket viewers (0.307916ms)
+  ✔ TEL latest only, outbound command and all non-TEL history (336.983625ms)
+  ✔ receive-thread log delivery continues while Unity frame loop is stalled (121.604584ms)
+  ✔ reconnect replays only unseen logs and signals retained-history gaps (411.117666ms)
+  ✔ session/state/age checks, command result lookup and duplicate suppression (350.238ms)
+  ✔ operator advances selection to tutorial and countdown with guarded actions (156.281667ms)
+  ✔ two simultaneous viewers receive the same event (879.189834ms)
+  ✔ F8 test race is state guarded and duplicate requests do not start it twice (160.89725ms)
+  ✔ actual browser: hardware diagnosis opens on desktop and iPhone-sized layout (3044.407167ms)
+  ✔ actual browser: player input buttons, cancellation, blur and ESC actions (4323.064542ms)
+  ✔ actual browser: unified screen, numeric TEL, event history and race action (7990.207291ms)
+✔ production bridge → relay → WebSocket integration (22486.767ms)
+﹣ Serial Lab → real PTY receiver → production bridge → WebSocket, 100 Hz setting (0.460791ms) # SKIP
+ℹ tests 33
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 33699.397042

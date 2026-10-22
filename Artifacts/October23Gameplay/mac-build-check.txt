@@ -1,0 +1,1 @@
+MULTI_DISPLAY_BUILD_PASS: /Users/kenichirowada/.codex/worktrees/3331/Racing/Builds/DisplayValidation/Race.app

@@ -1,0 +1,4 @@
+VEHICLE_CONTACT_TRIAL_PASS: trial=0, A=(0.00, 10.00, -2.36), B=(0.00, 10.00, 2.36), speedB=0
+VEHICLE_CONTACT_TRIAL_PASS: trial=1, A=(0.00, 10.00, 87.38), B=(0.00, 10.00, 92.10), speedB=45
+VEHICLE_CONTACT_TRIAL_PASS: trial=2, A=(-1.35, 10.00, 0.00), B=(1.35, 10.00, 0.00), speedB=0
+VEHICLE_CONTACT_PASS: actual prefab chassis / head-on, rear impact, side contact.

@@ -1,0 +1,2 @@
+ORDERED_LAP_RULES_PASS: grid, repeated finish crossings, direction, two full circuits, duplicate entry.
+SKILL_GAMEPLAY_RULES_PASS
