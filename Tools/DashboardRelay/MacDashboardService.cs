@@ -36,16 +36,28 @@ internal static class MacDashboardService
             if(stop.Exit!=0)throw new IOException("常駐Dashboardを停止できませんでした。更新は適用していません。");
             stopped=true;
             foreach(string file in files){string target=Path.Combine(service,file);Directory.CreateDirectory(Path.GetDirectoryName(target)!);File.Copy(Path.Combine(staging,"next",file),target,true);}
-            var start=await QuickStart.Run("/bin/launchctl",CancellationToken.None,"bootstrap",scope,plist);
-            if(start.Exit!=0)throw new IOException("更新後のDashboardを起動できませんでした。");
+            var start=await BootstrapAfterStop(scope,plist);
+            if(start.Exit!=0)throw new IOException("更新後のDashboardを起動できませんでした："+start.Error.Trim());
             stopped=false;Console.WriteLine("DASHBOARD_SERVICE_UPDATE_PASS: installed route, operator policy, and notification subscriptions preserved.");
         }
         catch
         {
-            if(stopped){foreach(string file in previous)File.Copy(Path.Combine(staging,"previous",file),Path.Combine(service,file),true);await QuickStart.Run("/bin/launchctl",CancellationToken.None,"bootstrap",scope,plist);}
+            if(stopped){foreach(string file in previous)File.Copy(Path.Combine(staging,"previous",file),Path.Combine(service,file),true);await BootstrapAfterStop(scope,plist);}
             throw;
         }
         finally{if(Directory.Exists(staging))Directory.Delete(staging,true);}
+    }
+    private static async Task<(int Exit,string Output,string Error)> BootstrapAfterStop(string scope,string plist)
+    {
+        // bootout can return before launchd has completely retired the previous registration.
+        (int Exit,string Output,string Error) result=(1,"","");
+        for(int attempt=0;attempt<5;attempt++)
+        {
+            await Task.Delay(300*(attempt+1));
+            result=await QuickStart.Run("/bin/launchctl",CancellationToken.None,"bootstrap",scope,plist);
+            if(result.Exit==0)break;
+        }
+        return result;
     }
     public static async Task Configure(bool install)
     {
