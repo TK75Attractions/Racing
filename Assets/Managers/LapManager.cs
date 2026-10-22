@@ -18,6 +18,9 @@ public class LapManager : MonoBehaviour
         [System.NonSerialized] public float verifiedRaceProgressDistance;
         [System.NonSerialized] public bool hasVerifiedProgress;
         [System.NonSerialized] public bool hasLeftStartArea;
+        [System.NonSerialized] public LapTraversal traversal = new LapTraversal();
+        [System.NonSerialized] public Vector3 traversalPosition;
+        [System.NonSerialized] public bool traversalHasPosition;
         public int nextCheckpointIndex = 0;
         public int lastCheckpointIndex = -1;
         public int passedCheckpointCount;
@@ -140,7 +143,7 @@ public class LapManager : MonoBehaviour
             data.lapCount = Mathf.Max(data.lapCount, goalLap - 1);
         }
 
-        return OnCarPassGoal(rb);
+        return PassGoal(rb, null, true);
     }
 
     public void RegisterCar(Rigidbody rb, Transform startTransform = null)
@@ -159,6 +162,7 @@ public class LapManager : MonoBehaviour
         data.hasVerifiedProgress = false;
         ResetCheckpointProgress(data);
         data.hasLeftStartArea = false;
+        data.traversal.Reset(); data.traversalHasPosition = false;
         SetRespawnPoint(data, startTransform);
         if (!hasProgressReference && startTransform != null)
         {
@@ -173,6 +177,11 @@ public class LapManager : MonoBehaviour
 
     public bool OnCarPassGoal(Rigidbody rb, Transform goalTransform)
     {
+        return PassGoal(rb, goalTransform, false);
+    }
+
+    private bool PassGoal(Rigidbody rb, Transform goalTransform, bool debug)
+    {
         if (!raceActive || rb == null)
         {
             return false;
@@ -184,16 +193,28 @@ public class LapManager : MonoBehaviour
             return false;
         }
 
+        if (!debug)
+        {
+            if (raceCourse == null || !raceCourse.HasValidPath || !hasProgressReference) return false;
+            UpdateRaceProgress(data);
+            float raw = raceCourse.GetProgressDistance(rb.position);
+            if (!raceCourse.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample sample) ||
+                Vector3.Dot(rb.linearVelocity, sample.forward * (reverseProgressDirection ? -1f : 1f)) <= .1f) return false;
+        }
+
         if (!data.hasCrossedGoal)
         {
             data.hasCrossedGoal = true;
             data.hasLeftStartArea = false;
+            data.traversal.Reset();data.traversal.Rebase(0);data.traversalPosition=rb.position;data.traversalHasPosition=true;
             ResetCheckpointProgress(data);
             SetRespawnPoint(data, goalTransform);
             Debug.Log($"{data.carName} joined race");
             return false;
         }
 
+        if (!debug && !data.traversal.IsArmed) return false;
+        data.traversal.Reset();data.traversal.Rebase(0);data.traversalPosition=rb.position;data.traversalHasPosition=true;
         data.lapCount++;
         data.hasLeftStartArea = false;
         if (data.currentLapTime < data.bestLapTime)
@@ -426,7 +447,16 @@ public class LapManager : MonoBehaviour
         // Below-road/off-road projections must not change ranking or forbid a safe backward recovery.
         bool valid = Mathf.Abs(data.rb.position.y-sample.position.y)<6f &&
             Mathf.Abs(Vector3.Dot(data.rb.position-sample.position,sample.right))<=sample.width*.5f;
-        if(valid) { data.verifiedRaceProgressDistance=total; data.hasVerifiedProgress=true; }
+        if(valid)
+        {
+            if (data.hasCrossedGoal)
+            {
+                bool continuous = !data.traversalHasPosition || Vector3.Distance(data.traversalPosition,data.rb.position) < Mathf.Min(150f,lapLength*.15f);
+                data.traversal.Observe(GetLapProgressDistance(data.rb.position,lapLength)/lapLength,continuous);
+                data.traversalPosition=data.rb.position;data.traversalHasPosition=true;
+            }
+            data.verifiedRaceProgressDistance=total; data.hasVerifiedProgress=true;
+        }
         return data.hasVerifiedProgress ? data.verifiedRaceProgressDistance : total;
     }
 
@@ -548,6 +578,9 @@ public class LapManager : MonoBehaviour
         data.hasValidRacePosition = true;
         data.lastValidPosition = body.position;
         data.lastValidRotation = body.rotation;
+        if (raceCourse != null && raceCourse.TotalLength > 0f)
+            data.traversal.Rebase(GetLapProgressDistance(body.position,raceCourse.TotalLength)/raceCourse.TotalLength);
+        data.traversalPosition=body.position;data.traversalHasPosition=true;
         UpdateRaceProgress(data);
     }
 

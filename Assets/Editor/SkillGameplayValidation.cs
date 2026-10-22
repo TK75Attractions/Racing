@@ -72,7 +72,7 @@ public static class SkillGameplayValidation
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }
-    private static void ValidateStartingLine()
+    public static void ValidateStartingLine()
     {
         GameObject root = new GameObject("Starting line QA");
         try
@@ -82,12 +82,35 @@ public static class SkillGameplayValidation
             GameObject goal = new GameObject("Goal",typeof(GoalSensor)); goal.transform.SetParent(root.transform);
             GameObject start = new GameObject("Grid"); start.transform.SetParent(root.transform); start.transform.position=Vector3.back*20;
             GameObject car = new GameObject("Car",typeof(Rigidbody)); car.transform.SetParent(root.transform);
-            Rigidbody body=car.GetComponent<Rigidbody>(); body.isKinematic=true; body.position=start.transform.position;
+            Rigidbody body=car.GetComponent<Rigidbody>(); body.isKinematic=false;body.useGravity=false; body.position=start.transform.position;
             laps.RegisterCar(body,start.transform); var data=laps.GetCarData(body); data.currentLapTime=8;
+            body.position=Vector3.forward;body.linearVelocity=Vector3.forward*5f;
             Require(!laps.OnCarPassGoal(body,goal.transform) && data.lapCount==0 && data.currentLapTime==8,
                 "Initial grid-to-line crossing must not complete a lap or discard race time.");
-            Require(laps.OnCarPassGoal(body,goal.transform) && data.lapCount==1,"A subsequent goal crossing must count without checkpoints.");
-            Require(laps.OnCarPassGoal(body,goal.transform) && data.isFinished,"Two full circuits must finish a two-lap race.");
+            for(int i=0;i<20;i++)
+            {
+                body.position=Vector3.back*2;body.linearVelocity=Vector3.back*5;laps.GetRaceProgressDistance(body);
+                Require(!laps.OnCarPassGoal(body,goal.transform),"Reverse goal passage must not count.");
+                body.position=Vector3.forward*2;body.linearVelocity=Vector3.forward*5;laps.GetRaceProgressDistance(body);
+                Require(!laps.OnCarPassGoal(body,goal.transform)&&data.lapCount==0,"Rocking over the finish cannot complete a lap.");
+            }
+            float startRaw=course.GetProgressDistance(goal.transform.position);
+            for(int round=0;round<2;round++)
+            {
+                for(int i=1;i<200;i++)
+                {
+                    course.TryGetSampleAtProgress(startRaw+course.TotalLength*i/200f,out var sample);
+                    body.position=sample.position+Vector3.up*.5f;body.linearVelocity=sample.forward*5;
+                    laps.GetRaceProgressDistance(body);
+                }
+                body.linearVelocity=-body.linearVelocity;
+                Require(!laps.OnCarPassGoal(body,goal.transform),"A reverse crossing must not consume an armed lap.");
+                body.linearVelocity=-body.linearVelocity;
+                Require(laps.OnCarPassGoal(body,goal.transform)&&data.lapCount==round+1,"Each full, ordered circuit counts exactly one lap. round="+round+" travel="+data.traversal.Travel+" armed="+data.traversal.IsArmed+" progress="+laps.GetRaceProgressDistance(body)+" crossed="+data.hasCrossedGoal+" lap="+data.lapCount+" velocity="+body.linearVelocity);
+                Require(!laps.OnCarPassGoal(body,goal.transform),"A second collider cannot complete another lap.");
+            }
+            Require(data.isFinished,"Two full circuits must finish a two-lap race.");
+            Debug.Log("ORDERED_LAP_RULES_PASS: grid, repeated finish crossings, direction, two full circuits, duplicate entry.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }
@@ -197,7 +220,7 @@ public static class SkillGameplayValidation
             laps.RegisterCar(body); laps.NotifyManualRespawn(body); goal.OnTriggerEnter(car.GetComponent<BoxCollider>());
             Require(laps.GetCarData(body).lapCount==0,"Respawning inside a goal must not award a lap.");
             goal.OnTriggerExit(car.GetComponent<BoxCollider>()); goal.OnTriggerEnter(car.GetComponent<BoxCollider>());
-            Require(laps.GetCarData(body).lapCount==1,"A genuine later passage must still count.");
+            Require(laps.GetCarData(body).lapCount==0,"Leaving and re-entering after recovery still requires a full circuit.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }
