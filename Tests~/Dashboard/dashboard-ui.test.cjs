@@ -25,15 +25,21 @@ function fixture() {
     control.dataset.settingArg = /data-setting-arg="([^"]+)"/.exec(match[4])?.[1];
     return control;
   });
+  const inputButtons = [...html.matchAll(/<button([^>]+)>/g)].map(match => {
+    const button = new Element();
+    for (const [, name, value] of match[1].matchAll(/data-([a-z-]+)="([^"]*)"/g))
+      button.dataset[name.replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase())]=value;
+    return button;
+  }).filter(button=>button.dataset.inputHold||button.dataset.inputPulse||button.dataset.menuAction);
   const document = { getElementById(id) { assert.ok(elements.has(id), `Missing UI element ${id}`); return elements.get(id); },
-    createElement(){return new Element();}, querySelectorAll(selector){return selector==='[data-action]'?buttons:selector==='[data-setting]'?[...settingControls,...elements.get('settings-features').children.map(row=>row.children[0]).filter(child=>child?.dataset?.setting)]:[];} };
+    createElement(){return new Element();}, querySelectorAll(selector){return selector==='[data-action]'?buttons:selector==='[data-setting]'?[...settingControls,...elements.get('settings-features').children.map(row=>row.children[0]).filter(child=>child?.dataset?.setting)]:selector==='[data-input-hold], [data-input-pulse]'?inputButtons.filter(button=>button.dataset.inputHold||button.dataset.inputPulse):selector==='[data-menu-action]'?inputButtons.filter(button=>button.dataset.menuAction):[];} };
   let now = 100000;
   class ClockDate extends Date { static now() { return now; } }
   const context = vm.createContext({Date:ClockDate,document,location:{origin:'http://127.0.0.1:8765'},URL:{revokeObjectURL(){}}});
   // Load the real render functions without timers, network polling or UI event handlers.
   vm.runInContext(script.slice(0,script.indexOf("document.querySelectorAll('[data-action]').forEach")),context);
   const render = (snapshot,options) => context.render(snapshot,options);
-  return {elements,buttons,context,render,advance(ms) { now += ms; }};
+  return {elements,buttons,inputButtons,context,render,advance(ms) { now += ms; }};
 }
 const base = {state:'Game',goalLap:2,players:[{number:1},{number:2}],serial:{lines:[]},participantCount:4,
   participants:Array.from({length:4},(_,index)=>({number:index+1,isCpu:index>=2,position:4-index,lap:1,
@@ -560,4 +566,70 @@ test('F8 feature, preset, all-off and test-start requests use the shared guarded
     [['feature',['Slipstream','false']],['preset',['Experience']],['allFeaturesOff',[]],['testRace',[]]]);
   assert.ok(calls.every(request=>request.settingsRevision===5&&request.targetSession==='current'));
   assert.match(ui.elements.get('settings-status').textContent,/テストレースを開始しました/);
+});
+const inputControl={available:true,canEscape:true,players:[{number:1,available:true,active:false,owner:'',menuOpen:false},
+  {number:2,available:true,active:false,owner:'',menuOpen:false}]};
+test('Player input requires permission and explicit takeover; occupied players and ESC actions reflect Unity',()=>{
+  const ui=fixture();ui.render({...base,inputControl},{canControl:false});
+  assert.equal(ui.elements.get('keyboard-take-0').disabled,true);
+  assert.equal(ui.elements.get('keyboard-escape').disabled,true);
+  ui.render({...base,inputControl});
+  assert.equal(ui.elements.get('keyboard-take-0').disabled,false);
+  assert.ok(ui.inputButtons.filter(button=>button.dataset.inputHold).every(button=>button.disabled));
+  ui.render({...base,inputControl:{...inputControl,players:[{...inputControl.players[0],active:true,owner:'someone-else'},
+    {...inputControl.players[1],available:false,menuOpen:true}]}});
+  assert.equal(ui.elements.get('keyboard-take-0').disabled,true);
+  assert.match(ui.elements.get('keyboard-status-0').textContent,/別の管理画面/);
+  assert.equal(ui.inputButtons.find(button=>button.dataset.menuPlayer==='1').disabled,false);
+  ui.context.setConnection(false);
+  assert.equal(ui.elements.get('keyboard-escape').disabled,true);
+  assert.ok(ui.inputButtons.every(button=>button.disabled));
+  ui.render(base);assert.equal(ui.elements.get('keyboard-take-0').disabled,true);
+});
+test('Remote movement uses independent player sequences and stops with the original session after a transition',async()=>{
+  const ui=fixture(),calls=[];ui.context.AbortSignal=AbortSignal;ui.context.crypto={randomUUID:require('node:crypto').randomUUID};
+  ui.context.apiFetch=async(route,options)=>{calls.push([route,JSON.parse(options.body)]);return {json:async()=>({ok:true})};};
+  ui.render({...base,inputControl,sessionId:'one',stateRevision:2,serverTime:100});
+  ui.context.beginRemoteInput(0);await new Promise(setImmediate);
+  assert.equal(calls[0][1].command,'begin');assert.equal(calls[0][1].args.length,3,'begin with neutral input');
+  vm.runInContext('remotePlayers[0].pointers.set(1,"accelerate");remotePlayers[0].pointers.set(2,"left")',ui.context);
+  await ui.context.pumpRemoteInput(0);
+  assert.deepEqual(calls[1][1].args.slice(3),['accelerate','left']);
+  assert.equal(calls[1][1].args[0],'0');assert.equal(calls[1][1].targetSession,'one');
+  ui.context.beginRemoteInput(1);await new Promise(setImmediate);
+  await ui.context.pulseRemoteInput(1,'reset');
+  assert.equal(calls.at(-1)[1].command,'pulse');assert.equal(calls.at(-1)[1].args[0],'1');
+  assert.equal(calls.at(-1)[1].args.at(-1),'reset');
+  ui.render({...base,state:'Countdown',stateRevision:3,sessionId:'one',serverTime:200,
+    inputControl:{...inputControl,players:inputControl.players.map(player=>({...player,available:false}))}});
+  assert.equal(calls.filter(([,request])=>request.command==='release').length,2);
+  const release=calls.at(-1)[1];assert.equal(release.targetSession,'one');assert.equal(release.stateRevision,2);
+  assert.equal(ui.elements.get('keyboard-stop-0').disabled,true);
+  assert.ok(ui.inputButtons.filter(button=>button.dataset.inputHold).every(button=>button.disabled));
+});
+test('Stopping during an outstanding request cancels queued button edges and never queues release behind them',async()=>{
+  const ui=fixture(),calls=[];let finish;
+  ui.context.AbortSignal=AbortSignal;ui.context.crypto={randomUUID:require('node:crypto').randomUUID};
+  ui.context.apiFetch=async(route,options)=>{
+    const request=JSON.parse(options.body);calls.push(request);
+    if(request.command==='begin')return new Promise(resolve=>{finish=()=>resolve({json:async()=>({ok:true})});});
+    return {json:async()=>({ok:true})};
+  };
+  ui.render({...base,inputControl,sessionId:'one',stateRevision:1});ui.context.beginRemoteInput(0);await new Promise(setImmediate);
+  const pulse=ui.context.pulseRemoteInput(0,'reset');ui.context.stopRemoteInput(0);
+  assert.equal(calls.at(-1).command,'release');finish();await pulse;
+  assert.equal(calls.filter(request=>request.command==='pulse').length,0);
+  assert.equal(calls.filter(request=>request.command==='begin').length,1);
+});
+test('Acknowledged lease generations ignore older snapshots and stop after Unity clears input without a phase change',async()=>{
+  const ui=fixture(),calls=[];ui.context.AbortSignal=AbortSignal;ui.context.crypto={randomUUID:require('node:crypto').randomUUID};
+  ui.context.apiFetch=async(route,options)=>{
+    calls.push(JSON.parse(options.body));return {json:async()=>({ok:true,inputControl:{players:[{number:1,generation:1}]}})};
+  };
+  const state={...base,inputControl:{...inputControl,players:inputControl.players.map(player=>({...player,generation:0}))},sessionId:'one',stateRevision:2};
+  ui.render(state);ui.context.beginRemoteInput(0);await new Promise(setImmediate);
+  ui.render(state);assert.equal(ui.elements.get('keyboard-stop-0').disabled,false,'old snapshot must not cancel the new lease');
+  ui.render({...state,inputControl:{...state.inputControl,players:[{...state.inputControl.players[0],generation:2},state.inputControl.players[1]]}});
+  assert.equal(ui.elements.get('keyboard-stop-0').disabled,true);
+  assert.equal(calls.at(-1).command,'release');
 });

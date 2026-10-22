@@ -45,16 +45,29 @@ public class InputManager
     public float ConstantTestPedal = 1f;
     public bool SerialDebugMode, ConstantTestPedalPaused;
     public bool IsSerialDebugDisplayVisible => SerialDebugMode;
-    public bool SetInputMode(string mode) { if(mode!="serial"&&mode!="keyboard"&&mode!="mixed")return false;InputMode=mode;return true; }
+    public bool SetInputMode(string mode) { if(mode!="serial"&&mode!="keyboard"&&mode!="mixed")return false;if(InputMode!=mode)ClearDashboardInputs();InputMode=mode;return true; }
     public void SetP1SteeringTestMode(P1SteeringTestMode mode)=>SteeringTestMode=mode;
     public void SetP1ConstantPedal(float value)=>ConstantTestPedal=value;
     public void SetSerialDebugDisplayVisible(bool value) { }
     public void PauseP1ConstantPedal()=>ConstantTestPedalPaused=true;
     public void ResumeP1ConstantPedal()=>ConstantTestPedalPaused=false;
     public string InputModeLabel => "Serial P1/P2";
-    public DriveInputState GetInputState(int i)=>SharedSerialInputSource?.GetInputState(i) ?? DriveInputState.Neutral;
-    public bool IsPlayerConnected(int i)=>SharedSerialInputSource?.IsConnected(i) ?? false;
-    public void Pump() { SharedSerialInputSource?.UpdateInput(.016f); }
+    private readonly DashboardInputLease[] leases = {new DashboardInputLease(),new DashboardInputLease()};
+    private DashboardDriveInputSource[] sources;
+    public DashboardInputLease GetDashboardInput(int player)=>leases[player];
+    public void ClearDashboardInputs(){foreach(var lease in leases)lease.Clear();}
+    private void EnsureSources(){if(sources==null)sources=new[]{new DashboardDriveInputSource(new HarnessDrive(this,0),leases[0],()=>UnityEngine.Time.realtimeSinceStartupAsDouble),new DashboardDriveInputSource(new HarnessDrive(this,1),leases[1],()=>UnityEngine.Time.realtimeSinceStartupAsDouble)};}
+    public DriveInputState GetInputState(int i){EnsureSources();return sources[i].CurrentState;}
+    public bool IsPlayerConnected(int i){EnsureSources();return sources[i].IsConnected;}
+    public void Pump() { SharedSerialInputSource?.UpdateInput(.016f);EnsureSources();foreach(var source in sources)source.UpdateInput(.016f);
+        for(int i=0;i<2;i++){var state=GetInputState(i);if(state.resetPressed)Harness.Resets[i]++;if(state.readyPressed)Harness.Readies[i]++;}}
+    private sealed class HarnessDrive : IDriveInputSource {
+        private InputManager input;public int PlayerIndex{get;}public string DeviceId=>"Harness";
+        public bool IsConnected=>input.SharedSerialInputSource?.IsConnected(PlayerIndex)??false;
+        public DriveInputState CurrentState=>input.SharedSerialInputSource?.GetInputState(PlayerIndex)??DriveInputState.Neutral;
+        public HarnessDrive(InputManager input,int player){this.input=input;PlayerIndex=player;}
+        public void UpdateInput(float deltaTime){}public void Dispose(){}
+    }
     public void Bind() { if(SharedSerialInputSource!=null) SharedSerialInputSource.LineProcessed+=(status,line)=>SerialLineProcessed?.Invoke(status,line); }
 }
 public class Gmanager
@@ -63,6 +76,11 @@ public class Gmanager
     public State state=State.Title;
     public RaceFeatureController Features = new RaceFeatureController();
     public bool CanUseDashboardControls=>true;
+    private readonly bool[] menus={false,false};
+    public bool CanUseDashboardPlayerInput(int i)=>(state==State.Title||state==State.CarSelection||state==State.Tutorial||state==State.Game||state==State.Result)&&!menus[i];
+    public bool IsDashboardMenuOpen(int i)=>menus[i];
+    public bool ToggleDashboardEscape(){if(state!=State.Game)return false;bool close=menus[0]||menus[1];menus[0]=menus[1]=!close;((InputManager)Harness.Components[typeof(InputManager)]).ClearDashboardInputs();return true;}
+    public bool TryDashboardMenuAction(int i,string action){if(state!=State.Game||!menus[i]||!(action=="resume"||action=="direction"||action=="restart"||action=="withdraw"))return false;menus[i]=false;Harness.MenuActions++;return true;}
     public bool IsPreparing=>state==State.Title;
     public float time=>UnityEngine.Time.time;
     public float CountdownTimeRemaining=>0;
@@ -108,7 +126,8 @@ public static class KeyboardDriveInputSource { public static bool IsResetPressed
 public static class Harness
 {
     public static readonly Dictionary<Type,object> Components=new Dictionary<Type,object>();
-    public static int Applied;
+    public static int Applied,MenuActions;
+    public static readonly int[] Resets={0,0},Readies={0,0};
     private static volatile bool running=true, frozen;
     public static void Main(string[] args)
     {
@@ -131,6 +150,7 @@ public static class Harness
             else if(line=="rules:unlock") race.Features.Settings.UnlockAtTitle();
             else if(line=="rules:lock") race.Features.Settings.BeginPreparation();
             else if(line.StartsWith("feature:")) race.Features.SetFeature((RaceFeature)Enum.Parse(typeof(RaceFeature),line.Substring(8)),false);
+            else if(line=="inputCounts") Console.WriteLine("INPUT_COUNTS="+string.Join(",",Resets)+"/"+string.Join(",",Readies));
             else if(line=="count") Console.WriteLine("APPLIED="+Applied);
         }}) {IsBackground=true}.Start();
         Console.WriteLine("BRIDGE_READY");

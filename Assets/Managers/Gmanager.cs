@@ -1403,6 +1403,22 @@ public class Gmanager : MonoBehaviour
         if (keyboard == null) return;
         if (!keyboard.escapeKey.wasPressedThisFrame || state != State.Game || IsScreenTransitioning()) return;
 
+        ToggleDashboardEscape();
+    }
+
+    public bool IsDashboardMenuOpen(int index) => index >= 0 && index < players.Length && players[index]?.interruptionMenu?.IsOpen == true;
+    public bool CanUseDashboardPlayerInput(int index)
+    {
+        if (!CanUseDashboardControls || index < 0 || index >= players.Length || players[index] == null) return false;
+        PlayerRuntime player = players[index];
+        if (state == State.Game) return player.car != null && player.result == null && !player.withdrewFromRace && !IsDashboardMenuOpen(index);
+        if (state == State.Result) return !player.returnedToTitle;
+        return IsPreparing && (player.preparationState == State.Title || player.preparationState == State.CarSelection || player.preparationState == State.Tutorial);
+    }
+
+    public bool ToggleDashboardEscape()
+    {
+        if (state != State.Game || !CanUseDashboardControls) return false;
         bool anyMenuOpen = false;
         for (int index = 0; index < players.Length; index++)
         {
@@ -1422,6 +1438,24 @@ public class Gmanager : MonoBehaviour
             }
             else OpenInterruptionMenu(index);
         }
+        IManager?.ClearDashboardInputs();
+        return true;
+    }
+
+    public bool TryDashboardMenuAction(int playerIndex, string action)
+    {
+        if (state != State.Game || !CanUseDashboardControls || playerIndex < 0 || playerIndex >= players.Length) return false;
+        PlayerRuntime player = players[playerIndex];
+        if (player?.interruptionMenu?.IsOpen != true || player.car == null || player.result != null || player.withdrewFromRace) return false;
+        switch (action) {
+            case "resume": CloseInterruptionMenu(playerIndex); break;
+            case "direction": TogglePlayerDirection(playerIndex); break;
+            case "restart": RestartPlayerFromStart(playerIndex); break;
+            case "withdraw": InterruptPlayer(playerIndex); break;
+            default: return false;
+        }
+        IManager?.ClearDashboardInputs();
+        return true;
     }
 
     public void OpenInterruptionMenu(int playerIndex)

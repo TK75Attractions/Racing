@@ -30,7 +30,7 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
     dirty = false;
     if (snapshot && alive) {
       const current = Date.now() - lastStateAt < 3000;
-      render({ ...snapshot, telemetry, rawLines: rawHistory, rawGap, serial: { ...snapshot.serial, lines: history, alerts } }, { canControl: info.canControl && current && !busy });
+      render({ ...snapshot, telemetry, rawLines: rawHistory, rawGap, serial: { ...snapshot.serial, lines: history, alerts } }, { canControl: info.canControl && current && !busy, canInput: info.canControl && current });
       renderTelemetry(telemetry);
       $('live-detail').textContent = `${current ? '状態更新中' : 'Unityの状態更新が停止しています'} / RTT ${rtt ?? '—'} ms${gap ? ' / 保持範囲外のログ欠落あり' : ''}`;
       if (!current) $('control-note').textContent = 'Unityの状態更新を待っています。操作は停止しています。';
