@@ -3,7 +3,7 @@ using System;
 /// <summary>One player's practice progress; input alone cannot complete a driving task.</summary>
 public sealed class DrivingTutorialProgress
 {
-    public enum Stage { Accelerate, Steer, Stop, Complete }
+    public enum Stage { Accelerate, Steer, CollectItem, Complete }
     public Stage CurrentStage { get; private set; }
     public bool PedalReleased { get; private set; }
     public bool IsComplete => CurrentStage == Stage.Complete;
@@ -42,10 +42,7 @@ public sealed class DrivingTutorialProgress
             case Stage.Steer:
                 satisfied = Math.Abs(steering) >= 2f && speed >= 2f && Math.Abs(headingChange) >= 25f;
                 break;
-            default:
-                // Losing a device must never count as releasing the pedal and stopping.
-                satisfied = Math.Abs(pedal) <= 0.05f && speed <= 0.5f;
-                break;
+            default: return; // Only a real pickup contact completes the third lesson.
         }
         holdSeconds = satisfied ? holdSeconds + dt : 0f;
         if (holdSeconds < 0.6f) return;
@@ -59,5 +56,11 @@ public sealed class DrivingTutorialProgress
         // Recovery preserves completed lessons but never carries a partial hold through a teleport.
         holdSeconds = 0f;
         if (CurrentStage == Stage.Accelerate) PedalReleased = false;
+    }
+
+    public bool CollectItem(bool connected)
+    {
+        if (!connected || IsFinished || CurrentStage != Stage.CollectItem) return false;
+        CurrentStage = Stage.Complete; holdSeconds = 0f; countdown.Stop(); return true;
     }
 }

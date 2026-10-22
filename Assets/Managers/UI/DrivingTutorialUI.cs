@@ -82,12 +82,12 @@ public sealed class DrivingTutorialUI
         if(shownPedal!=percent){pedal.SetText("{0}<size=58%>%</size>",percent);shownPedal=percent;}
         meter.Pressure = pressure;
         int stage = lesson.HasTimedOut ? 4 : (int)lesson.CurrentStage;
-        string prompt=lesson.HasTimedOut ? "TIME UP\nもう一人を待っています" : lesson.IsComplete ? "練習完了！\nもう一人を待っています" : !connected ? connectionNotice ?? "コントローラーの\n接続を確認してください" : !lesson.PedalReleased ? "まずペダルから\n足を離そう" : stage == 0 ? "ペダルを踏んで\n加速しよう" : stage == 1 ? "ハンドルを回して\n角を曲がってみよう" : "ペダルから足を離して\n停車しよう";
+        string prompt=lesson.HasTimedOut ? "TIME UP\nもう一人を待っています" : lesson.IsComplete ? "アイテム獲得！\n練習完了" : !connected ? connectionNotice ?? "コントローラーの\n接続を確認してください" : !lesson.PedalReleased ? "まずペダルから\n足を離そう" : stage == 0 ? "ペダルを踏んで\n加速しよう" : stage == 1 ? "ハンドルを回して\n角を曲がってみよう" : "光る箱に触れて\nアイテムを取ろう";
         if(shownMessage!=prompt)
         {
             message.text=prompt;shownMessage=prompt;popupTime=0f;
-            instructionIcon.Configure(!lesson.PedalReleased || stage >= 2
-                ? DrivingTutorialControlGraphic.Kind.ReleasePedal : stage == 1
+            instructionIcon.Configure(!lesson.PedalReleased
+                ? DrivingTutorialControlGraphic.Kind.ReleasePedal : stage >= 2 ? DrivingTutorialControlGraphic.Kind.ItemBox : stage == 1
                 ? DrivingTutorialControlGraphic.Kind.TurnWheel : DrivingTutorialControlGraphic.Kind.PressPedal);
             instructionIcon.gameObject.SetActive(connected && !lesson.IsFinished);
             message.rectTransform.anchorMin = new Vector2(connected && !lesson.IsFinished ? .28f : .06f, .10f);

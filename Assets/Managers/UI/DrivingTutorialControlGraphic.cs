@@ -5,7 +5,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class DrivingTutorialControlGraphic : MaskableGraphic
 {
-    public enum Kind { WheelHeader, PedalHeader, TurnWheel, PressPedal, ReleasePedal, Crown }
+    public enum Kind { WheelHeader, PedalHeader, TurnWheel, PressPedal, ReleasePedal, Crown, ItemBox }
     private Kind kind;
     private float angle;
     public float Angle { set { if (Mathf.Approximately(angle, value)) return; angle = value; SetVerticesDirty(); } }
@@ -17,6 +17,13 @@ public sealed class DrivingTutorialControlGraphic : MaskableGraphic
         Rect r = rectTransform.rect;
         Vector2 center = r.center;
         float radius = Mathf.Min(r.width, r.height) * .46f;
+        if (kind == Kind.ItemBox)
+        {
+            Vector2 a=center+new Vector2(0,radius), b=center+new Vector2(radius,0), c=center-new Vector2(0,radius), d=center-new Vector2(radius,0);
+            Quad(vh,a,b,c,d,DrivingTutorialUI.Cyan);
+            Line(vh,a,b,3f,Color.white);Line(vh,b,c,3f,Color.white);Line(vh,c,d,3f,Color.white);Line(vh,d,a,3f,Color.white);
+            return;
+        }
         if (kind == Kind.Crown)
         {
             Vector2 a = center + new Vector2(-radius, -radius * .3f), b = center + new Vector2(radius, -radius * .3f);

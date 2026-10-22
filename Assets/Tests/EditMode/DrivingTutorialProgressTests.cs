@@ -25,7 +25,7 @@ public class DrivingTutorialProgressTests
         float beforeRecovery = lesson.TimeRemaining;
         lesson.ResetCurrentAttempt();
         Assert.That(lesson.TimeRemaining, Is.EqualTo(beforeRecovery));
-        lesson.Tick(.7f, true, 0f, 0f, 0f, 35f);
+        Assert.That(lesson.CollectItem(true), Is.True);
         float atCompletion = lesson.TimeRemaining;
         lesson.Tick(100f, false, 0f, 0f, 0f, 0f);
         Assert.That(lesson.IsComplete, Is.True);
@@ -55,32 +55,29 @@ public class DrivingTutorialProgressTests
         lesson.Tick(2f, true, 1f, 10f, 0f, 35f);
         Assert.That(lesson.CurrentStage, Is.EqualTo(DrivingTutorialProgress.Stage.Steer));
         lesson.Tick(.7f, true, 1f, -10f, 4f, -35f);
-        Assert.That(lesson.CurrentStage, Is.EqualTo(DrivingTutorialProgress.Stage.Stop));
+        Assert.That(lesson.CurrentStage, Is.EqualTo(DrivingTutorialProgress.Stage.CollectItem));
     }
 
     [Test]
-    public void StopRequiresReleasedPedalAndSustainedLowSpeed()
+    public void ItemRequiresContactAfterSteeringAndWhileConnected()
     {
-        var lesson = Turned();
-        lesson.Tick(2f, true, 1f, 0f, 0f, 35f);
-        lesson.Tick(2f, true, -1f, 0f, 0f, 35f);
-        lesson.Tick(2f, true, 0f, 0f, 2f, 35f);
-        Assert.That(lesson.IsComplete, Is.False);
-        lesson.Tick(.4f, true, 0f, 0f, .1f, 35f);
-        lesson.Tick(.1f, true, 0f, 0f, 1f, 35f);
-        lesson.Tick(.4f, true, 0f, 0f, .1f, 35f);
-        Assert.That(lesson.IsComplete, Is.False, "A brief stop interrupted by movement resets the hold.");
-        lesson.Tick(.3f, true, 0f, 0f, .1f, 35f);
+        var lesson = Accelerated();
+        Assert.That(lesson.CollectItem(true), Is.False);
+        lesson.Tick(.7f, true, 1f, 10f, 4f, 35f);
+        lesson.Tick(2f, true, 0f, 0f, 0f, 35f);
+        Assert.That(lesson.IsComplete, Is.False, "Stopping is no longer a lesson.");
+        Assert.That(lesson.CollectItem(false), Is.False);
+        Assert.That(lesson.CollectItem(true), Is.True);
+        Assert.That(lesson.CollectItem(true), Is.False, "Multiple colliders cannot complete it twice.");
         Assert.That(lesson.IsComplete, Is.True);
     }
 
     [Test]
-    public void DisconnectionNeverCompletesStop()
+    public void TimedOutPracticeCannotCollectAnItem()
     {
         var lesson = Turned();
-        lesson.Tick(.4f, true, 0f, 0f, 0f, 35f);
-        lesson.Tick(10f, false, 0f, 0f, 0f, 35f);
-        lesson.Tick(.3f, true, 0f, 0f, 0f, 35f);
+        lesson.Tick(100f, true, 1f, 0f, 4f, 35f);
+        Assert.That(lesson.CollectItem(true), Is.False);
         Assert.That(lesson.IsComplete, Is.False);
     }
 
@@ -89,7 +86,7 @@ public class DrivingTutorialProgressTests
     {
         var first = Turned();
         var second = new DrivingTutorialProgress();
-        first.Tick(.7f, true, 0f, 0f, 0f, 35f);
+        first.CollectItem(true);
         first.Tick(10f, true, 1f, 10f, 10f, 90f);
         Assert.That(first.IsComplete, Is.True);
         Assert.That(second.CurrentStage, Is.EqualTo(DrivingTutorialProgress.Stage.Accelerate));
@@ -104,7 +101,7 @@ public class DrivingTutorialProgressTests
         lesson.Tick(.3f, true, 1f, 10f, 4f, 35f);
         Assert.That(lesson.CurrentStage, Is.EqualTo(DrivingTutorialProgress.Stage.Steer));
         lesson.Tick(.4f, true, 1f, 10f, 4f, 35f);
-        Assert.That(lesson.CurrentStage, Is.EqualTo(DrivingTutorialProgress.Stage.Stop));
+        Assert.That(lesson.CurrentStage, Is.EqualTo(DrivingTutorialProgress.Stage.CollectItem));
     }
 
     private static DrivingTutorialProgress Accelerated()

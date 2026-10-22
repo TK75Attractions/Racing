@@ -91,7 +91,7 @@ public static class DrivingTutorialValidation
             if (manager.state == Gmanager.State.Countdown || manager.state == Gmanager.State.Game)
             {
                 Require(peakSpeed > 10.5f, "Practice must accelerate beyond the old 10 m/s velocity clamp.");
-                Debug.Log($"TUTORIAL_QA_PASSED: continuous stage transition, production input gates, actual accelerate/turn/stop, countdown. Peak speed: {peakSpeed:0.000} m/s. Maximum vertical speed after settling: {maximumVerticalSpeed:0.000} m/s");
+                Debug.Log($"TUTORIAL_QA_PASSED: continuous stage transition, production input gates, actual accelerate/turn/item pickup, countdown. Peak speed: {peakSpeed:0.000} m/s. Maximum vertical speed after settling: {maximumVerticalSpeed:0.000} m/s");
                 SessionState.SetBool(ValidationKey, false);
                 if (Application.isBatchMode) EditorApplication.Exit(0);
                 return;
@@ -109,13 +109,18 @@ public static class DrivingTutorialValidation
                 { capturedDriving = true; Capture(manager, i, "05-accelerating.png"); }
                 float pedal = 0f, steering = 0f;
                 if (lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate && Time.time - began > .6f + i * 2f) pedal = .65f;
-                if (lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer)
+                if (lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer || lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem)
                 {
-                    pedal = .55f; steering = local.z >= 3f ? 10f : 0f;
+                    float nearest=0f,best=float.PositiveInfinity;
+                    for(float d=0;d<=195;d+=1f){DrivingTutorialRoad.Sample(d,out var point,out _);float distance=(point-local).sqrMagnitude;if(distance<best){best=distance;nearest=d;}}
+                    DrivingTutorialRoad.Sample(nearest+10f,out var target,out _);
+                    Vector3 direction=target-local;direction.y=0;
+                    float error=Vector3.SignedAngle(body.rotation*Vector3.forward,direction,Vector3.up);
+                    pedal=.55f;steering=Mathf.Clamp(error*.45f,-10f,10f);
                     if (i == 0 && !capturedTurn) { capturedTurn = true; Capture(manager, i, "02-steer.png"); }
                 }
-                if (lesson.CurrentStage == DrivingTutorialProgress.Stage.Stop && i == 0 && !capturedStop)
-                { capturedStop = true; Capture(manager, i, "03-stop.png"); }
+                if (lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem && i == 0 && !capturedStop)
+                { capturedStop = true; Capture(manager, i, "03-item.png"); }
                 inputs[i].CurrentState = new DriveInputState { pedal = pedal, steering = steering };
                 if (i == 0 && lesson.IsComplete && !SessionState.GetBool("Racing.TutorialWaitCaptured", false))
                 { SessionState.SetBool("Racing.TutorialWaitCaptured", true); Capture(manager, i, "04-wait.png"); }
@@ -144,8 +149,8 @@ public static class DrivingTutorialValidation
             Vector3 beforeVelocity = body.linearVelocity;
             Quaternion beforeRotation = body.rotation;
             inputs[index].CurrentState = new DriveInputState { pedal = .65f };
-            tutorial.Tick(.02f);
-            Require(lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer, "The acceleration task must advance to steering.");
+            tutorial.Tick(.04f);
+            Require(lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer, "The acceleration task must advance to steering. Stage="+lesson.CurrentStage+" hold="+lesson.HoldProgress+" remaining="+lesson.TimeRemaining+" speed="+body.linearVelocity+" pedal="+inputs[index].CurrentState.pedal);
             Require(Vector3.Distance(body.position, position) < .001f && Quaternion.Angle(body.rotation, beforeRotation) < .01f,
                 "STEP 1 -> 2 must preserve position and heading.");
             Require(Vector3.Distance(body.linearVelocity, beforeVelocity) < .001f,

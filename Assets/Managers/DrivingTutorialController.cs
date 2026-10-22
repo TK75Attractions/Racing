@@ -17,6 +17,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
         public DrivingTutorialProgress lesson;
         public float startYaw;
         public float recoveryTimer;
+        public readonly List<TutorialItemPickup> pickups = new List<TutorialItemPickup>();
     }
 
     private readonly List<Practice> players = new List<Practice>();
@@ -75,7 +76,8 @@ public sealed class DrivingTutorialController : MonoBehaviour
         player.mover.SetInputSource(player.driveGate);
         // Lesson recovery provides a safe spawn for the current step instead of the race start.
         foreach (CarResetter resetter in player.car.GetComponentsInChildren<CarResetter>()) resetter.enabled = false;
-        foreach (CarItemEffects effects in player.car.GetComponentsInChildren<CarItemEffects>()) effects.enabled = false;
+        CarItemEffects effects = player.car.GetComponent<CarItemEffects>() ?? player.car.AddComponent<CarItemEffects>();
+        effects.Configure(i); effects.enabled = true;
         player.camera = player.world.AddComponent<RaceDirectionCameraController>();
         player.camera.SetCamera(displays[i].RaceCamera);
         player.camera.SetCar(player.car.transform);
@@ -117,9 +119,11 @@ public sealed class DrivingTutorialController : MonoBehaviour
                 RaceSoundEffects.PlayForPlayer(player.lesson.IsComplete ? RaceSoundCue.Confirm : RaceSoundCue.Ready, player.input.PlayerIndex);
                 if (player.lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer)
                     player.startYaw = player.body.rotation.eulerAngles.y;
+                if (player.lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem) PlaceItems(player);
             }
             if (player.lesson.IsFinished && !player.body.isKinematic)
             {
+                foreach (var pickup in player.pickups) if (pickup != null) pickup.gameObject.SetActive(false);
                 player.mover.enabled = false;
                 foreach (CarStabilityController stability in player.car.GetComponentsInChildren<CarStabilityController>()) stability.enabled = false;
                 foreach (CarSoundController sound in player.car.GetComponentsInChildren<CarSoundController>()) sound.enabled = false;
@@ -152,6 +156,31 @@ public sealed class DrivingTutorialController : MonoBehaviour
         player.recoveryTimer = 0f;
         player.lesson.ResetCurrentAttempt();
         player.mover.SuppressInputAfterRespawn();
+        if (player.lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem) PlaceItems(player);
+    }
+
+    private static void PlaceItems(Practice player)
+    {
+        foreach (var pickup in player.pickups) if (pickup != null) Destroy(pickup.gameObject);
+        player.pickups.Clear();
+        Vector3 local = player.body.position - player.world.transform.position;
+        float nearest = 0f, best = float.PositiveInfinity;
+        for (float d = 0; d <= 190f; d += 1f)
+        {
+            DrivingTutorialRoad.Sample(d, out Vector3 point, out _);
+            float distance = (point - local).sqrMagnitude;
+            if (distance < best) { best = distance; nearest = d; }
+        }
+        DrivingTutorialRoad.Sample(Mathf.Min(190f, nearest + 18f), out Vector3 center, out Vector3 tangent);
+        for (int lane = -1; lane <= 1; lane++)
+        {
+            var go = new GameObject("Practice item / drive through a box");go.transform.SetParent(player.world.transform, false);
+            go.transform.localPosition = center + Vector3.Cross(Vector3.up, tangent) * (lane * 4f);
+            var pickup = go.AddComponent<TutorialItemPickup>();
+            pickup.Configure(player.body, () => player.lesson.CollectItem(player.input.IsConnected));
+            player.pickups.Add(pickup);
+        }
+        Physics.SyncTransforms();
     }
 
     public void End()
