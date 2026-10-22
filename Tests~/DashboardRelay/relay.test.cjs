@@ -243,6 +243,51 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       assert.equal((await apply(await make('preset',['Standard']))).status,200);
       for(const feature of initial.features) assert.equal((await apply(await make('feature',[feature.id,String(feature.enabled)]))).status,200);
     });
+    await t.test('player keyboard input is leased, independent, ordered and cleared across phases',async()=>{
+      const make=async(player,command,sequence,buttons=[],owner='test-page')=>{
+        const snapshot=(await request('/api/status')).json;
+        return {id:crypto.randomUUID(),targetSession:snapshot.sessionId,expectedState:snapshot.state,
+          stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime,command,args:[String(player),owner,String(sequence),...buttons]};
+      };
+      const apply=body=>request('/api/action/input',{method:'POST',origin:'http://127.0.0.1:8766',body});
+      const hold=await make(0,'begin',1,['accelerate','left']);
+      assert.equal((await request('/api/action/input',{...remote,method:'POST',body:hold})).status,403);
+      assert.equal((await apply(hold)).status,200);
+      assert.equal((await apply(await make(1,'begin',1,['brake','right']))).status,200);
+      await waitFor(async()=>{const state=(await request('/api/status')).json;return state.players[0].pedal===1&&state.players[0].steering===-10&&state.players[1].pedal===-1&&state.players[1].steering===10;});
+      assert.equal((await apply(await make(0,'hold',1,[],'another-page'))).json.reason,'input_busy');
+      assert.equal((await apply(await make(0,'release',2,[],'another-page'))).status,409);
+      assert.equal((await apply(await make(0,'hold',2,[]))).status,200);
+      const pulse=await make(0,'pulse',3,['reset']);assert.equal((await apply(pulse)).status,200);assert.equal((await apply(pulse)).status,200);
+      assert.equal((await apply(await make(1,'pulse',2,['ready']))).status,200);
+      await delay(100);send('inputCounts');await waitFor(()=>output.includes('INPUT_COUNTS=1,0/0,1'));
+      assert.equal((await apply(await make(0,'release',5))).status,200);
+      assert.equal((await apply(await make(0,'hold',4,['accelerate']))).json.reason,'input_outdated');
+      assert.equal((await apply(await make(0,'hold',6,['accelerate']))).json.reason,'input_expired');
+      for(const buttons of [['unknown'],['accelerate','accelerate'],['reset']])
+        assert.equal((await apply(await make(0,'hold',6,buttons))).status,409);
+      const stale=await make(0,'hold',7,['accelerate']);stale.observedAt-=2000;assert.equal((await apply(stale)).status,409);
+      await delay(1100);assert.equal((await request('/api/status')).json.inputControl.players[1].active,false);
+      assert.equal((await apply(await make(0,'begin',8,['accelerate']))).status,200);
+      send('state:Game');await waitFor(async()=>(await request('/api/status')).json.state==='Game');
+      assert.equal((await request('/api/status')).json.inputControl.players[0].active,false);
+      assert.equal((await apply(await make(0,'begin',9,['accelerate']))).status,200);
+      const release=await make(0,'release',10);release.stateRevision=-1;release.expectedState='old';release.observedAt=1;
+      assert.equal((await apply(release)).status,200,'own release remains safe after state/age changes');
+      const menu=async(command,args=[])=>{
+        const snapshot=(await request('/api/status')).json;
+        return request('/api/action/keyboardMenu',{method:'POST',origin:'http://127.0.0.1:8766',body:{id:crypto.randomUUID(),targetSession:snapshot.sessionId,
+          expectedState:snapshot.state,stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime,command,args}});
+      };
+      assert.equal((await menu('restart',['0'])).status,409);
+      assert.equal((await menu('escape')).status,200);
+      assert.equal((await request('/api/status')).json.inputControl.players[0].menuOpen,true);
+      assert.equal((await apply(await make(0,'hold',11,['accelerate']))).json.reason,'input_unavailable');
+      assert.equal((await menu('resume',['0'])).status,200);
+      assert.equal((await menu('direction',['1'])).status,200);
+      send('state:Title');await waitFor(async()=>(await request('/api/status')).json.state==='Title');
+      assert.equal((await menu('escape')).status,409);
+    });
     const first=await open('/api/events',remote);
     await waitFor(()=>first.packets.some(packet=>packet.snapshot));
     await t.test('FPS measurements reach WebSocket viewers',async()=>{
@@ -337,6 +382,55 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       assert.equal(snapshot.state,'Countdown');assert.equal(snapshot.settings.canStartTestRace,false);
       assert.equal(snapshot.settings.features.find(feature=>feature.id==='PlayerTwoAutodrive').enabled,true);
     });
+    if(process.env.RACING_BROWSER_TEST==='1') await t.test('actual browser: player input buttons, cancellation, blur and ESC actions',async()=>{
+      const {chromium}=require('playwright');const browser=await chromium.launch({headless:true,channel:'chrome'});
+      try {
+        const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];
+        page.on('pageerror',error=>errors.push(error.message));send('state:Title');
+        await page.goto('http://127.0.0.1:8766/');await page.locator('#keyboard-take-0:enabled').waitFor();
+        await page.locator('#keyboard-take-0').click();
+        const accel=page.locator('[data-input-player="0"][data-input-hold="accelerate"]');
+        await accel.hover();await page.mouse.down();
+        await waitFor(async()=>(await request('/api/status')).json.players[0].pedal===1);
+        await page.mouse.move(10,10);await page.mouse.up();await waitFor(async()=>(await request('/api/status')).json.players[0].pedal===0);
+        const right=page.locator('[data-input-player="0"][data-input-hold="right"]');
+        await right.focus();await page.keyboard.down('Space');
+        await waitFor(async()=>(await request('/api/status')).json.players[0].steering===10);
+        await page.keyboard.up('Space');await waitFor(async()=>(await request('/api/status')).json.players[0].steering===0);
+        await page.locator('[data-input-player="0"][data-input-pulse="reset"]').click();
+        await page.locator('#keyboard-take-1:enabled').click();
+        await page.locator('[data-input-player="1"][data-input-pulse="ready"]').click();
+        const left=page.locator('[data-input-player="1"][data-input-hold="left"]');await left.hover();await page.mouse.down();
+        await waitFor(async()=>(await request('/api/status')).json.players[1].steering===-10);
+        await left.dispatchEvent('pointercancel',{pointerId:1});
+        await waitFor(async()=>(await request('/api/status')).json.players[1].steering===0);await page.mouse.up();
+        await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+        await waitFor(async()=>(await request('/api/status')).json.inputControl.players.every(player=>!player.active));
+        await page.locator('#keyboard-take-0:enabled').click();await accel.hover();await page.mouse.down();
+        await waitFor(async()=>(await request('/api/status')).json.players[0].pedal===1);
+        await page.route('**/api/action/input',route=>route.abort());
+        await waitFor(async()=>(await request('/api/status')).json.inputControl.players.every(player=>!player.active));
+        await page.mouse.up();await page.unroute('**/api/action/input');
+        await page.locator('#keyboard-take-0:enabled').click();
+        await waitFor(async()=>(await request('/api/status')).json.inputControl.players[0].active);
+        const modeSnapshot=(await request('/api/status')).json;
+        const mode=await request('/api/action/settings',{method:'POST',origin:'http://127.0.0.1:8766',body:{id:crypto.randomUUID(),
+          targetSession:modeSnapshot.sessionId,expectedState:modeSnapshot.state,stateRevision:modeSnapshot.stateRevision,
+          settingsRevision:modeSnapshot.settingsRevision,observedAt:modeSnapshot.serverTime,command:'inputMode',args:['keyboard']}});
+        assert.equal(mode.status,200);await page.locator('#keyboard-take-0:enabled').waitFor();
+        await delay(450);assert.equal((await request('/api/status')).json.inputControl.players[0].active,false,'heartbeats cannot silently reacquire after mode reconfiguration');
+        send('state:Game');await page.locator('#keyboard-escape:enabled').waitFor();await page.locator('#keyboard-escape').click();
+        await page.locator('[data-menu-player="0"][data-menu-action="resume"]:enabled').click();
+        await waitFor(async()=>!(await request('/api/status')).json.inputControl.players[0].menuOpen);
+        await page.locator('#keyboard-escape:enabled').click();
+        await waitFor(async()=>(await request('/api/status')).json.inputControl.players.every(player=>!player.menuOpen));
+        fs.mkdirSync(path.join(root,'Artifacts/DashboardRealtime'),{recursive:true});
+        await page.locator('.keyboard-input').screenshot({path:path.join(root,'Artifacts/DashboardRealtime/keyboard-desktop.png')});
+        await page.setViewportSize({width:390,height:844});await page.locator('.keyboard-input').screenshot({path:path.join(root,'Artifacts/DashboardRealtime/keyboard-mobile.png')});
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'input controls do not overflow mobile');
+        assert.deepEqual(errors,[]);
+      } finally {await browser.close();}
+    });
     if(process.env.RACING_BROWSER_TEST==='1') await t.test('actual browser: unified screen, numeric TEL, event history and race action',async()=>{
       const {chromium}=require('playwright');
       const browser=await chromium.launch({headless:true,channel:'chrome'});
@@ -415,7 +509,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       } finally {await browser.close();}
     });
     fs.mkdirSync(path.join(root,'Artifacts/DashboardRealtime'),{recursive:true});
-    fs.writeFileSync(path.join(root,'Artifacts/DashboardRealtime/integration.json'),JSON.stringify({passed:true,source:'production bridge and serial journal / scene and graphics stubs',network:'loopback with simulated Serve headers',tests:process.env.RACING_BROWSER_TEST==='1'?13:12},null,2));
+    fs.writeFileSync(path.join(root,'Artifacts/DashboardRealtime/integration.json'),JSON.stringify({passed:true,source:'production bridge and serial journal / scene and graphics stubs',network:'loopback with simulated Serve headers',tests:process.env.RACING_BROWSER_TEST==='1'?15:13},null,2));
   } finally {
     sockets.forEach(s=>s.close());send('quit');relay.kill('SIGTERM');
     await delay(300);if(bridge.exitCode===null)bridge.kill('SIGKILL');if(relay.exitCode===null)relay.kill('SIGKILL');

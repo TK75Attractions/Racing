@@ -91,6 +91,35 @@
           </div>
           <p id="settings-status" class="control-note" role="status" aria-live="polite">Unity の接続を待っています。</p>
         </section>
+        <section class="panel keyboard-input" aria-labelledby="keyboard-input-title">
+          <div class="panel-heading"><div><span class="section-kicker">PLAYER INPUT / KEYBOARD</span><h2 id="keyboard-input-title">プレイヤー入力</h2></div></div>
+          <p class="control-note">「遠隔操作を開始」すると、そのプレイヤーは管理画面の入力を優先します。矢印・ペダルは押している間だけ入力。車選択・結果画面では左右で選択、アクセルの短押し／長押しで操作できます。</p>
+          <div class="keyboard-player-grid">
+            <article class="keyboard-player" id="keyboard-player-0"><h3>PLAYER 1</h3>
+              <div class="keyboard-actions"><button id="keyboard-take-0" type="button" data-input-player="0" data-input-take disabled>遠隔操作を開始</button><button id="keyboard-stop-0" type="button" data-input-player="0" data-input-stop disabled>遠隔操作を終了</button></div>
+              <p id="keyboard-status-0" class="control-note" role="status" aria-live="polite">Unity の接続を待っています。</p>
+              <div class="keyboard-pad">
+                <button type="button" data-input-player="0" data-input-hold="accelerate" disabled>▲ アクセル・決定<br><small>W</small></button>
+                <div class="keyboard-steering"><button type="button" data-input-player="0" data-input-hold="left" disabled>◀ 左<br><small>A</small></button><button type="button" data-input-player="0" data-input-hold="brake" disabled>▼ ブレーキ<br><small>S</small></button><button type="button" data-input-player="0" data-input-hold="right" disabled>右 ▶<br><small>D</small></button></div>
+              </div>
+              <div class="keyboard-actions"><button type="button" data-input-player="0" data-input-pulse="reset" disabled>復帰（Space）</button><button type="button" data-input-player="0" data-input-pulse="ready" disabled>スタート（Enter）</button></div>
+              <div class="keyboard-menu" aria-label="P1のESCメニュー操作"><span>ESCメニューを開いている間の操作</span><div class="keyboard-actions"><button type="button" data-menu-player="0" data-menu-action="resume" disabled>走行に戻る</button><button type="button" data-menu-player="0" data-menu-action="direction" disabled>前進・後退を切替</button><button type="button" data-menu-player="0" data-menu-action="restart" disabled>スタート位置へ</button><button type="button" data-menu-player="0" data-menu-action="withdraw" disabled>このプレイヤーを中断</button></div></div>
+            </article>
+            <article class="keyboard-player" id="keyboard-player-1"><h3>PLAYER 2</h3>
+              <div class="keyboard-actions"><button id="keyboard-take-1" type="button" data-input-player="1" data-input-take disabled>遠隔操作を開始</button><button id="keyboard-stop-1" type="button" data-input-player="1" data-input-stop disabled>遠隔操作を終了</button></div>
+              <p id="keyboard-status-1" class="control-note" role="status" aria-live="polite">Unity の接続を待っています。</p>
+              <div class="keyboard-pad">
+                <button type="button" data-input-player="1" data-input-hold="accelerate" disabled>▲ アクセル・決定<br><small>↑</small></button>
+                <div class="keyboard-steering"><button type="button" data-input-player="1" data-input-hold="left" disabled>◀ 左<br><small>←</small></button><button type="button" data-input-player="1" data-input-hold="brake" disabled>▼ ブレーキ<br><small>↓</small></button><button type="button" data-input-player="1" data-input-hold="right" disabled>右 ▶<br><small>→</small></button></div>
+              </div>
+              <div class="keyboard-actions"><button type="button" data-input-player="1" data-input-pulse="reset" disabled>復帰（/・右Ctrl）</button><button type="button" data-input-player="1" data-input-pulse="ready" disabled>スタート（Right Shift）</button></div>
+              <div class="keyboard-menu" aria-label="P2のESCメニュー操作"><span>ESCメニューを開いている間の操作</span><div class="keyboard-actions"><button type="button" data-menu-player="1" data-menu-action="resume" disabled>走行に戻る</button><button type="button" data-menu-player="1" data-menu-action="direction" disabled>前進・後退を切替</button><button type="button" data-menu-player="1" data-menu-action="restart" disabled>スタート位置へ</button><button type="button" data-menu-player="1" data-menu-action="withdraw" disabled>このプレイヤーを中断</button></div></div>
+            </article>
+          </div>
+          <div class="keyboard-actions"><button id="keyboard-escape" type="button" disabled>ESC：両プレイヤーの中断メニューを開閉</button><button id="keyboard-release-all" type="button" disabled>自分の遠隔入力をすべて終了</button></div>
+          <p class="control-note">画面を離れる・通信が途切れると遠隔入力を解除し、Unity側でも約1秒で失効します。レース段階が変わったら操作を開始し直してください。元の実機・キーボード入力へ戻るときは、ペダルを一度離してください。ゲームの入力モード設定自体は変更しません。</p>
+          <p id="keyboard-menu-status" class="control-note" role="status" aria-live="polite"></p>
+        </section>
         <section class="panel cameras" aria-labelledby="cameras-title">
           <div class="panel-heading"><div><span class="section-kicker">02 / LIVE VIEW</span><h2 id="cameras-title">プレイヤー画面</h2></div><span class="muted-note">約2秒ごとに更新</span></div>
           <div class="camera-grid">

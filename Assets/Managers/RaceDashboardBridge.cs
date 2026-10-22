@@ -155,11 +155,25 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public FeatureSnapshot[] features;
     }
 
+    [Serializable] private sealed class InputControlSnapshot
+    {
+        public bool available, canEscape;
+        public InputPlayerSnapshot[] players;
+    }
+    [Serializable] private sealed class InputPlayerSnapshot
+    {
+        public int number, held;
+        public long generation;
+        public bool available, active, menuOpen;
+        public string owner;
+    }
+
     [Serializable] private sealed class DashboardSnapshot
     {
         public string sessionId;
         public long stateRevision, serverTime, settingsRevision;
         public SettingsSnapshot settings;
+        public InputControlSnapshot inputControl;
         public SerialEntry telemetry;
         public RawEntry[] rawLines;
         public HardwareSnapshot hardware;
@@ -460,6 +474,58 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         }
     }
 
+    private InputControlSnapshot BuildInputControl()
+    {
+        double now = Time.realtimeSinceStartupAsDouble;
+        var players = new InputPlayerSnapshot[2];
+        for (int i = 0; i < 2; i++)
+        {
+            DashboardInputLease lease = input?.GetDashboardInput(i);
+            players[i] = new InputPlayerSnapshot { number = i + 1, held = (int)(lease?.Held(now) ?? DashboardInputButtons.None), generation = lease?.Generation ?? 0,
+                active = lease?.IsActive(now) ?? false, owner = lease?.Owner(now) ?? "",
+                available = input != null && race != null && race.CanUseDashboardPlayerInput(i), menuOpen = race?.IsDashboardMenuOpen(i) ?? false };
+        }
+        return new InputControlSnapshot { available = input != null, players = players,
+            canEscape = race != null && race.state == Gmanager.State.Game && race.CanUseDashboardControls };
+    }
+
+    private bool ApplyInput(ActionRequest request, out string reason)
+    {
+        reason = "invalid_input";
+        string[] args = request.args ?? Array.Empty<string>();
+        if (args.Length < 3 || args.Length > 7 || (args[0] != "0" && args[0] != "1") ||
+            !long.TryParse(args[2], NumberStyles.None, CultureInfo.InvariantCulture, out long sequence)) return false;
+        int player = args[0] == "0" ? 0 : 1;
+        DashboardInputLease lease = input?.GetDashboardInput(player);
+        if (lease == null) return false;
+        if (request.command != "release" && (race == null || !race.CanUseDashboardPlayerInput(player)))
+        { reason = "input_unavailable"; return false; }
+        DashboardInputButtons buttons = DashboardInputButtons.None;
+        for (int i = 3; i < args.Length; i++)
+        {
+            DashboardInputButtons button;
+            switch (args[i]) {
+                case "accelerate": button = DashboardInputButtons.Accelerate; break;
+                case "brake": button = DashboardInputButtons.Brake; break;
+                case "left": button = DashboardInputButtons.Left; break;
+                case "right": button = DashboardInputButtons.Right; break;
+                case "reset": button = DashboardInputButtons.Reset; break;
+                case "ready": button = DashboardInputButtons.Ready; break;
+                default: return false;
+            }
+            if ((buttons & button) != 0) return false;
+            buttons |= button;
+        }
+        return lease.TryApply(args[1], sequence, request.command, buttons, Time.realtimeSinceStartupAsDouble, out reason);
+    }
+
+    private bool ApplyKeyboardMenu(ActionRequest request)
+    {
+        string[] args = request.args ?? Array.Empty<string>();
+        if (request.command == "escape" && args.Length == 0) return race != null && race.ToggleDashboardEscape();
+        return args.Length == 1 && (args[0] == "0" || args[0] == "1") && race != null && race.TryDashboardMenuAction(args[0] == "0" ? 0 : 1, request.command);
+    }
+
     private DashboardSnapshot BuildSnapshot()
     {
         SyncSerialSource();
@@ -481,7 +547,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         return new DashboardSnapshot
         {
             sessionId = liveSession, stateRevision = stateRevision, serverTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            settingsRevision = settingsRevision, settings = BuildSettings(),
+            settingsRevision = settingsRevision, settings = BuildSettings(), inputControl = BuildInputControl(),
             telemetry = latestTelemetry,
             rawLines = Array.ConvertAll((serial?.Monitor ?? liveJournal).LatestRaw(), entry => new RawEntry
                 { id = entry.Id, time = entry.Time, direction = entry.Direction, line = entry.Line }),
@@ -690,7 +756,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     private void ObserveState()
     {
         string current = race != null ? race.state.ToString() : "Unknown";
-        if (current != observedState) { observedState = current; stateRevision++; }
+        if (current != observedState) { observedState = current; stateRevision++; input?.ClearDashboardInputs(); }
         string settings = JsonUtility.ToJson(BuildSettings());
         if (settings != observedSettings) { observedSettings = settings; settingsRevision++; }
     }
@@ -717,10 +783,16 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         long age = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - request.observedAt;
         bool accepted = request.targetSession == liveSession && request.stateRevision == stateRevision &&
             age >= -1000 && age <= 15000 && race != null && race.state.ToString() == request.expectedState;
+        // Clearing this controller's own input is safe even after a transition or stale snapshot.
+        bool release = action == "input" && request.command == "release";
+        if (release) accepted = request.targetSession == liveSession;
+        else if (action == "input") accepted &= age <= 1500;
         string reason = "state_changed"; uint serialSeq = 0;
         if (accepted)
         {
-            if (action == "serial")
+            if (action == "input") accepted = ApplyInput(request, out reason);
+            else if (action == "keyboardMenu") accepted = ApplyKeyboardMenu(request);
+            else if (action == "serial")
             {
                 TwoPlayerSerialInputSource source = input?.SharedSerialInputSource;
                 reason = "serial_disconnected";
@@ -737,6 +809,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         string result = "{\"id\":" + RgpSerialJournal.Quote(request.id) + ",\"ok\":" + (accepted ? "true" : "false") +
             ",\"reason\":" + RgpSerialJournal.Quote(accepted ? "" : reason) +
             ",\"serialSequence\":" + serialSeq +
+            (action == "input" ? ",\"inputControl\":" + JsonUtility.ToJson(BuildInputControl()) : "") +
             (action == "settings" ? ",\"settingsRevision\":" + settingsRevision + ",\"settings\":" + JsonUtility.ToJson(BuildSettings()) : "") + "}";
         commandResults.Add(request.id, result); commandRequests.Add(request.id, signature); commandOrder.Enqueue(request.id);
         if (commandOrder.Count > 256) { string old = commandOrder.Dequeue(); commandResults.Remove(old); commandRequests.Remove(old); }
@@ -805,6 +878,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     private void OnDestroy()
     {
         stopping = true;
+        input?.ClearDashboardInputs();
         if (input != null) input.SerialLineProcessed -= RecordSerialLine;
         listener?.Close();
         listener = null;

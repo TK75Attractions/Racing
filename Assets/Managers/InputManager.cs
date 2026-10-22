@@ -68,6 +68,10 @@ public class InputManager : MonoBehaviour
     private readonly LiveDriveInputSource[] liveInputs = {
         new LiveDriveInputSource(0), new LiveDriveInputSource(1)
     };
+    private readonly DashboardInputLease[] dashboardInputs = { new DashboardInputLease(), new DashboardInputLease() };
+    private readonly DashboardDriveInputSource[] dashboardSources = new DashboardDriveInputSource[SupportedPlayerCount];
+    public DashboardInputLease GetDashboardInput(int player) => IsValidPlayerIndex(player) ? dashboardInputs[player] : null;
+    public void ClearDashboardInputs() { foreach (DashboardInputLease lease in dashboardInputs) lease.Clear(); }
     private bool appliedDebugMode, appliedMixedMode;
     private bool initialized, hasInitialized;
     private bool? backgroundBeforeSimulator;
@@ -162,7 +166,8 @@ public class InputManager : MonoBehaviour
         foreach (IDriveInputSource source in inputSources) source?.UpdateInput(0f);
         for (int i = 0; i < SupportedPlayerCount; i++)
         {
-            liveInputs[i].SwitchSource(inputSources[i], hasInitialized);
+            dashboardSources[i] = new DashboardDriveInputSource(inputSources[i], dashboardInputs[i], () => Time.realtimeSinceStartupAsDouble);
+            liveInputs[i].SwitchSource(dashboardSources[i], hasInitialized);
         }
         hasInitialized = true;
     }
@@ -224,6 +229,7 @@ public class InputManager : MonoBehaviour
         ApplySteeringTestSettings();
         sharedSerialInputSource?.UpdateInput(deltaTime);
         foreach (IDriveInputSource source in inputSources) source?.UpdateInput(deltaTime);
+        foreach (DashboardDriveInputSource source in dashboardSources) source?.UpdateInput(deltaTime);
 
         DriveInputState playerOneState = GetInputState(0);
         handle = playerOneState.steering;
@@ -473,6 +479,8 @@ public class InputManager : MonoBehaviour
 
     private void DisposeInputSources()
     {
+        ClearDashboardInputs();
+        Array.Clear(dashboardSources, 0, dashboardSources.Length);
         foreach (LiveDriveInputSource handle in liveInputs) handle.SwitchSource(null, true);
         if (sharedSerialInputSource != null)
         {

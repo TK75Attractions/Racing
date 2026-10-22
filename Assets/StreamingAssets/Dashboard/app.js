@@ -10,6 +10,8 @@ let latestCanControl = false;
 let settingsBusy = false;
 let featureSignature = null;
 const featureElements = new Map();
+let inputControllerId = null, latestInputAllowed = false;
+const remotePlayers = [0, 1].map(() => ({ active:false, epoch:0, sequence:0, inFlight:false, started:false, generation:null, pointers:new Map(), anchor:null, tail:Promise.resolve() }));
 const $ = (id) => document.getElementById(id);
 const labels = { Title: 'タイトル', CarSelection: '車選択', Tutorial: 'チュートリアル', Countdown: 'カウントダウン', Game: 'レース中', Goal: 'ゴール処理中', Result: '結果表示' };
 const details = { Title: '開始操作を待っています', CarSelection: '参加者が車を選んでいます', Tutorial: '参加者が操作を練習しています', Countdown: 'スタートまでまもなく', Game: 'レース進行中', Goal: '完走処理中', Result: '次のレースを選択できます' };
@@ -38,6 +40,8 @@ function setConnection(isConnected) {
   badge.querySelector('span').textContent = isConnected ? (localMode ? 'UNITY 接続中' : '遠隔監視中') : (localMode ? 'UNITY 未接続' : '遠隔未接続');
   $('footer-status').textContent = isConnected ? 'Unity からデータを受信中' : 'Unity との接続を確認中';
   if (!isConnected) {
+    stopAllRemoteInputs();
+    renderRemoteInputs(null, false);
     frameGeneration++;
     currentState = null;
     $('game-state').textContent = '接続待機';
@@ -130,7 +134,7 @@ function renderPerformance(performance) {
   $('frame-time').textContent = valid ? `${performance.frameTimeMs.toFixed(1)} ms / frame · 約0.5秒平均` : 'Unity全体 · 計測待ち';
 }
 
-function render(snapshot, { canControl = localMode } = {}) {
+function render(snapshot, { canControl = localMode, canInput = canControl } = {}) {
   setConnection(true);
   // An HTTP acknowledgement can arrive before the next WebSocket snapshot.
   if (latestSnapshot && latestSnapshot.sessionId === snapshot.sessionId && latestSnapshot.settingsRevision > snapshot.settingsRevision)
@@ -138,6 +142,7 @@ function render(snapshot, { canControl = localMode } = {}) {
   latestSnapshot = snapshot;
   latestCanControl = canControl;
   renderSettings(snapshot.settings, canControl);
+  renderRemoteInputs(snapshot.inputControl, canInput);
   currentState = snapshot.state;
   updateFlow(snapshot.state);
   $('game-state').textContent = labels[snapshot.state] || snapshot.state;
@@ -931,6 +936,138 @@ async function submitSetting(control) {
   }
 }
 
+function renderRemoteInputs(control, canInput) {
+  latestInputAllowed = connected && localMode && canInput && !!control?.available;
+  for (let player = 0; player < 2; player++) {
+    const local = remotePlayers[player], remote = control?.players?.find(item => item.number === player + 1);
+    const currentLease = local.generation == null || (remote?.generation ?? -1) >= local.generation;
+    const occupied = remote?.active && remote.owner !== inputControllerId && (!local.active || currentLease);
+    if (local.active && (!latestInputAllowed || !remote?.available || occupied ||
+        (local.generation != null && currentLease && !remote?.active) ||
+        local.anchor?.sessionId !== latestSnapshot?.sessionId || local.anchor?.stateRevision !== latestSnapshot?.stateRevision))
+      stopRemoteInput(player);
+    $('keyboard-take-' + player).disabled = !latestInputAllowed || !remote?.available || !!occupied || local.active;
+    $('keyboard-stop-' + player).disabled = !local.active;
+    document.querySelectorAll('[data-input-hold], [data-input-pulse]').forEach(button => {
+      if (Number(button.dataset.inputPlayer) !== player) return;
+      button.disabled = !latestInputAllowed || !local.active;
+      if (button.dataset.inputHold) button.setAttribute('aria-pressed', String([...local.pointers.values()].includes(button.dataset.inputHold)));
+    });
+    document.querySelectorAll('[data-menu-action]').forEach(button => {
+      if (Number(button.dataset.menuPlayer) === player) button.disabled = !latestInputAllowed || !remote?.menuOpen;
+    });
+    const status = $('keyboard-status-' + player);
+    if (!latestInputAllowed) status.textContent = !control ? 'Unity の接続・バージョンを確認してください。' : '閲覧専用、または状態の更新待ちです。';
+    else if (occupied) status.textContent = '別の管理画面が操作中です。';
+    else if (local.active) status.textContent = '遠隔操作中：押しているボタンをゲームへ入力します。';
+    else if (remote?.menuOpen) status.textContent = 'ESCメニューが開いています。下のメニュー操作を使えます。';
+    else if (!remote?.available) status.textContent = 'この段階ではプレイヤー入力を受け付けません。';
+    else if (!status.dataset.error) status.textContent = '操作を開始すると実機・キーボードより優先します。';
+  }
+  $('keyboard-escape').disabled = !latestInputAllowed || !control?.canEscape;
+  $('keyboard-release-all').disabled = !remotePlayers.some(player => player.active);
+}
+
+function inputRequest(player, command, buttons = []) {
+  const local = remotePlayers[player], epoch = local.epoch;
+  const dispatch = () => {
+    if (command !== 'release' && (!local.active || local.epoch !== epoch)) return;
+    return performInputRequest(player, command, buttons);
+  };
+  if (command === 'release') return dispatch(); // Never wait behind a stalled press to release.
+  const result = local.tail.catch(() => {}).then(dispatch);
+  local.tail = result.catch(() => {});
+  return result;
+}
+
+async function performInputRequest(player, command, buttons) {
+  const local = remotePlayers[player];
+  const snapshot = command === 'release' ? local.anchor : latestSnapshot;
+  if (!snapshot?.sessionId) return;
+  const request = { id:crypto.randomUUID(), targetSession:snapshot.sessionId, expectedState:snapshot.state,
+    stateRevision:snapshot.stateRevision, observedAt:snapshot.serverTime, command,
+    args:[String(player), inputControllerId, String(++local.sequence), ...buttons] };
+  const response = await apiFetch('/api/action/input', { method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(request), signal:AbortSignal.timeout(800) });
+  return response.json();
+}
+
+async function pumpRemoteInput(player) {
+  const local = remotePlayers[player];
+  if (!local.active || local.inFlight || !latestInputAllowed) return;
+  const epoch = local.epoch;
+  local.inFlight = true;
+  try {
+    const result = await inputRequest(player, local.started ? 'hold' : 'begin', local.started ? [...new Set(local.pointers.values())] : []);
+    if (local.epoch !== epoch) return;
+    if (result?.ok) local.started = true;
+    if (result?.ok && result.inputControl) {
+      const acknowledged = result.inputControl.players?.find(item => item.number === player + 1);
+      if (acknowledged) local.generation = acknowledged.generation;
+    }
+    if (!result?.ok) {
+      stopRemoteInput(player);
+      const status = $('keyboard-status-' + player); status.dataset.error = 'true';
+      status.textContent = result?.reason === 'input_busy' ? '別の管理画面が操作中です。' : '入力を受け付けられません。状態を確認して開始し直してください。';
+    }
+  } catch {
+    if (local.epoch === epoch) {
+      stopRemoteInput(player);
+      const status = $('keyboard-status-' + player); status.dataset.error = 'true';
+      status.textContent = '入力の通信が途切れました。Unity側でも約1秒で解除します。';
+    }
+  } finally { local.inFlight = false; }
+}
+
+function beginRemoteInput(player) {
+  if (!latestInputAllowed || $('keyboard-take-' + player).disabled) return;
+  inputControllerId ||= crypto.randomUUID();
+  const local = remotePlayers[player];
+  local.active = true; local.epoch++; local.started = false; local.generation = null; local.pointers.clear(); local.anchor = {...latestSnapshot};
+  $('keyboard-status-' + player).dataset.error = '';
+  renderRemoteInputs(latestSnapshot.inputControl, true);
+  void pumpRemoteInput(player);
+}
+
+function stopRemoteInput(player) {
+  const local = remotePlayers[player];
+  if (!local.active) return;
+  local.active = false; local.epoch++; local.pointers.clear();
+  void inputRequest(player, 'release').catch(() => {});
+}
+function stopAllRemoteInputs() { for (let player = 0; player < 2; player++) stopRemoteInput(player); }
+
+async function pulseRemoteInput(player, button) {
+  if (!latestInputAllowed || !remotePlayers[player].active) return;
+  try {
+    const result = await inputRequest(player, 'pulse', [button]);
+    if (!result?.ok) throw new Error('input rejected');
+    $('keyboard-status-' + player).textContent = button === 'reset' ? '復帰入力を送りました。' : 'スタート入力を送りました。';
+  } catch {
+    stopRemoteInput(player);
+    $('keyboard-status-' + player).textContent = '入力結果を確認できません。入力は再送していません。';
+  }
+}
+
+async function sendKeyboardMenu(command, player) {
+  if (!latestInputAllowed) return;
+  stopAllRemoteInputs();
+  const snapshot = latestSnapshot;
+  const request = { id:crypto.randomUUID(), targetSession:snapshot.sessionId, expectedState:snapshot.state,
+    stateRevision:snapshot.stateRevision, observedAt:snapshot.serverTime, command, args:player == null ? [] : [String(player)] };
+  let result;
+  try {
+    const response = await apiFetch('/api/action/keyboardMenu', { method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(request), signal:AbortSignal.timeout(4000) });
+    result = await response.json();
+  } catch {
+    try { const response = await apiFetch('/api/command/' + request.id, {signal:AbortSignal.timeout(2000)});
+      if (response.ok) result = await response.json(); } catch { }
+  }
+  $('keyboard-menu-status').textContent = result?.ok ? 'メニュー操作を実行しました。' : result ?
+    '現在の状態では操作できません。ゲーム画面を確認してください。' : '結果を確認できません。操作は再送していません。';
+}
+
 document.querySelectorAll('[data-action]').forEach((button) => {
   button.addEventListener('click', async () => {
     if (!localMode || !connected || !actionAvailable(button.dataset.action, latestSnapshot)) return;
@@ -1006,3 +1143,36 @@ renderSettings(null, false);
 $('settings-features').addEventListener('change', event => {
   if (event.target.dataset.setting === 'feature') void submitSetting(event.target);
 });
+
+// Pointer capture supports mouse, pen and simultaneous touches; cancellation always releases movement.
+document.querySelectorAll('[data-input-take]').forEach(button => button.addEventListener('click', () => beginRemoteInput(Number(button.dataset.inputPlayer))));
+document.querySelectorAll('[data-input-stop]').forEach(button => button.addEventListener('click', () => {
+  stopRemoteInput(Number(button.dataset.inputPlayer)); renderRemoteInputs(latestSnapshot?.inputControl, latestInputAllowed);
+}));
+document.querySelectorAll('[data-input-pulse]').forEach(button => button.addEventListener('click', () => void pulseRemoteInput(Number(button.dataset.inputPlayer), button.dataset.inputPulse)));
+document.querySelectorAll('[data-input-hold]').forEach(button => {
+  const player = Number(button.dataset.inputPlayer), local = remotePlayers[player];
+  const release = id => { if (local.pointers.delete(id)) { void pumpRemoteInput(player); renderRemoteInputs(latestSnapshot?.inputControl, latestInputAllowed); } };
+  button.addEventListener('pointerdown', event => {
+    if (button.disabled || event.button !== 0) return;
+    event.preventDefault(); button.setPointerCapture(event.pointerId);
+    local.pointers.set(event.pointerId, button.dataset.inputHold); void pumpRemoteInput(player);
+    renderRemoteInputs(latestSnapshot?.inputControl, latestInputAllowed);
+  });
+  for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(event, value => release(value.pointerId));
+  button.addEventListener('keydown', event => {
+    if (!['Space','Enter'].includes(event.code) || button.disabled || event.repeat) return;
+    event.preventDefault(); local.pointers.set('key:' + event.code, button.dataset.inputHold); void pumpRemoteInput(player);
+  });
+  button.addEventListener('keyup', event => release('key:' + event.code));
+  button.addEventListener('blur', () => { release('key:Space'); release('key:Enter'); });
+  button.addEventListener('contextmenu', event => event.preventDefault());
+});
+document.querySelectorAll('[data-menu-action]').forEach(button => button.addEventListener('click', () => void sendKeyboardMenu(button.dataset.menuAction, Number(button.dataset.menuPlayer))));
+$('keyboard-escape').addEventListener('click', () => void sendKeyboardMenu('escape'));
+$('keyboard-release-all').addEventListener('click', () => { stopAllRemoteInputs(); renderRemoteInputs(latestSnapshot?.inputControl, latestInputAllowed); });
+window.addEventListener('blur', stopAllRemoteInputs);
+window.addEventListener('pagehide', stopAllRemoteInputs);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'visible') stopAllRemoteInputs(); });
+setInterval(() => { for (let player = 0; player < 2; player++) void pumpRemoteInput(player); }, 200);
+renderRemoteInputs(null, false);

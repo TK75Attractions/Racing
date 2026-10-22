@@ -56,6 +56,38 @@ public static class LiveInputTests
             "The stable handle must leave device updates and ownership to InputManager.");
         live.SwitchSource(null, true);
         Require(!live.IsConnected && live.CurrentState.pedal == 0f, "Detaching must never expose disposed input.");
+        TestDashboardInput();
         Console.WriteLine("LIVE_INPUT_PASS: startup, live car/practice routing, release gate, pause/reverse, disconnect, constant resume and ownership.");
+    }
+    private static void TestDashboardInput()
+    {
+        double now=0;
+        var local=new Device { DeviceId="keyboard", IsConnected=false, State=new DriveInputState {pedal=.8f} };
+        var lease=new DashboardInputLease();
+        var dashboard=new DashboardDriveInputSource(local,lease,()=>now);
+        var live=new LiveDriveInputSource(0);live.SwitchSource(dashboard,false);
+        var car=new PlayerDriveInputGate(live);
+        _=car.CurrentState;Require(car.NeedsPedalRelease,"A disconnected car must require release.");
+        Require(lease.TryApply("page",1,"begin",0,now,out _),"Acquire dashboard input.");
+        dashboard.UpdateInput(.02f);_=car.CurrentState;
+        Require(!car.NeedsPedalRelease&&car.IsConnected,"A neutral handover must arm an existing gate even without a local device.");
+        Require(lease.TryApply("page",2,"pulse",DashboardInputButtons.Reset,now,out _),"Queue Space/Slash.");
+        now=.02;dashboard.UpdateInput(.02f);
+        _=live.CurrentState;
+        Require(car.CurrentState.resetPressed&&car.CurrentState.resetPressed,"Status polling must not consume the reset edge.");
+        now=.04;dashboard.UpdateInput(.02f);Require(!car.CurrentState.resetPressed,"Reset is one game frame, not a repeated reset.");
+        Require(lease.TryApply("page",3,"hold",DashboardInputButtons.Accelerate|DashboardInputButtons.Right,now,out _),"Hold two controls.");
+        now=.06;dashboard.UpdateInput(.02f);Require(car.CurrentState.pedal==1f&&car.CurrentState.steering==10f,"Remote movement reaches the production car gate.");
+        local.IsConnected=true;now=1.1;
+        Require(car.CurrentState.pedal==0f,"The getter must expire remote acceleration even before the next Update.");
+        dashboard.UpdateInput(.02f);Require(car.CurrentState.pedal==0f,"Do not resume a held physical pedal on remote disconnect.");
+        local.State=DriveInputState.Neutral;_=car.CurrentState;
+        local.State=new DriveInputState {pedal=.8f};Require(car.CurrentState.pedal==.8f,"Physical input resumes after release.");
+        Require(lease.TryApply("second",1,"begin",DashboardInputButtons.Brake,now,out _),"A new owner can acquire an expired lease.");
+        Require(car.CurrentState.pedal==0f,"Do not expose stale movement from the previous controller.");
+        dashboard.UpdateInput(.02f);now+=.02;dashboard.UpdateInput(.02f);
+        Require(car.CurrentState.pedal==-1f,"New owner supplies its own input.");
+        lease.Clear();Require(car.CurrentState.pedal==0f,"Transition/stop clears cached remote input immediately.");
+        Console.WriteLine("DASHBOARD_INPUT_PASS: real gate handover, independent button samples, expiry between frames, local release and owner replacement.");
     }
 }
