@@ -78,6 +78,8 @@ public class Gmanager
     public bool CanUseDashboardControls=>true;
     private readonly bool[] menus={false,false};
     public bool CanUseDashboardPlayerInput(int i)=>(state==State.Title||state==State.CarSelection||state==State.Tutorial||state==State.Game||state==State.Result)&&!menus[i];
+    public bool CanRecoverDashboardPlayer(int i)=>(state==State.Game||state==State.Tutorial)&&!menus[i];
+    public bool TryDashboardRecovery(int i){if(!CanRecoverDashboardPlayer(i))return false;Harness.MenuActions++;return true;}
     public bool IsDashboardMenuOpen(int i)=>menus[i];
     public bool ToggleDashboardEscape(){if(state!=State.Game)return false;bool close=menus[0]||menus[1];menus[0]=menus[1]=!close;((InputManager)Harness.Components[typeof(InputManager)]).ClearDashboardInputs();return true;}
     public bool TryDashboardMenuAction(int i,string action){if(state!=State.Game||!menus[i]||!(action=="resume"||action=="direction"||action=="restart"||action=="withdraw"))return false;menus[i]=false;Harness.MenuActions++;return true;}

@@ -1429,6 +1429,22 @@ public class Gmanager : MonoBehaviour
         return IsPreparing && (player.preparationState == State.Title || player.preparationState == State.CarSelection || player.preparationState == State.Tutorial);
     }
 
+    public bool CanRecoverDashboardPlayer(int index)
+    {
+        if (!CanUseDashboardControls || index < 0 || index >= players.Length) return false;
+        if (IsPreparing) return GetPlayerPreparationState(index) == State.Tutorial && drivingTutorial?.HasStarted(index) == true &&
+            drivingTutorial.GetPlayerProgress(index)?.IsFinished == false;
+        return state == State.Game && players[index]?.car != null && players[index].result == null &&
+            !players[index].withdrewFromRace && !IsDashboardMenuOpen(index);
+    }
+
+    public bool TryDashboardRecovery(int index)
+    {
+        if (!CanRecoverDashboardPlayer(index)) return false;
+        if (IsPreparing) return drivingTutorial.RecoverPlayer(index);
+        return players[index].car.GetComponent<CarResetter>()?.TryResetCar() == true;
+    }
+
     public bool ToggleDashboardEscape()
     {
         if (state != State.Game || !CanUseDashboardControls) return false;

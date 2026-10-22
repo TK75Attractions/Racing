@@ -164,7 +164,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     {
         public int number, held;
         public long generation;
-        public bool available, active, menuOpen;
+        public bool available, active, menuOpen, canRecover;
         public string owner;
     }
 
@@ -483,7 +483,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             DashboardInputLease lease = input?.GetDashboardInput(i);
             players[i] = new InputPlayerSnapshot { number = i + 1, held = (int)(lease?.Held(now) ?? DashboardInputButtons.None), generation = lease?.Generation ?? 0,
                 active = lease?.IsActive(now) ?? false, owner = lease?.Owner(now) ?? "",
-                available = input != null && race != null && race.CanUseDashboardPlayerInput(i), menuOpen = race?.IsDashboardMenuOpen(i) ?? false };
+                available = input != null && race != null && race.CanUseDashboardPlayerInput(i), menuOpen = race?.IsDashboardMenuOpen(i) ?? false,
+                canRecover = race?.CanRecoverDashboardPlayer(i) ?? false };
         }
         return new InputControlSnapshot { available = input != null, players = players,
             canEscape = race != null && race.state == Gmanager.State.Game && race.CanUseDashboardControls };
@@ -523,6 +524,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     {
         string[] args = request.args ?? Array.Empty<string>();
         if (request.command == "escape" && args.Length == 0) return race != null && race.ToggleDashboardEscape();
+        if (request.command == "recover" && args.Length == 1 && (args[0] == "0" || args[0] == "1"))
+            return race != null && race.TryDashboardRecovery(args[0] == "0" ? 0 : 1);
         return args.Length == 1 && (args[0] == "0" || args[0] == "1") && race != null && race.TryDashboardMenuAction(args[0] == "0" ? 0 : 1, request.command);
     }
 

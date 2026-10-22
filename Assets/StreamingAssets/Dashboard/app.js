@@ -950,7 +950,7 @@ function renderRemoteInputs(control, canInput) {
     $('keyboard-stop-' + player).disabled = !local.active;
     document.querySelectorAll('[data-input-hold], [data-input-pulse]').forEach(button => {
       if (Number(button.dataset.inputPlayer) !== player) return;
-      button.disabled = !latestInputAllowed || !local.active;
+      button.disabled = !latestInputAllowed || (button.dataset.inputPulse === 'reset' ? !remote?.canRecover : !local.active);
       if (button.dataset.inputHold) button.setAttribute('aria-pressed', String([...local.pointers.values()].includes(button.dataset.inputHold)));
     });
     document.querySelectorAll('[data-menu-action]').forEach(button => {
@@ -1038,6 +1038,11 @@ function stopRemoteInput(player) {
 function stopAllRemoteInputs() { for (let player = 0; player < 2; player++) stopRemoteInput(player); }
 
 async function pulseRemoteInput(player, button) {
+  if (button === 'reset') {
+    if (latestInputAllowed && latestSnapshot?.inputControl?.players?.find(item => item.number === player + 1)?.canRecover)
+      await sendKeyboardMenu('recover', player);
+    return;
+  }
   if (!latestInputAllowed || !remotePlayers[player].active) return;
   try {
     const result = await inputRequest(player, 'pulse', [button]);
@@ -1051,7 +1056,7 @@ async function pulseRemoteInput(player, button) {
 
 async function sendKeyboardMenu(command, player) {
   if (!latestInputAllowed) return;
-  stopAllRemoteInputs();
+  if (command !== 'recover') stopAllRemoteInputs();
   const snapshot = latestSnapshot;
   const request = { id:crypto.randomUUID(), targetSession:snapshot.sessionId, expectedState:snapshot.state,
     stateRevision:snapshot.stateRevision, observedAt:snapshot.serverTime, command, args:player == null ? [] : [String(player)] };
@@ -1064,7 +1069,7 @@ async function sendKeyboardMenu(command, player) {
     try { const response = await apiFetch('/api/command/' + request.id, {signal:AbortSignal.timeout(2000)});
       if (response.ok) result = await response.json(); } catch { }
   }
-  $('keyboard-menu-status').textContent = result?.ok ? 'メニュー操作を実行しました。' : result ?
+  $('keyboard-menu-status').textContent = result?.ok ? (command === 'recover' ? '車両をコースへ復帰しました。' : 'メニュー操作を実行しました。') : result ?
     '現在の状態では操作できません。ゲーム画面を確認してください。' : '結果を確認できません。操作は再送していません。';
 }
 

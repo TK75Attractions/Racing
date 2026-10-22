@@ -134,6 +134,13 @@ public sealed class DrivingTutorialController : MonoBehaviour
         readyTimer = complete ? readyTimer + dt : 0f;
     }
 
+    public bool RecoverPlayer(int index)
+    {
+        Practice player = players.Find(p => p.playerIndex == index);
+        if (player == null || player.lesson.IsFinished) return false;
+        Recover(player); return true;
+    }
+
     private static void Recover(Practice player)
     {
         bool first = player.lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate;

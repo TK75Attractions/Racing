@@ -597,9 +597,9 @@ test('Remote movement uses independent player sequences and stops with the origi
   assert.deepEqual(calls[1][1].args.slice(3),['accelerate','left']);
   assert.equal(calls[1][1].args[0],'0');assert.equal(calls[1][1].targetSession,'one');
   ui.context.beginRemoteInput(1);await new Promise(setImmediate);
-  await ui.context.pulseRemoteInput(1,'reset');
+  await ui.context.pulseRemoteInput(1,'ready');
   assert.equal(calls.at(-1)[1].command,'pulse');assert.equal(calls.at(-1)[1].args[0],'1');
-  assert.equal(calls.at(-1)[1].args.at(-1),'reset');
+  assert.equal(calls.at(-1)[1].args.at(-1),'ready');
   ui.render({...base,state:'Countdown',stateRevision:3,sessionId:'one',serverTime:200,
     inputControl:{...inputControl,players:inputControl.players.map(player=>({...player,available:false}))}});
   assert.equal(calls.filter(([,request])=>request.command==='release').length,2);
@@ -632,4 +632,18 @@ test('Acknowledged lease generations ignore older snapshots and stop after Unity
   ui.render({...state,inputControl:{...state.inputControl,players:[{...state.inputControl.players[0],generation:2},state.inputControl.players[1]]}});
   assert.equal(ui.elements.get('keyboard-stop-0').disabled,true);
   assert.equal(calls.at(-1).command,'release');
+});
+
+test('Recovery is available without takeover and never acquires a movement lease',async()=>{
+  const ui=fixture(),calls=[];ui.context.AbortSignal=AbortSignal;ui.context.crypto={randomUUID:require('node:crypto').randomUUID};
+  ui.context.apiFetch=async(route,options)=>{calls.push([route,JSON.parse(options.body)]);return {json:async()=>({ok:true})};};
+  const control={...inputControl,players:inputControl.players.map(p=>({...p,canRecover:true}))};
+  ui.render({...base,state:'Game',inputControl:control,sessionId:'recovery',stateRevision:3,serverTime:100});
+  assert.equal(ui.inputButtons.find(b=>b.dataset.inputPulse==='reset').disabled,false);
+  assert.ok(ui.inputButtons.filter(b=>b.dataset.inputHold).every(b=>b.disabled));
+  await ui.context.pulseRemoteInput(0,'reset');
+  assert.equal(calls.length,1);assert.equal(calls[0][0],'/api/action/keyboardMenu');
+  assert.equal(calls[0][1].command,'recover');assert.deepEqual(calls[0][1].args,['0']);
+  ui.render({...base,inputControl:control},{canControl:false});
+  assert.equal(ui.inputButtons.find(b=>b.dataset.inputPulse==='reset').disabled,true);
 });
