@@ -1358,6 +1358,17 @@ public class Gmanager : MonoBehaviour
             ? 1 - displayPlayerIndex : displayPlayerIndex;
     }
 
+    public State GetPlayerAudioState(int playerIndex)
+    {
+        if (playerIndex < 0 || playerIndex >= players.Length) return state;
+        PlayerRuntime player = players[playerIndex];
+        if (IsPreparing) return GetPlayerPreparationState(playerIndex);
+        if (state == State.Result && player?.returnedToTitle == true) return State.Title;
+        // A finisher keeps the celebration music while the other player is still racing.
+        if (state == State.Game && player?.result?.didFinish == true) return State.Goal;
+        return state;
+    }
+
     public bool IsPlayerOnFinalLap(int playerIndex)
     {
         if (playerIndex < 0 || playerIndex >= players.Length || lapManager == null || lapManager.GoalLap <= 0) return false;

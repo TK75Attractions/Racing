@@ -53,7 +53,19 @@ public static class PlayerAudioValidation
             Require(sources.Length == 2 && sources[0] != sources[1], "Each player needs an independent source.");
             manager.state = Gmanager.State.Title;
             Call(music, "Update");
-            Require(sources.All(s => s.clip != null && s.clip.name == "TachibanaMoroe"), "Title music must remain intact.");
+            Require(sources.All(s => s.clip != null && s.clip.name == "Race_Opening_v2"), "Title must use the opening track.");
+            Set(players.GetValue(0), "preparationState", Gmanager.State.CarSelection);
+            manager.state = Gmanager.State.CarSelection;
+            Call(music, "Update");
+            Require(sources.All(s => s.clip.name == "Race_Opening_v2"), "Car selection and the other title screen must keep the opening track.");
+            Set(players.GetValue(0), "preparationState", Gmanager.State.Tutorial);
+            manager.state = Gmanager.State.Tutorial;
+            Call(music, "Update");
+            Require(sources[0].clip.name == "TachibanaMoroe" && sources[1].clip.name == "Race_Opening_v2",
+                "Each screen must select tutorial or opening music independently of the shared state.");
+            Set(players.GetValue(1), "preparationState", Gmanager.State.Tutorial);
+            Call(music, "Update");
+            Require(sources.All(s => s.clip.name == "TachibanaMoroe"), "Both tutorial screens must use TachibanaMoroe.");
             manager.state = Gmanager.State.Countdown;
             Call(music, "Update");
             Require(sources.All(s => s.clip.name == "racegame_v3"), "Countdown must use the new race track.");
@@ -69,15 +81,35 @@ public static class PlayerAudioValidation
             Call(music, "Update");
             Require(sources[1].clip.name == "racegame_v3_final lap", "P2 must switch independently.");
             laps.GetCarData(bodies[1]).lapCount = 0;
+            Set(players.GetValue(0), "result", new RaceResultRecord { didFinish = true });
+            Call(music, "Update");
+            Require(sources[0].clip.name == "finish_v2" && sources[1].clip.name == "racegame_v3",
+                "The goal celebration must start finish music only for the finisher.");
             Set(players.GetValue(0), "isSpectating", true);
             Call(music, "Update");
-            Require(manager.GetAudioViewedPlayer(0) == 1 && sources[0].clip == sources[1].clip,
-                "Spectator music must follow the watched player.");
+            Require(manager.GetAudioViewedPlayer(0) == 1 && sources[0].clip.name == "finish_v2",
+                "A finisher must retain finish music while spectating the other player.");
+            Set(players.GetValue(0), "result", new RaceResultRecord { didFinish = false });
+            Call(music, "Update");
+            Require(sources[0].clip == sources[1].clip, "A DNF spectator still follows the watched player's race music.");
+            manager.state = Gmanager.State.Goal;
+            Call(music, "Update");
+            Require(sources.All(s => s.clip.name == "finish_v2"), "The shared goal scene must use finish music.");
             manager.state = Gmanager.State.Result;
             Call(music, "Update");
-            Require(sources.All(s => s.clip.name == "TachibanaMoroe"), "Results must restore menu music.");
+            Require(sources.All(s => s.clip.name == "finish_v2"), "Results must keep finish music.");
+            Set(players.GetValue(0), "returnedToTitle", true);
+            Call(music, "Update");
+            Require(sources[0].clip.name == "Race_Opening_v2" && sources[1].clip.name == "finish_v2",
+                "Returning one screen to the title must not change the other result screen.");
             laps.ResetRace();
-            for (int i = 0; i < 2; i++) { laps.RegisterCar(bodies[i]); Set(players.GetValue(i), "isSpectating", false); }
+            for (int i = 0; i < 2; i++)
+            {
+                laps.RegisterCar(bodies[i]);
+                Set(players.GetValue(i), "isSpectating", false);
+                Set(players.GetValue(i), "result", null);
+                Set(players.GetValue(i), "returnedToTitle", false);
+            }
             manager.state = Gmanager.State.Countdown;
             Call(music, "Update");
             Require(sources.All(s => s.clip.name == "racegame_v3"), "Retry must restore normal race music.");
@@ -120,7 +152,7 @@ public static class PlayerAudioValidation
                 outputType.GetMethod("ra_shutdown", nativeFlags).Invoke(null, null);
                 Require(count >= 0, "Unity must load the native plugin and enumerate real audio endpoints.");
             }
-            Debug.Log("PlayerAudioValidation PASSED: independent final laps, spectator, retry, single lap, menu tracks, stereo viewpoint, unchanged-rate device notification and no default-output leakage.");
+            Debug.Log("PlayerAudioValidation PASSED: opening/selection, independent tutorials and final laps, finish/spectator/results, individual title return, retry, single lap, stereo viewpoint, unchanged-rate device notification and no default-output leakage.");
         }
         finally
         {
