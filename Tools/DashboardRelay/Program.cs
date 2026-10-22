@@ -3,6 +3,8 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 
+if (args.Contains("--update-service")) { await MacDashboardService.UpdateInstalled(); return; }
+
 if (args.Contains("--install-service") || args.Contains("--uninstall-service"))
 {
     await MacDashboardService.Configure(args.Contains("--install-service"));
@@ -66,6 +68,10 @@ using var client = new HttpClient(new SocketsHttpHandler { UseProxy = false, Max
 string? allowedOrigin = Environment.GetEnvironmentVariable("RACING_DASHBOARD_ORIGIN")?.TrimEnd('/');
 var operators = (Environment.GetEnvironmentVariable("RACING_DASHBOARD_OPERATORS") ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
 int activeSockets = 0;
+using var push = new DashboardPush(Environment.GetEnvironmentVariable("RACING_PUSH_DATA") ??
+    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RacingDashboard", "Push"), allowedOrigin);
+Task? pushMonitor = null;
+var pushTests = new System.Collections.Concurrent.ConcurrentDictionary<string, long>();
 Console.WriteLine("Dashboard relay: http://127.0.0.1:8766 (Tailscale Serve target)");
 if (allowedOrigin == null) Console.WriteLine("Local-only mode. Set RACING_DASHBOARD_ORIGIN to the exact Serve HTTPS origin to allow remote access.");
 app.Run(async context =>
@@ -93,6 +99,38 @@ app.Run(async context =>
     // Host/Origin checks above still apply before granting any control access.
     bool canControl = local || operators.Contains("*") || operators.Contains(identity);
     string path = context.Request.Path.Value ?? "/";
+    if (path == "/api/push" || path.StartsWith("/api/push/", StringComparison.Ordinal))
+    {
+        context.Response.Headers.CacheControl = "no-store";
+        string owner = local ? "local" : identity;
+        if (path == "/api/push" && !mutation) { await context.Response.WriteAsJsonAsync(push.Status(owner,canControl)); return; }
+        if (!canControl || context.Request.Method != "POST") { context.Response.StatusCode = 403; return; }
+        if (!push.Ready) { context.Response.StatusCode = 503; await context.Response.WriteAsJsonAsync(new { ok=false,reason="https_required" }); return; }
+        try
+        {
+            using var document = await JsonDocument.ParseAsync(context.Request.Body,cancellationToken:context.RequestAborted);
+            string endpoint = HardwareAlertMonitor.Text(document.RootElement,"endpoint");
+            bool ok = false;
+            if (path == "/api/push/subscribe")
+            {
+                var keys = HardwareAlertMonitor.Object(document.RootElement,"keys");
+                ok = push.Subscribe(owner,endpoint,new Dictionary<string,string> { ["p256dh"] = HardwareAlertMonitor.Text(keys,"p256dh"), ["auth"] = HardwareAlertMonitor.Text(keys,"auth") });
+            }
+            else if (path == "/api/push/unsubscribe") ok = push.Remove(owner,endpoint);
+            else if (path == "/api/push/test")
+            {
+                long now = Environment.TickCount64;
+                if (pushTests.TryGetValue(owner,out long previous) && now-previous<60_000) { context.Response.StatusCode=429; return; }
+                pushTests[owner]=now;
+                await push.Send("通知テストです。この端末でレース機器の異常通知を受信できます。",context.RequestAborted,owner);ok=true;
+            }
+            context.Response.StatusCode=ok?200:400;
+            await context.Response.WriteAsJsonAsync(new{ok});
+        }
+        catch (Exception error) when (error is JsonException or BadHttpRequestException or IOException or UnauthorizedAccessException)
+        { if (!context.Response.HasStarted) context.Response.StatusCode=400; }
+        return;
+    }
     if (path == "/api/connection")
     {
         await context.Response.WriteAsJsonAsync(new { app = "racing-dashboard", transport = "websocket", canControl, user = remote ? identity : "local", remote,
@@ -170,11 +208,13 @@ app.Run(async context =>
 });
 using var managedRegistration = managedStop.Token.Register(app.Lifetime.StopApplication);
 await app.StartAsync();
+pushMonitor = push.Monitor(client,app.Lifetime.ApplicationStopping,owner=>owner=="local"||operators.Contains("*")||operators.Contains(owner));
 Console.WriteLine("RACING_DASHBOARD_READY " + JsonSerializer.Serialize(new {
     localUrl = "http://127.0.0.1:8766/", remoteUrl = allowedOrigin == null ? null : allowedOrigin + "/", notice = startNotice, reused = false }));
 Console.WriteLine(startNotice ?? "WebSocketの準備ができました。UnityをPlayしてダッシュボードを開いてください。");
 if (openBrowser) QuickStart.Open("http://127.0.0.1:8766/");
 await app.WaitForShutdownAsync();
+try { await pushMonitor; } catch (OperationCanceledException) { }
 
 static async Task ReceiveUntilClose(WebSocket socket, CancellationTokenSource cancellation)
 {

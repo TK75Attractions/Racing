@@ -4,6 +4,49 @@ using System.Xml.Linq;
 internal static class MacDashboardService
 {
     private const string Label = "com.racing.dashboard";
+    // Update code/assets while preserving the installed route, operator policy, and push keys.
+    public static async Task UpdateInstalled()
+    {
+        if (!OperatingSystem.IsMacOS()) throw new PlatformNotSupportedException();
+        string library=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),"Library");
+        string service=Path.Combine(library,"Application Support","RacingDashboard");
+        string plist=Path.Combine(library,"LaunchAgents",Label+".plist");
+        if(!File.Exists(plist))throw new IOException("常駐設定がありません。先にInstall Dashboard Serviceを実行してください。");
+        var config=XDocument.Load(plist);
+        if(!config.Descendants("string").Any(x=>x.Value==Path.Combine(service,"DashboardRelay.dll")))throw new IOException("既存設定が別のアプリを使用しています。");
+        if(Path.GetFullPath(AppContext.BaseDirectory).TrimEnd(Path.DirectorySeparatorChar)==service)throw new IOException("更新元プロジェクトから実行してください。");
+        var uid=await QuickStart.Run("/usr/bin/id",CancellationToken.None,"-u");
+        if(uid.Exit!=0||!uint.TryParse(uid.Output.Trim(),out uint userId))throw new IOException("ログインユーザーを確認できません。");
+        string scope="gui/"+userId;
+        string staging=Path.Combine(Path.GetTempPath(),"racing-dashboard-update-"+Guid.NewGuid().ToString("N"));
+        var files=Directory.EnumerateFiles(AppContext.BaseDirectory,"*.dll").Select(Path.GetFileName).Cast<string>().ToList();
+        files.AddRange(new[]{"DashboardRelay.deps.json","DashboardRelay.runtimeconfig.json"});
+        files.AddRange(Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory,"Dashboard")).Select(file=>Path.Combine("Dashboard",Path.GetFileName(file))));
+        var previous=new List<string>();bool stopped=false;
+        try
+        {
+            foreach(string file in files)
+            {
+                string next=Path.Combine(staging,"next",file);Directory.CreateDirectory(Path.GetDirectoryName(next)!);
+                File.Copy(Path.Combine(AppContext.BaseDirectory,file),next);
+                string old=Path.Combine(service,file);
+                if(File.Exists(old)){string backup=Path.Combine(staging,"previous",file);Directory.CreateDirectory(Path.GetDirectoryName(backup)!);File.Copy(old,backup);previous.Add(file);}
+            }
+            var stop=await QuickStart.Run("/bin/launchctl",CancellationToken.None,"bootout",scope+"/"+Label);
+            if(stop.Exit!=0)throw new IOException("常駐Dashboardを停止できませんでした。更新は適用していません。");
+            stopped=true;
+            foreach(string file in files){string target=Path.Combine(service,file);Directory.CreateDirectory(Path.GetDirectoryName(target)!);File.Copy(Path.Combine(staging,"next",file),target,true);}
+            var start=await QuickStart.Run("/bin/launchctl",CancellationToken.None,"bootstrap",scope,plist);
+            if(start.Exit!=0)throw new IOException("更新後のDashboardを起動できませんでした。");
+            stopped=false;Console.WriteLine("DASHBOARD_SERVICE_UPDATE_PASS: installed route, operator policy, and notification subscriptions preserved.");
+        }
+        catch
+        {
+            if(stopped){foreach(string file in previous)File.Copy(Path.Combine(staging,"previous",file),Path.Combine(service,file),true);await QuickStart.Run("/bin/launchctl",CancellationToken.None,"bootstrap",scope,plist);}
+            throw;
+        }
+        finally{if(Directory.Exists(staging))Directory.Delete(staging,true);}
+    }
     public static async Task Configure(bool install)
     {
         if (!OperatingSystem.IsMacOS()) throw new PlatformNotSupportedException("この常駐設定はmacOS用です。");
@@ -45,6 +88,9 @@ internal static class MacDashboardService
         Directory.CreateDirectory(service); Directory.CreateDirectory(agents); Directory.CreateDirectory(logs);
         foreach (string name in new[] { "DashboardRelay.dll", "DashboardRelay.deps.json", "DashboardRelay.runtimeconfig.json" })
             File.Copy(Path.Combine(AppContext.BaseDirectory, name), Path.Combine(service, name), true);
+        // Web Push's managed encryption/protocol libraries must accompany the relay.
+        foreach (string source in Directory.EnumerateFiles(AppContext.BaseDirectory, "*.dll"))
+            File.Copy(source, Path.Combine(service, Path.GetFileName(source)), true);
         string assets = Path.Combine(service, "Dashboard"); Directory.CreateDirectory(assets);
         foreach (string source in Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory, "Dashboard")))
             File.Copy(source, Path.Combine(assets, Path.GetFileName(source)), true);

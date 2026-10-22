@@ -5,6 +5,7 @@ relay_root=$(CDPATH= cd -- "$relay_dir/../.." && pwd)
 mkdir -p "$relay_root/Temp/DashboardRelay" "$relay_root/Artifacts/DashboardRealtime"
 cd "$relay_dir"
 DOTNET_CLI_TELEMETRY_OPTOUT=1 dotnet build DashboardRelay.csproj --nologo -v:q
+dotnet run --project "$relay_root/Tests~/DashboardPush/PushTests.csproj"
 cd "$relay_root"
 mcs -langversion:latest -define:UNITY_STANDALONE_OSX -r:System.Web.Extensions \
   -out:Temp/DashboardRelay/BridgeHarness.exe 'Tests~/DashboardRelay/BridgeHarness.cs' \

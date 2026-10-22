@@ -150,7 +150,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public bool inputAvailable, serialDebug, featurePanel, constantPaused, audioRefreshAvailable;
         public string[] deviceNames, deviceKeys, outputStatus, selectedDevices;
         public bool[] outputAvailable;
-        public bool featuresAvailable, rulesLocked, hasQueuedPreset, canStartTestRace;
+        public bool featuresAvailable, rulesLocked, hasQueuedPreset, canStartTestRace, bothPlayersAutodrive;
         public string activePreset, selectedPreset;
         public FeatureSnapshot[] features;
     }
@@ -329,6 +329,9 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             case "/":
             case "/index.html": fileName = "index.html"; contentType = "text/html; charset=utf-8"; return true;
             case "/live.js": fileName = "live.js"; contentType = "application/javascript; charset=utf-8"; return true;
+            case "/notifications.js": fileName = "notifications.js"; contentType = "application/javascript; charset=utf-8"; return true;
+            case "/manifest.webmanifest": fileName = "manifest.webmanifest"; contentType = "application/manifest+json"; return true;
+            case "/app-icon.png": fileName = "app-icon.png"; contentType = "image/png"; return true;
             case "/diagnostics.js": fileName = "diagnostics.js"; contentType = "application/javascript; charset=utf-8"; return true;
             case "/app.js": fileName = "app.js"; contentType = "application/javascript; charset=utf-8"; return true;
             case "/style.css": fileName = "style.css"; contentType = "text/css; charset=utf-8"; return true;
@@ -398,7 +401,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             selected[i] = device >= 0 && device < keys.Length ? keys[device] : "";
         }
         return new SettingsSnapshot {
-            featuresAvailable = features != null, features = BuildFeatures(features),
+            featuresAvailable = features != null, features = BuildFeatures(features), bothPlayersAutodrive = race?.BothPlayersAutodrive ?? false,
             activePreset = features?.ActivePreset.ToString() ?? "", selectedPreset = features?.SelectedPreset.ToString() ?? "",
             rulesLocked = features?.RulesLocked ?? false, hasQueuedPreset = features?.HasQueuedPreset ?? false,
             canStartTestRace = features != null && race.CanUseDashboardControls &&

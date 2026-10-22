@@ -6,6 +6,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '../..');
+process.env.RACING_PUSH_DATA ||= path.join(root,'Temp/DashboardRelay/Push');
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 function wire(body) {
   let crc = 65535;
@@ -70,7 +71,7 @@ test('dashboard remains an HTML page when Unity is stopped and reconnects after 
         assert.equal(page.headers['content-disposition'],undefined);assert.match(page.text,/RACING CONTROL/);
         assert.equal(page.headers['cache-control'],'no-store');
       }
-      for(const [route,mime] of [['/app.js','application/javascript'],['/live.js','application/javascript'],['/style.css','text/css']]) {
+      for(const [route,mime] of [['/app.js','application/javascript'],['/live.js','application/javascript'],['/style.css','text/css'],['/diagnostics.js','application/javascript'],['/notifications.js','application/javascript'],['/sw.js','application/javascript'],['/app-icon.png','image/png'],['/manifest.webmanifest','application/manifest+json']]) {
         const asset=await request(route,headers);assert.equal(asset.status,200);assert.ok(asset.headers['content-type'].startsWith(mime));
       }
       const unavailable=await request('/api/status',headers);
@@ -171,6 +172,22 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       assert.equal((await request('/api/action/serial',{...remote,method:'POST',body:{command:'CALIBRATE',args:['ALL']}})).status,403);
       assert.equal((await request('/api/action/start',{method:'POST',origin:'https://evil.example',body:{}})).status,403);
       await assert.rejects(connect('/api/events',{origin:'https://evil.example'}),/403/);
+    });
+    await t.test('push subscription endpoints require operator identity, scoped ownership and valid browser keys',async()=>{
+      const operator={...remote,user:'operator@example.com'};
+      assert.equal((await request('/api/push',remote)).json.enabled,false);
+      const config=(await request('/api/push',operator)).json;assert.equal(config.enabled,true);assert.equal(Buffer.from(config.publicKey,'base64url').length,65);
+      const ecdh=crypto.createECDH('prime256v1');ecdh.generateKeys();
+      const subscription={endpoint:'https://web.push.apple.com/owned-test-'+crypto.randomUUID(),keys:{p256dh:ecdh.getPublicKey().toString('base64url'),auth:crypto.randomBytes(16).toString('base64url')}};
+      const apply=(path,body,headers=operator)=>request('/api/push/'+path,{...headers,method:'POST',body});
+      assert.equal((await apply('subscribe',subscription,remote)).status,403);
+      assert.equal((await apply('subscribe',{...subscription,endpoint:'https://127.0.0.1/private'})).status,400);
+      try{
+        assert.equal((await apply('subscribe',subscription)).status,200);
+        const info=(await request('/api/push',operator)).json;assert.equal(info.subscriptions,1);assert.ok(!JSON.stringify(info).includes(subscription.endpoint));
+        assert.equal((await apply('unsubscribe',{endpoint:subscription.endpoint},{origin:'http://127.0.0.1:8766'})).status,400,'another operator cannot remove the device');
+      }finally{await apply('unsubscribe',{endpoint:subscription.endpoint});}
+      assert.equal((await request('/api/push',operator)).json.subscriptions,0);
     });
     await t.test('live settings validate values, permissions, revisions and idempotent requests', async()=>{
       const make=async(command,args)=>{
@@ -279,6 +296,13 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         return request('/api/action/keyboardMenu',{method:'POST',origin:'http://127.0.0.1:8766',body:{id:crypto.randomUUID(),targetSession:snapshot.sessionId,
           expectedState:snapshot.state,stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime,command,args}});
       };
+      const recoverySnapshot=(await request('/api/status')).json;
+      assert.equal(recoverySnapshot.inputControl.players[0].active,false);
+      assert.equal(recoverySnapshot.inputControl.players[0].canRecover,true);
+      const recovery={id:crypto.randomUUID(),targetSession:recoverySnapshot.sessionId,expectedState:'Game',stateRevision:recoverySnapshot.stateRevision,observedAt:recoverySnapshot.serverTime,command:'recover',args:['0']};
+      assert.equal((await request('/api/action/keyboardMenu',{method:'POST',origin:'http://127.0.0.1:8766',body:recovery})).status,200);
+      assert.equal((await request('/api/action/keyboardMenu',{method:'POST',origin:'http://127.0.0.1:8766',body:recovery})).status,200,'duplicate recovery request is idempotent');
+      assert.equal((await request('/api/status')).json.inputControl.players[0].active,false,'recovery never takes over movement');
       assert.equal((await menu('restart',['0'])).status,409);
       assert.equal((await menu('escape')).status,200);
       assert.equal((await request('/api/status')).json.inputControl.players[0].menuOpen,true);
@@ -381,6 +405,25 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       const snapshot=(await request('/api/status')).json;
       assert.equal(snapshot.state,'Countdown');assert.equal(snapshot.settings.canStartTestRace,false);
       assert.equal(snapshot.settings.features.find(feature=>feature.id==='PlayerTwoAutodrive').enabled,true);
+      send('state:Result');await waitFor(async()=>(await request('/api/status')).json.state==='Result');
+      const both=await make();both.args=['both'];assert.equal((await apply(both)).status,200);
+      assert.equal((await request('/api/status')).json.settings.bothPlayersAutodrive,true);
+
+    });
+    if(process.env.RACING_BROWSER_TEST==='1') await t.test('actual browser: hardware diagnosis opens on desktop and iPhone-sized layout',async()=>{
+      const {chromium}=require('playwright');const browser=await chromium.launch({headless:true,channel:'chrome'});
+      try{
+        const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
+        await page.goto('http://127.0.0.1:8766/');await page.locator('#hardware-grid button').first().waitFor();
+        await page.locator('#hardware-grid button').first().click();await page.locator('#diagnostics-dialog:visible').waitFor();
+        assert.ok(await page.locator('#diagnostics-facts li').count()>0);
+        fs.mkdirSync(path.join(root,'Artifacts/DashboardRealtime'),{recursive:true});
+        await page.locator('#diagnostics-dialog').screenshot({path:path.join(root,'Artifacts/DashboardRealtime/diagnosis-desktop.png')});
+        await page.setViewportSize({width:390,height:844});await page.locator('#diagnostics-dialog').screenshot({path:path.join(root,'Artifacts/DashboardRealtime/diagnosis-mobile.png')});
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+        await page.locator('#diagnostics-close').click();assert.equal(await page.locator('#diagnostics-dialog').isVisible(),false);
+        assert.deepEqual(errors,[]);
+      }finally{await browser.close();}
     });
     if(process.env.RACING_BROWSER_TEST==='1') await t.test('actual browser: player input buttons, cancellation, blur and ESC actions',async()=>{
       const {chromium}=require('playwright');const browser=await chromium.launch({headless:true,channel:'chrome'});
@@ -397,7 +440,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         await right.focus();await page.keyboard.down('Space');
         await waitFor(async()=>(await request('/api/status')).json.players[0].steering===10);
         await page.keyboard.up('Space');await waitFor(async()=>(await request('/api/status')).json.players[0].steering===0);
-        await page.locator('[data-input-player="0"][data-input-pulse="reset"]').click();
+        assert.equal(await page.locator('[data-input-player="0"][data-input-pulse="reset"]').isDisabled(),true,'title has no vehicle to recover');
         await page.locator('#keyboard-take-1:enabled').click();
         await page.locator('[data-input-player="1"][data-input-pulse="ready"]').click();
         const left=page.locator('[data-input-player="1"][data-input-hold="left"]');await left.hover();await page.mouse.down();
@@ -419,7 +462,10 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
           settingsRevision:modeSnapshot.settingsRevision,observedAt:modeSnapshot.serverTime,command:'inputMode',args:['keyboard']}});
         assert.equal(mode.status,200);await page.locator('#keyboard-take-0:enabled').waitFor();
         await delay(450);assert.equal((await request('/api/status')).json.inputControl.players[0].active,false,'heartbeats cannot silently reacquire after mode reconfiguration');
-        send('state:Game');await page.locator('#keyboard-escape:enabled').waitFor();await page.locator('#keyboard-escape').click();
+        send('state:Game');await page.locator('#keyboard-escape:enabled').waitFor();
+        await page.locator('[data-input-player="0"][data-input-pulse="reset"]:enabled').click();
+        assert.equal((await request('/api/status')).json.inputControl.players[0].active,false,'recovery works without takeover');
+        await page.locator('#keyboard-escape').click();
         await page.locator('[data-menu-player="0"][data-menu-action="resume"]:enabled').click();
         await waitFor(async()=>!(await request('/api/status')).json.inputControl.players[0].menuOpen);
         await page.locator('#keyboard-escape:enabled').click();

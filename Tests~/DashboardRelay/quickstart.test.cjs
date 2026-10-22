@@ -6,6 +6,7 @@ const {tmpdir}=require('node:os');
 const path=require('node:path');
 const http=require('node:http');
 const root=path.resolve(__dirname,'../..');
+process.env.RACING_PUSH_DATA ||= path.join(root,'Temp/DashboardRelay/Push');
 const dll=path.join(root,'Tools/DashboardRelay/bin/Debug/net10.0/DashboardRelay.dll');
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(check){const end=Date.now()+20000;while(Date.now()<end){const result=check();if(result)return result;await wait(20);}throw new Error('Launcher timed out');}

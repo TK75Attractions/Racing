@@ -125,3 +125,8 @@ InitTestScene*.unity*
 /Tools/RaceMonitor/monitor.paused
 **/__pycache__/
 /Tools/RaceMonitor/monitor.state.json.lock
+
+# Web Push protocol test project; runtime subscriptions/keys never belong in Git.
+!/Tests~/DashboardPush/PushTests.csproj
+/Tests~/DashboardPush/bin/
+/Tests~/DashboardPush/obj/

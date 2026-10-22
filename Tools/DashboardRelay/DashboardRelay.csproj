@@ -5,7 +5,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="../../Assets/StreamingAssets/Dashboard/*.html;../../Assets/StreamingAssets/Dashboard/*.js;../../Assets/StreamingAssets/Dashboard/*.css;../../Assets/StreamingAssets/Dashboard/*.svg;../../Assets/StreamingAssets/Dashboard/*.json"
+    <PackageReference Include="Lib.Net.Http.WebPush" Version="3.3.1" />
+    <Content Include="../../Assets/StreamingAssets/Dashboard/*.html;../../Assets/StreamingAssets/Dashboard/*.js;../../Assets/StreamingAssets/Dashboard/*.css;../../Assets/StreamingAssets/Dashboard/*.svg;../../Assets/StreamingAssets/Dashboard/*.json;../../Assets/StreamingAssets/Dashboard/*.png;../../Assets/StreamingAssets/Dashboard/*.webmanifest"
              Link="Dashboard/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
