@@ -36,7 +36,7 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
         public int cpuOvertakes, humanOvertakes;
         public float splitSeconds, rearPairedSeconds;
         public bool occupiedRecoveryRejected, visibleRecoveryRejected, hiddenRecoverySucceeded, checkpointStatePreserved, droveAfterRecovery;
-        public bool automaticRecoverySucceeded, humanContactGraceSucceeded, humanContactGraceReleased;
+        public bool automaticRecoverySucceeded, humanContactPreserved, humanContactSeparated;
         public bool repeatedRecoveryMovedBack;
         public string automaticRecoveryDetails;
         public List<Trial> cars = new List<Trial>();
@@ -66,7 +66,7 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
             report.mode="recovery-only";
             typeof(Gmanager).GetMethod("StartGameWhenScreenCovered", Private).Invoke(manager, null);
             yield return ValidateRecovery();
-            report.success=report.occupiedRecoveryRejected && report.visibleRecoveryRejected && report.hiddenRecoverySucceeded && report.checkpointStatePreserved && report.droveAfterRecovery && report.automaticRecoverySucceeded && report.humanContactGraceSucceeded && report.humanContactGraceReleased && report.repeatedRecoveryMovedBack;
+            report.success=report.occupiedRecoveryRejected && report.visibleRecoveryRejected && report.hiddenRecoverySucceeded && report.checkpointStatePreserved && report.droveAfterRecovery && report.automaticRecoverySucceeded && report.humanContactPreserved && report.humanContactSeparated && report.repeatedRecoveryMovedBack;
             FinishReport(); yield break;
         }
         typeof(LapManager).GetField("goalLap", Private).SetValue(laps, 2);
@@ -102,7 +102,7 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
         report.retryCreatesNewCpus = manager.GetParticipant(2).Car != oldCpu && manager.Participants.Count == 4;
         yield return ValidateRecovery();
         report.success = report.error == null && report.countdownStopped && report.resultsContainFour && report.retryCreatesNewCpus && report.cpuFinishKeptHumansRacing && report.cpuOvertakes > 0 && report.humanOvertakes > 0 &&
-            report.occupiedRecoveryRejected && report.visibleRecoveryRejected && report.hiddenRecoverySucceeded && report.checkpointStatePreserved && report.droveAfterRecovery && report.automaticRecoverySucceeded && report.humanContactGraceSucceeded && report.humanContactGraceReleased && report.repeatedRecoveryMovedBack;
+            report.occupiedRecoveryRejected && report.visibleRecoveryRejected && report.hiddenRecoverySucceeded && report.checkpointStatePreserved && report.droveAfterRecovery && report.automaticRecoverySucceeded && report.humanContactPreserved && report.humanContactSeparated && report.repeatedRecoveryMovedBack;
         FinishReport();
     }
     private void FinishReport()
@@ -249,11 +249,11 @@ public sealed class NpcRaceValidationProbe : MonoBehaviour
         yield return new WaitForSeconds(.3f);
         Collider ownSolid=Array.Find(cpu.Car.GetComponentsInChildren<Collider>(),c=>!c.isTrigger && c.attachedRigidbody==cpu.Body);
         Collider humanSolid=Array.Find(humanCar.Car.GetComponentsInChildren<Collider>(),c=>!c.isTrigger && c.attachedRigidbody==humanCar.Body);
-        report.humanContactGraceSucceeded=Physics.GetIgnoreCollision(ownSolid,humanSolid);
-        // Test expiry after separation; parking on the driving route can cause a new contact.
+        report.humanContactPreserved=!Physics.GetIgnoreCollision(ownSolid,humanSolid);
+        // Contact stays enabled both during contact and after separation.
         humanCar.Body.position=new Vector3(2600,100,2700); Physics.SyncTransforms();
         yield return new WaitForSeconds(3f);
-        report.humanContactGraceReleased=!Physics.GetIgnoreCollision(ownSolid,humanSolid);
+        report.humanContactSeparated=!Physics.GetIgnoreCollision(ownSolid,humanSolid);
     }
 
     public void Contact(GameObject vehicle,Collision collision)

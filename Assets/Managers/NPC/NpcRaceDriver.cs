@@ -34,9 +34,6 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     private int recoveryBackoffSteps;
     public float LastRecoveryRollbackMeters { get; private set; }
     public string RecoveryBlockedReason { get; private set; } = "";
-    private sealed class ContactGrace { public Rigidbody Other; public Collider[] Colliders; public float Until; }
-    private Collider[] ownColliders;
-    private readonly List<ContactGrace> contactGrace = new List<ContactGrace>(2);
     private readonly Collider[] overlaps = new Collider[32];
     public int PlayerIndex => -1;
     public string DeviceId => "CPU";
@@ -46,7 +43,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     public int RecoveryCount { get; private set; }
     public string ContestPhase => RaceFeatureController.Enabled(RaceFeature.CpuRacing) ? ((manager.time + entry.Index * 3f) % 16f < 10f ? "Attack" : "Counterattack room") : "Legacy";
     public float TargetSpeed => targetSpeed * 3.6f;
-    public bool HasContactGrace => contactGrace.Count > 0;
+    public bool HasContactGrace => false; // Racing cars always keep physical contact.
     // Read-only diagnostics use the same decisions as the physical driver.
     public string DrivingStatus => !driving ? "Stopped" :
         groundedTires == 0 ? "Airborne" : Time.time < reverseUntil ? "Reversing" :
@@ -58,7 +55,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     {
         manager = race; course = race.course; laps = lapManager; entry = participant;
         humanPace=RaceHumanPace.For(race);
-        body = GetComponent<Rigidbody>(); body.interpolation = RigidbodyInterpolation.Interpolate; ownColliders = GetComponentsInChildren<Collider>(); tires = GetComponentsInChildren<TireForce>();
+        body = GetComponent<Rigidbody>(); body.interpolation = RigidbodyInterpolation.Interpolate; tires = GetComponentsInChildren<TireForce>();
         rivalIndex = entry.Index % 2; lane = desiredLane = entry.Index % 2 == 0 ? -2f : 2f;
         mover = GetComponent<DebugMover>(); mover.SetInputSource(this);
         CarResetter resetter = GetComponent<CarResetter>();
@@ -81,7 +78,6 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
     }
     private void FixedUpdate()
     {
-        RestoreContactCollisions();
         if (!driving || manager.state != Gmanager.State.Game || !entry.IsRacing || laps == null || course == null || !course.HasValidPath)
         { CurrentState = DriveInputState.Neutral; return; }
         float dt = Time.fixedDeltaTime, sign = manager.CourseProgressSign;
@@ -277,31 +273,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
                 else desiredLane = Vector3.Dot(other.Body.position - body.position, transform.right) >= 0 ? -3f : 3f;
             }
             yieldUntil = Time.time + (RaceFeatureController.Enabled(RaceFeature.CpuRacing) ? .65f : 3f);
-            if (!contactGrace.Exists(grace => grace.Other == other.Body))
-            {
-                ContactGrace grace = new ContactGrace { Other = other.Body, Colliders = other.Car.GetComponentsInChildren<Collider>(), Until = Time.time + 2f };
-                SetPairCollisions(grace, false); contactGrace.Add(grace);
-            }
-        }
-    }
-    private void RestoreContactCollisions()
-    {
-        for (int i = contactGrace.Count - 1; i >= 0; i--)
-        {
-            ContactGrace grace = contactGrace[i];
-            if (grace.Other != null && (Time.time < grace.Until || Vector3.Distance(body.position, grace.Other.position) < 5f)) continue;
-            SetPairCollisions(grace, true); contactGrace.RemoveAt(i);
-        }
-    }
-    private void SetPairCollisions(ContactGrace grace, bool value)
-    {
-        foreach (Collider own in ownColliders)
-        foreach (Collider other in grace.Colliders)
-            if (own != null && other != null && !own.isTrigger && !other.isTrigger) Physics.IgnoreCollision(own, other, !value);
-    }
-    private void OnDestroy()
-    {
-        foreach (ContactGrace grace in contactGrace) SetPairCollisions(grace, true);
-    }
 
+        }
+    }
 }
