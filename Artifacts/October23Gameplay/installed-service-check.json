@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "existingPlistPreserved": true,
+  "installedManagedLibrariesMatch": true,
+  "pushApiReady": true,
+  "publicKeyBytes": 65,
+  "assets": {
+    "sw.js": 200,
+    "manifest.webmanifest": 200,
+    "app-icon.png": 200,
+    "notifications.js": 200
+  },
+  "devicePermissionStillRequired": true
+}
