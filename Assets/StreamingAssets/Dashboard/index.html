@@ -51,6 +51,36 @@
 
       <div class="grid">
         <section class="panel controls" aria-labelledby="controls-title"><div class="panel-heading"><div><span class="section-kicker">01 / RACE FLOW</span><h2 id="controls-title">進行コントロール</h2></div></div><div class="flow" aria-label="レース進行状況"><div class="flow-step" data-flow-state="Title"><span>01</span><strong>タイトル</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="CarSelection"><span>02</span><strong>車選択</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Tutorial"><span>03</span><strong>チュートリアル</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Countdown"><span>04</span><strong>カウントダウン</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Game"><span>05</span><strong>レース</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Goal"><span>06</span><strong>ゴール処理</strong></div><div class="flow-line"></div><div class="flow-step" data-flow-state="Result"><span>07</span><strong>結果</strong></div></div><p class="flow-state" id="flow-state" role="status">Unity の状態を待っています</p><div class="action-area"><span class="action-label">今できる操作</span><div class="buttons"><button class="primary" data-action="start" disabled><span>▶</span> 車選択へ進む</button><button data-action="tutorial" disabled>チュートリアルへ進む</button><button data-action="countdown" disabled>カウントダウンへ進む</button><button data-action="result" disabled>レースを終了して結果を表示</button><button data-action="retry" disabled>もう一度走る</button><button data-action="title" disabled>タイトルへ戻る</button></div><p id="action-empty" class="action-empty" role="status">Unity の接続を待っています</p></div><p class="control-note" id="control-note">Unity の接続後、現在の状態に応じて操作できます。</p></section>
+        <section class="panel game-settings" aria-labelledby="settings-title">
+          <div class="panel-heading"><div><span class="section-kicker">SETTINGS / LIVE</span><h2 id="settings-title">音量・出力・デバッグ</h2></div></div>
+          <p class="control-note">ESCメニューと共通の設定です。音量と出力機器は保存されます。入力・デバッグ設定は今回の実行中のみ有効です。</p>
+          <div class="settings-grid">
+            <fieldset><legend>音量（全プレイヤー共通）</legend>
+              <label for="settings-master">全体<output id="settings-master-value">—</output></label><input id="settings-master" type="range" min="0" max="100" step="1" data-setting="volume" data-setting-arg="master" disabled>
+              <label for="settings-bgm">BGM<output id="settings-bgm-value">—</output></label><input id="settings-bgm" type="range" min="0" max="100" step="1" data-setting="volume" data-setting-arg="bgm" disabled>
+              <label for="settings-engine">エンジン音<output id="settings-engine-value">—</output></label><input id="settings-engine" type="range" min="0" max="100" step="1" data-setting="volume" data-setting-arg="engine" disabled>
+              <label for="settings-effects">効果音<output id="settings-effects-value">—</output></label><input id="settings-effects" type="range" min="0" max="100" step="1" data-setting="volume" data-setting-arg="effects" disabled>
+            </fieldset>
+            <fieldset><legend>オーディオ出力</legend>
+              <label for="settings-output-0">P1 出力</label><select id="settings-output-0" data-setting="device" data-setting-arg="0" disabled></select><p id="settings-output-0-status" class="control-note"></p>
+              <label for="settings-output-1">P2 出力</label><select id="settings-output-1" data-setting="device" data-setting-arg="1" disabled></select><p id="settings-output-1-status" class="control-note"></p>
+              <button id="settings-refresh" type="button" data-setting="refreshDevices" disabled>出力機器を再検出</button>
+            </fieldset>
+            <fieldset><legend>入力デバッグ</legend>
+              <label for="settings-inputMode">入力モード</label><select id="settings-inputMode" data-setting="inputMode" disabled><option value="serial">P1/P2 実機（ESP32）</option><option value="keyboard">P1/P2 キーボード</option><option value="mixed">P1 実機ハンドル＋W/S・P2 キーボード</option></select>
+              <label for="settings-steeringMode">P1 ハンドルテスト</label><select id="settings-steeringMode" data-setting="steeringMode" disabled><option value="Normal">通常入力</option><option value="KeyboardPedal">実機ハンドル＋W/Sペダル</option><option value="ConstantPedal">実機ハンドル＋一定ペダル</option></select>
+              <label for="settings-constantPedal">一定ペダル<output id="settings-constantPedal-value">—</output></label><input id="settings-constantPedal" type="range" min="0" max="100" step="1" data-setting="constantPedal" disabled>
+              <label class="setting-check"><input id="settings-constantPaused" type="checkbox" data-setting="constantPaused" disabled>一定ペダルを停止</label>
+              <p class="control-note">実行中も切替可能。切替後はペダルを離してください。一定ペダルはレース中のみ有効です。シミュレーター接続時は起動時のPTY設定を優先します。</p>
+            </fieldset>
+            <fieldset><legend>デバッグ表示</legend>
+              <label class="setting-check"><input id="settings-serialDebug" type="checkbox" data-setting="serialDebug" disabled>シリアルモニターを表示</label>
+              <label class="setting-check"><input id="settings-featurePanel" type="checkbox" data-setting="featurePanel" disabled>F8 デバッグパネルを表示</label>
+              <p class="control-note">F8パネルはゲーム画面に表示します。機能別の比較スイッチはパネル内で変更できます。</p>
+            </fieldset>
+          </div>
+          <p id="settings-status" class="control-note" role="status" aria-live="polite">Unity の接続を待っています。</p>
+        </section>
         <section class="panel cameras" aria-labelledby="cameras-title">
           <div class="panel-heading"><div><span class="section-kicker">02 / LIVE VIEW</span><h2 id="cameras-title">プレイヤー画面</h2></div><span class="muted-note">約2秒ごとに更新</span></div>
           <div class="camera-grid">

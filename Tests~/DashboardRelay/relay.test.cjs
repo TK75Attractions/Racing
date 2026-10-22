@@ -172,6 +172,37 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       assert.equal((await request('/api/action/start',{method:'POST',origin:'https://evil.example',body:{}})).status,403);
       await assert.rejects(connect('/api/events',{origin:'https://evil.example'}),/403/);
     });
+    await t.test('live settings validate values, permissions, revisions and idempotent requests', async()=>{
+      const make=async(command,args)=>{
+        const snapshot=(await request('/api/status')).json;
+        return {id:crypto.randomUUID(),targetSession:snapshot.sessionId,expectedState:snapshot.state,
+          stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime,settingsRevision:snapshot.settingsRevision,command,args};
+      };
+      const apply=body=>request('/api/action/settings',{method:'POST',origin:'http://127.0.0.1:8766',body});
+      const volume=await make('volume',['engine','0.42']);
+      assert.equal((await request('/api/action/settings',{...remote,method:'POST',body:volume})).status,403);
+      const stale=await make('inputMode',['keyboard']);
+      assert.equal((await apply(volume)).status,200);
+      assert.equal((await request('/api/status')).json.settings.engine,.42);
+      assert.equal((await apply(stale)).json.reason,'settings_changed');
+      assert.equal((await apply(volume)).status,200,'same ID returns cached result despite changed settings');
+      for (const args of [['master','NaN'],['master','Infinity'],['master','1.01'],['master','-1'],['bogus','0.5'],['bgm']])
+        assert.equal((await apply(await make('volume',args))).status,409);
+      assert.equal((await apply(await make('device',['0','usb-key']))).status,200);
+      assert.equal((await apply(await make('device',['1','usb-key']))).json.reason,'audio_unavailable');
+      assert.equal((await apply(await make('device',['1','missing-key']))).status,409);
+      assert.equal((await apply(await make('device',['1','hdmi-key']))).status,200);
+      assert.deepEqual((await request('/api/status')).json.settings.selectedDevices,['usb-key','hdmi-key']);
+      for (const [command,args] of [['inputMode',['keyboard']],['inputMode',['mixed']],['inputMode',['serial']],
+          ['steeringMode',['ConstantPedal']],['constantPedal',['0.65']],['constantPaused',['true']],
+          ['serialDebug',['true']],['featurePanel',['true']],['refreshDevices',[]]])
+        assert.equal((await apply(await make(command,args))).status,200,command);
+      const result=(await request('/api/status')).json.settings;
+      assert.equal(result.inputMode,'serial');assert.equal(result.constantPedal,.65);
+      assert.equal(result.constantPaused,true);assert.equal(result.serialDebug,true);assert.equal(result.featurePanel,true);
+      assert.equal((await apply(await make('inputMode',['invalid']))).status,409);
+      assert.equal((await apply(await make('serialDebug',['1']))).status,409);
+    });
     const first=await open('/api/events',remote);
     await waitFor(()=>first.packets.some(packet=>packet.snapshot));
     await t.test('FPS measurements reach WebSocket viewers',async()=>{
@@ -261,12 +292,29 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         await page.getByText('ローカル / WebSocket',{exact:true}).waitFor();
         assert.equal(await page.locator('#share-url').inputValue(),'https://race.test.ts.net/');
         assert.equal(await page.locator('#share-dashboard').isVisible(),true);
+        await page.locator('#settings-master:enabled').waitFor();
+        await page.locator('#settings-master').evaluate(control => {
+          control.value = '47'; control.dispatchEvent(new Event('input', {bubbles:true}));
+          control.dispatchEvent(new Event('change', {bubbles:true}));
+        });
+        await page.locator('#settings-status').filter({hasText:'設定を反映しました'}).waitFor();
+        await waitFor(async()=>(await request('/api/status')).json.settings.master===.47);
+        await page.locator('#settings-inputMode:enabled').selectOption('keyboard');
+        await waitFor(async()=>(await request('/api/status')).json.settings.inputMode==='keyboard');
+        await page.locator('#settings-featurePanel:enabled').uncheck();
+        await waitFor(async()=>(await request('/api/status')).json.settings.featurePanel===false);
+        await page.locator('#settings-output-0:enabled').selectOption('');
+        await waitFor(async()=>(await request('/api/status')).json.settings.selectedDevices[0]==='');
+        await page.waitForFunction(() => !document.querySelector('#settings-output-1 option[value="usb-key"]').disabled);
+        await page.locator('#settings-refresh:enabled').click();
+        await page.locator('#settings-status').filter({hasText:'設定を反映しました'}).waitFor();
         send('rx:'+wire('EVT,500,0,STATE,READY'));
         send('rx:'+wire('TEL,501,0,-12.5,0.75,0,25,0,0.4'));
         send('rx:'+wire('ERR,502,0,WARN,HANDLE,ANGLE_REFERENCE_INVALID'));
-        await page.locator('#latest-tel').filter({hasText:'ACCEL 75.0%'}).waitFor();
+        await page.locator('#latest-tel').filter({hasText:'アクセル75.0%'}).waitFor();
         await page.locator('#serial-log').filter({hasText:'2人分の入力が使用可能'}).waitFor();
         assert.ok(!(await page.locator('#serial-log').innerText()).includes('@TEL,'));
+        await page.locator('#raw-open').click();
         await page.locator('#raw-log').filter({hasText:'@TEL,'}).waitFor();
         assert.equal(await page.locator('[data-flow-state]').count(),7);
         assert.equal(await page.locator('#hardware-grid .hardware-card').count(),6);
@@ -274,18 +322,22 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         await page.locator('#raw-pause').click();
         assert.match(await page.locator('#raw-status').innerText(),/一時停止/);
         await page.locator('#raw-pause').click();
+        await page.locator('#raw-close').click();
         assert.match(await page.locator('#serial-alert-list').innerText(),/基準角度が無効/);
         await page.locator('[data-action="start"]:enabled').waitFor();
         fs.mkdirSync(path.join(root,'Artifacts/DashboardRealtime'),{recursive:true});
         await page.screenshot({path:path.join(root,'Artifacts/DashboardRealtime/desktop.png'),fullPage:true});
+        await page.locator('.game-settings').screenshot({path:path.join(root,'Artifacts/DashboardRealtime/settings-desktop.png')});
         await page.locator('[data-action="start"]').click();
         await page.locator('#game-state').filter({hasText:'カウントダウン'}).waitFor();
         await page.setViewportSize({width:390,height:844});
         await page.screenshot({path:path.join(root,'Artifacts/DashboardRealtime/mobile.png'),fullPage:true});
+        await page.locator('.game-settings').screenshot({path:path.join(root,'Artifacts/DashboardRealtime/settings-mobile.png')});
         assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),'mobile overflow');
         send('freeze');await delay(3500);
         assert.equal(await page.locator('[data-action="start"]').isDisabled(),true);
         assert.match(await page.locator('#live-detail').innerText(),/状態更新が停止/);
+        assert.equal(await page.locator('#settings-master').isDisabled(),true);
         send('unfreeze');
         relay.kill('SIGKILL');await waitFor(()=>relay.exitCode!==null||relay.signalCode!==null);
         await page.locator('#connection.offline').waitFor();
@@ -297,7 +349,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       } finally {await browser.close();}
     });
     fs.mkdirSync(path.join(root,'Artifacts/DashboardRealtime'),{recursive:true});
-    fs.writeFileSync(path.join(root,'Artifacts/DashboardRealtime/integration.json'),JSON.stringify({passed:true,source:'production bridge and serial journal / scene and graphics stubs',network:'loopback with simulated Serve headers',tests:process.env.RACING_BROWSER_TEST==='1'?8:7},null,2));
+    fs.writeFileSync(path.join(root,'Artifacts/DashboardRealtime/integration.json'),JSON.stringify({passed:true,source:'production bridge and serial journal / scene and graphics stubs',network:'loopback with simulated Serve headers',tests:process.env.RACING_BROWSER_TEST==='1'?10:9},null,2));
   } finally {
     sockets.forEach(s=>s.close());send('quit');relay.kill('SIGTERM');
     await delay(300);if(bridge.exitCode===null)bridge.kill('SIGKILL');if(relay.exitCode===null)relay.kill('SIGKILL');

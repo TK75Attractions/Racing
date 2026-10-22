@@ -14,11 +14,18 @@ namespace UnityEngine
     public class SerializeField : Attribute { }
     public class TooltipAttribute : Attribute { public TooltipAttribute(string value) { } }
     public class MinAttribute : Attribute { public MinAttribute(float value) { } }
+    public static class PlayerPrefs {
+        private static readonly Dictionary<string,float> Values = new Dictionary<string,float>();
+        public static float GetFloat(string key,float fallback)=>Values.TryGetValue(key,out float v)?v:fallback;
+        public static void SetFloat(string key,float value)=>Values[key]=value;
+        public static void Save() { }
+    }
+    public static class AudioListener { public static float volume; }
     public static class Application { public static bool runInBackground; public static string streamingAssetsPath; }
     public static class Time { private static readonly Stopwatch Clock = Stopwatch.StartNew(); public static double realtimeSinceStartupAsDouble => Clock.Elapsed.TotalSeconds; public static float realtimeSinceStartup => (float)realtimeSinceStartupAsDouble; public static float time => realtimeSinceStartup; }
     public static class Debug { public static void Log(object value) => Console.WriteLine(value); public static void LogWarning(object value) => Console.Error.WriteLine(value); public static void LogError(object value) => Console.Error.WriteLine(value); }
     public static class JsonUtility { public static string ToJson(object value) => new JavaScriptSerializer().Serialize(value); public static T FromJson<T>(string value) => new JavaScriptSerializer().Deserialize<T>(value); }
-    public static class Mathf { public static float Clamp(float v,float a,float b)=>Math.Max(a,Math.Min(v,b)); public static float Round(float v)=>(float)Math.Round(v); public static float Max(float a,float b)=>Math.Max(a,b); }
+    public static class Mathf { public static float Clamp01(float v)=>Clamp(v,0,1); public static float Clamp(float v,float a,float b)=>Math.Max(a,Math.Min(v,b)); public static float Round(float v)=>(float)Math.Round(v); public static float Max(float a,float b)=>Math.Max(a,b); }
     public class Camera { }
     public class RenderTexture { public static RenderTexture active; public static RenderTexture GetTemporary(int w,int h,int d)=>new RenderTexture(); public static void ReleaseTemporary(RenderTexture v) { } }
     public enum TextureFormat { RGB24 }
@@ -33,6 +40,17 @@ public class InputManager
 {
     public event Action<string,string> SerialLineProcessed;
     public TwoPlayerSerialInputSource SharedSerialInputSource;
+    public string InputMode = "serial";
+    public P1SteeringTestMode SteeringTestMode;
+    public float ConstantTestPedal = 1f;
+    public bool SerialDebugMode, ConstantTestPedalPaused;
+    public bool IsSerialDebugDisplayVisible => SerialDebugMode;
+    public bool SetInputMode(string mode) { if(mode!="serial"&&mode!="keyboard"&&mode!="mixed")return false;InputMode=mode;return true; }
+    public void SetP1SteeringTestMode(P1SteeringTestMode mode)=>SteeringTestMode=mode;
+    public void SetP1ConstantPedal(float value)=>ConstantTestPedal=value;
+    public void SetSerialDebugDisplayVisible(bool value) { }
+    public void PauseP1ConstantPedal()=>ConstantTestPedalPaused=true;
+    public void ResumeP1ConstantPedal()=>ConstantTestPedalPaused=false;
     public string InputModeLabel => "Serial P1/P2";
     public DriveInputState GetInputState(int i)=>SharedSerialInputSource?.GetInputState(i) ?? DriveInputState.Neutral;
     public bool IsPlayerConnected(int i)=>SharedSerialInputSource?.IsConnected(i) ?? false;
@@ -43,6 +61,7 @@ public class Gmanager
 {
     public enum State { Title, CarSelection, Tutorial, Countdown, Game, Result }
     public State state=State.Title;
+    public RaceFeatureController Features = new RaceFeatureController();
     public bool CanUseDashboardControls=>true;
     public bool IsPreparing=>state==State.Title;
     public float time=>UnityEngine.Time.time;
@@ -62,6 +81,19 @@ public class Gmanager
     public int GetParticipantLap(RaceParticipant p)=>0; public float GetParticipantSpeed(RaceParticipant p)=>0;
     public UnityEngine.Camera GetPlayerCaptureCamera(int i)=>null;
     public byte[] CapturePlayerFrame(int i)=>null;
+}
+public enum P1SteeringTestMode { Normal, KeyboardPedal, ConstantPedal }
+public class RaceFeatureController { public bool PanelVisible; }
+public class RaceAudioOutput {
+    public static RaceAudioOutput Instance = new RaceAudioOutput();
+    public bool CanRefreshDevices => true;
+    public string[] DeviceNames = { "USB P1", "HDMI P2" }, DeviceKeys = { "usb-key", "hdmi-key" };
+    private int[] selected = { -1, -1 };
+    public string GetDeviceLabel(int player)=>selected[player]<0 ? "出力なし" : DeviceNames[selected[player]];
+    public int GetSelectedDevice(int player)=>selected[player];
+    public bool CanSelectDevice(int player,int device)=>device<0||device!=selected[1-player];
+    public bool SelectDevice(int player,int device) { if(!CanSelectDevice(player,device))return false;selected[player]=device;return true; }
+    public void RefreshDevices() { }
 }
 public class RaceParticipant { public int Index,Position; public bool IsCpu,IsRacing; public float Progress; public NpcRaceDriver Driver; public RaceResultRecord Result; }
 public class NpcRaceDriver { public int RivalIndex,RecoveryCount; public bool HasContactGrace; public string DrivingStatus; public float TargetSpeed; }

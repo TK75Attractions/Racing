@@ -14,11 +14,13 @@ public sealed class RaceAudioOutput : MonoBehaviour
     private const string PreferencePrefix = "Racing.Audio.Device.P";
     public static RaceAudioOutput Instance { get; private set; }
     public string[] DeviceNames { get; private set; } = Array.Empty<string>();
+    public string[] DeviceKeys => (string[])deviceKeys.Clone();
     private string[] deviceKeys = Array.Empty<string>();
     private readonly int[] selected = { -1, -1 };
     private readonly string[] status = { "未接続", "未接続" };
     private bool available;
     private bool pluginLoaded;
+    public bool CanRefreshDevices => pluginLoaded;
     private volatile bool accepting;
     private int sampleRate;
     private float nextDeviceCheck;

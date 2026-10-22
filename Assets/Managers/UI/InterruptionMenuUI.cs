@@ -250,7 +250,14 @@ public sealed class InterruptionMenuUI : MonoBehaviour
 
     private void Update()
     {
-        if (IsOpen && optionsPanel != null && optionsPanel.activeSelf) RefreshDeviceLabels();
+        if (IsOpen && optionsPanel != null && optionsPanel.activeSelf)
+        {
+            masterSlider.SetValueWithoutNotify(RaceAudioSettings.Master);
+            bgmSlider.SetValueWithoutNotify(RaceAudioSettings.Bgm);
+            engineSlider.SetValueWithoutNotify(RaceAudioSettings.Engine);
+            effectsSlider.SetValueWithoutNotify(RaceAudioSettings.Effects);
+            RefreshDeviceLabels();
+        }
     }
 
     private static Slider CreateVolumeSlider(Transform parent, string name, string caption, float top,

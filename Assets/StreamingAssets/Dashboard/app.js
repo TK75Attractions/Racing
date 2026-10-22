@@ -7,6 +7,7 @@ let rawPaused = false, rawSignature = '', rawPending = [], rawGap = false;
 let rawElements = new Map();
 let canSendSerial = false;
 let latestCanControl = false;
+let settingsBusy = false;
 const $ = (id) => document.getElementById(id);
 const labels = { Title: 'タイトル', CarSelection: '車選択', Tutorial: 'チュートリアル', Countdown: 'カウントダウン', Game: 'レース中', Goal: 'ゴール処理中', Result: '結果表示' };
 const details = { Title: '開始操作を待っています', CarSelection: '参加者が車を選んでいます', Tutorial: '参加者が操作を練習しています', Countdown: 'スタートまでまもなく', Game: 'レース進行中', Goal: '完走処理中', Result: '次のレースを選択できます' };
@@ -63,6 +64,7 @@ function setConnection(isConnected) {
     renderParticipants(null);
     $('serial-log').innerHTML = '<div class="empty-log">シリアル入力を待っています。Unity の接続状態を確認してください。</div>';
     updateActions(null, false);
+    renderSettings(null, false);
     for (let i = 1; i <= 2; i++) {
       $('player-status-' + i).textContent = '待機中';
       $('player-status-' + i).classList.remove('active');
@@ -128,8 +130,12 @@ function renderPerformance(performance) {
 
 function render(snapshot, { canControl = localMode } = {}) {
   setConnection(true);
+  // An HTTP acknowledgement can arrive before the next WebSocket snapshot.
+  if (latestSnapshot && latestSnapshot.sessionId === snapshot.sessionId && latestSnapshot.settingsRevision > snapshot.settingsRevision)
+    snapshot = { ...snapshot, settings: latestSnapshot.settings, settingsRevision: latestSnapshot.settingsRevision };
   latestSnapshot = snapshot;
   latestCanControl = canControl;
+  renderSettings(snapshot.settings, canControl);
   currentState = snapshot.state;
   updateFlow(snapshot.state);
   $('game-state').textContent = labels[snapshot.state] || snapshot.state;
@@ -793,6 +799,100 @@ async function refreshFrames() {
   } finally { frameBusy = false; }
 }
 
+function renderSettings(settings, canControl) {
+  const enabled = connected && localMode && canControl && !!settings && !settingsBusy;
+  document.querySelectorAll('[data-setting]').forEach(control => {
+    const command = control.dataset.setting;
+    let available = true;
+    if (['inputMode', 'steeringMode', 'constantPedal', 'constantPaused', 'serialDebug'].includes(command))
+      available = !!settings?.inputAvailable;
+    if (['constantPedal', 'constantPaused'].includes(command)) available &&= settings?.steeringMode === 'ConstantPedal';
+    if (command === 'device') available = !!settings?.outputAvailable?.[Number(control.dataset.settingArg)];
+    if (command === 'refreshDevices') available = !!settings?.audioRefreshAvailable;
+    control.disabled = !enabled || !available;
+  });
+  if (settingsBusy) return;
+  for (const name of ['master', 'bgm', 'engine', 'effects', 'constantPedal']) {
+    const control = $('settings-' + name);
+    if (document.activeElement !== control) control.value = Math.round((settings?.[name] ?? 0) * 100);
+    $('settings-' + name + '-value').textContent = settings ? control.value + '%' : '—';
+  }
+  for (const name of ['inputMode', 'steeringMode', 'constantPaused', 'serialDebug', 'featurePanel']) {
+    const control = $('settings-' + name);
+    if (document.activeElement === control) continue;
+    if (['constantPaused', 'serialDebug', 'featurePanel'].includes(name)) control.checked = !!settings?.[name];
+    else control.value = settings?.[name] ?? '';
+  }
+  for (let player = 0; player < 2; player++) {
+    const select = $('settings-output-' + player);
+    if (document.activeElement !== select) {
+      const options = [['', '出力なし'], ...(settings?.deviceKeys || []).map((key, index) => [key, settings.deviceNames[index]])];
+      const signature = JSON.stringify([options, settings?.selectedDevices]);
+      if (select.dataset.options !== signature) {
+        select.replaceChildren(...options.map(([key, label]) => {
+          const option = document.createElement('option'); option.value = key; option.textContent = label;
+          option.disabled = !!key && key === settings?.selectedDevices?.[1 - player];
+          return option;
+        }));
+        select.dataset.options = signature;
+      }
+      select.value = settings?.selectedDevices?.[player] ?? '';
+    }
+    $('settings-output-' + player + '-status').textContent = settings?.outputStatus?.[player] ?? '未接続';
+  }
+  if (!settingsBusy && (!settings || !canControl || !localMode))
+    $('settings-status').textContent = !settings ? '設定を取得できません。Unity の接続・バージョンを確認してください。' :
+      !localMode ? 'この設定はローカルまたはTailscaleの管理画面で操作できます。' : '状態更新待ち、または閲覧専用のため変更できません。';
+  else if (!settingsBusy && /取得できません|閲覧専用|接続を待|管理画面で操作/.test($('settings-status').textContent))
+    $('settings-status').textContent = '変更はゲームへ即時反映されます。';
+}
+
+async function submitSetting(control) {
+  if (!connected || !localMode || !latestCanControl || !latestSnapshot?.settings || settingsBusy || control.disabled) return;
+  const command = control.dataset.setting;
+  let args;
+  if (command === 'volume') args = [control.dataset.settingArg, String(Number(control.value) / 100)];
+  else if (command === 'device') args = [control.dataset.settingArg, control.value];
+  else if (command === 'refreshDevices') args = [];
+  else if (command === 'constantPedal') args = [String(Number(control.value) / 100)];
+  else args = [control.type === 'checkbox' ? String(control.checked) : control.value];
+  const requestedSession = latestSnapshot.sessionId;
+  const payload = { command, args, settingsRevision: latestSnapshot.settingsRevision };
+  settingsBusy = true;
+  renderSettings(latestSnapshot.settings, false);
+  $('settings-status').textContent = '設定を反映中…';
+  let result;
+  try {
+    if (liveController) result = await liveController.command('settings', payload);
+    else {
+      const request = { ...payload, id: crypto.randomUUID(), targetSession: latestSnapshot.sessionId,
+        expectedState: latestSnapshot.state, stateRevision: latestSnapshot.stateRevision, observedAt: latestSnapshot.serverTime };
+      try {
+        const response = await apiFetch('/api/action/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(request), signal: AbortSignal.timeout(8000) });
+        result = await response.json();
+      } catch {
+        // Recover the original result without executing the setting a second time.
+        const response = await apiFetch('/api/command/' + request.id, { signal: AbortSignal.timeout(4000) });
+        if (response.ok) result = await response.json();
+      }
+      await poll();
+    }
+  } catch { }
+  finally {
+    settingsBusy = false;
+    if (result?.settings && latestSnapshot?.sessionId === requestedSession && result.settingsRevision >= latestSnapshot.settingsRevision)
+      latestSnapshot = { ...latestSnapshot, settings: result.settings, settingsRevision: result.settingsRevision };
+    // Release focused controls so the acknowledged Unity values can replace drafts.
+    control.blur();
+    renderSettings(connected ? latestSnapshot?.settings : null, connected && latestCanControl);
+    $('settings-status').textContent = result?.ok ? '設定を反映しました。' : result ?
+      result.reason === 'audio_unavailable' ? '出力機器を開けませんでした。接続を確認して再検出してください。' :
+      '設定またはゲーム状態が変わりました。最新の表示を確認して操作してください。' :
+      '反映結果を確認できません。最新の設定を確認してください。操作は再送していません。';
+  }
+}
+
 document.querySelectorAll('[data-action]').forEach((button) => {
   button.addEventListener('click', async () => {
     if (!localMode || !connected || !actionAvailable(button.dataset.action, latestSnapshot)) return;
@@ -855,3 +955,12 @@ if (localMode) {
   import('./remote.js').then(({ startRemote }) => startRemote({ render, setConnection }))
     .catch(() => { $('remote-status').textContent = '遠隔監視の読み込みに失敗しました。ページを再読み込みしてください。'; });
 }
+
+document.querySelectorAll('[data-setting]').forEach(control => {
+  control.addEventListener(control.tagName === 'BUTTON' ? 'click' : 'change', () => void submitSetting(control));
+  if (control.type === 'range') control.addEventListener('input', () => {
+    const name = control.dataset.setting === 'volume' ? control.dataset.settingArg : 'constantPedal';
+    $('settings-' + name + '-value').textContent = control.value + '%';
+  });
+});
+renderSettings(null, false);
