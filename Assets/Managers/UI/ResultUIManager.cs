@@ -28,6 +28,9 @@ public class ResultUIManager
         Transform legacy=parent.Find("Panel");if(legacy!=null)legacy.gameObject.SetActive(false);
         RectTransform presentation=RacingUITheme.Rect(parent,"ResultPresentation",Vector2.zero,Vector2.one);
         NeonUI.Background(presentation,"ResultBackground","UI/Neon/ResultBackground");
+        Image rootBackground = parent.GetComponent<Image>();
+        if (rootBackground != null) rootBackground.color = Color.clear;
+        MenuSceneryScrim.Create(presentation, "MenuSceneryScrim", true);
         card=RacingUITheme.Rect(presentation,"ResultCard",Vector2.zero,Vector2.one);
         if(card.GetComponent<CanvasGroup>()==null)card.gameObject.AddComponent<CanvasGroup>();
         RectTransform heading=NeonUI.Panel(card,"Header",new Vector2(.03f,.82f),new Vector2(.465f,.955f));
@@ -79,10 +82,11 @@ public class ResultUIManager
     private void BuildCourseCard(Transform parent)
     {
         RectTransform course=NeonUI.Panel(parent,"CourseCard",new Vector2(.527f,.82f),new Vector2(.974f,.955f));
-        RectTransform photo=RacingUITheme.Rect(course,"Photo",new Vector2(.02f,.08f),new Vector2(.365f,.92f));
-        RawImage image=photo.GetComponent<RawImage>() ?? photo.gameObject.AddComponent<RawImage>();image.texture=Resources.Load<Texture2D>("UI/Neon/ResultBackground");image.raycastTarget=false;image.uvRect=new Rect(.26f,.3f,.62f,.49f);
-        NeonUI.Text(course,"Name","つくこまサーキット",new Vector2(.40f,.45f),new Vector2(.78f,.92f),31f,italic:true);
-        NeonUI.Text(course,"EnglishName","Tsukukoma Circuit",new Vector2(.40f,.15f),new Vector2(.78f,.46f),22f,italic:true);
+        Transform oldPhoto = course.Find("Photo");
+        if (oldPhoto != null) oldPhoto.gameObject.SetActive(false);
+        NeonUI.Icon(course,"CircuitFlag",RacingIconGraphic.Icon.Flag,new Vector2(.035f,.18f),new Vector2(.18f,.85f));
+        NeonUI.Text(course,"Name","つくこまサーキット",new Vector2(.22f,.45f),new Vector2(.78f,.92f),31f,italic:true);
+        NeonUI.Text(course,"EnglishName","Tsukukoma Circuit",new Vector2(.22f,.15f),new Vector2(.78f,.46f),22f,italic:true);
         RectTransform outline=RacingUITheme.Rect(course,"Outline",new Vector2(.80f,.07f),new Vector2(.97f,.93f));
         NeonCourseOutlineGraphic map=outline.GetComponent<NeonCourseOutlineGraphic>() ?? outline.gameObject.AddComponent<NeonCourseOutlineGraphic>();
         map.Configure(Gmanager.Control!=null?Gmanager.Control.course:Object.FindFirstObjectByType<RaceCourse>());

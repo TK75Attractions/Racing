@@ -414,8 +414,10 @@ public sealed class ScreenTransitionController : MonoBehaviour
         }
 
         Image background = title.GetComponent<Image>() ?? title.gameObject.AddComponent<Image>();
-        background.color = Color.black; background.raycastTarget = false;
+        background.color = Color.clear; background.raycastTarget = false;
         NeonUI.Background(title, "TitleBackground", "UI/Neon/TitleBackground");
+        MenuSceneryScrim.Create(title, "MenuSceneryScrim", false);
+        MenuSceneryScrim.BuildTitleBrand(title);
         TMP_Text playerBadge = NeonUI.Text(title, "PlayerBadge", $"PLAYER 0{displayPlayerIndex + 1}  /  プレイヤー {displayPlayerIndex + 1}",
             new Vector2(.69f,.90f), new Vector2(.97f,.955f), 21f, TextAlignmentOptions.Right, tint: NeonUI.Cyan);
         foreach(Button legacy in title.GetComponentsInChildren<Button>(true)) legacy.gameObject.SetActive(false);

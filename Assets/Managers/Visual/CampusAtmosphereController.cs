@@ -288,7 +288,7 @@ public sealed class CampusAtmosphereController : MonoBehaviour
     }
     private void UpdateShadows()
     {
-        bool target=applied&&manager!=null&&manager.IsCourseIntroPlaying;
+        bool target=applied&&manager!=null&&(manager.IsCourseIntroPlaying || manager.IsMenuSceneryPlaying);
         if(target==introShadows)return;
         if(target)
         {

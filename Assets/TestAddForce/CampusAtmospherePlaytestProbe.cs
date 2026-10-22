@@ -18,6 +18,7 @@ public sealed class CampusAtmospherePlaytestProbe : MonoBehaviour
         public bool liveOffOn, rainNightDay, disableEnable, collidersUnchanged;
     }
     private readonly Report report=new Report();
+    public bool Passed => report.passed;
     private readonly Dictionary<Collider,(bool enabled,Mesh mesh)> courseColliders=new Dictionary<Collider,(bool,Mesh)>();
     private UniversalRenderPipelineAsset pipeline;
     private bool seen,done;private int stage;
@@ -27,8 +28,13 @@ public sealed class CampusAtmospherePlaytestProbe : MonoBehaviour
     private void Awake()
     {
         report.mode=Environment.GetEnvironmentVariable("RACING_CAMPUS_ATMOSPHERE_MODE")??"normal";
+        // Menus now share the aerial shadow tier. Measure the driving baseline before comparing the intro.
+        var features = Gmanager.Control?.Features;
+        bool menuShowing = Gmanager.Control != null && Gmanager.Control.IsMenuSceneryPlaying;
+        if (menuShowing) features.SetFeature(RaceFeature.MenuScenery, false);
         pipeline=GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
         report.originalShadowDistance=pipeline.shadowDistance;report.originalShadowResolution=pipeline.mainLightShadowmapResolution;
+        if (menuShowing) features.SetFeature(RaceFeature.MenuScenery, true);
 
     }
     private void LateUpdate()

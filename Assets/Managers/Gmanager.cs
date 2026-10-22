@@ -140,7 +140,9 @@ public class Gmanager : MonoBehaviour
     public bool WaitingForSecondPlace => raceSession != null && raceSession.WaitingForSecondPlace;
     public float CountdownTimeRemaining => countdownTimeRemaining;
     public bool IsCourseIntroPlaying => courseIntro != null && courseIntro.IsPlaying;
+    public bool IsMenuSceneryPlaying => menuScenery != null && menuScenery.IsShowing;
     private CourseIntroDirector courseIntro;
+    private MenuSceneryDirector menuScenery;
     public bool IsPreparing => state == State.Title || state == State.CarSelection || state == State.Tutorial;
     public State GetPlayerPreparationState(int index) => index >= 0 && index < PlayerCount ? players[index]?.preparationState ?? State.Title : state;
     public void GetPlayerDashboardProgress(int index, out string playerState, out string carName,
@@ -252,6 +254,8 @@ public class Gmanager : MonoBehaviour
 
         displayRigs = TwoPlayerDisplayFactory.Create(transform.parent, cameraBlendSeconds, PlayerTwoDisplayIndex);
         InitializePlayerDisplays();
+        menuScenery = GetComponent<MenuSceneryDirector>() ?? gameObject.AddComponent<MenuSceneryDirector>();
+        menuScenery.Configure(this, displayRigs, System.Array.ConvertAll(players, player => player.titleCamera));
         if (GetComponent<RaceAudioOutput>() == null) gameObject.AddComponent<RaceAudioOutput>();
         soundEffects = GetComponent<RaceSoundEffects>() ?? gameObject.AddComponent<RaceSoundEffects>();
         if (GetComponent<RaceBackgroundMusic>() == null) gameObject.AddComponent<RaceBackgroundMusic>();
