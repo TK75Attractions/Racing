@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using TMPro;
 using UnityEditor;
@@ -39,6 +40,12 @@ public static class DrivingTutorialValidation
     {
         if (EditorApplication.isPlaying) return;
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
+        if (validate)
+        {
+            RacingHUDFontBuilder.Build();
+            var font=UnityEditor.AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>("Assets/Resources/UI/HUD/Tutorial ExtraBold.asset");
+            Require(font.HasCharacters("光る箱に触れてアイテムを取ろう獲得"),"The item lesson must have all static Japanese glyphs.");
+        }
         InputManager input = UnityEngine.Object.FindFirstObjectByType<InputManager>();
         input.isDebugMode = true; input.isP1SerialP2KeyboardDebugMode = false;
         RaceRemoteFirebasePublisher publisher = UnityEngine.Object.FindFirstObjectByType<RaceRemoteFirebasePublisher>();
@@ -74,7 +81,9 @@ public static class DrivingTutorialValidation
                 if (manager.state != Gmanager.State.Tutorial || !manager.IsDrivingEnabled) return;
                 DrivingTutorialController tutorial = manager.GetComponent<DrivingTutorialController>();
                 if (!tutorial.HasStarted(0) || !tutorial.HasStarted(1)) return;
-                practices = (IList)typeof(DrivingTutorialController).GetField("players", Fields).GetValue(tutorial);
+                var startedPractices = (IList)typeof(DrivingTutorialController).GetField("players", Fields).GetValue(tutorial);
+                // Players confirm selection independently; list insertion order is not a player ID.
+                practices = startedPractices.Cast<object>().OrderBy(p => Get<int>(p,"playerIndex")).ToArray();
                 inputs = new StubInput[practices.Count];
                 for (int i = 0; i < practices.Count; i++)
                 {
@@ -101,6 +110,8 @@ public static class DrivingTutorialValidation
                 object practice = practices[i];
                 var lesson = Get<DrivingTutorialProgress>(practice, "lesson");
                 Rigidbody body = Get<Rigidbody>(practice, "body");
+                // Practice objects are retired during the covered frame before Countdown is published.
+                if (body == null) continue;
                 Vector3 local = body.position - Get<GameObject>(practice, "world").transform.position;
                 peakSpeed = Mathf.Max(peakSpeed, Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up).magnitude);
                 if (Time.time - began > 2f && local.z < -15f && lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate)
