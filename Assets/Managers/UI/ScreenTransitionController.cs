@@ -116,7 +116,9 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     public bool TryPlayGoal(string winnerText, string finishTime, float visibleSeconds, Action onCompleted = null)
     {
-        if (IsTransitioning || goalCelebration == null)
+        // A close finish can arrive before the first player's own celebration ends.
+        // Replace that celebration without running its stale spectating callback.
+        if (goalCelebration == null || IsTransitioning && !goalCelebration.gameObject.activeSelf)
         {
             return false;
         }

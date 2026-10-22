@@ -1220,7 +1220,7 @@ public class Gmanager : MonoBehaviour
         {
             // Spectators keep watching this car: show its finish on their own display too.
             foreach (PlayerRuntime viewer in players)
-                if (viewer != null && viewer != finalFinisher && viewer.isSpectating)
+                if (viewer != null && viewer != finalFinisher && (viewer.isSpectating || viewer.result?.didFinish == true))
                 {
                     viewer.isSpectating = false;
                     PlayPlayerGoal(finalFinisher, null, viewer.playerIndex);
