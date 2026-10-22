@@ -25,6 +25,8 @@ monitor=new();monitor.Evaluate(healthy,0);monitor.Evaluate(null,1);Require(monit
 monitor=new();monitor.Evaluate(State(s=>s["state"]="Title"),0);monitor.Evaluate(null,1);Require(monitor.Evaluate(null,100)==null,"stopping idle Unity is not a race incident");
 monitor=new();var calibration=State(s=>s["hardware"]!["calibrated"]=false);monitor.Evaluate(calibration,0);Require(monitor.Evaluate(calibration,20)==null,"startup calibration grace");Require(monitor.Evaluate(calibration,31)?.Contains("校正")==true,"unfinished calibration");
 
+monitor=new();var calibrating=State(s=>{s["hardware"]!["state"]="CALIBRATING";s["hardware"]!["calibrated"]=false;s["hardware"]!["telemetryEnabled"]=false;s["hardware"]!["inputFresh"]=false;});monitor.Evaluate(calibrating,0);Require(monitor.Evaluate(calibrating,120)==null,"intentional input suspension during calibration is not a telemetry outage");
+
 string folder=Path.Combine(Path.GetTempPath(),"racing-push-test-"+Guid.NewGuid().ToString("N"));
 using var receiver=ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);var receiverParams=receiver.ExportParameters(false);
 byte[] receiverPublic=[4,..receiverParams.Q.X!,..receiverParams.Q.Y!];byte[] auth=RandomNumberGenerator.GetBytes(16);

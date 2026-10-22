@@ -37,9 +37,12 @@ internal sealed class HardwareAlertMonitor
                         {if(i<2&&(!oneOnly||i==0)&&Text(imu,"status")=="Fault")faults["imu"+i]=($"IMU {i+1} に異常があります。電源・I2Cの分岐配線とアドレスを機器診断で確認してください。",6);i++;}
                     }
                     if(!oneOnly&&Text(hw,"ads")=="Fault")faults["ads"]=("ペダル用ADS1115に異常があります。I2C配線と給電を確認してください。",6);
-                    if(Flag(hw,"invalidTelemetry"))faults["invalid-input"]=("ESP32の入力データが不正です。受信形式・値・通信状態を確認してください。",6);
-                    else if(!Flag(hw,"telemetryEnabled"))faults["stream"]=("ESP32の入力配信が停止しています。TEL配信設定を確認してください。",15);
-                    else if(!Flag(hw,"inputFresh")&&Text(hw,"state")=="READY")faults["input-stale"]=("走行入力の更新が止まっています。ESP32とセンサーの状態を確認してください。",8);
+                    if(Text(hw,"state")=="READY")
+                    {
+                        if(Flag(hw,"invalidTelemetry"))faults["invalid-input"]=("ESP32の入力データが不正です。受信形式・値・通信状態を確認してください。",6);
+                        else if(!Flag(hw,"telemetryEnabled"))faults["stream"]=("ESP32の入力配信が停止しています。TEL配信設定を確認してください。",15);
+                        else if(!Flag(hw,"inputFresh"))faults["input-stale"]=("走行入力の更新が止まっています。ESP32とセンサーの状態を確認してください。",8);
+                    }
                     if(Text(hw,"state")!="CALIBRATING")
                     {
                         if(!Flag(hw,"calibrated"))faults["calibration"]=("センサーの校正が未完了です。待機中に機器診断で確認してください。",30);
