@@ -203,6 +203,46 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       assert.equal((await apply(await make('inputMode',['invalid']))).status,409);
       assert.equal((await apply(await make('serialDebug',['1']))).status,409);
     });
+    await t.test('F8 switches share the catalog, synchronize external changes and queue locked presets',async()=>{
+      const make=async(command,args)=>{
+        const snapshot=(await request('/api/status')).json;
+        return {id:crypto.randomUUID(),targetSession:snapshot.sessionId,expectedState:snapshot.state,
+          stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime,settingsRevision:snapshot.settingsRevision,command,args};
+      };
+      const apply=body=>request('/api/action/settings',{method:'POST',origin:'http://127.0.0.1:8766',body});
+      const initial=(await request('/api/status')).json.settings;
+      assert.equal(initial.features.length,23);assert.equal(initial.featuresAvailable,true);
+      assert.ok(initial.features.every(feature=>feature.id&&feature.label&&typeof feature.enabled==='boolean'));
+      const toggle=await make('feature',['Slipstream','false']);
+      assert.equal((await request('/api/action/settings',{...remote,method:'POST',body:toggle})).status,403);
+      assert.equal((await apply(toggle)).status,200);
+      let settings=(await request('/api/status')).json.settings;
+      assert.equal(settings.features.find(feature=>feature.id==='Slipstream').enabled,false);
+      assert.equal(settings.features.find(feature=>feature.id==='HitProtection').enabled,true);
+      const stale=await make('feature',['Slipstream','true']);
+      send('feature:HitProtection');
+      await waitFor(async()=>!(await request('/api/status')).json.settings.features.find(feature=>feature.id==='HitProtection').enabled);
+      assert.equal((await apply(stale)).json.reason,'settings_changed');
+      for(const args of [['All','false'],['None','true'],['1','true'],['Slipstream','1'],['Unknown','true'],['Slipstream'],['Slipstream, HitProtection','false']])
+        assert.equal((await apply(await make('feature',args))).status,409);
+      assert.equal((await apply(await make('allFeaturesOff',[]))).status,200);
+      assert.ok((await request('/api/status')).json.settings.features.every(feature=>!feature.enabled));
+      assert.equal((await apply(await make('preset',['Experience']))).status,200);
+      settings=(await request('/api/status')).json.settings;
+      assert.equal(settings.activePreset,'Experience');assert.equal(settings.rulesLocked,false);
+      assert.equal(settings.features.find(feature=>feature.id==='ExperienceItems').enabled,true);
+      assert.equal((await apply(await make('preset',['Standard']))).status,200);
+      send('rules:lock');await waitFor(async()=>(await request('/api/status')).json.settings.rulesLocked);
+      assert.equal((await apply(await make('preset',['Experience']))).status,200);
+      settings=(await request('/api/status')).json.settings;
+      assert.equal(settings.activePreset,'Standard');assert.equal(settings.selectedPreset,'Experience');assert.equal(settings.hasQueuedPreset,true);
+      assert.equal(settings.features.find(feature=>feature.id==='ExperienceItems').enabled,false);
+      assert.equal((await apply(await make('feature',['HitProtection','true']))).status,200);
+      assert.equal((await apply(await make('preset',['2']))).status,409);
+      send('rules:unlock');await waitFor(async()=>!(await request('/api/status')).json.settings.rulesLocked);
+      assert.equal((await apply(await make('preset',['Standard']))).status,200);
+      for(const feature of initial.features) assert.equal((await apply(await make('feature',[feature.id,String(feature.enabled)]))).status,200);
+    });
     const first=await open('/api/events',remote);
     await waitFor(()=>first.packets.some(packet=>packet.snapshot));
     await t.test('FPS measurements reach WebSocket viewers',async()=>{
@@ -282,6 +322,21 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       await Promise.all([a,b].map(s=>waitFor(()=>s.packets.some(p=>p.lines.some(l=>l.line==='multiple viewers')))));
       a.close();b.close();
     });
+    await t.test('F8 test race is state guarded and duplicate requests do not start it twice',async()=>{
+      const make=async()=>{
+        const snapshot=(await request('/api/status')).json;
+        return {id:crypto.randomUUID(),targetSession:snapshot.sessionId,expectedState:snapshot.state,
+          stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime,settingsRevision:snapshot.settingsRevision,command:'testRace',args:[]};
+      };
+      const apply=body=>request('/api/action/settings',{method:'POST',origin:'http://127.0.0.1:8766',body});
+      assert.equal((await apply(await make())).status,409,'countdown cannot start another test');
+      send('state:Result');await waitFor(async()=>(await request('/api/status')).json.state==='Result');
+      const body=await make();assert.equal((await apply(body)).status,200);
+      assert.equal((await apply(body)).status,200,'identical request returns original result');
+      const snapshot=(await request('/api/status')).json;
+      assert.equal(snapshot.state,'Countdown');assert.equal(snapshot.settings.canStartTestRace,false);
+      assert.equal(snapshot.settings.features.find(feature=>feature.id==='PlayerTwoAutodrive').enabled,true);
+    });
     if(process.env.RACING_BROWSER_TEST==='1') await t.test('actual browser: unified screen, numeric TEL, event history and race action',async()=>{
       const {chromium}=require('playwright');
       const browser=await chromium.launch({headless:true,channel:'chrome'});
@@ -308,6 +363,16 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         await page.waitForFunction(() => !document.querySelector('#settings-output-1 option[value="usb-key"]').disabled);
         await page.locator('#settings-refresh:enabled').click();
         await page.locator('#settings-status').filter({hasText:'設定を反映しました'}).waitFor();
+        assert.equal(await page.locator('#settings-features input').count(),23);
+        await page.locator('#settings-feature-Slipstream:enabled').uncheck();
+        await waitFor(async()=>!(await request('/api/status')).json.settings.features.find(feature=>feature.id==='Slipstream').enabled);
+        send('feature:HitProtection');
+        await page.waitForFunction(()=>!document.getElementById('settings-feature-HitProtection').checked);
+        await page.locator('#settings-preset:enabled').selectOption('Experience');
+        await page.locator('#settings-rules').filter({hasText:'予約済み'}).waitFor();
+        assert.equal((await request('/api/status')).json.settings.activePreset,'Standard');
+        await page.locator('#settings-all-off:enabled').click();
+        await waitFor(async()=>(await request('/api/status')).json.settings.features.every(feature=>!feature.enabled));
         send('rx:'+wire('EVT,500,0,STATE,READY'));
         send('rx:'+wire('TEL,501,0,-12.5,0.75,0,25,0,0.4'));
         send('rx:'+wire('ERR,502,0,WARN,HANDLE,ANGLE_REFERENCE_INVALID'));
@@ -328,7 +393,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         fs.mkdirSync(path.join(root,'Artifacts/DashboardRealtime'),{recursive:true});
         await page.screenshot({path:path.join(root,'Artifacts/DashboardRealtime/desktop.png'),fullPage:true});
         await page.locator('.game-settings').screenshot({path:path.join(root,'Artifacts/DashboardRealtime/settings-desktop.png')});
-        await page.locator('[data-action="start"]').click();
+        await page.locator('#settings-test-race:enabled').click();
         await page.locator('#game-state').filter({hasText:'カウントダウン'}).waitFor();
         await page.setViewportSize({width:390,height:844});
         await page.screenshot({path:path.join(root,'Artifacts/DashboardRealtime/mobile.png'),fullPage:true});
@@ -338,6 +403,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         assert.equal(await page.locator('[data-action="start"]').isDisabled(),true);
         assert.match(await page.locator('#live-detail').innerText(),/状態更新が停止/);
         assert.equal(await page.locator('#settings-master').isDisabled(),true);
+        assert.equal(await page.locator('#settings-feature-Slipstream').isDisabled(),true);
         send('unfreeze');
         relay.kill('SIGKILL');await waitFor(()=>relay.exitCode!==null||relay.signalCode!==null);
         await page.locator('#connection.offline').waitFor();
@@ -349,7 +415,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       } finally {await browser.close();}
     });
     fs.mkdirSync(path.join(root,'Artifacts/DashboardRealtime'),{recursive:true});
-    fs.writeFileSync(path.join(root,'Artifacts/DashboardRealtime/integration.json'),JSON.stringify({passed:true,source:'production bridge and serial journal / scene and graphics stubs',network:'loopback with simulated Serve headers',tests:process.env.RACING_BROWSER_TEST==='1'?10:9},null,2));
+    fs.writeFileSync(path.join(root,'Artifacts/DashboardRealtime/integration.json'),JSON.stringify({passed:true,source:'production bridge and serial journal / scene and graphics stubs',network:'loopback with simulated Serve headers',tests:process.env.RACING_BROWSER_TEST==='1'?13:12},null,2));
   } finally {
     sockets.forEach(s=>s.close());send('quit');relay.kill('SIGTERM');
     await delay(300);if(bridge.exitCode===null)bridge.kill('SIGKILL');if(relay.exitCode===null)relay.kill('SIGKILL');

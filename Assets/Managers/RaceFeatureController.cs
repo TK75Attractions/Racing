@@ -5,12 +5,6 @@ using UnityEngine.InputSystem;
 [DisallowMultipleComponent]
 public sealed class RaceFeatureController : MonoBehaviour
 {
-    private static readonly RaceFeature[] Features = {
-        RaceFeature.ExperienceItems, RaceFeature.DriftCoaching, RaceFeature.HitProtection, RaceFeature.Slipstream, RaceFeature.SteeringAssist, RaceFeature.HighSpeedCornering, RaceFeature.FastAiPace, RaceFeature.LandingFeedback, RaceFeature.LandingBoost, RaceFeature.TubeChargeLines, RaceFeature.PlayerTwoAutodrive, RaceFeature.CpuRacing, RaceFeature.ResultHighlights, RaceFeature.FinishRun, RaceFeature.FinishApproachGrace, RaceFeature.ClearSpeedPresentation, RaceFeature.CourseIntro, RaceFeature.CampusAtmosphere, RaceFeature.RivalProximity, RaceFeature.ItemHitFeedback, RaceFeature.SteeringStability, RaceFeature.DailyRanking, RaceFeature.AdaptiveAiPace
-    };
-    private static readonly string[] Labels = {
-        "Gentle items (shield / rocket only)", "Drift coaching", "Anti-chain hit protection", "Slipstream boost", "Course edge steering assist", "High-speed cornering + turn braking", "Fast AI pace (2 laps / 120s target)", "Landing success feedback", "Safe landing reward boost", "Tube side charge lines", "P2 test autodrive (manual on OFF)", "CPU overtaking / counterattack", "Result achievement highlight", "Short winning run after finish", "One short grace near the finish line", "Clear high-speed view (reduced blur / distortion)", "Pre-race drone course preview", "Campus lighting / landscaping / town", "Rival proximity: 3D arrow / rear red edges", "Named outgoing item hit confirmations", "Stable steering: prevent sudden slip / spin", "Today ranking panel (completed times still saved)", "Adaptive CPU / P2 pace around manual players"
-    };
     public RaceFeatureSettings Settings { get; } = new RaceFeatureSettings();
     public bool PanelVisible { get; set; }
     public event System.Action FeaturesChanged;
@@ -84,11 +78,12 @@ public sealed class RaceFeatureController : MonoBehaviour
             if (GUILayout.Button("Start test race - P1 manual / P2 AUTO")) manager.StartAutodriveTestRace();
         GUILayout.Space(6);
         GUILayout.Label("Feature switches apply immediately (both players).");
-        for (int i = 0; i < Features.Length; i++)
+        for (int i = 0; i < RaceDebugFeatureCatalog.Entries.Count; i++)
         {
-            bool current = Settings.IsEnabled(Features[i]);
-            bool next = GUILayout.Toggle(current, Labels[i]);
-            if (current != next) SetFeature(Features[i], next);
+            RaceDebugFeatureCatalog.Entry entry = RaceDebugFeatureCatalog.Entries[i];
+            bool current = Settings.IsEnabled(entry.Feature);
+            bool next = GUILayout.Toggle(current, entry.PanelLabel);
+            if (current != next) SetFeature(entry.Feature, next);
         }
         GUILayout.Space(8);
         GUILayout.Label("Rules now: " + Settings.ActivePreset + " / " + (manager != null ? manager.GoalLap : 2) + " lap(s)");

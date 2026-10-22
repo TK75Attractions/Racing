@@ -8,6 +8,8 @@ let rawElements = new Map();
 let canSendSerial = false;
 let latestCanControl = false;
 let settingsBusy = false;
+let featureSignature = null;
+const featureElements = new Map();
 const $ = (id) => document.getElementById(id);
 const labels = { Title: 'タイトル', CarSelection: '車選択', Tutorial: 'チュートリアル', Countdown: 'カウントダウン', Game: 'レース中', Goal: 'ゴール処理中', Result: '結果表示' };
 const details = { Title: '開始操作を待っています', CarSelection: '参加者が車を選んでいます', Tutorial: '参加者が操作を練習しています', Countdown: 'スタートまでまもなく', Game: 'レース進行中', Goal: '完走処理中', Result: '次のレースを選択できます' };
@@ -799,7 +801,40 @@ async function refreshFrames() {
   } finally { frameBusy = false; }
 }
 
+function renderFeatureSettings(settings) {
+  if (settingsBusy) return;
+  const features = settings?.featuresAvailable && Array.isArray(settings.features) ? settings.features : [];
+  const signature = JSON.stringify(features.map(feature => [feature.id, feature.label]));
+  if (signature !== featureSignature) {
+    featureSignature = signature;
+    featureElements.clear();
+    const rows = features.map(feature => {
+      const label = document.createElement('label'); label.className = 'feature-option';
+      const input = document.createElement('input'); input.type = 'checkbox';
+      input.id = 'settings-feature-' + feature.id;
+      input.dataset.setting = 'feature'; input.dataset.settingArg = feature.id;
+      const caption = document.createElement('span'); caption.textContent = feature.label;
+      label.append(input, caption); featureElements.set(feature.id, input);
+      return label;
+    });
+    $('settings-features').replaceChildren(...rows);
+  }
+  for (const feature of features) featureElements.get(feature.id).checked = !!feature.enabled;
+  $('settings-feature-count').textContent = features.length ?
+    `${features.filter(feature => feature.enabled).length} / ${features.length} 項目がON` :
+    'F8設定を取得できません。Unity の接続・バージョンを確認してください。';
+  const presets = { Standard: '標準', Experience: '体験（1周・180秒）' };
+  const select = $('settings-preset');
+  if (document.activeElement !== select) select.value = settings?.selectedPreset ?? '';
+  $('settings-rules').textContent = settings?.featuresAvailable ?
+    `現在：${presets[settings.activePreset] ?? '未確認'} / ${latestSnapshot?.goalLap ?? '—'}周　次回：${presets[settings.selectedPreset] ?? '未確認'}${settings.hasQueuedPreset ? '（予約済み）' : ''}` : '';
+  $('settings-rule-help').textContent = settings?.featuresAvailable ? settings.rulesLocked ?
+    '今回の周回・制限時間は確定済みです。プリセットの変更は次のレースから適用されます。' :
+    'プリセットは今の準備から適用されます。各機能のON/OFFはすぐに反映されます。' : '';
+}
+
 function renderSettings(settings, canControl) {
+  renderFeatureSettings(settings);
   const enabled = connected && localMode && canControl && !!settings && !settingsBusy;
   document.querySelectorAll('[data-setting]').forEach(control => {
     const command = control.dataset.setting;
@@ -807,6 +842,8 @@ function renderSettings(settings, canControl) {
     if (['inputMode', 'steeringMode', 'constantPedal', 'constantPaused', 'serialDebug'].includes(command))
       available = !!settings?.inputAvailable;
     if (['constantPedal', 'constantPaused'].includes(command)) available &&= settings?.steeringMode === 'ConstantPedal';
+    if (['feature', 'preset', 'allFeaturesOff'].includes(command)) available = !!settings?.featuresAvailable;
+    if (command === 'testRace') available = !!settings?.canStartTestRace;
     if (command === 'device') available = !!settings?.outputAvailable?.[Number(control.dataset.settingArg)];
     if (command === 'refreshDevices') available = !!settings?.audioRefreshAvailable;
     control.disabled = !enabled || !available;
@@ -851,9 +888,10 @@ async function submitSetting(control) {
   if (!connected || !localMode || !latestCanControl || !latestSnapshot?.settings || settingsBusy || control.disabled) return;
   const command = control.dataset.setting;
   let args;
-  if (command === 'volume') args = [control.dataset.settingArg, String(Number(control.value) / 100)];
+  if (command === 'feature') args = [control.dataset.settingArg, String(control.checked)];
+  else if (command === 'volume') args = [control.dataset.settingArg, String(Number(control.value) / 100)];
   else if (command === 'device') args = [control.dataset.settingArg, control.value];
-  else if (command === 'refreshDevices') args = [];
+  else if (['refreshDevices', 'allFeaturesOff', 'testRace'].includes(command)) args = [];
   else if (command === 'constantPedal') args = [String(Number(control.value) / 100)];
   else args = [control.type === 'checkbox' ? String(control.checked) : control.value];
   const requestedSession = latestSnapshot.sessionId;
@@ -886,7 +924,7 @@ async function submitSetting(control) {
     // Release focused controls so the acknowledged Unity values can replace drafts.
     control.blur();
     renderSettings(connected ? latestSnapshot?.settings : null, connected && latestCanControl);
-    $('settings-status').textContent = result?.ok ? '設定を反映しました。' : result ?
+    $('settings-status').textContent = result?.ok ? (command === 'testRace' ? 'テストレースを開始しました。' : '設定を反映しました。') : result ?
       result.reason === 'audio_unavailable' ? '出力機器を開けませんでした。接続を確認して再検出してください。' :
       '設定またはゲーム状態が変わりました。最新の表示を確認して操作してください。' :
       '反映結果を確認できません。最新の設定を確認してください。操作は再送していません。';
@@ -964,3 +1002,7 @@ document.querySelectorAll('[data-setting]').forEach(control => {
   });
 });
 renderSettings(null, false);
+
+$('settings-features').addEventListener('change', event => {
+  if (event.target.dataset.setting === 'feature') void submitSetting(event.target);
+});
