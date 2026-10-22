@@ -141,6 +141,7 @@ public class Gmanager : MonoBehaviour
     public float CountdownTimeRemaining => countdownTimeRemaining;
     public bool IsCourseIntroPlaying => courseIntro != null && courseIntro.IsPlaying;
     public bool IsMenuSceneryPlaying => menuScenery != null && menuScenery.IsShowing;
+    public RaceBroadcastDirector Broadcast { get; private set; }
     private CourseIntroDirector courseIntro;
     private MenuSceneryDirector menuScenery;
     public bool IsPreparing => state == State.Title || state == State.CarSelection || state == State.Tutorial;
@@ -256,6 +257,8 @@ public class Gmanager : MonoBehaviour
         InitializePlayerDisplays();
         menuScenery = GetComponent<MenuSceneryDirector>() ?? gameObject.AddComponent<MenuSceneryDirector>();
         menuScenery.Configure(this, displayRigs, System.Array.ConvertAll(players, player => player.titleCamera));
+        Broadcast = GetComponent<RaceBroadcastDirector>() ?? gameObject.AddComponent<RaceBroadcastDirector>();
+        Broadcast.Configure(this, displayRigs);
         if (GetComponent<RaceAudioOutput>() == null) gameObject.AddComponent<RaceAudioOutput>();
         soundEffects = GetComponent<RaceSoundEffects>() ?? gameObject.AddComponent<RaceSoundEffects>();
         if (GetComponent<RaceBackgroundMusic>() == null) gameObject.AddComponent<RaceBackgroundMusic>();
@@ -476,6 +479,7 @@ public class Gmanager : MonoBehaviour
         latestSessionResult = preview;
         latestResult = preview.GetResultAtPosition(1);
         state = State.Result;
+        Broadcast?.RestartLatestHighlights();
         resultReturnInputDelayTimer = 0f;
         foreach (ResultUIManager manager in resultUIManagers) manager?.ShowResults(preview);
         foreach (ScreenTransitionController transition in screenTransitions) transition?.TryShowResultAnimated();
@@ -1267,6 +1271,7 @@ public class Gmanager : MonoBehaviour
 
         state = State.Result;
         soundEffects?.PlayForAll(RaceSoundCue.Results);
+        Broadcast?.RestartLatestHighlights();
         ResetResultPlayerInputs();
         resultReturnInputDelayTimer = 0f;
         if (latestSessionResult != null) latestSessionResult.dailyRanking = dailyRanking?.Snapshot();

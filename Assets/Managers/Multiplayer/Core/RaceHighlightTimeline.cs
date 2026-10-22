@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-public enum RaceHighlightKind { Overtake, Corner, Finish, Battle }
+public enum RaceHighlightKind { Overtake, Corner, Finish, Battle, Drive }
 public sealed class RaceHighlight
 {
     public float Time, Start, End, Score;
@@ -38,7 +38,7 @@ public sealed class RaceHighlightTimeline
         foreach (RaceHighlight item in ranked)
         {
             if (item.Time>duration) continue;
-            float start=Math.Max(0,item.Time-3f), end=Math.Min(duration,item.Time+4.5f);
+            float start=Math.Max(0,item.Time-3f), end=Math.Min(duration,item.Time+(item.Kind==RaceHighlightKind.Finish?2.5f:4.5f));
             if (end-start<3f) continue;
             bool overlaps=false;
             foreach (RaceHighlight other in result) if (Math.Min(end,other.End)-Math.Max(start,other.Start)>2f) {overlaps=true;break;}
@@ -46,7 +46,7 @@ public sealed class RaceHighlightTimeline
             result.Add(new RaceHighlight {Time=item.Time,Start=start,End=end,Driver=item.Driver,Kind=item.Kind,Score=item.Score});
             if (result.Count>=maximum) break;
         }
-        if (result.Count==0) result.Add(new RaceHighlight {Start=Math.Max(0,duration-8),End=duration,Time=Math.Max(0,duration-4),Driver=0,Kind=RaceHighlightKind.Battle});
+        if (result.Count==0) result.Add(new RaceHighlight {Start=Math.Max(0,duration-8),End=duration,Time=Math.Max(0,duration-4),Driver=0,Kind=RaceHighlightKind.Drive});
         result.Sort((a,b)=>a.Start.CompareTo(b.Start));
         return result;
     }

@@ -78,6 +78,8 @@ public class ResultUIManager
         achievement=NeonUI.Text(card,"Achievement","",new Vector2(.665f,.153f),new Vector2(.97f,.205f),25f,TextAlignmentOptions.Center,true,NeonUI.Cyan);
         dailyRankingPanel=new DailyRankingPanel(card);
         BuildMenu(card);
+        var replayPanel = card.GetComponent<ResultReplayPanel>() ?? card.gameObject.AddComponent<ResultReplayPanel>();
+        replayPanel.Build(localPlayerNumber);
     }
     private void BuildCourseCard(Transform parent)
     {

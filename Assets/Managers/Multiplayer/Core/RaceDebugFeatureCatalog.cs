@@ -38,6 +38,8 @@ public static class RaceDebugFeatureCatalog
         new Entry(RaceFeature.DailyRanking, "Today ranking panel (completed times still saved)", "本日のランキング表示（OFFでも完走記録を保存）"),
         new Entry(RaceFeature.AdaptiveAiPace, "Adaptive CPU / P2 pace around manual players", "手動プレイヤーに合わせたCPU・P2のペース調整"),
         new Entry(RaceFeature.MenuScenery, "Live campus scenery on title / results", "タイトル・結果画面の校舎背景"),
+        new Entry(RaceFeature.BroadcastScreen, "Third broadcast window", "第3画面のレース中継"),
+        new Entry(RaceFeature.RaceReplays, "Recorded race replays / result highlights", "走行記録・リプレイハイライト"),
     });
 
     public static bool TryFind(string id, out RaceFeature feature)

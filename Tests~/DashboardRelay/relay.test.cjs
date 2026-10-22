@@ -211,7 +211,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       };
       const apply=body=>request('/api/action/settings',{method:'POST',origin:'http://127.0.0.1:8766',body});
       const initial=(await request('/api/status')).json.settings;
-      assert.equal(initial.features.length,24);assert.equal(initial.featuresAvailable,true);
+      assert.equal(initial.features.length,26);assert.equal(initial.featuresAvailable,true);
       assert.ok(initial.features.every(feature=>feature.id&&feature.label&&typeof feature.enabled==='boolean'));
       const toggle=await make('feature',['Slipstream','false']);
       assert.equal((await request('/api/action/settings',{...remote,method:'POST',body:toggle})).status,403);
@@ -363,7 +363,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         await page.waitForFunction(() => !document.querySelector('#settings-output-1 option[value="usb-key"]').disabled);
         await page.locator('#settings-refresh:enabled').click();
         await page.locator('#settings-status').filter({hasText:'設定を反映しました'}).waitFor();
-        assert.equal(await page.locator('#settings-features input').count(),24);
+        assert.equal(await page.locator('#settings-features input').count(),26);
         await page.locator('#settings-feature-Slipstream:enabled').uncheck();
         await waitFor(async()=>!(await request('/api/status')).json.settings.features.find(feature=>feature.id==='Slipstream').enabled);
         send('feature:HitProtection');

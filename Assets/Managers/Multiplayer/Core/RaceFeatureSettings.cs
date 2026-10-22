@@ -30,13 +30,15 @@ public enum RaceFeature
     DailyRanking = 2097152,
     AdaptiveAiPace = 4194304,
     MenuScenery = 8388608,
-    All = ExperienceItems | DriftCoaching | HitProtection | Slipstream | SteeringAssist | LandingFeedback | LandingBoost | TubeChargeLines | PlayerTwoAutodrive | CpuRacing | ResultHighlights | HighSpeedCornering | FastAiPace | FinishRun | FinishApproachGrace | ClearSpeedPresentation | CourseIntro | CampusAtmosphere | RivalProximity | ItemHitFeedback | SteeringStability | DailyRanking | AdaptiveAiPace | MenuScenery
+    BroadcastScreen = 16777216,
+    RaceReplays = 33554432,
+    All = ExperienceItems | DriftCoaching | HitProtection | Slipstream | SteeringAssist | LandingFeedback | LandingBoost | TubeChargeLines | PlayerTwoAutodrive | CpuRacing | ResultHighlights | HighSpeedCornering | FastAiPace | FinishRun | FinishApproachGrace | ClearSpeedPresentation | CourseIntro | CampusAtmosphere | RivalProximity | ItemHitFeedback | SteeringStability | DailyRanking | AdaptiveAiPace | MenuScenery | BroadcastScreen | RaceReplays
 }
 
 /// <summary>Session-local feature switches. Structural rules are frozen for a race.</summary>
 public sealed class RaceFeatureSettings
 {
-    public RaceFeature Enabled { get; private set; } = RaceFeature.DriftCoaching | RaceFeature.HitProtection | RaceFeature.Slipstream | RaceFeature.SteeringAssist | RaceFeature.LandingFeedback | RaceFeature.LandingBoost | RaceFeature.TubeChargeLines | RaceFeature.CpuRacing | RaceFeature.ResultHighlights | RaceFeature.HighSpeedCornering | RaceFeature.FastAiPace | RaceFeature.FinishRun | RaceFeature.FinishApproachGrace | RaceFeature.ClearSpeedPresentation | RaceFeature.CourseIntro | RaceFeature.CampusAtmosphere | RaceFeature.RivalProximity | RaceFeature.ItemHitFeedback | RaceFeature.SteeringStability | RaceFeature.DailyRanking | RaceFeature.AdaptiveAiPace | RaceFeature.MenuScenery;
+    public RaceFeature Enabled { get; private set; } = RaceFeature.DriftCoaching | RaceFeature.HitProtection | RaceFeature.Slipstream | RaceFeature.SteeringAssist | RaceFeature.LandingFeedback | RaceFeature.LandingBoost | RaceFeature.TubeChargeLines | RaceFeature.CpuRacing | RaceFeature.ResultHighlights | RaceFeature.HighSpeedCornering | RaceFeature.FastAiPace | RaceFeature.FinishRun | RaceFeature.FinishApproachGrace | RaceFeature.ClearSpeedPresentation | RaceFeature.CourseIntro | RaceFeature.CampusAtmosphere | RaceFeature.RivalProximity | RaceFeature.ItemHitFeedback | RaceFeature.SteeringStability | RaceFeature.DailyRanking | RaceFeature.AdaptiveAiPace | RaceFeature.MenuScenery | RaceFeature.BroadcastScreen | RaceFeature.RaceReplays;
     public RacePreset SelectedPreset { get; private set; }
     public RacePreset ActivePreset { get; private set; }
     public bool RulesLocked { get; private set; }

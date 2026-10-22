@@ -28,4 +28,11 @@ public sealed class RaceHighlightTimelineTests
         Assert.LessOrEqual(events.CandidateCount,96);
         Assert.LessOrEqual(events.Select(2200).Count,8);
     }
+    [Test] public void QuietFootageIsNotLabeledAsABattleAndFinishClipsEndBeforeRetirement()
+    {
+        var events=new RaceHighlightTimeline();
+        Assert.AreEqual(RaceHighlightKind.Drive,events.Select(10)[0].Kind);
+        events.Add(10,0,RaceHighlightKind.Finish,80);
+        Assert.AreEqual(12.5f,events.Select(30)[0].End);
+    }
 }
