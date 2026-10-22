@@ -781,7 +781,7 @@ public class Gmanager : MonoBehaviour
     public void StartAutodriveTestRace(bool bothPlayers = false)
     {
         if ((state != State.Title && state != State.Result) || IsScreenTransitioning()) return;
-        Features.SetFeature(RaceFeature.PlayerTwoAutodrive, true);
+        if (!bothPlayers) Features.SetFeature(RaceFeature.PlayerTwoAutodrive, true);
         ClearCurrentRaceObjects(); BothPlayersAutodrive = bothPlayers;
         Features.Settings.BeginPreparation(); ApplyFeatureRules();
         StartGameWhenScreenCovered(); CompleteGameStart();
