@@ -103,7 +103,9 @@ public sealed class RacingStandalonePerformanceProbe : MonoBehaviour
         rigs = (PlayerDisplayRig[])typeof(Gmanager).GetField("displayRigs",Private).GetValue(manager);
         if (RacePlayerWindows.UsesNativeWindow)
         {
-            report.outputMode = "P1 and P2 independent desktop windows";
+            report.outputMode = RacePlayerWindows.ExternalFullscreenActive
+                ? "P1 and P2 fill two external displays; built-in excluded"
+                : "P1 and P2 independent desktop windows";
             presenter = rigs[1].CameraRoot.GetComponent<RenderGraphDisplayOutput>();
         }
         else if (Display.displays.Length == 1)

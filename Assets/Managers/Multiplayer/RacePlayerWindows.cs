@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-/// <summary>Standalone player windows. Editor Game views keep virtual display routing.</summary>
+/// <summary>Standalone windows; two external Mac screens use independent borderless full-screen outputs.</summary>
 public static class RacePlayerWindows
 {
     public const int InitialWidth = 960;
@@ -17,7 +17,7 @@ public static class RacePlayerWindows
     {
         if (Application.isEditor) return;
         Application.runInBackground = true;
-        // Also override a fullscreen preference saved by an older build.
+        // Avoid macOS fullscreen Spaces. The native plugin fills two external screens after both windows exist.
         if (Screen.fullScreenMode != FullScreenMode.Windowed)
             Screen.SetResolution(InitialWidth, InitialHeight, FullScreenMode.Windowed);
     }
@@ -25,6 +25,8 @@ public static class RacePlayerWindows
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
     private const string Library = "RaceWindows";
     [DllImport(Library)] private static extern int RaceWindows_Open(int screen, int width, int height);
+    [DllImport(Library)] private static extern void RaceWindows_UpdateLayout();
+    [DllImport(Library)] private static extern int RaceWindows_ExternalFullscreen();
     [DllImport(Library)] private static extern void RaceWindows_Size(out int width, out int height);
     [DllImport(Library)] private static extern int RaceWindows_CloseRequested();
     [DllImport(Library)] private static extern void RaceWindows_Close();
@@ -54,6 +56,24 @@ public static class RacePlayerWindows
             return new Vector2Int(width, height);
 #else
             return Vector2Int.zero;
+#endif
+        }
+    }
+
+    public static void UpdateLayout()
+    {
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+        if (UsesNativeWindow) RaceWindows_UpdateLayout();
+#endif
+    }
+    public static bool ExternalFullscreenActive
+    {
+        get
+        {
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            return UsesNativeWindow && RaceWindows_ExternalFullscreen()!=0;
+#else
+            return false;
 #endif
         }
     }
