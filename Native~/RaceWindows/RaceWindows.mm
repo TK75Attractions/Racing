@@ -103,11 +103,21 @@ static void RestoreWindow(NSWindow* window, WindowPlacement& placement)
     [window setFrame:frame display:NO];
     placement.saved=false;
 }
+static NSWindow* FindUnityWindow()
+{
+    NSWindow* candidate=NSApp.mainWindow ?: NSApp.keyWindow;
+    if (candidate && candidate!=playerWindow && ![candidate isKindOfClass:NSPanel.class]) return candidate;
+    // Background launches can create the Unity window before it becomes main/key.
+    for (NSWindow* window in NSApp.windows)
+        if (window!=playerWindow && ![window isKindOfClass:NSPanel.class] && window.contentView &&
+            ((window.styleMask&NSWindowStyleMaskTitled) || [NSStringFromClass(window.class) containsString:@"Unity"])) return window;
+    return nil;
+}
 static void RefreshExternalLayout()
 {
     if (!playerWindow) return;
     if (!unityWindow) {
-        NSWindow* primary=NSApp.mainWindow ?: NSApp.keyWindow;
+        NSWindow* primary=FindUnityWindow();
         if (!primary || primary==playerWindow) return;
         unityWindow=primary; primaryPlacement.saved=false;
     }
@@ -177,8 +187,7 @@ extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_Open(int screenIndex, int widt
     __block int success = 0;
     OnMain(^{
         if (playerWindow) { success = 1; return; }
-        NSWindow* primary = NSApp.mainWindow ?: NSApp.keyWindow;
-        if (!primary) return;
+        NSWindow* primary = FindUnityWindow();
         unityWindow=primary;
         primary.title = @"RACING — P1";
         NSArray<NSScreen*>* screens = NSScreen.screens;

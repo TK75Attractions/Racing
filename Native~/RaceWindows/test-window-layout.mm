@@ -43,6 +43,8 @@ int main()
         RacePlayerWindow* secondary=[[RacePlayerWindow alloc] initWithContentRect:initial
             styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskResizable backing:NSBackingStoreBuffered defer:NO];
         secondary.releasedWhenClosed=NO;
+        playerWindow=secondary;
+        assert(FindUnityWindow()==primary); // Both remain hidden and neither is main/key.
         WindowPlacement secondaryOriginal;RememberWindow(secondary,secondaryOriginal);
         NSRect secondaryFrame=NSMakeRect(1920,-200,3840,2160);
         FillScreen(secondary,secondaryFrame);
@@ -53,6 +55,7 @@ int main()
         RestoreWindow(secondary,secondaryOriginal);
         assert(secondary.styleMask&NSWindowStyleMaskTitled);
         [secondary close];
+        playerWindow=nil;
         [primary close];
         unityWindow=nil;
         std::cout<<"EXTERNAL_WINDOW_LAYOUT_PASS: production AppKit helpers; full content frames, portrait/negative coordinates, focus eligibility, idempotent sizing and original-window restoration. Windows remained hidden.\n";
