@@ -1,0 +1,6 @@
+MULTI_DISPLAY_VALIDATION_PASS
+MULTI_DISPLAY_BUILD_PASS: Builds/DisplayValidation/Race.app
+Source: 26179ff (includes 245ddff and b333c0a)
+Native plugin and player executable: arm64 + x86_64
+Standalone startup with owned RGP/1 PTY: errors=[]; P1/P2 rendered; application exited.
+Physical two-external-monitor operation: unavailable, not claimed.

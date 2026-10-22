@@ -1,0 +1,2 @@
+EXTERNAL_DISPLAY_SELECTION_PASS: 12 configurations; built-in/main ordering, lid closed, portrait, negative coordinates, mirroring, duplicates, invalid geometry.
+EXTERNAL_WINDOW_LAYOUT_PASS: production AppKit helpers; full content frames, portrait/negative coordinates, focus eligibility, idempotent sizing and original-window restoration. Windows remained hidden.
