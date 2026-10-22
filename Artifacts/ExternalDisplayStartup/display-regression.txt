@@ -1,0 +1,1 @@
+MULTI_DISPLAY_VALIDATION_PASS: Render Graph enabled, no compatibility define; Display 1/3 routing; unequal-size output pairs; stable UI; explicit stack color/depth target resize, reuse and cleanup; ordered presentation into alternating buffers; completed-stack/once-per-frame guards; presentation shader.
