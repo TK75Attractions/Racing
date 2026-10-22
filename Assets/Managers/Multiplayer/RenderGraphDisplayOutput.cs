@@ -18,6 +18,7 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
     private Material presentation;
     private bool nativeWindow;
     private System.IntPtr nativeTexture;
+    private float nextLayoutCheck;
     private static readonly int TextureId = Shader.PropertyToID("_BlitTexture");
     private static readonly int ScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
     private static readonly int EncodeId = Shader.PropertyToID("_EncodeSRGB");
@@ -50,7 +51,9 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
         cameras = outputCameras;
         displayIndex = preferredScreen;
         RefreshTarget();
-        Debug.Log("Race output windows: P1=Unity window, P2=native window (move either by its title bar).");
+        Debug.Log(RacePlayerWindows.ExternalFullscreenActive
+            ? "Race output windows: P1/P2 fill two independent external displays; built-in display is excluded."
+            : "Race output windows: fewer than two independent external displays (or windowed override); P1/P2 use desktop windows.");
     }
 
     private void OnEnable()
@@ -71,7 +74,13 @@ public sealed class RenderGraphDisplayOutput : MonoBehaviour
         presentation = null;
     }
 
-    private void LateUpdate() => RefreshTarget();
+    private void LateUpdate()
+    {
+        // Also correct a late Unity startup resize, and recover from monitor unplug/reconnect.
+        if (nativeWindow && Time.unscaledTime>=nextLayoutCheck)
+        { nextLayoutCheck=Time.unscaledTime+.5f; RacePlayerWindows.UpdateLayout(); }
+        RefreshTarget();
+    }
     private void BeginRendering(ScriptableRenderContext context, List<Camera> rendered)
     {
         if (!CapturingPreview) RefreshTarget();

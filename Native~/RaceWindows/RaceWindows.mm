@@ -1,11 +1,14 @@
 #import <AppKit/AppKit.h>
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
+#import <CoreGraphics/CoreGraphics.h>
 #include <atomic>
 #include <mutex>
 #include <memory>
+#include <cstring>
 #include "IUnityGraphics.h"
 #include "IUnityGraphicsMetal.h"
+#include "ExternalDisplayLayout.h"
 
 // AppKit stays on the main thread. Texture ownership is shared with Unity's
 // render thread; all rendering/presentation uses Unity's own command buffer.
@@ -16,6 +19,9 @@ static id<MTLRenderPipelineState> pipeline;
 static std::mutex outputMutex;
 static std::atomic<int> pixelWidth{0}, pixelHeight{0};
 static std::atomic<bool> visible{false}, closeRequested{false};
+static std::atomic<bool> externalFullscreen{false};
+static __weak NSWindow* unityWindow;
+static id screenObserver;
 
 static void OnMain(dispatch_block_t action)
 {
@@ -23,7 +29,132 @@ static void OnMain(dispatch_block_t action)
 }
 
 @interface RacePlayerWindow : NSWindow <NSWindowDelegate>
+- (void)updateOutputSize;
 @end
+
+struct WindowPlacement {
+    bool saved=false;
+    NSRect frame;
+    NSWindowStyleMask style;
+    NSWindowCollectionBehavior behavior;
+    NSInteger level;
+    NSSize minimum, maximum, increments;
+    BOOL shadow;
+    NSWindowTitleVisibility title;
+    BOOL transparent, closeHidden, minimizeHidden, zoomHidden;
+};
+static WindowPlacement primaryPlacement, secondaryPlacement;
+
+static void RememberWindow(NSWindow* window, WindowPlacement& placement)
+{
+    if (!window || placement.saved) return;
+    placement={true,window.frame,window.styleMask,window.collectionBehavior,window.level,
+        window.minSize,window.maxSize,window.resizeIncrements,window.hasShadow,window.titleVisibility,window.titlebarAppearsTransparent,
+        [window standardWindowButton:NSWindowCloseButton].hidden,[window standardWindowButton:NSWindowMiniaturizeButton].hidden,
+        [window standardWindowButton:NSWindowZoomButton].hidden};
+}
+static bool FillScreen(NSWindow* window, NSRect frame)
+{
+    // A plain borderless NSWindow cannot receive keyboard focus. Give Unity a
+    // full-content window with invisible chrome, preserving its original class/delegate.
+    const auto style=window==unityWindow
+        ? NSWindowStyleMaskTitled | NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView
+        : NSWindowStyleMaskBorderless | NSWindowStyleMaskResizable;
+    const auto behavior=NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorFullScreenAuxiliary;
+    if (NSEqualRects(window.frame,frame) && window.styleMask==style && window.level==NSMainMenuWindowLevel+1 && window.collectionBehavior==behavior) return false;
+    window.styleMask=style;
+    window.titleVisibility=NSWindowTitleHidden;
+    window.titlebarAppearsTransparent=YES;
+    for (NSNumber* button in @[@(NSWindowCloseButton),@(NSWindowMiniaturizeButton),@(NSWindowZoomButton)])
+        [window standardWindowButton:(NSWindowButton)button.integerValue].hidden=YES;
+    window.collectionBehavior=behavior;
+    window.level=NSMainMenuWindowLevel+1;
+    window.hasShadow=NO;
+    window.minSize=NSMakeSize(320,180);
+    window.maxSize=NSMakeSize(10000,10000);
+    window.resizeIncrements=NSMakeSize(1,1);
+    [window setFrame:frame display:NO];
+    return true;
+}
+static void RestoreWindow(NSWindow* window, WindowPlacement& placement)
+{
+    if (!window || !placement.saved) return;
+    window.styleMask=placement.style;
+    window.collectionBehavior=placement.behavior;
+    window.level=placement.level;
+    window.hasShadow=placement.shadow;
+    window.minSize=placement.minimum;
+    window.maxSize=placement.maximum;
+    window.resizeIncrements=placement.increments;
+    window.titleVisibility=placement.title;
+    window.titlebarAppearsTransparent=placement.transparent;
+    [window standardWindowButton:NSWindowCloseButton].hidden=placement.closeHidden;
+    [window standardWindowButton:NSWindowMiniaturizeButton].hidden=placement.minimizeHidden;
+    [window standardWindowButton:NSWindowZoomButton].hidden=placement.zoomHidden;
+    NSRect frame=placement.frame;
+    bool onscreen=false;
+    for (NSScreen* screen in NSScreen.screens) if (NSIntersectsRect(frame,screen.visibleFrame)) onscreen=true;
+    if (!onscreen && NSScreen.mainScreen) {
+        NSRect area=NSScreen.mainScreen.visibleFrame;
+        frame.size.width=MIN(frame.size.width,area.size.width);
+        frame.size.height=MIN(frame.size.height,area.size.height);
+        frame.origin=NSMakePoint(NSMidX(area)-frame.size.width/2,NSMidY(area)-frame.size.height/2);
+    }
+    [window setFrame:frame display:NO];
+    placement.saved=false;
+}
+static NSWindow* FindUnityWindow()
+{
+    NSWindow* candidate=NSApp.mainWindow ?: NSApp.keyWindow;
+    if (candidate && candidate!=playerWindow && ![candidate isKindOfClass:NSPanel.class]) return candidate;
+    // Background launches can create the Unity window before it becomes main/key.
+    for (NSWindow* window in NSApp.windows)
+        if (window!=playerWindow && ![window isKindOfClass:NSPanel.class] && window.contentView &&
+            ((window.styleMask&NSWindowStyleMaskTitled) || [NSStringFromClass(window.class) containsString:@"Unity"])) return window;
+    return nil;
+}
+static void RefreshExternalLayout()
+{
+    if (!playerWindow) return;
+    if (!unityWindow) {
+        NSWindow* primary=FindUnityWindow();
+        if (!primary || primary==playerWindow) return;
+        unityWindow=primary; primaryPlacement.saved=false;
+    }
+    NSArray<NSScreen*>* screens=NSScreen.screens;
+    std::vector<racing::DisplayArea> displays;
+    for (NSScreen* screen in screens) {
+        CGDirectDisplayID id=[screen.deviceDescription[@"NSScreenNumber"] unsignedIntValue];
+        NSRect r=screen.frame;
+        displays.push_back({id,(bool)CGDisplayIsBuiltin(id),CGDisplayMirrorsDisplay(id)!=kCGNullDirectDisplay,
+            r.origin.x,r.origin.y,r.size.width,r.size.height});
+    }
+    auto pair=racing::ExternalPair(displays);
+    const char* forceWindowed=getenv("RACING_WINDOWED");
+    bool windowed=(forceWindowed && strcmp(forceWindowed,"1")==0) ||
+        [NSProcessInfo.processInfo.arguments containsObject:@"-racing-windowed"];
+    if (!windowed && pair[0]>=0) {
+        NSWindow* primary=unityWindow;
+        RememberWindow(primary,primaryPlacement); RememberWindow(playerWindow,secondaryPlacement);
+        bool changed=FillScreen(primary,screens[pair[0]].frame);
+        changed=FillScreen(playerWindow,screens[pair[1]].frame) || changed;
+        bool activating=!externalFullscreen.exchange(true);
+        if (activating || changed) {
+            [(RacePlayerWindow*)playerWindow updateOutputSize];
+            if (NSApp.active) [primary makeKeyWindow];
+            NSLog(@"RaceWindows: external fullscreen P1=%@ id=%u %@, P2=%@ id=%u %@ (AppKit points)",
+                screens[pair[0]].localizedName,displays[pair[0]].id,NSStringFromRect(screens[pair[0]].frame),
+                screens[pair[1]].localizedName,displays[pair[1]].id,NSStringFromRect(screens[pair[1]].frame));
+        }
+    } else if (externalFullscreen.exchange(false)) {
+        RestoreWindow(unityWindow,primaryPlacement); RestoreWindow(playerWindow,secondaryPlacement);
+        [(RacePlayerWindow*)playerWindow updateOutputSize];
+        NSLog(@"RaceWindows: fewer than two independent external displays or windowed override; restored desktop windows.");
+    }
+}
+
+extern "C" void UNITY_INTERFACE_EXPORT RaceWindows_UpdateLayout() { OnMain(^{RefreshExternalLayout();}); }
+extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_ExternalFullscreen() { return externalFullscreen?1:0; }
 @implementation RacePlayerWindow
 // Both keyboard input maps continue to go to Unity's primary window.
 - (BOOL)canBecomeKeyWindow { return NO; }
@@ -56,7 +187,8 @@ extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_Open(int screenIndex, int widt
     __block int success = 0;
     OnMain(^{
         if (playerWindow) { success = 1; return; }
-        NSWindow* primary = NSApp.mainWindow ?: NSApp.keyWindow;
+        NSWindow* primary = FindUnityWindow();
+        unityWindow=primary;
         primary.title = @"RACING — P1";
         NSArray<NSScreen*>* screens = NSScreen.screens;
         if (screens.count == 0) return;
@@ -91,6 +223,10 @@ extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_Open(int screenIndex, int widt
         }
         closeRequested = false;
         [window orderFront:nil];
+        RefreshExternalLayout();
+        if (!screenObserver) screenObserver=[NSNotificationCenter.defaultCenter
+            addObserverForName:NSApplicationDidChangeScreenParametersNotification object:nil queue:NSOperationQueue.mainQueue
+            usingBlock:^(NSNotification* notification) { RefreshExternalLayout(); }];
         [window updateOutputSize];
         success = 1;
     });
@@ -116,6 +252,11 @@ extern "C" void UNITY_INTERFACE_EXPORT RaceWindows_Close()
 {
     visible = false;
     OnMain(^{
+        if (screenObserver) { [NSNotificationCenter.defaultCenter removeObserver:screenObserver]; screenObserver=nil; }
+        RestoreWindow(unityWindow,primaryPlacement);
+        primaryPlacement.saved=false;
+        externalFullscreen=false; secondaryPlacement.saved=false;
+        unityWindow=nil;
         NSWindow* window;
         {
             std::lock_guard<std::mutex> lock(outputMutex);

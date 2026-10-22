@@ -158,6 +158,8 @@ public static class MultiDisplayValidation
     [MenuItem("Racing/Build/Mac Display Validation")]
     public static void BuildMac()
     {
+        if (!Application.isBatchMode && !UnityEditor.SceneManagement.EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
         Run();
         string path = Path.Combine(Directory.GetCurrentDirectory(), "Builds/DisplayValidation/Race.app");
         Directory.CreateDirectory(Path.GetDirectoryName(path));
