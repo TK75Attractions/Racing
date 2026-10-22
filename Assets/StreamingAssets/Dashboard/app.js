@@ -157,7 +157,7 @@ function render(snapshot, { canControl = localMode, canInput = canControl } = {}
   $('serial-port').textContent = 'PORT ' + (snapshot.serial.port || '—');
   $('port-status').textContent = snapshot.serial.portOpen ? '接続中' : '未接続';
   $('port-status').classList.toggle('active', snapshot.serial.portOpen);
-  $('input-mode').textContent = /keyboard/i.test(snapshot.inputMode || '') ? '⌨ キーボード' :
+  $('input-mode').textContent = snapshot.settings?.inputMode === 'mixed' ? '↔ P1ハンドル / ⌨ 代替ペダル・P2' : /^keyboard/i.test(snapshot.inputMode || '') ? '⌨ キーボード' :
     /serial/i.test(snapshot.inputMode || '') ? '↔ シリアル機器' : snapshot.inputMode || '—';
   $('last-result').textContent = serialStatusLabel(snapshot.serial.lastResult);
   for (const player of snapshot.players || []) {
@@ -558,10 +558,11 @@ function renderHardware(snapshot) {
   cards.forEach((card,index)=>{if(snapshot&&!HardwareDiagnostics.required(snapshot,index)){card[1]=['unknown','この入力モードでは未使用'];card[2]='未接続でも現在の走行入力には影響しません';}});
   const faults = cards.filter(([, [level]]) => level === 'fault').length;
   const ready = cards.filter(([, [level]]) => level === 'ok').length;
-  const keyboard = /keyboard/i.test(snapshot?.inputMode || '');
+  const requiredCount = cards.filter((_,index)=>HardwareDiagnostics.required(snapshot,index)).length;
+  const keyboard = snapshot?.settings?.inputMode === 'keyboard' || /^keyboard/i.test(snapshot?.inputMode || '');
   const summary = $('device-summary');
   const level = !snapshot || keyboard ? 'unknown' : faults ? 'fault' :
-    ready === cards.length && hardware?.state === 'READY' && hardware?.angleLocked && hardware?.calibrated ? 'ok' : 'unknown';
+    requiredCount > 0 && ready === requiredCount && hardware?.state === 'READY' && hardware?.angleLocked && hardware?.calibrated ? 'ok' : 'unknown';
   summary.className = level;
   summary.textContent = !snapshot ? '確認待ち' : keyboard ? '⌨ 機器入力は未使用' : faults ? `⚠ ${faults}件 要確認` :
     level === 'ok' ? '✓ すべて正常' : '◷ 準備・確認中';
@@ -592,6 +593,7 @@ function renderHardwareDiagnosis(){
 async function openHardwareDiagnosis(key){
   diagnosticKey=key;diagnosticScan=null;const generation=++diagnosticGeneration;
   $('diagnostics-close').onclick=()=>{diagnosticGeneration++;$('diagnostics-dialog').close();};
+  $('diagnostics-dialog').oncancel=()=>{diagnosticGeneration++;};
   if(!$('diagnostics-dialog').open)$('diagnostics-dialog').showModal();
   renderHardwareDiagnosis();
   const session=latestSnapshot?.sessionId,hardwareGeneration=latestSnapshot?.hardware?.generation;

@@ -5,6 +5,10 @@ internal static class DashboardAssets
     {
         ["/"] = ("index.html", "text/html; charset=utf-8"),
         ["/index.html"] = ("index.html", "text/html; charset=utf-8"),
+        ["/notifications.js"] = ("notifications.js", "application/javascript; charset=utf-8"),
+        ["/sw.js"] = ("sw.js", "application/javascript; charset=utf-8"),
+        ["/manifest.webmanifest"] = ("manifest.webmanifest", "application/manifest+json"),
+        ["/app-icon.png"] = ("app-icon.png", "image/png"),
         ["/diagnostics.js"] = ("diagnostics.js", "application/javascript; charset=utf-8"),
         ["/app.js"] = ("app.js", "application/javascript; charset=utf-8"),
         ["/live.js"] = ("live.js", "application/javascript; charset=utf-8"),

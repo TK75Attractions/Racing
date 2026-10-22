@@ -1,0 +1,5 @@
+{
+  "id": "/", "name": "Racing 管理画面", "short_name": "Racing", "lang": "ja",
+  "start_url": "/", "scope": "/", "display": "standalone", "background_color": "#0b1220", "theme_color": "#0b1220",
+  "icons": [{"src":"/app-icon.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]
+}
