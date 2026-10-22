@@ -1,0 +1,20 @@
+{
+    "passed": true,
+    "liveOnly": true,
+    "error": "",
+    "liveFrames": 156,
+    "cuts": 6,
+    "recordedFrames": 82,
+    "cars": 0,
+    "clips": 0,
+    "overpasses": 0,
+    "corners": 0,
+    "archiveBytes": 0,
+    "pvSeen": false,
+    "liveSeen": true,
+    "replaySeen": false,
+    "archiveRoundTrip": false,
+    "corruptRejected": false,
+    "renderOnlyActors": false,
+    "physicsUnchanged": false
+}

@@ -1,0 +1,45 @@
+✔ Unity FPS and frame time update and clear on disconnect (34.2555ms)
+✔ Missing, warming up or invalid FPS never shows a stale measurement (2.662958ms)
+✔ Four standings include CPU diagnostics and preserve two player feeds (0.85ms)
+✔ All driver modes, finish/DNF and contact protection have explicit labels (1.25775ms)
+✔ Disconnect, round reset and old snapshots clear previous CPU rows (1.459084ms)
+✔ Remote render uses the same CPU rows and does not enable viewer controls (1.251083ms)
+✔ TEL updates latest numeric values without entering natural-language history (2.204917ms)
+✔ Invalid TEL remains in error history and outbound commands are translated (1.043125ms)
+✔ SYS, state, calibration, configuration and ACK have meaningful labels (0.867583ms)
+✔ Errors, warnings, failed ACK and timeouts appear separately without losing raw logs (2.731917ms)
+✔ Invalid, truncated and unknown data never masquerade as valid telemetry (0.757458ms)
+✔ Diagnostic text is decoded once and inserted as text, including HTML-like device text (0.849417ms)
+✔ Remote rendering shows alerts, parse counts and port failures while keyboard mode stays quiet (1.232708ms)
+✔ All supplied host acceptance vectors can be explained without exceptions (1.6945ms)
+✔ Dedicated alerts survive history eviction, are deduplicated and ordered newest first (1.082666ms)
+✔ Raw section preserves TEL, TX direction, CRLF and untrusted text without translating (1.069416ms)
+✔ Hardware shows both IMUs and validates independent pedal values including zero (1.64375ms)
+✔ Players can select cars and practice independently, including timeouts and waiting (1.706416ms)
+✔ Raw display pauses rendering, bounds history, and resumes with fresh data (1.749916ms)
+✔ Race buttons advance selection and tutorial with mixed player preparation (1.782458ms)
+✔ Resolved alerts disappear after ten seconds and retained history cannot resurrect them (3.014791ms)
+✔ Recovering one IMU does not dismiss the other IMU fault (1.080667ms)
+✔ Structured command results show status, configuration, progress, completion and failures inline (1.507917ms)
+✔ Unrelated results and new device sessions cannot complete an operator request (0.803542ms)
+✔ Repeated reports update one active issue and a recurrence restarts the recovery window (5.20325ms)
+✔ Preview retries preserve good frames, decode before display, and release every replaced URL (3.059583ms)
+✔ Preview fetches cannot overlap or restore stale images after a disconnect (1.064458ms)
+✔ Device overview counts faults and never reports stale or incomplete hardware as healthy (1.55675ms)
+✔ Progression shows only applicable actions and keeps viewer actions disabled (1.387041ms)
+✔ Input meters preserve independent values and warn for old or invalid telemetry (1.36025ms)
+✔ Closed raw dialog buffers recent frames without rebuilding its contents (0.755208ms)
+✔ Settings mirror Unity, use stable device keys, prevent duplicate outputs and disable viewers (1.147625ms)
+✔ Old Unity snapshots leave settings disabled and active slider drafts survive polling (0.939584ms)
+✔ Acknowledged settings survive late snapshots and reset with a new Unity session (1.180375ms)
+✔ HTTP settings use guarded requests, display acknowledged values and query lost responses without replay (5.464333ms)
+✔ F8 controls show live switches and queued rules, synchronize without rebuilding, and disable on disconnect (1.530958ms)
+✔ F8 feature, preset, all-off and test-start requests use the shared guarded settings transport (3.809625ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 174.44675

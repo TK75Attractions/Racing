@@ -1,0 +1,19 @@
+{
+    "passed": true,
+    "error": "",
+    "liveFrames": 4619,
+    "cuts": 38,
+    "recordedFrames": 1479,
+    "cars": 4,
+    "clips": 8,
+    "overpasses": 4,
+    "corners": 4,
+    "archiveBytes": 826438,
+    "pvSeen": false,
+    "liveSeen": true,
+    "replaySeen": true,
+    "archiveRoundTrip": true,
+    "corruptRejected": true,
+    "renderOnlyActors": true,
+    "physicsUnchanged": true
+}
