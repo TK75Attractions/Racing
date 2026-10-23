@@ -177,7 +177,9 @@ public sealed class ScreenTransitionController : MonoBehaviour
     public void RefreshLapTotal()
     {
         TMP_Text total = onPlayRoot != null ? onPlayRoot.transform.Find("CountdownLap/Total")?.GetComponent<TMP_Text>() : null;
-        if (total != null) total.text = "/ " + (Gmanager.Control != null ? Gmanager.Control.GoalLap : LapManager.DefaultGoalLaps);
+        string value="/ "+(Gmanager.Control!=null?Gmanager.Control.GoalLap:LapManager.DefaultGoalLaps);
+        if(total!=null)total.text=value;
+        var hudTotal=onPlayRoot?.transform.Find("ModernHUD/Lap/Total")?.GetComponent<TMP_Text>();if(hudTotal!=null)hudTotal.text=value;
     }
 
     public void ShowCountdown(int seconds)
@@ -418,13 +420,13 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
         Image background = title.GetComponent<Image>() ?? title.gameObject.AddComponent<Image>();
         background.color = Color.clear; background.raycastTarget = false;
-        NeonUI.Background(title, "TitleBackground", "UI/Neon/TitleBackground");
+        ArcadeUI.Hide(title,"TitleBackground");
         MenuSceneryScrim.Create(title, "MenuSceneryScrim", false);
         ArcadeUI.Hide(title,"SceneryTitleBrand");
         ArcadeUI.Logo(title,new Vector2(.03f,.54f),new Vector2(.63f,.84f));
         title.Find("TitleBackground")?.gameObject.SetActive(false);
         TMP_Text playerBadge = NeonUI.Text(title, "PlayerBadge", $"P{displayPlayerIndex + 1} / プレイヤー{displayPlayerIndex + 1}",
-            new Vector2(.69f,.90f), new Vector2(.97f,.955f), 21f, TextAlignmentOptions.Right, tint: NeonUI.Cyan);
+            new Vector2(.69f,.90f), new Vector2(.97f,.955f), 21f, TextAlignmentOptions.Right, tint: ArcadeUI.For(displayPlayerIndex).Primary);
         foreach(Button legacy in title.GetComponentsInChildren<Button>(true)) legacy.gameObject.SetActive(false);
         Transform oldSheet=title.Find("MenuSheet"); if(oldSheet!=null)oldSheet.gameObject.SetActive(false);
         BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(.67f,.23f), new Vector2(.960f,.40f), NeonUI.Pink);
@@ -496,6 +498,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
             countdownSignals[i].display=NeonRingGraphic.Display.Light;
             countdownSignals[i].SetAmount(0f);
         }
+        var housing=ArcadeUI.Panel(countdownStatusRoot.transform,"SignalHousing",new Vector2(.055f,1.04f),new Vector2(.945f,1.31f),ArcadeUI.For(displayPlayerIndex).Ink);housing.SetAsFirstSibling();
+        for(int i=0;i<countdownSignals.Length;i++)countdownStatusRoot.transform.Find("Lamp"+i+"/ModernSurface")?.gameObject.SetActive(false);
         raceStatusPulse = raceStatus.GetComponent<UIValuePulse>() ?? raceStatus.gameObject.AddComponent<UIValuePulse>();
         RectTransform courseCard = NeonUI.Panel(onPlay,"CountdownCourse",new Vector2(.02f,.855f),new Vector2(.335f,.975f));
         RectTransform courseIcon = RacingUITheme.Rect(courseCard,"Outline",new Vector2(.02f,.09f),new Vector2(.26f,.91f));
@@ -568,7 +572,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         raceStatus.text = value;
         bool go = value == "GO!";
         int.TryParse(value, out int seconds);
-        Color accent = go ? ArcadeUI.For(displayPlayerIndex).Secondary : ArcadeUI.For(displayPlayerIndex).Primary;
+        Color accent = go ? ArcadeUI.Blue.Secondary : ArcadeUI.For(displayPlayerIndex).Primary;
         int illuminated = go ? countdownSignals.Length : Mathf.Clamp(countdownSignals.Length - seconds + 1, 0, countdownSignals.Length);
         for (int i = 0; i < countdownSignals.Length; i++)
             if (countdownSignals[i] != null)

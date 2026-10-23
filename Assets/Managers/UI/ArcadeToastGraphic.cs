@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>Meter ticks and forward motion accents shared by boost and item announcements.</summary>
+[RequireComponent(typeof(CanvasRenderer))]
 public sealed class ArcadeToastGraphic : MaskableGraphic
 {
     private bool fast,warning;

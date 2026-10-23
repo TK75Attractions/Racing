@@ -17,6 +17,7 @@ public sealed class ResultReplayPanel : MonoBehaviour
         ArcadeUI.Label(heading,"Title","ハイライト",new Vector2(.025f,.08f),new Vector2(.6f,.92f),23,p.Soft);
         mode=ArcadeUI.Label(heading,"Mode","REPLAY",new Vector2(.65f,.08f),new Vector2(.975f,.92f),23,p.Paper,true,TextAlignmentOptions.Right);
         empty=ArcadeUI.Label(panel,"Empty","リプレイはありません",new Vector2(.1f,.4f),new Vector2(.9f,.6f),26,p.Soft,false,TextAlignmentOptions.Center);
+        Refresh();
     }
     private void LateUpdate()=>Refresh();
     public void Refresh()

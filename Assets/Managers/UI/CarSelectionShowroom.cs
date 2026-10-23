@@ -26,38 +26,12 @@ public sealed class CarSelectionShowroom : MonoBehaviour
         world = new GameObject("Car Showroom P" + (playerIndex + 1));
         world.transform.position = new Vector3(20000f + playerIndex * 200f, 4000f, 0f);
         SceneManager.MoveGameObjectToScene(world, gameObject.scene);
-        Material floor = Material("Garage floor", new Color(.007f, .013f, .026f), true);
-        Material dark = Material("Garage structure", new Color(.012f, .023f, .047f), true);
-        Material platform = Material("Display platform", new Color(.019f, .028f, .052f), true);
-        Material cyan = Material("Cyan neon", NeonUI.Cyan, true);
-        Material pink = Material("Pink neon", NeonUI.Pink, true);
-        Material violet = Material("Violet neon", NeonUI.Violet, true);
-        Cube("Floor", new Vector3(0, -.20f, 0), new Vector3(40, .2f, 40), floor);
-        GameObject disk = Primitive("Display plinth", PrimitiveType.Cylinder, platform);
-        disk.transform.localPosition = new Vector3(0, -.09f, 0);
-        disk.transform.localScale = new Vector3(7.4f, .06f, 7.4f);
-        Arc("Outer cyan rim", 3.73f, .0f, 0f, 190f, cyan, .04f);
-        Arc("Outer pink rim", 3.73f, .0f, 190f, 360f, pink, .04f);
-        Arc("Inner rim", 3.48f, -.005f, 0f, 360f, violet, .018f);
-        for (int i = -4; i <= 4; i++)
-        {
-            Cube("Floor seam", new Vector3(i * 3f, -.09f, 0), new Vector3(.012f, .01f, 30f), dark);
-            Cube("Garage column", new Vector3(i * 4f, 3.4f, -7), new Vector3(.25f, 7f, .3f), dark);
-            Cube("Column neon", new Vector3(i * 4f - .16f, 3.4f, -6.82f), new Vector3(.025f, 6.4f, .025f), i % 2 == 0 ? cyan : pink);
-            Cube("Upper rail", new Vector3(i * 4f, 3.2f, -6.8f), new Vector3(4f, .025f, .035f), i % 2 == 0 ? pink : cyan);
-            Cube("Ceiling beam", new Vector3(i * 4f, 6.5f, -1), new Vector3(.10f, .10f, 20f), dark);
-            Cube("Ceiling light", new Vector3(i * 4f, 6.4f, -1), new Vector3(.04f, .03f, 17f), violet);
-        }
-        for (int i = 0; i < 18; i++)
-        {
-            float height = 1.3f + (i * 7 % 11) * .32f;
-            Cube("Night skyline", new Vector3(-18f + i * 2.2f, height * .5f, -17f), new Vector3(1.6f, height, 1.3f), dark);
-            for (int j = 1; j < 5; j++)
-                Cube("City window", new Vector3(-18f + i * 2.2f, height * j / 5f, -16.32f), new Vector3(.035f, .035f, .01f), cyan);
-        }
-        Light("Softbox", LightType.Point, Color.white, 60f, Vector3.zero, new Vector3(-3, 4, 4));
-        Light("Blue rim", LightType.Point, new Color(.35f, .55f, 1f), 15f, Vector3.zero, new Vector3(3, 3, -3));
-        Light("Pink bounce", LightType.Point, new Color(1, .035f, .3f), 8f, Vector3.zero, new Vector3(3, 2, -2));
+        var palette=ArcadeUI.For(playerIndex);
+        Material floor=Material("Arcade garage floor",palette.Ink,true);
+        Cube("Floor",new Vector3(0,-.20f,0),new Vector3(40,.2f,40),floor);
+        Light("Softbox",LightType.Point,Color.white,60f,Vector3.zero,new Vector3(-3,4,4));
+        Light("Player rim",LightType.Point,palette.Soft,15f,Vector3.zero,new Vector3(3,3,-3));
+        Light("Soft fill",LightType.Point,Color.Lerp(palette.Primary,Color.white,.65f),8f,Vector3.zero,new Vector3(3,2,-2));
         pivot = new GameObject("Vehicle rotation").transform;
         pivot.SetParent(world.transform, false);
         GameObject cameraObject = new GameObject("Showroom Camera");
@@ -66,7 +40,7 @@ public sealed class CarSelectionShowroom : MonoBehaviour
         previewCamera.scene = gameObject.scene;
         previewCamera.enabled = false;
         previewCamera.clearFlags = CameraClearFlags.SolidColor;
-        previewCamera.backgroundColor = new Color(.008f, .014f, .035f);
+        previewCamera.backgroundColor = palette.Ink;
         previewCamera.cullingMask = 1 << PreviewLayer;
         previewCamera.nearClipPlane = .1f;
         previewCamera.farClipPlane = 60f;
@@ -109,13 +83,16 @@ public sealed class CarSelectionShowroom : MonoBehaviour
 
     public RenderTexture Thumbnail(CarSelectionCatalog.Vehicle vehicle, int color)
     {
-        Show(vehicle, color);
         RenderTexture thumbnail = new RenderTexture(400, 225, 24) { name = vehicle.id + " thumbnail", antiAliasing = 4 };
         thumbnail.Create();
-        Frame(true);
-        RenderTo(thumbnail);
-        Frame(false);
+        RenderThumbnail(vehicle,color,thumbnail);
         return thumbnail;
+    }
+
+    // UI is built before URP is ready on startup; refresh the retained textures on opening.
+    public void RenderThumbnail(CarSelectionCatalog.Vehicle vehicle,int color,RenderTexture thumbnail)
+    {
+        Show(vehicle,color);Frame(true);RenderTo(thumbnail);Frame(false);
     }
 
     public void RenderNow() { RenderTo(target); dirty = false; }

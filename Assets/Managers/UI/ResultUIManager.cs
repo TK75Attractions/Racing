@@ -79,6 +79,8 @@ public class ResultUIManager
             ranks[i].color=drivers[i].color=times[i].color=ink;
         }
         var local=session?.GetPlayerResult(localPlayerNumber-1);
+        int laps=local!=null&&local.goalLap>0?local.goalLap:Gmanager.Control!=null&&Gmanager.Control.GoalLap>0?Gmanager.Control.GoalLap:LapManager.DefaultGoalLaps;
+        card.Find("Header/Course").GetComponent<TMP_Text>().text="つくこまサーキット / "+laps+"周";
         localRank.text=local==null?"—":local.didFinish?local.finishPosition+"<size=32%>位</size>":"DNF";
         localTime.text=local==null?"—":local.didFinish?FormatTime(local.totalRaceTime):"未完走";
         rankingOpen=false;classification.SetActive(true);dailyRankingPanel.SetExpanded(false);rankingLabel.text="本日のランキング  +";

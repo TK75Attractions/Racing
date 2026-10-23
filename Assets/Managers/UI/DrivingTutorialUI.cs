@@ -19,9 +19,9 @@ public sealed class DrivingTutorialUI
         player=playerIndex;ArcadeUI.Bind(canvas,player);
         var r=RacingUITheme.Rect(canvas,"DrivingTutorial",Vector2.zero,Vector2.one);root=r.gameObject;r.SetAsFirstSibling();
         Transform hud=RacingHUDBuilder.Build(r,player,2);
-        ArcadeUI.Hide(hud,"Position","Lap","Time","LapDelta","Leaderboard");
+        ArcadeUI.Hide(hud,"Position","Lap","Time","LapDelta","Leaderboard","Pause");
         speed.Init(hud.Find("Speed"));telemetry=hud.GetComponent<ArcadeHUDTelemetry>();telemetry.enabled=false;
-        steering=hud.Find("SteeringIndicator/Track").GetComponent<RacingSteeringIndicator>();steering.enabled=false;
+        steering=hud.Find("SteeringIndicator/Track").GetComponent<RacingSteeringIndicator>();steering.AutoBind=false;
         ArcadeUI.Logo(r,new Vector2(.03f,.84f),new Vector2(.27f,.97f));
         var p=ArcadeUI.For(player);
         var tag=ArcadeUI.Panel(r,"Player",new Vector2(.77f,.89f),new Vector2(.81f,.95f),p.Primary);
@@ -50,7 +50,7 @@ public sealed class DrivingTutorialUI
         if(shownMessage!=prompt){message.text=prompt;shownMessage=prompt;}
         if(shownStage==stage)return;shownStage=stage;
         status.text=lesson.HasTimedOut?"TIME UP":lesson.IsComplete?"COMPLETE":"練習しよう";
-        step.text=lesson.HasTimedOut?"!":lesson.IsComplete?"✓":(stage+1).ToString("00");
+        step.text=lesson.HasTimedOut?"!":lesson.IsComplete?"OK":(stage+1).ToString("00");
     }
-    public void Dispose(){if(root!=null){root.SetActive(false);Object.Destroy(root);}}
+    public void Dispose(){if(root!=null){root.SetActive(false);if(Application.isPlaying)Object.Destroy(root);else Object.DestroyImmediate(root);}}
 }

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>Rounded, asymmetric surfaces and shared drawing primitives, without glow stacks.</summary>
+[RequireComponent(typeof(CanvasRenderer))]
 public sealed class ArcadeSurfaceGraphic : MaskableGraphic
 {
     protected override void OnPopulateMesh(VertexHelper vh){vh.Clear();Rounded(vh,rectTransform.rect,color,12);}

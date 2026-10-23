@@ -6,6 +6,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class RacingSteeringIndicator : MaskableGraphic
 {
+    public bool AutoBind { get; set; }=true;
     private int player;
     private Transform viewedCar;
     private DebugMover mover;
@@ -28,6 +29,7 @@ public sealed class RacingSteeringIndicator : MaskableGraphic
 
     private void LateUpdate()
     {
+        if(!AutoBind)return;
         Gmanager manager = Gmanager.Control;
         if (manager == null) return;
         Transform car = manager.GetPlayerCarTransform(manager.GetAudioViewedPlayer(player));

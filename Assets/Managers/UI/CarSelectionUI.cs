@@ -139,7 +139,8 @@ public sealed class CarSelectionUI : MonoBehaviour
     }
     private static void ApplyFont(TMP_Text text)
     {
-        TMP_FontAsset font = Resources.Load<TMP_FontAsset>("UI/CarSelectionFont");
+        bool latin=true;foreach(char c in text.text??"")if(c>127){latin=false;break;}
+        TMP_FontAsset font = latin?ArcadeUI.Digits:RacingUIFontCatalog.GetHUD(true);
         if (font != null) { text.font = font; text.fontSharedMaterial = font.material; }
     }
 
@@ -235,6 +236,7 @@ public sealed class CarSelectionUI : MonoBehaviour
         EventSystem.current?.SetSelectedGameObject(null);
         sheet.gameObject.SetActive(true); showroom.SetVisible(true); sheet.SetAsLastSibling();
         pedalHint.text = "ペダルを離してから踏み込む";
+        for(int i=0;i<thumbnails.Count;i++)showroom.RenderThumbnail(catalog.vehicles[i],i==1?2:i==2?3:0,thumbnails[i]);
         Refresh(true); UpdateFeedback();
     }
     public void SelectVehicle(int index)

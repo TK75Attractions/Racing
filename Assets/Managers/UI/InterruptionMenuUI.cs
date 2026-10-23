@@ -70,6 +70,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
     {
         if (optionsPanel == null) return;
         optionsPanel.SetActive(visible);
+        root.transform.Find("MenuCard/Title").GetComponent<TMP_Text>().text=visible?"設定":"一時停止";
         foreach (string name in new[] { "Restart", "ToggleDirection", "Options", "Interrupt", "Subtitle" })
             root.transform.Find("MenuCard/" + name)?.gameObject.SetActive(!visible);
         if (visible)
@@ -78,6 +79,8 @@ public sealed class InterruptionMenuUI : MonoBehaviour
             bgmSlider.SetValueWithoutNotify(RaceAudioSettings.Bgm);
             engineSlider.SetValueWithoutNotify(RaceAudioSettings.Engine);
             effectsSlider.SetValueWithoutNotify(RaceAudioSettings.Effects);
+            Slider[] sliders={masterSlider,bgmSlider,engineSlider,effectsSlider};string[] names={"Master","BGM","Engine","Effects"};
+            for(int i=0;i<sliders.Length;i++)optionsPanel.transform.Find(names[i]+"Value").GetComponent<TMP_Text>().SetText("{0}",Mathf.RoundToInt(sliders[i].value*100));
             RefreshDeviceLabels();
         }
         GameObject selected = visible ? masterSlider.gameObject : optionsButton.gameObject;
@@ -89,7 +92,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
     {
         if (directionStatus == null) return;
         directionStatus.text = isReverse ? "後退" : "前進";
-        directionStatus.color = isReverse ? RacingUITheme.Gold : RacingUITheme.Cyan;
+        directionStatus.color = isReverse ? ArcadeUI.For(transform).Accent : ArcadeUI.For(transform).Primary;
     }
 
     private void Build(Transform canvasRoot)
@@ -106,7 +109,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         GameObject card = GetOrCreate("MenuCard", root.transform, typeof(Image));
         Stretch(card.GetComponent<RectTransform>(), new Vector2(0.27f, 0.12f), new Vector2(0.73f, 0.88f));
         RacingUITheme.Surface(card.transform);
-        RacingUITheme.Rule(card.transform, "HeaderAccent", new Vector2(0.08f, 0.926f), new Vector2(0.125f, 0.93f), RacingUITheme.Cyan);
+        RacingUITheme.Rule(card.transform, "HeaderAccent", new Vector2(0.08f, 0.926f), new Vector2(0.125f, 0.93f), ArcadeUI.For(canvasRoot).Primary);
         TMP_Text eyebrow = CreateLabel(card.transform, "Eyebrow", "RACE MENU", new Vector2(0.15f, 0.895f), new Vector2(0.92f, 0.957f), 16f, FontRole.English);
         eyebrow.alignment = TextAlignmentOptions.Left;
         eyebrow.color = RacingUITheme.Muted;
@@ -217,7 +220,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         TMP_Dropdown dropdown = control.GetComponent<TMP_Dropdown>(); dropdown.targetGraphic = background;
         TMP_Text caption = CreateLabel(control.transform, "Caption", "出力なし", new Vector2(.04f, .08f), new Vector2(.88f, .92f), 21f, FontRole.Japanese);
         caption.alignment = TextAlignmentOptions.Left;
-        CreateLabel(control.transform, "Arrow", "▾", new Vector2(.88f, .05f), new Vector2(.98f, .95f), 24f, FontRole.English);
+        CreateLabel(control.transform, "Arrow", "", new Vector2(.88f, .05f), new Vector2(.98f, .95f), 24f, FontRole.English);
         GameObject template = GetOrCreate("Template", control.transform, typeof(Image), typeof(ScrollRect));
         RectTransform templateRect = template.GetComponent<RectTransform>();
         Stretch(templateRect, Vector2.zero, new Vector2(1f, 0f));
@@ -236,7 +239,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         Toggle toggle = item.GetComponent<Toggle>(); toggle.targetGraphic = itemBackground;
         GameObject check = GetOrCreate("Check", item.transform, typeof(Image));
         Stretch(check.GetComponent<RectTransform>(), new Vector2(.02f, .25f), new Vector2(.035f, .75f));
-        check.GetComponent<Image>().color = RacingUITheme.Cyan; toggle.graphic = check.GetComponent<Image>();
+        check.GetComponent<Image>().color = ArcadeUI.For(parent).Primary; toggle.graphic = check.GetComponent<Image>();
         TMP_Text itemLabel = CreateLabel(item.transform, "Label", "", new Vector2(.055f, .08f), new Vector2(.96f, .92f), 21f, FontRole.Japanese);
         itemLabel.alignment = TextAlignmentOptions.Left;
         ScrollRect scroll = template.GetComponent<ScrollRect>();
@@ -256,6 +259,8 @@ public sealed class InterruptionMenuUI : MonoBehaviour
             bgmSlider.SetValueWithoutNotify(RaceAudioSettings.Bgm);
             engineSlider.SetValueWithoutNotify(RaceAudioSettings.Engine);
             effectsSlider.SetValueWithoutNotify(RaceAudioSettings.Effects);
+            Slider[] sliders={masterSlider,bgmSlider,engineSlider,effectsSlider};string[] names={"Master","BGM","Engine","Effects"};
+            for(int i=0;i<sliders.Length;i++)optionsPanel.transform.Find(names[i]+"Value").GetComponent<TMP_Text>().SetText("{0}",Mathf.RoundToInt(sliders[i].value*100));
             RefreshDeviceLabels();
         }
     }
@@ -266,7 +271,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         TMP_Text label = CreateLabel(parent, name + "Label", caption, new Vector2(0.08f, top), new Vector2(0.45f, top + 0.15f), 23f, FontRole.Japanese);
         label.alignment = TextAlignmentOptions.Left;
         GameObject sliderObject = GetOrCreate(name + "Slider", parent, typeof(Slider));
-        Stretch(sliderObject.GetComponent<RectTransform>(), new Vector2(0.45f, top + 0.015f), new Vector2(0.92f, top + 0.125f));
+        Stretch(sliderObject.GetComponent<RectTransform>(), new Vector2(0.45f, top + 0.015f), new Vector2(0.84f, top + 0.125f));
         Image hit = sliderObject.GetComponent<Image>() ?? sliderObject.AddComponent<Image>();
         hit.color = Color.clear; hit.raycastTarget = true;
         GameObject track = GetOrCreate("Track", sliderObject.transform, typeof(Image));
@@ -276,7 +281,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         Stretch(fillArea.GetComponent<RectTransform>(), new Vector2(0f, 0.45f), new Vector2(1f, 0.55f));
         GameObject fill = GetOrCreate("Fill", fillArea.transform, typeof(Image));
         Stretch(fill.GetComponent<RectTransform>(), Vector2.zero, Vector2.one);
-        fill.GetComponent<Image>().color = RacingUITheme.Cyan;
+        fill.GetComponent<Image>().color = ArcadeUI.For(parent).Primary;
         GameObject handleArea = GetOrCreate("HandleArea", sliderObject.transform);
         Stretch(handleArea.GetComponent<RectTransform>(), new Vector2(0f, 0.3f), new Vector2(1f, 0.7f));
         GameObject handle = GetOrCreate("Handle", handleArea.transform, typeof(Image));
@@ -293,6 +298,8 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         slider.targetGraphic = handle.GetComponent<Image>();
         slider.onValueChanged.RemoveAllListeners();
         slider.onValueChanged.AddListener(onChanged);
+        TMP_Text output=CreateLabel(parent,name+"Value","",new Vector2(.86f,top+.02f),new Vector2(.94f,top+.12f),30,FontRole.English);
+        slider.onValueChanged.AddListener(value=>output.SetText("{0}",Mathf.RoundToInt(value*100)));
         return slider;
     }
 
@@ -317,6 +324,7 @@ public sealed class InterruptionMenuUI : MonoBehaviour
         Stretch(labelObject.GetComponent<RectTransform>(), min, max);
         TMP_Text label = labelObject.GetComponent<TMP_Text>();
         RacingUITheme.ApplyTypography(label, role, maxSize);
+        var font=role==FontRole.Japanese?RacingUIFontCatalog.GetHUD(true):ArcadeUI.Digits;if(font!=null){label.font=font;label.fontSharedMaterial=font.material;}
         label.text = value;
         label.color = ArcadeUI.For(parent).Paper;
         label.alignment = TextAlignmentOptions.Center;

@@ -36,6 +36,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
     private readonly Vector2[] oilBlobDrift = new Vector2[OilBlobCount];
     private CarItemEffects effects;
     private ArcadeToastGraphic toastFace;
+    private RacingIconGraphic toastIcon;
     private bool wasBoosting;
     private DebugMover boostMover;
     private float toastAge = float.PositiveInfinity;
@@ -153,6 +154,8 @@ public sealed class PlayerItemHUD : MonoBehaviour
         toastTitle.text = title;
         bool fast=title=="ロケット"||title=="ブースト発動！";
         toastFace?.SetStyle(fast,title.Contains("踏んだ")||title.Contains("反転")||title.Contains("スピン"));
+        if(toastIcon!=null)toastIcon.symbol=title.Contains("シールド")?RacingIconGraphic.Icon.Shield:title.Contains("ロケット")?RacingIconGraphic.Icon.Rocket:title.Contains("オイル")?RacingIconGraphic.Icon.Droplet:title.Contains("反転")?RacingIconGraphic.Icon.Swap:RacingIconGraphic.Icon.Bolt;
+        toastIcon?.SetVerticesDirty();
         toastTitle.color = ArcadeUI.For(transform).Ink;
         toastCaption.color=ArcadeUI.For(transform).Ink;
         toastTitle.fontStyle=fast?FontStyles.Italic:FontStyles.Normal;
@@ -316,8 +319,10 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
         toastRect = RacingHUDStyle.Plate(root, "Toast", new Vector2(.31f, .57f), new Vector2(.69f, .74f),
             RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
-        toastRect.Find("ModernSurface").GetComponent<RacingHUDPlateGraphic>().enabled=false;
-        toastFace=toastRect.Find("ModernSurface").gameObject.AddComponent<ArcadeToastGraphic>();toastFace.raycastTarget=false;
+        toastRect.Find("ModernSurface").gameObject.SetActive(false);
+        var arcadeFace=RacingUITheme.Rect(toastRect,"ArcadeFace",Vector2.zero,Vector2.one);arcadeFace.SetAsFirstSibling();
+        toastFace=arcadeFace.gameObject.AddComponent<ArcadeToastGraphic>();toastFace.raycastTarget=false;
+        toastIcon=NeonUI.Icon(toastRect,"ItemIcon",RacingIconGraphic.Icon.Bolt,new Vector2(.065f,.30f),new Vector2(.155f,.70f));
         toastGroup = toastRect.gameObject.AddComponent<CanvasGroup>();
         toastGroup.alpha = 0f;
         toastGroup.blocksRaycasts = false;

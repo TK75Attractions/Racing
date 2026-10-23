@@ -14,7 +14,8 @@ public sealed class ArcadeNoticeRail : MonoBehaviour
         if(rail.panel==null)
         {
             var p=ArcadeUI.For(canvas);
-            rail.panel=ArcadeUI.Panel(canvas,"QuietRaceNotice",new Vector2(.69f,.683f),new Vector2(.92f,.738f),p.Ink);
+            rail.panel=ArcadeUI.Panel(canvas,"QuietRaceNotice",new Vector2(.92f,.683f),new Vector2(.92f,.738f),p.Ink);
+            rail.panel.pivot=new Vector2(1,.5f);rail.panel.sizeDelta=new Vector2(250,0);
             RacingUITheme.Rule(rail.panel,"Accent",new Vector2(0,.25f),new Vector2(.007f,.75f),p.Primary);
             rail.label=ArcadeUI.Label(rail.panel,"Text","",new Vector2(.045f,.1f),new Vector2(.96f,.90f),22,p.Paper,false,TextAlignmentOptions.Right);
             rail.panel.gameObject.SetActive(false);
@@ -24,9 +25,9 @@ public sealed class ArcadeNoticeRail : MonoBehaviour
     // 0: jump, 1: front rival, 2: rear rival, 3: confirmed effect.
     public void Set(int source,string text)
     {
-        if(source<0||source>=notices.Length)return;notices[source]=text;
+        if(panel==null||label==null||source<0||source>=notices.Length)return;notices[source]=text;
         string next="";for(int i=notices.Length-1;i>=0;i--)if(!string.IsNullOrEmpty(notices[i])){next=notices[i];break;}
-        if(next==shown)return;shown=next;label.text=next;panel.gameObject.SetActive(next.Length>0);
+        if(next==shown)return;shown=next;label.text=next;panel.sizeDelta=new Vector2(Mathf.Clamp(label.GetPreferredValues(next).x+44,130,480),0);panel.gameObject.SetActive(next.Length>0);
     }
     public string Text=>shown??"";
 }

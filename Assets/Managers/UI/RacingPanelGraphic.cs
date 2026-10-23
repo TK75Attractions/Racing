@@ -47,22 +47,28 @@ public class RacingPanelGraphic : MaskableGraphic
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear(); Rect r=rectTransform.rect;if(r.width<2||r.height<2)return;
-        var p=ArcadeUI.For(transform);bool button=style!=SurfaceStyle.Panel;
-        Color fill=!button?p.Ink:style==SurfaceStyle.Primary?p.Primary:style==SurfaceStyle.Danger?ArcadeUI.Hex("edb3b5"):p.Paper;
+        var p=ArcadeUI.For(transform);bool button=transform.parent!=null&&transform.parent.GetComponent<UnityEngine.UI.Selectable>()!=null;
+        Color fill=style==SurfaceStyle.Panel?p.Ink:style==SurfaceStyle.Primary?p.Primary:style==SurfaceStyle.Danger?ArcadeUI.Hex("edb3b5"):p.Paper;
         if(button)fill=Color.Lerp(fill,p.Soft,selection*.25f);
         if(disabled)fill=Color.Lerp(fill,p.Ink,.6f);
         Rect shadow=r;shadow.y-=button?7:3;ArcadeSurfaceGraphic.Rounded(vh,shadow,p.Ink,10);
         ArcadeSurfaceGraphic.Rounded(vh,r,fill*color,10);
         if(!button)return;
         Color mark=style==SurfaceStyle.Primary?p.Ink:p.Primary;
-        for(int i=0;i<5;i++)
+        if(transform.parent.name.EndsWith("Pedal"))
+        {
+            Vector2 c=new Vector2(r.xMin+75,r.center.y);float radius=Mathf.Min(45,r.height*.28f);
+            for(int i=0;i<20;i++){float a=Mathf.Lerp(223,-43,i/20f);ArcadeSurfaceGraphic.Arc(vh,c,radius,a,a-8,4,p.Ink);}
+            Line(vh,c,ArcadeSurfaceGraphic.Point(c,radius*.76f,54),4,p.Ink,.5f);
+        }
+        else for(int i=0;i<5;i++)
         {
             float y=r.center.y-19+i*8;
             Line(vh,new Vector2(r.xMin+18,y),new Vector2(r.xMin+36,y),5,mark,.5f);
         }
         for(int i=0;i<5;i++)
             Line(vh,new Vector2(r.xMax-18-i*11,r.yMin+10),new Vector2(r.xMax-12-i*11,r.yMin+20),4,Alpha(p.Ink,.35f),.5f);
-        if(pressure>0)Line(vh,new Vector2(r.xMin+8,r.yMin+4),new Vector2(Mathf.Lerp(r.xMin+8,r.xMax-15,pressure),r.yMin+4),6,p.Accent,.5f);
+
     }
 
     private void Shape(Rect r, float inset, Vector2[] points)

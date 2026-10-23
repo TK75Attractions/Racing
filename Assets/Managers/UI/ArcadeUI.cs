@@ -14,6 +14,7 @@ public static class ArcadeUI
     public static readonly Palette Blue=new Palette("4b9df3","acd3fb","193348","f1f6fb","67d8c5","f5d474");
     public static readonly Palette Pink=new Palette("f08bb9","f9c4dd","423147","fff2f7","f4d575","adcfe9");
     private static TMP_FontAsset digits;
+    private static Material logoMaterial;
     public static Color Hex(string value) { ColorUtility.TryParseHtmlString("#"+value,out Color c); return c; }
     public static Palette For(int player)=>player==1?Pink:Blue;
     public static Palette For(Transform t)=>For(t!=null?t.GetComponentInParent<ArcadeDisplayTheme>(true)?.PlayerIndex??0:0);
@@ -26,7 +27,7 @@ public static class ArcadeUI
             if(digits==null)
             {
                 Font source=Resources.Load<Font>("UI/Arcade/BarlowCondensed-Bold");
-                if(source!=null) { digits=TMP_FontAsset.CreateFontAsset(source); digits.name="Arcade Barlow Condensed"; }
+                if(source!=null) { digits=TMP_FontAsset.CreateFontAsset(source); digits.name="Arcade Barlow Condensed"; digits.fallbackFontAssetTable=new System.Collections.Generic.List<TMP_FontAsset>{RacingUIFontCatalog.GetHUD(true)}; }
             }
             return digits;
         }
@@ -51,12 +52,12 @@ public static class ArcadeUI
     public static RectTransform Logo(Transform parent,Vector2 min,Vector2 max)
     {
         var root=RacingUITheme.Rect(parent,"CircuitLogo",min,max);
-        var image=root.GetComponent<RawImage>()??root.gameObject.AddComponent<RawImage>();
+        var artwork=RacingUITheme.Rect(root,"Artwork",Vector2.zero,Vector2.one);
+        var image=artwork.GetComponent<RawImage>()??artwork.gameObject.AddComponent<RawImage>();
         image.texture=Resources.Load<Texture2D>("UI/Arcade/CircuitLogo");image.color=Color.white;image.raycastTarget=false;
-        var fit=root.GetComponent<AspectRatioFitter>()??root.gameObject.AddComponent<AspectRatioFitter>();fit.aspectMode=AspectRatioFitter.AspectMode.FitInParent;fit.aspectRatio=1720f/465;
-        var outline=root.GetComponent<Outline>()??root.gameObject.AddComponent<Outline>();outline.effectColor=Blue.Paper;outline.effectDistance=new Vector2(2.5f,-2.5f);outline.useGraphicAlpha=true;
-        Shadow shadow=null;foreach(var effect in root.GetComponents<Shadow>())if(effect.GetType()==typeof(Shadow))shadow=effect;
-        if(shadow==null)shadow=root.gameObject.AddComponent<Shadow>();shadow.effectColor=new Color(0.04f,.10f,.14f,.75f);shadow.effectDistance=new Vector2(4,-5);
+        var fit=artwork.GetComponent<AspectRatioFitter>()??artwork.gameObject.AddComponent<AspectRatioFitter>();fit.aspectMode=AspectRatioFitter.AspectMode.FitInParent;fit.aspectRatio=1720f/465;
+        if(logoMaterial==null){var shader=Resources.Load<Shader>("UI/Arcade/ArcadeLogo");if(shader!=null)logoMaterial=new Material(shader){name="Arcade logo legibility"};}
+        image.material=logoMaterial;
         return root;
     }
 }

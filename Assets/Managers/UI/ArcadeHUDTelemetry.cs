@@ -21,6 +21,8 @@ public sealed class ArcadeHUDTelemetry : MonoBehaviour
         int viewed=manager.GetAudioViewedPlayer(player);var car=manager.GetPlayerCarTransform(viewed);
         if(car!=viewedCar){viewedCar=car;engine=car!=null?car.GetComponentInChildren<CarSoundController>():null;mover=car!=null?car.GetComponent<DebugMover>():null;}
         float charge=mover!=null?Mathf.Max(mover.NormalizedDriftCharge,mover.AccelerationPadBoostDuration>0?mover.AccelerationPadBoostTimeRemaining/mover.AccelerationPadBoostDuration:0):0;
+        var effects=car!=null?car.GetComponent<CarItemEffects>():null;
+        if(effects!=null&&effects.IsRocketActive&&effects.RocketDuration>0)charge=Mathf.Max(charge,effects.RocketTimeRemaining/effects.RocketDuration);
         SetTelemetry(engine!=null?engine.CurrentRpm:0,charge);
     }
     public void SetTelemetry(float revolutions,float charge)

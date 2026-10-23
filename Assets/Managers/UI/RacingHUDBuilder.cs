@@ -30,6 +30,11 @@ public static class RacingHUDBuilder
         // The timer adapter still accepts lap time, but it no longer adds a second clock to the HUD.
         Text(time,"Lap","",0,0,0,0,20,p.Ink).gameObject.SetActive(false);
         Text(time,"LapFraction","",0,0,0,0,20,p.Ink).gameObject.SetActive(false);
+        var pause=ArcadeUI.Panel(root,"Pause",new Vector2(.934f,.875f),new Vector2(.978f,.957f),p.Paper);
+        var pauseFace=pause.GetComponent<ArcadeSurfaceGraphic>();pauseFace.raycastTarget=true;
+        var pauseButton=pause.GetComponent<Button>()??pause.gameObject.AddComponent<Button>();pauseButton.targetGraphic=pauseFace;pauseButton.transition=Selectable.Transition.None;pauseButton.onClick.RemoveAllListeners();pauseButton.onClick.AddListener(()=>Gmanager.Control?.OpenInterruptionMenu(playerIndex));
+        RacingUITheme.Rule(pause,"LeftBar",new Vector2(.32f,.28f),new Vector2(.43f,.72f),p.Ink);RacingUITheme.Rule(pause,"RightBar",new Vector2(.57f,.28f),new Vector2(.68f,.72f),p.Ink);
+        RacingUITheme.Rule(pause,"Accent",Vector2.zero,new Vector2(1,.07f),p.Primary);
         var delta=ArcadeUI.Panel(root,"LapDelta",new Vector2(.825f,.76f),new Vector2(.92f,.82f),p.Ink);
         Text(delta,"Heading","前周比",.08f,.1f,.53f,.9f,19,p.Paper);
         Text(delta,"Value","—",.53f,.05f,.94f,.95f,31,p.Secondary,true);

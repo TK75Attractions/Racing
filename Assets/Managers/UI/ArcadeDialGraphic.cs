@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>270-degree segmented instrument, with a separate outer boost track on the tachometer.</summary>
+[RequireComponent(typeof(CanvasRenderer))]
 public class ArcadeDialGraphic : MaskableGraphic
 {
     public bool Tachometer { get; set; }
