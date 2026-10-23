@@ -8,7 +8,8 @@ public static class LiveInputTests
         public int PlayerIndex => 0;
         public string DeviceId { get; set; }
         public bool IsConnected { get; set; } = true;
-        public DriveConnectionState ConnectionState => IsConnected ? DriveConnectionState.Ready : DriveConnectionState.SerialDisconnected;
+        public DriveConnectionState OfflineState = DriveConnectionState.SerialDisconnected;
+        public DriveConnectionState ConnectionState => IsConnected ? DriveConnectionState.Ready : OfflineState;
         public DriveInputState State;
         public DriveInputState CurrentState => State;
         public int Acknowledged, Updated, Disposed;
@@ -57,7 +58,40 @@ public static class LiveInputTests
         live.SwitchSource(null, true);
         Require(!live.IsConnected && live.CurrentState.pedal == 0f, "Detaching must never expose disposed input.");
         TestDashboardInput();
+        TestReleaseDiagnostics();
         Console.WriteLine("LIVE_INPUT_PASS: startup, live car/practice routing, release gate, pause/reverse, disconnect, constant resume and ownership.");
+    }
+    private static void TestReleaseDiagnostics()
+    {
+        var device = new Device { State = new DriveInputState { pedal = .8f }, OfflineState = DriveConnectionState.TelemetryStale };
+        var gate = new PlayerDriveInputGate(device);
+        var events = new System.Collections.Generic.List<string>();
+        Action<PlayerDriveInputGate, string> record = (sender, transition) => {
+            if (sender == gate) events.Add(transition + ":" + sender.PedalReleaseReason + ":" + sender.NeedsPedalRelease);
+        };
+        PlayerDriveInputGate.ReleaseChanged += record;
+        try
+        {
+            Require(gate.CurrentState.pedal == .8f, "Diagnostics must not alter normal acceleration.");
+            device.IsConnected = false;
+            _ = gate.CurrentState; _ = gate.CurrentState;
+            Require(events.Count == 1 && events[0] == "RELEASE_REQUIRED:connection_lost:True",
+                "A brief telemetry loss must record the release latch once, without per-frame spam.");
+            device.IsConnected = true;
+            Require(gate.CurrentState.pedal == 0f && gate.NeedsPedalRelease && events.Count == 1,
+                "Recovered communications must not resume a held pedal or silently acknowledge release.");
+            device.State = DriveInputState.Neutral; _ = gate.CurrentState;
+            Require(events.Count == 2 && events[1] == "RELEASE_OBSERVED:connection_lost:False",
+                "Record the physical release which clears the wait.");
+            gate.RequirePedalRelease("course_reset");
+            Require(events[2] == "RELEASE_REQUIRED:course_reset:True", "Course recovery must be distinguishable from a communication loss.");
+            gate.RequirePedalRelease("input_mode_changed");
+            Require(events[3] == "RELEASE_REQUIRED:input_mode_changed:True", "Changing input mode must retain its own cause.");
+            gate.SwitchSource(device);
+            Require(events[4] == "RELEASE_REQUIRED:source_changed:True", "Device replacement must retain its own cause.");
+        }
+        finally { PlayerDriveInputGate.ReleaseChanged -= record; }
+        Console.WriteLine("RELEASE_DIAGNOSTICS_PASS: cause, recovery, physical release and unchanged safety latch.");
     }
     private static void TestDashboardInput()
     {

@@ -31,3 +31,13 @@ Editorを再起動し、起動順序と警告表示を修正した状態でPlay�
 - `1016こうしゃ/高校棟昇降口/Plane.049` に負スケールのBoxCollider警告が1件ある。Unityがサイズを正に補正しているが、実際の当たり判定の評価は別途必要。既存のシーン編集を変更してはいない。
 - 既存のDiscord通知WebhookがHTTP 400を返す。通知送信の問題で、ゲームやチャット側のローカル状態記録とは別。通知先の変更や追加の外部送信は行っていない。
 - Unity CloudのHTTP 403はクラウド接続の失敗。ローカルの実機入力準備とは分けて記録する。
+
+## Intermittent pedal-release notice investigation
+
+The notice can follow a brief unavailable/stale input, a course reset, a source replacement, or an input-mode change. `PlayerDriveInputGate` deliberately keeps acceleration neutral after recovery until a physical neutral pedal sample is observed. A healthy sensor status after the event does not clear this latch by itself. Dashboard `players` contains InputManager source values, not the car gate output, so it cannot establish the latch cause on its own.
+
+Added transition-only `INPUT_GATE` diagnostics to the existing local serial journal and dashboard history: `RELEASE_REQUIRED` and `RELEASE_OBSERVED`, player number, reason (`connection_lost`, `course_reset`, `source_changed`, `input_mode_changed`), and current connection status. Reasons distinguish an input outage from normal course recovery without changing the safety timeout, release threshold, or driving behavior. The connection status is sampled when recording the transition; if a new sample arrives immediately after the failed connection check it can already read Ready. The `connection_lost` reason records the actual preceding failed check.
+
+The ongoing local witness consumes `/api/events` continuously, preserving raw receive timestamps and before/after context around interruptions rather than relying on heartbeat snapshots. Witness data and PID files remain in ignored `Temp/PhysicalMonitor`; no external message is sent. Hardware timestamps advancing about 10 ms while PC receive records pause over 100 ms, together with severe system load, support investigating host/USB buffering or scheduling; they do not establish the root cause.
+
+Validation: production gate/source tests cover one diagnostic per unavailable transition, continued neutral output while a recovered pedal is held, physical-release acknowledgement, and separate reset/mode/source reasons. These tests passed, the dashboard bridge harness compiled, and the full Unity runtime compiled using Unity's Roslyn references (existing warnings only). Runtime diagnostic sources were applied after the race reached Result and Play was stopped gracefully. The root-cause investigation remains open until actual diagnostic events identify the reported interruption and stable real play is verified.

@@ -215,6 +215,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         race = GetComponent<Gmanager>();
         input = GetComponent<InputManager>();
         if (input != null) input.SerialLineProcessed += RecordSerialLine;
+        PlayerDriveInputGate.ReleaseChanged += RecordInputRelease;
         try
         {
             listener = new HttpListener();
@@ -693,6 +694,14 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     private static string Limit(string value, int maximum) =>
         string.IsNullOrEmpty(value) || value.Length <= maximum ? value : value.Substring(0, maximum);
 
+    private void RecordInputRelease(PlayerDriveInputGate gate, string transition)
+    {
+        string message = "P" + (gate.PlayerIndex + 1) + " " + transition +
+            " reason=" + gate.PedalReleaseReason + " connection=" + gate.ConnectionState;
+        (input?.SharedSerialInputSource?.Monitor ?? liveJournal).Diagnostic("INPUT_GATE", message);
+        RecordSerialLine("INPUT_GATE", message);
+    }
+
     private void RecordSerialLine(string status, string line)
     {
         var entry = new SerialEntry
@@ -887,6 +896,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         stopping = true;
         input?.ClearDashboardInputs();
         if (input != null) input.SerialLineProcessed -= RecordSerialLine;
+        PlayerDriveInputGate.ReleaseChanged -= RecordInputRelease;
         listener?.Close();
         listener = null;
         if (listenerThread != null && listenerThread.IsAlive) listenerThread.Join(500);
