@@ -40,6 +40,11 @@ public sealed class RgpHostSession
     private double lastTelemetryAt;
     private string sessionId;
     private bool automaticCalibrationAttempted, automaticAngleZeroAttempted;
+    // The controller resets its orientation filters when calibration finishes.
+    // Its five-second settling phase can lock the reference itself; asking for
+    // ANGLE_ZERO during that phase fails with ANGLE_REFERENCE_INVALID.
+    private const double PostCalibrationSettlingMilliseconds = 6000;
+    private double anglePreparationNotBefore = double.NegativeInfinity;
     public string InputMode { get; private set; } = "ALL";
     public string RequestedInputMode { get; private set; } = "ALL";
     public bool InputModeReady => InputMode == RequestedInputMode;
@@ -142,6 +147,7 @@ public sealed class RgpHostSession
         Generation++; commandResults.Clear();
         pending.Clear(); nextSequence = 0; hasTelSequence = false;
         automaticCalibrationAttempted = automaticAngleZeroAttempted = false;
+        anglePreparationNotBefore = double.NegativeInfinity;
         InputMode = "ALL"; inputModeAttempted = InputModeUnsupported = false;
         SessionOpen = false; State = "UNKNOWN"; Compatible = true; ResetHardware();
         TelemetryRate = 100; TelemetryEnabled = true; Invalidate();
@@ -205,12 +211,16 @@ public sealed class RgpHostSession
         // Each operation gets one SEQ per session; Tick only retries that exact wire on timeout.
         if (!SessionOpen || (InputMode != "P1_STEERING" && AdsStatus != "Ok") || ImuStatus != "Ok" ||
             (State != "WAIT_ANGLE" && State != "READY")) return;
+        // Aggregate IMU_OK may describe only one handle while the other is still
+        // reconnecting. CALIBRATE freezes its target set on the device, so starting
+        // early leaves the late handle uncalibrated with no second automatic try.
+        if (!IsPlayerSteeringAvailable(0) || (InputMode != "P1_STEERING" && !IsPlayerSteeringAvailable(1))) return;
         if (!Calibrated && !automaticCalibrationAttempted)
         {
             automaticCalibrationAttempted = true;
             TryCommand("CALIBRATE", new[] { "ALL" }, now, out _, out _);
         }
-        else if (Calibrated && !AngleLocked && !automaticAngleZeroAttempted)
+        else if (Calibrated && !AngleLocked && !automaticAngleZeroAttempted && now >= anglePreparationNotBefore)
         {
             automaticAngleZeroAttempted = true;
             TryCommand("ANGLE_ZERO", Array.Empty<string>(), now, out _, out _);
@@ -282,7 +292,11 @@ public sealed class RgpHostSession
                 if (d[0] == "ANGLE_LOCKED") AngleLocked = true;
                 if (d[0] == "ANGLE_UNLOCKED") AngleLocked = false;
                 if (d[0] == "CAL_START") Calibrated = false;
-                if (d[0] == "CAL_DONE") Calibrated = true;
+                if (d[0] == "CAL_DONE")
+                {
+                    Calibrated = true;
+                    anglePreparationNotBefore = receivedAt + PostCalibrationSettlingMilliseconds;
+                }
                 // A bus-wide loss cannot identify which individual sensor was unplugged.
                 if (d[0] == "I2C_LOST") AdsStatus = ImuStatus = "Unknown";
                 if (d[0] == "I2C_RESTORED") AdsStatus = ImuStatus = "Unknown";
@@ -380,6 +394,9 @@ public sealed class RgpHostSession
                         foreach (ImuDevice imu in Imus) { if (imu.Address.Length > 0 && imu.Status != "Disconnected") imu.Status = "Ok"; }
                     else
                         foreach (ImuDevice imu in Imus) { if (imu.Status == "Ok") imu.Status = "Unknown"; }
+                    // Also cover a missed CAL_DONE event with authoritative status.
+                    if (!Calibrated && d[7] == "1" && automaticCalibrationAttempted)
+                        anglePreparationNotBefore = now + PostCalibrationSettlingMilliseconds;
                     AngleLocked = d[6] == "1"; Calibrated = d[7] == "1";
                     SetState(d[3] == "READY" && ((InputMode != "P1_STEERING" && d[4] != "1") || d[5] != "1" || d[6] != "1" || d[7] != "1") ? "NOT_READY" : d[3]);
                     break;

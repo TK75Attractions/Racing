@@ -357,11 +357,16 @@ function alertRecovered(item, entries, snapshot) {
   const address = d.slice(3).find(value => /^0x[0-9A-F]{2}$/.test(value));
   const after = entries.filter(entry => entry.id > item.entry.id).map(entry => ({entry, frame:serialFrame(entry)}));
   const command = frame?.type === 'ACK' ? d[1] : item.entry.status === 'TIMEOUT' ? item.entry.line : null;
+  const angleReferenceFailure = frame?.type === 'ACK' && command === 'ANGLE_ZERO' &&
+    d[2] === 'FAILED' && d[3] === 'ANGLE_REFERENCE_INVALID';
+  const referenceRecovered = angleReferenceFailure && known && h.state === 'READY' &&
+    h.angleLocked && h.calibrated && h.inputFresh && !h.invalidTelemetry && h.telemetryEnabled;
   const requestAt = d.indexOf('REQ');
   const recovery = after.find(({frame: next}) => {
     if (!next) return false;
     const n = next.data;
-    if (command) return next.type === 'ACK' && n[1] === command && n[2] === 'OK';
+    if (command) return (next.type === 'ACK' && n[1] === command && n[2] === 'OK') ||
+      (referenceRecovered && next.type === 'EVT' && n[0] === 'ANGLE_LOCKED');
     if (frame?.type === 'ERR' && requestAt >= 0)
       return next.type === 'EVT' && ['CAL_DONE', 'I2C_SCAN_END'].includes(n[0]) && n[1] === d[requestAt + 1];
     if (item.entry.status === 'INVALID') return item.entry.line?.startsWith('@TEL,') ?
@@ -376,9 +381,17 @@ function alertRecovered(item, entries, snapshot) {
     }
     return next.type === 'EVT' && n[0] === 'STATE' && n[1] === 'READY';
   });
-  if (recovery) return recovery.entry.receivedAt || Date.now();
+  if (recovery) {
+    if (referenceRecovered && recovery.frame.type === 'EVT')
+      item.recoveryNote = '現在は装置が基準角度を確定し、入力が復旧しています。';
+    return recovery.entry.receivedAt || Date.now();
+  }
   // Snapshots cover recovery events that have already left the replay window.
   if (!known || (item.entry.receivedAt && snapshot.serverTime < item.entry.receivedAt)) return null;
+  if (referenceRecovered) {
+    item.recoveryNote = '現在は装置が基準角度を確定し、入力が復旧しています。';
+    return Date.now();
+  }
   if (command || requestAt >= 0) return null;
   if (item.entry.status === 'INVALID') return !h.invalidTelemetry && h.inputFresh ? Date.now() : null;
   if (item.entry.status === 'STALE') return h.inputFresh ? Date.now() : null;
@@ -425,7 +438,8 @@ function renderSerialAlerts(serial, inputMode = '', snapshot = latestSnapshot) {
   $('serial-alert-list').replaceChildren(...alerts.map(item => {
     const row = document.createElement('div'); row.className = 'serial-alert ' + item.level + (item.resolvedAt != null ? ' resolved' : '');
     const time = document.createElement('span'); time.className = 'alert-time'; time.textContent = item.entry.time || '—';
-    const text = document.createElement('p'); text.textContent = (item.resolvedAt != null ? '解決済み · ' : '未解決 · ') + item.text;
+    const text = document.createElement('p'); text.textContent = (item.resolvedAt != null ? '解決済み · ' : '未解決 · ') + item.text +
+      (item.recoveryNote ? ' ' + item.recoveryNote : '');
     row.append(time, text); return row;
   }));
 }

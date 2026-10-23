@@ -4,6 +4,8 @@
 /// </summary>
 public sealed class PlayerDriveInputGate : IDriveInputSource, IDriveInputStatusSource
 {
+    // Only transitions are published; inspecting diagnostics never consumes player input.
+    public static event System.Action<PlayerDriveInputGate, string> ReleaseChanged;
     private IDriveInputSource source;
     public IDriveInputSource Source => source;
 
@@ -14,6 +16,7 @@ public sealed class PlayerDriveInputGate : IDriveInputSource, IDriveInputStatusS
     public bool IsBlocked { get; private set; }
     public bool IsReverse { get; private set; }
     public bool NeedsPedalRelease { get; private set; }
+    public string PedalReleaseReason { get; private set; } = "";
     // Used only to retain a reset-button edge while the gate temporarily emits neutral input.
     public bool ResetButtonHeld => source != null && source.IsConnected && source.CurrentState.resetPressed;
 
@@ -22,7 +25,11 @@ public sealed class PlayerDriveInputGate : IDriveInputSource, IDriveInputStatusS
         get
         {
             if (source == null) return DriveInputState.Neutral;
-            if (!source.IsConnected) { NeedsPedalRelease = true; return DriveInputState.Neutral; }
+            if (!source.IsConnected)
+            {
+                if (!NeedsPedalRelease) RequirePedalRelease("connection_lost");
+                return DriveInputState.Neutral;
+            }
             if (IsBlocked) return DriveInputState.Neutral;
 
             DriveInputState state = source.CurrentState;
@@ -30,7 +37,11 @@ public sealed class PlayerDriveInputGate : IDriveInputSource, IDriveInputStatusS
             if (released) (source as IDrivePedalReleaseObserver)?.PedalReleaseObserved();
             if (NeedsPedalRelease)
             {
-                if (released) NeedsPedalRelease = false;
+                if (released)
+                {
+                    NeedsPedalRelease = false;
+                    ReleaseChanged?.Invoke(this, "RELEASE_OBSERVED");
+                }
                 return DriveInputState.Neutral;
             }
             if (IsReverse) state.pedal = -state.pedal;
@@ -45,14 +56,20 @@ public sealed class PlayerDriveInputGate : IDriveInputSource, IDriveInputStatusS
 
     public void SwitchSource(IDriveInputSource next)
     {
-        source = next; IsReverse = false; RequirePedalRelease();
+        source = next; IsReverse = false; RequirePedalRelease("source_changed");
     }
 
     public void SetBlocked(bool blocked)
     {
         IsBlocked = blocked;
     }
-    public void RequirePedalRelease() => NeedsPedalRelease = true;
+    public void RequirePedalRelease(string reason = "requested")
+    {
+        bool changed = !NeedsPedalRelease || PedalReleaseReason != reason;
+        NeedsPedalRelease = true;
+        PedalReleaseReason = reason;
+        if (changed) ReleaseChanged?.Invoke(this, "RELEASE_REQUIRED");
+    }
 
     public bool ToggleDirection()
     {
@@ -65,6 +82,7 @@ public sealed class PlayerDriveInputGate : IDriveInputSource, IDriveInputStatusS
         IsBlocked = false;
         IsReverse = false;
         NeedsPedalRelease = false;
+        PedalReleaseReason = "";
     }
 
     public void UpdateInput(float deltaTime)

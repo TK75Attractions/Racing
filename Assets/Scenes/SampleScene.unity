@@ -365,7 +365,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -3350101853002094637, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_Mesh
-      value:
+      value: 
       objectReference: {fileID: 4300000, guid: c14a0588f302f41569eae40b4071a322, type: 2}
     - target: {fileID: -2036472721373001367, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
@@ -373,7 +373,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -1398540048242649291, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_Mesh
-      value:
+      value: 
       objectReference: {fileID: 4300000, guid: 9265db2d7a4a84a658b3889e9b96342c, type: 2}
     - target: {fileID: -1393781089802967949, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
@@ -385,7 +385,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 490939697822461851, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value:
+      value: 
       objectReference: {fileID: 2100000, guid: 754426768b24045198a202f82a3b73c9, type: 2}
     - target: {fileID: 749727992793697501, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
@@ -417,7 +417,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4876933053422263863, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_Mesh
-      value:
+      value: 
       objectReference: {fileID: 4300000, guid: 8aa170a99f4124bba86a5d55983c0b42, type: 2}
     - target: {fileID: 6500614012991000065, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
@@ -4428,9 +4428,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.076105565
+    x: 0.032066792
     y: 0
-    width: 0.8477889
+    width: 0.9358664
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
@@ -5167,8 +5167,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f52a755a3309da548a6b36b8c8bc56bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InputManager
-  isDebugMode: 0
+  isDebugMode: 1
   isP1SerialP2KeyboardDebugMode: 0
+  p1SteeringTestMode: 0
+  p1ConstantPedal: 1
   esp32Serial:
     portName: 
     steeringDivisor: 6.5
@@ -5200,6 +5202,7 @@ MonoBehaviour:
   goMessageSeconds: 0.75
   lapManager: {fileID: 0}
   secondPlaceTimeoutSeconds: 40
+  maximumHumanFinishGraceSeconds: 180
   carSelectionTimeLimitSeconds: 30
   tutorialTimeLimitSeconds: 60
   npcCount: 2
@@ -6698,9 +6701,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.076105565
+    x: 0.032066792
     y: 0
-    width: 0.8477889
+    width: 0.9358664
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
@@ -9760,7 +9763,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8e4571e0f1e4b0e90a36f1b0e33f06d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CheckpointSensor
-  lapManager: {fileID: 0}
   checkpointIndex: 0
 --- !u!65 &647429397
 BoxCollider:
@@ -11179,9 +11181,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.076105565
+    x: 0.032066792
     y: 0
-    width: 0.8477889
+    width: 0.9358664
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
@@ -11731,7 +11733,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8e4571e0f1e4b0e90a36f1b0e33f06d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CheckpointSensor
-  lapManager: {fileID: 0}
   checkpointIndex: 2
 --- !u!65 &835309375
 BoxCollider:
@@ -13527,6 +13528,72 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -8751192112428474927, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+--- !u!1001 &1028352386
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1911937256}
+    m_Modifications:
+    - target: {fileID: 810072451222865334, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_Name
+      value: CircuitFinishGate
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.000091552734
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+--- !u!4 &1028352387 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
+  m_PrefabInstance: {fileID: 1028352386}
+  m_PrefabAsset: {fileID: 0}
 --- !u!64 &1030647955
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -15748,9 +15815,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.076105565
+    x: 0.032066792
     y: 0
-    width: 0.8477889
+    width: 0.9358664
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
@@ -21508,7 +21575,6 @@ MonoBehaviour:
   - {fileID: 647429396}
   - {fileID: 2059898390}
   autoFindCheckpoints: 1
-  allowLapWithoutCheckpoints: 1
   goalLap: 2
   respawnWhenOffCourse: 0
   offCourseRespawnDelay: 2
@@ -22568,7 +22634,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8e4571e0f1e4b0e90a36f1b0e33f06d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CheckpointSensor
-  lapManager: {fileID: 0}
   checkpointIndex: 1
 --- !u!65 &2059898391
 BoxCollider:
@@ -23697,72 +23762,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -6466179566686067123, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
---- !u!1001 &1028352386
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1911937256}
-    m_Modifications:
-    - target: {fileID: 810072451222865334, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_Name
-      value: CircuitFinishGate
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 1.25
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0.000091552734
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
---- !u!4 &1028352387 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5311319149226521401, guid: 7c8f9015d8d6fac45bffdd93c6ef0fe0, type: 3}
-  m_PrefabInstance: {fileID: 1028352386}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

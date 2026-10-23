@@ -106,6 +106,10 @@ public sealed class CarSelectionUI : MonoBehaviour
         focusHint = Text(sheet, "FocusHint", "車種を選択 / ハンドルで切替", new Vector2(.10f, .385f), new Vector2(.62f, .415f), 17f,
             TextAlignmentOptions.Center, tint: NeonUI.Cyan);
         foreach (TMP_Text label in sheet.GetComponentsInChildren<TMP_Text>(true)) ApplyFont(label);
+        // Connection notices share the HUD vocabulary, which is wider than the
+        // car catalog's baked atlas (for example 通信 / 確認してください).
+        TMP_FontAsset noticeFont = RacingUIFontCatalog.GetHUD(false);
+        if (noticeFont != null) { pedalHint.font = noticeFont; pedalHint.fontSharedMaterial = noticeFont.material; }
         sheet.gameObject.SetActive(false); showroom.SetVisible(false);
     }
 
