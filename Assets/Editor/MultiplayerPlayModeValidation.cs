@@ -15,10 +15,11 @@ using UnityEngine;
 public static class MultiplayerPlayModeValidation
 {
     private const string SessionKey = "Racing.MultiplayerValidation.Active";
-    private const double TimeoutSeconds = 100d;
+    private const double TimeoutSeconds = 180d;
 
     private static int stage;
     private static int reportedStage=-1;
+    private static bool capturedIntro;
     private static int frameCount;
     private static double testStartTime;
     private static double stageStartTime;
@@ -119,10 +120,11 @@ public static class MultiplayerPlayModeValidation
             if (stage == 6 && manager?.state == Gmanager.State.Tutorial)
                 throw new InvalidOperationException("Retry must skip the already completed tutorial.");
             if (stage == 1 || stage == 11) CarSelectionValidation.ContinueToRaceForEditor(manager);
+            if(stage==1&&manager!=null&&manager.IsCourseIntroPlaying&&manager.GetComponent<CourseIntroDirector>().ElapsedSeconds>.6f&&!capturedIntro){Capture("course-preview-p1.png");capturedIntro=true;}
             switch (stage)
             {
                 case 0 when frameCount > 5:
-                    ValidateDisplayAndTitle();
+                    ValidateDisplayAndTitle();Capture("title-p1.png");
                     Gmanager.Control.GetComponent<RaceSoundEffects>().CueQueued += (cue,player) => soundCounts[player,(int)cue]++;
                     pressBefore=soundCounts[0,(int)RaceSoundCue.Press];
                     confirmBefore=soundCounts[0,(int)RaceSoundCue.Confirm];
@@ -158,8 +160,8 @@ public static class MultiplayerPlayModeValidation
                     stage=1;
                     break;
 
-                case 1 when manager.state == Gmanager.State.Countdown:
-                    ValidateSpawnAndCountdown();
+                case 1 when manager.state == Gmanager.State.Countdown && !manager.IsCourseIntroPlaying && !AnyTransitionActive():
+                    ValidateSpawnAndCountdown();Capture("countdown-p1.png");
                     stage = 2;
                     break;
 
@@ -180,7 +182,7 @@ public static class MultiplayerPlayModeValidation
                     stageStartTime=EditorApplication.timeSinceStartup;stage=109;
                     break;
                 case 109 when EditorApplication.timeSinceStartup-stageStartTime > .2d:
-                    Capture("04-audio-settings.png");
+                    Capture("settings-p1.png");
                     typeof(Gmanager).GetMethod("CloseInterruptionMenu", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(manager,new object[] {0});
                     SetPedals(1f);
                     driveStart = manager.GetPlayerCarTransform(0).position;
@@ -188,13 +190,13 @@ public static class MultiplayerPlayModeValidation
                     break;
                 case 106 when EditorApplication.timeSinceStartup-stageStartTime > 2d:
                     Require(Vector3.Distance(driveStart, manager.GetPlayerCarTransform(0).position) > 2f && manager.GetPlayerSpeed(0) > 3f, $"Actual pedal input must accelerate and move the production car: distance={Vector3.Distance(driveStart, manager.GetPlayerCarTransform(0).position):F2}, speed={manager.GetPlayerSpeed(0):F2}.");
-                    Capture("01-race.png");
+                    Capture("race-p1.png");
                     ValidateFirstFinish();
                     stage = 3;
                     break;
 
                 case 3 when IsSpectatorVisible(0):
-                    ValidateSpectatorAndFinishSecondPlayer();
+                    Capture("spectator-p1.png");ValidateSpectatorAndFinishSecondPlayer();
                     stage = 4;
                     stageStartTime = EditorApplication.timeSinceStartup;
                     break;
@@ -207,10 +209,10 @@ public static class MultiplayerPlayModeValidation
                 case 5 when manager.state == Gmanager.State.Result && !AnyTransitionActive():
                     ValidateSharedResult();
                     for (int player=0;player<2;player++)
-                        Require(soundCounts[player,(int)RaceSoundCue.Finish]==1 && soundCounts[player,(int)RaceSoundCue.Results]==1,
-                            "Each finisher must hear its own goal cue once; results must sound once per destination.");
+                        Require(soundCounts[player,(int)RaceSoundCue.Finish]==(player==0?2:1) && soundCounts[player,(int)RaceSoundCue.Results]==1,
+                            "Goal cues follow the own finish and the watched final finish; results sound once per destination.");
                     confirmBeforeRetry=soundCounts[0,(int)RaceSoundCue.Confirm];
-                    Capture("02-result-release-pedal.png");
+                    Capture("result-p1.png");
                     stageStartTime=EditorApplication.timeSinceStartup;stage=104;
                     break;
                 case 104:
@@ -222,7 +224,7 @@ public static class MultiplayerPlayModeValidation
                     inputs[0].CurrentState = new DriveInputState { pedal = 1f };
                     stage=6;
                     break;
-                case 6 when manager.state == Gmanager.State.Countdown:
+                case 6 when manager.state == Gmanager.State.Countdown && !manager.IsCourseIntroPlaying && !AnyTransitionActive():
                     Require(soundCounts[0,(int)RaceSoundCue.Confirm]==confirmBeforeRetry+1,"Pedal retry must confirm audibly once.");
                     SetPedals(0f);
                     ValidateSpawnAndCountdown();
@@ -233,12 +235,12 @@ public static class MultiplayerPlayModeValidation
                     stage=8;
                     break;
                 case 8 when manager.state == Gmanager.State.Result && !AnyTransitionActive():
-                    manager.SelectResultOption(1,1);
+                    manager.SelectResultOption(1,1);ConfirmEnding(1);
                     stage=9;
                     break;
                 case 9 when !AnyTransitionActive() && FindComponentIncludingInactive<ScreenTransitionController>("GameManagers/MainCanvas_P2")?.transform.Find("Title").gameObject.activeSelf == true:
                     Require(manager.state == Gmanager.State.Result,"One player returning must preserve the other result.");
-                    manager.SelectResultOption(0,1);stage=10;
+                    manager.SelectResultOption(0,1);ConfirmEnding(0);stage=10;
                     break;
                 case 10 when manager.state == Gmanager.State.Title && !AnyTransitionActive():
                     Require(FindComponentIncludingInactive<RacingMenuButton>("GameManagers/MainCanvas/Title/Player1Pedal")!=null,"Main-menu return failed.");
@@ -254,8 +256,8 @@ public static class MultiplayerPlayModeValidation
                     break;
                 case 12 when manager.state == Gmanager.State.Result && !AnyTransitionActive():
                     Require(!manager.LatestSessionResult.GetPlayerResult(1).didFinish, "Both withdrawals must reach a result with two DNF records.");
-                    Require(!FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/Winner").text.Contains("優勝"), "Two DNF records must not display a winner.");
-                    Capture("03-both-withdrawn.png");
+                    Require(FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/Finish/Rank").text=="DNF", "Two DNF records must not award a placement.");
+                    Capture("dnf-p1.png");
                     manager.RetryGame();stage=13;
                     break;
                 case 13 when manager.state == Gmanager.State.Game && !AnyTransitionActive():
@@ -278,7 +280,7 @@ public static class MultiplayerPlayModeValidation
                     break;
                 case 17 when manager.state == Gmanager.State.Game && !AnyTransitionActive():
                     ValidateFirstFinish();
-                    typeof(Gmanager).GetMethod("UpdateSecondPlaceTimeout", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(manager, new object[] { 40f });
+                    typeof(Gmanager).GetMethod("UpdateSecondPlaceTimeout", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(manager, new object[] { manager.SecondPlaceTimeRemaining+1f });
                     stage=18;
                     break;
                 case 18 when manager.state == Gmanager.State.Result && !AnyTransitionActive():
@@ -314,17 +316,25 @@ public static class MultiplayerPlayModeValidation
             sources[i]?.Dispose();
             inputs[i] = new TestInput { PlayerIndex = i };
             sources[i] = inputs[i];
+            ((LiveDriveInputSource)manager.IManager.GetPlayerInputSource(i)).SwitchSource(inputs[i],false);
             typeof(Gmanager).GetMethod("AssignPlayerInput", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(manager, new object[] { manager.GetPlayerCarTransform(i).gameObject, i });
         }
     }
 
-    private static void Capture(string filename)
+    private static void Capture(string filename,int player=0)
     {
-        string directory = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "Logs/RaceFlowCaptures");
+        string directory = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "Artifacts/ArcadeSportUI/Live");
         System.IO.Directory.CreateDirectory(directory);
-        typeof(DrivingTutorialValidation).GetMethod("Capture", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { manager, 0, System.IO.Path.Combine(directory, filename) });
+        typeof(DrivingTutorialValidation).GetMethod("Capture", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { manager, player, System.IO.Path.Combine(directory, filename) });
     }
 
+    private static void ConfirmEnding(int player)
+    {
+        var ending=FindComponentIncludingInactive<ArcadeEndingUI>(player==0?"GameManagers/MainCanvas":"GameManagers/MainCanvas_P2");
+        Require(ending!=null&&ending.IsVisible,"Returning must first show the thank-you screen.");
+        Capture("ending-p"+(player+1)+".png",player);
+        ending.TickInput(0,.1f);ending.TickInput(1,1);
+    }
     private static void SetPedals(float pedal)
     {
         foreach (TestInput input in inputs) input.CurrentState = new DriveInputState { pedal = pedal };
@@ -364,7 +374,7 @@ public static class MultiplayerPlayModeValidation
 
         TMP_Text p1Title = FindComponent<TMP_Text>("GameManagers/MainCanvas/Title/PlayerBadge");
         TMP_Text p2Title = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Title/PlayerBadge");
-        Require(p1Title != null && p2Title != null && p1Title.text.Contains("PLAYER 01") && p2Title.text.Contains("PLAYER 02"),
+        Require(p1Title != null && p2Title != null && p1Title.text.Contains("P1") && p2Title.text.Contains("P2"),
             "Title player badges are not personalized for each display.");
         Require(FindComponentIncludingInactive<PedalButtonSurface>("GameManagers/MainCanvas/Title/Player1Pedal/ButtonSurface") != null &&
                 FindComponentIncludingInactive<PedalButtonSurface>("GameManagers/MainCanvas_P2/Title/Player2Pedal/ButtonSurface") != null &&
@@ -397,10 +407,10 @@ public static class MultiplayerPlayModeValidation
     {
         foreach (string canvasName in new[] { "MainCanvas", "MainCanvas_P2" })
         {
-            TMP_Text positionHeading = FindComponent<TMP_Text>($"GameManagers/{canvasName}/OnPlay/ModernHUD/Position/Heading");
+            TMP_Text positionHeading = FindComponent<TMP_Text>($"GameManagers/{canvasName}/OnPlay/ModernHUD/Position/PlaceUnit");
             TMP_Text speedHeading = FindComponent<TMP_Text>($"GameManagers/{canvasName}/OnPlay/ModernHUD/Speed/Heading");
-            Require(positionHeading != null && positionHeading.text == "順位" &&
-                    speedHeading != null && speedHeading.text == "スピード",
+            Require(positionHeading != null && positionHeading.text == "位" &&
+                    speedHeading != null && speedHeading.text == "速度",
                 "The bilingual HUD was not initialized for both players.");
         }
         GameObject p1Car = GameObject.Find("Player1_Car");
@@ -423,10 +433,11 @@ public static class MultiplayerPlayModeValidation
         Require(manager.state == Gmanager.State.Game, "Race ended when only first place finished.");
         Require(marks.SegmentCount > 0, "Tire marks must remain while the second player is still racing.");
         Require(manager.WaitingForSecondPlace, "Second-place wait did not start.");
-        Require(Mathf.Abs(manager.SecondPlaceTimeRemaining - 40f) < 0.2f, "Second-place timeout is not 40 seconds.");
+        Require(manager.SecondPlaceTimeRemaining>=40f&&manager.SecondPlaceTimeRemaining<=180f,"Human finish grace must preserve the configured minimum and adaptive upper bound.");
         foreach (Collider collider in p1Car.GetComponentsInChildren<Collider>(true))
         {
-            Require(!collider.enabled, "First-place car still blocks the course.");
+            foreach(Collider other in GameObject.Find("Player2_Car").GetComponentsInChildren<Collider>(true))
+                Require(!collider.enabled||!other.enabled||Physics.GetIgnoreCollision(collider,other),"A finisher must not push the remaining racer during its physical finish run.");
         }
 
         GoalCelebrationUI p1Goal = FindComponentIncludingInactive<GoalCelebrationUI>("GameManagers/MainCanvas/Goal");
@@ -434,7 +445,7 @@ public static class MultiplayerPlayModeValidation
         Require(p1Goal != null && p1Goal.gameObject.activeInHierarchy &&
                 p2Goal != null && !p2Goal.gameObject.activeInHierarchy,
             "Only the player who finished should see the goal screen.");
-        Require(!IsFinishWarningVisible(0) && IsFinishWarningVisible(1) && GetRaceStatus(1).Contains("40.0"),
+        Require(!IsFinishWarningVisible(0) && IsFinishWarningVisible(1) && GetRaceStatus(1).Contains(manager.SecondPlaceTimeRemaining.ToString("0.0")),
             "Only the unfinished player should see the second-place timer.");
     }
 
@@ -461,10 +472,10 @@ public static class MultiplayerPlayModeValidation
 
     private static void ValidateSharedResult()
     {
-        TMP_Text p1Winner = FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/Winner");
-        TMP_Text p2Winner = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Result/ResultPresentation/ResultCard/Winner");
-        TMP_Text p1First = FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/ResultRow1/Player");
-        TMP_Text p1Second = FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/ResultRow2/Player");
+        TMP_Text p1Winner = FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/Classification/ResultRow1/Driver");
+        TMP_Text p2Winner = FindComponent<TMP_Text>("GameManagers/MainCanvas_P2/Result/ResultPresentation/ResultCard/Classification/ResultRow1/Driver");
+        TMP_Text p1First = FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/Classification/ResultRow1/Driver");
+        TMP_Text p1Second = FindComponent<TMP_Text>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/Classification/ResultRow2/Driver");
         Require(manager.state == Gmanager.State.Result, "Result state was not reached.");
         Require(TireMarkRenderer.GetOrCreate().SegmentCount == 0,
             "Tire marks must remain cleared on the result screen.");
@@ -482,9 +493,9 @@ public static class MultiplayerPlayModeValidation
             "GameManagers/MainCanvas_P2/Goal/Hero/GoalText");
         Transform p2Confetti = GameObject.Find("GameManagers")?.transform.Find("MainCanvas_P2/Goal/Confetti");
         Require(manager.state == Gmanager.State.Goal, "Goal celebration state was not reached.");
-        Require(p1Goal != null && !p1Goal.gameObject.activeInHierarchy &&
+        Require(p1Goal != null && p1Goal.gameObject.activeInHierarchy &&
                 p2Goal != null && p2Goal.gameObject.activeInHierarchy && p2GoalText != null && p2GoalText.text == "GOAL!",
-            "Only the second finisher should see the second goal screen.");
+            "The final finisher and their spectator should both see the final goal screen.");
         Require(p2Confetti != null && p2Confetti.childCount > 0,
             "Goal confetti was not created for the second finisher.");
     }

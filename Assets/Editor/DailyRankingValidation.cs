@@ -97,10 +97,13 @@ public static class DailyRankingValidation
             {
                 ui.Init(root.transform,player);ui.ShowResults(session);
                 Transform panel=root.transform.Find("ResultPresentation/ResultCard/DailyRanking");
+                Require(!panel.gameObject.activeSelf,"Daily ranking is initially disclosed on demand.");
+                root.transform.Find("ResultPresentation/ResultCard/RankingDisclosure").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
                 Require(panel.Find("OwnRank").GetComponent<TMP_Text>().text.Contains(player==1?"3位":"7位"),"Show each player's rank even outside the top five.");
-                foreach(var text in root.GetComponentsInChildren<TMP_Text>(true))Require(text.font.HasCharacters(text.text),"Missing baked glyph: "+text.text);
+                foreach(var text in root.GetComponentsInChildren<TMP_Text>(true))Require(text.font.HasCharacters(text.text,out uint[] missing,true,true),"Missing rendered glyph: "+text.text);
                 flags.SetValidationFeature(RaceFeature.DailyRanking,false);ui.RefreshDailyRanking();Require(!panel.gameObject.activeSelf,"Live OFF hides the panel.");
-                flags.SetValidationFeature(RaceFeature.DailyRanking,true);ui.RefreshDailyRanking();Require(panel.gameObject.activeSelf,"Live ON restores it.");
+                flags.SetValidationFeature(RaceFeature.DailyRanking,true);ui.RefreshDailyRanking();Require(!panel.gameObject.activeSelf,"Live ON keeps the compact classification until disclosure.");
+                root.transform.Find("ResultPresentation/ResultCard/RankingDisclosure").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();Require(panel.gameObject.activeSelf,"Disclosure restores the daily records.");
                 foreach(Transform child in root.GetComponentsInChildren<Transform>(true))child.gameObject.layer=30;
                 foreach(var size in new[]{new Vector2Int(1280,720),new Vector2Int(1920,1080)})
                     Render(camera,size,Path.Combine(output,$"result-p{player}-{size.x}.png"));

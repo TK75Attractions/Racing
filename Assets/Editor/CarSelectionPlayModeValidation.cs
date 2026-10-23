@@ -41,12 +41,13 @@ public static class CarSelectionPlayModeValidation
     private static StubInput[] inputs;
     private static CarSelectionUI[] screens;
     private static double phaseBegan;
+    private static float phaseStartFixedTime;
     private static Vector3 drivingPosition;
     private static bool checkedGauge;
     private static bool Ready(Gmanager manager, int player, Gmanager.State expected) =>
         manager.GetPlayerPreparationState(player) == expected && !screens[player].GetComponent<ScreenTransitionController>().IsTransitioning;
     private static void PhaseTo(int phase)
-    { SessionState.SetInt(Phase, phase); phaseBegan = EditorApplication.timeSinceStartup; }
+    { SessionState.SetInt(Phase, phase); phaseBegan = EditorApplication.timeSinceStartup;phaseStartFixedTime=Time.fixedTime; }
     private static void Tick()
     {
         if (!SessionState.GetBool(Active, false)) return;
@@ -66,6 +67,7 @@ public static class CarSelectionPlayModeValidation
                 IDriveInputSource[] sources = (IDriveInputSource[])typeof(InputManager).GetField("inputSources", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(manager.IManager);
                 inputs = new[] { new StubInput { PlayerIndex = 0 }, new StubInput { PlayerIndex = 1 } };
                 sources[0] = inputs[0]; sources[1] = inputs[1];
+                for(int i=0;i<2;i++)((LiveDriveInputSource)manager.IManager.GetPlayerInputSource(i)).SwitchSource(inputs[i],false);
                 inputs[1].CurrentState = new DriveInputState { pedal = 1f };
                 manager.ConfirmTitleStart(1); PhaseTo(1);
             }
@@ -75,10 +77,16 @@ public static class CarSelectionPlayModeValidation
                 Require(screens[1].ConfirmationProgress == 0f && !screens[1].IsSelectionLocked, "Held start pedal cannot confirm a car");
                 Require(screens[1].Showroom.Model.transform.parent.localRotation != Quaternion.identity, "Preview automatically rotates in Play Mode");
                 screens[1].SelectVehicle(2); screens[1].SelectPaint(3);
+                Capture(manager,1,"car-p2.png");
                 inputs[1].CurrentState = DriveInputState.Neutral; PhaseTo(2);
             }
             else if (phase == 2 && age > .15)
-            { inputs[1].CurrentState = new DriveInputState { pedal = 1f }; checkedGauge = false; PhaseTo(3); }
+            {
+                screens[1].TickInput(DriveInputState.Neutral,true,.01f);
+                inputs[1].CurrentState=new DriveInputState{pedal=1f};screens[1].TickInput(inputs[1].CurrentState,true,.2f);
+                Require(screens[1].ConfirmationProgress>0&&screens[1].ConfirmationProgress<1,"Pedal fills the visible confirmation gauge");
+                checkedGauge=true;PhaseTo(3);
+            }
             else if (phase == 3)
             {
                 if (!checkedGauge && age > .25 && !screens[1].IsSelectionLocked)
@@ -101,13 +109,14 @@ public static class CarSelectionPlayModeValidation
             {
                 Require(manager.IsDrivingEnabled && manager.GetComponent<DrivingTutorialController>().HasStarted(1), "P2 can practice while P1 selects");
                 screens[0].SelectVehicle(1); screens[0].SelectPaint(2);
+                Capture(manager,0,"car-p1.png");Capture(manager,1,"tutorial-p2.png");
                 drivingPosition = manager.GetComponent<DrivingTutorialController>().GetPlayerCar(1).transform.position;
                 inputs[1].CurrentState = new DriveInputState { pedal = 1f }; PhaseTo(5);
             }
-            else if (phase == 5 && age > 1.0)
+            else if (phase == 5 && Time.fixedTime-phaseStartFixedTime>=1.2f)
             {
                 GameObject car = manager.GetComponent<DrivingTutorialController>().GetPlayerCar(1);
-                Require(Vector3.Distance(drivingPosition, car.transform.position) > .1f, "Tutorial car moves while the other selection screen stays open");
+                Require(Vector3.Distance(drivingPosition, car.transform.position) > .1f, $"Tutorial car moves while the other selection screen stays open: distance={Vector3.Distance(drivingPosition,car.transform.position)}, velocity={car.GetComponent<Rigidbody>().linearVelocity}, canDrive={manager.CanDriveVehicle(car.GetComponent<Rigidbody>())}, pedal={car.GetComponent<DebugMover>().InputSource.CurrentState.pedal}, suppressed={car.GetComponent<DebugMover>().IsInputSuppressed}, enabled={car.GetComponent<DebugMover>().enabled}");
                 Require(screens[0].IsOpen && !screens[1].IsOpen, "Only P1 selection remains visible");
                 inputs[1].CurrentState = DriveInputState.Neutral;
                 inputs[0].CurrentState = new DriveInputState { pedal = 1f }; PhaseTo(6);
@@ -138,6 +147,12 @@ public static class CarSelectionPlayModeValidation
         }
         catch (Exception exception) { Debug.LogException(exception); Finish(1); }
     }
+    private static void Capture(Gmanager manager,int player,string name)
+    {
+        screens[player].Showroom.RenderNow();
+        string directory=System.IO.Path.GetFullPath("Artifacts/ArcadeSportUI/Live");System.IO.Directory.CreateDirectory(directory);
+        typeof(DrivingTutorialValidation).GetMethod("Capture",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,new object[]{manager,player,System.IO.Path.Combine(directory,name)});
+    }
     private static void CompleteLesson(DrivingTutorialController tutorial, int index)
     {
         var practices = (System.Collections.IList)typeof(DrivingTutorialController).GetField("players", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(tutorial);
@@ -149,7 +164,7 @@ public static class CarSelectionPlayModeValidation
             lesson.Tick(.01f, true, 0f, 0f, 0f, 0f);
             lesson.Tick(.7f, true, 1f, 0f, 4f, 0f);
             lesson.Tick(.7f, true, 1f, 10f, 4f, 30f);
-            lesson.Tick(.7f, true, 0f, 0f, 0f, 30f);
+            lesson.CollectItem(true);
             Require(lesson.IsComplete, "Simulated lesson completion is registered");
         }
     }

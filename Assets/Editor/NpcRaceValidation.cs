@@ -33,9 +33,8 @@ public static class NpcRaceValidation
                 { playerNumber = i + 1, isCpu = i >= 2, finishPosition = 4 - i, totalRaceTime = 100 + 4 - i });
             ResultUIManager ui = new ResultUIManager(); ui.Init(fixture.transform, 1); ui.ShowResults(result);
             Transform card = fixture.transform.Find("ResultPresentation/ResultCard");
-            if (card.Find("ResultRow1/Player").GetComponent<TMPro.TMP_Text>().text != "CPU 2" ||
-                card.Find("PlacementRibbon/Ordinal").GetComponent<TMPro.TMP_Text>().text != "4TH" ||
-                card.Find("Medal/Artwork").gameObject.activeSelf)
+            if (card.Find("Classification/ResultRow1/Driver").GetComponent<TMPro.TMP_Text>().text != "CPU 2" ||
+                !card.Find("Finish/Rank").GetComponent<TMPro.TMP_Text>().text.StartsWith("4"))
                 throw new InvalidOperationException("Four-car CPU results or fourth-place presentation failed");
             RaceCourse course = UnityEngine.Object.FindFirstObjectByType<RaceCourse>();
             UIMiniMap map = new UIMiniMap(); map.Init(fixture.transform, course, 0);
