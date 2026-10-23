@@ -10,11 +10,16 @@ public sealed class RgpSerialJournal
 {
     public sealed class Entry
     {
-        public long Id;
-        public string Time, Status, Line, Direction;
-        public long ReceivedAt;
-        public string Json => "{\"id\":" + Id + ",\"time\":" + Quote(Time) + ",\"status\":" + Quote(Status) +
-            ",\"line\":" + Quote(Line) + ",\"direction\":" + Quote(Direction) + ",\"receivedAt\":" + ReceivedAt + "}";
+        public readonly long Id, ReceivedAt;
+        public readonly string Time, Status, Line, Direction;
+        // Entries are immutable. Build JSON once rather than on every stream read/eviction.
+        public string Json { get; }
+        internal Entry(long id, string time, string status, string line, string direction, long receivedAt)
+        {
+            Id = id; Time = time; Status = status; Line = line; Direction = direction; ReceivedAt = receivedAt;
+            Json = "{\"id\":" + Id + ",\"time\":" + Quote(Time) + ",\"status\":" + Quote(Status) +
+                ",\"line\":" + Quote(Line) + ",\"direction\":" + Quote(Direction) + ",\"receivedAt\":" + ReceivedAt + "}";
+        }
     }
     public sealed class Batch
     {
@@ -90,12 +95,12 @@ public sealed class RgpSerialJournal
         if (line.Length > 512) line = line.Substring(0, 512);
         lock (gate)
         {
-            var entry = new Entry { Id = ++sequence, Time = receivedAt.ToString("HH:mm:ss.fff"), Status = status,
-                Line = line, Direction = direction, ReceivedAt = receivedAt.ToUnixTimeMilliseconds() };
+            var entry = new Entry(++sequence, receivedAt.ToString("HH:mm:ss.fff"), status,
+                line, direction, receivedAt.ToUnixTimeMilliseconds());
             if (wire != null)
             {
-                var rawEntry = new Entry { Id = entry.Id, Time = entry.Time, Status = entry.Status, Direction = direction,
-                    ReceivedAt = entry.ReceivedAt, Line = wire.Length > 1024 ? wire.Substring(0, 1024) : wire };
+                var rawEntry = new Entry(entry.Id, entry.Time, entry.Status,
+                    wire.Length > 1024 ? wire.Substring(0, 1024) : wire, direction, entry.ReceivedAt);
                 raw.Enqueue(rawEntry); rawBytes += Encoding.UTF8.GetByteCount(rawEntry.Json);
                 while (raw.Count > 1000 || rawBytes > 512 * 1024)
                 { Entry old = raw.Dequeue(); rawEvictedThrough = Math.Max(rawEvictedThrough, old.Id); rawBytes -= Encoding.UTF8.GetByteCount(old.Json); }

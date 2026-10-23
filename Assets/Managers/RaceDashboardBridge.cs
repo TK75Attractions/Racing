@@ -709,7 +709,10 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             id = ++serialSequence, time = DateTime.Now.ToString("HH:mm:ss.fff"),
             status = status, line = line.Length > 512 ? line.Substring(0, 512) : line
         };
-        if (SerialInputProtocol.TryParse(line + "\n", out RgpFrame parsed) && parsed.Type == "TEL")
+        // Successful TEL has already passed the production receiver's CRC/schema checks.
+        // Avoid splitting/parsing the same 100 Hz frame again for display-only history.
+        if (status == "OK" && line.StartsWith("@TEL,", StringComparison.Ordinal) ||
+            SerialInputProtocol.TryParse(line + "\n", out RgpFrame parsed) && parsed.Type == "TEL")
         { latestTelemetry = entry; return; }
         serialLines.Enqueue(entry);
         if (IsSerialAlert(status, line))
