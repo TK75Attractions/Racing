@@ -2,174 +2,95 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Neon classification, local-driver medal and two functional result actions.</summary>
+/// <summary>Highlight film, local finish and a compact classification; daily records are disclosed on demand.</summary>
 public class ResultUIManager
 {
     private RaceResultRecord currentResult;
     private RaceSessionResult currentSessionResult;
-    private Transform card;
     private int localPlayerNumber=1;
-    private readonly TMP_Text[] ranks=new TMP_Text[4],drivers=new TMP_Text[4],cars=new TMP_Text[4],times=new TMP_Text[4],gaps=new TMP_Text[4];
-    private readonly RacingPanelGraphic[] rowSurfaces=new RacingPanelGraphic[4];
-    private readonly RacingIconGraphic[] carIcons=new RacingIconGraphic[4];
-    private TMP_Text winnerLabel,medalNumber,ordinal,bestLap,lastLap,completedLaps,menuHint,achievement;
-    private RawImage medalImage;
-    private RectTransform achievementPanel;
+    private Transform card;
+    private readonly TMP_Text[] ranks=new TMP_Text[4],drivers=new TMP_Text[4],times=new TMP_Text[4];
+    private readonly ArcadeSurfaceGraphic[] surfaces=new ArcadeSurfaceGraphic[4];
+    private TMP_Text localRank,localTime,rankingLabel,menuHint;
     private ResultMenuAnimator menuAnimator;
     private DailyRankingPanel dailyRankingPanel;
-    public string AchievementText=>achievement!=null ? achievement.text : "";
+    private GameObject classification;
+    private bool rankingOpen;
+    public string AchievementText=>FormatHighlight(currentSessionResult?.GetPlayerResult(localPlayerNumber-1));
     public RaceResultRecord CurrentResult=>currentResult;
     public RaceSessionResult CurrentSessionResult=>currentSessionResult;
-
     public void Init(Transform parent,int playerNumber=1)
     {
-        if(parent==null){Debug.LogWarning("ResultUIManager requires a Result root.");return;}
-        localPlayerNumber=playerNumber;
-        Transform legacy=parent.Find("Panel");if(legacy!=null)legacy.gameObject.SetActive(false);
-        RectTransform presentation=RacingUITheme.Rect(parent,"ResultPresentation",Vector2.zero,Vector2.one);
-        NeonUI.Background(presentation,"ResultBackground","UI/Neon/ResultBackground");
-        Image rootBackground = parent.GetComponent<Image>();
-        if (rootBackground != null) rootBackground.color = Color.clear;
-        MenuSceneryScrim.Create(presentation, "MenuSceneryScrim", true);
+        if(parent==null)return;localPlayerNumber=playerNumber;ArcadeUI.Bind(parent,playerNumber-1);
+        var p=ArcadeUI.For(playerNumber-1);ArcadeUI.Hide(parent,"Panel");
+        var presentation=RacingUITheme.Rect(parent,"ResultPresentation",Vector2.zero,Vector2.one);
+        var background=parent.GetComponent<Image>();if(background!=null)background.color=Color.clear;
         card=RacingUITheme.Rect(presentation,"ResultCard",Vector2.zero,Vector2.one);
         if(card.GetComponent<CanvasGroup>()==null)card.gameObject.AddComponent<CanvasGroup>();
-        RectTransform heading=NeonUI.Panel(card,"Header",new Vector2(.03f,.82f),new Vector2(.465f,.955f));
-        RacingPanelGraphic headingFace=heading.Find("ModernSurface").GetComponent<RacingPanelGraphic>();headingFace.Configure(RacingPanelGraphic.SurfaceStyle.Panel,NeonUI.Pink);
-        TMP_Text resultTitle=NeonUI.Text(heading,"Title","RACE RESULT",new Vector2(.035f,.29f),new Vector2(.94f,.98f),85f,italic:true);
-        NeonUI.GlowText(resultTitle,NeonUI.Cyan);
-        NeonUI.Text(heading,"Subtitle","レース結果",new Vector2(.04f,.065f),new Vector2(.85f,.33f),27f,italic:true);
-        BuildCourseCard(card);
-        NeonUI.Panel(card,"Table",new Vector2(.03f,.17f),new Vector2(.625f,.80f));
-        RectTransform tableHead=RacingUITheme.Rect(card,"TableHeader",new Vector2(.04f,.727f),new Vector2(.614f,.785f));
-        NeonUI.Text(tableHead,"Rank","POS / 順位",new Vector2(.02f,0),new Vector2(.15f,1),22f,TextAlignmentOptions.Center,true,new Color(.6f,.83f,1));
-        NeonUI.Text(tableHead,"Driver","ドライバー",new Vector2(.18f,0),new Vector2(.52f,1),24f);
-        NeonUI.Text(tableHead,"Time","タイム",new Vector2(.60f,0),new Vector2(.79f,1),24f,TextAlignmentOptions.Center);
-        NeonUI.Text(tableHead,"Gap","差 / 周回",new Vector2(.80f,0),new Vector2(.98f,1),24f,TextAlignmentOptions.Center);
+        var header=ArcadeUI.Panel(card,"Header",new Vector2(.03f,.865f),new Vector2(.97f,.96f),p.Ink);
+        ArcadeUI.Label(header,"Title","レース結果",new Vector2(.025f,.1f),new Vector2(.6f,.90f),44,p.Paper);
+        ArcadeUI.Label(header,"Course","つくこまサーキット / 2周",new Vector2(.60f,.1f),new Vector2(.98f,.9f),21,p.Soft,false,TextAlignmentOptions.Right);
+        RacingUITheme.Rule(header,"Accent",Vector2.zero,new Vector2(.005f,1),p.Primary);
+        var finish=ArcadeUI.Panel(card,"Finish",new Vector2(.625f,.63f),new Vector2(.97f,.83f),p.Paper);
+        ArcadeUI.Label(finish,"Player","P"+playerNumber,new Vector2(.055f,.73f),new Vector2(.18f,.94f),24,p.Ink,true);
+        localRank=ArcadeUI.Label(finish,"Rank","—",new Vector2(.055f,.10f),new Vector2(.30f,.80f),110,p.Ink,true);localRank.fontStyle=FontStyles.Italic;
+        ArcadeUI.Label(finish,"TimeLabel","タイム",new Vector2(.50f,.65f),new Vector2(.94f,.87f),21,p.Ink);
+        localTime=ArcadeUI.Label(finish,"Time","—",new Vector2(.38f,.18f),new Vector2(.94f,.65f),66,p.Ink,true,TextAlignmentOptions.Right);
+        RacingUITheme.Rule(finish,"Underline",Vector2.zero,new Vector2(1,.03f),p.Primary);
+        var table=ArcadeUI.Panel(card,"Classification",new Vector2(.625f,.27f),new Vector2(.97f,.61f),p.Ink);classification=table.gameObject;
+        ArcadeUI.Label(table,"Header","順位     ドライバー",new Vector2(.06f,.87f),new Vector2(.65f,.98f),20,p.Paper);
+        ArcadeUI.Label(table,"Time","タイム",new Vector2(.70f,.87f),new Vector2(.96f,.98f),20,p.Paper,false,TextAlignmentOptions.Right);
         for(int i=0;i<4;i++)
         {
-            float top=.72f-i*.095f;
-            RectTransform row=NeonUI.Panel(card,"ResultRow"+(i+1),new Vector2(.04f,top-.088f),new Vector2(.614f,top));
-            rowSurfaces[i]=row.Find("ModernSurface").GetComponent<RacingPanelGraphic>();
-            ranks[i]=NeonUI.Text(row,"Rank",(i+1).ToString(),new Vector2(.01f,.08f),new Vector2(.145f,.92f),48f,TextAlignmentOptions.Center,true);
-            drivers[i]=NeonUI.Text(row,"Player","プレイヤー "+(i+1),new Vector2(.18f,.43f),new Vector2(.53f,.89f),27f);
-            cars[i]=NeonUI.Text(row,"CarName","SPORT CAR",new Vector2(.18f,.12f),new Vector2(.53f,.43f),21f,tint:new Color(.73f,.82f,.93f));
-            carIcons[i]=NeonUI.Icon(row,"Car",RacingIconGraphic.Icon.Car,new Vector2(.47f,.25f),new Vector2(.60f,.76f));
-            times[i]=NeonUI.Text(row,"Time","--'--.---",new Vector2(.60f,.21f),new Vector2(.80f,.79f),32f,TextAlignmentOptions.Center,true);
-            gaps[i]=NeonUI.Text(row,"Gap","—",new Vector2(.81f,.21f),new Vector2(.98f,.79f),24f,TextAlignmentOptions.Center,true);
-            RacingUITheme.Rule(row,"Divider",new Vector2(.015f,.01f),new Vector2(.985f,.016f),new Color(.23f,.37f,.70f,.5f));
+            float top=.85f-i*.20f;
+            var row=ArcadeUI.Panel(table,"ResultRow"+(i+1),new Vector2(.025f,top-.19f),new Vector2(.975f,top),p.Ink);surfaces[i]=row.GetComponent<ArcadeSurfaceGraphic>();
+            ranks[i]=ArcadeUI.Label(row,"Rank","—",new Vector2(.01f,.06f),new Vector2(.13f,.94f),39,p.Paper,true,TextAlignmentOptions.Center);
+            drivers[i]=ArcadeUI.Label(row,"Driver","—",new Vector2(.17f,.06f),new Vector2(.53f,.94f),26,p.Paper,true);
+            times[i]=ArcadeUI.Label(row,"Time","—",new Vector2(.53f,.06f),new Vector2(.98f,.94f),39,p.Paper,true,TextAlignmentOptions.Right);
         }
-        winnerLabel=NeonUI.Text(card,"Winner","RACE COMPLETE",new Vector2(.052f,.295f),new Vector2(.60f,.34f),27f,italic:true,tint:NeonUI.Cyan);
-        winnerLabel.rectTransform.pivot=new Vector2(0f,.5f); // Keep the left edge inside the viewport during its celebration pulse.
-        RectTransform summary=RacingUITheme.Rect(card,"RaceSummary",new Vector2(.053f,.18f),new Vector2(.602f,.29f));
-        NeonUI.Text(summary,"BestLabel","ベストラップ / BEST LAP",new Vector2(.01f,.62f),new Vector2(.48f,.97f),18f,tint:new Color(.6f,.83f,1));
-        bestLap=NeonUI.Text(summary,"Best","--'--.---",new Vector2(.01f,.05f),new Vector2(.46f,.62f),36f,italic:true);
-        NeonUI.Text(summary,"LastLabel","最終ラップ / LAST LAP",new Vector2(.50f,.62f),new Vector2(.98f,.97f),18f,tint:new Color(.6f,.83f,1));
-        lastLap=NeonUI.Text(summary,"Last","--'--.---",new Vector2(.50f,.05f),new Vector2(.94f,.62f),36f,italic:true);
-        RectTransform medal=RacingUITheme.Rect(card,"Medal",new Vector2(.665f,.60f),new Vector2(.96f,.80f));
-        RectTransform artwork=RacingUITheme.Rect(medal,"Artwork",Vector2.zero,Vector2.one);
-        medalImage=artwork.GetComponent<RawImage>() ?? artwork.gameObject.AddComponent<RawImage>();medalImage.raycastTarget=false;
-        AspectRatioFitter fit=artwork.GetComponent<AspectRatioFitter>() ?? artwork.gameObject.AddComponent<AspectRatioFitter>();fit.aspectMode=AspectRatioFitter.AspectMode.FitInParent;fit.aspectRatio=1f;
-        medalNumber=NeonUI.Text(medal,"Number","1",new Vector2(.20f,.34f),new Vector2(.80f,.78f),98f,TextAlignmentOptions.Center,true,new Color(1,.94f,.73f));
-        RectTransform ribbon=NeonUI.Panel(card,"PlacementRibbon",new Vector2(.665f,.505f),new Vector2(.97f,.60f),true);
-        ordinal=NeonUI.Text(ribbon,"Ordinal","1ST",new Vector2(.04f,.23f),new Vector2(.96f,.98f),67f,TextAlignmentOptions.Center,true);
-        NeonUI.GlowText(ordinal,NeonUI.Pink);
-        completedLaps=NeonUI.Text(ribbon,"Completed","1 位 / FINISH",new Vector2(.04f,.03f),new Vector2(.96f,.30f),22f,TextAlignmentOptions.Center);
-        achievementPanel=NeonUI.Panel(card,"AchievementBackdrop",new Vector2(.665f,.153f),new Vector2(.97f,.205f));
-        achievement=NeonUI.Text(card,"Achievement","",new Vector2(.665f,.153f),new Vector2(.97f,.205f),25f,TextAlignmentOptions.Center,true,NeonUI.Cyan);
-        dailyRankingPanel=new DailyRankingPanel(card);
-        BuildMenu(card);
-        var replayPanel = card.GetComponent<ResultReplayPanel>() ?? card.gameObject.AddComponent<ResultReplayPanel>();
-        replayPanel.Build(localPlayerNumber);
+        dailyRankingPanel=new DailyRankingPanel(card);dailyRankingPanel.SetExpanded(false);
+        var disclosure=ArcadeUI.Panel(card,"RankingDisclosure",new Vector2(.625f,.17f),new Vector2(.97f,.25f),p.Ink);
+        var hit=disclosure.gameObject.AddComponent<Image>();hit.color=Color.clear;
+        var button=disclosure.gameObject.AddComponent<Button>();button.targetGraphic=hit;button.onClick.AddListener(ToggleRanking);
+        rankingLabel=ArcadeUI.Label(disclosure,"Label","本日のランキング  ＋",new Vector2(.045f,.1f),new Vector2(.96f,.9f),22,p.Soft);
+        BuildMenu();
+        (card.GetComponent<ResultReplayPanel>()??card.gameObject.AddComponent<ResultReplayPanel>()).Build(localPlayerNumber);
     }
-    private void BuildCourseCard(Transform parent)
+    private void BuildMenu()
     {
-        RectTransform course=NeonUI.Panel(parent,"CourseCard",new Vector2(.527f,.82f),new Vector2(.974f,.955f));
-        Transform oldPhoto = course.Find("Photo");
-        if (oldPhoto != null) oldPhoto.gameObject.SetActive(false);
-        NeonUI.Icon(course,"CircuitFlag",RacingIconGraphic.Icon.Flag,new Vector2(.035f,.18f),new Vector2(.18f,.85f));
-        NeonUI.Text(course,"Name","つくこまサーキット",new Vector2(.22f,.45f),new Vector2(.78f,.92f),31f,italic:true);
-        NeonUI.Text(course,"EnglishName","Tsukukoma Circuit",new Vector2(.22f,.15f),new Vector2(.78f,.46f),22f,italic:true);
-        RectTransform outline=RacingUITheme.Rect(course,"Outline",new Vector2(.80f,.07f),new Vector2(.97f,.93f));
-        NeonCourseOutlineGraphic map=outline.GetComponent<NeonCourseOutlineGraphic>() ?? outline.gameObject.AddComponent<NeonCourseOutlineGraphic>();
-        map.Configure(Gmanager.Control!=null?Gmanager.Control.course:Object.FindFirstObjectByType<RaceCourse>());
+        var menu=RacingUITheme.Rect(card,"ResultMenu",new Vector2(.28f,.045f),new Vector2(.72f,.13f));
+        var buttons=new RectTransform[2];
+        for(int i=0;i<2;i++){int option=i;var button=NeonUI.Button(menu,"Option"+(i+1),i==0?"もう一度":"タイトルへ","",i==0?RacingIconGraphic.Icon.Retry:RacingIconGraphic.Icon.Home,new Vector2(i*.53f,0),new Vector2(i*.53f+.47f,1),i==0,()=>Gmanager.Control?.SelectResultOption(localPlayerNumber-1,option));buttons[i]=button.GetComponent<RectTransform>();button.PlayConfirmationSound=false;button.ConfigureHold(1,i==0);}
+        menuAnimator=menu.GetComponent<ResultMenuAnimator>()??menu.gameObject.AddComponent<ResultMenuAnimator>();menuAnimator.Configure(buttons);
+        menuHint=ArcadeUI.Label(card,"MenuHint","",new Vector2(.28f,.005f),new Vector2(.72f,.04f),18,ArcadeUI.For(card).Paper,false,TextAlignmentOptions.Center);
     }
-    private void BuildMenu(Transform parent)
-    {
-        RectTransform menu=RacingUITheme.Rect(parent,"ResultMenu",new Vector2(.22f,.048f),new Vector2(.78f,.14f));
-        foreach(string name in new[]{"Option3","Option4"})
-        {Transform stale=menu.Find(name);if(stale!=null)Object.DestroyImmediate(stale.gameObject);}
-        string[] labels={"もう一度","メインメニュー"};
-        string[] english={"RACE AGAIN","MAIN MENU"};
-        RacingIconGraphic.Icon[] icons={RacingIconGraphic.Icon.Retry,RacingIconGraphic.Icon.Home};
-        RectTransform[] buttons=new RectTransform[2];
-        for(int i=0;i<2;i++)
-        {
-            int option=i;
-            RacingMenuButton button=NeonUI.Button(menu,"Option"+(i+1),labels[i],english[i],icons[i],
-                new Vector2(i*.525f,0),new Vector2(i*.525f+.475f,1),i==0,()=>Gmanager.Control?.SelectResultOption(localPlayerNumber-1,option));
-            buttons[i]=button.GetComponent<RectTransform>();
-            button.transform.Find("Label").GetComponent<TMP_Text>().fontSizeMax=28f;
-        }
-        menuAnimator=menu.GetComponent<ResultMenuAnimator>() ?? menu.gameObject.AddComponent<ResultMenuAnimator>();menuAnimator.Configure(buttons);
-        foreach(RectTransform button in buttons)
-        {
-            button.Find("ModernSurface").gameObject.SetActive(false);
-            Image hit=button.GetComponent<Image>();hit.enabled=true;hit.color=Color.clear;hit.raycastTarget=true;
-            RacingMenuButton control=button.GetComponent<RacingMenuButton>();
-            control.Configure(button.Find("ButtonSurface").GetComponent<RacingPanelGraphic>());
-            control.ConfigureHold(1f,button.name=="Option1");
-            control.PlayConfirmationSound = false; // Gmanager confirms pointer and pedal actions once.
-        }
-        menuHint=NeonUI.Text(parent,"MenuHint","",new Vector2(.20f,.008f),new Vector2(.80f,.042f),17f,TextAlignmentOptions.Center);
-    }
+    private void ToggleRanking(){rankingOpen=!rankingOpen;dailyRankingPanel.SetExpanded(rankingOpen);classification.SetActive(!rankingOpen);rankingLabel.text=rankingOpen?"本日のランキング  −":"本日のランキング  ＋";}
     public void ShowResults()=>ShowResults((RaceResultRecord)null);
-    public void ShowResults(RaceResultRecord record)
-    {
-        var session=new RaceSessionResult();
-        if(record!=null)session.SetPlayerResult(Mathf.Clamp(record.playerNumber-1,0,1),record);
-        ShowResults(session);
-    }
+    public void ShowResults(RaceResultRecord record){var session=new RaceSessionResult();if(record!=null)session.SetPlayerResult(Mathf.Clamp(record.playerNumber-1,0,1),record);ShowResults(session);}
     public void ShowResults(RaceSessionResult session)
     {
-        currentSessionResult=session;currentResult=session?.GetResultAtPosition(1);
-        float winnerTime=currentResult!=null&&currentResult.didFinish?currentResult.totalRaceTime:0f;
-        for(int i=0;i<4;i++)ApplyRow(i,session?.GetResultAtPosition(i+1),winnerTime);
-        winnerLabel.text=currentResult!=null&&currentResult.didFinish?$"{currentResult.DriverLabel}  WINNER / 優勝":"RACE COMPLETE / レース終了";
-        RaceResultRecord local=session?.GetPlayerResult(localPlayerNumber-1);
-        int position=local!=null?Mathf.Clamp(local.finishPosition,1,4):localPlayerNumber;
-        bool finished=local==null||local.didFinish;
-        medalImage.texture=Resources.Load<Texture2D>(position==1?"UI/Neon/MedalGold":"UI/Neon/MedalSilver");
-        medalImage.gameObject.SetActive(finished && position <= 2);medalNumber.gameObject.SetActive(finished);
-        medalNumber.text=position.ToString();medalNumber.color=Color.white;
-        medalNumber.enableVertexGradient=true;
-        Color highlight=position==1?new Color(1,.97f,.78f):new Color(.96f,.99f,1f);
-        Color shadow=position==1?new Color(.66f,.29f,.10f):new Color(.35f,.45f,.58f);
-        medalNumber.colorGradient=new VertexGradient(highlight,highlight,shadow,shadow);
-        Material metal=medalNumber.fontMaterial;
-        metal.SetColor("_OutlineColor",position==1?new Color(.32f,.14f,.05f):new Color(.12f,.17f,.25f));
-        metal.SetFloat("_OutlineWidth",.12f);
-        metal.EnableKeyword("UNDERLAY_ON");metal.SetColor("_UnderlayColor",new Color(.04f,.02f,.01f,.95f));
-        metal.SetFloat("_UnderlayOffsetX",.75f);metal.SetFloat("_UnderlayOffsetY",-.75f);
-        medalNumber.UpdateMeshPadding();
-        ordinal.text=finished?(position==1?"1ST":position==2?"2ND":position==3?"3RD":"4TH"):"DNF";
-        completedLaps.text=finished?$"{position} 位 / FINISH": local!=null&&local.goalLap>0
-            ? $"未完走 / {Mathf.Clamp(local.completedLaps,0,local.goalLap)} / {local.goalLap} 周" : "未完走 / DID NOT FINISH";
-        bestLap.text=local!=null&&local.bestLapTime>0&&local.bestLapTime<float.MaxValue?FormatTime(local.bestLapTime):"--'--.---";
-        lastLap.text=local!=null&&local.didFinish&&local.finalLapTime>0?FormatTime(local.finalLapTime):"--'--.---";
-        RefreshHighlight();
-        RefreshDailyRanking();
-        SetMenuState(0,0);
-        SetPedalConfirmationReady(false);
+        currentSessionResult=session;currentResult=session?.GetResultAtPosition(1);var p=ArcadeUI.For(localPlayerNumber-1);
+        for(int i=0;i<4;i++)
+        {
+            var record=session?.GetResultAtPosition(i+1);bool own=record!=null&&!record.isCpu&&record.playerNumber==localPlayerNumber;
+            surfaces[i].color=own?p.Primary:p.Ink;Color ink=own?p.Ink:p.Paper;
+            ranks[i].text=record?.didFinish==true?(i+1).ToString():"—";drivers[i].text=record==null?"—":record.isCpu?record.DriverLabel:"P"+record.playerNumber;
+            times[i].text=record==null?"—":record.didFinish?FormatTime(record.totalRaceTime):"DNF";
+            ranks[i].color=drivers[i].color=times[i].color=ink;
+        }
+        var local=session?.GetPlayerResult(localPlayerNumber-1);
+        localRank.text=local==null?"—":local.didFinish?local.finishPosition+"<size=32%>位</size>":"DNF";
+        localTime.text=local==null?"—":local.didFinish?FormatTime(local.totalRaceTime):"未完走";
+        rankingOpen=false;classification.SetActive(true);dailyRankingPanel.SetExpanded(false);rankingLabel.text="本日のランキング  ＋";
+        RefreshDailyRanking();SetMenuState(0,0);SetPedalConfirmationReady(false);
     }
-    public void RefreshHighlight()
-    {
-        if (achievement == null) return;
-        achievement.text = RaceFeatureController.Enabled(RaceFeature.ResultHighlights)
-            ? FormatHighlight(currentSessionResult?.GetPlayerResult(localPlayerNumber-1)) : "";
-        if (achievementPanel != null) achievementPanel.gameObject.SetActive(achievement.text.Length > 0);
-    }
-    public void RefreshDailyRanking() => dailyRankingPanel?.Refresh(currentSessionResult?.dailyRanking,
-        currentSessionResult?.GetPlayerResult(localPlayerNumber-1),localPlayerNumber);
+    public void RefreshHighlight() { }
+    public void RefreshDailyRanking()=>dailyRankingPanel?.Refresh(currentSessionResult?.dailyRanking,currentSessionResult?.GetPlayerResult(localPlayerNumber-1),localPlayerNumber);
+    public void SetMenuState(int index,float amount)=>menuAnimator?.SetState(index,amount);
+    public void SetPedalConfirmationReady(bool ready){menuHint.text=ready?"":"まずペダルから足を離してください";}
+    public void PlayConfirm(int index)=>menuAnimator?.PlayConfirm(index);
+    public void HideResults(){currentResult=null;currentSessionResult=null;SetMenuState(0,0);}
+    private static string FormatTime(float seconds)=>$"{Mathf.FloorToInt(seconds/60)}:{Mathf.FloorToInt(seconds%60):00}.{Mathf.FloorToInt(seconds*1000)%1000:000}";
     public static string FormatHighlight(RaceResultRecord local)
     {
         if (local == null) return "";
@@ -187,30 +108,4 @@ public class ResultUIManager
         return local.didFinish ? text : "未完走 / " + text;
     }
 
-    private void ApplyRow(int index,RaceResultRecord result,float winnerTime)
-    {
-        bool local=result!=null&&result.playerNumber==localPlayerNumber;
-        rowSurfaces[index].Configure(local?RacingPanelGraphic.SurfaceStyle.Primary:RacingPanelGraphic.SurfaceStyle.Panel,local?NeonUI.Pink:NeonUI.Cyan);
-        ranks[index].text=result!=null&&result.didFinish?(index+1).ToString():"—";
-        drivers[index].text=result!=null?(result.isCpu ? result.DriverLabel : "プレイヤー "+result.playerNumber):"—";
-        cars[index].text=result!=null?(result.isCpu||string.IsNullOrEmpty(result.carName)||result.carName==$"Player{result.playerNumber}_Car"?"SPORT CAR":result.carName):"";
-        carIcons[index].gameObject.SetActive(result!=null);
-        if(result!=null)carIcons[index].color=Color.Lerp(result.isCpu ? new Color(1f,.8f,.25f) : PlayerCarPaint.GetPlayerColor(result.playerNumber-1),Color.white,.3f);
-        times[index].text=result==null?"—":result.didFinish?FormatTime(result.totalRaceTime):"DNF";
-        gaps[index].text=result==null?"—":!result.didFinish&&result.goalLap>0
-            ? $"{Mathf.Clamp(result.completedLaps,0,result.goalLap)} / {result.goalLap} 周"
-            : index==0||!result.didFinish?"—":"+"+Mathf.Max(0,result.totalRaceTime-winnerTime).ToString("0.000");
-        times[index].color=local?new Color(1,.62f,.78f):Color.white;
-        gaps[index].color=local?new Color(1,.62f,.78f):new Color(.74f,.80f,.95f);
-    }
-    public void SetMenuState(int selectedIndex,float amount)=>menuAnimator?.SetState(selectedIndex,amount);
-    public void SetPedalConfirmationReady(bool ready)
-    {
-        if (menuHint != null) menuHint.text = ready
-            ? "ハンドルで選択 / ペダルを 1 秒踏んで決定"
-            : "まずペダルから足を離してください / ハンドルで選択";
-    }
-    public void PlayConfirm(int selectedIndex)=>menuAnimator?.PlayConfirm(selectedIndex);
-    public void HideResults(){currentResult=null;currentSessionResult=null;SetMenuState(0,0);}
-    private static string FormatTime(float time)=>$"{Mathf.FloorToInt(time/60f)}'{Mathf.FloorToInt(time%60f):00}.{Mathf.FloorToInt(time*1000f)%1000:000}";
 }

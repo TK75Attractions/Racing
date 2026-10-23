@@ -1696,7 +1696,10 @@ public class Gmanager : MonoBehaviour
         soundEffects?.Play(option == 0 ? RaceSoundCue.Confirm : RaceSoundCue.Cancel, playerIndex);
         resultUIManagers[playerIndex]?.PlayConfirm(option);
         if(option == 0) { RetryGame(); return; }
-        ReturnPlayerToTitle(playerIndex);
+        var ending=ArcadeEndingUI.Get(players[playerIndex].displayRig.CanvasRoot.transform);
+        if(ending.IsVisible)return;
+        players[playerIndex].titleCamera.Priority=20;players[playerIndex].displayRig.RaceCamera.Priority=10;
+        ending.Show(()=>ReturnPlayerToTitle(playerIndex));
     }
 
     private void UpdateResultReturnInput(float dt)
@@ -1716,6 +1719,8 @@ public class Gmanager : MonoBehaviour
             PlayerRuntime player = players[index];
             if (player == null || player.returnedToTitle || screenTransitions[index]?.IsTransitioning == true) continue;
             DriveInputState input = IManager.GetInputState(index);
+            var ending=player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>();
+            if(ending!=null&&ending.IsVisible){ending.TickInput(input.pedal,dt);continue;}
             if (!player.resultSteeringLatch && Mathf.Abs(input.steering) >= resultSteeringThreshold)
             {
                 player.resultSelection = 1 - player.resultSelection;

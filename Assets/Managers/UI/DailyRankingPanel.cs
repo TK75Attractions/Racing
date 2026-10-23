@@ -8,10 +8,12 @@ public sealed class DailyRankingPanel
     private readonly TMP_Text context, ownRank, empty;
     private readonly TMP_Text[] ranks = new TMP_Text[5], drivers = new TMP_Text[5], times = new TMP_Text[5];
     private readonly RectTransform[] rows = new RectTransform[5];
+    private bool expanded;
     public string OwnRankText => ownRank.text;
+    public void SetExpanded(bool value){expanded=value;root.gameObject.SetActive(value);}
     public DailyRankingPanel(Transform parent)
     {
-        root = NeonUI.Panel(parent, "DailyRanking", new Vector2(.65f,.215f), new Vector2(.974f,.50f));
+        root = NeonUI.Panel(parent, "DailyRanking", new Vector2(.625f,.27f), new Vector2(.97f,.61f));
         NeonUI.Text(root, "Title", "本日のランキング", new Vector2(.045f,.81f), new Vector2(.96f,.98f), 31f, tint: NeonUI.Cyan);
         context = NeonUI.Text(root, "Context", "", new Vector2(.045f,.70f), new Vector2(.96f,.82f), 17f, tint: new Color(.70f,.83f,.95f));
         empty = NeonUI.Text(root, "Empty", "本日の完走記録はまだありません", new Vector2(.07f,.28f), new Vector2(.93f,.65f), 23f, TextAlignmentOptions.Center);
@@ -30,11 +32,12 @@ public sealed class DailyRankingPanel
     {
         // This debug switch hides the presentation only; completed records remain saved.
         bool visible = Gmanager.Control?.Features == null || RaceFeatureController.Enabled(RaceFeature.DailyRanking);
-        root.gameObject.SetActive(visible);
+        root.gameObject.SetActive(visible&&expanded);
         if (!visible) return;
         string date = view?.day?.Replace('-', '/') ?? System.DateTime.Now.ToString("yyyy/MM/dd");
         string direction = view?.reversed == true ? "逆走" : "正走";
         string preset = view?.experience == true ? "体験" : "標準";
+        context.gameObject.SetActive(false);
         context.text = view == null ? date + " / この端末の記録" :
             $"{date} / {view.goalLaps}周 / {direction} / {preset} / {view.rows.Count}件";
         int count = view?.available == true ? view.rows.Count : 0;
