@@ -29,5 +29,11 @@ public sealed class ArcadeNoticeRail : MonoBehaviour
         string next="";for(int i=notices.Length-1;i>=0;i--)if(!string.IsNullOrEmpty(notices[i])){next=notices[i];break;}
         if(next==shown)return;shown=next;label.text=next;panel.sizeDelta=new Vector2(Mathf.Clamp(label.GetPreferredValues(next).x+44,130,480),0);panel.gameObject.SetActive(next.Length>0);
     }
+    public void Clear()
+    {
+        System.Array.Clear(notices,0,notices.Length);shown="";
+        if(label!=null)label.text="";if(panel!=null)panel.gameObject.SetActive(false);
+    }
+    private void LateUpdate(){if(Gmanager.Control!=null&&Gmanager.Control.state!=Gmanager.State.Game&&Text.Length>0)Clear();}
     public string Text=>shown??"";
 }

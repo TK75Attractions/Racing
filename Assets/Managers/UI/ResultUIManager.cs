@@ -87,7 +87,13 @@ public class ResultUIManager
         RefreshDailyRanking();SetMenuState(0,0);SetPedalConfirmationReady(false);
     }
     public void RefreshHighlight() { }
-    public void RefreshDailyRanking()=>dailyRankingPanel?.Refresh(currentSessionResult?.dailyRanking,currentSessionResult?.GetPlayerResult(localPlayerNumber-1),localPlayerNumber);
+    public void RefreshDailyRanking()
+    {
+        bool visible=Gmanager.Control?.Features==null||RaceFeatureController.Enabled(RaceFeature.DailyRanking);
+        card.Find("RankingDisclosure").gameObject.SetActive(visible);
+        if(!visible&&rankingOpen)ToggleRanking();
+        dailyRankingPanel?.Refresh(currentSessionResult?.dailyRanking,currentSessionResult?.GetPlayerResult(localPlayerNumber-1),localPlayerNumber);
+    }
     public void SetMenuState(int index,float amount)=>menuAnimator?.SetState(index,amount);
     public void SetPedalConfirmationReady(bool ready){menuHint.text=ready?"":"まずペダルから足を離してください";}
     public void PlayConfirm(int index)=>menuAnimator?.PlayConfirm(index);

@@ -264,6 +264,11 @@ public class DebugMover : MonoBehaviour
         ? accelerationPadBoostTimeRemaining : 0f;
     public float AccelerationPadBoostDuration => IsAccelerationPadBoosting
         ? accelerationPadBoostDuration : 0f;
+    /// <summary>HUD-only remaining fraction; leaves all boost force and timing unchanged.</summary>
+    public float NormalizedActiveBoostRemaining => !isActiveAndEnabled || IsInputSuppressed ? 0f : Mathf.Clamp01(Mathf.Max(
+        IsDriftBoosting && driftBoostDuration > 0f ? driftBoostTimeRemaining / driftBoostDuration : 0f,
+        AccelerationPadBoostDuration > 0f ? AccelerationPadBoostTimeRemaining / AccelerationPadBoostDuration : 0f,
+        slipstreamBoostRemaining / .7f, landingBoostRemaining / .5f));
     public bool IsRocketBoosting => isActiveAndEnabled && itemEffects != null && itemEffects.IsRocketActive;
     /// <summary>ドリフト、加速度盤、ロケットを合わせた加速画面演出用の強度です。</summary>
     public float BoostVisualIntensity => Mathf.Max(DriftBoostVisualIntensity,

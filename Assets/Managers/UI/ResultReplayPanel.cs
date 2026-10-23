@@ -10,7 +10,8 @@ public sealed class ResultReplayPanel : MonoBehaviour
     {
         if(image!=null)return;var p=ArcadeUI.For(transform);
         var panel=ArcadeUI.Panel(transform,"ReplayPanel",new Vector2(.03f,.215f),new Vector2(.60f,.83f),p.Ink);
-        var video=RacingUITheme.Rect(panel,"Video",new Vector2(0,.035f),new Vector2(1,.88f));
+        var frame=RacingUITheme.Rect(panel,"VideoFrame",new Vector2(0,.035f),new Vector2(1,.85f));
+        var video=RacingUITheme.Rect(frame,"Video",Vector2.zero,Vector2.one);
         image=video.gameObject.AddComponent<RawImage>();image.color=Color.white;image.raycastTarget=false;
         var fit=video.gameObject.AddComponent<AspectRatioFitter>();fit.aspectMode=AspectRatioFitter.AspectMode.FitInParent;fit.aspectRatio=16f/9;
         var heading=ArcadeUI.Panel(panel,"Header",new Vector2(0,.86f),Vector2.one,p.Ink);

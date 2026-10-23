@@ -10,7 +10,7 @@ public sealed class DailyRankingPanel
     private readonly RectTransform[] rows = new RectTransform[5];
     private bool expanded;
     public string OwnRankText => ownRank.text;
-    public void SetExpanded(bool value){expanded=value;root.gameObject.SetActive(value);}
+    public void SetExpanded(bool value){expanded=value;root.gameObject.SetActive(value&&(Gmanager.Control?.Features==null||RaceFeatureController.Enabled(RaceFeature.DailyRanking)));}
     public DailyRankingPanel(Transform parent)
     {
         root = NeonUI.Panel(parent, "DailyRanking", new Vector2(.625f,.27f), new Vector2(.97f,.61f));
