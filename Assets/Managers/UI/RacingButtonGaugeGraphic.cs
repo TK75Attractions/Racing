@@ -17,30 +17,9 @@ public sealed class RacingButtonGaugeGraphic : MaskableGraphic
     }
     protected override void OnPopulateMesh(VertexHelper vh)
     {
-        vh.Clear();Rect r=rectTransform.rect;
-        Color edge=unavailable?new Color(.32f,.37f,.47f):Color.Lerp(tint,Color.white,.28f);
-        Polygon(vh,r,new Color(.005f,.015f,.05f,.99f));
-        Outline(vh,r,1.5f,edge);
-        Rect inside=new Rect(r.xMin+5f,r.yMin+4f,r.width-10f,r.height-8f);
-        float gap=2f, width=(inside.width-gap*4f)/5f;
-        for(int i=0;i<5;i++)
-        {
-            Rect cell=new Rect(inside.xMin+i*(width+gap),inside.yMin,width,inside.height);
-            Quad(vh,cell,new Color(.035f,.065f,.12f));
-            float value=Mathf.Clamp01(charge*5f-i);
-            if(value>0f)
-            {
-                Rect fill=cell;fill.width*=value;
-                Color lit=Color.Lerp(edge,Color.white,.35f+flash*.35f);
-                Quad(vh,fill,Color.Lerp(edge,lit,.5f));
-                RacingPanelGraphic.Line(vh,new Vector2(fill.xMin,fill.yMax),new Vector2(fill.xMax,fill.yMax),1.5f,lit);
-            }
-            Color divider=RacingPanelGraphic.Alpha(edge,.42f);
-            RacingPanelGraphic.Line(vh,new Vector2(cell.xMin,cell.yMin),new Vector2(cell.xMax,cell.yMin),.7f,divider);
-            RacingPanelGraphic.Line(vh,new Vector2(cell.xMax,cell.yMin),new Vector2(cell.xMax,cell.yMax),.7f,divider);
-            RacingPanelGraphic.Line(vh,new Vector2(cell.xMax,cell.yMax),new Vector2(cell.xMin,cell.yMax),.7f,divider);
-            RacingPanelGraphic.Line(vh,new Vector2(cell.xMin,cell.yMax),new Vector2(cell.xMin,cell.yMin),.7f,divider);
-        }
+        vh.Clear();Rect r=rectTransform.rect;if(r.width<1||r.height<1)return;
+        var p=ArcadeUI.For(transform);
+        if(charge>0)Quad(vh,new Rect(r.xMin,r.yMin,r.width*charge,r.height),unavailable?p.Soft:p.Accent);
     }
     private static void Quad(VertexHelper vh,Rect r,Color c)
     {
