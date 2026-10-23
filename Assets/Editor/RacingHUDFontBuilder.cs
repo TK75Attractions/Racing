@@ -34,6 +34,9 @@ public static class RacingHUDFontBuilder
         foreach (string source in sources)
             foreach (Match match in Regex.Matches(File.ReadAllText(source), "\"([^\"\\r\\n]*)\""))
                 corpus += match.Groups[1].Value;
+        var catalog=CarSelectionCatalog.Load();
+        if(catalog!=null)foreach(var vehicle in catalog.vehicles)corpus+=vehicle.displayName+vehicle.grade+vehicle.description+vehicle.bodyType;
+        foreach(string paint in CarSelectionCatalog.PaintNames)corpus+=paint;
         // The dropdown's small arrow belongs to FontRole.English; M PLUS has no such glyph.
         string characters = new string(corpus.Where(c => c >= 32 && c != '▾').Distinct().OrderBy(c => c).ToArray());
         foreach (string weight in new[] { "Medium", "Bold", "Tutorial" })
