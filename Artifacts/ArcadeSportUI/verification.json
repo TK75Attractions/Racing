@@ -1,0 +1,43 @@
+{
+  "unity": "6000.3.9f1",
+  "date": "2026-10-24 JST",
+  "base": "23ec146",
+  "branch": "codex/arcade-sport-ui",
+  "checks": {
+    "car_selection": {
+      "result": "passed",
+      "summary": "CAR_SELECTION_PLAY_MODE_PASS: independent P2-first start, pedal gauge, mixed selection/practice, confirmation release gate, tutorial timeout, synchronized race"
+    },
+    "race_flow": {
+      "result": "passed",
+      "summary": "MULTIPLAYER_PLAYMODE_VALIDATION_PASS: actual acceleration, finish/spectator, held-pedal safety, retry without practice, two title returns, both withdrawals, withdrawal/timeout during goal, remaining-player finish; one-shot button, readiness, countdown, GO, player-local goal and results cues."
+    },
+    "ending": {
+      "result": "passed",
+      "summary": "ARCADE_ENDING_PLAYMODE_PASS: real rendered P1/P2 endings, held-pedal safety, independent title returns."
+    },
+    "ui": {
+      "result": "passed",
+      "summary": "ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, result disclosure, DNF, ending input gate, stable meshes."
+    },
+    "capture": {
+      "result": "passed",
+      "summary": "ARCADE_UI_CAPTURE_PASS: /Users/kenichirowada/.codex-workspaces/worktrees/ios-68533090-2770-45db-8758-a84c974b02cd/Racing/Artifacts/ArcadeSportUI"
+    },
+    "daily_ranking": {
+      "result": "passed",
+      "summary": "DAILY_RANKING_VALIDATION_PASS: persistence, calendar rollover, exclusions, backup/error paths and P1/P2 result UI."
+    },
+    "result_facts": {
+      "result": "passed",
+      "summary": "RESULT_HIGHLIGHT_VALIDATION_PASS: per-player snapshot, factual fallback, DNF, AUTO label, compact presentation, 720p/1080p renders."
+    }
+  },
+  "editmode": {
+    "result": "Passed",
+    "total": "152",
+    "passed": "152",
+    "failed": "0",
+    "skipped": "0"
+  }
+}
