@@ -142,11 +142,13 @@ public sealed class CourseIntroDirector : MonoBehaviour
         foreach (var range in new[] { new Vector4(0,0,1,.17f), new Vector4(0,.92f,1,1) })
         {
             var bar = RacingUITheme.Rect(root, range.y > .5f ? "UpperLetterbox" : "LowerLetterbox", new Vector2(range.x,range.y), new Vector2(range.z,range.w));
-            var image = bar.gameObject.AddComponent<Image>(); image.color = new Color(.005f,.012f,.025f,.96f); image.raycastTarget = false;
+            var image = bar.gameObject.AddComponent<Image>(); image.color = ArcadeUI.For(rig.PlayerIndex).Ink; image.raycastTarget = false;
         }
-        NeonUI.Text(root, "Preview", "RACING  /  COURSE PREVIEW", new Vector2(.045f,.945f), new Vector2(.8f,.985f), 21f, tint:NeonUI.Cyan);
+        NeonUI.Text(root, "Preview", "RACING  /  COURSE PREVIEW", new Vector2(.045f,.945f), new Vector2(.8f,.985f), 21f, tint:ArcadeUI.For(rig.PlayerIndex).Soft);
         NeonUI.Text(root, "Course", "つくこまサーキット", new Vector2(.045f,.068f), new Vector2(.8f,.143f), 45f, italic:true);
-        NeonUI.Text(root, "Details", "TSUKUKOMA CIRCUIT   /   " + laps + " LAPS   /   " + drivers + " DRIVERS", new Vector2(.047f,.026f), new Vector2(.85f,.07f), 20f, tint:NeonUI.Cyan);
+        NeonUI.Text(root, "Details", "TSUKUKOMA CIRCUIT   /   " + laps + " LAPS   /   " + drivers + " DRIVERS", new Vector2(.047f,.026f), new Vector2(.85f,.07f), 20f, tint:ArcadeUI.For(rig.PlayerIndex).Soft);
+        var outline=RacingUITheme.Rect(root,"CourseOutline",new Vector2(.85f,.025f),new Vector2(.96f,.145f));
+        var map=outline.gameObject.AddComponent<NeonCourseOutlineGraphic>();map.Configure(Gmanager.Control!=null?Gmanager.Control.course:Object.FindFirstObjectByType<RaceCourse>());
         return group;
     }
     private void OnDisable() => Stop();
