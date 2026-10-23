@@ -18,7 +18,7 @@ public sealed class DailyRankingBook
 
     public static string Day(DateTime localTime) => localTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     // Match the production result screen's float-to-millisecond display, including boundary rounding.
-    public static int Milliseconds(float seconds) => (int)(seconds * 1000f);
+    public static int Milliseconds(float seconds) => (int)Math.Round((double)seconds * 1000d, MidpointRounding.AwayFromZero);
     public static bool Eligible(RaceResultRecord result) => result != null && !result.isCpu && result.didFinish &&
         result.playerNumber >= 1 && result.playerNumber <= 2 && result.goalLap > 0 && result.completedLaps >= result.goalLap &&
         result.achievements?.usedAutodrive != true && !result.dailyRankingExcluded &&

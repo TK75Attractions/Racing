@@ -50,9 +50,9 @@ public class ResultUIManager
         }
         dailyRankingPanel=new DailyRankingPanel(card);dailyRankingPanel.SetExpanded(false);
         var disclosure=ArcadeUI.Panel(card,"RankingDisclosure",new Vector2(.625f,.17f),new Vector2(.97f,.25f),p.Ink);
-        var hit=disclosure.gameObject.AddComponent<Image>();hit.color=Color.clear;
+        var hit=disclosure.GetComponent<ArcadeSurfaceGraphic>();hit.raycastTarget=true;
         var button=disclosure.gameObject.AddComponent<Button>();button.targetGraphic=hit;button.onClick.AddListener(ToggleRanking);
-        rankingLabel=ArcadeUI.Label(disclosure,"Label","本日のランキング  ＋",new Vector2(.045f,.1f),new Vector2(.96f,.9f),22,p.Soft);
+        rankingLabel=ArcadeUI.Label(disclosure,"Label","本日のランキング  +",new Vector2(.045f,.1f),new Vector2(.96f,.9f),22,p.Soft);
         BuildMenu();
         (card.GetComponent<ResultReplayPanel>()??card.gameObject.AddComponent<ResultReplayPanel>()).Build(localPlayerNumber);
     }
@@ -64,7 +64,7 @@ public class ResultUIManager
         menuAnimator=menu.GetComponent<ResultMenuAnimator>()??menu.gameObject.AddComponent<ResultMenuAnimator>();menuAnimator.Configure(buttons);
         menuHint=ArcadeUI.Label(card,"MenuHint","",new Vector2(.28f,.005f),new Vector2(.72f,.04f),18,ArcadeUI.For(card).Paper,false,TextAlignmentOptions.Center);
     }
-    private void ToggleRanking(){rankingOpen=!rankingOpen;dailyRankingPanel.SetExpanded(rankingOpen);classification.SetActive(!rankingOpen);rankingLabel.text=rankingOpen?"本日のランキング  −":"本日のランキング  ＋";}
+    private void ToggleRanking(){rankingOpen=!rankingOpen;dailyRankingPanel.SetExpanded(rankingOpen);classification.SetActive(!rankingOpen);rankingLabel.text=rankingOpen?"本日のランキング  -":"本日のランキング  +";}
     public void ShowResults()=>ShowResults((RaceResultRecord)null);
     public void ShowResults(RaceResultRecord record){var session=new RaceSessionResult();if(record!=null)session.SetPlayerResult(Mathf.Clamp(record.playerNumber-1,0,1),record);ShowResults(session);}
     public void ShowResults(RaceSessionResult session)
@@ -81,7 +81,7 @@ public class ResultUIManager
         var local=session?.GetPlayerResult(localPlayerNumber-1);
         localRank.text=local==null?"—":local.didFinish?local.finishPosition+"<size=32%>位</size>":"DNF";
         localTime.text=local==null?"—":local.didFinish?FormatTime(local.totalRaceTime):"未完走";
-        rankingOpen=false;classification.SetActive(true);dailyRankingPanel.SetExpanded(false);rankingLabel.text="本日のランキング  ＋";
+        rankingOpen=false;classification.SetActive(true);dailyRankingPanel.SetExpanded(false);rankingLabel.text="本日のランキング  +";
         RefreshDailyRanking();SetMenuState(0,0);SetPedalConfirmationReady(false);
     }
     public void RefreshHighlight() { }
@@ -90,7 +90,7 @@ public class ResultUIManager
     public void SetPedalConfirmationReady(bool ready){menuHint.text=ready?"":"まずペダルから足を離してください";}
     public void PlayConfirm(int index)=>menuAnimator?.PlayConfirm(index);
     public void HideResults(){currentResult=null;currentSessionResult=null;SetMenuState(0,0);}
-    private static string FormatTime(float seconds)=>$"{Mathf.FloorToInt(seconds/60)}:{Mathf.FloorToInt(seconds%60):00}.{Mathf.FloorToInt(seconds*1000)%1000:000}";
+    private static string FormatTime(float seconds){int ms=DailyRankingBook.Milliseconds(seconds);return $"{ms/60000}:{ms/1000%60:00}.{ms%1000:000}";}
     public static string FormatHighlight(RaceResultRecord local)
     {
         if (local == null) return "";
