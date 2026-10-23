@@ -38,6 +38,8 @@ public sealed class RgpSerialJournal
     }
     private readonly ConcurrentQueue<Pending> pending = new ConcurrentQueue<Pending>();
     private int pendingCount, droppedPending;
+    private int drainScheduled;
+    private static readonly WaitCallback drainWork = state => ((RgpSerialJournal)state).DrainOnWorker();
     private readonly Queue<Entry> history = new Queue<Entry>();
     private readonly Queue<Entry> raw = new Queue<Entry>();
     private long rawEvictedThrough;
@@ -59,9 +61,25 @@ public sealed class RgpSerialJournal
         // A paused dashboard reader must never hold up physical serial acquisition.
         while (Volatile.Read(ref pendingCount) > 8192 && pending.TryDequeue(out _))
         { Interlocked.Decrement(ref pendingCount); Interlocked.Increment(ref droppedPending); }
-        if (!Monitor.TryEnter(gate)) return;
-        try { DrainPending(32); }
-        finally { Monitor.Exit(gate); }
+        ScheduleDrain();
+    }
+
+    private void ScheduleDrain()
+    {
+        if (Interlocked.CompareExchange(ref drainScheduled, 1, 0) == 0)
+            ThreadPool.QueueUserWorkItem(drainWork, this);
+    }
+
+    // Parsing, CRC validation and JSON formatting must never run on the UART
+    // producer, even when the dashboard lock happens to be uncontended.
+    private void DrainOnWorker()
+    {
+        try { lock (gate) { DrainPending(256); } }
+        finally
+        {
+            Volatile.Write(ref drainScheduled, 0);
+            if (!pending.IsEmpty) ScheduleDrain();
+        }
     }
 
     // Call with gate held; bound catch-up work even after a long dashboard pause.
