@@ -61,6 +61,7 @@ public sealed class CarSelectionUI : MonoBehaviour
     public void Initialize(int playerIndex)
     {
         player = Mathf.Clamp(playerIndex, 0, 1);
+        ArcadeUI.Bind(transform,player);
         catalog = CarSelectionCatalog.Load();
         if (catalog == null || catalog.vehicles.Length == 0)
         { Debug.LogError("Car selection catalog is missing.", this); return; }
@@ -106,9 +107,29 @@ public sealed class CarSelectionUI : MonoBehaviour
         focusHint = Text(sheet, "FocusHint", "車種を選択 / ハンドルで切替", new Vector2(.10f, .385f), new Vector2(.62f, .415f), 17f,
             TextAlignmentOptions.Center, tint: NeonUI.Cyan);
         foreach (TMP_Text label in sheet.GetComponentsInChildren<TMP_Text>(true)) ApplyFont(label);
+        ApplyArcadeLayout();
         sheet.gameObject.SetActive(false); showroom.SetVisible(false);
     }
 
+    private void ApplyArcadeLayout()
+    {
+        var p=ArcadeUI.For(player);sheet.GetComponent<Image>().color=p.Ink;
+        ArcadeUI.Hide(sheet,"GarageBrand","VehicleCount","FocusHint","PedalHint","Heading/English");
+        ArcadeUI.Place(sheet,"Heading",.03f,.86f,.28f,.96f);
+        var heading=sheet.Find("Heading");heading.Find("ModernSurface").gameObject.SetActive(false);ArcadeUI.Panel(sheet,"Heading",new Vector2(.03f,.86f),new Vector2(.28f,.96f),p.Paper);
+        var title=heading.Find("Japanese").GetComponent<TMP_Text>();title.text="車の選択";title.color=p.Ink;title.fontStyle=FontStyles.Normal;ArcadeUI.Place(heading,"Japanese",.10f,.10f,.9f,.90f);
+        var panel=sheet.Find("Performance");panel.Find("ModernSurface").gameObject.SetActive(false);
+        ArcadeUI.Panel(sheet,"Performance",new Vector2(.68f,.34f),new Vector2(.97f,.83f),p.Paper);
+        foreach(TMP_Text label in panel.GetComponentsInChildren<TMP_Text>(true))label.color=p.Ink;
+        ArcadeUI.Hide(panel,"Grade","HeaderRule","Drive","DriveLabel","DriveRule","ColorLabel");
+        ArcadeUI.Place(panel,"ModelName",.07f,.79f,.94f,.97f);ArcadeUI.Place(panel,"BodyType",.07f,.69f,.94f,.78f);
+        for(int i=0;i<4;i++){ArcadeUI.Hide(panel,"StatIcon"+i);ArcadeUI.Place(panel,"StatLabel"+i,.07f,.58f-i*.105f,.42f,.65f-i*.105f);ArcadeUI.Place(panel,"Track"+i,.44f,.607f-i*.105f,.84f,.63f-i*.105f);ArcadeUI.Place(panel,"Rating"+i,.86f,.58f-i*.105f,.95f,.66f-i*.105f);bars[i].GetComponent<Image>().color=p.Primary;bars[i].parent.GetComponent<Image>().color=new Color(.5f,.6f,.7f,.2f);}
+        ArcadeUI.Place(panel,"ColorName",.07f,.16f,.94f,.24f);
+        for(int i=0;i<swatches.Length;i++)ArcadeUI.Place(panel,"Paint"+i,.07f+i*.17f,.035f,.17f+i*.17f,.13f);
+        for(int i=0;i<cards.Length;i++)foreach(TMP_Text label in cards[i].transform.parent.GetComponentsInChildren<TMP_Text>(true))label.color=p.Ink;
+        var playerLabel=sheet.Find("Player").GetComponent<TMP_Text>();playerLabel.text="P"+(player+1);playerLabel.color=p.Soft;
+        ArcadeUI.Place(titleRoot,"SelectedCar",.67f,.10f,.96f,.14f);
+    }
     private static TMP_Text Text(Transform parent, string name, string value, Vector2 min, Vector2 max, float size,
         TextAlignmentOptions alignment = TextAlignmentOptions.Left, bool italic = false, Color? tint = null)
     {
@@ -322,7 +343,7 @@ public sealed class CarSelectionUI : MonoBehaviour
     {
         focusHint.text = focus == Focus.Vehicle ? "車種を選択 / ハンドルで切替" :
             focus == Focus.Paint ? "カラーを選択 / ハンドルで切替" : backSelected ? "戻る / ペダル長押しでタイトルへ" : "決定 / ペダル長押しでチュートリアルへ";
-        colorName.color = focus == Focus.Paint ? NeonUI.Cyan : Color.white;
+        colorName.color = ArcadeUI.For(player).Ink;
         UpdateFeedback();
     }
 
@@ -337,10 +358,10 @@ public sealed class CarSelectionUI : MonoBehaviour
         for (int i = 0; i < cards.Length; i++)
         {
             bool selected = i == draftVehicle;
-            cards[i].Configure(RacingPanelGraphic.SurfaceStyle.Panel, selected ? NeonUI.Pink : NeonUI.Cyan);
+            cards[i].Configure(selected?RacingPanelGraphic.SurfaceStyle.Primary:RacingPanelGraphic.SurfaceStyle.Secondary,ArcadeUI.For(player).Primary);
             cards[i].SetState(selected ? 1f : 0f, 0f, 0f, selected ? NeonUI.Pink : NeonUI.Cyan);
-            selectedLabels[i].text = selected ? "選択中 / SELECTED" : catalog.vehicles[i].bodyType;
-            selectedLabels[i].color = selected ? NeonUI.Pink : new Color(.63f, .73f, .89f);
+            selectedLabels[i].text = selected ? "選択中" : catalog.vehicles[i].bodyType;
+            selectedLabels[i].color = ArcadeUI.For(player).Ink;
         }
         for (int i = 0; i < swatches.Length; i++)
         {

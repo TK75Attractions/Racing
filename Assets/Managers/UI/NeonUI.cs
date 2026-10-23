@@ -21,8 +21,8 @@ public static class NeonUI
     public static TMP_Text Text(Transform parent, string name, string value, Vector2 min, Vector2 max, float size,
         TextAlignmentOptions alignment = TextAlignmentOptions.Left, bool italic = false, Color? tint = null)
     {
-        TMP_Text text = RacingHUDStyle.Label(parent, name, value, min.x, min.y, max.x, max.y, size,
-            tint ?? ArcadeUI.For(parent).Paper, alignment, true);
+        bool latin=true;foreach(char c in value??"")if(c>127){latin=false;break;}
+        TMP_Text text=ArcadeUI.Label(parent,name,value,min,max,size,tint??ArcadeUI.For(parent).Paper,latin,alignment);
         if (italic) text.fontStyle = FontStyles.Italic;
         return text;
     }

@@ -43,23 +43,12 @@ public sealed class NeonRingGraphic : MaskableGraphic
                 if(x*x+y*y<20) Dot(center+new Vector2(x,y)*radius*.15f,radius*.045f,signal);
             return;
         }
-        Disc(radius,new Color(.015f,.025f,.085f,.78f),new Color(.015f,.025f,.085f,.15f));
-        for(int layer=5;layer>0;layer--)
-        {
-            Color pink=RacingPanelGraphic.Alpha(NeonUI.Pink,.018f*(6-layer));
-            Color blue=RacingPanelGraphic.Alpha(NeonUI.Cyan,.018f*(6-layer));
-            Arc(radius,0,92,layer*5f,pink);Arc(radius,96,177,layer*5f,blue);
-            Arc(radius,182,267,layer*5f,pink);Arc(radius,271,357,layer*5f,blue);
-        }
-        Arc(radius,0,92,4f,NeonUI.Pink);Arc(radius,96,177,4f,NeonUI.Cyan);
-        Arc(radius,182,267,4f,NeonUI.Pink);Arc(radius,271,357,4f,NeonUI.Cyan);
-        Arc(radius*1.09f,8,72,1f,RacingPanelGraphic.Alpha(NeonUI.Pink,.7f));
-        Arc(radius*1.09f,103,164,1f,RacingPanelGraphic.Alpha(NeonUI.Cyan,.7f));
-        Arc(radius*.84f,0,360,1f,new Color(.49f,.38f,.94f,.45f));
-        for(int i=0;i<120;i++)
-        {float a=i*3f;Color c=i<60?NeonUI.Pink:NeonUI.Cyan;c.a=.46f;Line(Point(radius*.83f,a),Point(radius*.86f,a),1f,c);}
-        if(display==Display.Boost && progressArc==null)Arc(radius*.91f,-90,-90+360*Mathf.Clamp01(amount),9f,NeonUI.Pink);
+        var p=ArcadeUI.For(transform);
+        Disc(radius,p.Ink,p.Ink);
+        for(int i=0;i<48;i++){float a=-135+i*7.5f;Arc(radius,a,a+5,8,i<48*Mathf.Clamp01(amount)?p.Primary:RacingPanelGraphic.Alpha(p.Soft,.25f));}
+        for(int i=0;i<12;i++){float a=i*30;Line(Point(radius*.78f,a),Point(radius*.87f,a),2,p.Paper);}
     }
+
     private Vector2 Point(float r,float degrees) {float a=degrees*Mathf.Deg2Rad;return center+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*r;}
     private void Line(Vector2 a,Vector2 b,float width,Color c)=>RacingPanelGraphic.Line(mesh,a,b,width,c,aa);
     private void Arc(float r,float from,float to,float width,Color c)

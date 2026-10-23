@@ -185,6 +185,7 @@ public class Gmanager : MonoBehaviour
         RaceParticipant participant = FindParticipant(body);
         return participant == null || participant.Result == null;
     }
+    public Transform TutorialCar(int player) => drivingTutorial?.GetPlayerCar(player)?.transform;
     public int GoalLap => lapManager != null ? lapManager.GoalLap : 0;
     public int GetPlayerLap(int index)
     {

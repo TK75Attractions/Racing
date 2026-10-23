@@ -58,6 +58,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         int playerIndex)
     {
         displayPlayerIndex = Mathf.Clamp(playerIndex, 0, 1);
+        ArcadeUI.Bind(transform,displayPlayerIndex);
         titleRoot = title != null ? title.gameObject : null;
         onPlayRoot = onPlay != null ? onPlay.gameObject : null;
 
@@ -419,14 +420,16 @@ public sealed class ScreenTransitionController : MonoBehaviour
         background.color = Color.clear; background.raycastTarget = false;
         NeonUI.Background(title, "TitleBackground", "UI/Neon/TitleBackground");
         MenuSceneryScrim.Create(title, "MenuSceneryScrim", false);
-        MenuSceneryScrim.BuildTitleBrand(title);
-        TMP_Text playerBadge = NeonUI.Text(title, "PlayerBadge", $"PLAYER 0{displayPlayerIndex + 1}  /  プレイヤー {displayPlayerIndex + 1}",
+        ArcadeUI.Hide(title,"SceneryTitleBrand");
+        ArcadeUI.Logo(title,new Vector2(.03f,.54f),new Vector2(.63f,.84f));
+        title.Find("TitleBackground")?.gameObject.SetActive(false);
+        TMP_Text playerBadge = NeonUI.Text(title, "PlayerBadge", $"P{displayPlayerIndex + 1} / プレイヤー{displayPlayerIndex + 1}",
             new Vector2(.69f,.90f), new Vector2(.97f,.955f), 21f, TextAlignmentOptions.Right, tint: NeonUI.Cyan);
         foreach(Button legacy in title.GetComponentsInChildren<Button>(true)) legacy.gameObject.SetActive(false);
         Transform oldSheet=title.Find("MenuSheet"); if(oldSheet!=null)oldSheet.gameObject.SetActive(false);
-        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(.678f,.41f), new Vector2(.970f,.56f), NeonUI.Pink);
+        BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(.67f,.23f), new Vector2(.960f,.40f), NeonUI.Pink);
         titlePrompt = NeonUI.Text(title, "StartPrompt", promptText,
-            new Vector2(.66f,.31f), new Vector2(.985f,.385f), 18f, TextAlignmentOptions.Center);
+            new Vector2(.66f,.15f), new Vector2(.97f,.21f), 18f, TextAlignmentOptions.Center);
         RectTransform news = NeonUI.Panel(title, "News", new Vector2(.02f,.035f), new Vector2(.977f,.078f));
         NeonUI.Text(news,"Tag","NEWS",new Vector2(.018f,0),new Vector2(.07f,1),19f,TextAlignmentOptions.Center);
         NeonUI.Text(news,"Welcome","ようこそ、ツクコマ・サーキットへ！",new Vector2(.09f,0),new Vector2(.78f,1),18f);
@@ -476,14 +479,14 @@ public sealed class ScreenTransitionController : MonoBehaviour
             return;
         }
 
-        countdownStatusRoot = RacingUITheme.Rect(onPlay, "CountdownStatus", new Vector2(.37f,.39f),new Vector2(.63f,.77f)).gameObject;
+        countdownStatusRoot = RacingUITheme.Rect(onPlay, "CountdownStatus", new Vector2(.40f,.32f),new Vector2(.60f,.67f)).gameObject;
         RectTransform ring = RacingUITheme.Rect(countdownStatusRoot.transform,"NeonRing",Vector2.zero,Vector2.one);
         NeonRingGraphic graphic = ring.GetComponent<NeonRingGraphic>() ?? ring.gameObject.AddComponent<NeonRingGraphic>();
         graphic.display = NeonRingGraphic.Display.Countdown;
-        raceStatusCaption = NeonUI.Text(countdownStatusRoot.transform,"Caption","スタートまで",new Vector2(.15f,.13f),new Vector2(.85f,.21f),23f,TextAlignmentOptions.Center);
-        raceStatusEnglishCaption = NeonUI.Text(countdownStatusRoot.transform,"EnglishCaption","RACE START",new Vector2(.15f,.07f),new Vector2(.85f,.13f),13f,TextAlignmentOptions.Center);
-        raceStatus = NeonUI.Text(countdownStatusRoot.transform,"RaceStatus","",new Vector2(.08f,.23f),new Vector2(.92f,.85f),240f,TextAlignmentOptions.Center,true);
-        NeonUI.GlowText(raceStatus, NeonUI.Pink);
+        raceStatusCaption = NeonUI.Text(countdownStatusRoot.transform,"Caption","READY",new Vector2(.15f,.13f),new Vector2(.85f,.23f),25f,TextAlignmentOptions.Center);
+        raceStatusEnglishCaption = NeonUI.Text(countdownStatusRoot.transform,"EnglishCaption","",new Vector2(.15f,.07f),new Vector2(.85f,.13f),13f,TextAlignmentOptions.Center);
+        raceStatus = NeonUI.Text(countdownStatusRoot.transform,"RaceStatus","",new Vector2(.08f,.26f),new Vector2(.92f,.90f),218f,TextAlignmentOptions.Center,true);
+        raceStatus.font=ArcadeUI.Digits;raceStatus.fontSharedMaterial=ArcadeUI.Digits.material;
         for(int i=0;i<countdownSignals.Length;i++)
         {
             float left=.08f+i*.30f;
@@ -530,7 +533,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
         start.ConfigureHold(.65f, true);
         start.PlayConfirmationSound = false; // Ready cue comes from the same gate as pedal input.
         start.transform.Find("Label").GetComponent<TMP_Text>().fontSizeMax=46f;
-        start.transform.Find("Caption").GetComponent<TMP_Text>().fontSizeMax=18f;
+        var caption=start.transform.Find("Caption").GetComponent<TMP_Text>();caption.fontSizeMax=25f;caption.color=ArcadeUI.For(playerIndex).Ink;caption.gameObject.SetActive(true);
+        ArcadeUI.Place(start.transform,"Label",.28f,.42f,.88f,.88f);ArcadeUI.Place(start.transform,"Caption",.285f,.17f,.87f,.43f);
         titleButtonFeedback[playerIndex] = feedback;
     }
 
@@ -542,8 +546,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
         }
 
         float amount = Mathf.Clamp01(value);
-        Color accent = NeonUI.Pink;
-        Color readyColor = NeonUI.Pink;
+        Color accent = ArcadeUI.For(displayPlayerIndex).Primary;
+        Color readyColor = ArcadeUI.For(displayPlayerIndex).Primary;
         titleButtonFeedback[playerIndex].SetState(armed, amount, ready ? readyColor : accent);
         titleButtonFeedback[playerIndex].SetConfirmed(ready);
         if (titlePrompt != null)
@@ -564,7 +568,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         raceStatus.text = value;
         bool go = value == "GO!";
         int.TryParse(value, out int seconds);
-        Color accent = go ? new Color(.1f, 1f, .3f) : NeonUI.Red;
+        Color accent = go ? ArcadeUI.For(displayPlayerIndex).Secondary : ArcadeUI.For(displayPlayerIndex).Primary;
         int illuminated = go ? countdownSignals.Length : Mathf.Clamp(countdownSignals.Length - seconds + 1, 0, countdownSignals.Length);
         for (int i = 0; i < countdownSignals.Length; i++)
             if (countdownSignals[i] != null)
@@ -574,8 +578,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
             }
         if (raceStatusCaption != null)
         {
-            raceStatusCaption.text = go ? "スタート!" : "スタートまで";
-            raceStatusEnglishCaption.text = caption;
+            raceStatusCaption.text = go ? "スタート!" : "READY";
+            raceStatusEnglishCaption.text = "";
         }
         if (changed)
         {
@@ -594,10 +598,12 @@ public sealed class ScreenTransitionController : MonoBehaviour
         finishWarningRoot?.SetActive(showWarning);
         if(onPlayRoot != null)
         {
-            foreach(string node in new[]{"ModernHUD","MiniMap"})
-                onPlayRoot.transform.Find(node)?.gameObject.SetActive(!showCountdown);
-            onPlayRoot.transform.Find("CountdownCourse")?.gameObject.SetActive(showCountdown);
-            onPlayRoot.transform.Find("CountdownLap")?.gameObject.SetActive(showCountdown);
+            onPlayRoot.transform.Find("ModernHUD")?.gameObject.SetActive(true);
+            onPlayRoot.transform.Find("MiniMap")?.gameObject.SetActive(false);
+            onPlayRoot.transform.Find("ModernHUD/LapDelta")?.gameObject.SetActive(!showCountdown);
+            onPlayRoot.transform.Find("ModernHUD/Leaderboard")?.gameObject.SetActive(!showCountdown);
+            onPlayRoot.transform.Find("CountdownCourse")?.gameObject.SetActive(false);
+            onPlayRoot.transform.Find("CountdownLap")?.gameObject.SetActive(false);
         }
     }
 

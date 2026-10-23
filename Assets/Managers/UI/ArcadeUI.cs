@@ -1,7 +1,6 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Unity.VectorGraphics;
 
 /// <summary>The approved arcade sport palette and artwork. Colours belong to the display owner.</summary>
 public static class ArcadeUI
@@ -52,10 +51,12 @@ public static class ArcadeUI
     public static RectTransform Logo(Transform parent,Vector2 min,Vector2 max)
     {
         var root=RacingUITheme.Rect(parent,"CircuitLogo",min,max);
-        var image=root.GetComponent<SVGImage>()??root.gameObject.AddComponent<SVGImage>();
-        image.sprite=Resources.Load<Sprite>("UI/Arcade/CircuitLogo");image.color=Color.white;image.raycastTarget=false;image.preserveAspect=true;
+        var image=root.GetComponent<RawImage>()??root.gameObject.AddComponent<RawImage>();
+        image.texture=Resources.Load<Texture2D>("UI/Arcade/CircuitLogo");image.color=Color.white;image.raycastTarget=false;
+        var fit=root.GetComponent<AspectRatioFitter>()??root.gameObject.AddComponent<AspectRatioFitter>();fit.aspectMode=AspectRatioFitter.AspectMode.FitInParent;fit.aspectRatio=1720f/465;
         var outline=root.GetComponent<Outline>()??root.gameObject.AddComponent<Outline>();outline.effectColor=Blue.Paper;outline.effectDistance=new Vector2(2.5f,-2.5f);outline.useGraphicAlpha=true;
-        var shadow=root.GetComponent<Shadow>()??root.gameObject.AddComponent<Shadow>();shadow.effectColor=new Color(0.04f,.10f,.14f,.75f);shadow.effectDistance=new Vector2(4,-5);
+        Shadow shadow=null;foreach(var effect in root.GetComponents<Shadow>())if(effect.GetType()==typeof(Shadow))shadow=effect;
+        if(shadow==null)shadow=root.gameObject.AddComponent<Shadow>();shadow.effectColor=new Color(0.04f,.10f,.14f,.75f);shadow.effectDistance=new Vector2(4,-5);
         return root;
     }
 }
