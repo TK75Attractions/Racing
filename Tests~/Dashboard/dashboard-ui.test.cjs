@@ -320,6 +320,32 @@ test('Recovering one IMU does not dismiss the other IMU fault',()=>{
   assert.equal(ui.elements.get('serial-alert-list').children.length,1);
   assert.match(ui.elements.get('serial-alert-list').textContent,/0x69/);
 });
+test('A failed startup angle reset resolves after verified automatic reference recovery',()=>{
+  const ui=fixture();
+  const failure={...entry('ACK_FAILED','ACK,79,16153,57,ANGLE_ZERO,FAILED,ANGLE_REFERENCE_INVALID',79),receivedAt:90000};
+  const hardware={...healthyHardware,imus:healthyHardware.imus.map(imu=>({...imu,status:'Ok'}))};
+  const render=(h,lines=[failure])=>ui.render({...base,serverTime:100000,serial:{portOpen:true,lines,alerts:[failure]},hardware:h});
+  render({...hardware,state:'WAIT_ANGLE',angleLocked:false,inputFresh:false});
+  assert.match(ui.elements.get('serial-alert-list').textContent,/未解決/);
+  const locked=entry('EVENT','EVT,100,21125,ANGLE_LOCKED',100);
+  render({...hardware,inputFresh:false},[failure,locked]);
+  assert.match(ui.elements.get('serial-alert-list').textContent,/未解決/,'Angle lock alone does not verify usable inputs');
+  render(hardware,[failure,locked]);
+  assert.match(ui.elements.get('serial-alert-list').textContent,/解決済み.*失敗しました.*現在は装置が基準角度を確定し、入力が復旧/);
+  ui.advance(10000);render(hardware,[failure,locked]);
+  assert.equal(ui.elements.get('serial-alerts').hidden,true,'Historical failure must not reappear after recovery');
+});
+test('Current healthy input can verify angle recovery after replay eviction but cannot clear other command failures',()=>{
+  const ui=fixture(),hardware={...healthyHardware,imus:healthyHardware.imus.map(imu=>({...imu,status:'Ok'}))};
+  const failure={...entry('ACK_FAILED','ACK,79,0,57,ANGLE_ZERO,FAILED,ANGLE_REFERENCE_INVALID',79),receivedAt:90000};
+  ui.render({...base,serverTime:100000,serial:{portOpen:true,lines:[],alerts:[failure]},hardware});
+  assert.match(ui.elements.get('serial-alert-list').textContent,/解決済み.*入力が復旧/);
+  const other=entry('ACK_FAILED','ACK,80,0,58,SET_STREAM,UNSUPPORTED',80);
+  ui.render({...base,serverTime:100000,serial:{portOpen:true,lines:[other]},hardware});
+  assert.match(ui.elements.get('serial-alert-list').textContent,/未解決.*対応していません/);
+  const next=fixture();next.render({...base,serverTime:80000,serial:{portOpen:true,lines:[failure]},hardware});
+  assert.match(next.elements.get('serial-alert-list').textContent,/未解決/,'An older snapshot cannot prove recovery');
+});
 function trackCommand(ui,command,sequence=8) {
   vm.runInContext(`commandRequest = {command:${JSON.stringify(command)},sequence:${sequence},generation:1,sessionId:'unity'}`,ui.context);
 }
