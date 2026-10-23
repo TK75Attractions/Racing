@@ -19,6 +19,8 @@ public class OnPlayUIManager
     private RectTransform driverNotice;
     private TMPro.TMP_Text driverNoticeText;
     private string displayedNotice;
+    private ArcadeNoticeRail quiet;
+    private ArcadeHUDTelemetry telemetry;
 
     public UIPosition Position => position;
     public UILap Lap => lap;
@@ -43,7 +45,8 @@ public class OnPlayUIManager
         if (miniMap == null) miniMap = new UIMiniMap();
 
         Transform hud = RacingHUDBuilder.Build(parent, playerIndex, totalLaps);
-        driverNotice = NeonUI.Panel(hud, "DriverNotice", new Vector2(.29f,.84f), new Vector2(.71f,.94f));
+        quiet=ArcadeNoticeRail.Get(parent.parent);telemetry=hud.GetComponent<ArcadeHUDTelemetry>();
+        driverNotice = NeonUI.Panel(hud, "DriverNotice", new Vector2(.32f,.58f), new Vector2(.70f,.72f));
         driverNoticeText = NeonUI.Text(driverNotice, "Text", "", new Vector2(.04f,.08f), new Vector2(.96f,.92f),
             32f, TMPro.TextAlignmentOptions.Center, true, RacingUITheme.Gold);
         driverNotice.gameObject.SetActive(false);
@@ -87,15 +90,18 @@ public class OnPlayUIManager
             gate != null && gate.NeedsPedalRelease ? DriverInputNotice.Release(gate.Source) :
             pedalNotice.Length > 0 ? pedalNotice :
             resetter != null && UnityEngine.Time.time - resetter.LastRecoveryTime < 1.5f ? "コースへ復帰しました" :
-            jumpAhead ? "この先ジャンプ：まっすぐ加速" :
+
             !string.IsNullOrEmpty(challengeNotice) ? challengeNotice :
             !string.IsNullOrEmpty(tubeNotice) ? tubeNotice :
             !string.IsNullOrEmpty(coachingNotice) ? coachingNotice : slipstreamBoosting ? "追走で加速！" : autodrive ? "P2 自動運転テスト中" : "";
+        quiet?.Set(0,racing&&jumpAhead?"この先ジャンプ":"");
         if (text == displayedNotice || driverNotice == null) return;
         displayedNotice = text;
         driverNoticeText.text = text;
         driverNotice.gameObject.SetActive(text.Length > 0);
     }
+
+    public void SetLapDelta(float? seconds)=>telemetry?.SetLapDelta(seconds);
 
     public void SetMiniMapCars(Transform playerOneCar, Transform playerTwoCar)
     {
