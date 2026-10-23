@@ -417,6 +417,9 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         await page.goto('http://127.0.0.1:8766/');await page.locator('#hardware-grid button').first().waitFor();
         await page.locator('#hardware-grid button').first().click();await page.locator('#diagnostics-dialog:visible').waitFor();
         assert.ok(await page.locator('#diagnostics-facts li').count()>0);
+        assert.ok(await page.locator('#diagnostics-summary strong').textContent());
+        assert.equal(await page.locator('.diagnosis-node').count(),6);
+        assert.equal(await page.locator('.diagnosis-node.selected').count(),1);
         fs.mkdirSync(path.join(root,'Artifacts/DashboardRealtime'),{recursive:true});
         await page.locator('#diagnostics-dialog').screenshot({path:path.join(root,'Artifacts/DashboardRealtime/diagnosis-desktop.png')});
         await page.setViewportSize({width:390,height:844});await page.locator('#diagnostics-dialog').screenshot({path:path.join(root,'Artifacts/DashboardRealtime/diagnosis-mobile.png')});

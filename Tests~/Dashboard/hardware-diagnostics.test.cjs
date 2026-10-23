@@ -34,3 +34,44 @@ test('Fully automated matches do not require physical sensors',()=>{
  const automatic={...good,settings:{inputMode:'serial',bothPlayersAutodrive:true},serial:{portOpen:false}};
  for(let key=0;key<6;key++)assert.equal(analyze(automatic,key).causes.length,0);
 });
+
+test('Visual cards distinguish observed failures from wiring hypotheses',()=>{
+ const broken={...good,hardware:{...good.hardware,calibrated:false,imus:[{status:'Fault',address:'0x68'},{status:'Ok',address:'0x69'}]}};
+ const result=analyze(broken,1,['0x48','0x69']);
+ assert.equal(result.summary.level,'fault');
+ assert.equal(result.issues[0].id,'address');assert.equal(result.issues[0].confirmed,true);
+ assert.equal(result.issues.find(x=>x.id==='sensor').confirmed,false);
+ assert.equal(result.issues.find(x=>x.id==='calibration').confirmed,true);
+ assert.equal(result.nodes[1].level,'fault');assert.equal(result.nodes[1].selected,true);
+ assert.equal(result.nodes[2].level,'ok');assert.equal(result.sharedBusSuspect,false);
+ assert.ok(result.readings.some(x=>x.label==='今回のI2C検索'&&x.level==='fault'));
+ for(const issue of result.issues){assert.ok(issue.title.length<=24);assert.ok(issue.next);}
+});
+test('The schematic never presents stale or unpowered downstream devices as failed',()=>{
+ const old={...good,hardware:{...good.hardware,recent:false,ads:'Fault',imus:[{status:'Fault'}]}};
+ for(const snapshot of [null,old,{...old,serial:{portOpen:false}}]){
+  const result=analyze(snapshot,1,[]);
+  assert.ok(result.nodes.slice(1).every(node=>node.level==='unknown'));
+  assert.equal(result.sharedBusSuspect,false);
+ }
+ const only={...good,settings:{inputMode:'mixed'},hardware:{...good.hardware,ads:'Fault',imus:[{status:'Fault'},{status:'Fault'}]}};
+ const result=analyze(only,1);
+ assert.equal(result.sharedBusSuspect,false);
+ for(const key of [2,3,4,5])assert.equal(result.nodes[key].level,'unused');
+});
+test('Calibration, stopped TEL and zero input have clear non-wiring states',()=>{
+ const setup=analyze({...good,hardware:{...good.hardware,calibrated:false,angleLocked:false}},1);
+ assert.equal(setup.summary.level,'warn');assert.ok(setup.nodes.slice(0,5).every(node=>node.level==='ok'));
+ const stopped=analyze({...good,hardware:{...good.hardware,telemetryEnabled:false,inputFresh:false}},4);
+ assert.equal(stopped.issues.find(x=>x.id==='telemetry').confirmed,true);
+ assert.equal(stopped.nodes[4].level,'unknown');assert.equal(stopped.nodes[3].level,'ok');
+ const zero=analyze(good,4);assert.equal(zero.issues.length,0);assert.equal(zero.summary.level,'ok');
+ // USB diagnosis must not turn an absent ADS address into a fault in the USB cable.
+ assert.equal(analyze(good,0,[]).issues.length,0);
+});
+test('A missing player input or an invalid pedal value never appears green',()=>{
+ const missing=analyze(good,5);assert.equal(missing.nodes[5].level,'unknown');
+ assert.ok(missing.issues.some(x=>x.id==='input'));assert.notEqual(missing.summary.level,'ok');
+ const invalid=analyze({...good,hardware:{...good.hardware,pedals:[{number:1,accel:1.5,brake:0}]}},4);
+ assert.equal(invalid.nodes[4].level,'fault');assert.equal(invalid.summary.level,'fault');
+});

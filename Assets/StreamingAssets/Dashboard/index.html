@@ -190,11 +190,16 @@
     </main>
   </div>
   <dialog id="diagnostics-dialog" aria-labelledby="diagnostics-title">
-    <div class="panel-heading"><h2 id="diagnostics-title">機器診断</h2><button id="diagnostics-close" type="button" class="secondary-button">閉じる</button></div>
+    <div class="panel-heading"><div><span class="section-kicker">DEVICE CHECK / 機器診断</span><h2 id="diagnostics-title">機器診断</h2></div><button id="diagnostics-close" type="button" class="secondary-button" autofocus>閉じる ✕</button></div>
+    <div id="diagnostics-summary" class="diagnosis-summary"></div>
     <p id="diagnostics-progress" role="status" aria-live="polite"></p>
-    <h3>受信から確認できたこと</h3><ul id="diagnostics-facts"></ul>
-    <h3>原因の候補</h3><ul id="diagnostics-causes"></ul>
-    <h3>確認する箇所・次の操作</h3><ul id="diagnostics-checks"></ul>
+    <div class="diagnosis-layout">
+      <section aria-labelledby="diagnostics-causes-title"><h3 id="diagnostics-causes-title">原因と次の確認</h3><div id="diagnostics-causes" class="diagnosis-causes"></div></section>
+      <section class="diagnosis-map" aria-labelledby="diagnostics-map-title"><h3 id="diagnostics-map-title">接続の見取り図</h3><div id="diagnostics-topology"></div><p class="diagnosis-map-note">配線のつながりを示す概略図です。断線した端子の位置は通信だけでは特定できません。</p></section>
+    </div>
+    <h3>受信した状態</h3><dl id="diagnostics-readings" class="diagnosis-readings"></dl>
+    <details class="diagnosis-details" id="diagnostics-details"><summary>受信データ・詳しい点検手順</summary><h4>確認できたこと</h4><ul id="diagnostics-facts"></ul><h4>確認する箇所・次の操作</h4><ul id="diagnostics-checks"></ul></details>
+    <p class="diagnosis-footnote">配線の点検は電源を切ってから。診断中に校正・入力設定は変更しません。</p>
   </dialog>
 </body>
 </html>

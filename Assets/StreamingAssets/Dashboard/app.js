@@ -64,6 +64,10 @@ function setConnection(isConnected) {
     renderTelemetry(null);
     rawPending = []; rawSignature = ''; rawGap = false; renderRaw([], false, true);
     renderHardware(null); renderPlayerProgress(null); setSerialControls(false);
+    if($('diagnostics-dialog').open){
+      diagnosticGeneration++;renderHardwareDiagnosis();
+      $('diagnostics-progress').textContent='Unityへの接続が切れました。再接続後に診断を開き直してください。';
+    }
     $('serial-command-status').textContent = 'Unityへの再接続を待っています。';
     if (commandRequest) showCommandResult('unknown', '接続が中断しました。再接続後に実行結果を確認します。');
     updateFlow(null);
@@ -587,13 +591,69 @@ function renderHardware(snapshot) {
   }));
 }
 let diagnosticGeneration=0, diagnosticKey=0, diagnosticScan=null;
+const diagnosisIcons={
+  usb:'M9 18V6m0 0L6 9m3-3 3 3M9 13h7V7m-2 0h4M9 16H5v-4m4 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z',
+  wheel:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm-9-9h18M12 12v9m-3-9a3 3 0 0 1 6 0',
+  chip:'M7 7h10v10H7zm3-4v4m4-4v4m-4 10v4m4-4v4M3 10h4m-4 4h4m10-4h4m-4 4h4',
+  pedal:'m9 3 7 2-3 13-7-2L9 3Zm-1 8 6 2m-7-6 8 2M4 21h16',
+  check:'m5 12 4 4L19 6',alert:'M12 4 2 21h20L12 4Zm0 6v4m0 3v1',
+  wait:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-14v5l3 2',minus:'M5 12h14',
+  setup:'M4 7h16M4 17h16M8 4v6m8 4v6',signal:'M4 15v5m5-10v10m5-15v15m5-18v18',
+  wiring:'M4 4v6h16V4M12 10v10m-3-3 3 3 3-3'
+};
+const diagnosisStates={ok:['✓','正常応答'],fault:['!','異常'],warn:['!','要確認'],unknown:['?','未確認'],unused:['−','未使用'],info:['·','情報']};
+function diagnosisElement(tag,className,text){
+  const element=document.createElement(tag);if(className)element.className=className;if(text!==undefined)element.textContent=text;return element;
+}
+function diagnosisIcon(name){
+  const icon=diagnosisElement('span','diagnosis-icon');icon.setAttribute('aria-hidden','true');
+  icon.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+(diagnosisIcons[name]||diagnosisIcons.alert)+'"/></svg>';return icon;
+}
 function renderHardwareDiagnosis(){
-  const report=HardwareDiagnostics.analyze(latestSnapshot,diagnosticKey,diagnosticScan);
+  const report=HardwareDiagnostics.analyze(connected?latestSnapshot:null,diagnosticKey,diagnosticScan);
   $('diagnostics-title').textContent=report.title+' の診断';
-  for(const name of ['facts','causes','checks'])$('diagnostics-'+name).replaceChildren(...report[name].map(text=>{const item=document.createElement('li');item.textContent=text;return item;}));
+  const summary=$('diagnostics-summary');summary.className='diagnosis-summary '+report.summary.level;
+  const heading=diagnosisElement('div');heading.append(diagnosisElement('strong','',report.summary.title),diagnosisElement('p','',report.summary.note));
+  summary.replaceChildren(diagnosisIcon(report.summary.icon),heading);
+  // Keep an operator's expanded explanation open while the fresh query completes.
+  const expanded=new Set([...$('diagnostics-causes').children].filter(card=>card.querySelector('details')?.open).map(card=>card.dataset.issueId));
+  $('diagnostics-causes').replaceChildren(...report.issues.map(issue=>{
+    const card=diagnosisElement('article','diagnosis-cause '+issue.level);card.dataset.issueId=issue.id;
+    const head=diagnosisElement('div','diagnosis-cause-head');
+    head.append(diagnosisIcon(issue.icon),diagnosisElement('h4','',issue.title),diagnosisElement('span','diagnosis-certainty '+(issue.confirmed?'observed':'candidate'),issue.confirmed?'確認済み':'候補'));
+    const next=diagnosisElement('p','diagnosis-next');next.append(diagnosisElement('span','','次に'),diagnosisElement('span','',issue.next));
+    const details=diagnosisElement('details');details.open=expanded.has(issue.id);
+    details.append(diagnosisElement('summary','','説明を開く'),diagnosisElement('p','',issue.detail));
+    card.append(head,next,details);return card;
+  }));
+  if(!report.issues.length){
+    const empty=diagnosisElement('div','diagnosis-empty');empty.append(diagnosisIcon(report.summary.icon),diagnosisElement('p','',report.summary.level==='unused'?'この機器の点検は不要です。':report.summary.level==='unknown'?'接続が戻ると原因候補を表示します。':'現在の情報に原因候補はありません。'));$('diagnostics-causes').append(empty);
+  }
+  function node(index){
+    const item=report.nodes[index],state=diagnosisStates[item.level],card=diagnosisElement('div','diagnosis-node '+item.level+(item.selected?' selected':''));
+    card.setAttribute('aria-label',`${item.label}：${state[1]}${item.selected?'、診断対象':''}`);
+    card.append(diagnosisIcon(item.icon),diagnosisElement('strong','',item.label));
+    if(item.sublabel)card.append(diagnosisElement('small','',item.sublabel));
+    card.append(diagnosisElement('span','diagnosis-node-state',state.join(' ')));
+    if(item.selected)card.append(diagnosisElement('span','diagnosis-selected','診断対象'));return card;
+  }
+  const root=diagnosisElement('div','diagnosis-root');root.append(node(0));
+  const bus=diagnosisElement('div','diagnosis-bus'+(report.sharedBusSuspect?' suspect':''));
+  bus.append(diagnosisElement('strong','','I2C 共通バス'+(report.sharedBusSuspect?' · 点検候補':'')),diagnosisElement('span','','VCC / GND / SDA / SCL'));
+  const branches=diagnosisElement('div','diagnosis-branches'),ads=diagnosisElement('div','diagnosis-ads'),pedals=diagnosisElement('div','diagnosis-pedals');
+  pedals.append(node(4),node(5));ads.append(node(3),diagnosisElement('span','diagnosis-pedal-wire','信号 / 電源 / GND'),pedals);branches.append(node(1),node(2),ads);
+  const legend=diagnosisElement('div','diagnosis-legend');
+  for(const level of ['ok','fault','unknown','unused'])legend.append(diagnosisElement('span',level,diagnosisStates[level].join(' ')));
+  $('diagnostics-topology').replaceChildren(root,bus,branches,legend);
+  $('diagnostics-readings').replaceChildren(...report.readings.map(item=>{
+    const cell=diagnosisElement('div',item.level);cell.append(diagnosisElement('dt','',item.label),diagnosisElement('dd','',diagnosisStates[item.level][0]+' '+item.value));return cell;
+  }));
+  for(const name of ['facts','checks'])$('diagnostics-'+name).replaceChildren(...report[name].map(text=>diagnosisElement('li','',text)));
 }
 async function openHardwareDiagnosis(key){
   diagnosticKey=key;diagnosticScan=null;const generation=++diagnosticGeneration;
+  $('diagnostics-details').open=false;
+  $('diagnostics-causes').replaceChildren();
   $('diagnostics-close').onclick=()=>{diagnosticGeneration++;$('diagnostics-dialog').close();};
   $('diagnostics-dialog').oncancel=()=>{diagnosticGeneration++;};
   if(!$('diagnostics-dialog').open)$('diagnostics-dialog').showModal();
