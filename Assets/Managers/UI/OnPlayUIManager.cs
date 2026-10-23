@@ -55,7 +55,7 @@ public class OnPlayUIManager
         time.Init(hud.Find("Time"));
         speed.Init(hud.Find("Speed"));
         // ミニマップはノードが無ければ自前で生成するため、OnPlay ルートごと渡します。
-        miniMap.Init(parent, course, playerIndex);
+        // The approved HUD has no minimap; retain the data adapter for display ownership.
         initialized = true;
     }
 

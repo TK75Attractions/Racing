@@ -11,6 +11,7 @@ public sealed class RacingSteeringIndicator : MaskableGraphic
     private DebugMover mover;
     private TMP_Text caption;
     private float requested, applied, allowed = 1f;
+    private float lastCaptionDegrees=float.NaN;
     private bool limited;
     private bool turnBraking;
     public float AllowedFraction => allowed;
@@ -55,14 +56,12 @@ public sealed class RacingSteeringIndicator : MaskableGraphic
             requested = nextRaw; applied = nextApplied; allowed = nextLimit;
             SetVerticesDirty();
         }
-        bool nextLimited = allowed < .98f;
-        bool nextTurnBraking = RaceFeatureController.Enabled(RaceFeature.HighSpeedCornering);
-        if (caption != null && (limited != nextLimited || turnBraking != nextTurnBraking || string.IsNullOrEmpty(caption.text)))
-            caption.text = !nextLimited ? "ハンドル / 中央が直進" : nextTurnBraking
-                ? "高速時は深く切ると減速 / 暗い範囲は切れ角上限"
-                : "高速時は操舵角を制限 / 暗い範囲は上限外";
-        limited = nextLimited;
-        turnBraking = nextTurnBraking;
+        if(caption!=null)
+        {
+            int degrees=Mathf.RoundToInt(applied*90);int previous=Mathf.RoundToInt(lastCaptionDegrees);
+            if(degrees!=previous||string.IsNullOrEmpty(caption.text)){caption.SetText(degrees<0?"L {0}°":degrees>0?"R {0}°":"{0}°",Mathf.Abs(degrees));lastCaptionDegrees=degrees;}
+        }
+        limited=allowed<.98f;
     }
 
     protected override void OnPopulateMesh(VertexHelper vh)
@@ -75,8 +74,8 @@ public sealed class RacingSteeringIndicator : MaskableGraphic
         float y = r.yMin + r.height * .43f;
         float aa = 1f / Mathf.Max(.1f, canvas != null ? canvas.scaleFactor : 1f);
         float low = middle - half * allowed, high = middle + half * allowed;
-        Color active = new Color(.25f, .88f, 1f, .90f);
-        Color dim = new Color(.48f, .65f, .72f, .16f);
+        var p=ArcadeUI.For(transform); Color active=p.Accent;
+        Color dim = new Color(.48f, .58f, .63f, .55f);
         // A dark backing keeps the broad band readable over bright road surfaces.
         Line(vh, left, right, y, 17f, new Color(.005f, .015f, .035f, .8f), aa);
         Line(vh, left, low, y, 10f, dim, aa);
@@ -98,7 +97,7 @@ public sealed class RacingSteeringIndicator : MaskableGraphic
         Color rawColor = Mathf.Abs(requested) > allowed + .01f ? new Color(1f, .7f, .4f, .65f) : new Color(.85f, .94f, 1f, .45f);
         RacingPanelGraphic.Line(vh, new Vector2(requestedX, y + 12f), new Vector2(requestedX, y + 19f), 4f, rawColor, aa);
         float cursor = middle + half * applied;
-        Line(vh, middle, cursor, y, 14f, NeonUI.Cyan, aa);
+        Line(vh, middle, cursor, y, 14f, p.Primary, aa);
         RacingPanelGraphic.Line(vh, new Vector2(cursor, y - 12f), new Vector2(cursor, y + 12f), 11f, new Color(.005f, .015f, .035f, .9f), aa);
         RacingPanelGraphic.Line(vh, new Vector2(cursor, y - 11f), new Vector2(cursor, y + 11f), 7f, Color.white, aa);
     }
