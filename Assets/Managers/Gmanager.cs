@@ -1574,6 +1574,8 @@ public class Gmanager : MonoBehaviour
                 mover != null ? mover.AccelerationPadBoostTimeRemaining : 0f,
                 mover != null ? mover.AccelerationPadBoostDuration : 0f, ownerPosition, playerIndex == 0 ? progressGap : -progressGap);
             ui.UpdateParticipants(participants);
+            if(lapData!=null&&course!=null&&course.TotalLength>0)
+                ui.UpdateLapComparison(lapData.lapCount,Mathf.Repeat(lapData.raceProgressDistance,course.TotalLength)/course.TotalLength,lapData.currentLapTime,lapData.totalRaceTime,viewedPlayerIndex);
             ui.UpdateDriverNotice(player.inputGate, player.car.GetComponent<CarResetter>(),
                 state == State.Game && player.result == null && !player.withdrewFromRace,
                 course != null && course.IsJumpAhead(player.rigidbody.position,CourseProgressSign),
