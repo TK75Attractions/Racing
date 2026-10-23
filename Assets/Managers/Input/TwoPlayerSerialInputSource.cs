@@ -266,9 +266,9 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
                 {
                     string wire = decoder.Push(bytes[i], now);
                     if (wire == null) continue;
-                    Monitor.RecordWire("RX", wire);
                     receivedLines.Enqueue(new ReceivedFrame(wire, now));
                     Interlocked.Increment(ref linesReceived);
+                    Monitor.RecordWire("RX", wire);
                 }
             }
             catch (TimeoutException) { decoder.Expire(clock.Elapsed.TotalMilliseconds); }

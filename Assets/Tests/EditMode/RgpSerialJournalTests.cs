@@ -2,6 +2,54 @@ using NUnit.Framework;
 
 public sealed class RgpSerialJournalTests
 {
+    [Test] public void PausedDashboardReaderCannotBlockAcquisitionAndReceiveTimeIsPreserved()
+    {
+        var journal = new RgpSerialJournal();
+        object gate = typeof(RgpSerialJournal).GetField("gate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(journal);
+        string wire = SerialInputProtocol.Encode("TEL,1,0,0,1,0,0,1,0");
+        long before = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), finishedAt = 0;
+        bool completed;
+        using (var done = new System.Threading.ManualResetEventSlim())
+        {
+            var producer = new System.Threading.Thread(() => {
+                journal.RecordWire("RX", wire);
+                journal.Diagnostic("INPUT_GATE", "P1 RELEASE_REQUIRED reason=connection_lost");
+                finishedAt = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                done.Set();
+            }) { IsBackground = true };
+            lock (gate) { producer.Start(); completed = done.Wait(10000); }
+            producer.Join();
+        }
+        Assert.That(completed, Is.True, "A dashboard holding the history lock must not stop the UART producer.");
+        var batch = journal.Read("", 0);
+        Assert.That(batch.RawLines[0].Line, Is.EqualTo(wire));
+        Assert.That(batch.RawLines[0].ReceivedAt, Is.InRange(before, finishedAt), "Keep acquisition time, not later drain time.");
+        Assert.That(batch.Lines[0].Status, Is.EqualTo("INPUT_GATE"));
+        Assert.That(batch.Lines[0].Id, Is.GreaterThan(batch.RawLines[0].Id));
+    }
+    [Test] public void ContendedPendingCaptureIsBoundedAndReportsItsLoss()
+    {
+        var journal = new RgpSerialJournal();
+        var initial = journal.Read("", 0);
+        object gate = typeof(RgpSerialJournal).GetField("gate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(journal);
+        string wire = SerialInputProtocol.Encode("TEL,1,0,0,1,0,0,1,0");
+        bool completed;
+        using (var done = new System.Threading.ManualResetEventSlim())
+        {
+            var producer = new System.Threading.Thread(() => { for (int i=0;i<10000;i++) journal.RecordWire("RX",wire); done.Set(); }) { IsBackground = true };
+            lock (gate) { producer.Start(); completed = done.Wait(10000); }
+            producer.Join();
+        }
+        Assert.That(completed, Is.True);
+        var batch = journal.Read(initial.Session, initial.Cursor);
+        Assert.That(batch.Gap && batch.RawGap, Is.True);
+        Assert.That(batch.Alerts[0].Status, Is.EqualTo("JOURNAL_GAP"));
+        Assert.That(batch.Alerts[0].Line, Is.EqualTo("dropped_pending=1808"));
+        for (int i=0;i<40;i++) journal.Read(initial.Session, 0);
+        var later = journal.Read(initial.Session, 0);
+        Assert.That(later.RawGap, Is.True, "Evicting older raw entries must not erase the reported capture gap.");
+        Assert.That(journal.LatestRaw(2000).Length, Is.EqualTo(1000));
+    }
     [Test] public void TelemetryDoesNotEvictHistoryAndCommandsAreIncluded()
     {
         var journal = new RgpSerialJournal();
