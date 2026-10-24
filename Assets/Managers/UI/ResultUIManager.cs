@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Highlight film, local finish and a compact classification; daily records are disclosed on demand.</summary>
+/// <summary>Highlight film, local finish and a compact classification; only the local daily place.</summary>
 public class ResultUIManager
 {
     private RaceResultRecord currentResult;
@@ -11,11 +11,9 @@ public class ResultUIManager
     private Transform card;
     private readonly TMP_Text[] ranks=new TMP_Text[4],drivers=new TMP_Text[4],times=new TMP_Text[4];
     private readonly ArcadeSurfaceGraphic[] surfaces=new ArcadeSurfaceGraphic[4];
-    private TMP_Text localRank,localTime,rankingLabel,menuHint;
+    private TMP_Text localRank,localTime,menuHint;
     private ResultMenuAnimator menuAnimator;
     private DailyRankingPanel dailyRankingPanel;
-    private GameObject classification;
-    private bool rankingOpen;
     public string AchievementText=>FormatHighlight(currentSessionResult?.GetPlayerResult(localPlayerNumber-1));
     public RaceResultRecord CurrentResult=>currentResult;
     public RaceSessionResult CurrentSessionResult=>currentSessionResult;
@@ -37,7 +35,7 @@ public class ResultUIManager
         ArcadeUI.Label(finish,"TimeLabel","タイム",new Vector2(.50f,.65f),new Vector2(.94f,.87f),21,p.Ink);
         localTime=ArcadeUI.Label(finish,"Time","—",new Vector2(.38f,.18f),new Vector2(.94f,.65f),66,p.Ink,true,TextAlignmentOptions.Right);
         RacingUITheme.Rule(finish,"Underline",Vector2.zero,new Vector2(1,.03f),p.Primary);
-        var table=ArcadeUI.Panel(card,"Classification",new Vector2(.625f,.27f),new Vector2(.97f,.61f),p.Ink);classification=table.gameObject;
+        var table=ArcadeUI.Panel(card,"Classification",new Vector2(.625f,.27f),new Vector2(.97f,.61f),p.Ink);
         ArcadeUI.Label(table,"Header","順位     ドライバー",new Vector2(.06f,.87f),new Vector2(.65f,.98f),20,p.Paper);
         ArcadeUI.Label(table,"Time","タイム",new Vector2(.70f,.87f),new Vector2(.96f,.98f),20,p.Paper,false,TextAlignmentOptions.Right);
         for(int i=0;i<4;i++)
@@ -48,11 +46,7 @@ public class ResultUIManager
             drivers[i]=ArcadeUI.Label(row,"Driver","—",new Vector2(.17f,.06f),new Vector2(.53f,.94f),26,p.Paper,true);
             times[i]=ArcadeUI.Label(row,"Time","—",new Vector2(.53f,.06f),new Vector2(.98f,.94f),39,p.Paper,true,TextAlignmentOptions.Right);
         }
-        dailyRankingPanel=new DailyRankingPanel(card);dailyRankingPanel.SetExpanded(false);
-        var disclosure=ArcadeUI.Panel(card,"RankingDisclosure",new Vector2(.625f,.17f),new Vector2(.97f,.25f),p.Ink);
-        var hit=disclosure.GetComponent<ArcadeSurfaceGraphic>();hit.raycastTarget=true;
-        var button=disclosure.gameObject.AddComponent<Button>();button.targetGraphic=hit;button.onClick.AddListener(ToggleRanking);
-        rankingLabel=ArcadeUI.Label(disclosure,"Label","本日のランキング  +",new Vector2(.045f,.1f),new Vector2(.96f,.9f),22,p.Soft);
+        dailyRankingPanel=new DailyRankingPanel(card);
         BuildMenu();
         (card.GetComponent<ResultReplayPanel>()??card.gameObject.AddComponent<ResultReplayPanel>()).Build(localPlayerNumber);
     }
@@ -64,7 +58,6 @@ public class ResultUIManager
         menuAnimator=menu.GetComponent<ResultMenuAnimator>()??menu.gameObject.AddComponent<ResultMenuAnimator>();menuAnimator.Configure(buttons);
         menuHint=ArcadeUI.Label(card,"MenuHint","",new Vector2(.28f,.005f),new Vector2(.72f,.04f),18,ArcadeUI.For(card).Paper,false,TextAlignmentOptions.Center);
     }
-    private void ToggleRanking(){rankingOpen=!rankingOpen;dailyRankingPanel.SetExpanded(rankingOpen);classification.SetActive(!rankingOpen);rankingLabel.text=rankingOpen?"本日のランキング  -":"本日のランキング  +";}
     public void ShowResults()=>ShowResults((RaceResultRecord)null);
     public void ShowResults(RaceResultRecord record){var session=new RaceSessionResult();if(record!=null)session.SetPlayerResult(Mathf.Clamp(record.playerNumber-1,0,1),record);ShowResults(session);}
     public void ShowResults(RaceSessionResult session)
@@ -83,17 +76,10 @@ public class ResultUIManager
         card.Find("Header/Course").GetComponent<TMP_Text>().text="つくこまサーキット / "+laps+"周";
         localRank.text=local==null?"—":local.didFinish?local.finishPosition+"<size=32%>位</size>":"DNF";
         localTime.text=local==null?"—":local.didFinish?FormatTime(local.totalRaceTime):"未完走";
-        rankingOpen=false;classification.SetActive(true);dailyRankingPanel.SetExpanded(false);rankingLabel.text="本日のランキング  +";
         RefreshDailyRanking();SetMenuState(0,0);SetPedalConfirmationReady(false);
     }
     public void RefreshHighlight() { }
-    public void RefreshDailyRanking()
-    {
-        bool visible=Gmanager.Control?.Features==null||RaceFeatureController.Enabled(RaceFeature.DailyRanking);
-        card.Find("RankingDisclosure").gameObject.SetActive(visible);
-        if(!visible&&rankingOpen)ToggleRanking();
-        dailyRankingPanel?.Refresh(currentSessionResult?.dailyRanking,currentSessionResult?.GetPlayerResult(localPlayerNumber-1),localPlayerNumber);
-    }
+    public void RefreshDailyRanking()=>dailyRankingPanel?.Refresh(currentSessionResult?.dailyRanking,currentSessionResult?.GetPlayerResult(localPlayerNumber-1),localPlayerNumber);
     public void SetMenuState(int index,float amount)=>menuAnimator?.SetState(index,amount);
     public void SetPedalConfirmationReady(bool ready){menuHint.text=ready?"":"まずペダルから足を離してください";}
     public void PlayConfirm(int index)=>menuAnimator?.PlayConfirm(index);
