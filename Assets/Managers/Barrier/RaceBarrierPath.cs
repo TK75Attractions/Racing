@@ -318,6 +318,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
         generatedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         List<Vector3> vertices = new List<Vector3>();
         List<Vector2> uvs = new List<Vector2>();
+        List<Vector2> edgeDistances = new List<Vector2>();
         List<int> triangles = new List<int>();
 
         float distance = 0f;
@@ -331,12 +332,15 @@ public sealed class RaceBarrierPath : MonoBehaviour
             Vector3 tangent = GetTangent(i);
             Vector3 outward = GetOutward(tangent);
             int rowStart = vertices.Count;
+            float totalArcDistance = GetSectionArcDistance(samples[i], sectionCount);
 
             for (int section = 0; section <= sectionCount; section++)
             {
                 vertices.Add(GetSectionPoint(samples[i], outward, section));
                 uvs.Add(new Vector2(distance / uvMetersPerRepeat,
                     GetSectionArcDistance(samples[i], section) / uvMetersPerRepeat));
+                float arcDistance = GetSectionArcDistance(samples[i], section);
+                edgeDistances.Add(new Vector2(arcDistance, totalArcDistance - arcDistance));
             }
 
             if (i == 0)
@@ -375,6 +379,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
 
         generatedMesh.SetVertices(vertices);
         generatedMesh.SetUVs(0, uvs);
+        generatedMesh.SetUVs(1, edgeDistances);
         generatedMesh.SetTriangles(triangles, 0);
         generatedMesh.RecalculateNormals();
         generatedMesh.RecalculateBounds();
