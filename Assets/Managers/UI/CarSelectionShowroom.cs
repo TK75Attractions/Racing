@@ -10,7 +10,12 @@ public sealed class CarSelectionShowroom : MonoBehaviour
     private const int PreviewLayer = 31;
     private readonly List<Material> materials = new List<Material>();
     private GameObject world, model;
-    private Transform pivot;
+    private Transform pivot, vehicleMount;
+    private readonly List<Mesh> meshes=new List<Mesh>();
+    private int player;
+    private const float DeckTop=.36f;
+    public Transform Turntable=>pivot;
+    public float DeckHeight=>DeckTop;
     private Camera previewCamera;
     private PlayerCarPaint paint;
     private RenderTexture target;
@@ -23,6 +28,7 @@ public sealed class CarSelectionShowroom : MonoBehaviour
 
     public void Initialize(int playerIndex)
     {
+        player=playerIndex;
         world = new GameObject("Car Showroom P" + (playerIndex + 1));
         world.transform.position = new Vector3(20000f + playerIndex * 200f, 4000f, 0f);
         SceneManager.MoveGameObjectToScene(world, gameObject.scene);
@@ -34,6 +40,19 @@ public sealed class CarSelectionShowroom : MonoBehaviour
         Light("Soft fill",LightType.Point,Color.Lerp(palette.Primary,Color.white,.65f),8f,Vector3.zero,new Vector3(3,2,-2));
         pivot = new GameObject("Vehicle rotation").transform;
         pivot.SetParent(world.transform, false);
+        Disc("Turntable foot",3.12f,.16f,0,Material("Turntable shadow",Color.Lerp(palette.Ink,Color.black,.48f),true));
+        Disc("Turntable rim",3.02f,.14f,.16f,Material("Turntable player rim",palette.Primary,true));
+        Disc("Turntable deck",2.98f,.06f,.30f,Material("Turntable matte deck",Color.Lerp(palette.Soft,palette.Ink,.35f),true));
+        Material ticks=Material("Turntable markings",palette.Paper,true);
+        for(int i=0;i<24;i++)
+        {
+            float a=i*15f*Mathf.Deg2Rad;
+            var mark=new GameObject("Deck tick "+i);mark.transform.SetParent(pivot,false);
+            var line=mark.AddComponent<LineRenderer>();line.useWorldSpace=false;line.positionCount=2;line.widthMultiplier=.028f;line.sharedMaterial=ticks;line.shadowCastingMode=ShadowCastingMode.Off;
+            line.SetPosition(0,new Vector3(Mathf.Cos(a)*2.82f,DeckTop+.002f,Mathf.Sin(a)*2.82f));
+            line.SetPosition(1,new Vector3(Mathf.Cos(a)*2.95f,DeckTop+.002f,Mathf.Sin(a)*2.95f));
+        }
+        vehicleMount=new GameObject("Vehicle mount").transform;vehicleMount.SetParent(pivot,false);
         GameObject cameraObject = new GameObject("Showroom Camera");
         cameraObject.transform.SetParent(world.transform, false);
         previewCamera = cameraObject.AddComponent<Camera>();
@@ -48,7 +67,7 @@ public sealed class CarSelectionShowroom : MonoBehaviour
         previewCamera.fieldOfView = 42f;
         previewCamera.transform.localPosition = new Vector3(-6.4f, 2.8f, 7.8f);
         Frame(false);
-        target = new RenderTexture(1600, 900, 24, RenderTextureFormat.ARGB32) { name = "Car Selection Preview", antiAliasing = 4 };
+        target = new RenderTexture(1920, 1080, 24, RenderTextureFormat.ARGB32) { name = "Car Selection Preview", antiAliasing = 4 };
         target.Create();
         previewCamera.targetTexture = target;
         SetLayer(world.transform);
@@ -58,11 +77,11 @@ public sealed class CarSelectionShowroom : MonoBehaviour
     {
         if (model != null) { model.SetActive(false); DestroyOwned(model); }
         pivot.localRotation = Quaternion.identity;
-        model = CarSelectionModel.Create(vehicle.model, pivot);
+        model = CarSelectionModel.Create(vehicle.model, vehicleMount);
         Bounds bounds = CarSelectionModel.Bounds(model);
         model.transform.localScale = Vector3.one * (4.8f / Mathf.Max(.01f, bounds.size.z));
         bounds = CarSelectionModel.Bounds(model);
-        model.transform.position += new Vector3(pivot.position.x - bounds.center.x, pivot.position.y - bounds.min.y, pivot.position.z - bounds.center.z);
+        model.transform.position += new Vector3(pivot.position.x - bounds.center.x, pivot.position.y + DeckTop - bounds.min.y, pivot.position.z - bounds.center.z);
         SetLayer(model.transform);
         paint = model.AddComponent<PlayerCarPaint>();
         SetPaint(colorIndex);
@@ -71,7 +90,7 @@ public sealed class CarSelectionShowroom : MonoBehaviour
 
     public void SetPaint(int index)
     {
-        paint?.SetColor(CarSelectionCatalog.Paints[Mathf.Clamp(index, 0, CarSelectionCatalog.Paints.Length - 1)]);
+        paint?.SetPlayerIndex(player);
         dirty = true;
     }
 
@@ -127,10 +146,10 @@ public sealed class CarSelectionShowroom : MonoBehaviour
         if (!thumbnail)
         {
             // Offset the focal point to leave the right side free for the performance panel.
-            Vector3 focal = world.transform.position + new Vector3(0, .05f, 0) + previewCamera.transform.right * 1.2f;
+            Vector3 focal = world.transform.position + new Vector3(0, .18f, 0) + previewCamera.transform.right * 1.2f;
             previewCamera.transform.LookAt(focal);
         }
-        previewCamera.fieldOfView = thumbnail ? 26f : 34f;
+        previewCamera.fieldOfView = thumbnail ? 30f : 37f;
     }
 
     private Material Material(string name, Color color, bool neon)
@@ -159,17 +178,23 @@ public sealed class CarSelectionShowroom : MonoBehaviour
         GameObject obj = Primitive(name, PrimitiveType.Cube, material);
         obj.transform.localPosition = position; obj.transform.localScale = scale;
     }
-    private void Arc(string name, float radius, float y, float from, float to, Material material, float width)
+    private void Disc(string name,float radius,float height,float bottom,Material material)
     {
-        GameObject obj = new GameObject(name); obj.transform.SetParent(world.transform, false);
-        LineRenderer line = obj.AddComponent<LineRenderer>();
-        line.useWorldSpace = false; line.positionCount = 100; line.widthMultiplier = width;
-        line.sharedMaterial = material; line.shadowCastingMode = ShadowCastingMode.Off;
-        for (int i = 0; i < 100; i++)
+        const int steps=128;
+        var vertices=new Vector3[1+steps*3];var normals=new Vector3[vertices.Length];var triangles=new int[steps*9];
+        vertices[0]=new Vector3(0,bottom+height,0);normals[0]=Vector3.up;
+        for(int i=0;i<steps;i++)
         {
-            float angle = Mathf.Lerp(from, to, i / 99f) * Mathf.Deg2Rad;
-            line.SetPosition(i, new Vector3(Mathf.Cos(angle) * radius, y, Mathf.Sin(angle) * radius));
+            float a=i*Mathf.PI*2/steps;var radial=new Vector3(Mathf.Cos(a),0,Mathf.Sin(a));
+            vertices[1+i]=radial*radius+Vector3.up*(bottom+height);normals[1+i]=Vector3.up;
+            vertices[1+steps+i]=vertices[1+i];normals[1+steps+i]=radial;
+            vertices[1+steps*2+i]=radial*radius+Vector3.up*bottom;normals[1+steps*2+i]=radial;
+            int j=(i+1)%steps,k=i*9,t=1+steps+i,n=1+steps+j,b=1+steps*2+i,bn=1+steps*2+j;
+            triangles[k]=0;triangles[k+1]=1+j;triangles[k+2]=1+i;
+            triangles[k+3]=t;triangles[k+4]=n;triangles[k+5]=b;triangles[k+6]=n;triangles[k+7]=bn;triangles[k+8]=b;
         }
+        var mesh=new Mesh{name=name};mesh.vertices=vertices;mesh.normals=normals;mesh.triangles=triangles;mesh.RecalculateBounds();meshes.Add(mesh);
+        var go=new GameObject(name,typeof(MeshFilter),typeof(MeshRenderer));go.transform.SetParent(pivot,false);go.GetComponent<MeshFilter>().sharedMesh=mesh;go.GetComponent<MeshRenderer>().sharedMaterial=material;
     }
     private void Light(string name, LightType type, Color color, float intensity, Vector3 rotation, Vector3 position)
     {
@@ -188,6 +213,7 @@ public sealed class CarSelectionShowroom : MonoBehaviour
     {
         if (world != null) DestroyOwned(world);
         if (target != null) { target.Release(); DestroyOwned(target); }
+        foreach(Mesh mesh in meshes)if(mesh!=null)DestroyOwned(mesh);
         foreach (Material material in materials) if (material != null) DestroyOwned(material);
     }
 }

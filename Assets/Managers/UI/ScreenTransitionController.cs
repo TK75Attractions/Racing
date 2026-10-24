@@ -432,10 +432,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         BuildTitlePedalPanel(title, displayPlayerIndex, new Vector2(.67f,.23f), new Vector2(.960f,.40f), NeonUI.Pink);
         titlePrompt = NeonUI.Text(title, "StartPrompt", promptText,
             new Vector2(.66f,.15f), new Vector2(.97f,.21f), 18f, TextAlignmentOptions.Center);
-        RectTransform news = NeonUI.Panel(title, "News", new Vector2(.02f,.035f), new Vector2(.977f,.078f));
-        NeonUI.Text(news,"Tag","NEWS",new Vector2(.018f,0),new Vector2(.07f,1),19f,TextAlignmentOptions.Center);
-        NeonUI.Text(news,"Welcome","ようこそ、ツクコマ・サーキットへ！",new Vector2(.09f,0),new Vector2(.78f,1),18f);
-        NeonUI.Text(news,"Version","Ver. " + Application.version,new Vector2(.85f,0),new Vector2(.985f,1),17f,TextAlignmentOptions.Right);
+        ArcadeUI.Hide(title,"News");
     }
 
     private void InitializeFadeOverlay()
