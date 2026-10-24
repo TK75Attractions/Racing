@@ -97,22 +97,21 @@ public static class DailyRankingValidation
             {
                 ui.Init(root.transform,player);ui.ShowResults(session);
                 Transform panel=root.transform.Find("ResultPresentation/ResultCard/DailyRanking");
-                Require(!panel.gameObject.activeSelf,"Daily ranking is initially disclosed on demand.");
-                root.transform.Find("ResultPresentation/ResultCard/RankingDisclosure").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+                Require(panel.gameObject.activeSelf&&panel.Find("DailyRow0")==null,"Only local placement is shown, without a ranking table.");
+                Require(root.transform.Find("ResultPresentation/ResultCard/Classification").gameObject.activeSelf,"Race classification remains visible.");
                 Require(panel.Find("OwnRank").GetComponent<TMP_Text>().text.Contains(player==1?"3位":"7位"),"Show each player's rank even outside the top five.");
                 foreach(var text in root.GetComponentsInChildren<TMP_Text>(true))Require(text.font.HasCharacters(text.text,out uint[] missing,true,true),"Missing rendered glyph: "+text.text);
                 flags.SetValidationFeature(RaceFeature.DailyRanking,false);ui.RefreshDailyRanking();Require(!panel.gameObject.activeSelf,"Live OFF hides the panel.");
-                flags.SetValidationFeature(RaceFeature.DailyRanking,true);ui.RefreshDailyRanking();Require(!panel.gameObject.activeSelf,"Live ON keeps the compact classification until disclosure.");
-                root.transform.Find("ResultPresentation/ResultCard/RankingDisclosure").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();Require(panel.gameObject.activeSelf,"Disclosure restores the daily records.");
+                flags.SetValidationFeature(RaceFeature.DailyRanking,true);ui.RefreshDailyRanking();Require(panel.gameObject.activeSelf,"Live ON restores the placement summary.");
                 foreach(Transform child in root.GetComponentsInChildren<Transform>(true))child.gameObject.layer=30;
                 foreach(var size in new[]{new Vector2Int(1280,720),new Vector2Int(1920,1080)})
                     Render(camera,size,Path.Combine(output,$"result-p{player}-{size.x}.png"));
                 p1.didFinish=false;ui.RefreshDailyRanking();if(player==1)Require(panel.Find("OwnRank").GetComponent<TMP_Text>().text.Contains("未完走"),"DNF explanation.");p1.didFinish=true;
-                view.saved=false;ui.RefreshDailyRanking();Require(panel.Find("OwnRank").GetComponent<TMP_Text>().text.Contains("保存失敗"),"Save failure must be visible.");view.saved=true;
+                view.saved=false;ui.RefreshDailyRanking();Require(panel.Find("OwnRank").GetComponent<TMP_Text>().text.Contains("保存できません"),"Save failure must be visible.");view.saved=true;
                 var local=player==1?p1:p2;
                 var facts=local.achievements;local.achievements=new RaceAchievementSnapshot {usedAutodrive=true};
                 ui.RefreshDailyRanking();Require(panel.Find("OwnRank").GetComponent<TMP_Text>().text.Contains("テスト走行"),"Explain excluded auto runs.");local.achievements=facts;
-                view.available=false;ui.RefreshDailyRanking();Require(panel.Find("Empty").GetComponent<TMP_Text>().text.Contains("履歴を読み込めません"),"Explain unreadable history.");view.available=true;
+                view.available=false;ui.RefreshDailyRanking();Require(panel.Find("OwnRank").GetComponent<TMP_Text>().text.Contains("確認できません"),"Explain unreadable history.");view.available=true;
                 UnityEngine.Object.DestroyImmediate(root.transform.Find("ResultPresentation").gameObject);
             }
         }

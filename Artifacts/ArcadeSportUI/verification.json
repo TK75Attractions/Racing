@@ -18,7 +18,7 @@
     },
     "ui": {
       "result": "passed",
-      "summary": "ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, result disclosure, DNF, ending input gate, stable meshes."
+      "summary": "ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, ExtraBold digits, HUD shadows, speed colours, DNF, ending input gate, stable meshes."
     },
     "capture": {
       "result": "passed",
@@ -39,5 +39,17 @@
     "passed": "152",
     "failed": "0",
     "skipped": "0"
+  },
+  "refinement": {
+    "date": "2026-10-24 JST",
+    "fixed_player_paint_and_turntable": "passed in SampleScene",
+    "old_saved_paint_ignored": "passed",
+    "native_render_policy": "passed: a scale of 0.5 is reset to 1",
+    "hud_capture_resolutions": [
+      "1280x720",
+      "1920x1080",
+      "3840x2160"
+    ],
+    "native_4k_frame_time_measured": false
   }
 }

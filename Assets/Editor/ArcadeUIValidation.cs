@@ -37,11 +37,15 @@ public static class ArcadeUIValidation
                 var transition=root.AddComponent<ScreenTransitionController>();transition.Initialize(title,play,result,"","準備",player);transition.ShowCountdown(3);
                 Require(hud.gameObject.activeSelf&&play.Find("CountdownStatus").gameObject.activeSelf,"Countdown must overlay the race HUD.");
                 Require(!play.Find("CountdownCourse").gameObject.activeSelf,"Countdown must not duplicate course/lap cards.");
+                Require(title.Find("News")==null||!title.Find("News").gameObject.activeSelf,"Title must omit the news strip.");
+                var speedLabel=hud.Find("Speed/Txt").GetComponent<TMP_Text>();Require(speedLabel.font==ArcadeUI.SpeedDigits&&speedLabel.fontSize>=150&&!speedLabel.enableAutoSizing,"Speed uses large ExtraBold digits without silent shrinking.");
+                var shadow=hud.Find("Time").GetComponent<ArcadeSurfaceGraphic>();Require(shadow.ShadowOffset.x>0&&shadow.ShadowOffset.y<0,"HUD shadows point down and right.");
+                var speedDial=hud.Find("Speed/Gauge").GetComponent<ArcadeDialGraphic>();speedDial.SetReading(0);var cold=speedDial.NeedleColor;speedDial.SetReading(240);Require(cold!=speedDial.NeedleColor,"Speed changes the needle colour.");
                 Require(title.Find("CircuitLogo/Artwork").GetComponent<RawImage>().texture!=null,"Supplied transparent logo must load.");
                 var ui=new ResultUIManager();ui.Init(result,player+1);var session=Session();ui.ShowResults(session);
                 var card=result.Find("ResultPresentation/ResultCard");Require(card.Find("Classification").gameObject.activeSelf,"Classification must be initially visible.");
-                Require(!card.Find("DailyRanking").gameObject.activeSelf,"Daily ranking must start collapsed.");
-                card.Find("RankingDisclosure").GetComponent<Button>().onClick.Invoke();Require(card.Find("DailyRanking").gameObject.activeSelf&&!card.Find("Classification").gameObject.activeSelf,"Daily disclosure must switch its content without covering actions.");
+                Require(card.Find("RankingDisclosure")==null&&card.Find("DailyRanking/DailyRow0")==null,"Daily rank must not expand a full ranking.");
+                Require(Text(card,"DailyRanking/OwnRank").StartsWith("本日")&&Text(card,"DailyRanking/OwnRank").EndsWith("位！"),"Each player sees only their own daily place.");
                 session.GetPlayerResult(player).didFinish=false;ui.ShowResults(session);Require(Text(card,"Finish/Rank")=="DNF"&&Text(card,"Finish/Time")=="未完走","DNF must not award a finish place/time.");
                 var practice=new DrivingTutorialUI(root.transform,player);var lesson=new DrivingTutorialProgress();practice.Update(lesson,new DriveInputState{steering=-24,pedal=.65f},6,true);
                 var tutorial=root.transform.Find("DrivingTutorial/ModernHUD");Require(tutorial.GetComponentsInChildren<ArcadeDialGraphic>(true).Length==2,"Practice must reuse both race dials.");Require(!tutorial.Find("Position").gameObject.activeSelf&&!tutorial.Find("Time").gameObject.activeSelf,"Practice must omit race rank/timer.");Require(tutorial.Find("SteeringIndicator/Track").GetComponent<RacingSteeringIndicator>().enabled,"Practice steering must remain visible.");practice.Dispose();
@@ -50,7 +54,7 @@ public static class ArcadeUIValidation
             }
             finally{UnityEngine.Object.DestroyImmediate(root);}
         }
-        Debug.Log("ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, result disclosure, DNF, ending input gate, stable meshes.");
+        Debug.Log("ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, ExtraBold digits, HUD shadows, speed colours, DNF, ending input gate, stable meshes.");
     }
     [MenuItem("Racing/UI/Capture Arcade Sport UI")]
     public static void Capture()
@@ -58,6 +62,7 @@ public static class ArcadeUIValidation
         string[] paths={"ProjectSettings/GraphicsSettings.asset","ProjectSettings/QualitySettings.asset"};var bytes=Array.ConvertAll(paths,File.ReadAllBytes);
         try{Directory.CreateDirectory(Output);
         foreach(int player in new[]{0,1})foreach(string state in new[]{"title","tutorial","countdown","race","spectator","quiet","boost","pause","settings","result","ending","broadcast","replay","pv"})CaptureView(player,state,1920,1080);
+        foreach(int player in new[]{0,1}){CaptureView(player,"race",1280,720);CaptureView(player,"race",3840,2160);}
         Debug.Log("ARCADE_UI_CAPTURE_PASS: "+Path.GetFullPath(Output));
         }finally{for(int i=0;i<paths.Length;i++)File.WriteAllBytes(paths[i],bytes[i]);}
     }
@@ -79,10 +84,15 @@ public static class ArcadeUIValidation
     private static RaceSessionResult Session()
     {
         var session=new RaceSessionResult(4);
-        session.SetPlayerResult(0,new RaceResultRecord{playerNumber=1,finishPosition=2,totalRaceTime=109.933f,didFinish=true});
-        session.SetPlayerResult(1,new RaceResultRecord{playerNumber=2,finishPosition=4,totalRaceTime=132.896f,didFinish=true});
-        session.SetPlayerResult(2,new RaceResultRecord{playerNumber=3,isCpu=true,finishPosition=1,totalRaceTime=108.865f,didFinish=true});
-        session.SetPlayerResult(3,new RaceResultRecord{playerNumber=4,isCpu=true,finishPosition=3,totalRaceTime=132.647f,didFinish=true});return session;
+        session.SetPlayerResult(0,new RaceResultRecord{playerNumber=1,finishPosition=2,totalRaceTime=109.933f,didFinish=true,goalLap=2,completedLaps=2});
+        session.SetPlayerResult(1,new RaceResultRecord{playerNumber=2,finishPosition=4,totalRaceTime=132.896f,didFinish=true,goalLap=2,completedLaps=2});
+        session.SetPlayerResult(2,new RaceResultRecord{playerNumber=3,isCpu=true,finishPosition=1,totalRaceTime=108.865f,didFinish=true,goalLap=2,completedLaps=2});
+        session.SetPlayerResult(3,new RaceResultRecord{playerNumber=4,isCpu=true,finishPosition=3,totalRaceTime=132.647f,didFinish=true,goalLap=2,completedLaps=2});
+        var book=new DailyRankingBook{day="2026-10-24"};var now=new DateTime(2026,10,24,12,0,0);
+        book.Record("previous1","arcade",new RaceResultRecord{playerNumber=1,didFinish=true,goalLap=2,completedLaps=2,totalRaceTime=90},now);
+        book.Record("previous2","arcade",new RaceResultRecord{playerNumber=1,didFinish=true,goalLap=2,completedLaps=2,totalRaceTime=100},now);
+        book.Record("current","arcade",session.GetPlayerResult(0),now);book.Record("current","arcade",session.GetPlayerResult(1),now);
+        session.dailyRanking=DailyRankingView.Build(book,"arcade","current");return session;
     }
     private static void CaptureView(int player,string state,int width,int height)
     {
@@ -116,7 +126,7 @@ public static class ArcadeUIValidation
             if(state=="ending")ArcadeEndingUI.Get(host.transform).Show(null);
             if(state=="broadcast"||state=="replay"||state=="pv"){play.gameObject.SetActive(false);var feed=new RaceBroadcastHUD(host.transform,null);host.transform.Find("BroadcastVideo").gameObject.SetActive(false);feed.Update(state=="pv"?"COURSE PV":state=="replay"?"REPLAY":"LIVE",state=="pv"?"CAMPUS MOTORSPORT":state=="replay"?"OVERTAKE / CPU 2":"P2 / 111 km/h",state=="pv"?"":"1 P1     2 P2     3 CPU 2     4 CPU 1");}
             foreach(TMP_Text label in host.GetComponentsInChildren<TMP_Text>(false))label.ForceMeshUpdate();
-            Canvas.ForceUpdateCanvases();camera.Render();RenderTexture.active=target;pixels.ReadPixels(new Rect(0,0,width,height),0,0);pixels.Apply();File.WriteAllBytes(Path.Combine(Output,$"{state}-p{player+1}.png"),pixels.EncodeToPNG());
+            Canvas.ForceUpdateCanvases();camera.Render();RenderTexture.active=target;pixels.ReadPixels(new Rect(0,0,width,height),0,0);pixels.Apply();File.WriteAllBytes(Path.Combine(Output,$"{state}-p{player+1}"+(width==1920?"":$"-{width}x{height}")+".png"),pixels.EncodeToPNG());
         }
         finally{RenderTexture.active=previous;GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=quality;UnityEngine.Object.DestroyImmediate(pixels);UnityEngine.Object.DestroyImmediate(target);EditorSceneManager.ClosePreviewScene(scene);}
     }

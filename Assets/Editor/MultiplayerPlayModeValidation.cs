@@ -332,7 +332,6 @@ public static class MultiplayerPlayModeValidation
     {
         var ending=FindComponentIncludingInactive<ArcadeEndingUI>(player==0?"GameManagers/MainCanvas":"GameManagers/MainCanvas_P2");
         Require(ending!=null&&ending.IsVisible,"Returning must first show the thank-you screen.");
-        Capture("ending-p"+(player+1)+".png",player);
         ending.TickInput(0,.1f);ending.TickInput(1,1);
     }
     private static void SetPedals(float pedal)

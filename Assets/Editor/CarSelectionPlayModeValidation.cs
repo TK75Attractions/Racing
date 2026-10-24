@@ -22,6 +22,8 @@ public static class CarSelectionPlayModeValidation
             SessionState.SetBool(Active + i + ".exists", PlayerPrefs.HasKey(Keys[i]));
             SessionState.SetString(Active + i + ".value", i % 2 == 0 ? PlayerPrefs.GetString(Keys[i]) : PlayerPrefs.GetInt(Keys[i]).ToString());
         }
+        // An old saved colour must never override the seat's blue/pink identity.
+        PlayerPrefs.SetInt(Keys[1],0);PlayerPrefs.SetInt(Keys[3],4);
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
         InputManager input = UnityEngine.Object.FindFirstObjectByType<InputManager>();
         input.isDebugMode = true; input.isP1SerialP2KeyboardDebugMode = false;
@@ -61,6 +63,13 @@ public static class CarSelectionPlayModeValidation
             double age = EditorApplication.timeSinceStartup - phaseBegan;
             if (phase == 0 && manager.state == Gmanager.State.Title)
             {
+                var pipeline=UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+                if(pipeline!=null)
+                {
+                    float before=pipeline.renderScale;pipeline.renderScale=.5f;
+                    var native=manager.gameObject.AddComponent<RaceRenderBudget>();Require(pipeline.renderScale==1f,"The build policy preserves native UI resolution.");
+                    UnityEngine.Object.DestroyImmediate(native);pipeline.renderScale=before;
+                }
                 screens = new CarSelectionUI[2];
                 foreach (CarSelectionUI screen in UnityEngine.Object.FindObjectsByType<CarSelectionUI>(FindObjectsInactive.Include, FindObjectsSortMode.None)) screens[screen.PlayerIndex] = screen;
                 Require(screens[0] != null && screens[1] != null, "Each player receives a selection screen");
@@ -75,7 +84,10 @@ public static class CarSelectionPlayModeValidation
             {
                 Require(Ready(manager, 0, Gmanager.State.Title), "P2 starts selection without waiting for P1");
                 Require(screens[1].ConfirmationProgress == 0f && !screens[1].IsSelectionLocked, "Held start pedal cannot confirm a car");
-                Require(screens[1].Showroom.Model.transform.parent.localRotation != Quaternion.identity, "Preview automatically rotates in Play Mode");
+                Require(screens[1].Showroom.Turntable.localRotation != Quaternion.identity,"The car and its turntable rotate together.");
+                Require(screens[0].SelectedPaint==2&&screens[1].SelectedPaint==3,"Player colours override saved paint choices.");
+                Require(screens[1].Showroom.transform.Find("Performance/Paint0")==null,"Paint selection controls are not built.");
+                Require(Mathf.Abs(CarSelectionModel.Bounds(screens[1].Showroom.Model).min.y-screens[1].Showroom.Turntable.position.y-screens[1].Showroom.DeckHeight)<.01f,"The tyres sit on the turntable deck.");
                 screens[1].SelectVehicle(2); screens[1].SelectPaint(3);
                 Capture(manager,1,"car-p2.png");
                 inputs[1].CurrentState = DriveInputState.Neutral; PhaseTo(2);
