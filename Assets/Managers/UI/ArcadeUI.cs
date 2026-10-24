@@ -13,7 +13,7 @@ public static class ArcadeUI
     }
     public static readonly Palette Blue=new Palette("4b9df3","acd3fb","193348","f1f6fb","67d8c5","f5d474");
     public static readonly Palette Pink=new Palette("f08bb9","f9c4dd","423147","fff2f7","f4d575","adcfe9");
-    private static TMP_FontAsset digits;
+    private static TMP_FontAsset digits,speedDigits;
     private static Material logoMaterial;
     public static Color Hex(string value) { ColorUtility.TryParseHtmlString("#"+value,out Color c); return c; }
     public static Palette For(int player)=>player==1?Pink:Blue;
@@ -31,6 +31,23 @@ public static class ArcadeUI
             }
             return digits;
         }
+    }
+    public static TMP_FontAsset SpeedDigits
+    {
+        get
+        {
+            if(speedDigits==null)
+            {
+                var source=Resources.Load<Font>("UI/Arcade/BarlowCondensed-ExtraBold");
+                if(source!=null){speedDigits=TMP_FontAsset.CreateFontAsset(source,120,12,UnityEngine.TextCore.LowLevel.GlyphRenderMode.SDFAA,1024,1024);speedDigits.name="Arcade ExtraBold speed digits";}
+            }
+            return speedDigits??Digits;
+        }
+    }
+    public static void HUDShadow(Transform target)
+    {
+        var face=target.GetComponent<ArcadeSurfaceGraphic>();if(face==null)return;
+        var p=For(target);face.ShadowOffset=new Vector2(7,-7);face.ShadowColor=Color.Lerp(p.Ink,Color.black,.38f);face.SetVerticesDirty();
     }
     public static TMP_Text Label(Transform parent,string name,string value,Vector2 min,Vector2 max,float size,Color tint,bool numeric=false,TextAlignmentOptions alignment=TextAlignmentOptions.Left)
     {

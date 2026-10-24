@@ -44,6 +44,7 @@ public class RacingPanelGraphic : MaskableGraphic
         SetVerticesDirty();
     }
 
+    public bool HardShadow { get; set; }
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear(); Rect r=rectTransform.rect;if(r.width<2||r.height<2)return;
@@ -51,7 +52,7 @@ public class RacingPanelGraphic : MaskableGraphic
         Color fill=style==SurfaceStyle.Panel?p.Ink:style==SurfaceStyle.Primary?p.Primary:style==SurfaceStyle.Danger?ArcadeUI.Hex("edb3b5"):p.Paper;
         if(button)fill=Color.Lerp(fill,p.Soft,selection*.25f);
         if(disabled)fill=Color.Lerp(fill,p.Ink,.6f);
-        Rect shadow=r;shadow.y-=button?7:3;ArcadeSurfaceGraphic.Rounded(vh,shadow,p.Ink,10);
+        Rect shadow=r;shadow.position+=new Vector2(button||HardShadow?6:0,-(button||HardShadow?6:3));ArcadeSurfaceGraphic.Rounded(vh,shadow,HardShadow?Color.Lerp(p.Ink,Color.black,.38f):p.Ink,10);
         ArcadeSurfaceGraphic.Rounded(vh,r,fill*color,10);
         if(!button)return;
         Color mark=style==SurfaceStyle.Primary?p.Ink:p.Primary;

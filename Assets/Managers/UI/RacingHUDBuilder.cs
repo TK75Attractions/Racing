@@ -52,6 +52,9 @@ public static class RacingHUDBuilder
         (track.GetComponent<RacingSteeringIndicator>()??track.gameObject.AddComponent<RacingSteeringIndicator>()).Configure(playerIndex,caption);
         var telemetry=root.GetComponent<ArcadeHUDTelemetry>()??root.gameObject.AddComponent<ArcadeHUDTelemetry>();telemetry.Configure(playerIndex);
         IsolateCanvas(root.Find("Speed") as RectTransform);IsolateCanvas(root.Find("Tachometer") as RectTransform);IsolateCanvas(steering);IsolateCanvas(time);
+        foreach(string name in new[]{"Lap","Time","Pause","LapDelta","SteeringIndicator","Position/Badge","Tachometer/Boost"})ArcadeUI.HUDShadow(root.Find(name));
+        // A short hard shadow follows the position glyph rather than a rectangular plate.
+        var rank=position.Find("Txt").GetComponent<TMP_Text>();var rankShadow=rank.GetComponent<Shadow>()??rank.gameObject.AddComponent<Shadow>();rankShadow.effectDistance=new Vector2(4,-5);rankShadow.effectColor=p.Ink;
         return root;
     }
     private static void BuildDial(Transform root,string name,bool tach,Vector2 min,Vector2 max,ArcadeUI.Palette p)
@@ -60,8 +63,14 @@ public static class RacingHUDBuilder
         var face=RacingUITheme.Rect(dial,"Gauge",Vector2.zero,Vector2.one);
         ArcadeDialGraphic graphic=tach?face.GetComponent<ArcadeDialGraphic>()??face.gameObject.AddComponent<ArcadeDialGraphic>():face.GetComponent<RacingSpeedGauge>()??face.gameObject.AddComponent<RacingSpeedGauge>();graphic.Tachometer=tach;
         Text(dial,"Heading",tach?"回転数":"速度",.34f,.60f,.66f,.66f,20,p.Ink);
-        Text(dial,"Txt",tach?"0.9":"0",.29f,.39f,.71f,.60f,108,p.Ink,true);
-        Text(dial,"Unit",tach?"×1000 rpm":"km/h",.31f,.36f,.69f,.42f,20,p.Ink,true);
+        var valueLabel=Text(dial,"Txt",tach?"0.9":"0",tach?.29f:.275f,tach?.39f:.365f,tach?.71f:.725f,tach?.60f:.65f,tach?108:154,p.Ink,true);
+        if(!tach)
+        {
+            valueLabel.font=ArcadeUI.SpeedDigits;valueLabel.fontSharedMaterial=valueLabel.font.material;
+            valueLabel.enableAutoSizing=false;valueLabel.overflowMode=TextOverflowModes.Overflow;
+            ArcadeUI.Place(dial,"Heading",.34f,.655f,.66f,.72f);
+        }
+        Text(dial,"Unit",tach?"×1000 rpm":"km/h",.31f,tach?.36f:.32f,.69f,tach?.42f:.385f,20,p.Ink,true);
         float[] values=tach?new[]{0f,2,4,6,8,9}:new[]{0f,60,120,180,240};
         foreach(float value in values){float a=Mathf.Lerp(223.2f,-43.2f,value/(tach?9:240))*Mathf.Deg2Rad;float x=.5f+Mathf.Cos(a)*(tach?.399f:.426f)*.64f,y=.515f+Mathf.Sin(a)*(tach?.399f:.426f)*.64f;Text(dial,"Tick"+value,value.ToString(),x-.045f,y-.03f,x+.045f,y+.03f,20,p.Paper,true);}
         if(tach){var boost=ArcadeUI.Panel(dial,"Boost",new Vector2(.22f,.06f),new Vector2(.78f,.17f),p.Ink);Text(boost,"Value","BOOST  0%",0,0,1,1,29,p.Secondary,true);}

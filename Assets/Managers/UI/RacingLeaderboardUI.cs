@@ -18,6 +18,7 @@ public sealed class RacingLeaderboardUI : MonoBehaviour
             ranks[i] = NeonUI.Text(rows[i], "Rank", (i+1).ToString(), new Vector2(.035f,.09f), new Vector2(.12f,.91f), 25f, italic:true);
             names[i] = NeonUI.Text(rows[i], "Name", i < 2 ? "P"+(i+1) : "CPU "+(i-1), new Vector2(.20f,.14f), new Vector2(.74f,.88f), 19f);
             gaps[i] = NeonUI.Text(rows[i], "Gap", "—", new Vector2(.73f,.14f), new Vector2(.96f,.88f), 16f, TextAlignmentOptions.Right, true);
+            var face=rows[i].Find("ModernSurface").GetComponent<RacingPanelGraphic>();face.HardShadow=true;
             if(i==owner)ranks[i].color=names[i].color=gaps[i].color=ArcadeUI.For(player).Ink;
         }
         SetPosition(owner + 1, 0);
