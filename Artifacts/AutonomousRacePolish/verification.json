@@ -1,0 +1,78 @@
+{
+  "dateJst": "2026-10-25",
+  "unity": "6000.3.9f1",
+  "baseRevision": "6eb636009115d62f96c72818f04d1c193b22d3ec",
+  "implementationRevision": "aa8b929a16563788054f5b52d743b38ecd13afb2",
+  "nightBranchRevision": "c0d6158add4a7a1f229d0430f90e0f4fdce08af0",
+  "editmode": {
+    "before": {
+      "total": "152",
+      "passed": "152",
+      "failed": "0",
+      "skipped": "0",
+      "result": "Passed",
+      "duration": "4.9917976"
+    },
+    "after": {
+      "total": "159",
+      "passed": "159",
+      "failed": "0",
+      "skipped": "0",
+      "result": "Passed",
+      "duration": "4.5697358"
+    }
+  },
+  "validationMarkers": {
+    "ui": [
+      "HUD_FONT_BUILD_PASS: static medium and bold, 369 characters.",
+      "ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, ExtraBold digits, HUD shadows, speed colours, DNF, ending input gate, stable meshes.",
+      "RACE_BARRIER_PATH_VALIDATION_PASS",
+      "AUTONOMOUS_POLISH_CAPTURE_PASS: /Users/kenichirowada/.codex/worktrees/autonomous-race-polish/Racing/Logs/AutonomousPolish/AfterVisuals",
+      "AUTONOMOUS_POLISH_UI_PASS: both palettes, readable Japanese states, notice preemption/release, held pedal, barrier UVs, 720p/1080p renders."
+    ],
+    "rules": [
+      "ORDERED_LAP_RULES_PASS: grid, repeated finish crossings, direction, two full circuits, duplicate entry.",
+      "SKILL_GAMEPLAY_RULES_PASS",
+      "RACING_POLISH_VALIDATION_PASS: nearest road, jump-gap exclusion, slope clearance, lap state, current tutorial instruction and display-aware dropdowns.",
+      "RACE_BARRIER_PATH_VALIDATION_PASS",
+      "WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.",
+      "WALL_STUCK_RECOVERY_PASS: smooth driving, neutral/disconnected input, stale contacts, ungrounded jitter, sleeping contacts, safe road/lap preservation, reverse input, occupied-road retry.",
+      "ORDERED_LAP_RULES_PASS: grid, repeated finish crossings, direction, two full circuits, duplicate entry.",
+      "RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.",
+      "RACE_COURSE_ROAD_VALIDATION_PASS: exact band mesh, upward collision, dash gaps, both red/white curbs, materials, slope, closed seam, transforms, undo, cleanup, narrow/empty paths, Rigidbody support and existing course regression checks.",
+      "PlayerAudioValidation PASSED: opening/selection, independent tutorials and final laps, finish/spectator/results, individual title return, retry, single lap, stereo viewpoint, unchanged-rate device notification and no default-output leakage.",
+      "TUBE_COURSE_VALIDATION_PASS: length=1904.2m, heading/5m=15.53°, grade=0.446, grade change/5m=0.086, retained ground=100.00 %, road folds/intersections=0.",
+      "COURSE_EDGE_BARRIERS_PASS: {\"goalLaps\":2,\"wallPaths\":2,\"exteriorSamples\":1522,\"tubeSamples\":2287,\"missingSideHits\":0,\"interiorWallNodes\":0,\"courseLength\":1904.192626953125,\"exteriorMeters\":761.0,\"tubeMeters\":1143.5,\"maximumPhysicsExcursion\":20.02073097229004,\"minimumPhysicsHeight\":0.7841799855232239,\"physicsTrials\":4}",
+      "AUTONOMOUS_POLISH_RULES_PASS: input/recovery, tutorial prompts, barrier coverage and isolated physics."
+    ],
+    "tutorial": [
+      "HUD_FONT_BUILD_PASS: static medium and bold, 369 characters.",
+      "TUTORIAL_CONTINUITY_PASS: P1 position, heading, velocity and steering reference preserved.",
+      "TUTORIAL_RESET_EDGE_PASS: P1 held reset and deliberate repeat.",
+      "TUTORIAL_CONTINUITY_PASS: P2 position, heading, velocity and steering reference preserved.",
+      "TUTORIAL_RESET_EDGE_PASS: P2 held reset and deliberate repeat.",
+      "TUTORIAL_COMPLETION_CUES_PASS: one successful pickup cue per player.",
+      "TUTORIAL_QA_PASSED: continuous stage transition, production input gates, actual accelerate/turn/item pickup, countdown. Peak speed: 25.404 m/s. Maximum vertical speed after settling: 0.000 m/s"
+    ],
+    "selection": [
+      "CAR_SELECTION_PLAY_MODE_PASS: independent P2-first start, pedal gauge, mixed selection/practice, confirmation release gate, tutorial timeout, synchronized race"
+    ],
+    "ending": [
+      "ARCADE_ENDING_PLAYMODE_PASS: real rendered P1/P2 endings, held-pedal safety, independent title returns."
+    ]
+  },
+  "knownEnvironmentIssue": "Cloned batch Editors log a UnityEditor.Search.SearchDatabase startup ArgumentOutOfRangeException before playtest agent startup; the independent production-input playthroughs and assertions still complete. No claim of a warning-free Editor log.",
+  "driving": {
+    "beforeCompleted": true,
+    "afterCompleted": true,
+    "beforeRuntimeErrors": 0,
+    "afterRuntimeErrors": 0,
+    "beforeRunCount": 3,
+    "afterRunCount": 4,
+    "afterRevision": "aa8b929a16563788054f5b52d743b38ecd13afb2"
+  },
+  "observedNoviceJumpNotices": {
+    "before": 0,
+    "after": 2
+  }
+}
