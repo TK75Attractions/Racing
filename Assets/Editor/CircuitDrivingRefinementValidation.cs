@@ -165,6 +165,16 @@ public static class CircuitDrivingRefinementValidation
             body.position = new Vector3(0, .8f, 70); body.linearVelocity = Vector3.zero; Physics.SyncTransforms();
             for (int i = 0; i < 30; i++) { Call(mover, "ApplyDriving"); Physics.Simulate(.02f); }
             Require(Mathf.Abs(body.linearVelocity.z) < .1f, "CPU launch spacing may deliberately wait; human run-up assistance must not override it.");
+            body.position = new Vector3(0, 1.3f, 118); body.linearVelocity = body.angularVelocity = Vector3.zero; Physics.SyncTransforms();
+            for (int frame = 0; frame < 80; frame++) Physics.Simulate(.02f);
+            var effects = car.GetComponent<CarItemEffects>() ?? car.AddComponent<CarItemEffects>(); Call(effects, "Awake");
+            effects.UseItem(RaceItemType.Rocket, null);
+            for (int frame = 0; frame < 100; frame++)
+            { Call(effects, "FixedUpdate"); Call(mover, "FixedUpdate"); Physics.Simulate(.02f); }
+            float rocketSpeed = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up).magnitude * 3.6f;
+            Require(effects.IsRocketActive && Mathf.Abs(rocketSpeed - 240) < 1,
+                "The production car and complete drive/effect ticks must reach 240km/h after landing. actual=" + rocketSpeed);
+            Debug.Log($"CIRCUIT_ROCKET_PHYSICS_PASS: production car, fresh wheel contact, complete fixed ticks, actual={rocketSpeed:F2}km/h.");
             Debug.Log("CIRCUIT_JUMP_PASS: production car starts from rest on run-up with pedal released; blocked/disconnected/CPU waiting remain stopped; flush contrast outlines have no collider.");
         }
         finally { Physics.simulationMode = mode; Gmanager.Control = previous; UnityEngine.Object.DestroyImmediate(root); UnityEngine.Object.DestroyImmediate(inactive); }
