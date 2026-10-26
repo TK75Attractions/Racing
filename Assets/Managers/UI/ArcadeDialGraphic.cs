@@ -41,7 +41,7 @@ public class ArcadeDialGraphic : MaskableGraphic
         {
             bool red=Tachometer&&(i+.5f)/48>=7500f/9000;
             Color tint=i<segments?(red?ArcadeUI.Hex("ff5b21"):Tachometer?p.Primary:SpeedColor((i+.5f)/48*240,p)):(red?ArcadeUI.Hex("d95724"):new Color(.58f,.67f,.73f,.44f));
-            float a=Mathf.Lerp(223.2f,-43.2f,i/48f);ArcadeSurfaceGraphic.Arc(vh,c,radius*.98f,a,a-266.4f/48*.72f,Mathf.Max(8,r.width*.024f),tint);
+            float a=Mathf.Lerp(223.2f,-43.2f,i/48f);ArcadeSurfaceGraphic.Arc(vh,c,radius*.98f,a,a-266.4f/48*.72f,Mathf.Max(12,r.width*.041f),tint);
             if(red)
             {
                 // A separate orange band and pale hatch remain distinct from P2 pink.
@@ -51,7 +51,7 @@ public class ArcadeDialGraphic : MaskableGraphic
         for(int i=0;i<=48;i++)
         {
             float a=Mathf.Lerp(223.2f,-43.2f,i/48f);bool major=i%12==0;
-            RacingPanelGraphic.Line(vh,ArcadeSurfaceGraphic.Point(c,radius*(major?.74f:.81f),a),ArcadeSurfaceGraphic.Point(c,radius*.89f,a),major?3:1.5f,p.Paper,1f);
+            RacingPanelGraphic.Line(vh,ArcadeSurfaceGraphic.Point(c,radius*(major?.82f:.85f),a),ArcadeSurfaceGraphic.Point(c,radius*.89f,a),major?2:1f,p.Paper,1f);
         }
         ArcadeSurfaceGraphic.Disc(vh,c+new Vector2(7,-7),radius*.50f,shade);
         ArcadeSurfaceGraphic.Disc(vh,c,radius*.50f,p.Paper);
@@ -59,7 +59,7 @@ public class ArcadeDialGraphic : MaskableGraphic
         RacingPanelGraphic.Line(vh,ArcadeSurfaceGraphic.Point(c,radius*.75f,needle),ArcadeSurfaceGraphic.Point(c,radius*1.075f,needle),9,p.Ink,.5f);
         RacingPanelGraphic.Line(vh,ArcadeSurfaceGraphic.Point(c,radius*.76f,needle),ArcadeSurfaceGraphic.Point(c,radius*1.065f,needle),5,NeedleColor,1f);
         if(!Tachometer)return;
-        ArcadeSurfaceGraphic.Arc(vh,c,radius*1.14f,223.2f,-43.2f,8,p.Ink);
-        for(int i=0;i<40;i++){float a=Mathf.Lerp(223.2f,-43.2f,i/40f);ArcadeSurfaceGraphic.Arc(vh,c,radius*1.14f,a,a-266.4f/40*.74f,5,i<boostSegments?p.Secondary:new Color(.51f,.57f,.61f,.44f));}
+        ArcadeSurfaceGraphic.Arc(vh,c,radius*1.14f,223.2f,-43.2f,12,p.Ink);
+        for(int i=0;i<40;i++){float a=Mathf.Lerp(223.2f,-43.2f,i/40f);ArcadeSurfaceGraphic.Arc(vh,c,radius*1.14f,a,a-266.4f/40*.74f,9,i<boostSegments?p.Secondary:new Color(.51f,.57f,.61f,.44f));}
     }
 }
