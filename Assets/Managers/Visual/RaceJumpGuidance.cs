@@ -22,6 +22,7 @@ public sealed class RaceJumpGuidance : MonoBehaviour
     public static void Build(Transform owner, Transform root, List<Vector3> left, List<Vector3> right,
         List<float> distances, List<bool> road, bool closed)
     {
+        int segmentCount = Mathf.Min(road.Count, left.Count - 1);
         bool any = false; foreach (bool solid in road) if (!solid) { any = true; break; }
         if (!any) return;
         var host = new GameObject("Jump Guidance") { hideFlags = HideFlags.DontSave };
@@ -39,13 +40,13 @@ public sealed class RaceJumpGuidance : MonoBehaviour
         guidance.SetDirection(sign);
         var backing = new List<Vector3>(); var bright = new List<Vector3>();
         var gilded = new List<Vector3>(); var flowUV = new List<Vector2>(); var approachUV = new List<Vector2>();
-        for (int i = 0; i < road.Count; i++)
+        for (int i = 0; i < segmentCount; i++)
         {
             if (!road[i]) continue;
             bool near = false;
             for (int j = i - 30; j <= i + 30; j++)
             {
-                int index = closed ? (j % road.Count + road.Count) % road.Count : Mathf.Clamp(j, 0, road.Count - 1);
+                int index = closed ? (j % segmentCount + segmentCount) % segmentCount : Mathf.Clamp(j, 0, segmentCount - 1);
                 float delta = Mathf.Abs(distances[index] - distances[i]);
                 if (closed) delta = Mathf.Min(delta, distances[distances.Count - 1] - delta);
                 if (!road[index] && delta <= 24f) { near = true; break; }
@@ -56,13 +57,13 @@ public sealed class RaceJumpGuidance : MonoBehaviour
             foreach (int approach in new[] { -1, 1 })
             {
                 float runUp = 0; int cursor = i; bool found = false;
-                for (int step = 0; step < road.Count && runUp <= 18f; step++)
+                for (int step = 0; step < segmentCount && runUp <= 18f; step++)
                 {
                     if (!road[cursor]) { found = true; break; }
                     runUp += distances[cursor + 1] - distances[cursor];
                     cursor += approach;
-                    if (!closed && (cursor < 0 || cursor >= road.Count)) break;
-                    cursor = (cursor + road.Count) % road.Count;
+                    if (!closed && (cursor < 0 || cursor >= segmentCount)) break;
+                    cursor = (cursor + segmentCount) % segmentCount;
                 }
                 if (!found) continue;
                 Vector3[] corners = { left[i], right[i], right[i + 1], left[i + 1] };
@@ -79,8 +80,8 @@ public sealed class RaceJumpGuidance : MonoBehaviour
                 Quad(backing, a, b, b + inwardB * 1.55f, a + inwardA * 1.55f, .025f);
                 Quad(bright, a + inwardA * .25f, b + inwardB * .25f, b + inwardB * 1.15f, a + inwardA * 1.15f, .03f);
             }
-            bool beforeGap = i + 1 < road.Count ? !road[i + 1] : closed && !road[0];
-            bool afterGap = i > 0 ? !road[i - 1] : closed && !road[road.Count - 1];
+            bool beforeGap = i + 1 < segmentCount ? !road[i + 1] : closed && !road[0];
+            bool afterGap = i > 0 ? !road[i - 1] : closed && !road[segmentCount - 1];
             if (beforeGap || afterGap)
             {
                 int edge = beforeGap ? i + 1 : i;
