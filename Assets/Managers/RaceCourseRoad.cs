@@ -128,6 +128,7 @@ public static class RaceCourseRoad
 
         BuildTubeShoulders(owner, root.transform, center, left, right, distances, roadSegments, settings);
         RaceCourseBarriers.Build(root.transform, center, left, right, closedLoop, settings);
+        RaceJumpGuidance.Build(owner, root.transform, left, right, distances, roadSegments, closedLoop);
 
         // Paint is clipped against each surface triangle, so it follows curves, width changes
         // and slopes without crossing below a twisted road quad. Only the road has a collider.

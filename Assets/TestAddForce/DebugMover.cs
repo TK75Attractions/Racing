@@ -392,6 +392,36 @@ public class DebugMover : MonoBehaviour
         ApplyDriftSpinProtection(Time.fixedDeltaTime);
         ApplyVelocityResistance();
         ApplyCorneringBrake();
+        ApplyJumpRunUp(Time.fixedDeltaTime);
+    }
+
+    // A released pedal must not strand a new driver on the final ramp. This small
+    // run-up aid supplies forward acceleration only; the handle and launch physics stay live.
+    private void ApplyJumpRunUp(float dt)
+    {
+        Gmanager race = Gmanager.Control;
+        if (race == null || race.state != Gmanager.State.Game || race.course == null || IsInputSuppressed ||
+            inputSource == null || !inputSource.IsConnected ||
+            inputSource is PlayerDriveInputGate gate && (gate.IsBlocked || gate.NeedsPedalRelease) ||
+            rawPedalInput < -.1f || itemEffects != null && (itemEffects.BlocksDriverInput || itemEffects.IsRocketActive || itemEffects.IsOiled || itemEffects.IsConfused)) return;
+        RaceCourse course = race.course;
+        float raw = course.GetProgressDistance(rb.position);
+        if (!course.HasRoadAtProgress(raw) || !course.TryGetSampleAtProgress(raw, out var sample)) return;
+        Vector3 direction = sample.forward * race.CourseProgressSign;
+        if (Vector3.Dot(transform.forward, direction) < .8f ||
+            Vector3.Dot(transform.up, sample.up) < .85f ||
+            Mathf.Abs(Vector3.Dot(rb.position - sample.position, sample.right)) > sample.width * .5f - 1f) return;
+        bool approach = false;
+        for (float ahead = 1f; ahead <= 38f; ahead += 1f)
+            if (!course.HasRoadAtProgress(raw + ahead * race.CourseProgressSign)) { approach = true; break; }
+        if (!approach) return;
+        int contacts = 0;
+        foreach (TireForce tire in tires) if (tire.GetComponent<GroundCheck>().CheckNow()) contacts++;
+        if (contacts < 2) return;
+        Vector3 forward = Vector3.ProjectOnPlane(direction, GetDrivingUp()).normalized;
+        float speed = Vector3.Dot(rb.linearVelocity, forward);
+        if (speed < -.5f || speed >= 22f) return;
+        rb.AddForce(forward * Mathf.Min(22f - speed, 24f * Mathf.Max(0, dt)), ForceMode.VelocityChange);
     }
 
     public void SetInputSource(IDriveInputSource source)

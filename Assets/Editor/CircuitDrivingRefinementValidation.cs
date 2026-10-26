@@ -99,6 +99,58 @@ public static class CircuitDrivingRefinementValidation
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }
 
+    private sealed class Input : IDriveInputSource
+    {
+        public int PlayerIndex => 0;
+        public string DeviceId => "CIRCUIT_QA";
+        public bool IsConnected { get; set; } = true;
+        public DriveInputState CurrentState { get; set; }
+        public void UpdateInput(float dt) { }
+        public void Dispose() { }
+    }
+    [MenuItem("Racing/Validate Circuit Jump Run-Up")]
+    public static void RunJump()
+    {
+        UnityEditor.SceneManagement.EditorSceneManager.NewScene(UnityEditor.SceneManagement.NewSceneSetup.EmptyScene);
+        var root = new GameObject("Jump run-up QA");
+        var inactive = new GameObject("Inactive jump manager"); inactive.SetActive(false);
+        Gmanager previous = Gmanager.Control; SimulationMode mode = Physics.simulationMode;
+        try
+        {
+            Physics.simulationMode = SimulationMode.Script;
+            var course = root.AddComponent<RaceCourse>();
+            SetPath(course, new[] { Vector3.zero, Vector3.forward * 100, Vector3.forward * 112, Vector3.forward * 400 }, 1);
+            var so = new SerializedObject(course); so.FindProperty("generateRoad").boolValue = true;
+            so.ApplyModifiedPropertiesWithoutUndo(); course.RebuildCache(); course.RebuildRoad();
+            var guidance = course.transform.Find(RaceCourseRoad.RootName + "/Jump Guidance");
+            Require(guidance != null && guidance.GetComponentsInChildren<MeshFilter>().Length == 2 &&
+                guidance.GetComponentsInChildren<Collider>().Length == 0, "Ramp edges have contrast backing and add no collision.");
+            var manager = inactive.AddComponent<Gmanager>(); manager.course = course; manager.state = Gmanager.State.Game; Gmanager.Control = manager;
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/car/car2.prefab");
+            var car = UnityEngine.Object.Instantiate(prefab, new Vector3(0, 1.3f, 70), Quaternion.identity, root.transform);
+            var body = car.GetComponent<Rigidbody>(); body.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            foreach (var ground in car.GetComponentsInChildren<GroundCheck>()) Call(ground, "Awake");
+            foreach (var tire in car.GetComponentsInChildren<TireForce>()) Call(tire, "Awake");
+            var mover = car.GetComponent<DebugMover>(); Call(mover, "Awake");
+            var input = new Input(); var gate = new PlayerDriveInputGate(input); mover.SetInputSource(gate);
+            Physics.SyncTransforms();
+            for (int i = 0; i < 100; i++) Physics.Simulate(.02f);
+            body.linearVelocity = Vector3.zero;
+            for (int i = 0; i < 75; i++) { Call(mover, "ApplyDriving"); Physics.Simulate(.02f); }
+            Require(body.position.z > 80 && body.linearVelocity.z > 12,
+                "A stopped, connected car with a released pedal must naturally build a jump run-up. position=" + body.position + " velocity=" + body.linearVelocity);
+            body.position = new Vector3(0, .8f, 70); body.linearVelocity = Vector3.zero; Physics.SyncTransforms();
+            gate.SetBlocked(true);
+            for (int i = 0; i < 30; i++) { Call(mover, "ApplyDriving"); Physics.Simulate(.02f); }
+            Require(Mathf.Abs(body.linearVelocity.z) < .1f, "A blocked pedal gate must never auto-accelerate.");
+            gate.SetBlocked(false); input.IsConnected = false;
+            for (int i = 0; i < 30; i++) { Call(mover, "ApplyDriving"); Physics.Simulate(.02f); }
+            Require(Mathf.Abs(body.linearVelocity.z) < .1f, "Disconnected cars must never auto-accelerate.");
+            Debug.Log("CIRCUIT_JUMP_PASS: production car starts from rest on run-up with pedal released; blocked/disconnected remain stopped; flush contrast outlines have no collider.");
+        }
+        finally { Physics.simulationMode = mode; Gmanager.Control = previous; UnityEngine.Object.DestroyImmediate(root); UnityEngine.Object.DestroyImmediate(inactive); }
+    }
+
     private static void SetPath(RaceCourse course, Vector3[] positions, int jump)
     {
         var so = new SerializedObject(course);
