@@ -89,16 +89,42 @@ public sealed class TubePortalProfile
 {
     public const float BlendLength = 32f;
     private static readonly Dictionary<Mesh, List<Vector3[]>> ringCache = new Dictionary<Mesh, List<Vector3[]>>();
-    public static void InvalidateCache() => ringCache.Clear();
+    private static readonly Dictionary<Mesh, Vector3[]> endCenters = new Dictionary<Mesh, Vector3[]>();
+    public static void InvalidateCache() { ringCache.Clear(); endCenters.Clear(); }
     public Vector3[] points, outwardTangents;
     public Vector3 Evaluate(float phase, float outsideDistance)
     {
         float p = Mathf.Clamp01(phase) * (points.Length - 1); int a = Mathf.FloorToInt(p), b = Mathf.Min(a + 1, points.Length - 1);
         return Vector3.Lerp(points[a], points[b], p - a) + Vector3.Lerp(outwardTangents[a], outwardTangents[b], p - a) * outsideDistance;
     }
+    /// <summary>The real end plane, rather than a roof ray whose intersection shifts on bends.</summary>
+    public static bool TryGetEndFrame(MeshCollider tube, Vector3 position, out Vector3 center, out Vector3 outward)
+    {
+        center = outward = Vector3.zero;
+        var filter = tube != null && tube.enabled && tube.gameObject.activeInHierarchy ? tube.GetComponent<MeshFilter>() : null;
+        if (filter == null || filter.sharedMesh == null || !filter.sharedMesh.isReadable || filter.sharedMesh.name != TubeSurfaceGeometry.SmoothMeshName) return false;
+        if (!ringCache.TryGetValue(filter.sharedMesh, out var rings)) ringCache.Add(filter.sharedMesh, rings = TubeSurfaceGeometry.ReadRings(filter.sharedMesh));
+        if (!endCenters.TryGetValue(filter.sharedMesh, out var centers))
+        {
+            centers = new Vector3[4]; int[] indices = {0,1,rings.Count-1,rings.Count-2};
+            for (int i=0;i<4;i++) { foreach (var v in rings[indices[i]]) centers[i] += v / rings[indices[i]].Length; }
+            endCenters.Add(filter.sharedMesh,centers);
+        }
+        Vector3 first=filter.transform.TransformPoint(centers[0]), last=filter.transform.TransformPoint(centers[2]);
+        int end = Vector3.Distance(first,position) < Vector3.Distance(last,position) ? 0 : 2;
+        center = end==0 ? first : last;
+        if (Vector3.Distance(center, position) > 45f) return false;
+        outward = (center-filter.transform.TransformPoint(centers[end+1])).normalized;
+        return outward.sqrMagnitude > .9f;
+    }
+    public static bool IsInsideAtEdge(MeshCollider tube, Vector3 edge, Vector3 center, Vector3 side)
+    {
+        if (TryGetEndFrame(tube, edge, out var mouth, out var outward)) return Vector3.Dot(edge - mouth, outward) <= 0;
+        return RaceCourseBarriers.IsInsideTube(center, side, tube);
+    }
     public static TubePortalProfile Create(MeshCollider tube, Vector3 roadEdge, Vector3 outward, int sections)
     {
-        MeshFilter filter = tube != null ? tube.GetComponent<MeshFilter>() : null;
+        MeshFilter filter = tube != null && tube.enabled && tube.gameObject.activeInHierarchy ? tube.GetComponent<MeshFilter>() : null;
         // Preparation bakes a readable mesh asset. No runtime CPU reads of the non-readable FBX.
         if (filter == null || filter.sharedMesh == null || !filter.sharedMesh.isReadable ||
             filter.sharedMesh.name != TubeSurfaceGeometry.SmoothMeshName) return null;

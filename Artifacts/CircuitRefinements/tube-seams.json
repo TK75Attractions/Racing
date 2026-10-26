@@ -2,9 +2,9 @@
     "sourceVertices": 4699,
     "smoothVertices": 99716,
     "portalProfiles": 4,
-    "comparedColliderVertices": 44418,
+    "comparedColliderVertices": 44484,
     "portalShoulders": 2,
-    "supportedShoulderSamples": 259,
+    "supportedShoulderSamples": 288,
     "maximumSeamGap": 0.0,
-    "maximumSeamTangentAngle": 0.048456642776727679
+    "maximumSeamTangentAngle": 1.2788596153259278
 }

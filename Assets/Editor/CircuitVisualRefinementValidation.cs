@@ -92,11 +92,11 @@ public static class CircuitVisualRefinementValidation
         foreach (var shoulder in course.GetComponentsInChildren<MeshCollider>())
         {
             if (!shoulder.name.StartsWith("Portal Road Shoulder ")) continue; report.portalShoulders++;
-            var v = shoulder.sharedMesh.vertices;
-            for (int row = 1; row < v.Length / 2; row++)
+            var v = shoulder.sharedMesh.vertices; int columns = RaceCourseRoad.ShoulderSegments + 1;
+            for (int row = 1; row < v.Length / columns; row++)
             {
-                Vector3 a = shoulder.transform.TransformPoint(v[row * 2]), b = shoulder.transform.TransformPoint(v[row * 2 + 1]);
-                Vector3 beforeA = shoulder.transform.TransformPoint(v[(row - 1) * 2]), beforeB = shoulder.transform.TransformPoint(v[(row - 1) * 2 + 1]);
+                Vector3 a = shoulder.transform.TransformPoint(v[row * columns]), b = shoulder.transform.TransformPoint(v[row * columns + columns - 1]);
+                Vector3 beforeA = shoulder.transform.TransformPoint(v[(row - 1) * columns]), beforeB = shoulder.transform.TransformPoint(v[(row - 1) * columns + columns - 1]);
                 if (Vector3.Distance(a, b) < .2f || Vector3.Distance(beforeA, beforeB) < .2f) continue;
                 Vector3 midpoint = (a + b + beforeA + beforeB) * .25f;
                 if (!shoulder.Raycast(new Ray(midpoint + Vector3.up * 2, Vector3.down), out _, 3))

@@ -72,24 +72,22 @@ public static class TubeCourseValidation
             Vector3[] shoulderVertices = shoulders.GetComponent<MeshFilter>().sharedMesh.vertices;
             MeshCollider innerWall = tube.GetComponent<MeshCollider>();
             Require(TubeDriveSurface.Contains(innerWall), "The configured tube interior must allow banked wheel contact.");
-            for (int i = 0; i < shoulderVertices.Length; i += 4)
+            for (int i = 0; i < shoulderVertices.Length; i += RaceCourseRoad.ShoulderSegments + 1)
             {
-                Vector3 l = shoulders.TransformPoint(shoulderVertices[i + 1]);
-                Vector3 r = shoulders.TransformPoint(shoulderVertices[i + 2]);
-                Vector3 centerPoint = (l + r) * .5f;
-                Vector3 side = (r - l).normalized;
-                float half = Vector3.Distance(l, r) * .5f;
-                bool leftHit = innerWall.Raycast(new Ray(centerPoint, -side), out var lh, 25f);
-                bool rightHit = innerWall.Raycast(new Ray(centerPoint, side), out var rh, 25f);
-                if (!leftHit || !rightHit || lh.distance < half - .1f || rh.distance < half - .1f) continue;
+                Vector3 edge = shoulders.TransformPoint(shoulderVertices[i]);
+                Vector3 outer = shoulders.TransformPoint(shoulderVertices[i+RaceCourseRoad.ShoulderSegments]);
+                Vector3 delta = outer-edge;
+                if (delta.magnitude < .2f) continue;
                 report.filledTubeShoulderRows++;
-                Vector3 outerLeft = shoulders.TransformPoint(shoulderVertices[i]);
-                Vector3 outerRight = shoulders.TransformPoint(shoulderVertices[i + 3]);
-                report.maximumShoulderWallGap = Mathf.Max(report.maximumShoulderWallGap,
-                    Vector3.Distance(outerLeft, lh.point), Vector3.Distance(outerRight, rh.point));
-                Require(shoulders.GetComponent<MeshCollider>().Raycast(
-                    new Ray(Vector3.Lerp(l, outerLeft, .5f) + Vector3.up, Vector3.down), out _, 1.1f),
-                    "The filled shoulder must support a car.");
+                // The ray follows this actual cross-section, including the portal's
+                // end-plane alignment rather than assuming four vertices per course row.
+                if (innerWall.Raycast(new Ray(edge,delta.normalized),out var hit,delta.magnitude+.1f))
+                    report.maximumShoulderWallGap = Mathf.Max(report.maximumShoulderWallGap, Vector3.Distance(outer,hit.point));
+                // A ray exactly on a mesh boundary has undefined triangle inclusion;
+                // the follow-up seam test probes both sides of each real portal instead.
+                if (TubePortalProfile.TryGetEndFrame(innerWall,edge,out var mouth,out var normal) && Mathf.Abs(Vector3.Dot(edge-mouth,normal))<.01f) continue;
+                Require(shoulders.GetComponent<MeshCollider>().Raycast(new Ray(Vector3.Lerp(edge,outer,.5f)+Vector3.up,Vector3.down),out _,1.1f),
+                    "The filled shoulder must support a car at " + edge);
             }
             Require(report.filledTubeShoulderRows > 200 && report.maximumShoulderWallGap < .075f,
                 "Tube road still has a gap to the interior wall.");

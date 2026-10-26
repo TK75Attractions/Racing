@@ -70,6 +70,8 @@ public sealed class RaceBarrierPath : MonoBehaviour
     private Mesh generatedColliderMesh;
     private TubePortalProfile portalStart, portalEnd;
     private float pathLength;
+    private sealed class PortalLoft { public TubePortalProfile profile; public Vector3[] end, tangent; }
+    private PortalLoft startLoft, endLoft;
     public bool HasPortalBlend => portalStart != null || portalEnd != null;
 #if UNITY_EDITOR
     private bool editorRefreshQueued;
@@ -199,6 +201,8 @@ public sealed class RaceBarrierPath : MonoBehaviour
             if (i > 0) pathLength += Vector3.Distance(samples[i - 1].position, samples[i].position);
             Sample row = samples[i]; row.pathDistance = pathLength; samples[i] = row;
         }
+        startLoft = BuildPortalLoft(portalStart, true);
+        endLoft = BuildPortalLoft(portalEnd, false);
         EnsureGeneratedRoots();
 
         if (generateVisual)
@@ -243,11 +247,8 @@ public sealed class RaceBarrierPath : MonoBehaviour
             return;
         }
 
-        BuildSamples(samples);
-        for (int i = 0; i < samples.Count; i++)
-        {
-            destination.Add(transform.TransformPoint(samples[i].position));
-        }
+        var preview = new List<Sample>(); BuildSamples(preview);
+        for (int i = 0; i < preview.Count; i++) destination.Add(transform.TransformPoint(preview[i].position));
     }
 
     public void AddControlPoint()
@@ -483,21 +484,40 @@ public sealed class RaceBarrierPath : MonoBehaviour
         collider.sharedMaterial = colliderMaterial;
     }
 
+    private Vector3 OriginalAtDistance(float distance, int section)
+    {
+        distance = Mathf.Clamp(distance, 0, pathLength);
+        int low = 0, high = samples.Count-2;
+        while (low < high) { int m=(low+high)/2; if (samples[m+1].pathDistance < distance) low=m+1; else high=m; }
+        float t = Mathf.InverseLerp(samples[low].pathDistance, samples[low+1].pathDistance, distance);
+        return Vector3.Lerp(GetOriginalSectionPoint(samples[low], GetOutward(GetTangent(low)), section),
+            GetOriginalSectionPoint(samples[low+1], GetOutward(GetTangent(low+1)), section), t);
+    }
+    private PortalLoft BuildPortalLoft(TubePortalProfile profile, bool start)
+    {
+        if (profile == null) return null;
+        int count = wallSectionSegments * 2 + 1;
+        var loft = new PortalLoft { profile = profile, end = new Vector3[count], tangent = new Vector3[count] };
+        float d = start ? TubePortalProfile.BlendLength : pathLength - TubePortalProfile.BlendLength;
+        for (int k=0;k<count;k++)
+        {
+            loft.end[k] = OriginalAtDistance(d, k);
+            loft.tangent[k] = (OriginalAtDistance(d+.1f,k)-OriginalAtDistance(d-.1f,k)) / .2f * (start ? 1 : -1);
+        }
+        return loft;
+    }
     private Vector3 GetSectionPoint(Sample sample, Vector3 outward, int section)
     {
-        Vector3 original = GetOriginalSectionPoint(sample, outward, section);
-        float distance = sample.pathDistance;
-        TubePortalProfile portal = portalStart;
-        if (portalEnd != null && (portal == null || pathLength - distance < distance))
-        { portal = portalEnd; distance = pathLength - distance; }
-        if (portal == null || distance >= TubePortalProfile.BlendLength) return original;
-        float t = Mathf.Clamp01(distance / TubePortalProfile.BlendLength);
-        // Quintic smootherstep has zero first/second derivatives at BOTH ends.
-        // At the portal the surface and its longitudinal tangent equal the actual tube;
-        // at 32m they return to the unchanged outdoor wall, without a collider step.
-        float weight = 1f - t * t * t * (t * (6f * t - 15f) + 10f);
-        Vector3 target = transform.InverseTransformPoint(portal.Evaluate(section / (float)(wallSectionSegments * 2), distance));
-        return Vector3.LerpUnclamped(original, target, weight);
+        float distance = sample.pathDistance; PortalLoft loft = startLoft;
+        if (endLoft != null && (loft == null || pathLength-distance < distance)) { loft=endLoft; distance=pathLength-distance; }
+        if (loft == null || distance >= TubePortalProfile.BlendLength) return GetOriginalSectionPoint(sample, outward, section);
+        float t = Mathf.Clamp01(distance / TubePortalProfile.BlendLength), t2=t*t, t3=t2*t;
+        // One Hermite arc per longitudinal column: exact positions AND derivatives at
+        // the tube and the outdoor wall. No long tangent extrapolation / quintic bulge.
+        Vector3 a = transform.InverseTransformPoint(loft.profile.points[section]);
+        Vector3 tangent = transform.InverseTransformVector(loft.profile.outwardTangents[section]);
+        return (2*t3-3*t2+1)*a + (t3-2*t2+t)*TubePortalProfile.BlendLength*tangent +
+            (-2*t3+3*t2)*loft.end[section] + (t3-t2)*TubePortalProfile.BlendLength*loft.tangent[section];
     }
 
     private Vector3 GetSurfaceBackNormal(int index, Vector3 outward, int section)
