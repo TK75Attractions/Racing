@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 public enum P1SteeringTestMode { Normal, KeyboardPedal, ConstantPedal }
 
 /// <summary>Stable P1 adapter: switch pedal sources without replacing a car/tutorial's input gate.</summary>
-public sealed class P1SteeringTestInputSource : IDriveInputSource, IDriveInputStatusSource, IDrivePedalReleaseObserver
+public sealed class P1SteeringTestInputSource : IDriveInputSource, IDriveSteeringCalibration, IDriveInputStatusSource, IDrivePedalReleaseObserver
 {
     private readonly IDriveInputSource normal, keyboard;
     public IDriveInputSource NormalSource => normal;
@@ -33,6 +33,7 @@ public sealed class P1SteeringTestInputSource : IDriveInputSource, IDriveInputSt
                 ? DriveConnectionState.KeyboardMissing : DriveConnectionState.Ready;
         }
     }
+    public float FullSteeringInput => DriveSteeringCalibration.Range(Mode == P1SteeringTestMode.Normal ? normal : Serial);
     public bool IsConnected => ConnectionState == DriveConnectionState.Ready;
     public DriveInputState CurrentState
     {

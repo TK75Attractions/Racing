@@ -120,3 +120,5 @@ VManager の Inspector の `Drift Boost Post Processing` で以下を調整で�
 通常時の画面設定も `Gmanager.Control.VManager.SetBloom(0.9f)` や `SetMotionBlur`、`SetLensDistortion`、`SetVignette`、`SetColorAdjustments` などから調整できます。演出終了時にはこれらの通常設定へ戻ります。
 
 Unity メニューの `Racing > Validate Boost Volumes` で、URP Volume への反映、プレイヤー間の分離、フェード、通常設定の復帰、Gmanager 経由の連携とリスポーン・リザルト時の解除を検証できます。バッチ実行は `-batchmode -nographics -executeMethod BoostVolumeValidation.Run -quit` を使用します。ブラーや歪みの操作感は Game ビューで実走して調整してください。
+
+実機ハンドルは車両が入力を読むときに90°を最大30の共通単位へ校正します。既定の開始しきい値8は24°、最大チャージ30は90°に相当します。通信・メニューの値と車両の共通単位は[Steering.md](Steering.md)を参照してください。

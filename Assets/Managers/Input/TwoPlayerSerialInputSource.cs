@@ -29,6 +29,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
     private long linesReceived;
     private bool inputWasFresh;
     private bool processingReceivedFrames;
+    private double nextReceiveTimingAt;
 
     public event Action<string, string> LineProcessed;
     public RgpSerialJournal Monitor { get; } = new RgpSerialJournal();
@@ -55,6 +56,7 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         return sent;
     }
     public string PortName => portName;
+    public float FullSteeringInput => configuration.FullSteeringInput;
     public bool IsPortOpen => portIsOpen;
     public int PendingLineCount => receivedLines.Count;
     public long LinesReceived => Interlocked.Read(ref linesReceived);
@@ -258,6 +260,8 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
         var bytes = new byte[256];
         while (!stopRequested && portIsOpen)
         {
+            double readStarted = clock.Elapsed.TotalMilliseconds;
+            int gcZero = GC.CollectionCount(0), gcFull = GC.CollectionCount(GC.MaxGeneration);
             try
             {
                 int count = pseudoTerminal != null ? pseudoTerminal.Read(bytes) : serialPort.Read(bytes, 0, bytes.Length);
@@ -266,12 +270,18 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
                 {
                     string wire = decoder.Push(bytes[i], now);
                     if (wire == null) continue;
-                    Monitor.RecordWire("RX", wire);
                     receivedLines.Enqueue(new ReceivedFrame(wire, now));
                     Interlocked.Increment(ref linesReceived);
+                    Monitor.RecordWire("RX", wire);
                 }
+                RecordReceiveTiming(readStarted, now, count, gcZero, gcFull, "data");
             }
-            catch (TimeoutException) { decoder.Expire(clock.Elapsed.TotalMilliseconds); }
+            catch (TimeoutException)
+            {
+                double now = clock.Elapsed.TotalMilliseconds;
+                decoder.Expire(now);
+                RecordReceiveTiming(readStarted, now, 0, gcZero, gcFull, "timeout");
+            }
             catch (Exception exception)
             {
                 if (!stopRequested) QueueDiagnostic($"Shared serial read failed: {exception.Message}");
@@ -279,6 +289,22 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
             }
         }
         portIsOpen = false;
+    }
+
+    // Wall time inside Read includes native waiting AND OS/GC scheduling pauses;
+    // this evidence must not be interpreted as a device fault on its own.
+    private void RecordReceiveTiming(double started, double readCompleted, int count,
+        int gcZero, int gcFull, string outcome)
+    {
+        double completed = clock.Elapsed.TotalMilliseconds;
+        double read = readCompleted - started, work = completed - readCompleted;
+        if (Interlocked.Read(ref linesReceived) == 0 || completed < nextReceiveTimingAt ||
+            (read <= 100 && work <= 50)) return;
+        nextReceiveTimingAt = completed + 1000;
+        Monitor.Diagnostic("RX_DELAY", string.Format(System.Globalization.CultureInfo.InvariantCulture,
+            "read_ms={0:F1} work_ms={1:F1} bytes={2} outcome={3} gc0_delta={4} gc_full_delta={5} queued={6}",
+            read, work, count, outcome, GC.CollectionCount(0) - gcZero,
+            GC.CollectionCount(GC.MaxGeneration) - gcFull, receivedLines.Count));
     }
 
     private void QueueDiagnostic(string text)
@@ -298,12 +324,13 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
 }
 
 // The cars use one logical input source each, while both adapters read the same port.
-public sealed class SharedPlayerDriveInputSource : IDriveInputSource, IDriveInputStatusSource
+public sealed class SharedPlayerDriveInputSource : IDriveInputSource, IDriveSteeringCalibration, IDriveInputStatusSource
 {
     private readonly TwoPlayerSerialInputSource sharedSource;
 
     public int PlayerIndex { get; }
     public string DeviceId => $"P{PlayerIndex + 1}";
+    public float FullSteeringInput => sharedSource.FullSteeringInput;
     public bool IsConnected => sharedSource.IsConnected(PlayerIndex);
     public DriveConnectionState ConnectionState => sharedSource.GetConnectionState(PlayerIndex);
     public DriveInputState CurrentState

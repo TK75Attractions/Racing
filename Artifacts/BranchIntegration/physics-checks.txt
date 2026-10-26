@@ -1,0 +1,8 @@
+STEERING_COMFORT_PASS response90=0.120s countersteer=0.020s centerNoise=0 movingNoiseRatio=0.250
+Steering validation passed.
+STEERING_COMFORT_PASS response90=0.120s countersteer=0.020s centerNoise=0 movingNoiseRatio=0.250
+Steering validation passed.
+Drift validation passed.
+HIGH_SPEED_CORNERING_PASS: 31 production-car trials, boost, trajectory, +/-60 degree banks, small corrections, center noise, airborne, blocked, disconnect, live OFF and steering/drift regressions.
+ABRUPT_STEERING_PASS: 86 real-car trials, small/full abrupt lock, reversals, boost, flat/+/-60 banks, air, oil, spin and live OFF/ON.
+BRANCH_INTEGRATION_PHYSICS_PASS

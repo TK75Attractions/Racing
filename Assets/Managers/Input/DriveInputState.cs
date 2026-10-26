@@ -21,6 +21,25 @@ public interface IDriveInputSource : IDisposable
     void UpdateInput(float deltaTime);
 }
 
+// Calibration applies only when a vehicle consumes input; menus keep transport units.
+public interface IDriveSteeringCalibration
+{
+    float FullSteeringInput { get; }
+}
+
+public static class DriveSteeringCalibration
+{
+    public const float FullLockUnits = 30f;
+    public static float Range(IDriveInputSource source) => source is IDriveSteeringCalibration calibration
+        ? calibration.FullSteeringInput : FullLockUnits;
+    public static float CanonicalInput(float value, float fullLock)
+    {
+        if (float.IsNaN(value) || float.IsInfinity(value)) return 0f;
+        if (float.IsNaN(fullLock) || float.IsInfinity(fullLock) || fullLock <= .0001f) fullLock = FullLockUnits;
+        return value / fullLock * FullLockUnits;
+    }
+}
+
 public enum DriveConnectionState
 {
     Ready, Unavailable, KeyboardMissing, SerialDisconnected, SerialPreparing,

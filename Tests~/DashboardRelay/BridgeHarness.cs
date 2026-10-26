@@ -14,6 +14,7 @@ namespace UnityEngine
     public class SerializeField : Attribute { }
     public class TooltipAttribute : Attribute { public TooltipAttribute(string value) { } }
     public class MinAttribute : Attribute { public MinAttribute(float value) { } }
+    public class RangeAttribute : Attribute { public RangeAttribute(float minimum, float maximum) { } }
     public static class PlayerPrefs {
         private static readonly Dictionary<string,float> Values = new Dictionary<string,float>();
         public static float GetFloat(string key,float fallback)=>Values.TryGetValue(key,out float v)?v:fallback;
