@@ -14,7 +14,7 @@
 
 ## 表示と実装
 
-`RaceMaintenanceController` が1つの保存状態・停止状態を所有し、各出力の既存Canvasへ `RaceMaintenanceScreen` を作ります。P1は青、P2はピンクの共通UI配色です。専用ウィンドウ／RenderTexture出力や管理画面の映像プレビューにも同じ表示を使います。UIをカメラ手前に配置して背景の深度による映り込みを防ぎ、解除時には元の描画距離を復元します。画面遷移がフェードを並べ替えた場合も案内を最前面に維持します。
+`RaceMaintenanceController` が1つの保存状態・停止状態を所有し、各出力の既存Canvasへ `RaceMaintenanceScreen` を作ります。P1は青、P2はピンクの共通UI配色です。観戦機能が通常OFFでもメンテナンス中は観戦出力を有効にし、解除後は以前の機能設定に従います。専用ウィンドウ／RenderTexture出力や管理画面の映像プレビューにも同じ表示を使います。UIをカメラ手前に配置して背景の深度による映り込みを防ぎ、解除時には元の描画距離を復元します。画面遷移がフェードを並べ替えた場合も案内を最前面に維持します。
 
 停止前の `Time.timeScale` と `AudioListener.pause` を復元し、音量設定は書き換えません。独立USB/HDMI音声への送信も一時停止します。管理HTTP処理・シリアル監視には実時間を使うため、停止中も切替・診断が可能です。オーナーの無効化・破棄時にも停止を解放し、Editor停止後へtimeScaleや音声ミュートを残しません。車選択やゴール演出などの実時間タイマー、遷移完了のコールバックもメンテナンス中は進めません。
 
@@ -27,4 +27,16 @@
 - `sh Tools/Validate-Rgp.sh`：既存の入力・機能設定・レースルール回帰。
 - Unityバッチ：`-batchmode -projectPath ... -executeMethod MaintenanceModeValidation.RunBatch -logFile ...`（`-quit`なし）。実シーンの7段階と画面遷移中の停止、3出力、物理・タイマー・音声、踏みっぱなし・既存ブロックの保持、無効化／再有効化、次のPlayセッションで保存状態を復元するところまで確認します。ゴール段階の準備には既存のデバッグ完走コマンドを使い、2周の自然走行を検証したとは扱いません。検証前のメンテナンス設定は終了時に復元します。
 
+常駐の8765/8766を使用中の場合は、`python3 Tools/ValidateMaintenanceDashboard.py` を使うと、一時コピーのポートだけを18765/18766へ差し替えて検証できます。実サービスは停止・変更しません。PlaywrightとChromeが利用できる環境では `--browser` を付けると、実ブラウザーで6ページの切替・解除、通信断、PC/スマホの表示も確認します。必要なら環境の `NODE_PATH` でPlaywrightの場所を指定します。ログは `Logs/Maintenance/` へ保存します。
+
+2026年10月27日、最新main `1b170d6` からの専用ブランチ上で、Play Modeの7段階・遷移中・3画面・2回の起動を検証しました。EditMode 166/166、既存UI回帰、Core回帰166/166、Dashboard UI 46/46、ブリッジ／中継30件成功（任意の実PTY検査1件は未実施）、Chromeの6ページ・PC/スマホ検査が成功しています。最終の機能コードは `60beccb`、全ページの操作結果表示は `aa886fa`、観戦OFF時の表示保証は `64a1b9b` です。
+
 実画面・管理画面の画像と結果は `Artifacts/Maintenance/` に保存します。既存のEditor SearchDatabase例外はPlay起動前に発生する場合があります。実機マルチモニター・ネイティブウィンドウ、USB/HDMI音声の実機出力、対象PCのFPS、Windows製品ビルド、本番Tailscale回線からの操作は別途確認が必要です。
+
+## 実装コミット
+
+|コミット|メッセージ|
+|---|---|
+|`60beccb`|feat(maintenance): control all game displays from the operator dashboard|
+|`aa886fa`|fix(maintenance): show toggle results on every dashboard page|
+|`64a1b9b`|fix(maintenance): keep broadcast visible when its normal feature is off|

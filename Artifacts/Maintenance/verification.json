@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-27",
+  "unityVersion": "6000.3.9f1",
+  "baseMain": "1b170d6",
+  "implementationCommit": "60beccb",
+  "dashboardFeedbackCommit": "aa886fa",
+  "editMode": {
+    "total": "166",
+    "passed": "166",
+    "failed": "0",
+    "skipped": "0"
+  },
+  "core": {
+    "total": "166",
+    "passed": "166",
+    "failed": "0"
+  },
+  "dashboardUi": {
+    "passed": 46,
+    "failed": 0
+  },
+  "relayIntegration": {
+    "passed": 30,
+    "failed": 0,
+    "skipped": 1,
+    "skipReason": "Optional real Serial Lab / PTY run is outside the maintenance test."
+  },
+  "playMode": {
+    "phases": [
+      "Title",
+      "CarSelection",
+      "Tutorial",
+      "Countdown",
+      "Game",
+      "Goal",
+      "Result"
+    ],
+    "transitionPause": true,
+    "outputs": [
+      "P1",
+      "P2",
+      "Broadcast"
+    ],
+    "physicsTimersAudioPaused": true,
+    "heldPedalRelease": true,
+    "existingInputBlockPreserved": true,
+    "restartPersistence": true,
+    "previousPreferenceRestoredAfterTest": true,
+    "goalPreparation": "Existing debug finish commands; no claim of natural two-lap completion.",
+    "normalBroadcastFeatureOffStillShowsMaintenance": true
+  },
+  "existingUiRegression": "ARCADE_UI_VALIDATION_PASS",
+  "browser": "browser-result.json",
+  "knownEditorIssue": "SearchDatabase ArgumentOutOfRangeException occurs before the validation probe starts.",
+  "notVerified": [
+    "Physical multi-monitor/native windows",
+    "USB/HDMI hardware audio output",
+    "Target PC FPS",
+    "Windows standalone build",
+    "Production Tailscale connection"
+  ],
+  "broadcastOutputCommit": "64a1b9b"
+}
