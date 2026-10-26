@@ -373,7 +373,7 @@ public class InputManager : MonoBehaviour
 
     void OnGUI()
     {
-        if (!IsSerialDebugDisplayVisible)
+        if (Gmanager.Control?.IsMaintenanceActive == true || !IsSerialDebugDisplayVisible)
         {
             return;
         }

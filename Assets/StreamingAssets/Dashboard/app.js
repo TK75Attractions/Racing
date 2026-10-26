@@ -8,6 +8,7 @@ let rawElements = new Map();
 let canSendSerial = false;
 let latestCanControl = false;
 let settingsBusy = false;
+let lastMaintenanceActive = null;
 let featureSignature = null;
 const featureElements = new Map();
 let inputControllerId = null, latestInputAllowed = false;
@@ -17,6 +18,7 @@ const labels = { Title: 'タイトル', CarSelection: '車選択', Tutorial: '�
 const details = { Title: '開始操作を待っています', CarSelection: '参加者が車を選んでいます', Tutorial: '参加者が操作を練習しています', Countdown: 'スタートまでまもなく', Game: 'レース進行中', Goal: '完走処理中', Result: '次のレースを選択できます' };
 const actions = { start: 'Title', tutorial: 'CarSelection', countdown: 'Tutorial', result: 'Game', retry: 'Result', title: 'Result' };
 function actionAvailable(action, snapshot) {
+  if (snapshot?.settings?.maintenanceActive) return false;
   const preparing = snapshot?.playerProgress || [];
   if (action === 'tutorial' && snapshot?.state === 'Tutorial')
     return preparing.some(player => ['Title', 'CarSelection'].includes(player.state));
@@ -254,11 +256,11 @@ function render(snapshot, { canControl = localMode, canInput = canControl } = {}
   latestSnapshot = snapshot;
   latestCanControl = canControl;
   renderSettings(snapshot.settings, canControl);
-  renderRemoteInputs(snapshot.inputControl, canInput);
+  renderRemoteInputs(snapshot.inputControl, canInput && !snapshot.settings?.maintenanceActive);
   currentState = snapshot.state;
   updateFlow(snapshot.state);
-  $('game-state').textContent = labels[snapshot.state] || snapshot.state;
-  $('state-detail').textContent = snapshot.state === 'Countdown' ? `あと ${Math.ceil(snapshot.countdown)} 秒` : (details[snapshot.state] || '状態を確認中');
+  $('game-state').textContent = snapshot.settings?.maintenanceActive ? 'メンテナンス中' : labels[snapshot.state] || snapshot.state;
+  $('state-detail').textContent = snapshot.settings?.maintenanceActive ? '全ゲーム画面で調整中の表示・進行停止中' : snapshot.state === 'Countdown' ? `あと ${Math.ceil(snapshot.countdown)} 秒` : (details[snapshot.state] || '状態を確認中');
   $('race-time').textContent = formatTime(snapshot.raceTime);
   renderPerformance(snapshot.performance);
   setGoalLap(snapshot.goalLap || '--');
@@ -284,7 +286,7 @@ function render(snapshot, { canControl = localMode, canInput = canControl } = {}
     $('steer-' + n).textContent = (player.steering || 0).toFixed(2);
   }
   updateActions(snapshot, canControl);
-  if (localMode) $('control-note').textContent = snapshot.state === 'Game' ? '「結果を表示」はレースを終了し、現在の記録で結果画面へ進みます。' : '現在のゲーム状態に応じて操作できます。';
+  if (localMode) $('control-note').textContent = snapshot.settings?.maintenanceActive ? 'メンテナンスを解除すると進行操作を再開できます。' : snapshot.state === 'Game' ? '「結果を表示」はレースを終了し、現在の記録で結果画面へ進みます。' : '現在のゲーム状態に応じて操作できます。';
   renderSerialAlerts(snapshot.serial, snapshot.inputMode, snapshot);
   renderLog(snapshot.serial.lines || []);
   renderTelemetry(snapshot.telemetry || null);
@@ -1074,7 +1076,23 @@ function renderFeatureSettings(settings) {
     'プリセットは今の準備から適用されます。各機能のON/OFFはすぐに反映されます。' : '';
 }
 
+function renderMaintenance(settings) {
+  const known = settings?.maintenanceAvailable === true && typeof settings.maintenanceActive === 'boolean';
+  if (known) lastMaintenanceActive = settings.maintenanceActive;
+  const active = known ? settings.maintenanceActive : lastMaintenanceActive === true;
+  const current = connected && known;
+  $('maintenance-panel').classList.toggle('is-active', active);
+  $('maintenance-status').textContent = current ? active ? 'メンテナンス中' : '通常表示' : active ? 'メンテナンス中（最後の確認）' : '状態未確認';
+  $('maintenance-description').textContent = !current ?
+    (active ? '接続が確認できません。ゲーム側のメンテナンス表示は保持されます。再接続後に状態を確認してください。' : 'Unity の接続・バージョンを確認してください。切替にはローカルまたはTailscaleの操作担当者権限が必要です。') :
+    active ? 'P1・P2・観戦画面に表示中。進行・入力・ゲーム音を停止しています。解除すると停止した段階から再開し、ペダルの解放を待ちます。' :
+    'P1・P2・観戦画面を一括で切り替えます。作動中は進行・入力・ゲーム音を停止し、再起動後も保持します。';
+  $('maintenance-start').hidden = active;
+  $('maintenance-stop').hidden = !active;
+}
+
 function renderSettings(settings, canControl) {
+  renderMaintenance(settings);
   renderFeatureSettings(settings);
   const enabled = connected && localMode && canControl && !!settings && !settingsBusy;
   document.querySelectorAll('[data-setting]').forEach(control => {
@@ -1084,6 +1102,7 @@ function renderSettings(settings, canControl) {
       available = !!settings?.inputAvailable;
     if (['constantPedal', 'constantPaused'].includes(command)) available &&= settings?.steeringMode === 'ConstantPedal';
     if (['feature', 'preset', 'allFeaturesOff'].includes(command)) available = !!settings?.featuresAvailable;
+    if (command === 'maintenance') available = settings?.maintenanceAvailable === true;
     if (command === 'testRace') available = !!settings?.canStartTestRace;
     if (command === 'device') available = !!settings?.outputAvailable?.[Number(control.dataset.settingArg)];
     if (command === 'refreshDevices') available = !!settings?.audioRefreshAvailable;
@@ -1166,7 +1185,7 @@ async function submitSetting(control) {
     // Release focused controls so the acknowledged Unity values can replace drafts.
     control.blur();
     renderSettings(connected ? latestSnapshot?.settings : null, connected && latestCanControl);
-    $('settings-status').textContent = result?.ok ? (command === 'testRace' ? 'テストレースを開始しました。' : '設定を反映しました。') : result ?
+    $('settings-status').textContent = result?.ok ? (command === 'maintenance' ? (args[0] === 'true' ? '全ゲーム画面をメンテナンス表示にしました。' : 'メンテナンスを解除しました。') : command === 'testRace' ? 'テストレースを開始しました。' : '設定を反映しました。') : result ?
       result.reason === 'audio_unavailable' ? '出力機器を開けませんでした。接続を確認して再検出してください。' :
       '設定またはゲーム状態が変わりました。最新の表示を確認して操作してください。' :
       '反映結果を確認できません。最新の設定を確認してください。操作は再送していません。';

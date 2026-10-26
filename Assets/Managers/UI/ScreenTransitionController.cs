@@ -256,6 +256,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         SetFadeInputBlocking(true);
 
         yield return FadeTo(1f, fadeOutSeconds);
+        yield return WaitForMaintenance();
         onScreenCovered?.Invoke();
         SetScreenVisibility(targetState);
 
@@ -265,7 +266,13 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
         SetFadeInputBlocking(false);
         IsTransitioning = false;
+        yield return WaitForMaintenance();
         onCompleted?.Invoke();
+    }
+
+    private static IEnumerator WaitForMaintenance()
+    {
+        while (Gmanager.Control?.IsMaintenanceActive == true) yield return null;
     }
 
     private IEnumerator ShowResultRoutine(Action onCompleted)
@@ -282,7 +289,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < resultEnterSeconds)
         {
-            elapsed += Time.unscaledDeltaTime;
+            elapsed += Gmanager.Control?.IsMaintenanceActive == true ? 0 : Time.unscaledDeltaTime;
             float t = resultEnterSeconds <= 0f ? 1f : Mathf.Clamp01(elapsed / resultEnterSeconds);
             float eased = 1f - Mathf.Pow(1f - t, 3f);
             if (resultCanvasGroup != null)
@@ -305,6 +312,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
             resultCanvasGroup.alpha = 1f;
         }
         IsTransitioning = false;
+        yield return WaitForMaintenance();
         onCompleted?.Invoke();
     }
 
@@ -323,7 +331,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < resultExitSeconds)
         {
-            elapsed += Time.unscaledDeltaTime;
+            elapsed += Gmanager.Control?.IsMaintenanceActive == true ? 0 : Time.unscaledDeltaTime;
             float t = resultExitSeconds <= 0f ? 1f : Mathf.Clamp01(elapsed / resultExitSeconds);
             float eased = t * t;
             if (resultCanvasGroup != null)
@@ -340,6 +348,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         }
 
         yield return FadeTo(1f, fadeOutSeconds);
+        yield return WaitForMaintenance();
         onScreenCovered?.Invoke();
         SetScreenVisibility(targetState);
         yield return null;
@@ -349,6 +358,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         RestoreResultRows(celebrateWinner: false);
         SetFadeInputBlocking(false);
         IsTransitioning = false;
+        yield return WaitForMaintenance();
         onCompleted?.Invoke();
     }
 
@@ -369,7 +379,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < duration)
         {
-            elapsed += Time.unscaledDeltaTime;
+            elapsed += Gmanager.Control?.IsMaintenanceActive == true ? 0 : Time.unscaledDeltaTime;
             fadeCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, Mathf.Clamp01(elapsed / duration));
             yield return null;
         }

@@ -138,7 +138,7 @@ public sealed class GoalCelebrationUI : MonoBehaviour
         const float enterSeconds = 0.62f;
         while (elapsed < enterSeconds)
         {
-            elapsed += Time.unscaledDeltaTime;
+            elapsed += Gmanager.Control?.IsMaintenanceActive == true ? 0 : Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / enterSeconds);
             float eased = 1f - Mathf.Pow(1f - t, 3f);
             float overshoot = 1f + Mathf.Sin(t * Mathf.PI) * 0.12f;
@@ -153,14 +153,19 @@ public sealed class GoalCelebrationUI : MonoBehaviour
         float holdSeconds = Mathf.Max(0f, visibleSeconds - enterSeconds - 0.45f);
         if (holdSeconds > 0f)
         {
-            yield return new WaitForSecondsRealtime(holdSeconds);
+            float held = 0;
+            while (held < holdSeconds)
+            {
+                held += Gmanager.Control?.IsMaintenanceActive == true ? 0 : Time.unscaledDeltaTime;
+                yield return null;
+            }
         }
 
         elapsed = 0f;
         const float exitSeconds = 0.45f;
         while (elapsed < exitSeconds)
         {
-            elapsed += Time.unscaledDeltaTime;
+            elapsed += Gmanager.Control?.IsMaintenanceActive == true ? 0 : Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / exitSeconds);
             canvasGroup.alpha = 1f - t * t;
             hero.localScale = Vector3.one * Mathf.Lerp(1f, 1.08f, t);

@@ -37,6 +37,10 @@
         </form>
         <div id="remote-account" hidden><span id="remote-user"></span><button id="remote-signout" type="button">ログアウト</button></div>
       </section>
+      <section id="maintenance-panel" class="maintenance-panel" aria-labelledby="maintenance-title">
+        <div><span class="section-kicker">SERVICE / ALL SCREENS</span><h2 id="maintenance-title">メンテナンスモード <span id="maintenance-status" class="mini-status" role="status" aria-live="polite">確認待ち</span></h2><p id="maintenance-description">Unity に接続すると切り替えられます。</p></div>
+        <div class="maintenance-actions"><button id="maintenance-start" type="button" data-setting="maintenance" value="true" disabled>全画面をメンテナンス表示にする</button><button id="maintenance-stop" type="button" data-setting="maintenance" value="false" hidden disabled>メンテナンスを解除する</button></div>
+      </section>
       <section id="page-home" class="dashboard-page" data-page="home" aria-label="ホーム">
  <div class="home-stats"><article class="stat"><span class="stat-label">レースタイム</span><strong class="mono" id="race-time">00:00.0</strong><small>経過時間</small></article><article class="stat"><span class="stat-label">規定周回</span><strong class="mono" id="goal-lap">--<span class="unit"> LAPS</span></strong><small>ゴールまでの周回数</small></article><article class="stat performance-stat"><span class="stat-label">現在のFPS</span><strong class="mono"><span id="fps">--</span><span class="unit"> FPS</span></strong><small id="frame-time">Unity全体 · 計測待ち</small></article><article class="stat device-summary" aria-label="機器の概要">
           <span class="stat-label">機器の接続 <span aria-hidden="true">↗</span></span>

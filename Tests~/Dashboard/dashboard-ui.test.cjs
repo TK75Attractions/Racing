@@ -398,7 +398,7 @@ test('Repeated reports update one active issue and a recurrence restarts the rec
 
 
 test('Preview retries preserve good frames, decode before display, and release every replaced URL', async () => {
-  const ui = fixture(); ui.render(base);
+  const ui = fixture(); ui.render(base); vm.runInContext("activePage='race'",ui.context);
   const revoked = []; let next = 0; let fail = false;
   ui.context.AbortSignal = AbortSignal;
   ui.context.URL = {createObjectURL: () => 'blob:'+(++next), revokeObjectURL: url => revoked.push(url)};
@@ -420,7 +420,7 @@ test('Preview retries preserve good frames, decode before display, and release e
 });
 
 test('Preview fetches cannot overlap or restore stale images after a disconnect', async () => {
-  const ui = fixture(); ui.render(base);
+  const ui = fixture(); ui.render(base); vm.runInContext("activePage='race'",ui.context);
   const revoked = []; const pending = []; let calls = 0;
   ui.context.AbortSignal = AbortSignal;
   ui.context.URL = {createObjectURL: () => 'blob:'+calls, revokeObjectURL: url => revoked.push(url)};
@@ -673,4 +673,40 @@ test('Recovery is available without takeover and never acquires a movement lease
   assert.equal(calls[0][1].command,'recover');assert.deepEqual(calls[0][1].args,['0']);
   ui.render({...base,inputControl:control},{canControl:false});
   assert.equal(ui.inputButtons.find(b=>b.dataset.inputPulse==='reset').disabled,true);
+});
+
+
+test('Maintenance covers every game phase while an authorized operator can always clear it',()=>{
+  const ui=fixture();
+  for(const state of ['Title','CarSelection','Tutorial','Countdown','Game','Goal','Result']) {
+    ui.render({...base,state,settings:{maintenanceAvailable:true,maintenanceActive:true}},{canControl:true});
+    assert.equal(ui.elements.get('maintenance-status').textContent,'メンテナンス中');
+    assert.equal(ui.elements.get('maintenance-start').hidden,true);
+    assert.equal(ui.elements.get('maintenance-stop').hidden,false);
+    assert.equal(ui.elements.get('maintenance-stop').disabled,false);
+    assert.ok(ui.buttons.every(button=>button.disabled));
+    assert.equal(ui.elements.get('game-state').textContent,'メンテナンス中');
+  }
+  ui.render({...base,settings:{maintenanceAvailable:true,maintenanceActive:true}},{canControl:false});
+  assert.equal(ui.elements.get('maintenance-stop').disabled,true);
+  ui.context.setConnection(false);
+  assert.match(ui.elements.get('maintenance-status').textContent,/最後の確認/);
+  assert.equal(ui.elements.get('maintenance-stop').disabled,true);
+  ui.render({...base,settings:{maintenanceAvailable:true,maintenanceActive:false}},{canControl:true});
+  assert.equal(ui.elements.get('maintenance-status').textContent,'通常表示');
+  assert.equal(ui.elements.get('maintenance-start').hidden,false);
+  ui.render({...base,settings:{}});
+  assert.equal(ui.elements.get('maintenance-start').disabled,true);
+});
+
+test('Maintenance submits explicit on/off through the existing versioned settings channel',async()=>{
+  const ui=fixture();const sent=[];
+  ui.context.AbortSignal=AbortSignal;ui.context.crypto={randomUUID:()=> 'maintenance-request'};
+  ui.context.maintenanceSent=(action,payload)=>sent.push({action,...JSON.parse(JSON.stringify(payload))});
+  vm.runInContext("liveController={command:async(action,payload)=>{maintenanceSent(action,payload);return {ok:true,settingsRevision:3,settings:{maintenanceAvailable:true,maintenanceActive:true}};}}",ui.context);
+  ui.render({...base,sessionId:'s',settingsRevision:2,settings:{maintenanceAvailable:true,maintenanceActive:false}});
+  const button=ui.elements.get('maintenance-start');button.value='true';button.blur=()=>{};
+  await ui.context.submitSetting(button);
+  assert.deepEqual(sent,[{action:'settings',command:'maintenance',args:['true'],settingsRevision:2}]);
+  assert.equal(ui.elements.get('maintenance-stop').hidden,false);
 });
