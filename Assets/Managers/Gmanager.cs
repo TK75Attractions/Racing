@@ -104,6 +104,10 @@ public class Gmanager : MonoBehaviour
     [SerializeField, Range(0.1f, 1f)] private float resultSteeringThreshold = 0.45f;
     [SerializeField, Min(1.2f)] private float goalCelebrationSeconds = 5.5f;
 
+    [Header("Debug UI")]
+    [Tooltip("DEBUG RACE CONTROLSだけを表示・非表示にします。キーボード等のデバッグ入力は変更しません。")]
+    [SerializeField] private bool showDebugRaceControls = true;
+
     [Header("Camera")]
     [SerializeField] private float cameraBlendSeconds = 0.65f;
     [Header("HUD")]
@@ -426,7 +430,7 @@ public class Gmanager : MonoBehaviour
 
     private void OnGUI()
     {
-        if (IManager == null || !IManager.IsAnyDebugMode || Features?.PanelVisible == true)
+        if (!showDebugRaceControls || IManager == null || !IManager.IsAnyDebugMode || Features?.PanelVisible == true)
         {
             return;
         }
