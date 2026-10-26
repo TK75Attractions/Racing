@@ -2,7 +2,7 @@
 /// 車両へ渡す入力をプレイヤー単位で停止し、ペダルの前進・後退方向を切り替えます。
 /// 元の入力ソースの更新と破棄は InputManager が所有します。
 /// </summary>
-public sealed class PlayerDriveInputGate : IDriveInputSource, IDriveInputStatusSource
+public sealed class PlayerDriveInputGate : IDriveInputSource, IDriveSteeringCalibration, IDriveInputStatusSource
 {
     // Only transitions are published; inspecting diagnostics never consumes player input.
     public static event System.Action<PlayerDriveInputGate, string> ReleaseChanged;
@@ -11,6 +11,7 @@ public sealed class PlayerDriveInputGate : IDriveInputSource, IDriveInputStatusS
 
     public int PlayerIndex => source?.PlayerIndex ?? -1;
     public string DeviceId => source?.DeviceId ?? string.Empty;
+    public float FullSteeringInput => DriveSteeringCalibration.Range(source);
     public bool IsConnected => source != null && source.IsConnected;
     public DriveConnectionState ConnectionState => DriveInputStatus.Of(source);
     public bool IsBlocked { get; private set; }

@@ -60,10 +60,10 @@ public class DebugMover : MonoBehaviour
     private float CorneringBoostScale => 1f - Mathf.Clamp01(corneringBrakingAcceleration / 4f);
 
     [Header("Drift")]
-    [Tooltip("ドリフトを開始する生のハンドル入力の絶対値（高速時の操舵補正前）。")]
+    [Tooltip("ドリフト開始入力（最大30の共通単位、高速補正前）。実ハンドル90度が30、既定値8は24度相当。")]
     [SerializeField, Min(0.01f)] private float driftStartHandle = 8f;
 
-    [Tooltip("チャージが最大速度でたまるハンドル入力の絶対値。")]
+    [Tooltip("チャージ最大速度の入力（最大30の共通単位）。既定値30は実ハンドル90度相当。")]
     [SerializeField, Min(0.01f)] private float driftFullChargeHandle = 30f;
 
     [SerializeField, Min(0f)] private float maxDriftCharge = 3f;
@@ -679,7 +679,8 @@ public class DebugMover : MonoBehaviour
         rawPedalInput = input.pedal;
         appliedPedalInput = Mathf.Clamp(rawPedalInput, -1f, 1f);
         // コンフューズ中はハンドルを左右反転します。ドリフト判定も反転後の値で行います。
-        rawSteeringInput = input.steering * (itemEffects != null ? itemEffects.SteeringSign : 1f);
+        rawSteeringInput = DriveSteeringCalibration.CanonicalInput(input.steering, DriveSteeringCalibration.Range(inputSource))
+            * (itemEffects != null ? itemEffects.SteeringSign : 1f);
         if (itemEffects != null && itemEffects.BlocksDriverInput)
         {
             ClearUserInput();

@@ -18,6 +18,17 @@ public static class SteeringValidation
         public void Dispose() { }
     }
 
+    private sealed class CalibratedInput : IDriveInputSource, IDriveSteeringCalibration
+    {
+        public int PlayerIndex => 0;
+        public string DeviceId => "CALIBRATION";
+        public bool IsConnected => true;
+        public float FullSteeringInput { get; set; } = 90f / 6.5f;
+        public DriveInputState CurrentState { get; set; }
+        public void UpdateInput(float deltaTime) { }
+        public void Dispose() { }
+    }
+
     [MenuItem("Racing/Validate Steering")]
     public static void Run()
     {
@@ -79,6 +90,7 @@ public static class SteeringValidation
             Near(mover.SteeringSpeedMultiplier, 1f, "Respawn must reset the steering multiplier.");
 
             ValidateComfort(mover, body, input);
+            ValidatePhysicalCalibration(mover, body, input);
 
             Debug.Log("Steering validation passed.");
         }
@@ -86,6 +98,44 @@ public static class SteeringValidation
         {
             UnityEngine.Object.DestroyImmediate(car);
         }
+    }
+
+    private static void ValidatePhysicalCalibration(DebugMover mover, Rigidbody body, StubInput keyboard)
+    {
+        var serial = new CalibratedInput { CurrentState = new DriveInputState { steering = 90f / 6.5f } };
+        var testMode = new P1SteeringTestInputSource(serial, keyboard) { Serial = serial };
+        var lease = new DashboardInputLease();
+        double now = 0;
+        var dashboard = new DashboardDriveInputSource(testMode, lease, () => now);
+        var live = new LiveDriveInputSource(0); live.SwitchSource(dashboard, false);
+        var gate = new PlayerDriveInputGate(live); mover.SetInputSource(gate);
+        Set(mover, "inputSuppressedUntil", -1f);
+        Set(mover, "steeringDeadzone", 0f); Set(mover, "steeringResponseSeconds", 0f);
+        Set(mover, "enableSpeedSensitiveSteering", false);
+        body.linearVelocity = Vector3.zero;
+        typeof(DebugMover).GetMethod("ReadInput", PrivateInstance).Invoke(mover, null);
+        Near(mover.RawSteeringInput, 30f, "Physical 90-degree full lock must survive every live input adapter.");
+        Near(mover.AppliedSteeringAngle, 30f, "Physical full lock must reach the selected maximum at rest.");
+        foreach (var mode in new[] { P1SteeringTestMode.Normal, P1SteeringTestMode.KeyboardPedal, P1SteeringTestMode.ConstantPedal })
+        {
+            testMode.Mode = mode;
+            Near(gate.FullSteeringInput, serial.FullSteeringInput, "Wheel-only modes must keep the serial calibration.");
+        }
+        serial.CurrentState = new DriveInputState { steering = -45f / 6.5f };
+        typeof(DebugMover).GetMethod("ReadInput", PrivateInstance).Invoke(mover, null);
+        Near(mover.RawSteeringInput, -15f, "Physical half lock must be symmetric before the speed safety cap.");
+        Near(gate.CurrentState.steering, serial.CurrentState.steering, "Menus must retain original transport units.");
+        var config = new Esp32SerialConfiguration();
+        Near(config.SteeringLockDegrees, 90f, "Default physical full lock must be 90 degrees.");
+        Near(config.FullSteeringInput * config.SteeringDivisor, 90f, "Transport division must not change physical calibration.");
+        Near(DriveSteeringCalibration.CanonicalInput(float.NaN, 30f), 0f, "Invalid steering must remain neutral.");
+        Near(DriveSteeringCalibration.CanonicalInput(10f, float.NaN), 10f, "Invalid calibration must fall back to canonical units.");
+        testMode.Mode = P1SteeringTestMode.Normal;
+        live.SwitchSource(keyboard, false);
+        Near(gate.FullSteeringInput, 30f, "Switching to keyboard must restore canonical input units.");
+        keyboard.CurrentState = new DriveInputState { steering = 10f };
+        typeof(DebugMover).GetMethod("ReadInput", PrivateInstance).Invoke(mover, null);
+        Near(mover.RawSteeringInput, 10f, "Keyboard and automatic drivers must retain their existing steering scale.");
     }
 
     private static void ValidateComfort(DebugMover mover, Rigidbody body, StubInput input)

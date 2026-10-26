@@ -1,12 +1,13 @@
 using System;
 
 /// <summary>Stable handle shared by menus, practice and cars while InputManager replaces devices.</summary>
-public sealed class LiveDriveInputSource : IDriveInputSource, IDriveInputStatusSource, IDrivePedalReleaseObserver
+public sealed class LiveDriveInputSource : IDriveInputSource, IDriveSteeringCalibration, IDriveInputStatusSource, IDrivePedalReleaseObserver
 {
     private IDriveInputSource source;
     private bool needsPedalRelease;
     public int PlayerIndex { get; }
     public string DeviceId => source?.DeviceId ?? string.Empty;
+    public float FullSteeringInput => DriveSteeringCalibration.Range(source);
     public bool IsConnected => source?.IsConnected == true;
     public DriveConnectionState ConnectionState => DriveInputStatus.Of(source);
     public DriveInputState CurrentState

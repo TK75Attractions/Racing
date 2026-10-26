@@ -1,0 +1,41 @@
+{
+  "base": "237db2b",
+  "unity": "6000.3.9f1",
+  "editMode": {
+    "passed": 166,
+    "failed": 0
+  },
+  "monoCore": {
+    "passed": 166,
+    "failed": 0
+  },
+  "dashboardUi": {
+    "passed": 54,
+    "failed": 0
+  },
+  "relay": {
+    "passed": 29,
+    "failed": 0,
+    "skipped": 1,
+    "testPorts": [
+      18765,
+      18766
+    ],
+    "note": "一時ソースコピー内で固定ポートのみ置換。既存8765/8766サービスとの競合を回避。既定OFFのSerial Lab/実PTY試験1件は未実行。"
+  },
+  "push": {
+    "checks": 31,
+    "result": "pass",
+    "transport": "captured local HTTP handler"
+  },
+  "physics": {
+    "highSpeedCorneringTrials": 31,
+    "abruptSteeringTrials": 86,
+    "playModeStabilityTrials": 58,
+    "result": "pass"
+  },
+  "selection": "pass",
+  "multiplayerFlow": "pass",
+  "physicalCabinet": "not tested",
+  "knownStartupEditorMessage": "UnityEditor.Search.SearchDatabase indexing ArgumentOutOfRangeException; tests completed successfully."
+}

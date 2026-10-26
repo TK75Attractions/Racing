@@ -3,9 +3,10 @@ using System;
 // Exercise the production handle and car gate together, without Unity/device substitutes in their code.
 public static class LiveInputTests
 {
-    private sealed class Device : IDriveInputSource, IDriveInputStatusSource, IDrivePedalReleaseObserver
+    private sealed class Device : IDriveInputSource, IDriveSteeringCalibration, IDriveInputStatusSource, IDrivePedalReleaseObserver
     {
         public int PlayerIndex => 0;
+        public float FullSteeringInput { get; set; } = 30f;
         public string DeviceId { get; set; }
         public bool IsConnected { get; set; } = true;
         public DriveConnectionState OfflineState = DriveConnectionState.SerialDisconnected;
@@ -57,10 +58,32 @@ public static class LiveInputTests
             "The stable handle must leave device updates and ownership to InputManager.");
         live.SwitchSource(null, true);
         Require(!live.IsConnected && live.CurrentState.pedal == 0f, "Detaching must never expose disposed input.");
+        TestCalibrationRouting();
         TestDashboardInput();
         TestReleaseDiagnostics();
         Console.WriteLine("LIVE_INPUT_PASS: startup, live car/practice routing, release gate, pause/reverse, disconnect, constant resume and ownership.");
     }
+    private static void TestCalibrationRouting()
+    {
+        var physical = new Device { FullSteeringInput = 90f / 6.5f, State = new DriveInputState { steering = 45f / 6.5f } };
+        var lease = new DashboardInputLease(); double now = 0;
+        var dashboard = new DashboardDriveInputSource(physical, lease, () => now);
+        var live = new LiveDriveInputSource(0); live.SwitchSource(dashboard, false);
+        var gate = new PlayerDriveInputGate(live);
+        Require(Math.Abs(DriveSteeringCalibration.CanonicalInput(gate.CurrentState.steering, gate.FullSteeringInput) - 15f) < .0001f,
+            "Physical half lock must survive dashboard/live/gate routing.");
+        // The dashboard supplies canonical keyboard units even over a calibrated serial device.
+        Require(lease.TryApply("calibration-test", 1, "begin", DashboardInputButtons.Right, now, out _), "Begin remote lease.");
+        dashboard.UpdateInput(0); dashboard.UpdateInput(0);
+        Require(gate.FullSteeringInput == 30f && gate.CurrentState.steering == 10f,
+            "A remote key lease must use keyboard scale rather than physical calibration.");
+        now = 10; dashboard.UpdateInput(0);
+        Require(Math.Abs(gate.FullSteeringInput - physical.FullSteeringInput) < .0001f,
+            "Lease expiry must restore physical scale.");
+        live.SwitchSource(new Device { FullSteeringInput = 6f }, false);
+        Require(gate.FullSteeringInput == 6f, "A retained gate must follow calibration when devices change.");
+    }
+
     private static void TestReleaseDiagnostics()
     {
         var device = new Device { State = new DriveInputState { pedal = .8f }, OfflineState = DriveConnectionState.TelemetryStale };

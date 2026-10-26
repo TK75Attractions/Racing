@@ -23,7 +23,7 @@ GET_STATUSで両センサーの正常を確認したら、PINGやGET_CONFIG等�
 @TEL,13,8210,-12.50,0.750,0.000,25.00,0.000,0.400*7118\n
 ```
 
-TELの順序は `P1_HANDLE,P1_ACCEL,P1_BRAKE,P2_HANDLE,P2_ACCEL,P2_BRAKE`。ハンドルは右旋回が正の累積角度（±3600 degree）、各ペダルは0〜1です。通信層では6項目を独立して保持します。ゲーム入力への変換時に `pedal = accel - brake`、`steering = handle / Steering Divisor` とします。既存シーンのSteering Divisor=6.5は維持します。リセットは従来どおりキーボード操作です。
+TELの順序は `P1_HANDLE,P1_ACCEL,P1_BRAKE,P2_HANDLE,P2_ACCEL,P2_BRAKE`。ハンドルは右旋回が正の累積角度（±3600 degree）、各ペダルは0〜1です。通信層では6項目を独立して保持します。ゲーム入力への変換時に `pedal = accel - brake`、`steering = handle / Steering Divisor` とします。既存シーンのSteering Divisor=6.5は維持します。 車両だけが `Steering Lock Degrees`（既定90°）を最大30の共通単位へ校正します。通信記録・メニュー入力は元の単位を使います。詳しくは[Steering.md](Steering.md)を参照してください。リセットは従来どおりキーボード操作です。
 
 CRCは `@` の直後から `*` の直前までに対するCRC-16/CCITT-FALSE（初期値FFFF、多項式1021、反転なし、XOR Out=0）です。CRCは大文字16進4桁、LF終端、CRLF受信も許可します。最大長はLF込み256 bytes（CRLF時のみ257 bytes）。前後の空白を取り除いて受理せず、非ASCII・空フィールド・不正な数値構文・範囲外・CRC不一致を拒否します。
 
