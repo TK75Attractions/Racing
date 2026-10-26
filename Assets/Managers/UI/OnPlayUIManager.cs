@@ -19,6 +19,9 @@ public class OnPlayUIManager
     private RectTransform driverNotice;
     private TMPro.TMP_Text driverNoticeText;
     private string displayedNotice;
+    private readonly DriverNoticeQueue notices = new DriverNoticeQueue();
+    private ArcadeSurfaceGraphic noticeSurface;
+    private int noticePlayer;
     private ArcadeNoticeRail quiet;
     private ArcadeHUDTelemetry telemetry;
     private readonly LapComparison lapComparison=new LapComparison();
@@ -47,10 +50,17 @@ public class OnPlayUIManager
         if (miniMap == null) miniMap = new UIMiniMap();
 
         Transform hud = RacingHUDBuilder.Build(parent, playerIndex, totalLaps);
-        quiet=ArcadeNoticeRail.Get(parent.parent);telemetry=hud.GetComponent<ArcadeHUDTelemetry>();
-        driverNotice = NeonUI.Panel(hud, "DriverNotice", new Vector2(.32f,.58f), new Vector2(.70f,.72f));
-        driverNoticeText = NeonUI.Text(driverNotice, "Text", "", new Vector2(.04f,.08f), new Vector2(.96f,.92f),
-            32f, TMPro.TextAlignmentOptions.Center, true, RacingUITheme.Gold);
+        quiet=ArcadeNoticeRail.Get(parent.parent != null ? parent.parent : parent);telemetry=hud.GetComponent<ArcadeHUDTelemetry>();
+        noticePlayer = playerIndex;
+        notices.Clear();
+        var palette = ArcadeUI.For(playerIndex);
+        driverNotice = ArcadeUI.Panel(hud, "DriverNotice", new Vector2(.30f,.74f), new Vector2(.70f,.82f), palette.Ink);
+        noticeSurface = driverNotice.GetComponent<ArcadeSurfaceGraphic>();
+        RacingUITheme.Rule(driverNotice, "Accent", new Vector2(0,.14f), new Vector2(.009f,.86f), palette.Primary);
+        driverNoticeText = ArcadeUI.Label(driverNotice, "Text", "", new Vector2(.04f,.08f), new Vector2(.96f,.92f),
+            29f, palette.Paper, alignment: TMPro.TextAlignmentOptions.Center);
+        driverNoticeText.textWrappingMode = TMPro.TextWrappingModes.Normal;
+        driverNoticeText.fontSizeMin = 24f;
         driverNotice.gameObject.SetActive(false);
         displayedNotice = null;
         fieldSize = hud.Find("Position/Field")?.GetComponent<TMPro.TMP_Text>();
@@ -85,22 +95,51 @@ public class OnPlayUIManager
 
     public void UpdateDriverNotice(PlayerDriveInputGate gate, CarResetter resetter, bool racing, bool jumpAhead = false, string coachingNotice = "", bool slipstreamBoosting = false, string challengeNotice = "", string tubeNotice = "", bool autodrive = false)
     {
-        string inputNotice = gate == null || gate.IsBlocked ? "" : DriverInputNotice.Connection(gate.Source);
+        float now = UnityEngine.Time.unscaledTime;
+        if (!racing || gate?.IsBlocked == true)
+        {
+            notices.Clear();
+            quiet?.Set(0, "");
+            ShowDriverNotice(null);
+            return;
+        }
+        string inputNotice = gate == null ? "" : DriverInputNotice.Connection(gate.Source);
         string pedalNotice = DriverInputNotice.Pedal(gate?.Source);
-        string text = !racing || gate?.IsBlocked == true ? "" : inputNotice.Length > 0 ? inputNotice :
+        string critical = inputNotice.Length > 0 ? inputNotice :
             resetter != null && resetter.IsRecoveryPending ? "コース復帰待ち" :
             gate != null && gate.NeedsPedalRelease ? DriverInputNotice.Release(gate.Source) :
-            pedalNotice.Length > 0 ? pedalNotice :
-            resetter != null && UnityEngine.Time.time - resetter.LastRecoveryTime < 1.5f ? "コースへ復帰しました" :
+            pedalNotice;
+        Condition("input", critical, DriverNoticePriority.Critical, now);
+        Condition("jump", jumpAhead ? "この先ジャンプ：まっすぐ加速" : "", DriverNoticePriority.Safety, now);
+        Condition("returned", resetter != null && UnityEngine.Time.time - resetter.LastRecoveryTime < 1.5f ? "コースへ復帰しました" : "", DriverNoticePriority.Guidance, now);
+        Condition("landing", challengeNotice, DriverNoticePriority.Success, now);
+        Condition("tube", tubeNotice, DriverNoticePriority.Guidance, now);
+        Condition("coaching", coachingNotice, DriverNoticePriority.Guidance, now);
+        Condition("slipstream", slipstreamBoosting ? "追走で加速！" : "", DriverNoticePriority.Success, now);
+        int viewedPlayer = gate != null && gate.PlayerIndex >= 0 ? gate.PlayerIndex : noticePlayer;
+        Condition("auto", autodrive ? "P" + (viewedPlayer + 1) + " 自動運転テスト中" : "", DriverNoticePriority.Success, now);
+        // A safety instruction must survive rival/item messages in the quiet rail.
+        quiet?.Set(0, "");
+        ShowDriverNotice(notices.Tick(now));
+    }
 
-            !string.IsNullOrEmpty(challengeNotice) ? challengeNotice :
-            !string.IsNullOrEmpty(tubeNotice) ? tubeNotice :
-            !string.IsNullOrEmpty(coachingNotice) ? coachingNotice : slipstreamBoosting ? "追走で加速！" : autodrive ? "P2 自動運転テスト中" : "";
-        quiet?.Set(0,racing&&jumpAhead?"この先ジャンプ":"");
+    private void Condition(string key, string text, DriverNoticePriority priority, float now)
+    {
+        if (!string.IsNullOrEmpty(text)) notices.Submit(key, text, priority, now, condition: true);
+        else notices.Release(key);
+    }
+
+    private void ShowDriverNotice(DriverNoticeQueue.Notice notice)
+    {
+        string text = notice?.Text ?? "";
         if (text == displayedNotice || driverNotice == null) return;
         displayedNotice = text;
         driverNoticeText.text = text;
         driverNotice.gameObject.SetActive(text.Length > 0);
+        bool critical = notice != null && notice.Priority >= DriverNoticePriority.Safety;
+        var palette = ArcadeUI.For(noticePlayer);
+        noticeSurface.color = critical ? palette.Accent : palette.Ink;
+        driverNoticeText.color = critical ? palette.Ink : palette.Paper;
     }
 
     public void SetLapDelta(float? seconds)=>telemetry?.SetLapDelta(seconds);
@@ -117,6 +156,7 @@ public class OnPlayUIManager
 
     public void SetActive(bool isActive)
     {
+        if (!isActive) { notices.Clear(); quiet?.Clear(); ShowDriverNotice(null); }
         trans.gameObject.SetActive(isActive);
     }
 

@@ -30,13 +30,16 @@ Material:
     m_Ints: []
     m_Floats:
     - _BlurRadius: 0.15
-    - _CellOpacity: 0.205
-    - _CellTintAmount: 0.42
-    - _GridBrightness: 4
-    - _GridOpacity: 1
+    - _CellOpacity: 0.0615
+    - _CellTintAmount: 0.13
+    - _EdgeGlowIntensity: 2.5
+    - _EdgeLineWidth: 0.08
+    - _GridBrightness: 1.2
+    - _GridOpacity: 0.3
     - _GridTiling: 0.08
     m_Colors:
     - _CellTint: {r: 0.45, g: 0.75, b: 0.85, a: 1}
+    - _EdgeGlowColor: {r: 0.05, g: 1.5, b: 2, a: 1}
     - _GridColor: {r: 0.15, g: 0.85, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -237,12 +237,79 @@ public sealed class RgpOperatorCommandTests
         session.TryCommand("GET_STATUS", null, 4001, out status, out _);
         session.Receive(Frame("ACK,12,0,"+status+",GET_STATUS,OK,WAIT_ANGLE,1,1,0,1"), 4002);
         session.Tick(4003);
+        Assert.That(sent.Count, Is.EqualTo(count+1), "Let the orientation filters settle after calibration, including a missed CAL_DONE.");
+        session.Tick(10002);
         Assert.That(sent[sent.Count-1], Does.Contain(",ANGLE_ZERO*"));
-        Assert.That(session.IsFresh(4003), Is.False);
+        Assert.That(session.IsFresh(10002), Is.False);
         SerialInputProtocol.TryParse(sent[sent.Count-1], out RgpFrame zero);
-        session.Receive(Frame("ACK,13,0,"+zero.Sequence+",ANGLE_ZERO,OK"), 4004);
-        session.Tick(4005);
+        session.Receive(Frame("ACK,13,0,"+zero.Sequence+",ANGLE_ZERO,OK"), 10003);
+        session.Tick(10004);
         Assert.That(sent.Count, Is.EqualTo(count+2));
+    }
+
+    [Test] public void FirmwareCanLockItsReferenceAfterCalibrationWithoutPrematureAngleZero()
+    {
+        var session = Ready(out var sent);
+        session.Receive(Frame("EVT,10,0,CAL_START,AUTO,ALL"), 10);
+        session.Receive(Frame("EVT,11,0,STATE,CALIBRATING"), 11);
+        session.Receive(Frame("EVT,12,0,CAL_DONE,AUTO,ALL"), 16000);
+        session.Receive(Frame("EVT,13,0,STATE,WAIT_ANGLE"), 16001);
+        session.TryCommand("GET_STATUS", null, 16002, out uint status, out _);
+        session.Receive(Frame("ACK,14,0,"+status+",GET_STATUS,OK,WAIT_ANGLE,1,1,0,1"), 16003);
+        int count = sent.Count;
+        session.Tick(16004); session.Tick(20999);
+        Assert.That(sent.Count, Is.EqualTo(count), "The physical firmware needs five seconds after CAL_DONE to settle.");
+        session.Receive(Frame("EVT,15,0,ANGLE_LOCKED"), 21000);
+        session.Receive(Frame("EVT,16,0,STATE,READY"), 21001);
+        session.Receive(Frame("TEL,17,0,0,0,0,0,0,0"), 21002);
+        Assert.That(session.IsFresh(21003), Is.True);
+        session.Tick(23000);
+        Assert.That(sent.Count, Is.EqualTo(count), "A reference locked by the device must not be reset by the host.");
+    }
+
+    [Test] public void LegacyFirmwareGetsOneAngleRequestAfterPostCalibrationSettling()
+    {
+        var session = Ready(out var sent);
+        session.Receive(Frame("EVT,10,0,CAL_START,AUTO,ALL"), 10);
+        session.Receive(Frame("EVT,11,0,CAL_DONE,AUTO,ALL"), 100);
+        session.TryCommand("GET_STATUS", null, 101, out uint status, out _);
+        session.Receive(Frame("ACK,12,0,"+status+",GET_STATUS,OK,WAIT_ANGLE,1,1,0,1"), 102);
+        int count = sent.Count;
+        session.Tick(6099); Assert.That(sent.Count, Is.EqualTo(count));
+        session.Tick(6100); Assert.That(sent[sent.Count-1], Does.Contain(",ANGLE_ZERO*"));
+        SerialInputProtocol.TryParse(sent[sent.Count-1], out RgpFrame zero);
+        session.Receive(Frame("ACK,13,0,"+zero.Sequence+",ANGLE_ZERO,FAILED,ANGLE_REFERENCE_INVALID"), 6101);
+        session.Tick(13000); Assert.That(sent.Count, Is.EqualTo(count+1), "Failure must not cause repeated reference resets.");
+    }
+
+    [Test] public void TwoPlayerCalibrationWaitsForTheLateHandleDespiteAggregateImuOk()
+    {
+        var session = Ready(out var sent);
+        session.Receive(Frame("SYS,10,0,DEVICE,IMU,0x69,0x75"), 10);
+        session.Receive(Frame("EVT,11,0,IMU_FOUND"), 11);
+        session.TryCommand("GET_STATUS", null, 12, out uint status, out _);
+        session.Receive(Frame("ACK,12,0,"+status+",GET_STATUS,OK,WAIT_ANGLE,1,1,0,0"), 13);
+        int count = sent.Count;
+        session.Tick(14); session.Tick(1000);
+        Assert.That(sent.Count, Is.EqualTo(count), "P2 alone must not freeze the calibration targets before P1 reconnects.");
+        session.Receive(Frame("SYS,13,0,DEVICE,IMU,0x68,0x68"), 1500);
+        session.Receive(Frame("EVT,14,0,IMU_FOUND"), 1501);
+        session.Tick(1502);
+        Assert.That(sent[sent.Count-1], Does.Contain(",CALIBRATE,ALL*"));
+        Assert.That(sent.Count, Is.EqualTo(count+1));
+    }
+
+    [Test] public void P1OnlyCalibrationDoesNotWaitForUnusedP2OrPedalHardware()
+    {
+        var session = Ready(out var sent);
+        session.RequestInputMode(true); session.Tick(10);
+        SerialInputProtocol.TryParse(sent[sent.Count-1], out RgpFrame mode);
+        session.Receive(Frame("ACK,10,0,"+mode.Sequence+",SET_INPUT_MODE,OK,P1_STEERING"), 11);
+        session.Receive(Frame("SYS,11,0,DEVICE,IMU,0x68,0x68"), 12);
+        session.TryCommand("GET_STATUS", null, 13, out uint status, out _);
+        session.Receive(Frame("ACK,12,0,"+status+",GET_STATUS,OK,WAIT_ANGLE,0,1,0,0"), 14);
+        session.Tick(15);
+        Assert.That(sent[sent.Count-1], Does.Contain(",CALIBRATE,ALL*"));
     }
 
     [Test] public void SlowDiagnosticAckCannotDelayVerifiedStartupAnglePreparation()

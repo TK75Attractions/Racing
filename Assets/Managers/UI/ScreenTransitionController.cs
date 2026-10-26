@@ -161,6 +161,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     public void SetTitlePrompt(string promptText)
     {
+        if (promptText == "WAITING FOR THE OTHER PLAYER TO RETURN")
+            promptText = "もう一人の結果操作待ち\nそのまま待っていてね";
         if (titlePrompt != null && titlePrompt.text != promptText)
         {
             titlePrompt.text = promptText;
@@ -553,9 +555,12 @@ public sealed class ScreenTransitionController : MonoBehaviour
         titleButtonFeedback[playerIndex].SetConfirmed(ready);
         if (titlePrompt != null)
         {
-            titlePrompt.text = !armed
+            var input = Gmanager.Control != null ? Gmanager.Control.IManager : null;
+            string connection = input != null ? DriverInputNotice.Connection(input.GetPlayerInputSource(playerIndex)) : "";
+            string prompt = connection.Length > 0 ? connection + "\n係員に知らせてね" : !armed
                 ? "ペダルを離して準備してください"
                 : ready ? "準備完了  /  相手の準備を待っています" : "長押しで車の選択へ / ペダルを踏み込む";
+            if (titlePrompt.text != prompt) titlePrompt.text = prompt;
         }
     }
 

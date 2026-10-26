@@ -313,7 +313,11 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             }
             bool originalHighlight = manager.Features.Settings.IsEnabled(RaceFeature.ResultHighlights);
             manager.Features.SetValidationFeature(RaceFeature.ResultHighlights, false);
-            if (results[0].AchievementText.Length > 0 || results[1].AchievementText.Length > 0) suite.error = "Result highlight live OFF failed.";
+            // The compact arcade result has no achievement label. Its snapshot API is
+            // intentionally available even when presentation features are switched off.
+            for (int i = 0; i < 2; i++)
+                if (results[i].AchievementText != ResultUIManager.FormatHighlight(results[i].CurrentSessionResult?.GetPlayerResult(i)))
+                    suite.error = "Result achievement snapshot changed when presentation was disabled.";
             manager.Features.SetValidationFeature(RaceFeature.ResultHighlights, originalHighlight);
             File.WriteAllText(Path.Combine(folder, "result-highlights.txt"), observed);
         }

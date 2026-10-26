@@ -1,5 +1,7 @@
 # ダッシュボード 起動マニュアル
 
+ビルド済みアプリとTailscale管理画面を使った進行・操作・トラブル対応は、[RACING 運営マニュアル](CustomerServiceManual.md)を参照してください。
+
 他の人を各自のTailscaleアカウントで招待する場合は、[主催者向けの共有手順](DashboardSharingOwner.md)と[参加者向けの閲覧手順](DashboardSharingParticipant.md)を参照してください。以下の「同じアカウント」は、自分のスマホから使う場合の手順です。
 
 ## 1. PCで起動する

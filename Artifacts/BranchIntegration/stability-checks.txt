@@ -1,0 +1,8 @@
+STEERING_COMFORT_PASS response90=0.120s countersteer=0.020s centerNoise=0 movingNoiseRatio=0.250
+Steering validation passed.
+Drift validation passed.
+Visual effects validation passed.
+CAR_STABILITY_REGRESSION_CHECKS_PASS
+RESET_KEYS_PLAYMODE_PASS: independent Space/Slash resets through serial inputs, blocked while paused.
+CONTROLS_PLAYMODE_PASS: reset keys and dropdown popups/blockers on the owning display.
+CAR_STABILITY_PLAYMODE_PASS (58 trials):  report=Artifacts/BranchIntegration/Stability

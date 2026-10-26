@@ -1,0 +1,29 @@
+phase,condition,driver,finished,completedLaps,progressMeters,recoveries,offCourseSeconds,raceSeconds,finishSeconds,itemsUsed
+before,skill-fast-pace,P1,True,2,3808.385,0,0.0,107.457,107.481,0
+before,skill-fast-pace,P2,True,2,3808.385,0,0.0,107.457,105.481,0
+before,skill-fast-pace,CPU 1,False,1,3784.794,0,0.0,107.457,-1.0,0
+before,skill-fast-pace,CPU 2,True,2,3808.385,0,0.0,107.457,105.481,0
+before,skill-novice-expert,P1,False,0,171.236,43,82.458,360.603,-1.0,0
+before,skill-novice-expert,P2,True,2,3808.385,0,0.0,360.603,182.163,0
+before,skill-novice-expert,CPU 1,False,1,2895.333,0,0.0,360.603,-1.0,0
+before,skill-novice-expert,CPU 2,True,2,3808.385,0,0.0,360.603,180.163,0
+before,skill-disconnect-rejoin,P1,True,2,3808.385,0,0.0,227.536,225.557,0
+before,skill-disconnect-rejoin,P2,True,2,3808.385,0,0.0,227.536,227.557,0
+before,skill-disconnect-rejoin,CPU 1,True,2,3808.385,0,0.0,227.536,225.557,0
+before,skill-disconnect-rejoin,CPU 2,True,2,3808.385,0,0.0,227.536,227.557,0
+after,human-fast-items-7101,P1,True,2,3808.385,0,0.0,144.971,110.448,3
+after,human-fast-items-7101,P2,True,2,3808.385,1,0.0,144.971,144.993,3
+after,human-fast-items-7101,CPU 1,True,2,3808.385,0,0.0,144.971,140.69,0
+after,human-fast-items-7101,CPU 2,True,2,3808.385,1,0.0,144.971,110.448,0
+after,skill-fast-pace,P1,True,2,3808.385,0,0.0,107.409,107.431,0
+after,skill-fast-pace,P2,True,2,3808.385,0,0.0,107.409,105.431,0
+after,skill-fast-pace,CPU 1,False,1,3785.085,0,0.0,107.409,-1.0,0
+after,skill-fast-pace,CPU 2,True,2,3808.385,0,0.0,107.409,105.431,0
+after,skill-novice-expert,P1,False,1,3406.68,0,0.0,360.489,-1.0,0
+after,skill-novice-expert,P2,True,2,3808.385,0,0.0,360.489,183.322,0
+after,skill-novice-expert,CPU 1,False,1,3421.278,0,0.0,360.489,-1.0,0
+after,skill-novice-expert,CPU 2,True,2,3808.385,0,0.0,360.489,183.322,0
+after,skill-disconnect-rejoin,P1,True,2,3808.385,0,0.0,227.383,227.413,0
+after,skill-disconnect-rejoin,P2,True,2,3808.385,0,0.0,227.383,225.413,0
+after,skill-disconnect-rejoin,CPU 1,False,1,3793.976,0,0.0,227.383,-1.0,0
+after,skill-disconnect-rejoin,CPU 2,False,1,3791.847,0,0.0,227.383,-1.0,0

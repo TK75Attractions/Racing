@@ -1,0 +1,521 @@
+{
+  "base": "237db2b",
+  "date": "2026-10-26",
+  "branches": [
+    {
+      "branches": [
+        "Engine-sound",
+        "origin/Engine-sound"
+      ],
+      "sha": "e482f27057b63ce23f39380b8c84f656ad72387a",
+      "tipDate": "2026-10-03T09:30:24+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "retain-obsolete-prototype",
+      "reason": "旧Rotaryエンジン試作。現在のリアルエンジン音・独立音声出力で置換済み。旧Prefabと音声制御は取り込まない。"
+    },
+    {
+      "branches": [
+        "ODA_",
+        "origin/ODA_"
+      ],
+      "sha": "1bbaa4aed713eb98f1f44d30397621140da8acad",
+      "tipDate": "2026-07-15T12:43:18+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "retain-unrelated-history",
+      "reason": "共通祖先のない旧校舎・車両モデル系統。現在の学校マップとシーンを巻き戻さない。"
+    },
+    {
+      "branches": [
+        "backup/main-before-sync-20261018-afac944",
+        "codex/skill-playtest-improvements"
+      ],
+      "sha": "afac94442dc8fa1144560e92325afa2a2daac015",
+      "tipDate": "2026-10-18T09:27:41+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "checkpoint",
+        "origin/checkpoint"
+      ],
+      "sha": "28346c8cb931a1a7f59207cc61c6beefd98d1342",
+      "tipDate": "2026-09-23T16:31:50+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "retain-superseded",
+      "reason": "初回ゴール通過フラグと旧チェックポイント配置。現在はスタート位置・コース進捗に応じた判定と再配置済み。"
+    },
+    {
+      "branches": [
+        "codex/arcade-sport-ui"
+      ],
+      "sha": "6eb636009115d62f96c72818f04d1c193b22d3ec",
+      "tipDate": "2026-10-24T15:41:15+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/autonomous-race-polish",
+        "origin/codex/autonomous-race-polish"
+      ],
+      "sha": "200721dc4ba843ada1e050159a4a8998ec80a50e",
+      "tipDate": "2026-10-25T09:02:31+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/backup-dashboard-before-split-7f1ff39"
+      ],
+      "sha": "7f1ff39bedd2aaf98753513c960dcd3cf083f46f",
+      "tipDate": "2026-10-16T21:59:48+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/bugfix"
+      ],
+      "sha": "f6897034df6fd583c04ab45eb522e52a27e46435",
+      "tipDate": "2026-10-14T15:48:39+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/cabinet-mac-mount",
+        "origin/codex/cabinet-mac-mount"
+      ],
+      "sha": "eb3dc2f62f77ba67d78054bd778e5dc0db9e1fd1",
+      "tipDate": "2026-10-18T23:13:46+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "reconcile-keep-current",
+      "reason": "ca2e842の10月19日機種・寸法確定版を保持して履歴を統合。古い仮寸法へ戻さない。"
+    },
+    {
+      "branches": [
+        "codex/car-selection"
+      ],
+      "sha": "bb0fdcd06c45f11dd98c5161824f5f645712e8d1",
+      "tipDate": "2026-10-13T11:11:35+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/course-safety-playtests"
+      ],
+      "sha": "3642fe83d940ee1d1140e0d073e6ed1cc2e064f4",
+      "tipDate": "2026-10-16T16:56:38+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/dashboard-f8-settings"
+      ],
+      "sha": "ee4ae7d58ad603dac150a28ad66fef305f03abfd",
+      "tipDate": "2026-10-22T14:19:21+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/dashboard-fps"
+      ],
+      "sha": "0874b219926b48bd66ee51589d25e85b2d9c3673",
+      "tipDate": "2026-10-22T00:38:21+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/dashboard-live-settings"
+      ],
+      "sha": "d3e64a656dc3b059c867899be7c6d33ec4a236c2",
+      "tipDate": "2026-10-22T00:50:56+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/dashboard-player-input"
+      ],
+      "sha": "d504a00260e6e3d3d2e73647d529ce3ccaf1e0e3",
+      "tipDate": "2026-10-22T21:08:20+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/display-audio-stability",
+        "origin/codex/display-audio-stability"
+      ],
+      "sha": "d9b416096c675c0c774e059000fff708833d21a3",
+      "tipDate": "2026-10-18T23:13:49+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "reconcile-equivalent",
+      "reason": "git cherryで追加パッチなし。31f3226に統合済みの表示・音声修正を保持して履歴を統合。"
+    },
+    {
+      "branches": [
+        "codex/fix-course-crest-collisions"
+      ],
+      "sha": "799fd38edf6abc7aa53212be78ae632e98be651b",
+      "tipDate": "2026-10-07T13:57:04+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/fix-wall-bounce-speed"
+      ],
+      "sha": "2c5ec17bf09575293e04c03f974b0f445e6cfe04",
+      "tipDate": "2026-10-06T18:20:44+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/generate-race-course-road",
+        "origin/codex/generate-race-course-road"
+      ],
+      "sha": "4e36c07a7a5fec7e82583f78812d1b79ff47e152",
+      "tipDate": "2026-10-09T20:52:32+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/ignore-course-height"
+      ],
+      "sha": "e7ec16c7c7507de67ebacc536fcd7fadb529e549",
+      "tipDate": "2026-10-08T16:35:56+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/integrate-pending-changes",
+        "origin/codex/integrate-pending-changes"
+      ],
+      "sha": "3ee04ca621c52b96c5c59b5d5848324ccc7620ba",
+      "tipDate": "2026-10-18T13:46:04+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/integrate-rendering-audio"
+      ],
+      "sha": "fcc6622314a1fc75c6437ab59a77d9b187f930d0",
+      "tipDate": "2026-10-22T08:35:40+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/neon-marker-material-settings",
+        "origin/codex/neon-marker-material-settings"
+      ],
+      "sha": "911bb7d192ea3f2610a9dfe6dd4af25593d901ec",
+      "tipDate": "2026-10-18T23:13:46+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "reconcile-noise",
+      "reason": "マテリアル色の浮動小数点再シリアライズのみ。現在値を維持して履歴を統合。"
+    },
+    {
+      "branches": [
+        "codex/night-ennichi-arcade-ui",
+        "origin/codex/night-ennichi-arcade-ui"
+      ],
+      "sha": "2f6264fe01cd9cdc07df0577401413ecb5c45c76",
+      "tipDate": "2026-10-26T10:39:27+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "separate-active-experiment",
+      "reason": "依頼済みの夜景と新UIの検証用ブランチ。今回のmain整理とは分離。"
+    },
+    {
+      "branches": [
+        "codex/npc-race-participants"
+      ],
+      "sha": "f5f79d21b6ff17f950f6efaba914d4b09fbaa65f",
+      "tipDate": "2026-10-14T14:09:40+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/physical-startup-diagnosis"
+      ],
+      "sha": "6fa92839ba7ad6d5e4351948693b06664c71d93c",
+      "tipDate": "2026-10-23T23:07:22+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "integrate",
+      "reason": "実機起動待ち・個別IMU待ち・復旧表示・受信スレッドから診断処理を分離する6コミットを統合。"
+    },
+    {
+      "branches": [
+        "codex/playthrough-flow-fixes",
+        "origin/codex/playthrough-flow-fixes"
+      ],
+      "sha": "7257f558fde5cf44f817a5120e151c06b4d5103c",
+      "tipDate": "2026-10-11T14:56:24+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/preserve-020f-worktree",
+        "origin/codex/preserve-020f-worktree"
+      ],
+      "sha": "8db5c321ce1ec10c95283d6b7c3b07c8819e76e3",
+      "tipDate": "2026-10-18T23:13:48+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "retain-recovery-snapshot",
+      "reason": "HUDの加減速・操舵表示は現在版に存在。古い保存状態を全面適用すると安全修正と検証成果物を削除するため保持のみ。"
+    },
+    {
+      "branches": [
+        "codex/race-sound-effects"
+      ],
+      "sha": "c2cf7847c67b758202fe90bc4dd1fd05c5ae23f9",
+      "tipDate": "2026-10-21T16:22:39+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/racing-finish-and-control-fixes"
+      ],
+      "sha": "1c14761327be9714454c550c646da09967d3da01",
+      "tipDate": "2026-10-17T23:07:26+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/racing-gameplay-features",
+        "origin/codex/racing-gameplay-features"
+      ],
+      "sha": "23ec14641798aa9db3c9098947b5949a35378e20",
+      "tipDate": "2026-10-23T12:27:25+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/racing-polish",
+        "origin/codex/racing-polish"
+      ],
+      "sha": "595bc2df5a8f2631e80e67549f25acf76f0574d8",
+      "tipDate": "2026-10-13T10:25:35+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/realistic-engine-audio",
+        "origin/codex/realistic-engine-audio"
+      ],
+      "sha": "3268c9aac1466439ad1a4eea56a9f9df30527701",
+      "tipDate": "2026-10-17T10:18:01+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/rendering-and-audio-optimizations"
+      ],
+      "sha": "18045e133b507d8c517a2184c31bc58adfb835de",
+      "tipDate": "2026-10-21T17:31:18+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/responsive-steering",
+        "origin/codex/responsive-steering"
+      ],
+      "sha": "ad1b408011418f2a55e74f176d3683d734a6d40d",
+      "tipDate": "2026-10-18T15:58:15+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "integrate-selectively",
+      "reason": "実ハンドル90度の校正と実物理経過時間の検証修正を移植。後発の高速旋回・減速・SteeringStabilityとHUDを保持して履歴を統合。"
+    },
+    {
+      "branches": [
+        "codex/rgp-serial-monitor"
+      ],
+      "sha": "4099e075bff4f8a3ee8134e2c7c6d916176ede98",
+      "tipDate": "2026-10-17T11:04:09+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/slope-camera-tube-driving"
+      ],
+      "sha": "d8fbfc8c419807143ffdd5b6144cf178bed6c31d",
+      "tipDate": "2026-10-16T22:48:38+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/smooth-race-course-road",
+        "origin/codex/smooth-race-course-road"
+      ],
+      "sha": "815bcf6cef9357190bfc0b9abc89f544d5cf4ded",
+      "tipDate": "2026-10-10T12:32:27+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/stable-driving-and-player-minimap",
+        "origin/codex/stable-driving-and-player-minimap"
+      ],
+      "sha": "b280b69be5a99ed141d43552c0edaeaf63b4656a",
+      "tipDate": "2026-10-08T19:11:48+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/steering-comfort",
+        "origin/codex/steering-comfort"
+      ],
+      "sha": "a19658119de2b933aedef7f1183d5d25919a6276",
+      "tipDate": "2026-10-18T09:00:55+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "codex/tube-course-road",
+        "origin/codex/tube-course-road"
+      ],
+      "sha": "8b50f4b15b798b55ae1e0c912acffde93fe04517",
+      "tipDate": "2026-10-10T21:50:37+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "feat/dashboard-device-controls",
+        "origin/feat/dashboard-device-controls"
+      ],
+      "sha": "088ee6915527b011d07603779ecb927ca0dde7e1",
+      "tipDate": "2026-10-18T11:33:50+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "main"
+      ],
+      "sha": "ea90b9a7279d1d6e8deb8e9d70cd48909ed8b4e4",
+      "tipDate": "2026-10-26T11:32:25+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "mud/testcourse",
+        "origin/mud/testcourse"
+      ],
+      "sha": "a7e095413682c159cb98b38423a2be09a78ef7c6",
+      "tipDate": "2026-07-14T13:04:07+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "retain-obsolete-prototype",
+      "reason": "7月の泥テストコース・ガラス材質・NavMesh試作。現行本番コースに適用しない。"
+    },
+    {
+      "branches": [
+        "raymee/night-ennichi-visuals",
+        "origin/raymee/night-ennichi-visuals"
+      ],
+      "sha": "c0d6158add4a7a1f229d0430f90e0f4fdce08af0",
+      "tipDate": "2026-10-21T14:23:08+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "separate-active-experiment",
+      "reason": "夜景の元ブランチ。新UIと統合した2f6264fを別途検証済み。"
+    },
+    {
+      "branches": [
+        "temp",
+        "origin/temp"
+      ],
+      "sha": "e950524078eb3a95b07edf3824ed5a34746a6c48",
+      "tipDate": "2026-09-04T13:05:22+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "retain-superseded",
+      "reason": "9月の難易度選択・タイトル・結果画面試作。現行のプリセットと独立準備・新UIで置換済み。"
+    },
+    {
+      "branches": [
+        "origin/main"
+      ],
+      "sha": "237db2b1346864af8f310f998b934339e4f6181a",
+      "tipDate": "2026-10-26T12:17:16+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "origin/raymee/visual-quality"
+      ],
+      "sha": "1737bec2b89b48d42f3397a83b215ab42290f962",
+      "tipDate": "2026-09-26T12:22:39+09:00",
+      "inMainBeforeAudit": true,
+      "disposition": "already-integrated",
+      "reason": "監査開始時のorigin/mainの祖先。再マージ不要。"
+    },
+    {
+      "branches": [
+        "origin/ガタガタを治す"
+      ],
+      "sha": "79143ffd9c57dfa1fef79763664d1a044e6979df",
+      "tipDate": "2026-10-03T12:23:42+09:00",
+      "inMainBeforeAudit": false,
+      "disposition": "retain-superseded",
+      "reason": "旧カメラ振動の数値調整。現在は走行カメラ振動自体を既定OFFにしているため適用しない。"
+    }
+  ]
+}

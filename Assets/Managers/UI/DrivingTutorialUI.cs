@@ -27,7 +27,7 @@ public sealed class DrivingTutorialUI
         var tag=ArcadeUI.Panel(r,"Player",new Vector2(.77f,.89f),new Vector2(.81f,.95f),p.Primary);
         ArcadeUI.Label(tag,"Value","P"+(player+1),Vector2.zero,Vector2.one,24,p.Ink,true,TextAlignmentOptions.Center);
         timer=new PreparationTimerUI(r,new Vector2(.82f,.88f),new Vector2(.97f,.96f));
-        var lesson=ArcadeUI.Panel(r,"CurrentInstruction",new Vector2(.34f,.51f),new Vector2(.66f,.765f),p.Ink);
+        var lesson=ArcadeUI.Panel(r,"CurrentInstruction",new Vector2(.31f,.775f),new Vector2(.69f,.975f),p.Ink);
         step=ArcadeUI.Label(lesson,"Step","01",new Vector2(.045f,.28f),new Vector2(.28f,.85f),104,p.Soft,true,TextAlignmentOptions.Center);step.fontStyle=FontStyles.Italic;
         ArcadeUI.Label(lesson,"Total","/ 03",new Vector2(.06f,.13f),new Vector2(.26f,.30f),22,p.Paper,true,TextAlignmentOptions.Center);
         RacingUITheme.Rule(lesson,"Divider",new Vector2(.31f,.16f),new Vector2(.315f,.89f),p.Primary);
@@ -35,6 +35,7 @@ public sealed class DrivingTutorialUI
         message=ArcadeUI.Label(lesson,"Message","",new Vector2(.37f,.21f),new Vector2(.97f,.75f),35,p.Paper);
         message.textWrappingMode=TextWrappingModes.Normal;
         for(int i=0;i<3;i++)RacingUITheme.Rule(lesson,"Stage"+i,new Vector2(.37f+i*.19f,.13f),new Vector2(.54f+i*.19f,.16f),p.Soft);
+        message.fontSizeMin=28f;
     }
     public void Update(DrivingTutorialProgress lesson,DriveInputState input,float metersPerSecond,bool connected,string connectionNotice=null)
     {
@@ -46,11 +47,18 @@ public sealed class DrivingTutorialUI
         float allowed=mover!=null?mover.SteeringInputLimit/Mathf.Max(.001f,mover.SteeringInputRange):1;
         float raw=input.steering/90f;steering.SetState(raw,Mathf.Clamp(raw,-allowed,allowed),allowed);
         int stage=lesson.HasTimedOut?4:(int)lesson.CurrentStage;
-        string prompt=lesson.HasTimedOut?"TIME UP\nもう一人を待っています":lesson.IsComplete?"アイテム獲得！\n練習完了":!connected?connectionNotice??"接続を確認してください":!lesson.PedalReleased?"まずペダルから\n足を離そう":stage==0?"ペダルを踏んで\n加速しよう":stage==1?"ハンドルを回して\n角を曲がってみよう":"光る箱に触れて\nアイテムを取ろう";
+        string prompt=lesson.IsFinished?"もう一人の準備待ち\nそろったらレースへ":!connected?(!string.IsNullOrEmpty(connectionNotice)?connectionNotice:"接続を確認してください")+"\n係員に知らせてね":!lesson.PedalReleased?"まずペダルから\n足を離そう":stage==0?"ペダルを踏んで\n加速しよう":stage==1?"この先は右カーブ\n道にそって曲がろう":"光る箱に触れて\nアイテムを取ろう";
         if(shownMessage!=prompt){message.text=prompt;shownMessage=prompt;}
+        string heading=lesson.HasTimedOut?"練習時間終了":lesson.IsComplete?"アイテム獲得！ 準備完了":!connected?"接続待ち":"練習しよう";
+        if(status.text!=heading)status.text=heading;
         if(shownStage==stage)return;shownStage=stage;
-        status.text=lesson.HasTimedOut?"TIME UP":lesson.IsComplete?"COMPLETE":"練習しよう";
         step.text=lesson.HasTimedOut?"!":lesson.IsComplete?"OK":(stage+1).ToString("00");
+        var palette=ArcadeUI.For(player);
+        for(int i=0;i<3;i++)
+        {
+            var bar=step.transform.parent.Find("Stage"+i).GetComponent<UnityEngine.UI.Image>();
+            bar.color=i<(int)lesson.CurrentStage?palette.Primary:i==stage?palette.Paper:new Color(palette.Soft.r,palette.Soft.g,palette.Soft.b,.3f);
+        }
     }
     public void Dispose(){if(root!=null){root.SetActive(false);if(Application.isPlaying)Object.Destroy(root);else Object.DestroyImmediate(root);}}
 }
