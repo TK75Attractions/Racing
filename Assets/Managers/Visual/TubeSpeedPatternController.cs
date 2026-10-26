@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-/// <summary>Layers emissive patterns on the unchanged tube; owns no mesh or collider.</summary>
+/// <summary>Layers emissive patterns on the authored or prepared tube; owns no mesh or collider.</summary>
 [ExecuteAlways, DisallowMultipleComponent]
 public sealed class TubeSpeedPatternController : MonoBehaviour
 {
@@ -9,6 +9,7 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
     [SerializeField] private MeshFilter tube;
     [SerializeField] private Material patternMaterial;
 
+    private Material smoothPatternMaterial;
     public MeshFilter Tube => tube;
     public Material PatternMaterial => patternMaterial;
 
@@ -37,8 +38,16 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
         { hideFlags = HideFlags.DontSave, layer = tube.gameObject.layer };
         overlay.transform.SetParent(tube.transform, false);
         overlay.GetComponent<MeshFilter>().sharedMesh = tube.sharedMesh;
+        Material display = patternMaterial;
+        if (tube.sharedMesh.name == TubeSurfaceGeometry.SmoothMeshName)
+        {
+            smoothPatternMaterial = new Material(patternMaterial) { name = "Smooth tube light patterns", hideFlags = HideFlags.DontSave };
+            smoothPatternMaterial.SetFloat("_CullMode", (float)CullMode.Back);
+            smoothPatternMaterial.SetFloat("_NormalDirection", 1f);
+            display = smoothPatternMaterial;
+        }
         var materials = new Material[tube.sharedMesh.subMeshCount];
-        for (int i = 0; i < materials.Length; i++) materials[i] = patternMaterial;
+        for (int i = 0; i < materials.Length; i++) materials[i] = display;
         MeshRenderer renderer = overlay.GetComponent<MeshRenderer>();
         renderer.sharedMaterials = materials;
         renderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -57,6 +66,11 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
 
     private void Clear()
     {
+        if (smoothPatternMaterial != null)
+        {
+            if (Application.isPlaying) Destroy(smoothPatternMaterial); else DestroyImmediate(smoothPatternMaterial);
+            smoothPatternMaterial = null;
+        }
         if (tube == null) return;
         // Find transient children too, so script reloads do not duplicate the overlay.
         for (int i = tube.transform.childCount - 1; i >= 0; i--)

@@ -68,6 +68,9 @@ public sealed class RaceBarrierPath : MonoBehaviour
     private Transform colliderRoot;
     private Mesh generatedMesh;
     private Mesh generatedColliderMesh;
+    private TubePortalProfile portalStart, portalEnd;
+    private float pathLength;
+    public bool HasPortalBlend => portalStart != null || portalEnd != null;
 #if UNITY_EDITOR
     private bool editorRefreshQueued;
 #endif
@@ -77,6 +80,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
         public Vector3 position;
         public float height;
         public float outwardFlare;
+        public float pathDistance;
     }
 
     public int ControlPointCount => controlPoints != null ? controlPoints.Count : 0;
@@ -84,8 +88,10 @@ public sealed class RaceBarrierPath : MonoBehaviour
 
     /// <summary>道路境界など、既にサンプリングされた経路を補間せずに壁へ変換します。</summary>
     public void SetWorldPath(IReadOnlyList<Vector3> points, int outside, bool loop,
-        Material material, PhysicsMaterial physicsMaterial, bool createCollider)
+        Material material, PhysicsMaterial physicsMaterial, bool createCollider,
+        TubePortalProfile start = null, TubePortalProfile end = null)
     {
+        portalStart = start; portalEnd = end;
         controlPoints.Clear();
         for (int i = 0; i < points.Count; i++)
             controlPoints.Add(new ControlPoint { localPosition = transform.InverseTransformPoint(points[i]) });
@@ -187,6 +193,12 @@ public sealed class RaceBarrierPath : MonoBehaviour
             return;
         }
 
+        pathLength = 0;
+        for (int i = 0; i < samples.Count; i++)
+        {
+            if (i > 0) pathLength += Vector3.Distance(samples[i - 1].position, samples[i].position);
+            Sample row = samples[i]; row.pathDistance = pathLength; samples[i] = row;
+        }
         EnsureGeneratedRoots();
 
         if (generateVisual)
@@ -416,7 +428,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
             for (int section = 0; section <= sectionCount; section++)
             {
                 vertices.Add(GetSectionPoint(samples[i], outward, section) +
-                    GetSectionBackNormal(outward, section) * colliderThickness);
+                    GetSurfaceBackNormal(i, outward, section) * colliderThickness);
             }
 
             if (i == 0)
@@ -472,6 +484,33 @@ public sealed class RaceBarrierPath : MonoBehaviour
     }
 
     private Vector3 GetSectionPoint(Sample sample, Vector3 outward, int section)
+    {
+        Vector3 original = GetOriginalSectionPoint(sample, outward, section);
+        float distance = sample.pathDistance;
+        TubePortalProfile portal = portalStart;
+        if (portalEnd != null && (portal == null || pathLength - distance < distance))
+        { portal = portalEnd; distance = pathLength - distance; }
+        if (portal == null || distance >= TubePortalProfile.BlendLength) return original;
+        float t = Mathf.Clamp01(distance / TubePortalProfile.BlendLength);
+        // Quintic smootherstep has zero first/second derivatives at BOTH ends.
+        // At the portal the surface and its longitudinal tangent equal the actual tube;
+        // at 32m they return to the unchanged outdoor wall, without a collider step.
+        float weight = 1f - t * t * t * (t * (6f * t - 15f) + 10f);
+        Vector3 target = transform.InverseTransformPoint(portal.Evaluate(section / (float)(wallSectionSegments * 2), distance));
+        return Vector3.LerpUnclamped(original, target, weight);
+    }
+
+    private Vector3 GetSurfaceBackNormal(int index, Vector3 outward, int section)
+    {
+        if (!HasPortalBlend) return GetSectionBackNormal(outward, section);
+        Vector3 profile = GetSectionPoint(samples[index], outward, Mathf.Min(wallSectionSegments * 2, section + 1)) -
+            GetSectionPoint(samples[index], outward, Mathf.Max(0, section - 1));
+        Vector3 normal = Vector3.Cross(GetTangent(index), profile).normalized;
+        if (Vector3.Dot(normal, GetSectionBackNormal(outward, section)) < 0) normal = -normal;
+        return normal;
+    }
+
+    private Vector3 GetOriginalSectionPoint(Sample sample, Vector3 outward, int section)
     {
         float radius = GetArcRadius(sample);
         float angle = GetSectionAngle(section);

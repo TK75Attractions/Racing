@@ -1,0 +1,10 @@
+{
+    "sourceVertices": 4699,
+    "smoothVertices": 99716,
+    "portalProfiles": 4,
+    "comparedColliderVertices": 44418,
+    "portalShoulders": 2,
+    "supportedShoulderSamples": 259,
+    "maximumSeamGap": 0.0,
+    "maximumSeamTangentAngle": 0.048456642776727679
+}

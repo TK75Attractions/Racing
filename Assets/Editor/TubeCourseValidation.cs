@@ -61,10 +61,11 @@ public static class TubeCourseValidation
                     vertices[triangles[i + 2]] - vertices[triangles[i]]).y <= 0f) report.foldedRoadTriangles++;
             Mesh original = PrefabUtility.GetCorrespondingObjectFromSource(tube).sharedMesh;
             report.originalTubeVertices = original.vertexCount;
-            report.originalTubeMeshPreserved = tube.sharedMesh == original;
+            report.originalTubeMeshPreserved = AssetDatabase.GetAssetPath(original) == TubeCoursePreparation.ModelPath &&
+                tube.sharedMesh.name == TubeSurfaceGeometry.SmoothMeshName && tube.sharedMesh.vertexCount > original.vertexCount;
             Mesh tubeCollision = tube.GetComponent<MeshCollider>().sharedMesh;
-            Require(tubeCollision.vertexCount == original.vertexCount && tubeCollision.triangles.Length == original.triangles.Length * 2,
-                "Tube collider must retain the original shape with both face directions.");
+            Require(tubeCollision.vertexCount == tube.sharedMesh.vertexCount && tubeCollision.triangles.Length == tube.sharedMesh.triangles.Length * 2,
+                "Tube collider must match the smooth visual grid with both face directions.");
             Transform shoulders = course.transform.Find(RaceCourseRoad.RootName + "/Tube Road Shoulders");
             Require(shoulders != null && shoulders.GetComponent<MeshCollider>() != null,
                 "Tube shoulders must have a visible surface and a solid collider.");
