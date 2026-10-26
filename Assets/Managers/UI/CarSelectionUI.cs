@@ -108,6 +108,10 @@ public sealed class CarSelectionUI : MonoBehaviour
             TextAlignmentOptions.Center, tint: NeonUI.Cyan);
         foreach (TMP_Text label in sheet.GetComponentsInChildren<TMP_Text>(true)) ApplyFont(label);
         ApplyArcadeLayout();
+        // Connection notices share the HUD vocabulary, which is wider than the
+        // car catalog's baked atlas (for example 通信 / 確認してください).
+        TMP_FontAsset noticeFont = RacingUIFontCatalog.GetHUD(false);
+        if (noticeFont != null) { pedalHint.font = noticeFont; pedalHint.fontSharedMaterial = noticeFont.material; }
         sheet.gameObject.SetActive(false); showroom.SetVisible(false);
     }
 
