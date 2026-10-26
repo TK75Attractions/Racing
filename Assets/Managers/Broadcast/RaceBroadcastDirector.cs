@@ -84,7 +84,7 @@ public sealed class RaceBroadcastDirector : MonoBehaviour
     private bool Feature(RaceFeature feature)=>manager?.Features?.Settings.IsEnabled(feature)==true;
     private void RefreshWindow()
     {
-        bool wanted=Feature(RaceFeature.BroadcastScreen);
+        bool wanted=manager.IsMaintenanceActive||Feature(RaceFeature.BroadcastScreen);
         if(wanted==showWindow)return;showWindow=wanted;
         presenter.enabled=wanted;
         if(!wanted){output.enabled=false;return;}

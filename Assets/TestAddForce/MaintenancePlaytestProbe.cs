@@ -70,6 +70,8 @@ public sealed class MaintenancePlaytestProbe : MonoBehaviour
             blockedGate=(PlayerDriveInputGate)runtime.GetValue(1).GetType().GetField("inputGate").GetValue(runtime.GetValue(1));
             original=heldGate.Source; heldGate.SwitchSource(held); blockedGate.SetBlocked(true);
         }
+        bool broadcastEnabled=manager.Features.Settings.IsEnabled(RaceFeature.BroadcastScreen);
+        if(capture) manager.Features.SetFeature(RaceFeature.BroadcastScreen,false);
         bool oldPause=AudioListener.pause;
         Require(manager.SetMaintenance(true), "Enable maintenance");
         Require(manager.Maintenance.ScreenCount == 3 && manager.IsMaintenanceActive && Time.timeScale == 0 && AudioListener.pause && RaceAudioSettings.MaintenanceMuted,
@@ -90,6 +92,7 @@ public sealed class MaintenancePlaytestProbe : MonoBehaviour
         Require(manager.GetPlayerPreparationState(0)==preparation[0] && manager.GetPlayerPreparationState(1)==preparation[1], "Maintenance must preserve individual preparation phases.");
         Require(manager.state.ToString()==phase && Mathf.Abs(manager.time-raceTime)<.001f && Mathf.Abs(manager.CountdownTimeRemaining-countdown)<.001f,"State and timers advanced behind maintenance: "+phase);
         for(int i=0;i<positions.Length;i++) Require(Vector3.Distance(positions[i],manager.Participants[i].Body.position)<.0001f,"A car moved while in maintenance.");
+        Require(manager.Broadcast.PresentationCamera.isActiveAndEnabled,"Broadcast output must show maintenance even when its normal feature is OFF.");
         if(capture)
         {
             var rigs=(PlayerDisplayRig[])typeof(Gmanager).GetField("displayRigs",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(manager);
@@ -114,6 +117,7 @@ public sealed class MaintenancePlaytestProbe : MonoBehaviour
             held.Pedal=0; _=heldGate.CurrentState; held.Pedal=.8f;
             Require(heldGate.CurrentState.pedal>.7f,"A deliberate pedal release must re-arm driving.");
             heldGate.SwitchSource(original); blockedGate.SetBlocked(false);
+            manager.Features.SetFeature(RaceFeature.BroadcastScreen,broadcastEnabled);
         }
         Debug.Log("MAINTENANCE_PHASE_PASS: "+phase);
     }
