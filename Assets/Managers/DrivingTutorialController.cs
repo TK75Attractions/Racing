@@ -177,7 +177,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
             float distance = (point - local).sqrMagnitude;
             if (distance < best) { best = distance; nearest = d; }
         }
-        DrivingTutorialRoad.Sample(Mathf.Min(190f, nearest + 18f), out Vector3 center, out Vector3 tangent);
+        DrivingTutorialRoad.Sample(Mathf.Min(190f, nearest + 55f), out Vector3 center, out Vector3 tangent);
         for (int lane = -1; lane <= 1; lane++)
         {
             var go = new GameObject("Practice item / drive through a box");go.transform.SetParent(player.world.transform, false);
