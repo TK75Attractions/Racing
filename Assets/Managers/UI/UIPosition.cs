@@ -60,9 +60,9 @@ public class UIPosition
 
         // 順位アップはシアン、順位ダウンは赤で一瞬だけ知らせる。
         Color accent = newPosition < oldPosition
-            ? new Color(0.15f, 1f, 0.85f, 1f)
-            : new Color(1f, 0.32f, 0.22f, 1f);
-        valuePulse.Play(accent, newPosition < oldPosition ? -8f : 8f);
+            ? new Color(.08f,.49f,.39f,1f)
+            : new Color(.82f,.22f,.12f,1f);
+        valuePulse.PlayRank(accent, newPosition < oldPosition ? 1 : -1);
     }
 
     public void SetActive(bool isActive)

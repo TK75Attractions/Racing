@@ -1,90 +1,54 @@
-using System.Collections;
 using TMPro;
 using UnityEngine;
 
-/// <summary>HUDの数値更新を、読みやすさを保った短いパンチアニメーションで通知します。</summary>
+/// <summary>Directional HUD impulse. Repeated events retarget from the current pose without accumulating offsets.</summary>
 [DisallowMultipleComponent]
 public sealed class UIValuePulse : MonoBehaviour
 {
-    [SerializeField, Min(0.05f)] private float duration = 0.42f;
-    [SerializeField, Range(1f, 2f)] private float peakScale = 1.34f;
-
     private TMP_Text label;
-    private Coroutine routine;
-    private Vector3 baseScale;
+    private RectTransform rect;
+    private Vector2 basePosition,startPosition;
+    private Vector3 baseScale,startScale;
     private Quaternion baseRotation;
-    private Color baseColor;
-
-    private void Awake()
+    private Color baseColor,accent,startColor;
+    private float age,duration,rotation,direction,peakScale;
+    public bool IsPlaying { get; private set; }
+    private void Awake()=>Cache();
+    private void Cache()
     {
-        CacheBaseState();
+        if(label!=null)return;
+        label=GetComponent<TMP_Text>();rect=transform as RectTransform;
+        basePosition=rect!=null?rect.anchoredPosition:Vector2.zero;baseScale=transform.localScale;baseRotation=transform.localRotation;
+        baseColor=label!=null?label.color:Color.white;
     }
-
-    public void Play(Color accentColor, float peakRotation)
+    public void Play(Color color,float angle)=>StartPulse(color,angle,0,1.16f,.34f);
+    public void PlayRank(Color color,int change)=>StartPulse(color,0,Mathf.Sign(change),1.15f,.38f);
+    private void StartPulse(Color color,float angle,float travel,float scale,float seconds)
     {
-        CacheBaseState();
-        if (label == null || !isActiveAndEnabled)
-        {
-            return;
-        }
-
-        if (routine != null)
-        {
-            StopCoroutine(routine);
-            RestoreBaseState();
-        }
-
-        routine = StartCoroutine(PlayRoutine(accentColor, peakRotation));
+        Cache();if(label==null||rect==null||!isActiveAndEnabled)return;
+        startPosition=rect.anchoredPosition;
+        if(!IsPlaying)startPosition-=Vector2.up*travel*24f;
+        startScale=transform.localScale;startColor=label.color;
+        accent=color;rotation=angle;direction=travel;peakScale=scale;duration=seconds;age=0;IsPlaying=true;Apply(0);
     }
-
-    private IEnumerator PlayRoutine(Color accentColor, float peakRotation)
+    public void Tick(float dt)
     {
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-            float pulse = Mathf.Sin(t * Mathf.PI);
-            float wobble = Mathf.Sin(t * Mathf.PI * 2f) * (1f - t);
-
-            transform.localScale = baseScale * Mathf.Lerp(1f, peakScale, pulse);
-            transform.localRotation = baseRotation * Quaternion.Euler(0f, 0f, peakRotation * wobble);
-            label.color = Color.Lerp(baseColor, accentColor, pulse);
-            yield return null;
-        }
-
-        RestoreBaseState();
-        routine = null;
+        if(!IsPlaying)return;age+=Mathf.Max(0,dt);float t=Mathf.Clamp01(age/duration);Apply(t);
+        if(t>=1)ResetPose();
     }
-
-    private void OnDisable()
+    private void Apply(float t)
     {
-        if (routine != null)
-        {
-            StopCoroutine(routine);
-            routine = null;
-        }
-        RestoreBaseState();
+        float eased=UIMotion.Out(t),hit=Mathf.Sin(Mathf.PI*t),spring=UIMotion.Spring(t);
+        rect.anchoredPosition=Vector2.LerpUnclamped(startPosition,basePosition,eased)+Vector2.up*(direction*4f*spring);
+        transform.localScale=Vector3.Min(baseScale*1.18f,Vector3.Lerp(startScale,baseScale,eased)+baseScale*((peakScale-1)*hit));
+        transform.localRotation=baseRotation*Quaternion.Euler(0,0,rotation*spring*.4f);
+        label.color=Color.Lerp(Color.Lerp(startColor,baseColor,eased),accent,hit);
     }
-
-    private void CacheBaseState()
+    public void ResetPose()
     {
-        if (label == null)
-        {
-            label = GetComponent<TMP_Text>();
-            baseScale = transform.localScale;
-            baseRotation = transform.localRotation;
-            baseColor = label != null ? label.color : Color.white;
-        }
+        IsPlaying=false;if(label==null)return;
+        rect.anchoredPosition=basePosition;transform.localScale=baseScale;transform.localRotation=baseRotation;label.color=baseColor;
     }
-
-    private void RestoreBaseState()
-    {
-        transform.localScale = baseScale;
-        transform.localRotation = baseRotation;
-        if (label != null)
-        {
-            label.color = baseColor;
-        }
-    }
+    private void Update()=>Tick(Time.unscaledDeltaTime);
+    private void OnDisable()=>ResetPose();
 }
