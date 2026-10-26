@@ -11,6 +11,7 @@ public sealed class SlipstreamController : MonoBehaviour
     private CarResetter resetter;
     private TireForce[] tires;
     private int recoveryCount;
+    private ParticleSystem rewardBurst;
     public int SuccessfulBoosts { get; private set; }
     public float PursuitProgress => charge.Charge / SlipstreamCharge.ChargeSeconds;
 
@@ -61,7 +62,28 @@ public sealed class SlipstreamController : MonoBehaviour
             target = candidate; nearest = forward;
         }
         if (charge.Tick(target != null ? target.Index : -1, dt) && mover.StartSlipstreamBoost())
+        {
             SuccessfulBoosts++;
+            EmitDraftBurst();
+            if (own != null && !own.IsCpu) RaceSoundEffects.PlayForPlayer(RaceSoundCue.Confirm, own.Index);
+        }
+    }
+    private void EmitDraftBurst()
+    {
+        if (rewardBurst == null)
+        {
+            GameObject effect = new GameObject("Slipstream Release Ring");
+            effect.transform.SetParent(transform, false);
+            rewardBurst = effect.AddComponent<ParticleSystem>();
+            var main = rewardBurst.main; main.loop = false; main.playOnAwake = false;
+            main.startLifetime = .22f; main.startSpeed = 2.5f; main.startSize = .16f;
+            main.startColor = new Color(.25f, .85f, 1f, .85f); main.maxParticles = 16;
+            var shape = rewardBurst.shape; shape.shapeType = ParticleSystemShapeType.Circle; shape.radius = .55f;
+            var emission = rewardBurst.emission; emission.enabled = false;
+            var renderer = rewardBurst.GetComponent<ParticleSystemRenderer>(); renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
+        rewardBurst.transform.SetPositionAndRotation(transform.position + transform.forward * 1.4f + transform.up * .65f, transform.rotation);
+        rewardBurst.Emit(12);
     }
     private bool CanDrive()
     {

@@ -192,6 +192,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
         if (generateVisual)
         {
             BuildVisualMesh();
+            BuildSolidFrame();
         }
 
         if (generateCollider)
@@ -318,6 +319,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
         generatedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         List<Vector3> vertices = new List<Vector3>();
         List<Vector2> uvs = new List<Vector2>();
+        List<Vector2> edgeDistances = new List<Vector2>();
         List<int> triangles = new List<int>();
 
         float distance = 0f;
@@ -331,12 +333,14 @@ public sealed class RaceBarrierPath : MonoBehaviour
             Vector3 tangent = GetTangent(i);
             Vector3 outward = GetOutward(tangent);
             int rowStart = vertices.Count;
+            float totalArcDistance = GetSectionArcDistance(samples[i], sectionCount);
 
             for (int section = 0; section <= sectionCount; section++)
             {
+                float sectionArcDistance = GetSectionArcDistance(samples[i], section);
                 vertices.Add(GetSectionPoint(samples[i], outward, section));
-                uvs.Add(new Vector2(distance / uvMetersPerRepeat,
-                    GetSectionArcDistance(samples[i], section) / uvMetersPerRepeat));
+                uvs.Add(new Vector2(distance / uvMetersPerRepeat, sectionArcDistance / uvMetersPerRepeat));
+                edgeDistances.Add(new Vector2(sectionArcDistance, totalArcDistance - sectionArcDistance));
             }
 
             if (i == 0)
@@ -375,6 +379,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
 
         generatedMesh.SetVertices(vertices);
         generatedMesh.SetUVs(0, uvs);
+        generatedMesh.SetUVs(1, edgeDistances);
         generatedMesh.SetTriangles(triangles, 0);
         generatedMesh.RecalculateNormals();
         generatedMesh.RecalculateBounds();
@@ -388,6 +393,50 @@ public sealed class RaceBarrierPath : MonoBehaviour
         renderer.sharedMaterial = visualMaterial != null
             ? visualMaterial
             : Resources.Load<Material>(DefaultVisualMaterialPath);
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
+    }
+
+    private void BuildSolidFrame()
+    {
+        var geometry = new RaceEnvironmentMeshBuilder();
+        Color metal = new Color(.10f, .17f, .22f);
+        float distance = 0f, nextPost = 0f;
+        int top = wallSectionSegments * 2;
+        for (int i = 0; i < samples.Count; i++)
+        {
+            Vector3 tangent = GetTangent(i).normalized, outward = GetOutward(tangent);
+            if (i > 0) distance += Vector3.Distance(samples[i-1].position, samples[i].position);
+            if (distance >= nextPost || (!closedLoop && i == samples.Count-1))
+            {
+                // A solid curved support also reads as the panel joint. It lies behind the drive surface.
+                for (int s = 0; s < top; s++)
+                {
+                    Vector3 normal = GetSectionBackNormal(outward, s);
+                    Vector3 a = GetSectionPoint(samples[i], outward, s) + normal * .18f;
+                    Vector3 b = GetSectionPoint(samples[i], outward, s+1) + GetSectionBackNormal(outward, s+1) * .18f;
+                    geometry.Box((a+b)*.5f, tangent * .20f, b-a, normal * .36f, metal);
+                }
+                nextPost = distance + 12f;
+            }
+            if (i == 0) continue;
+            foreach (int section in new[] { 0, top })
+            {
+                Vector3 previousOutward = GetOutward(GetTangent(i-1));
+                Vector3 a = GetSectionPoint(samples[i-1], previousOutward, section) + GetSectionBackNormal(previousOutward, section) * .15f;
+                Vector3 b = GetSectionPoint(samples[i], outward, section) + GetSectionBackNormal(outward, section) * .15f;
+                Vector3 normal = GetSectionBackNormal(outward, section);
+                geometry.Box((a+b)*.5f, b-a, Vector3.Cross(normal, (b-a).normalized) * .22f, normal * .30f, metal);
+            }
+        }
+        Mesh mesh = geometry.ToMesh("RaceBarrierSolidFrame");
+        mesh.hideFlags = HideFlags.DontSave;
+        var frame = new GameObject("Solid rails and panel supports", typeof(MeshFilter), typeof(MeshRenderer));
+        frame.layer = gameObject.layer;
+        frame.transform.SetParent(visualRoot, false);
+        frame.GetComponent<MeshFilter>().sharedMesh = mesh;
+        var renderer = frame.GetComponent<MeshRenderer>();
+        renderer.sharedMaterial = Resources.Load<Material>("RaceBarrier/M_EnvironmentSolid");
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         renderer.receiveShadows = false;
     }
@@ -614,7 +663,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
             roots.Add(child.gameObject);
             foreach (MeshFilter filter in child.GetComponentsInChildren<MeshFilter>(true))
             {
-                if (filter.sharedMesh != null && filter.sharedMesh.name == "RaceBarrierVisualMesh")
+                if (filter.sharedMesh != null && (filter.sharedMesh.name == "RaceBarrierVisualMesh" || filter.sharedMesh.name == "RaceBarrierSolidFrame"))
                 {
                     meshes.Add(filter.sharedMesh);
                 }

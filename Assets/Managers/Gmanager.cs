@@ -431,10 +431,25 @@ public class Gmanager : MonoBehaviour
             return;
         }
 
-        GUILayout.BeginArea(new Rect(16f, 16f, 300f, 184f), GUI.skin.box);
+        GUILayout.BeginArea(new Rect(16f, 16f, 340f, 300f), GUI.skin.box);
         GUILayout.Label("DEBUG RACE CONTROLS");
         GUILayout.Label($"State: {state}");
         bool previousGuiEnabled = GUI.enabled;
+
+        for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
+        {
+            // P2 の画面はエディタでは Display 2 にあるため、進行状況をここにも出します。
+            GetPlayerDashboardProgress(playerIndex, out string phase, out _, out string step, out float remaining, out _);
+            GUILayout.Label($"P{playerIndex + 1}: {phase}{(step.Length > 0 ? " / " + step : "")}{(remaining > 0f ? $" ({remaining:F0}s)" : "")}");
+        }
+
+        // 1 人でデバッグするときに、操作していないプレイヤーを待たずに次の段階へ進めます。
+        string allPlayersStep = GetDebugAllPlayersStepLabel();
+        GUI.enabled = allPlayersStep != null;
+        if (GUILayout.Button(allPlayersStep ?? "ALL PLAYERS: -")) AdvanceDebugAllPlayers();
+        GUI.enabled = state == State.Result && !IsScreenTransitioning();
+        if (GUILayout.Button("RETRY RACE")) RetryGame();
+        GUI.enabled = previousGuiEnabled;
 
         for (int playerIndex = 0; playerIndex < PlayerCount; playerIndex++)
         {
@@ -460,6 +475,43 @@ public class Gmanager : MonoBehaviour
         GUI.enabled = previousGuiEnabled;
 
         GUILayout.EndArea();
+    }
+
+    private string GetDebugAllPlayersStepLabel()
+    {
+        if (IsScreenTransitioning() || finishingPreparation) return null;
+        if (state == State.Result)
+        {
+            foreach (PlayerRuntime player in players) if (player != null && !player.returnedToTitle) return "ALL PLAYERS: RETURN TO TITLE";
+            return null;
+        }
+        if (!IsPreparing) return null;
+        bool anyTitle = false, anySelection = false;
+        foreach (PlayerRuntime player in players)
+        {
+            anyTitle |= player.preparationState == State.Title;
+            anySelection |= player.preparationState == State.CarSelection;
+        }
+        return anyTitle ? "ALL PLAYERS: START" : anySelection ? "ALL PLAYERS: CONFIRM CAR" : "ALL PLAYERS: SKIP TUTORIAL";
+    }
+
+    private void AdvanceDebugAllPlayers()
+    {
+        if (state == State.Result)
+        {
+            for (int index = 0; index < PlayerCount; index++)
+                if (!players[index].returnedToTitle) ReturnPlayerToTitle(index);
+            return;
+        }
+        bool anyTitle = false, anySelection = false;
+        foreach (PlayerRuntime player in players)
+        {
+            anyTitle |= player.preparationState == State.Title;
+            anySelection |= player.preparationState == State.CarSelection;
+        }
+        if (anyTitle) StartGame();
+        else if (anySelection) AdvanceDashboardToTutorial();
+        else AdvanceDashboardToCountdown();
     }
 
     public void DebugPreviewResult()
@@ -804,7 +856,8 @@ public class Gmanager : MonoBehaviour
         RaceItemPickup.ResetAll();
         raceLightning?.ResetRace();
         participants.Clear(); orderedParticipants.Clear();
-        raceSession = new RaceParticipantSession(PlayerCount, Mathf.Clamp(npcCount, 0, 2), RaceGraceSeconds, RaceMaximumSeconds);
+        raceSession = new RaceParticipantSession(PlayerCount, Mathf.Clamp(npcCount, 0, 2), RaceGraceSeconds, RaceMaximumSeconds,
+            RacingStandalonePerformanceProbe.AutorunEnabled);
         raceSession.Start();
         if (dailyRanking == null) dailyRanking = new DailyRaceRanking(System.IO.Path.Combine(Application.persistentDataPath, "DailyRankings"));
         bool allowDailyRecording = !Application.isBatchMode;
@@ -854,6 +907,11 @@ public class Gmanager : MonoBehaviour
             if (raceVisuals != null) collisionSparks.Impact += raceVisuals.AddImpact;
             if (player.car.GetComponent<TireEffectsVisual>() == null)
                 player.car.AddComponent<TireEffectsVisual>();
+            CarNightGlow nightGlow = player.car.GetComponent<CarNightGlow>() ?? player.car.AddComponent<CarNightGlow>();
+            nightGlow.Configure(playerIndex);
+            if (player.car.GetComponent<CarBodyMotion>() == null) player.car.AddComponent<CarBodyMotion>();
+            CarParticipantBadge badge = player.car.GetComponent<CarParticipantBadge>() ?? player.car.AddComponent<CarParticipantBadge>();
+            badge.Configure(playerIndex, displayRigs);
             if (player.car.GetComponent<CarWallCollisionResponse>() == null)
                 player.car.AddComponent<CarWallCollisionResponse>();
             player.chargeVisual = player.car.GetComponent<DriftChargeVisual>();
@@ -914,6 +972,11 @@ public class Gmanager : MonoBehaviour
             int index = PlayerCount + cpu;
             GameObject vehicle = Instantiate(carPrefab, position - rotation * Vector3.forward * 7f + right * startGridSpacing * (cpu == 0 ? -.5f : .5f), rotation);
             vehicle.name = $"CPU{cpu + 1}_Car";
+            CarNightGlow nightGlow = vehicle.GetComponent<CarNightGlow>() ?? vehicle.AddComponent<CarNightGlow>();
+            nightGlow.Configure(index);
+            if (vehicle.GetComponent<CarBodyMotion>() == null) vehicle.AddComponent<CarBodyMotion>();
+            CarParticipantBadge badge = vehicle.GetComponent<CarParticipantBadge>() ?? vehicle.AddComponent<CarParticipantBadge>();
+            badge.Configure(index, displayRigs);
             // CPUs borrow the vehicle physics/visuals, never a player display or input device.
             foreach (Camera camera in vehicle.GetComponentsInChildren<Camera>(true)) camera.enabled = false;
             foreach (AudioListener listener in vehicle.GetComponentsInChildren<AudioListener>(true)) listener.enabled = false;
@@ -1105,7 +1168,9 @@ public class Gmanager : MonoBehaviour
         if (entry.IsCpu)
         {
             if (!StartFinishRun(entry)) FreezeCpu(entry);
-            UpdateParticipantOrder(); return;
+            UpdateParticipantOrder();
+            if (registration == RaceFinishRegistration.RaceComplete) CompleteRace(latestSessionResult, null);
+            return;
         }
         player.result = result;
         if (!StartFinishRun(entry)) FreezePlayer(player, disableCollisions: true);

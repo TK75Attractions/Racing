@@ -115,6 +115,13 @@ public static class MiniMapValidation
             // 自車マーカーが常に相手より前面になることを確認します。
             Require(mapRoot.Find("Viewport/Content/Marker_P1").GetSiblingIndex() > mapRoot.Find("Viewport/Content/Marker_P2").GetSiblingIndex(),
                 "The own-car marker is not drawn on top.");
+            var selfMarker = mapRoot.Find("Viewport/Content/Marker_P1").GetComponent<MiniMapMarkerGraphic>();
+            var rivalMarker = mapRoot.Find("Viewport/Content/Marker_P2").GetComponent<MiniMapMarkerGraphic>();
+            var cpuMarker = mapRoot.Find("Viewport/Content/Marker_P3").GetComponent<MiniMapMarkerGraphic>();
+            Require(!selfMarker.IsCpu && !rivalMarker.IsCpu && cpuMarker.IsCpu &&
+                selfMarker.rectTransform.sizeDelta.x > rivalMarker.rectTransform.sizeDelta.x &&
+                rivalMarker.rectTransform.sizeDelta.x > cpuMarker.rectTransform.sizeDelta.x,
+                "Self/rival/CPU must use distinct shape and size roles.");
 
             // 車を割り当てていない間はマーカーを隠します。
             miniMap.UpdateMarkers();
@@ -164,6 +171,15 @@ public static class MiniMapValidation
                 "Player two must center its own car independently of player one.");
             Require(secondContent.Find("Marker_P2").GetSiblingIndex() > secondContent.Find("Marker_P1").GetSiblingIndex(),
                 "Player two must draw its own marker above the rival.");
+            rivalCar.transform.position = dummyCar.transform.position + Vector3.right * 100000f;
+            miniMap.SetCars(dummyCar.transform, rivalCar.transform);
+            RectTransform edgeMarker = rivalMarker.rectTransform;
+            RectTransform viewportRect = mapRoot.Find("Viewport") as RectTransform;
+            Vector3 edgePosition = viewportRect.InverseTransformPoint(edgeMarker.position);
+            float inset = edgeMarker.sizeDelta.magnitude * .5f;
+            Require(rivalMarker.IsAtEdge && Mathf.Abs(edgePosition.x) + inset < viewportRect.rect.width * .5f &&
+                Mathf.Abs(edgePosition.y) + inset < viewportRect.rect.height * .5f,
+                "A distant rival must remain fully visible at the inset viewport edge.");
             UnityEngine.Object.DestroyImmediate(view);
             UnityEngine.Object.DestroyImmediate(dummyCar);
 

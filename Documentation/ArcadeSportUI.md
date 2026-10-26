@@ -2,6 +2,8 @@
 
 `origin/main` の `23ec146` を基に、`codex/arcade-sport-ui` で実装。
 
+2026-10-26: 夜景との試験統合は `codex/night-ennichi-arcade-ui`。[統合内容・実画面・改善案](NightArcadeIntegration.md) を参照。このブランチでは `NativeResolutionUI` による3D縮小＋UI等倍合成を使用します。
+
 承認済みのデザイン2を共通の表示にしました。P1 は青、P2 はピンク。速度の数字は大きな Barlow Condensed ExtraBold、その他の数字は Barlow Condensed Bold、日本語は M PLUS の静的 HUD フォントです。SVG のロゴは透過画像として景色へ直接重ね、輪郭だけ白く補って可読性を保ちます。
 
 ## 画面

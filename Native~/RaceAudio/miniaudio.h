@@ -14284,7 +14284,9 @@ typedef int ma_atomic_memory_order;
     {
         #if defined(MA_ARM)
         {
-            MA_ATOMIC_MSVC_ARM_INTRINSIC(dst, 0, order, _InterlockedExchange, ma_atomic_flag, long);
+            /* Racing: 元のマクロは値を return するため、C++ の MSVC ARM64 ではコンパイルできません。完全バリアの交換で代用します。 */
+            (void)order;
+            _InterlockedExchange((volatile long*)dst, (long)0);
         }
         #else
         {

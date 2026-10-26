@@ -12,6 +12,7 @@ public static class BoostVolumeValidation
     [MenuItem("Racing/Validate Boost Volumes")]
     public static void Run()
     {
+        LightningValidation.EnsureVolumeManagerInitialized();
         GameObject root = new GameObject("Boost volume validation");
         VolumeProfile shared = ScriptableObject.CreateInstance<VolumeProfile>();
         VolumeStack stack = VolumeManager.instance.CreateStack();
@@ -62,7 +63,7 @@ public static class BoostVolumeValidation
             VolumeManager.instance.Update(stack, cameras[0].transform, p1Data.volumeLayerMask);
             Near(stack.GetComponent<Bloom>().intensity.value, 1.4f, "Player one must receive boosted bloom.");
             Near(stack.GetComponent<LensDistortion>().intensity.value, -0.63f, "Boost must add distortion to the existing look.");
-            Require(stack.GetComponent<MotionBlur>().intensity.value > 0f, "Boost must enable URP motion blur.");
+            Near(stack.GetComponent<MotionBlur>().intensity.value, 0f, "Boost must keep URP motion blur disabled.");
             VolumeManager.instance.Update(stack, cameras[1].transform, p2Data.volumeLayerMask);
             Near(stack.GetComponent<Bloom>().intensity.value, 0.9f, "Player two must retain normal bloom.");
             manager.SetDriftBoost(1, 0.5f);

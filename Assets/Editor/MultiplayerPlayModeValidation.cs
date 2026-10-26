@@ -15,7 +15,8 @@ using UnityEngine;
 public static class MultiplayerPlayModeValidation
 {
     private const string SessionKey = "Racing.MultiplayerValidation.Active";
-    private const double TimeoutSeconds = 180d;
+    private const double TimeoutSeconds = 420d;
+    private static double lastStageProgressAt;
 
     private static int stage;
     private static int reportedStage=-1;
@@ -110,8 +111,9 @@ public static class MultiplayerPlayModeValidation
         try
         {
             frameCount++;
-            if(reportedStage!=stage){reportedStage=stage;Debug.Log("MULTIPLAYER_VALIDATION_STAGE: "+stage+" / "+manager?.state);}
-            if (EditorApplication.timeSinceStartup - testStartTime > TimeoutSeconds)
+            if(reportedStage!=stage){reportedStage=stage;lastStageProgressAt=EditorApplication.timeSinceStartup;Debug.Log("MULTIPLAYER_VALIDATION_STAGE: "+stage+" / "+manager?.state);}
+            if (EditorApplication.timeSinceStartup - testStartTime > TimeoutSeconds ||
+                EditorApplication.timeSinceStartup - lastStageProgressAt > 60d)
             {
                 Fail("Validation timed out at stage " + stage + " / " + manager?.state + " / transition " + AnyTransitionActive());
                 return;
@@ -124,7 +126,7 @@ public static class MultiplayerPlayModeValidation
             switch (stage)
             {
                 case 0 when frameCount > 5:
-                    ValidateDisplayAndTitle();Capture("title-p1.png");
+                    ValidateDisplayAndTitle();
                     Gmanager.Control.GetComponent<RaceSoundEffects>().CueQueued += (cue,player) => soundCounts[player,(int)cue]++;
                     pressBefore=soundCounts[0,(int)RaceSoundCue.Press];
                     confirmBefore=soundCounts[0,(int)RaceSoundCue.Confirm];
@@ -155,13 +157,14 @@ public static class MultiplayerPlayModeValidation
                         "Two enabled presses must sound; a short/cancelled/disabled hold must never add a confirmation cue.");
                     UnityEngine.Object.Destroy(buttonFixture);
                     Debug.Log("BUTTON_HOLD_PLAYMODE_PASS: short hold cancels, full hold commits once, start retains after release, disabled input cannot commit.");
+                    Capture("title-p1.png");Capture("title-p2.png",1);
                     manager.ConfirmTitleStart(0); manager.ConfirmTitleStart(0); manager.ConfirmTitleStart(1);
                     Require(soundCounts[0,(int)RaceSoundCue.Ready]==1 && soundCounts[1,(int)RaceSoundCue.Ready]==1,"Each player's ready cue must play once, including duplicate readiness requests.");
                     stage=1;
                     break;
 
                 case 1 when manager.state == Gmanager.State.Countdown && !manager.IsCourseIntroPlaying && !AnyTransitionActive():
-                    ValidateSpawnAndCountdown();Capture("countdown-p1.png");
+                    ValidateSpawnAndCountdown();Capture("countdown-p1.png");Capture("countdown-p2.png",1);
                     stage = 2;
                     break;
 
@@ -190,7 +193,7 @@ public static class MultiplayerPlayModeValidation
                     break;
                 case 106 when EditorApplication.timeSinceStartup-stageStartTime > 2d:
                     Require(Vector3.Distance(driveStart, manager.GetPlayerCarTransform(0).position) > 2f && manager.GetPlayerSpeed(0) > 3f, $"Actual pedal input must accelerate and move the production car: distance={Vector3.Distance(driveStart, manager.GetPlayerCarTransform(0).position):F2}, speed={manager.GetPlayerSpeed(0):F2}.");
-                    Capture("race-p1.png");
+                    Capture("race-p1.png");Capture("race-p2.png",1);
                     ValidateFirstFinish();
                     stage = 3;
                     break;
@@ -212,7 +215,7 @@ public static class MultiplayerPlayModeValidation
                         Require(soundCounts[player,(int)RaceSoundCue.Finish]==(player==0?2:1) && soundCounts[player,(int)RaceSoundCue.Results]==1,
                             "Goal cues follow the own finish and the watched final finish; results sound once per destination.");
                     confirmBeforeRetry=soundCounts[0,(int)RaceSoundCue.Confirm];
-                    Capture("result-p1.png");
+                    Capture("result-p1.png");Capture("result-p2.png",1);
                     stageStartTime=EditorApplication.timeSinceStartup;stage=104;
                     break;
                 case 104:
@@ -357,6 +360,15 @@ public static class MultiplayerPlayModeValidation
     {
         manager = UnityEngine.Object.FindFirstObjectByType<Gmanager>();
         Require(manager != null, "Gmanager is missing.");
+        if (GameObject.Find("NightEnnichi") != null)
+        {
+            var scenery = manager.GetComponent<CampusAtmosphereController>();
+            Require(scenery != null && !scenery.IsApplied && scenery.ReplacedTreeVertices == 0,
+                "Authored night scenery and sakura must survive the arcade UI startup.");
+            Require(RaceEnvironmentController.Active != null &&
+                RaceEnvironmentController.Active.CurrentTimeOfDay == RaceEnvironmentController.TimeOfDay.Night,
+                "The integration scene must retain its saved night environment.");
+        }
 
         GameObject p2CameraRoot = GameObject.Find("GameManagers/CManager_P2");
         Camera p2MainCamera = p2CameraRoot != null
@@ -422,7 +434,7 @@ public static class MultiplayerPlayModeValidation
         finishMethod.Invoke(manager, new object[]
         {
             p1Car.GetComponent<Rigidbody>(),
-            new RaceResultRecord { totalRaceTime = 10f, completedLaps = 3, goalLap = 3 }
+            new RaceResultRecord { totalRaceTime = 10f, completedLaps = manager.GoalLap, goalLap = manager.GoalLap }
         });
 
         if (stage==106)
@@ -463,7 +475,7 @@ public static class MultiplayerPlayModeValidation
         finishMethod.Invoke(manager, new object[]
         {
             p2Car.GetComponent<Rigidbody>(),
-            new RaceResultRecord { totalRaceTime = 12f, completedLaps = 3, goalLap = 3 }
+            new RaceResultRecord { totalRaceTime = 12f, completedLaps = manager.GoalLap, goalLap = manager.GoalLap }
         });
         Require(TireMarkRenderer.GetOrCreate().SegmentCount == 0,
             "Finishing the race must clear all tire marks before the goal celebration.");

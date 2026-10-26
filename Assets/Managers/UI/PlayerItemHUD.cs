@@ -275,7 +275,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
             text = "保護中 / PROTECTED"; tint = ShieldColor;
         }
 
-        statusLabel.text = text;
+        if (statusLabel.text != text) RacingHUDStyle.SetText(statusLabel, text, true);
         statusLabel.color = tint;
         statusRect.gameObject.SetActive(!string.IsNullOrEmpty(text));
     }

@@ -141,19 +141,19 @@ public static class RacingPolishValidation
         {
             var lesson = new DrivingTutorialProgress();
             TMP_Text message = canvas.transform.Find("DrivingTutorial/CurrentInstruction/Message").GetComponent<TMP_Text>();
-            Require(canvas.transform.Find("DrivingTutorial/Lessons") == null, "No bottom instruction strip remains.");
+            Require(canvas.transform.Find("DrivingTutorial/Lessons") == null, "The legacy multi-lesson strip must stay retired; one compact current-action card is shown.");
             ui.Update(lesson, DriveInputState.Neutral, 0f, true);
             Require(message.text.Contains("まずペダル"), "Only pedal release is shown before starting.");
             lesson.Tick(.01f, true, 0f, 0f, 0f, 0f); ui.Update(lesson, DriveInputState.Neutral, 0f, true);
             Require(message.text == "ペダルを踏んで\n加速しよう", "Show acceleration first.");
             lesson.Tick(.7f, true, 1f, 0f, 4f, 0f); ui.Update(lesson, DriveInputState.Neutral, 4f, true);
-            Require(message.text.StartsWith("ハンドル"), "Show steering only after actual acceleration.");
+            Require(message.text.StartsWith("右カーブでハンドルを右へ"), "Show steering only after actual acceleration.");
             lesson.Tick(.7f, true, 1f, 10f, 4f, 30f); ui.Update(lesson, DriveInputState.Neutral, 4f, true);
             Require(message.text.Contains("停車"), "Show stopping only after actual steering.");
             ui.Update(lesson, DriveInputState.Neutral, 4f, false);
             Require(message.text.Contains("接続"), "Disconnected controller replaces the action prompt.");
             lesson.Tick(.7f, true, 0f, 0f, 0f, 30f); ui.Update(lesson, DriveInputState.Neutral, 0f, true);
-            Require(message.text.Contains("練習完了"), "Complete player sees the wait prompt.");
+            Require(message.text.Contains("準備完了") && message.text.Contains("操作不要"), "Complete player sees the wait prompt.");
         }
         finally { UnityEngine.Object.DestroyImmediate(canvas); }
     }

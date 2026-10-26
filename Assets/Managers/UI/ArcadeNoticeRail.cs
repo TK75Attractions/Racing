@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>One quiet line beneath the clock. Confirmed item effects outrank proximity and jump hints.</summary>
 public sealed class ArcadeNoticeRail : MonoBehaviour
 {
-    private readonly string[] notices=new string[4];
+    private readonly string[] notices=new string[5];
     private RectTransform panel;
     private TMP_Text label;
     private string shown;
@@ -22,7 +22,7 @@ public sealed class ArcadeNoticeRail : MonoBehaviour
         }
         return rail;
     }
-    // 0: jump, 1: front rival, 2: rear rival, 3: confirmed effect.
+    // 0: guidance/success, 1: front rival, 2: rear rival, 3: confirmed effect, 4: road safety.
     public void Set(int source,string text)
     {
         if(panel==null||label==null||source<0||source>=notices.Length)return;notices[source]=text;

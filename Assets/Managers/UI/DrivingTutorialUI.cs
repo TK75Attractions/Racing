@@ -46,7 +46,7 @@ public sealed class DrivingTutorialUI
         float allowed=mover!=null?mover.SteeringInputLimit/Mathf.Max(.001f,mover.SteeringInputRange):1;
         float raw=input.steering/90f;steering.SetState(raw,Mathf.Clamp(raw,-allowed,allowed),allowed);
         int stage=lesson.HasTimedOut?4:(int)lesson.CurrentStage;
-        string prompt=lesson.HasTimedOut?"TIME UP\nもう一人を待っています":lesson.IsComplete?"アイテム獲得！\n練習完了":!connected?connectionNotice??"接続を確認してください":!lesson.PedalReleased?"まずペダルから\n足を離そう":stage==0?"ペダルを踏んで\n加速しよう":stage==1?"ハンドルを回して\n角を曲がってみよう":"光る箱に触れて\nアイテムを取ろう";
+        string prompt=lesson.HasTimedOut?"時間終了 / 相手の準備待ち\nそろうとレースへ":lesson.IsComplete?"練習完了！\nそろうとレースへ":!connected?connectionNotice??"接続を確認してください":!lesson.PedalReleased?"まずペダルから\n足を離そう":stage==0?"ペダルを踏んで\n加速しよう":stage==1?"ハンドルを回して\n角を曲がってみよう":"光る箱に触れて\nアイテムを取ろう";
         if(shownMessage!=prompt){message.text=prompt;shownMessage=prompt;}
         if(shownStage==stage)return;shownStage=stage;
         status.text=lesson.HasTimedOut?"TIME UP":lesson.IsComplete?"COMPLETE":"練習しよう";

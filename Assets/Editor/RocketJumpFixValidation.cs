@@ -64,7 +64,7 @@ public static class RocketJumpFixValidation
             target.Create();
         }
         Canvas.ForceUpdateCanvases();
-        RenderPipeline.SubmitRenderRequest(camera, new RenderPipeline.StandardRequest { destination = target });
+        camera.GetComponentInParent<NativeResolutionUI>().RenderToTarget(target);
         string clip = reset ? "reset" : jump ? "jump" : "tube";
         int frame = reset ? resetFrames++ : jump ? jumpFrames++ : tubeFrames++;
         string directory = Path.Combine(Output, clip);

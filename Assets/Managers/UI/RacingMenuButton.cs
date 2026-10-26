@@ -9,6 +9,7 @@ public sealed class RacingMenuButton : Button
 {
     private PedalButtonFeedback feedback;
     private float holdSeconds, heldTime;
+    private double holdStarted;
     private bool holding, keyboardHold, committing;
     private Coroutine commitRoutine;
     public float HoldSeconds=>holdSeconds;
@@ -34,7 +35,7 @@ public sealed class RacingMenuButton : Button
         base.OnPointerDown(data);
         if(data.button!=PointerEventData.InputButton.Left || !IsActive() || !IsInteractable() || committing || feedback.IsRetained)return;
         RaceSoundEffects.PlayForButton(RaceSoundCue.Press,transform);
-        if(holdSeconds>0){holding=true;keyboardHold=false;heldTime=0;}
+        if(holdSeconds>0){holding=true;keyboardHold=false;heldTime=0;holdStarted=Time.realtimeSinceStartupAsDouble;}
     }
     public override void OnPointerUp(PointerEventData data)
     {
@@ -48,14 +49,16 @@ public sealed class RacingMenuButton : Button
     {
         if(!IsActive() || !IsInteractable() || committing || holding || feedback.IsRetained)return;
         RaceSoundEffects.PlayForButton(RaceSoundCue.Press,transform);
-        if(holdSeconds>0 && Keyboard.current!=null){holding=keyboardHold=true;heldTime=0;}
+        if(holdSeconds>0 && Keyboard.current!=null){holding=keyboardHold=true;heldTime=0;holdStarted=Time.realtimeSinceStartupAsDouble;}
         else Commit();
     }
     private void Update()
     {
         if(!holding)return;
         if(!IsInteractable() || (keyboardHold && !SubmitHeld())){CancelHold();return;}
-        heldTime+=Time.unscaledDeltaTime;feedback.SetPointerCharge(Mathf.Clamp01(heldTime/holdSeconds));
+        // Input can begin after an expensive render/import in the current frame.
+        // Count only time since this press, rather than charging that earlier frame to it.
+        heldTime=(float)(Time.realtimeSinceStartupAsDouble-holdStarted);feedback.SetPointerCharge(Mathf.Clamp01(heldTime/holdSeconds));
         if(heldTime>=holdSeconds){holding=keyboardHold=false;Commit();}
     }
     private static bool SubmitHeld()

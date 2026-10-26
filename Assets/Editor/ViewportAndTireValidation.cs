@@ -174,7 +174,7 @@ public static class ViewportAndTireValidation
             foreach (UnityEngine.UI.Graphic graphic in rig.Canvas.GetComponentsInChildren<UnityEngine.UI.Graphic>()) graphic.SetVerticesDirty();
             Canvas.ForceUpdateCanvases(); RenderTexture.active=output; GL.Clear(true,true,Color.black);
             ScriptableRenderContext.EmitGeometryForCamera(rig.UiCamera);
-            RenderPipeline.SubmitRenderRequest(rig.BackImageCamera,new RenderPipeline.StandardRequest { destination=output });
+            rig.RenderToTarget(output); RenderTexture.active=output;
             snapshot.ReadPixels(new Rect(0,0,output.width,output.height),0,0); snapshot.Apply();
             string directory=Path.Combine(Directory.GetCurrentDirectory(),"Logs/ViewportValidation"); Directory.CreateDirectory(directory);
             File.WriteAllBytes(Path.Combine(directory,name),snapshot.EncodeToPNG());

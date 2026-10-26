@@ -16,6 +16,7 @@ public sealed class FinishRunController : MonoBehaviour, IDriveInputSource
     public bool IsRetiredFromView => retiredRenderers != null;
     public bool IsActive { get; private set; }
     public float ElapsedSeconds => elapsed;
+    public float EngineAudioGain { get; private set; } = 1f;
     public int PlayerIndex => participant?.Index ?? -1;
     public string DeviceId => "Finish run";
     public bool IsConnected => true;
@@ -39,7 +40,7 @@ public sealed class FinishRunController : MonoBehaviour, IDriveInputSource
             foreach (Collider theirs in other.Car.GetComponentsInChildren<Collider>())
                 Physics.IgnoreCollision(own, theirs);
         }
-        elapsed = 0f; IsActive = true;
+        elapsed = 0f; IsActive = true; EngineAudioGain = 1f;
         mover.SetInputSource(this);
     }
 
@@ -61,10 +62,10 @@ public sealed class FinishRunController : MonoBehaviour, IDriveInputSource
     {
         if (!IsActive) return;
         IsActive = false; CurrentState = DriveInputState.Neutral;
+        EngineAudioGain = 0f;
         mover.enabled = false;
         foreach (CarStabilityController stability in GetComponentsInChildren<CarStabilityController>()) stability.enabled = false;
-        foreach (CarSoundController sound in GetComponentsInChildren<CarSoundController>()) sound.enabled = false;
-        foreach (AudioSource sound in GetComponentsInChildren<AudioSource>()) sound.Stop();
+        // Keep the engine DSP alive long enough to ramp its gain to silence.
         foreach (Collider collider in GetComponentsInChildren<Collider>()) collider.enabled = false;
         participant.Body.linearVelocity = Vector3.zero;
         participant.Body.angularVelocity = Vector3.zero;

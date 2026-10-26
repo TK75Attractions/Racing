@@ -161,9 +161,13 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     public void SetTitlePrompt(string promptText)
     {
+        if (promptText == "WAITING FOR THE OTHER PLAYER TO RETURN")
+        {
+            promptText = "相手の結果操作待ち\n相手が戻ると次の準備へ・操作不要";
+        }
         if (titlePrompt != null && titlePrompt.text != promptText)
         {
-            titlePrompt.text = promptText;
+            RacingHUDStyle.SetText(titlePrompt, promptText, true);
         }
     }
 
@@ -553,9 +557,12 @@ public sealed class ScreenTransitionController : MonoBehaviour
         titleButtonFeedback[playerIndex].SetConfirmed(ready);
         if (titlePrompt != null)
         {
-            titlePrompt.text = !armed
-                ? "ペダルを離して準備してください"
-                : ready ? "準備完了  /  相手の準備を待っています" : "長押しで車の選択へ / ペダルを踏み込む";
+            InputManager input = Gmanager.Control != null ? Gmanager.Control.IManager : null;
+            bool connected = input == null || input.IsPlayerConnected(playerIndex);
+            titlePrompt.text = !connected ? "接続待ち / 操作できません\n係員に知らせてください" : !armed
+                ? "準備 / あなたが操作\nペダルを離すと選択できます"
+                : ready ? "準備完了 / 相手待ち\nそろうまで操作不要" : "準備 / あなたが操作\nペダル長押しで車の選択へ";
+            RacingHUDStyle.SetText(titlePrompt, titlePrompt.text, true);
         }
     }
 

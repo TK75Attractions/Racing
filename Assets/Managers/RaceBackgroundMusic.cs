@@ -14,12 +14,16 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
     private Gmanager gameManager;
     private readonly AudioSource[] sources = new AudioSource[2];
     private readonly RaceSoundEffectsMixer[] mixers = new RaceSoundEffectsMixer[2];
+    private readonly AudioClip[] requestedClips = new AudioClip[2];
+    private readonly float[] transitionGains = { 1f, 1f };
+    private readonly bool[] switching = new bool[2];
     private AudioClip menuClip, tutorialClip, finishClip, raceClip, finalLapClip;
     private AudioClip silentClip;
 
     private void Awake()
     {
         gameManager = GetComponent<Gmanager>();
+        if (GetComponent<RaceAudioOperatorPanel>()==null) gameObject.AddComponent<RaceAudioOperatorPanel>();
         menuClip = Resources.Load<AudioClip>(MenuClipPath);
         tutorialClip = Resources.Load<AudioClip>(TutorialClipPath);
         finishClip = Resources.Load<AudioClip>(FinishClipPath);
@@ -39,7 +43,7 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
             // Music gain is applied inside the filter, so BGM mute cannot silence UI cues.
             source.volume = 1f;
             mixers[player] = sourceObject.AddComponent<RaceSoundEffectsMixer>();
-            mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm);
+            mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm * RaceAudioSettings.NotificationDuck);
             GetComponent<RaceSoundEffects>()?.RegisterMixer(player,mixers[player]);
             sourceObject.AddComponent<PlayerAudioCapture>().ConfigureMusic(GetComponent<RaceAudioOutput>(), player);
         }
@@ -50,11 +54,15 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
 
     private void Update()
     {
+        Tick(Time.unscaledDeltaTime);
+    }
+
+    private void Tick(float dt)
+    {
         if (gameManager == null) return;
         for (int player = 0; player < sources.Length; player++)
         {
             AudioSource source = sources[player];
-            mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm);
             int viewedPlayer = gameManager.GetAudioViewedPlayer(player);
             Gmanager.State phase = gameManager.GetPlayerAudioState(player);
             AudioClip desired;
@@ -76,10 +84,32 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
                     break;
             }
             desired = desired ?? silentClip;
-            if (source.clip == desired && source.isPlaying) continue;
-            source.Stop();
-            source.clip = desired;
-            if (desired != null && source.isActiveAndEnabled) source.Play();
+            if (source.clip == null)
+            {
+                source.clip = desired;
+                requestedClips[player] = desired;
+                if (desired != null && source.isActiveAndEnabled) source.Play();
+            }
+            else if (requestedClips[player] != desired)
+            {
+                requestedClips[player] = desired;
+                switching[player] = true;
+            }
+
+            if (switching[player])
+            {
+                transitionGains[player] = Mathf.MoveTowards(transitionGains[player], 0f, dt / .35f);
+                if (transitionGains[player] <= 0f)
+                {
+                    source.clip = requestedClips[player];
+                    source.time = 0f;
+                    if (source.isActiveAndEnabled) source.Play();
+                    switching[player] = false;
+                }
+            }
+            else
+                transitionGains[player] = Mathf.MoveTowards(transitionGains[player], 1f, dt / .55f);
+            mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm * RaceAudioSettings.NotificationDuck * transitionGains[player]);
         }
     }
     private void OnDestroy()

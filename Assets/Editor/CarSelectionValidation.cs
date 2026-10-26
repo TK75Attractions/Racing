@@ -94,10 +94,13 @@ public static class CarSelectionValidation
             ui.ApplyToCar(car);
             Require(car.transform.Find("SelectedVehicleBody") != null, "Sedan body reaches gameplay car");
             Require(car.GetComponent<DebugMover>().VehicleMultipliers == new Vector4(1.1f, .9f, 1.15f, .9f), "Selected handling reaches gameplay car");
+            Require(car.GetComponent<CarSoundController>().VehicleProfile == 1 && car.GetComponent<CarExhaustVisual>() != null,
+                "Selected vehicle also configures its exhaust tone and color");
             int bodies = car.GetComponentsInChildren<Rigidbody>(true).Length;
             catalog.Apply(car, 1, 0); Require(car.GetComponentsInChildren<Rigidbody>(true).Length == bodies, "Body change keeps production physics rig");
             catalog.Apply(car, 0, 2); Require(car.transform.Find("SelectedVehicleBody") == null, "Switch back restores coupe");
             Require(car.GetComponent<DebugMover>().VehicleMultipliers == Vector4.one, "Grade reset does not compound tuning");
+            Require(car.GetComponent<CarSoundController>().VehicleProfile == 0, "Returning to SPORT GT restores its sound profile");
             UnityEngine.Object.DestroyImmediate(car);
             Debug.Log("CAR_SELECTION_BEHAVIOR_PASS");
             ui.Open(); ui.SelectVehicle(0); ui.SelectPaint(0);
@@ -200,19 +203,20 @@ public static class CarSelectionValidation
         foreach (ScreenTransitionController transition in transitions) transition.ApplyStateImmediate(Gmanager.State.Countdown);
     }
 
-    private static void BuildFont()
+    public static void BuildFont()
     {
         const string path = "Assets/Resources/UI/CarSelectionFont.asset";
         string corpus = File.ReadAllText("Assets/Resources/UI/CarSelectionCatalog.asset");
         foreach (string source in Directory.GetFiles("Assets/Managers/UI", "CarSelection*.cs")) corpus += File.ReadAllText(source);
         corpus += File.ReadAllText("Assets/Managers/UI/NeonUI.cs");
+        corpus += File.ReadAllText("Assets/Managers/UI/PreparationTimerUI.cs");
         string characters = new string(System.Linq.Enumerable.ToArray(System.Linq.Enumerable.OrderBy(
             System.Linq.Enumerable.Distinct(System.Linq.Enumerable.Where(corpus, c => c >= 32)), c => c)));
         TMP_FontAsset existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
         if (existing != null && existing.HasCharacters(characters)) return;
         Font sourceFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/MPLUS1-HUD-Bold.ttf");
         TMP_FontAsset font = TMP_FontAsset.CreateFontAsset(sourceFont, 80, 8,
-            UnityEngine.TextCore.LowLevel.GlyphRenderMode.SDFAA, 2048, 2048, AtlasPopulationMode.Dynamic, false);
+            UnityEngine.TextCore.LowLevel.GlyphRenderMode.SDFAA, 2048, 2048, AtlasPopulationMode.Dynamic, true);
         Require(font.TryAddCharacters(characters, out string missing), "Font coverage: " + missing);
         font.name = "Car Selection Bold"; font.atlasPopulationMode = AtlasPopulationMode.Static;
         font.material.name = "Car Selection Bold Material";

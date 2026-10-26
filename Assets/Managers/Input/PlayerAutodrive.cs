@@ -30,7 +30,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
     public void ApplySwitch()
     {
         if (own?.Result != null) return;
-        bool next = own != null && (manager.BothPlayersAutodrive || own.Index == 1 && RaceFeatureController.Enabled(RaceFeature.PlayerTwoAutodrive));
+        bool next = own != null && (RacingStandalonePerformanceProbe.AutorunEnabled || manager.BothPlayersAutodrive || own.Index == 1 && RaceFeatureController.Enabled(RaceFeature.PlayerTwoAutodrive));
         if (next == IsActive || gate == null) return;
         CurrentState = DriveInputState.Neutral; bot.Clear();
         paceCruise=18f;

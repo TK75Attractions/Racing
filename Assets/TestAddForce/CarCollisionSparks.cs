@@ -34,6 +34,8 @@ public sealed class CarCollisionSparks : MonoBehaviour
     private Material sparkMaterial;
     private float nextEmissionTime;
     private float nextWallEmissionTime;
+    private float carContactStarted = -1f;
+    private float wallContactStarted = -1f;
 
     /// <summary>衝突の瞬間に、強さ（0〜1）を通知します。車同士の衝突では両方の車に届きます。</summary>
     public event Action<float> Impact;
@@ -41,6 +43,8 @@ public sealed class CarCollisionSparks : MonoBehaviour
     private void Awake()
     {
         body = GetComponent<Rigidbody>();
+        // Vehicle loading owns preparation; collision callbacks only emit particles.
+        CreateSparks();
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -50,16 +54,24 @@ public sealed class CarCollisionSparks : MonoBehaviour
     }
 
     private void OnCollisionStay(Collision collision) => EmitContactSparks(collision);
+    private void OnCollisionExit(Collision collision)
+    {
+        if (IsDynamicBody(collision.rigidbody)) carContactStarted = -1f;
+        else wallContactStarted = -1f;
+    }
 
     private void NotifyImpact(Collision collision)
     {
-        if (Impact == null || !IsGameplayActive() || collision.contactCount == 0) return;
+        if (!IsGameplayActive() || collision.contactCount == 0) return;
 
         float impactSpeed;
         if (IsDynamicBody(collision.rigidbody))
         {
             if (collision.rigidbody.GetComponent<CarCollisionSparks>() == null) return;
             impactSpeed = collision.relativeVelocity.magnitude;
+            if (collision.contactCount>0 && GetInstanceID()<collision.rigidbody.GetInstanceID() && impactSpeed>=1.2f)
+                RaceSoundEffects.PlayVehicleCue(impactSpeed>=8f?RaceVehicleAudioCue.HeavyImpact:RaceVehicleAudioCue.LightImpact,
+                    collision.GetContact(0).point,Mathf.Clamp01(impactSpeed/18f));
         }
         else
         {
@@ -69,7 +81,7 @@ public sealed class CarCollisionSparks : MonoBehaviour
         }
 
         float strength = EvaluateImpactStrength(impactSpeed);
-        if (strength > 0f) Impact.Invoke(strength);
+        if (strength > 0f) Impact?.Invoke(strength);
     }
 
     /// <summary>衝突の速さ（m/s）を揺れの強さ（0〜1）に変換します。</summary>
@@ -98,6 +110,7 @@ public sealed class CarCollisionSparks : MonoBehaviour
 
     private void EmitCarSparks(Collision collision)
     {
+        if (carContactStarted < 0f) carContactStarted = Time.time;
         if (Time.time < nextEmissionTime) return;
 
         CarCollisionSparks other = collision.rigidbody.GetComponent<CarCollisionSparks>();
@@ -110,8 +123,10 @@ public sealed class CarCollisionSparks : MonoBehaviour
 
         nextEmissionTime = Time.time + emissionInterval;
         float strength = Mathf.Clamp01(speed / 15f);
+        float contactFactor = Mathf.Lerp(.55f, 1f, Mathf.InverseLerp(.08f, .45f, Time.time - carContactStarted));
         int contactCount = Mathf.Min(collision.contactCount, 4);
-        int count = Mathf.Max(2, Mathf.RoundToInt(Mathf.Lerp(10f, 32f, strength) / contactCount));
+        int count = Mathf.RoundToInt(Mathf.Lerp(0f, 32f, strength * strength) * contactFactor / contactCount);
+        if (count <= 0) return;
         for (int contactIndex = 0; contactIndex < contactCount; contactIndex++)
         {
             ContactPoint contact = collision.GetContact(contactIndex);
@@ -123,6 +138,7 @@ public sealed class CarCollisionSparks : MonoBehaviour
 
     private void EmitWallSparks(Collision collision)
     {
+        if (wallContactStarted < 0f) wallContactStarted = Time.time;
         if (TubeDriveSurface.Contains(collision.collider)) return;
         if (Time.time < nextWallEmissionTime) return;
 
@@ -140,8 +156,17 @@ public sealed class CarCollisionSparks : MonoBehaviour
         if (sparks == null && !CreateSparks()) return;
 
         nextWallEmissionTime = Time.time + emissionInterval;
-        float strength = Mathf.Clamp01(speed / 20f);
-        int count = Mathf.Max(2, Mathf.RoundToInt(Mathf.Lerp(8f, 28f, strength) / wallContacts));
+        float tangentSpeed = 0f;
+        for (int i = 0; i < contactCount; i++)
+        {
+            ContactPoint contact = collision.GetContact(i);
+            if (!IsWallNormal(contact.normal)) continue;
+            tangentSpeed = Mathf.Max(tangentSpeed, Vector3.ProjectOnPlane(body.GetPointVelocity(contact.point), contact.normal).magnitude);
+        }
+        float strength = Mathf.Clamp01(tangentSpeed / 18f);
+        float contactFactor = Mathf.Lerp(.5f, 1f, Mathf.InverseLerp(.1f, .6f, Time.time - wallContactStarted));
+        int count = Mathf.RoundToInt(Mathf.Lerp(0f, 28f, strength * strength) * contactFactor / wallContacts);
+        if (count <= 0) return;
         for (int contactIndex = 0; contactIndex < contactCount; contactIndex++)
         {
             ContactPoint contact = collision.GetContact(contactIndex);
