@@ -18,7 +18,6 @@ public sealed class PedalButtonFeedback : MonoBehaviour
     private TMP_Text percentage;
     private RacingButtonFXGraphic fx;
     private bool selected, pointerFocused, pointerPressed, available=true, confirmed, retainStart, dirty=true;
-    private bool selectionDriven;
     private float progress, pointerProgress, focus, press, shownProgress, highlightAge=10f, confirmAge=10f;
     private Color accent;
     private int displayedPercent=-1;
@@ -70,7 +69,6 @@ public sealed class PedalButtonFeedback : MonoBehaviour
     }
     public void SetState(bool isSelected,float amount,Color color)
     {
-        if (!selectionDriven) { selectionDriven = true; dirty = true; }
         amount=Mathf.Clamp01(amount);
         if(selected==isSelected && progress==amount)return;
         if(isSelected && !selected)highlightAge=0;
@@ -94,14 +92,14 @@ public sealed class PedalButtonFeedback : MonoBehaviour
     {
         if(rect==null || surface==null)return;
         bool retained=IsRetained && available;
-        float targetFocus=available && ((selectionDriven ? selected : pointerFocused) || retained)?1f:0f;
+        float targetFocus=available && (selected || pointerFocused || retained)?1f:0f;
         float targetPress=available && !retained && (pointerPressed || progress>0f || pointerProgress>0f || confirmAge<.10f)?1f:0f;
         float targetProgress=retained?1f:available?Mathf.Max(progress,pointerProgress):0f;
         bool moving=focus!=targetFocus || press!=targetPress || shownProgress!=targetProgress || highlightAge<.52f || confirmAge<.48f;
         if(!dirty && !moving)return;
         highlightAge+=deltaTime;confirmAge+=deltaTime;
-        focus=Mathf.MoveTowards(focus,targetFocus,deltaTime*10f);
-        press=Mathf.MoveTowards(press,targetPress,deltaTime*14f);
+        focus=UIMotion.Follow(focus,targetFocus,deltaTime,.04f);
+        press=UIMotion.Follow(press,targetPress,deltaTime,.025f);
         // The gauge follows actual hold time without delaying the MAX confirmation.
         shownProgress=targetProgress;
         float flash=confirmAge<.48f?Mathf.Sin(Mathf.Clamp01(confirmAge/.48f)*Mathf.PI):0f;
@@ -115,7 +113,7 @@ public sealed class PedalButtonFeedback : MonoBehaviour
         Color tint=retained?RacingUITheme.Gold:surface.Style==RacingPanelGraphic.SurfaceStyle.Danger?NeonUI.Red:surface.Style==RacingPanelGraphic.SurfaceStyle.Primary?ArcadeUI.For(transform).Primary:accent;
         surface.SetButtonModifiers(!available,retained);
         surface.SetState(focus,press,flash,tint);
-        float scale=1f+focus*.012f+spring*.006f-press*.008f;
+        float scale=1f+focus*.022f+spring*.010f-press*.018f;
         Vector3 size=Vector3.Scale(baseScale,new Vector3(scale,scale,1));
         Vector2 position=basePosition+Vector2.down*(press*1.5f);
         if(rect.anchoredPosition!=position)rect.anchoredPosition=position;

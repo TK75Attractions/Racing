@@ -175,6 +175,10 @@ public sealed class InterruptionMenuUI : MonoBehaviour
             caption.rectTransform.anchorMax = new Vector2(.87f,.82f);
             button.transform.Find("Caption").GetComponent<TMP_Text>().text = string.Empty;
         }
+        var entrance=card.GetComponent<UIRevealSequence>();if(entrance==null)entrance=card.AddComponent<UIRevealSequence>();
+        entrance.Configure(root.transform,new[]{"MenuCard"},new Vector2(0,-24),0,.22f);
+        var optionMotion=optionsPanel.GetComponent<UIRevealSequence>();if(optionMotion==null)optionMotion=optionsPanel.AddComponent<UIRevealSequence>();
+        optionMotion.Configure(optionsPanel.transform,new[]{"Master","BGM","Engine","Effects","P1Output","P2Output"},new Vector2(12,0),.02f,.18f);
         optionsPanel.SetActive(false);
     }
 
