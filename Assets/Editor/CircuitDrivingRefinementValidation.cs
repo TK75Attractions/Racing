@@ -146,9 +146,23 @@ public static class CircuitDrivingRefinementValidation
             gate.SetBlocked(false); input.IsConnected = false;
             for (int i = 0; i < 30; i++) { Call(mover, "ApplyDriving"); Physics.Simulate(.02f); }
             Require(Mathf.Abs(body.linearVelocity.z) < .1f, "Disconnected cars must never auto-accelerate.");
-            Debug.Log("CIRCUIT_JUMP_PASS: production car starts from rest on run-up with pedal released; blocked/disconnected remain stopped; flush contrast outlines have no collider.");
+            input.IsConnected = true; _ = gate.CurrentState;
+            var npc = car.AddComponent<NpcRaceDriver>(); npc.enabled = false;
+            body.position = new Vector3(0, .8f, 70); body.linearVelocity = Vector3.zero; Physics.SyncTransforms();
+            for (int i = 0; i < 30; i++) { Call(mover, "ApplyDriving"); Physics.Simulate(.02f); }
+            Require(Mathf.Abs(body.linearVelocity.z) < .1f, "CPU launch spacing may deliberately wait; human run-up assistance must not override it.");
+            Debug.Log("CIRCUIT_JUMP_PASS: production car starts from rest on run-up with pedal released; blocked/disconnected/CPU waiting remain stopped; flush contrast outlines have no collider.");
         }
         finally { Physics.simulationMode = mode; Gmanager.Control = previous; UnityEngine.Object.DestroyImmediate(root); UnityEngine.Object.DestroyImmediate(inactive); }
+    }
+
+    public static void RunAll()
+    {
+        RunRocket(); RunLaps(); RunJump(); SlipstreamValidation.Run();
+        CircuitVisualRefinementValidation.RunTube();
+        CourseBarrierValidation.Run();
+        TubeWallRecoveryValidation.RunFullBatch();
+        Debug.Log("CIRCUIT_FULL_REGRESSION_PASS");
     }
 
     private static void SetPath(RaceCourse course, Vector3[] positions, int jump)

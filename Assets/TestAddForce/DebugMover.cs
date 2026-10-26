@@ -401,6 +401,7 @@ public class DebugMover : MonoBehaviour
     {
         Gmanager race = Gmanager.Control;
         if (race == null || race.state != Gmanager.State.Game || race.course == null || IsInputSuppressed ||
+            GetComponent<NpcRaceDriver>() != null ||
             inputSource == null || !inputSource.IsConnected ||
             inputSource is PlayerDriveInputGate gate && (gate.IsBlocked || gate.NeedsPedalRelease) ||
             rawPedalInput < -.1f || itemEffects != null && (itemEffects.BlocksDriverInput || itemEffects.IsRocketActive || itemEffects.IsOiled || itemEffects.IsConfused)) return;
