@@ -51,6 +51,54 @@ public static class CircuitDrivingRefinementValidation
         finally { Gmanager.Control = previous; UnityEngine.Object.DestroyImmediate(root); UnityEngine.Object.DestroyImmediate(inactive); }
     }
 
+    [MenuItem("Racing/Validate Circuit Lap Coverage")]
+    public static void RunLaps()
+    {
+        SkillGameplayValidation.Run();
+        var root = new GameObject("Wide lap QA");
+        try
+        {
+            RaceCourse course = root.AddComponent<RaceCourse>();
+            SetPath(course, new[] { Vector3.zero, Vector3.forward * 200, new Vector3(200, 0, 200), Vector3.right * 200 }, -1);
+            var so = new SerializedObject(course); so.FindProperty("closedLoop").boolValue = true;
+            so.FindProperty("generateRoad").boolValue = true;
+            so.FindProperty("road.generateBarriers").boolValue = true;
+            so.ApplyModifiedPropertiesWithoutUndo(); course.RebuildCache(); course.RebuildRoad();
+            var goal = new GameObject("Goal reference", typeof(GoalSensor)); goal.transform.SetParent(root.transform);
+            goal.transform.position = Vector3.forward * 40;
+            LapManager laps = root.AddComponent<LapManager>(); Set(laps, "raceCourse", course);
+            var grid = new GameObject("Grid"); grid.transform.SetParent(root.transform); grid.transform.position = Vector3.forward * 41;
+            var car = new GameObject("Lap car", typeof(Rigidbody)); car.transform.SetParent(root.transform);
+            Rigidbody body = car.GetComponent<Rigidbody>(); body.useGravity = false; body.position = grid.transform.position;
+            laps.RegisterCar(body, grid.transform);
+            float start = course.GetProgressDistance(goal.transform.position);
+            for (int lap = 0; lap < 2; lap++)
+            {
+                for (float d = 2; d < course.TotalLength + 4; d += 2)
+                {
+                    course.TryGetSampleAtProgress(start + d, out var sample);
+                    // Ride the outside barrier across several virtual gates, then cross
+                    // the finish above the old goal trigger. No trigger callback is sent.
+                    bool wall = d > 80 && d < 170 || d > 770;
+                    body.position = sample.position + sample.right * (wall ? 11.2f : 0) + Vector3.up * (wall ? 3f : .6f);
+                    body.linearVelocity = sample.forward * (240f / 3.6f); Physics.SyncTransforms();
+                    Call(laps, "FixedUpdate");
+                }
+                Require(laps.GetCarData(body).lapCount == lap + 1, "Wall riding and a missed narrow goal trigger must still count once.");
+            }
+            Require(laps.GetCarData(body).isFinished, "Two valid wide circuits finish the race.");
+            laps.RegisterCar(body, grid.transform);
+            for (int i = 0; i < 3; i++)
+            {
+                course.TryGetSampleAtProgress(start + i * course.TotalLength / 3, out var sample);
+                body.position = sample.position + Vector3.up; Physics.SyncTransforms(); Call(laps, "FixedUpdate");
+            }
+            Require(laps.GetCarData(body).lapCount == 0, "Teleporting between thirds cannot earn a lap.");
+            Debug.Log("CIRCUIT_LAP_PASS: two full circuits; barrier-width gates; high finish sweep; no trigger dependency; teleport blocked.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+
     private static void SetPath(RaceCourse course, Vector3[] positions, int jump)
     {
         var so = new SerializedObject(course);

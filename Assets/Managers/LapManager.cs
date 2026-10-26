@@ -21,6 +21,7 @@ public class LapManager : MonoBehaviour
         [System.NonSerialized] public LapTraversal traversal = new LapTraversal();
         [System.NonSerialized] public Vector3 traversalPosition;
         [System.NonSerialized] public bool traversalHasPosition;
+        [System.NonSerialized] public bool traversalWasValid;
         public int nextCheckpointIndex = 0;
         public int lastCheckpointIndex = -1;
         public int passedCheckpointCount;
@@ -111,6 +112,13 @@ public class LapManager : MonoBehaviour
         }
     }
 
+    private void FixedUpdate()
+    {
+        if (!raceActive) return;
+        foreach (CarTimeData data in carDataMap.Values)
+            if (data.rb != null && !data.isFinished) UpdateRaceProgress(data);
+    }
+
     // Kept for old scene references; checkpoint transforms now serve only as grid anchors.
     public void OnCarPassCheckpoint(Rigidbody rb, CheckpointSensor checkpoint) { }
 
@@ -196,7 +204,7 @@ public class LapManager : MonoBehaviour
         if (!debug)
         {
             if (raceCourse == null || !raceCourse.HasValidPath || !hasProgressReference) return false;
-            UpdateRaceProgress(data);
+            data.raceProgressDistance = GetValidatedProgress(data, raceCourse.TotalLength);
             float raw = raceCourse.GetProgressDistance(rb.position);
             if (!raceCourse.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample sample) ||
                 Vector3.Dot(rb.linearVelocity, sample.forward * (reverseProgressDirection ? -1f : 1f)) <= .1f) return false;
@@ -389,6 +397,9 @@ public class LapManager : MonoBehaviour
         }
 
         data.raceProgressDistance = GetValidatedProgress(data, lapLength);
+        // Sweep the directed finish distance at physics cadence. A 1m trigger can be
+        // skipped at Rocket speed or passed above while riding a barrier.
+        if (data.traversal.CrossedFinish) PassGoal(data.rb, null, false);
     }
 
     private void InitializeProgressReference()
@@ -444,18 +455,25 @@ public class LapManager : MonoBehaviour
             progress -= lapLength;
         float total = data.lapCount * lapLength + progress;
         raceCourse.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample sample);
-        // Below-road/off-road projections must not change ranking or forbid a safe backward recovery.
-        bool valid = Mathf.Abs(data.rb.position.y-sample.position.y)<6f &&
-            Mathf.Abs(Vector3.Dot(data.rb.position-sample.position,sample.right))<=sample.width*.5f;
-        if(valid)
+        // Virtual gates span the same legal driving area as recovery: shoulders,
+        // curved barriers and the actual tube interior count, not just the narrow road ribbon.
+        float height = Vector3.Dot(data.rb.position - sample.position, sample.up);
+        bool nearJump = height >= 12f && height < 25f &&
+            (raceCourse.IsJumpAhead(data.rb.position, 1, 45) || raceCourse.IsJumpAhead(data.rb.position, -1, 45));
+        bool valid = raceCourse.IsPointInsideTube(data.rb.position) ||
+            (height > -2.5f && height < (nearJump ? 25f : 12f) && raceCourse.IsPointInsideDrivingArea(data.rb.position));
+        if (data.hasCrossedGoal)
         {
-            if (data.hasCrossedGoal)
-            {
-                bool continuous = !data.traversalHasPosition || Vector3.Distance(data.traversalPosition,data.rb.position) < Mathf.Min(150f,lapLength*.15f);
-                data.traversal.Observe(GetLapProgressDistance(data.rb.position,lapLength)/lapLength,continuous);
-                data.traversalPosition=data.rb.position;data.traversalHasPosition=true;
-            }
-            data.verifiedRaceProgressDistance=total; data.hasVerifiedProgress=true;
+            float maximumStep = Mathf.Max(12f, data.rb.linearVelocity.magnitude * Time.fixedDeltaTime * 3f + 2f);
+            bool continuous = valid && (!data.traversalHasPosition || data.traversalWasValid &&
+                Vector3.Distance(data.traversalPosition, data.rb.position) <= maximumStep);
+            // Invalid samples rebase the observer without awarding travel or bridging a shortcut.
+            data.traversal.Observe(GetLapProgressDistance(data.rb.position, lapLength) / lapLength, continuous);
+        }
+        data.traversalPosition = data.rb.position; data.traversalHasPosition = true; data.traversalWasValid = valid;
+        if (valid)
+        {
+            data.verifiedRaceProgressDistance = total; data.hasVerifiedProgress = true;
         }
         return data.hasVerifiedProgress ? data.verifiedRaceProgressDistance : total;
     }
@@ -580,7 +598,7 @@ public class LapManager : MonoBehaviour
         data.lastValidRotation = body.rotation;
         if (raceCourse != null && raceCourse.TotalLength > 0f)
             data.traversal.Rebase(GetLapProgressDistance(body.position,raceCourse.TotalLength)/raceCourse.TotalLength);
-        data.traversalPosition=body.position;data.traversalHasPosition=true;
+        data.traversalPosition=body.position;data.traversalHasPosition=true;data.traversalWasValid=false;
         UpdateRaceProgress(data);
     }
 
