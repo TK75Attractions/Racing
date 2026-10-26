@@ -22,6 +22,7 @@ public class LapManager : MonoBehaviour
         [System.NonSerialized] public Vector3 traversalPosition;
         [System.NonSerialized] public bool traversalHasPosition;
         [System.NonSerialized] public bool traversalWasValid;
+        [System.NonSerialized] public float traversalProgress;
         public int nextCheckpointIndex = 0;
         public int lastCheckpointIndex = -1;
         public int passedCheckpointCount;
@@ -460,17 +461,25 @@ public class LapManager : MonoBehaviour
         float height = Vector3.Dot(data.rb.position - sample.position, sample.up);
         bool nearJump = height >= 12f && height < 25f &&
             (raceCourse.IsJumpAhead(data.rb.position, 1, 45) || raceCourse.IsJumpAhead(data.rb.position, -1, 45));
-        bool valid = raceCourse.IsPointInsideTube(data.rb.position) ||
-            (height > -2.5f && height < (nearJump ? 25f : 12f) && raceCourse.IsPointInsideDrivingArea(data.rb.position));
+        bool roadHeight = height > -2.5f && height < (nearJump ? 25f : 12f);
+        bool roadBand = Mathf.Abs(Vector3.Dot(data.rb.position - sample.position, sample.right)) <= sample.width * .5f;
+        // Most physics samples are on the road. Avoid repeated tube raycasts and
+        // polygon scans when the already-computed projection proves that case.
+        bool valid = roadHeight && roadBand || raceCourse.IsPointInsideTube(data.rb.position) ||
+            roadHeight && raceCourse.IsPointInsideDrivingArea(data.rb.position);
+        float lapProgress = Mathf.Repeat(progress, lapLength) / lapLength;
         if (data.hasCrossedGoal)
         {
             float maximumStep = Mathf.Max(12f, data.rb.linearVelocity.magnitude * Time.fixedDeltaTime * 3f + 2f);
+            float worldStep = Vector3.Distance(data.traversalPosition, data.rb.position);
+            float courseStep = Mathf.Abs(Mathf.DeltaAngle(data.traversalProgress * 360f, lapProgress * 360f)) / 360f * lapLength;
             bool continuous = valid && (!data.traversalHasPosition || data.traversalWasValid &&
-                Vector3.Distance(data.traversalPosition, data.rb.position) <= maximumStep);
+                worldStep <= maximumStep && courseStep <= Mathf.Max(8f, worldStep * 4f + 2f));
             // Invalid samples rebase the observer without awarding travel or bridging a shortcut.
-            data.traversal.Observe(GetLapProgressDistance(data.rb.position, lapLength) / lapLength, continuous);
+            data.traversal.Observe(lapProgress, continuous);
         }
         data.traversalPosition = data.rb.position; data.traversalHasPosition = true; data.traversalWasValid = valid;
+        data.traversalProgress = lapProgress;
         if (valid)
         {
             data.verifiedRaceProgressDistance = total; data.hasVerifiedProgress = true;

@@ -94,7 +94,21 @@ public static class CircuitDrivingRefinementValidation
                 body.position = sample.position + Vector3.up; Physics.SyncTransforms(); Call(laps, "FixedUpdate");
             }
             Require(laps.GetCarData(body).lapCount == 0, "Teleporting between thirds cannot earn a lap.");
-            Debug.Log("CIRCUIT_LAP_PASS: two full circuits; barrier-width gates; high finish sweep; no trigger dependency; teleport blocked.");
+            // Nearby parallel lanes can move a projection past a gate despite only
+            // a few meters of real motion. That must not award the skipped detour.
+            SetPath(course, new[] { Vector3.zero, Vector3.forward * 100, new Vector3(4,0,100),
+                new Vector3(4,0,80), new Vector3(100,0,80), Vector3.right * 100 }, -1);
+            so = new SerializedObject(course); so.FindProperty("closedLoop").boolValue = true;
+            so.ApplyModifiedPropertiesWithoutUndo(); course.RebuildCache(); goal.transform.position = Vector3.zero;
+            var shortcutLaps = root.AddComponent<LapManager>(); Set(shortcutLaps, "raceCourse", course);
+            grid.transform.position = Vector3.forward; body.position = grid.transform.position;
+            shortcutLaps.RegisterCar(body, grid.transform);
+            for (int z = 2; z <= 90; z += 2) { body.position = new Vector3(0,.6f,z); shortcutLaps.GetRaceProgressDistance(body); }
+            double beforeShortcut = shortcutLaps.GetCarData(body).traversal.Travel;
+            body.position = new Vector3(4,.6f,90); shortcutLaps.GetRaceProgressDistance(body);
+            Require(Math.Abs(shortcutLaps.GetCarData(body).traversal.Travel - beforeShortcut) < .0001,
+                "A 4m lane hop must not award the 24m detour or its virtual gate.");
+            Debug.Log("CIRCUIT_LAP_PASS: two full circuits; barrier-width gates; high finish sweep; no trigger dependency; teleport and nearby-lane shortcuts blocked.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }
