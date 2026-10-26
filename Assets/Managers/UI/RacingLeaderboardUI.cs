@@ -18,6 +18,8 @@ public sealed class RacingLeaderboardUI : MonoBehaviour
             ranks[i] = NeonUI.Text(rows[i], "Rank", (i+1).ToString(), new Vector2(.035f,.09f), new Vector2(.12f,.91f), 25f, italic:true);
             names[i] = NeonUI.Text(rows[i], "Name", i < 2 ? "P"+(i+1) : "CPU "+(i-1), new Vector2(.20f,.14f), new Vector2(.74f,.88f), 19f);
             gaps[i] = NeonUI.Text(rows[i], "Gap", "—", new Vector2(.73f,.14f), new Vector2(.96f,.88f), 16f, TextAlignmentOptions.Right, true);
+            var face=rows[i].Find("ModernSurface").GetComponent<RacingPanelGraphic>();face.HardShadow=true;
+            if(i==owner)ranks[i].color=names[i].color=gaps[i].color=ArcadeUI.For(player).Ink;
         }
         SetPosition(owner + 1, 0);
     }
@@ -41,12 +43,14 @@ public sealed class RacingLeaderboardUI : MonoBehaviour
     // Compatibility for standalone HUD previews.
     public void SetPosition(int position, float distance)
     {
-        position = Mathf.Clamp(position, 1, 2); int metres = Mathf.RoundToInt(Mathf.Abs(distance));
+        position = Mathf.Clamp(position, 1, 4); int metres = Mathf.RoundToInt(Mathf.Abs(distance));
         if (previewPosition == position && previewMetres == metres) return;
+        int other=1;
         for (int i = 0; i < rows.Length; i++)
         {
-            rows[i].gameObject.SetActive(i < 2); if (i >= 2) continue;
-            Place(i, i == owner ? position : 3-position, 2);
+            rows[i].gameObject.SetActive(true);
+            int rank;if(i==owner)rank=position;else{if(other==position)other++;rank=other++;}
+            Place(i, rank, 4);
             gaps[i].text = i == owner ? "YOU" : (position == 1 ? "+" : "−") + metres + " m";
         }
         previewPosition = position; previewMetres = metres;

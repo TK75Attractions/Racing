@@ -17,6 +17,8 @@ public sealed class DrivingTutorialController : MonoBehaviour
         public DrivingTutorialProgress lesson;
         public float startYaw;
         public float recoveryTimer;
+        public bool resetHeld;
+        public DrivingTutorialProgress.Stage announcedStage;
         public readonly List<TutorialItemPickup> pickups = new List<TutorialItemPickup>();
     }
 
@@ -98,6 +100,8 @@ public sealed class DrivingTutorialController : MonoBehaviour
         foreach (Practice player in players)
         {
             DriveInputState input = player.input.CurrentState;
+            bool resetPressed = player.input.IsConnected && input.resetPressed && !player.resetHeld;
+            player.resetHeld = player.input.IsConnected && input.resetPressed;
             // The pedal held to confirm a car must be released before it can accelerate the practice car.
             if (player.driveGate.IsBlocked && player.input.IsConnected && Mathf.Abs(input.pedal) <= .05f)
                 player.driveGate.SetBlocked(false);
@@ -106,16 +110,18 @@ public sealed class DrivingTutorialController : MonoBehaviour
             bool escaped = local.y < -2f || Mathf.Abs(local.x - 38f) > 95f || Mathf.Abs(local.z) > 92f;
             bool overturned = Vector3.Dot(player.car.transform.up, Vector3.up) < .3f;
             player.recoveryTimer = overturned ? player.recoveryTimer + dt : 0f;
-            if (!player.lesson.IsFinished && (escaped || player.recoveryTimer > 1.5f || input.resetPressed))
+            if (!player.lesson.IsFinished && (escaped || player.recoveryTimer > 1.5f || resetPressed))
             {
                 Recover(player);
                 speed = 0f;
             }
-            DrivingTutorialProgress.Stage previous = player.lesson.CurrentStage;
             player.lesson.Tick(dt, player.input.IsConnected, input.pedal, input.steering, speed,
                 Mathf.DeltaAngle(player.startYaw, player.car.transform.eulerAngles.y));
-            if (previous != player.lesson.CurrentStage)
+            // Pickup contact can complete a lesson between ticks. Remember the last announced
+            // stage so that the final success cue is emitted once, just like the driving steps.
+            if (player.announcedStage != player.lesson.CurrentStage)
             {
+                player.announcedStage = player.lesson.CurrentStage;
                 RaceSoundEffects.PlayForPlayer(player.lesson.IsComplete ? RaceSoundCue.Confirm : RaceSoundCue.Ready, player.input.PlayerIndex);
                 if (player.lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer)
                     player.startYaw = player.body.rotation.eulerAngles.y;

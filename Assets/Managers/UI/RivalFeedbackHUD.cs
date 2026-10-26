@@ -11,6 +11,7 @@ public sealed class RivalFeedbackHUD : MonoBehaviour
     private struct Notice { public CarItemEffects target; public ItemImpactKind kind; public string text; }
     private readonly Queue<Notice> pending = new Queue<Notice>(3);
     private readonly RaycastHit[] sightHits = new RaycastHit[32];
+    private ArcadeNoticeRail quiet;
     private Gmanager manager;
     private int playerIndex;
     private Camera view;
@@ -37,6 +38,7 @@ public sealed class RivalFeedbackHUD : MonoBehaviour
     public void Configure(Gmanager race, int index, PlayerDisplayRig rig)
     {
         manager = race; playerIndex = index; view = rig.MainCamera;
+        quiet=ArcadeNoticeRail.Get(transform);
         root = RacingUITheme.Rect(transform, "RivalFeedback", Vector2.zero, Vector2.one);
         Transform onPlay = transform.Find("OnPlay");
         if (onPlay != null) root.SetSiblingIndex(onPlay.GetSiblingIndex() + 1);
@@ -45,6 +47,7 @@ public sealed class RivalFeedbackHUD : MonoBehaviour
         frontPlate = Plate("FrontRival",new Vector2(.36f,.65f),new Vector2(.64f,.705f),new Color(1f,.72f,.2f),out frontText,out frontGroup);
         rearPlate = Plate("RearRival",new Vector2(.35f,.23f),new Vector2(.65f,.29f),RacingHUDStyle.Alert,out rearText,out rearGroup);
         hitPlate = Plate("ItemHitConfirmed",new Vector2(.32f,.335f),new Vector2(.68f,.415f),RacingHUDStyle.Teal,out hitText,out hitGroup);
+        frontPlate.gameObject.SetActive(false);rearPlate.gameObject.SetActive(false);hitPlate.gameObject.SetActive(false);
         CreateArrow();
         ClearPresentation();
     }
@@ -143,8 +146,9 @@ public sealed class RivalFeedbackHUD : MonoBehaviour
         frontGroup.alpha = front != null ? .85f + .15f * frontStrength : 0;
         rearAlpha = Mathf.MoveTowards(rearAlpha,rearStrength,Time.deltaTime * 3.5f);
         rearGroup.alpha = rear != null ? rearAlpha : 0;
-        edge.color = new Color(.96f,.06f,.09f,rearAlpha * (.65f + .04f * Mathf.Sin(Time.time * 5f)));
-        arrow.SetActive(front != null);
+        edge.color = Color.clear;
+        quiet?.Set(1,front!=null?frontText.text:"");quiet?.Set(2,rear!=null?rear.Label+" 後方から接近":"");
+        arrow.SetActive(false);
         if (front == null) return;
         Vector3 up = own.Body.rotation * Vector3.up;
         Vector3 anchor = front.Body.position + up * (2.4f + .10f * Mathf.Sin(Time.time * 3f));
@@ -199,12 +203,14 @@ public sealed class RivalFeedbackHUD : MonoBehaviour
     private void UpdateNotice()
     {
         if (!RaceFeatureController.Enabled(RaceFeature.ItemHitFeedback))
-        { pending.Clear(); noticeUntil = 0; current = default; hitGroup.alpha = 0; return; }
+        { pending.Clear(); noticeUntil = 0; current = default; hitGroup.alpha = 0;quiet?.Set(3,""); return; }
         if (Time.time >= noticeUntil && pending.Count > 0) ShowNotice(pending.Dequeue());
         hitGroup.alpha = Mathf.Clamp01((noticeUntil - Time.time) / .35f);
+        quiet?.Set(3,hitGroup.alpha>0?hitText.text.Replace(" が", " ").Replace("！", ""):"");
     }
     private void ClearProximity()
     {
+        quiet?.Set(1,"");quiet?.Set(2,"");
         front = rear = null; frontStrength = rearStrength = rearAlpha = 0; nextScan = 0;
         if (frontGroup != null) frontGroup.alpha = 0;
         if (rearGroup != null) rearGroup.alpha = 0;
@@ -213,6 +219,7 @@ public sealed class RivalFeedbackHUD : MonoBehaviour
     }
     private void ClearPresentation()
     {
+        quiet?.Set(3,"");
         ClearProximity(); pending.Clear(); current = default; noticeUntil = 0;
         if (hitGroup != null) hitGroup.alpha = 0;
         if (root != null) root.gameObject.SetActive(false);

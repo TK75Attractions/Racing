@@ -140,9 +140,10 @@ public static class MenuSceneryValidation
         foreach (var rig in rigs)
         {
             Transform root = rig.CanvasRoot.transform;
-            Require(root.Find("Title/TitleBackground").GetComponent<RawImage>().enabled == legacy, "Title artwork switch must match F8.");
-            Require(root.Find("Result/ResultPresentation/ResultBackground").GetComponent<RawImage>().enabled == legacy, "Result artwork switch must match F8.");
-            Require(root.Find("Title/SceneryTitleBrand").gameObject.activeSelf != legacy, "The live title must retain its own legible branding.");
+            Require(root.Find("Title/CircuitLogo/Artwork").GetComponent<RawImage>().texture!=null,"The transparent supplied logo must remain visible for both camera modes.");
+            Require(!root.Find("Title/TitleBackground").gameObject.activeSelf,"Retired title artwork must stay hidden.");
+            Transform oldBrand=root.Find("Title/SceneryTitleBrand");
+            Require(oldBrand==null||!oldBrand.gameObject.activeSelf,"Retired text branding must not cover the supplied logo.");
         }
     }
     private static void Capture(int player, string name)

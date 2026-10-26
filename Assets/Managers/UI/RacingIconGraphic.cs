@@ -5,7 +5,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class RacingIconGraphic : MaskableGraphic
 {
-    public enum Icon { Back, Pedal, Chevron, Flag, Car, Gear, Book, Power, Home, Retry, Course, Bolt, DoubleChevron }
+    public enum Icon { Back, Pedal, Chevron, Flag, Car, Gear, Book, Power, Home, Retry, Course, Bolt, DoubleChevron, Shield, Rocket, Droplet, Swap }
     public Icon symbol;
     private VertexHelper mesh;
     private Color ink;
@@ -52,6 +52,10 @@ public sealed class RacingIconGraphic : MaskableGraphic
                 Poly(new Vector2(-.38f,.33f),new Vector2(-.30f,-.03f),new Vector2(.02f,.15f)); break;
             case Icon.Course:
                 Path(.045f,new Vector2(-.38f,-.25f),new Vector2(-.28f,-.35f),new Vector2(-.05f,-.32f),new Vector2(.08f,-.07f),new Vector2(.30f,.06f),new Vector2(.38f,.29f),new Vector2(.22f,.38f),new Vector2(.04f,.31f),new Vector2(-.05f,.08f),new Vector2(-.27f,.01f),new Vector2(-.38f,-.25f)); break;
+            case Icon.Shield: Path(.07f,new Vector2(-.3f,.30f),new Vector2(0,.4f),new Vector2(.3f,.30f),new Vector2(.25f,-.12f),new Vector2(0,-.4f),new Vector2(-.25f,-.12f),new Vector2(-.3f,.3f));break;
+            case Icon.Rocket: Poly(new Vector2(-.17f,-.2f),new Vector2(.17f,-.2f),new Vector2(.16f,.2f),new Vector2(0,.42f),new Vector2(-.16f,.2f));Path(.08f,new Vector2(-.1f,-.28f),new Vector2(-.1f,-.4f));Path(.08f,new Vector2(.1f,-.28f),new Vector2(.1f,-.4f));break;
+            case Icon.Droplet: Path(.07f,new Vector2(0,.4f),new Vector2(.28f,-.06f),new Vector2(.23f,-.28f),new Vector2(0,-.38f),new Vector2(-.23f,-.28f),new Vector2(-.28f,-.06f),new Vector2(0,.4f));break;
+            case Icon.Swap: Path(.07f,new Vector2(-.35f,.13f),new Vector2(.35f,.13f),new Vector2(.15f,.32f));Path(.07f,new Vector2(.35f,-.13f),new Vector2(-.35f,-.13f),new Vector2(-.15f,-.32f));break;
             case Icon.Bolt: Poly(new Vector2(.04f,.42f),new Vector2(-.23f,-.02f),new Vector2(-.02f,-.02f),new Vector2(-.08f,-.40f),new Vector2(.25f,.12f),new Vector2(.04f,.12f)); break;
         }
     }

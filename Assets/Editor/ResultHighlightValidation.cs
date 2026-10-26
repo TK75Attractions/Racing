@@ -31,12 +31,8 @@ public static class ResultHighlightValidation
             Require(ResultUIManager.FormatHighlight(session.GetPlayerResult(1))=="自動運転テストの記録","AUTO cannot be presented as human achievement.");
             var dnf = new RaceResultRecord {didFinish=false,achievements=new RaceAchievementSnapshot {verifiedProgress=320}};
             Require(ResultUIManager.FormatHighlight(dnf).StartsWith("未完走 / 走行進捗"),"DNF must retain its status and factual fallback.");
-            TMP_Text highlight=root.transform.Find("ResultPresentation/ResultCard/Achievement").GetComponent<TMP_Text>();
-            Require(highlight.font.HasCharacters(highlight.text),"Static font must contain the achievement text.");
-            flags.SetValidationFeature(RaceFeature.ResultHighlights,false); ui.RefreshHighlight();
-            Require(highlight.text=="","OFF must hide the result highlight immediately.");
-            flags.SetValidationFeature(RaceFeature.ResultHighlights,true); ui.RefreshHighlight();
-            Require(highlight.text.Contains("着地成功"),"ON restores the saved snapshot.");
+            Require(root.transform.Find("ResultPresentation/ResultCard/Achievement")==null,"The compact result design keeps achievement facts out of the presentation.");
+            Require(!string.IsNullOrEmpty(ui.AchievementText),"Existing achievement snapshots remain available to the game.");
             cameraObject=new GameObject("Result camera");
             Camera camera=cameraObject.AddComponent<Camera>(); camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Color.black;
             camera.cullingMask=1<<30;camera.nearClipPlane=.1f;camera.farClipPlane=20f;
@@ -53,7 +49,7 @@ public static class ResultHighlightValidation
                 System.IO.File.WriteAllBytes(System.IO.Path.Combine(output,"result-"+size.x+".png"),image.EncodeToPNG());
                 RenderTexture.active=old;camera.targetTexture=null;UnityEngine.Object.DestroyImmediate(image);UnityEngine.Object.DestroyImmediate(target);target=null;
             }
-            Debug.Log("RESULT_HIGHLIGHT_VALIDATION_PASS: per-player snapshot, factual fallback, DNF, AUTO label, live OFF/ON, 720p/1080p renders.");
+            Debug.Log("RESULT_HIGHLIGHT_VALIDATION_PASS: per-player snapshot, factual fallback, DNF, AUTO label, compact presentation, 720p/1080p renders.");
         }
         finally
         {if(target!=null)UnityEngine.Object.DestroyImmediate(target);UnityEngine.Object.DestroyImmediate(root);if(cameraObject!=null)UnityEngine.Object.DestroyImmediate(cameraObject);UnityEngine.Object.DestroyImmediate(managerRoot);Gmanager.Control=previous;}

@@ -57,13 +57,10 @@ public sealed class PedalButtonFeedback : MonoBehaviour
     public void EnableGauge(bool keepSelected)
     {
         retainStart=keepSelected;
-        RectTransform bar=RacingUITheme.Rect(transform,"HoldGauge",new Vector2(.075f,.085f),new Vector2(.78f,.27f));
+        RectTransform bar=RacingUITheme.Rect(transform,"HoldGauge",new Vector2(.025f,.035f),new Vector2(.97f,.075f));
         gauge=bar.GetComponent<RacingButtonGaugeGraphic>() ?? bar.gameObject.AddComponent<RacingButtonGaugeGraphic>();
         percentage=NeonUI.Text(transform,"HoldPercent","0%",new Vector2(.79f,.08f),new Vector2(.955f,.29f),20f,TextAlignmentOptions.Right,true);
-        SetAnchors("Label",new Vector2(.28f,.51f),new Vector2(.87f,.96f));
-        SetAnchors("Caption",new Vector2(.285f,.29f),new Vector2(.87f,.51f));
-        SetAnchors("Icon",new Vector2(.085f,.40f),new Vector2(.235f,.90f));
-        SetAnchors("Chevron",new Vector2(.88f,.48f),new Vector2(.955f,.88f));
+        percentage.gameObject.SetActive(false);
         displayedPercent=-1;CacheContent();dirty=true;ApplyVisual(0,0);
     }
     private void SetAnchors(string name,Vector2 min,Vector2 max)
@@ -115,10 +112,10 @@ public sealed class PedalButtonFeedback : MonoBehaviour
     private void ApplyVisual(float flash,float spring)
     {
         bool retained=IsRetained && available;
-        Color tint=retained?RacingUITheme.Gold:surface.Style==RacingPanelGraphic.SurfaceStyle.Danger?NeonUI.Red:surface.Style==RacingPanelGraphic.SurfaceStyle.Primary?NeonUI.Pink:accent;
+        Color tint=retained?RacingUITheme.Gold:surface.Style==RacingPanelGraphic.SurfaceStyle.Danger?NeonUI.Red:surface.Style==RacingPanelGraphic.SurfaceStyle.Primary?ArcadeUI.For(transform).Primary:accent;
         surface.SetButtonModifiers(!available,retained);
         surface.SetState(focus,press,flash,tint);
-        float scale=1f+focus*.04f+spring*.023f+flash*.020f-press*.017f;
+        float scale=1f+focus*.012f+spring*.006f-press*.008f;
         Vector3 size=Vector3.Scale(baseScale,new Vector3(scale,scale,1));
         Vector2 position=basePosition+Vector2.down*(press*1.5f);
         if(rect.anchoredPosition!=position)rect.anchoredPosition=position;
@@ -132,7 +129,7 @@ public sealed class PedalButtonFeedback : MonoBehaviour
             {
                 Color color=available?item.tint:new Color(.55f,.59f,.67f,.72f);
                 if (available && !retained)
-                    color = Color.Lerp(item.tint * new Color(.78f,.78f,.78f,1f), new Color(.015f,.025f,.05f,1f), focus);
+                    color = Color.Lerp(item.tint * new Color(.78f,.78f,.78f,1f), ArcadeUI.For(transform).Ink, focus);
                 if(item.graphic.color!=color)item.graphic.color=color;
             }
         }

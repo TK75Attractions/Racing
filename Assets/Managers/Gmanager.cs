@@ -185,6 +185,7 @@ public class Gmanager : MonoBehaviour
         RaceParticipant participant = FindParticipant(body);
         return participant == null || participant.Result == null;
     }
+    public Transform TutorialCar(int player) => drivingTutorial?.GetPlayerCar(player)?.transform;
     public int GoalLap => lapManager != null ? lapManager.GoalLap : 0;
     public int GetPlayerLap(int index)
     {
@@ -1573,6 +1574,8 @@ public class Gmanager : MonoBehaviour
                 mover != null ? mover.AccelerationPadBoostTimeRemaining : 0f,
                 mover != null ? mover.AccelerationPadBoostDuration : 0f, ownerPosition, playerIndex == 0 ? progressGap : -progressGap);
             ui.UpdateParticipants(participants);
+            if(lapData!=null&&course!=null&&course.TotalLength>0)
+                ui.UpdateLapComparison(lapData.lapCount,Mathf.Repeat(lapData.raceProgressDistance,course.TotalLength)/course.TotalLength,lapData.currentLapTime,lapData.totalRaceTime,viewedPlayerIndex);
             ui.UpdateDriverNotice(player.inputGate, player.car.GetComponent<CarResetter>(),
                 state == State.Game && player.result == null && !player.withdrewFromRace,
                 course != null && course.IsJumpAhead(player.rigidbody.position,CourseProgressSign),
@@ -1695,7 +1698,10 @@ public class Gmanager : MonoBehaviour
         soundEffects?.Play(option == 0 ? RaceSoundCue.Confirm : RaceSoundCue.Cancel, playerIndex);
         resultUIManagers[playerIndex]?.PlayConfirm(option);
         if(option == 0) { RetryGame(); return; }
-        ReturnPlayerToTitle(playerIndex);
+        var ending=ArcadeEndingUI.Get(players[playerIndex].displayRig.CanvasRoot.transform);
+        if(ending.IsVisible)return;
+        players[playerIndex].titleCamera.Priority=20;players[playerIndex].displayRig.RaceCamera.Priority=10;
+        ending.Show(()=>ReturnPlayerToTitle(playerIndex));
     }
 
     private void UpdateResultReturnInput(float dt)
@@ -1715,6 +1721,8 @@ public class Gmanager : MonoBehaviour
             PlayerRuntime player = players[index];
             if (player == null || player.returnedToTitle || screenTransitions[index]?.IsTransitioning == true) continue;
             DriveInputState input = IManager.GetInputState(index);
+            var ending=player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>();
+            if(ending!=null&&ending.IsVisible){ending.TickInput(input.pedal,dt);continue;}
             if (!player.resultSteeringLatch && Mathf.Abs(input.steering) >= resultSteeringThreshold)
             {
                 player.resultSelection = 1 - player.resultSelection;

@@ -27,7 +27,7 @@ public sealed class NeonCourseOutlineGraphic : MaskableGraphic
             Vector3 p=path[i],q=path[(i+1)%path.Count];
             Vector2 a=r.center+(new Vector2(p.x,p.z)-(min+max)*.5f)*scale;
             Vector2 b=r.center+(new Vector2(q.x,q.z)-(min+max)*.5f)*scale;
-            RacingPanelGraphic.Line(vh,a,b,4f,Color.Lerp(new Color(.7f,.65f,1f),NeonUI.Cyan,i/(float)path.Count),aa);
+            RacingPanelGraphic.Line(vh,a,b,4f,ArcadeUI.For(transform).Soft,aa);
         }
     }
 }

@@ -115,11 +115,11 @@ public sealed class MenuSceneryDirector : MonoBehaviour
 
     private static void SetPresentation(View view, bool scenic)
     {
-        if (view.titleArt != null) view.titleArt.enabled = !scenic;
-        if (view.resultArt != null) view.resultArt.enabled = !scenic;
+        if (view.titleArt != null) view.titleArt.enabled = false;
+        if (view.resultArt != null) view.resultArt.enabled = false;
         if (view.titleScrim != null && view.titleScrim.gameObject.activeSelf != scenic) view.titleScrim.gameObject.SetActive(scenic);
         if (view.resultScrim != null && view.resultScrim.gameObject.activeSelf != scenic) view.resultScrim.gameObject.SetActive(scenic);
-        if (view.brand != null && view.brand.gameObject.activeSelf != scenic) view.brand.gameObject.SetActive(scenic);
+        if (view.brand != null && view.brand.gameObject.activeSelf) view.brand.gameObject.SetActive(false);
     }
     private static void Restore(View view)
     {

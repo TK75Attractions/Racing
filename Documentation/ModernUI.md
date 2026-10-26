@@ -1,23 +1,10 @@
-# Modern racing UI
+# Racing UI
 
-The title, race HUD, countdown, finish warning, spectator overlay, ESC menu and results share `RacingUITheme`.
-The palette uses navy surfaces, cyan selection and a gold pedal-progress/confirmation state.
+現在の共通デザインは [Arcade Sport UI（デザイン2）](ArcadeSportUI.md) です。タイトルから終了、実況まで P1 は青、P2 はピンクを使用します。
 
-- `RacingPanelGraphic` draws rounded panels and slanted primary buttons with gradients and screen-pixel edge feathering. It does not enlarge button textures.
-- `RacingHUDBuilder` replaces the legacy HUD bitmaps at runtime. Position, lap count, both clocks and speed remain bound to the existing race state. The lap denominator comes from `LapManager.GoalLap`.
-- The race HUD uses its own charcoal, mint and amber palette via `RacingHUDStyle`. Japanese headings are primary, with English captions and explicit number units. `RacingHUDPlateGraphic` draws chamfered surfaces and a circular speed dial. See [PlayScreenDesign.md](PlayScreenDesign.md) for the design and preview workflow.
-- `RacingSpeedGauge` and `RacingIconGraphic` draw scalable geometry. Each custom graphic requires its own `CanvasRenderer`.
-- Text uses the font catalog. The HUD uses static M PLUS Medium and Bold atlases; other screens use the existing catalog roles and Japanese SDF material.
-- The title uses live TSUKUKOMA CIRCUIT lettering. `ScreenTransitionController.useArtworkLogo` can restore the original artwork. The artwork import also disables block compression and mipmaps.
+`ArcadeUI` が配色・文字・ロゴ、`RacingHUDBuilder` が共通メーター、`ArcadeNoticeRail` が控えめな通知を担当します。`NeonUI` / `ModernUIValidation` は既存の呼び出しとの互換入口として残り、旧デザインの画面は構築しません。シーン上の旧 HUD は初期化時に隠すため、シーン移行は不要です。
 
-## Check in Unity
-
-1. Run **Racing > UI > Validate Modern UI**. This checks fonts and backgrounds, renderer dependencies and both players' HUD bindings, including fractional times and configurable total laps.
-2. Enter Play Mode to inspect the title and pedal feedback.
-3. Use **Racing > UI > Preview HUD** or **Racing > Preview Result UI** for the other screens. HUD preview is only a visual preview; exit Play Mode to reset it.
-4. Check at 1920 × 1080 and 3840 × 2160. In the Game view resolution menu, turn off **Low Resolution Aspect Ratios** when using Free Aspect on a Retina display. A magnified low-resolution Game view cannot show the final edge quality.
-
-The legacy scene objects are retained and hidden during initialization; no scene migration is required.
+`Racing > UI > Validate Arcade Sport UI` で結合を検証し、`Capture Arcade Sport UI` で両プレイヤーの描画を保存できます。試走を含む検証方法と画像の説明は上記ドキュメントを参照してください。
 
 ## Live viewport changes
 
@@ -27,7 +14,4 @@ The legacy scene objects are retained and hidden during initialization; no scene
 
 ## Spectator and ESC screens
 
-- Spectator status sits between the minimap and timer. Thin corner marks and a compact finish-status panel preserve the camera view. All spectator graphics ignore raycasts.
-- The ESC menu uses `RacingMenuButton`, a standard Unity Button with the same vector surface as pedal buttons. Pointer hover and keyboard selection light cyan; pressing lights gold. Transparent Image hit targets stay enabled, while decorative surfaces ignore raycasts.
-- Restart, direction change and interruption keep the existing callbacks. Forward/reverse is shown beside the direction action. ESC still closes the menu through the game manager.
-- **Racing > UI > Preview Spectator** and **Preview ESC Menu** are visual previews in Play Mode. Exit Play Mode to reset preview state. **Validate Modern UI** also checks both spectator labels, nonblocking overlays, hit targets, action callbacks and repeated menu initialization.
+観戦中も既存のカメラ追従を使用します。HUD は観戦先の速度・回転数へ切り替わり、配色は画面の持ち主に合わせます。ESC メニューは既存の再開・走行方向・設定・中断の処理を維持しています。

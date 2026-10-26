@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>Soft edge shading leaves the course visible behind readable menu controls.</summary>
+[RequireComponent(typeof(CanvasRenderer))]
 public sealed class MenuSceneryScrim : MaskableGraphic
 {
     private bool results;
@@ -14,17 +15,6 @@ public sealed class MenuSceneryScrim : MaskableGraphic
         scrim.raycastTarget = false;
         scrim.SetVerticesDirty();
         rect.gameObject.SetActive(false);
-    }
-
-    public static void BuildTitleBrand(Transform parent)
-    {
-        RectTransform brand = RacingUITheme.Rect(parent, "SceneryTitleBrand", new Vector2(.035f, .59f), new Vector2(.635f, .94f));
-        NeonUI.Text(brand, "Series", "CAMPUS MOTORSPORT", new Vector2(.008f, .90f), new Vector2(.95f, 1f), 19f, tint: NeonUI.Cyan);
-        NeonUI.Text(brand, "Tsukukoma", "TSUKUKOMA", new Vector2(0f, .49f), new Vector2(1f, .91f), 96f, italic: true);
-        var circuit = NeonUI.Text(brand, "Circuit", "CIRCUIT", new Vector2(.005f, .12f), new Vector2(.99f, .55f), 116f, italic: true, tint: NeonUI.Pink);
-        NeonUI.GlowText(circuit, NeonUI.Pink);
-        NeonUI.Text(brand, "Japanese", "ツクコマ・サーキット", new Vector2(.014f, 0f), new Vector2(.9f, .14f), 25f);
-        brand.gameObject.SetActive(false);
     }
 
     protected override void OnPopulateMesh(VertexHelper mesh)

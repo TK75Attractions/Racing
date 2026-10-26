@@ -27,14 +27,14 @@ public class RacingPanelGraphic : MaskableGraphic
     public void Configure(SurfaceStyle value, Color tint)
     {
         style = value;
-        accent = value == SurfaceStyle.Primary ? NeonUI.Pink : tint;
+        accent = ArcadeUI.For(transform).Primary;
         raycastTarget = false;
         SetVerticesDirty();
     }
 
     public void SetState(float focus, float pedal, float flash, Color tint)
     {
-        Color nextAccent = style == SurfaceStyle.Primary ? NeonUI.Pink : tint;
+        Color nextAccent = ArcadeUI.For(transform).Primary;
         if (Mathf.Approximately(selection, focus) && Mathf.Approximately(pressure, pedal)
             && Mathf.Approximately(confirmation, flash) && accent == nextAccent) return;
         selection = Mathf.Clamp01(focus);
@@ -44,75 +44,32 @@ public class RacingPanelGraphic : MaskableGraphic
         SetVerticesDirty();
     }
 
+    public bool HardShadow { get; set; }
     protected override void OnPopulateMesh(VertexHelper vh)
     {
-        vh.Clear();
-        Rect bounds = rectTransform.rect;
-        if (bounds.width < 2f || bounds.height < 2f) return;
-        float aa = 1f / Mathf.Max(0.1f, canvas != null ? canvas.scaleFactor : 1f);
-        bool button = style != SurfaceStyle.Panel;
-        float glow = style == SurfaceStyle.Primary ? .52f : .17f;
-        glow += selection * .75f + confirmation * .6f;
-        if (button) glow *= 1f - pressure * .65f * (1f - confirmation);
-        if (disabled) glow = 0f;
-        Color light = waiting ? RacingUITheme.Gold : style == SurfaceStyle.Danger ? NeonUI.Red : accent;
-        for (int i = 12; i > 0; i--)
+        vh.Clear(); Rect r=rectTransform.rect;if(r.width<2||r.height<2)return;
+        var p=ArcadeUI.For(transform);bool button=transform.parent!=null&&transform.parent.GetComponent<UnityEngine.UI.Selectable>()!=null;
+        Color fill=style==SurfaceStyle.Panel?p.Ink:style==SurfaceStyle.Primary?p.Primary:style==SurfaceStyle.Danger?ArcadeUI.Hex("edb3b5"):p.Paper;
+        if(button)fill=Color.Lerp(fill,p.Soft,selection*.25f);
+        if(disabled)fill=Color.Lerp(fill,p.Ink,.6f);
+        Rect shadow=r;shadow.position+=new Vector2(button||HardShadow?6:0,-(button||HardShadow?6:3));ArcadeSurfaceGraphic.Rounded(vh,shadow,HardShadow?Color.Lerp(p.Ink,Color.black,.38f):p.Ink,10);
+        ArcadeSurfaceGraphic.Rounded(vh,r,fill*color,10);
+        if(!button)return;
+        Color mark=style==SurfaceStyle.Primary?p.Ink:p.Primary;
+        if(transform.parent.name.EndsWith("Pedal"))
         {
-            float outerAlpha = .20f * glow * Mathf.Pow(1f - i / 12f, 2f);
-            float innerAlpha = .20f * glow * Mathf.Pow(1f - (i - 1f) / 12f, 2f);
-            Ring(vh, bounds, -i * 1.25f, -(i - 1) * 1.25f, Alpha(light,outerAlpha), Alpha(light,innerAlpha));
+            Vector2 c=new Vector2(r.xMin+75,r.center.y);float radius=Mathf.Min(45,r.height*.28f);
+            for(int i=0;i<20;i++){float a=Mathf.Lerp(223,-43,i/20f);ArcadeSurfaceGraphic.Arc(vh,c,radius,a,a-8,4,p.Ink);}
+            Line(vh,c,ArcadeSurfaceGraphic.Point(c,radius*.76f,54),4,p.Ink,.5f);
         }
-        Color bottom = new Color(.012f, .025f, .075f, .92f);
-        Color top = new Color(.025f, .065f, .16f, .93f);
-        if (style == SurfaceStyle.Primary)
+        else for(int i=0;i<5;i++)
         {
-            bottom = new Color(.28f, .007f, .095f, .98f);
-            top = new Color(.36f, .012f, .14f, .99f);
+            float y=r.center.y-19+i*8;
+            Line(vh,new Vector2(r.xMin+18,y),new Vector2(r.xMin+36,y),5,mark,.5f);
         }
-        if (style == SurfaceStyle.Danger)
-        {
-            bottom = new Color(.10f,.004f,.026f,.99f);
-            top = new Color(.49f,.008f,.08f,.99f);
-        }
-        if (waiting) { bottom = new Color(.17f,.075f,.004f,1f); top = new Color(.72f,.39f,.015f,1f); }
-        top = Color.Lerp(top, light, selection * .20f + confirmation * .25f);
-        if (button)
-        {
-            top = Color.Lerp(top, new Color(.025f,.012f,.035f,1f), pressure * .72f * (1f - confirmation * .55f));
-            bottom = Color.Lerp(bottom, Color.black, pressure * .45f);
-            if (!waiting)
-            {
-                Color selectedFill = Color.Lerp(light, Color.white, .86f);
-                top = Color.Lerp(top, selectedFill, selection);
-                bottom = Color.Lerp(bottom, Color.Lerp(light, Color.white, .64f), selection);
-            }
-        }
-        if (disabled) { top = new Color(.14f,.16f,.21f,.97f); bottom = new Color(.06f,.075f,.11f,.98f); light = new Color(.42f,.47f,.57f); }
-        Fill(vh, bounds, bottom, top);
+        for(int i=0;i<5;i++)
+            Line(vh,new Vector2(r.xMax-18-i*11,r.yMin+10),new Vector2(r.xMax-12-i*11,r.yMin+20),4,Alpha(p.Ink,.35f),.5f);
 
-        Color border = button ? Color.Lerp(light, Color.white, selection * .45f + confirmation * .2f) : Alpha(light,.8f);
-        float thickness = style == SurfaceStyle.Panel ? 1.2f : Mathf.Lerp(2f, 5f, selection);
-        Ring(vh, bounds, -aa, 0f, Alpha(border, 0f), border);
-        Ring(vh, bounds, 0f, thickness, border, border);
-        Ring(vh, bounds, thickness, thickness + aa, border, Alpha(border, 0f));
-        DrawChecks(vh, bounds, light);
-        if (button)
-        {
-            if (selection > .01f && !disabled)
-            {
-                // A solid side marker stays legible without relying on glow or color alone.
-                Color marker = Alpha(new Color(.015f,.025f,.05f), selection);
-                Line(vh, new Vector2(bounds.xMin + 12f, bounds.center.y - bounds.height * .21f),
-                    new Vector2(bounds.xMin + 12f, bounds.center.y + bounds.height * .21f), 6f, marker, aa);
-            }
-            Color bevel = Alpha(Color.Lerp(light,Color.white,.3f), disabled ? .14f : .32f);
-            Ring(vh,bounds,3f,4f,bevel,bevel);
-            if (pressure > .001f)
-            {
-                Color shadow = new Color(0,0,0,pressure*.7f);
-                Ring(vh,bounds,5f,10f,shadow,Alpha(shadow,0));
-            }
-        }
     }
 
     private void Shape(Rect r, float inset, Vector2[] points)

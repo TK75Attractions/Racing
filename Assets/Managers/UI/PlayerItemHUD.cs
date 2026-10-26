@@ -35,6 +35,10 @@ public sealed class PlayerItemHUD : MonoBehaviour
     private readonly Image[] oilBlobs = new Image[OilBlobCount];
     private readonly Vector2[] oilBlobDrift = new Vector2[OilBlobCount];
     private CarItemEffects effects;
+    private ArcadeToastGraphic toastFace;
+    private RacingIconGraphic toastIcon;
+    private bool wasBoosting;
+    private DebugMover boostMover;
     private float toastAge = float.PositiveInfinity;
     private float oilAge = float.PositiveInfinity;
     private float oilHoldSeconds = 1.5f;
@@ -92,6 +96,11 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
         int siblingIndex = GetTargetSiblingIndex();
         if (root.GetSiblingIndex() != siblingIndex) root.SetSiblingIndex(siblingIndex);
+        var manager=Gmanager.Control;
+        if(manager!=null){var car=manager.GetPlayerCarTransform(manager.GetAudioViewedPlayer(GetComponent<ArcadeDisplayTheme>()?.PlayerIndex??0));boostMover=car!=null?car.GetComponent<DebugMover>():null;}
+        bool boosting=boostMover!=null&&(boostMover.IsDriftBoosting||boostMover.IsAccelerationPadBoosting||boostMover.IsSlipstreamBoosting);
+        if(boosting&&!wasBoosting)ShowToast("ブースト発動！","BOOST ON",ArcadeUI.For(transform).Primary);
+        wasBoosting=boosting;
         UpdateToast(deltaTime);
         UpdateOil(deltaTime);
         UpdateConfuse();
@@ -143,8 +152,14 @@ public sealed class PlayerItemHUD : MonoBehaviour
     {
         if (toastTitle == null) return;
         toastTitle.text = title;
-        toastTitle.color = tint;
-        toastCaption.text = caption;
+        bool fast=title=="ロケット"||title=="ブースト発動！";
+        toastFace?.SetStyle(fast,title.Contains("踏んだ")||title.Contains("反転")||title.Contains("スピン"));
+        if(toastIcon!=null)toastIcon.symbol=title.Contains("シールド")?RacingIconGraphic.Icon.Shield:title.Contains("ロケット")?RacingIconGraphic.Icon.Rocket:title.Contains("オイル")?RacingIconGraphic.Icon.Droplet:title.Contains("反転")?RacingIconGraphic.Icon.Swap:RacingIconGraphic.Icon.Bolt;
+        toastIcon?.SetVerticesDirty();
+        toastTitle.color = ArcadeUI.For(transform).Ink;
+        toastCaption.color=ArcadeUI.For(transform).Ink;
+        toastTitle.fontStyle=fast?FontStyles.Italic:FontStyles.Normal;
+        toastCaption.text = title=="ロケット"?"ROCKET ON":caption;
         toastAge = 0f;
     }
 
@@ -302,16 +317,20 @@ public sealed class PlayerItemHUD : MonoBehaviour
         confuseFrame = CreateImage(root, "ConfuseFrame", edgeSprite, Vector2.zero, Vector2.one);
         confuseFrame.enabled = false;
 
-        toastRect = RacingHUDStyle.Plate(root, "Toast", new Vector2(.345f, .725f), new Vector2(.655f, .845f),
+        toastRect = RacingHUDStyle.Plate(root, "Toast", new Vector2(.31f, .57f), new Vector2(.69f, .74f),
             RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
+        toastRect.Find("ModernSurface").gameObject.SetActive(false);
+        var arcadeFace=RacingUITheme.Rect(toastRect,"ArcadeFace",Vector2.zero,Vector2.one);arcadeFace.SetAsFirstSibling();
+        toastFace=arcadeFace.gameObject.AddComponent<ArcadeToastGraphic>();toastFace.raycastTarget=false;
+        toastIcon=NeonUI.Icon(toastRect,"ItemIcon",RacingIconGraphic.Icon.Bolt,new Vector2(.065f,.30f),new Vector2(.155f,.70f));
         toastGroup = toastRect.gameObject.AddComponent<CanvasGroup>();
         toastGroup.alpha = 0f;
         toastGroup.blocksRaycasts = false;
-        toastTitle = RacingHUDStyle.Label(toastRect, "Title", string.Empty, .06f, .40f, .94f, .90f,
-            32f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
-        toastCaption = RacingHUDStyle.Label(toastRect, "Caption", string.Empty, .06f, .12f, .94f, .41f,
-            19f, RacingHUDStyle.Muted, TextAlignmentOptions.Center);
-        statusRect = RacingHUDStyle.Plate(root, "StatusPlate", new Vector2(.345f, .065f), new Vector2(.655f, .125f),
+        toastTitle = RacingHUDStyle.Label(toastRect, "Title", string.Empty, .20f, .21f, .80f, .69f,
+            45f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
+        toastCaption = RacingHUDStyle.Label(toastRect, "Caption", string.Empty, .20f, .70f, .80f, .94f,
+            22f, RacingHUDStyle.Muted, TextAlignmentOptions.Center);
+        statusRect = RacingHUDStyle.Plate(root, "StatusPlate", new Vector2(.42f, .46f), new Vector2(.58f, .53f),
             RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
         statusLabel = RacingHUDStyle.Label(statusRect, "Status", string.Empty, .05f, .15f, .95f, .85f,
             23f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
