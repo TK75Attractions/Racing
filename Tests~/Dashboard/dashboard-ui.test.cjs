@@ -709,4 +709,5 @@ test('Maintenance submits explicit on/off through the existing versioned setting
   await ui.context.submitSetting(button);
   assert.deepEqual(sent,[{action:'settings',command:'maintenance',args:['true'],settingsRevision:2}]);
   assert.equal(ui.elements.get('maintenance-stop').hidden,false);
+  assert.match(ui.elements.get('maintenance-feedback').textContent,/全ゲーム画面/);
 });

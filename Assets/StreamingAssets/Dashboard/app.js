@@ -1078,6 +1078,7 @@ function renderFeatureSettings(settings) {
 
 function renderMaintenance(settings) {
   const known = settings?.maintenanceAvailable === true && typeof settings.maintenanceActive === 'boolean';
+  if (known && lastMaintenanceActive !== settings.maintenanceActive) $('maintenance-feedback').textContent = '';
   if (known) lastMaintenanceActive = settings.maintenanceActive;
   const active = known ? settings.maintenanceActive : lastMaintenanceActive === true;
   const current = connected && known;
@@ -1160,6 +1161,7 @@ async function submitSetting(control) {
   settingsBusy = true;
   renderSettings(latestSnapshot.settings, false);
   $('settings-status').textContent = '設定を反映中…';
+  if (command === 'maintenance') $('maintenance-feedback').textContent = '切り替えを反映中…';
   let result;
   try {
     if (liveController) result = await liveController.command('settings', payload);
@@ -1189,6 +1191,7 @@ async function submitSetting(control) {
       result.reason === 'audio_unavailable' ? '出力機器を開けませんでした。接続を確認して再検出してください。' :
       '設定またはゲーム状態が変わりました。最新の表示を確認して操作してください。' :
       '反映結果を確認できません。最新の設定を確認してください。操作は再送していません。';
+    if (command === 'maintenance') $('maintenance-feedback').textContent = $('settings-status').textContent;
   }
 }
 

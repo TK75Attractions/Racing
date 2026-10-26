@@ -204,3 +204,5 @@ body.remote .controls{display:grid}
 .maintenance-actions button:disabled{opacity:.45;cursor:not-allowed}
 #maintenance-stop{background:#e9f268;color:#111923;border-color:#e9f268}
 @media(max-width:760px){.maintenance-panel{align-items:stretch;flex-direction:column;gap:14px;padding:18px}.maintenance-actions button{width:100%}}
+
+#maintenance-feedback{font-weight:700;margin-top:8px}#maintenance-feedback:empty{display:none}
