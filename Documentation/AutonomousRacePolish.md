@@ -81,3 +81,5 @@ RACING_BALANCE_OUTPUT="$OUTPUT/Drive" bash Tools/RunBalancePlaytest.sh
 - 実ESP32・ハンドル・ペダル・外部モニター・独立音声機器、Windows実機、4KでのGPU負荷と長時間運用は今回未検証。
 - 独立したバッチEditorの起動時にUnity内蔵Searchの `SearchDatabase` が `ArgumentOutOfRangeException` を出す環境由来の問題が残る。ゲームの検証はその後に完了しているが、Editorログが無警告であるとはしていない。
 - PRは既存UIの `6eb6360` を土台にするため、`main`との差分には先行するArcade Sport UIのコミットも含まれる。今回の追加改善は `546a5dd` 以降。`main`へのpush・マージは行っていない。
+
+後続のHUD調整で、走行中の案内は中央カードを廃止してタイム下の通知に統一しました。入力・安全の優先度は維持しています。[現行HUD](ArcadeSportUI.md)を参照してください。

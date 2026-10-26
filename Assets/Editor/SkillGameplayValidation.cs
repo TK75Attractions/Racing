@@ -44,7 +44,7 @@ public static class SkillGameplayValidation
             var ui=new OnPlayUIManager(); ui.Init(root.transform,null,0);
             var source=new Input { IsConnected=false }; var gate=new PlayerDriveInputGate(source);
             ui.UpdateDriverNotice(gate,null,true);
-            var notice=root.transform.Find("ModernHUD/DriverNotice");
+            var notice=root.transform.Find("QuietRaceNotice");
             var label=notice.Find("Text").GetComponent<TMPro.TMP_Text>();
             Require(notice.gameObject.activeSelf&&label.text=="接続を確認してください","Lost input needs an actionable notice.");
             _=gate.CurrentState; source.IsConnected=true; ui.UpdateDriverNotice(gate,null,true);

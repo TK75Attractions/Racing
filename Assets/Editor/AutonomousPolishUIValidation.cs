@@ -47,6 +47,7 @@ public static class AutonomousPolishUIValidation
         {
             var play = RacingUITheme.Rect(root.transform,"OnPlay",Vector2.zero,Vector2.one);
             var ui = new OnPlayUIManager(); ui.Init(play,null,0);
+            Require(play.Find("ModernHUD/DriverNotice")==null,"Driving guidance must not create a center card.");
             var input = new Input(); var gate = new PlayerDriveInputGate(input);
             ui.UpdateDriverNotice(gate,null,true,coachingNotice:"曲がってためる");
             Require(ui.DriverNotice == "曲がってためる","A driving hint must be visible.");
@@ -157,7 +158,7 @@ public static class AutonomousPolishUIValidation
             foreach(var label in host.GetComponentsInChildren<TMP_Text>())
             {
                 label.ForceMeshUpdate();
-                if(label.transform.parent.name=="CurrentInstruction" || label.transform.parent.name=="DriverNotice")
+                if(label.transform.parent.name=="CurrentInstruction" || label.transform.parent.name=="QuietRaceNotice")
                 {
                     Require(!label.isTextOverflowing,"Instruction overflows at "+width+": "+label.text);
                     Require(label.font.HasCharacters(new string(label.text.Where(c=>!char.IsControl(c)).ToArray())),"Static font is missing instruction glyphs: "+label.text);

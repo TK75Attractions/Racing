@@ -11,10 +11,10 @@ public static class RacingHUDBuilder
         foreach(string name in new[]{"Position","Lap","Time","Speed"}){var old=parent.Find(name);if(old!=null)old.gameObject.SetActive(false);}
         RectTransform root=RacingUITheme.Rect(parent,"ModernHUD",Vector2.zero,Vector2.one);root.SetAsFirstSibling();
         var p=ArcadeUI.For(playerIndex);
-        var position=RacingUITheme.Rect(root,"Position",new Vector2(.022f,.815f),new Vector2(.156f,.965f));
-        Text(position,"Txt","1",0,.05f,.53f,1,172,p.Paper,true).fontStyle=FontStyles.Italic;
-        Text(position,"PlaceUnit","位",.43f,.02f,.64f,.4f,38,p.Paper);
-        Text(position,"Field","/ 4",.66f,.45f,1,.90f,50,p.Paper,true);
+        var position=ArcadeUI.Panel(root,"Position",new Vector2(.022f,.815f),new Vector2(.156f,.965f),p.Paper);
+        Text(position,"Txt","1",0,.05f,.53f,1,172,p.Ink,true).fontStyle=FontStyles.Italic;
+        Text(position,"PlaceUnit","位",.43f,.02f,.64f,.4f,38,p.Ink);
+        Text(position,"Field","/ 4",.66f,.45f,1,.90f,50,p.Ink,true);
         var badge=ArcadeUI.Panel(position,"Badge",new Vector2(.66f,.16f),new Vector2(.92f,.40f),p.Primary);
         Text(badge,"Value","P"+(playerIndex+1),0,0,1,1,21,p.Ink,true);
         RacingUITheme.Rule(position,"Underline",Vector2.zero,new Vector2(1,.065f),p.Primary);
@@ -22,7 +22,10 @@ public static class RacingHUDBuilder
         Text(lap,"Heading","周回",.12f,.20f,.38f,.88f,22,p.Ink);
         Text(lap,"Txt","1",.40f,.19f,.64f,.93f,78,p.Ink,true);
         Text(lap,"Total","/ "+Mathf.Max(1,totalLaps),.66f,.23f,.96f,.85f,46,p.Ink,true);
-        RacingUITheme.Rule(lap,"Ticks",new Vector2(.12f,.1f),new Vector2(.85f,.14f),p.Ink);
+        var ticks=RacingUITheme.Rect(lap,"Ticks",new Vector2(.12f,.10f),new Vector2(.85f,.14f));
+        RacingUITheme.Rule(ticks,"Left",Vector2.zero,new Vector2(.47f,1),p.Ink);
+        Color unlit=p.Ink;unlit.a=.18f;
+        RacingUITheme.Rule(ticks,"Right",new Vector2(.53f,0),Vector2.one,unlit);
         var time=ArcadeUI.Panel(root,"Time",new Vector2(.718f,.835f),new Vector2(.92f,.965f),p.Paper);
         Text(time,"Heading","タイム",.08f,.13f,.32f,.87f,22,p.Ink);
         Text(time,"Total","00:00",.32f,.07f,.79f,.94f,73,p.Ink,true);
@@ -52,9 +55,7 @@ public static class RacingHUDBuilder
         (track.GetComponent<RacingSteeringIndicator>()??track.gameObject.AddComponent<RacingSteeringIndicator>()).Configure(playerIndex,caption);
         var telemetry=root.GetComponent<ArcadeHUDTelemetry>()??root.gameObject.AddComponent<ArcadeHUDTelemetry>();telemetry.Configure(playerIndex);
         IsolateCanvas(root.Find("Speed") as RectTransform);IsolateCanvas(root.Find("Tachometer") as RectTransform);IsolateCanvas(steering);IsolateCanvas(time);
-        foreach(string name in new[]{"Lap","Time","Pause","LapDelta","SteeringIndicator","Position/Badge","Tachometer/Boost"})ArcadeUI.HUDShadow(root.Find(name));
-        // A short hard shadow follows the position glyph rather than a rectangular plate.
-        var rank=position.Find("Txt").GetComponent<TMP_Text>();var rankShadow=rank.GetComponent<Shadow>()??rank.gameObject.AddComponent<Shadow>();rankShadow.effectDistance=new Vector2(4,-5);rankShadow.effectColor=p.Ink;
+        foreach(string name in new[]{"Position","Lap","Time","Pause","LapDelta","SteeringIndicator","Position/Badge","Tachometer/Boost"})ArcadeUI.HUDShadow(root.Find(name));
         return root;
     }
     private static void BuildDial(Transform root,string name,bool tach,Vector2 min,Vector2 max,ArcadeUI.Palette p)
@@ -62,15 +63,11 @@ public static class RacingHUDBuilder
         var dial=RacingUITheme.Rect(root,name,min,max);
         var face=RacingUITheme.Rect(dial,"Gauge",Vector2.zero,Vector2.one);
         ArcadeDialGraphic graphic=tach?face.GetComponent<ArcadeDialGraphic>()??face.gameObject.AddComponent<ArcadeDialGraphic>():face.GetComponent<RacingSpeedGauge>()??face.gameObject.AddComponent<RacingSpeedGauge>();graphic.Tachometer=tach;
-        Text(dial,"Heading",tach?"回転数":"速度",.34f,.60f,.66f,.66f,20,p.Ink);
-        var valueLabel=Text(dial,"Txt",tach?"0.9":"0",tach?.29f:.275f,tach?.39f:.365f,tach?.71f:.725f,tach?.60f:.65f,tach?108:154,p.Ink,true);
-        if(!tach)
-        {
-            valueLabel.font=ArcadeUI.SpeedDigits;valueLabel.fontSharedMaterial=valueLabel.font.material;
-            valueLabel.enableAutoSizing=false;valueLabel.overflowMode=TextOverflowModes.Overflow;
-            ArcadeUI.Place(dial,"Heading",.34f,.655f,.66f,.72f);
-        }
-        Text(dial,"Unit",tach?"×1000 rpm":"km/h",.31f,tach?.36f:.32f,.69f,tach?.42f:.385f,20,p.Ink,true);
+        Text(dial,"Heading",tach?"回転数":"速度",.34f,.65f,.66f,.72f,24,p.Ink);
+        var valueLabel=Text(dial,"Txt",tach?"0.9":"0",.275f,.375f,.725f,.64f,130,p.Ink,true);
+        valueLabel.font=ArcadeUI.SpeedDigits;valueLabel.fontSharedMaterial=valueLabel.font.material;
+        valueLabel.enableAutoSizing=false;valueLabel.overflowMode=TextOverflowModes.Overflow;
+        Text(dial,"Unit",tach?"×1000 rpm":"km/h",.29f,.315f,.71f,.385f,24,p.Ink,true);
         float[] values=tach?new[]{0f,2,4,6,8,9}:new[]{0f,60,120,180,240};
         foreach(float value in values){float a=Mathf.Lerp(223.2f,-43.2f,value/(tach?9:240))*Mathf.Deg2Rad;float x=.5f+Mathf.Cos(a)*(tach?.399f:.426f)*.64f,y=.515f+Mathf.Sin(a)*(tach?.399f:.426f)*.64f;Text(dial,"Tick"+value,value.ToString(),x-.045f,y-.03f,x+.045f,y+.03f,20,p.Paper,true);}
         if(tach){var boost=ArcadeUI.Panel(dial,"Boost",new Vector2(.22f,.06f),new Vector2(.78f,.17f),p.Ink);Text(boost,"Value","BOOST  0%",0,0,1,1,29,p.Secondary,true);}

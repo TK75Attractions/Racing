@@ -16,11 +16,8 @@ public class OnPlayUIManager
     private RacingLeaderboardUI leaderboard;
     private TMPro.TMP_Text fieldSize;
     private int displayedFieldSize = -1;
-    private RectTransform driverNotice;
-    private TMPro.TMP_Text driverNoticeText;
     private string displayedNotice;
     private readonly DriverNoticeQueue notices = new DriverNoticeQueue();
-    private ArcadeSurfaceGraphic noticeSurface;
     private int noticePlayer;
     private ArcadeNoticeRail quiet;
     private ArcadeHUDTelemetry telemetry;
@@ -53,15 +50,9 @@ public class OnPlayUIManager
         quiet=ArcadeNoticeRail.Get(parent.parent != null ? parent.parent : parent);telemetry=hud.GetComponent<ArcadeHUDTelemetry>();
         noticePlayer = playerIndex;
         notices.Clear();
-        var palette = ArcadeUI.For(playerIndex);
-        driverNotice = ArcadeUI.Panel(hud, "DriverNotice", new Vector2(.30f,.74f), new Vector2(.70f,.82f), palette.Ink);
-        noticeSurface = driverNotice.GetComponent<ArcadeSurfaceGraphic>();
-        RacingUITheme.Rule(driverNotice, "Accent", new Vector2(0,.14f), new Vector2(.009f,.86f), palette.Primary);
-        driverNoticeText = ArcadeUI.Label(driverNotice, "Text", "", new Vector2(.04f,.08f), new Vector2(.96f,.92f),
-            29f, palette.Paper, alignment: TMPro.TextAlignmentOptions.Center);
-        driverNoticeText.textWrappingMode = TMPro.TextWrappingModes.Normal;
-        driverNoticeText.fontSizeMin = 24f;
-        driverNotice.gameObject.SetActive(false);
+        // Disable any legacy center card left by a previous initialization.
+        Transform legacyNotice = hud.Find("DriverNotice");
+        if (legacyNotice != null) legacyNotice.gameObject.SetActive(false);
         displayedNotice = null;
         fieldSize = hud.Find("Position/Field")?.GetComponent<TMPro.TMP_Text>();
         leaderboard = hud.Find("Leaderboard")?.GetComponent<RacingLeaderboardUI>();
@@ -99,7 +90,6 @@ public class OnPlayUIManager
         if (!racing || gate?.IsBlocked == true)
         {
             notices.Clear();
-            quiet?.Set(0, "");
             ShowDriverNotice(null);
             return;
         }
@@ -118,8 +108,6 @@ public class OnPlayUIManager
         Condition("slipstream", slipstreamBoosting ? "追走で加速！" : "", DriverNoticePriority.Success, now);
         int viewedPlayer = gate != null && gate.PlayerIndex >= 0 ? gate.PlayerIndex : noticePlayer;
         Condition("auto", autodrive ? "P" + (viewedPlayer + 1) + " 自動運転テスト中" : "", DriverNoticePriority.Success, now);
-        // A safety instruction must survive rival/item messages in the quiet rail.
-        quiet?.Set(0, "");
         ShowDriverNotice(notices.Tick(now));
     }
 
@@ -132,14 +120,18 @@ public class OnPlayUIManager
     private void ShowDriverNotice(DriverNoticeQueue.Notice notice)
     {
         string text = notice?.Text ?? "";
-        if (text == displayedNotice || driverNotice == null) return;
+        if (text == displayedNotice) return;
         displayedNotice = text;
-        driverNoticeText.text = text;
-        driverNotice.gameObject.SetActive(text.Length > 0);
-        bool critical = notice != null && notice.Priority >= DriverNoticePriority.Safety;
-        var palette = ArcadeUI.For(noticePlayer);
-        noticeSurface.color = critical ? palette.Accent : palette.Ink;
-        driverNoticeText.color = critical ? palette.Ink : palette.Paper;
+        // All driving messages share the peripheral rail; no center overlay is created.
+        quiet?.Set(ArcadeNoticeRail.DrivingGuidance, "");
+        quiet?.Set(ArcadeNoticeRail.SafetyInstruction, "");
+        quiet?.Set(ArcadeNoticeRail.InputInstruction, "");
+        if (notice != null)
+        {
+            int source = notice.Priority == DriverNoticePriority.Critical ? ArcadeNoticeRail.InputInstruction :
+                notice.Priority >= DriverNoticePriority.Safety ? ArcadeNoticeRail.SafetyInstruction : ArcadeNoticeRail.DrivingGuidance;
+            quiet?.Set(source, text);
+        }
     }
 
     public void SetLapDelta(float? seconds)=>telemetry?.SetLapDelta(seconds);

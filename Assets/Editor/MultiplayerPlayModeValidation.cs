@@ -191,6 +191,17 @@ public static class MultiplayerPlayModeValidation
                 case 106 when EditorApplication.timeSinceStartup-stageStartTime > 2d:
                     Require(Vector3.Distance(driveStart, manager.GetPlayerCarTransform(0).position) > 2f && manager.GetPlayerSpeed(0) > 3f, $"Actual pedal input must accelerate and move the production car: distance={Vector3.Distance(driveStart, manager.GetPlayerCarTransform(0).position):F2}, speed={manager.GetPlayerSpeed(0):F2}.");
                     Capture("race-p1.png");
+                    manager.GetPlayerCarTransform(0).GetComponent<CarItemEffects>().UseItem(RaceItemType.Shield,null);
+                    typeof(Gmanager).GetField("showDebugRaceControls",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(manager,false);
+                    Require(manager.IManager.IsAnyDebugMode,"Hiding the race debug panel must preserve debug input.");
+                    stageStartTime=EditorApplication.timeSinceStartup;stage=110;
+                    break;
+                case 110 when EditorApplication.timeSinceStartup-stageStartTime > .2d:
+                    var notice=FindComponentIncludingInactive<PlayerItemHUD>("GameManagers/MainCanvas");
+                    var toast=notice.transform.Find("ItemHUD/Toast") as RectTransform;
+                    Require(toast.GetComponent<CanvasGroup>().alpha>0&&toast.Find("Title").GetComponent<TMP_Text>().text=="シールド","Actual item events must show the production notification.");
+                    Require(toast.anchorMin.x>=.7f&&toast.localScale==Vector3.one&&notice.transform.Find("ItemHUD/StatusPlate").gameObject.activeSelf,"Item and remaining effect must stay at the edge without zooming.");
+                    Capture("item-p1.png");
                     ValidateFirstFinish();
                     stage = 3;
                     break;

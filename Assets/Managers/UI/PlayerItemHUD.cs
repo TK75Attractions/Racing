@@ -112,16 +112,16 @@ public sealed class PlayerItemHUD : MonoBehaviour
         switch (item)
         {
             case RaceItemType.Shield:
-                ShowToast("シールド", "SHIELD  —  相手に当たるとスピン", ShieldColor);
+                ShowToast("シールド", "接触した相手がスピン", ShieldColor);
                 break;
             case RaceItemType.Rocket:
                 ShowToast("ロケット", "ROCKET  —  自動操縦で超加速", RocketColor);
                 break;
             case RaceItemType.Oil:
-                ShowToast("オイル", "OIL  —  後ろに設置", OilColor);
+                ShowToast("オイル", "後ろに設置", OilColor);
                 break;
             case RaceItemType.Confuse:
-                ShowToast("コンフューズ", "CONFUSE  —  相手のハンドルを反転", ConfuseColor);
+                ShowToast("コンフューズ", "相手のハンドルを反転", ConfuseColor);
                 break;
         }
     }
@@ -131,21 +131,21 @@ public sealed class PlayerItemHUD : MonoBehaviour
         switch (item)
         {
             case RaceItemType.Oil:
-                ShowToast("オイルを踏んだ!", "SLIPPING / すべりやすくなっています", WarningColor);
+                ShowToast("オイルを踏んだ!", "すべりやすくなっています", WarningColor);
                 StartOilSplatter();
                 break;
             case RaceItemType.Confuse:
-                ShowToast("ハンドル反転!", "CONFUSED / 左右の操作が逆になります", ConfuseColor);
+                ShowToast("ハンドル反転!", "左右の操作が逆になります", ConfuseColor);
                 break;
             case RaceItemType.Shield:
-                ShowToast("スピン!", "SPIN / 車の向きに気をつけて", WarningColor);
+                ShowToast("スピン!", "車の向きに気をつけて", WarningColor);
                 break;
         }
     }
 
     private void HandleChargeCollected()
     {
-        ShowToast("チャージ MAX", "DRIFT CHARGE  —  ドリフト解放で加速", ChargeColor);
+        ShowToast("チャージ MAX", "ドリフト解放で加速", ChargeColor);
     }
 
     private void ShowToast(string title, string caption, Color tint)
@@ -172,11 +172,11 @@ public sealed class PlayerItemHUD : MonoBehaviour
             return;
         }
 
-        // 出現時に少し大きく表示してから戻し、最後はフェードアウトします。
-        float pop = Mathf.Clamp01(toastAge / 0.15f);
-        toastRect.localScale = Vector3.one * Mathf.Lerp(1.06f, 1f, 1f - (1f - pop) * (1f - pop));
-        float fade = Mathf.Clamp01((ToastSeconds - toastAge) / ToastFadeSeconds);
-        toastGroup.alpha = fade;
+        // メーター上の定位置で短くフェード。拡大や中央への飛び出しは行いません。
+        toastRect.localScale = Vector3.one;
+        float fadeIn = Mathf.Clamp01(toastAge / .08f);
+        float fadeOut = Mathf.Clamp01((ToastSeconds - toastAge) / ToastFadeSeconds);
+        toastGroup.alpha = Mathf.Min(fadeIn, fadeOut);
     }
 
     private void StartOilSplatter()
@@ -317,23 +317,23 @@ public sealed class PlayerItemHUD : MonoBehaviour
         confuseFrame = CreateImage(root, "ConfuseFrame", edgeSprite, Vector2.zero, Vector2.one);
         confuseFrame.enabled = false;
 
-        toastRect = RacingHUDStyle.Plate(root, "Toast", new Vector2(.31f, .57f), new Vector2(.69f, .74f),
+        toastRect = RacingHUDStyle.Plate(root, "Toast", new Vector2(.71f, .575f), new Vector2(.97f, .665f),
             RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
         toastRect.Find("ModernSurface").gameObject.SetActive(false);
         var arcadeFace=RacingUITheme.Rect(toastRect,"ArcadeFace",Vector2.zero,Vector2.one);arcadeFace.SetAsFirstSibling();
         toastFace=arcadeFace.gameObject.AddComponent<ArcadeToastGraphic>();toastFace.raycastTarget=false;
-        toastIcon=NeonUI.Icon(toastRect,"ItemIcon",RacingIconGraphic.Icon.Bolt,new Vector2(.065f,.30f),new Vector2(.155f,.70f));
+        toastIcon=NeonUI.Icon(toastRect,"ItemIcon",RacingIconGraphic.Icon.Bolt,new Vector2(.045f,.36f),new Vector2(.105f,.64f));
         toastGroup = toastRect.gameObject.AddComponent<CanvasGroup>();
         toastGroup.alpha = 0f;
         toastGroup.blocksRaycasts = false;
-        toastTitle = RacingHUDStyle.Label(toastRect, "Title", string.Empty, .20f, .21f, .80f, .69f,
-            45f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
-        toastCaption = RacingHUDStyle.Label(toastRect, "Caption", string.Empty, .20f, .70f, .80f, .94f,
-            22f, RacingHUDStyle.Muted, TextAlignmentOptions.Center);
-        statusRect = RacingHUDStyle.Plate(root, "StatusPlate", new Vector2(.42f, .46f), new Vector2(.58f, .53f),
+        toastTitle = RacingHUDStyle.Label(toastRect, "Title", string.Empty, .145f, .21f, .78f, .69f,
+            32f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
+        toastCaption = RacingHUDStyle.Label(toastRect, "Caption", string.Empty, .145f, .70f, .78f, .94f,
+            18f, RacingHUDStyle.Muted, TextAlignmentOptions.Center);
+        statusRect = RacingHUDStyle.Plate(root, "StatusPlate", new Vector2(.71f, .515f), new Vector2(.97f, .56f),
             RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
         statusLabel = RacingHUDStyle.Label(statusRect, "Status", string.Empty, .05f, .15f, .95f, .85f,
-            23f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
+            20f, RacingHUDStyle.Text, TextAlignmentOptions.Center, bold: true);
         statusRect.gameObject.SetActive(false);
     }
 
