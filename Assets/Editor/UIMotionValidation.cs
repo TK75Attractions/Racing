@@ -32,6 +32,28 @@ public static class UIMotionValidation
         finally{UnityEngine.Object.DestroyImmediate(root);}
         Debug.Log("UI_MOTION_FOUNDATION_PASS: finite curves, directional ranks, interruption, replay, disable reset and classification.");
     }
+    public static void RunMeters()
+    {
+        RunFoundation();var root=new GameObject("Meter motion QA",typeof(RectTransform));
+        try
+        {
+            var hud=RacingHUDBuilder.Build(root.transform,0,2);var dial=hud.Find("Speed/Gauge").GetComponent<ArcadeDialGraphic>();
+            dial.SetReading(60);dial.SetTargetReading(180);dial.Tick(1f/60);
+            Require(dial.Reading>60&&dial.Reading<180,"Needle must ease into acceleration.");
+            float before=dial.Reading;dial.SetTargetReading(20);dial.Tick(1f/60);Require(dial.Reading<before&&dial.Reading>20,"Braking must immediately reverse needle travel.");
+            dial.SetTargetBoost(0,false);dial.SetTargetBoost(1);dial.FlashBoost();
+            for(int i=0;i<120;i++)dial.Tick(1f/60);
+            Require(dial.Reading==20&&dial.Boost==1&&!dial.IsAnimating,"Meter motion must settle without overshoot.");
+            int dirty=0;dial.RegisterDirtyVerticesCallback(()=>dirty++);
+            long allocated=GC.GetAllocatedBytesForCurrentThread();
+            for(int i=0;i<1000;i++){dial.SetTargetReading(20);dial.SetTargetBoost(1);dial.Tick(1f/60);}
+            allocated=GC.GetAllocatedBytesForCurrentThread()-allocated;
+            Require(dirty==0&&allocated==0,"Settled instrument must allocate nothing and rebuild no mesh.");
+            dial.SetReading(float.NaN);dial.SetBoost(float.PositiveInfinity);Require(dial.Reading==0&&dial.Boost==0,"Invalid samples cannot damage the UI mesh.");
+        }
+        finally{UnityEngine.Object.DestroyImmediate(root);}
+        Debug.Log("UI_MOTION_METERS_PASS: acceleration/braking response, finite values, settle, boost impulse, zero idle mesh rebuilds and zero idle managed allocations.");
+    }
     internal static void Require(bool condition,string message){if(!condition)throw new InvalidOperationException(message);}
 }
 #endif

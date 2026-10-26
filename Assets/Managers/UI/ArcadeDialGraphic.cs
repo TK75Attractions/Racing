@@ -6,7 +6,12 @@ using UnityEngine.UI;
 public class ArcadeDialGraphic : MaskableGraphic
 {
     public bool Tachometer { get; set; }
-    private int segments, boostSegments, needleStep=-1;
+    private int segments, boostSegments, needleStep=-1, motionStep, flashStep;
+    private float targetReading,targetBoost,boostFlash;
+    private bool hasReading,hasBoost;
+    public bool IsAnimating=>Reading!=targetReading||Boost!=targetBoost||boostFlash>0;
+    private float Maximum=>Tachometer?9000:240;
+    private float Clean(float value)=>float.IsNaN(value)||float.IsInfinity(value)?0:Mathf.Clamp(value,0,Maximum);
     public float Reading { get; private set; }
     public Color NeedleColor=>Tachometer?ArcadeUI.For(transform).Paper:SpeedColor(Reading,ArcadeUI.For(transform));
     public static Color SpeedColor(float speed,ArcadeUI.Palette palette)
@@ -19,17 +24,51 @@ public class ArcadeDialGraphic : MaskableGraphic
     public float Boost { get; private set; }
     public void SetReading(float value)
     {
-        Reading=float.IsNaN(value)||float.IsInfinity(value)?0:Mathf.Clamp(value,0,Tachometer?9000:240);
-        float fraction=Reading/(Tachometer?9000:240);
+        targetReading=Clean(value);hasReading=true;
+        if(motionStep!=0){motionStep=0;SetVerticesDirty();}
+        ApplyReading(targetReading);
+    }
+    public void SetTargetReading(float value,bool animate=true)
+    {
+        if(!animate||!hasReading||!isActiveAndEnabled){SetReading(value);return;}
+        targetReading=Clean(value);
+    }
+    private void ApplyReading(float value)
+    {
+        Reading=value;
+        float fraction=Reading/Maximum;
         int next=Mathf.RoundToInt(fraction*48),needle=Mathf.RoundToInt(fraction*270);
         if(segments==next&&needleStep==needle)return;segments=next;needleStep=needle;SetVerticesDirty();
     }
     public void SetBoost(float fraction)
     {
-        Boost=Mathf.Clamp01(fraction);int next=Mathf.RoundToInt(Boost*40);
+        targetBoost=float.IsNaN(fraction)||float.IsInfinity(fraction)?0:Mathf.Clamp01(fraction);hasBoost=true;ApplyBoost(targetBoost);
+    }
+    public void SetTargetBoost(float value,bool animate=true)
+    {
+        if(!animate||!hasBoost||!isActiveAndEnabled){SetBoost(value);return;}
+        targetBoost=float.IsNaN(value)||float.IsInfinity(value)?0:Mathf.Clamp01(value);
+    }
+    private void ApplyBoost(float fraction)
+    {
+        Boost=fraction;int next=Mathf.RoundToInt(Boost*40);
         if(next==boostSegments)return;boostSegments=next;SetVerticesDirty();
     }
-    protected override void OnEnable(){base.OnEnable();raycastTarget=false;}
+    public void SnapNextSample(){hasReading=hasBoost=false;boostFlash=0;if(motionStep!=0||flashStep!=0)SetVerticesDirty();motionStep=flashStep=0;}
+    public void FlashBoost(){boostFlash=.3f;}
+    public void Tick(float dt)
+    {
+        if(!IsAnimating||dt<=0)return;
+        ApplyReading(UIMotion.Follow(Reading,targetReading,dt,Tachometer?.045f:.065f,.01f));
+        ApplyBoost(UIMotion.Follow(Boost,targetBoost,dt,.045f,.001f));
+        boostFlash=Mathf.Max(0,boostFlash-dt);
+        int next=Mathf.RoundToInt(Mathf.Clamp((targetReading-Reading)/(Maximum*.09f),-1,1)*12);
+        int flash=Mathf.RoundToInt(Mathf.Sin(boostFlash/.3f*Mathf.PI)*12);
+        if(motionStep!=next||flashStep!=flash){motionStep=next;flashStep=flash;SetVerticesDirty();}
+    }
+    private void Update()=>Tick(Time.unscaledDeltaTime);
+    protected override void OnEnable(){base.OnEnable();raycastTarget=false;SnapNextSample();}
+    protected override void OnDisable(){base.OnDisable();SnapNextSample();}
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear();Rect r=rectTransform.rect;if(r.width<2||r.height<2)return;
@@ -56,10 +95,15 @@ public class ArcadeDialGraphic : MaskableGraphic
         ArcadeSurfaceGraphic.Disc(vh,c+new Vector2(7,-7),radius*.50f,shade);
         ArcadeSurfaceGraphic.Disc(vh,c,radius*.50f,p.Paper);
         float needle=Mathf.Lerp(223.2f,-43.2f,Mathf.Max(0,needleStep)/270f);
+        if(motionStep!=0)
+        {
+            Color trail=motionStep>0?p.Secondary:ArcadeUI.Hex("ff876e");trail.a=.48f;
+            ArcadeSurfaceGraphic.Arc(vh,c,radius*1.04f,needle,needle+motionStep*1.3f,4,trail);
+        }
         RacingPanelGraphic.Line(vh,ArcadeSurfaceGraphic.Point(c,radius*.75f,needle),ArcadeSurfaceGraphic.Point(c,radius*1.075f,needle),9,p.Ink,.5f);
         RacingPanelGraphic.Line(vh,ArcadeSurfaceGraphic.Point(c,radius*.76f,needle),ArcadeSurfaceGraphic.Point(c,radius*1.065f,needle),5,NeedleColor,1f);
         if(!Tachometer)return;
         ArcadeSurfaceGraphic.Arc(vh,c,radius*1.14f,223.2f,-43.2f,8,p.Ink);
-        for(int i=0;i<40;i++){float a=Mathf.Lerp(223.2f,-43.2f,i/40f);ArcadeSurfaceGraphic.Arc(vh,c,radius*1.14f,a,a-266.4f/40*.74f,5,i<boostSegments?p.Secondary:new Color(.51f,.57f,.61f,.44f));}
+        for(int i=0;i<40;i++){float a=Mathf.Lerp(223.2f,-43.2f,i/40f);ArcadeSurfaceGraphic.Arc(vh,c,radius*1.14f,a,a-266.4f/40*.74f,5+flashStep*.22f,i<boostSegments?Color.Lerp(p.Secondary,p.Paper,flashStep/24f):new Color(.51f,.57f,.61f,.44f));}
     }
 }

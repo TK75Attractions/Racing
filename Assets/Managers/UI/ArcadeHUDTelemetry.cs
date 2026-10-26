@@ -8,6 +8,8 @@ public sealed class ArcadeHUDTelemetry : MonoBehaviour
     private Transform viewedCar;
     private CarSoundController engine;
     private DebugMover mover;
+    private CarItemEffects effects;
+    private bool wasBoosting;
     private ArcadeDialGraphic tach;
     private TMP_Text rpm,boost,delta;
     public void Configure(int index)
@@ -19,15 +21,17 @@ public sealed class ArcadeHUDTelemetry : MonoBehaviour
     {
         var manager=Gmanager.Control;if(manager==null)return;
         int viewed=manager.GetAudioViewedPlayer(player);var car=manager.GetPlayerCarTransform(viewed);
-        if(car!=viewedCar){viewedCar=car;engine=car!=null?car.GetComponentInChildren<CarSoundController>():null;mover=car!=null?car.GetComponent<DebugMover>():null;}
+        bool changed=car!=viewedCar;
+        if(changed){viewedCar=car;engine=car!=null?car.GetComponentInChildren<CarSoundController>():null;mover=car!=null?car.GetComponent<DebugMover>():null;effects=car!=null?car.GetComponent<CarItemEffects>():null;tach.SnapNextSample();}
         float charge=mover!=null?Mathf.Max(mover.NormalizedDriftCharge,mover.NormalizedActiveBoostRemaining):0;
-        var effects=car!=null?car.GetComponent<CarItemEffects>():null;
         if(effects!=null&&effects.IsRocketActive&&effects.RocketDuration>0)charge=Mathf.Max(charge,effects.RocketTimeRemaining/effects.RocketDuration);
+        bool boosting=mover!=null&&(mover.IsDriftBoosting||mover.IsAccelerationPadBoosting||mover.IsSlipstreamBoosting)||effects!=null&&effects.IsRocketActive;
+        if(boosting&&!wasBoosting&&!changed)tach.FlashBoost();wasBoosting=boosting;
         SetTelemetry(engine!=null?engine.CurrentRpm:0,charge);
     }
     public void SetTelemetry(float revolutions,float charge)
     {
-        if(tach==null)return;tach.SetReading(revolutions);tach.SetBoost(charge);
+        if(tach==null)return;tach.SetTargetReading(revolutions,Application.isPlaying);tach.SetTargetBoost(charge,Application.isPlaying);
         int next=Mathf.RoundToInt(revolutions/100);if(next!=shownRpm){rpm.SetText("{0:0}.{1:0}",next/10,next%10);shownRpm=next;}
         next=Mathf.RoundToInt(Mathf.Clamp01(charge)*100);if(next!=shownBoost){boost.SetText("BOOST  {0}%",next);shownBoost=next;}
     }
