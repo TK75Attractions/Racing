@@ -1,0 +1,27 @@
+{
+  "unityVersion": "6000.3.9f1",
+  "testedRevision": "a2350f28b133c1d71a164a1643fd6f0551031a10",
+  "editMode": {
+    "result": "Passed",
+    "total": "169",
+    "passed": "169",
+    "failed": "0",
+    "skipped": "0",
+    "duration": "13.1931899"
+  },
+  "fullRegression": "JUMP_PORTAL_FULL_REGRESSION_PASS",
+  "visualChecks": [
+    "jump-gold-a.png vs jump-gold-b.png (0.0s and 0.4s)",
+    "tube-portal.png",
+    "tube-west-portal.png"
+  ],
+  "portalReport": "portal-floor.json",
+  "playModeReport": "drive-report.json",
+  "notVerified": [
+    "cabinet steering wheel and pedal feel",
+    "target PC frame rate",
+    "night-time venue visibility",
+    "Windows/target-cabinet standalone build"
+  ],
+  "editorStartupNote": "Known UnityEditor.Search.SearchDatabase ArgumentOutOfRangeException before the playtest started; race runtimeErrors is empty."
+}
