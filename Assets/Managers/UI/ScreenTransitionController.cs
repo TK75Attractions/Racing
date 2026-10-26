@@ -31,6 +31,9 @@ public sealed class ScreenTransitionController : MonoBehaviour
     private SpectatorOverlayUI spectatorOverlay;
     private CanvasGroup fadeCanvasGroup;
     private RectTransform fadeOverlay;
+    private RacingTransitionGraphic transitionWipe;
+    private Coroutine motionRoutine;
+    private int motionVersion;
     private TMP_Text titlePrompt;
     private readonly PedalButtonFeedback[] titleButtonFeedback = new PedalButtonFeedback[2];
     private GameObject countdownStatusRoot;
@@ -86,6 +89,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     public void ApplyStateImmediate(Gmanager.State state)
     {
+        CancelTransition();
         SetScreenVisibility(state);
 
         if (fadeCanvasGroup != null)
@@ -106,12 +110,12 @@ public sealed class ScreenTransitionController : MonoBehaviour
         Action onScreenCovered,
         Action onCompleted = null)
     {
-        if (IsTransitioning)
+        if (IsTransitioning || !isActiveAndEnabled)
         {
             return false;
         }
 
-        StartCoroutine(TransitionRoutine(targetState, onScreenCovered, onCompleted));
+        motionVersion++;motionRoutine=StartCoroutine(TransitionRoutine(targetState, onScreenCovered, onCompleted));
         return true;
     }
 
@@ -119,15 +123,17 @@ public sealed class ScreenTransitionController : MonoBehaviour
     {
         // A close finish can arrive before the first player's own celebration ends.
         // Replace that celebration without running its stale spectating callback.
-        if (goalCelebration == null || IsTransitioning && !goalCelebration.gameObject.activeSelf)
+        if (!isActiveAndEnabled || goalCelebration == null || IsTransitioning && !goalCelebration.gameObject.activeSelf)
         {
             return false;
         }
 
+        int version=++motionVersion;
         IsTransitioning = true;
         SetScreenVisibility(Gmanager.State.Goal);
         goalCelebration.Play(winnerText, finishTime, visibleSeconds, () =>
         {
+            if(version!=motionVersion)return;
             IsTransitioning = false;
             onCompleted?.Invoke();
         });
@@ -136,12 +142,12 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     public bool TryShowResultAnimated(Action onCompleted = null)
     {
-        if (IsTransitioning)
+        if (IsTransitioning || !isActiveAndEnabled)
         {
             return false;
         }
 
-        StartCoroutine(ShowResultRoutine(onCompleted));
+        motionVersion++;motionRoutine=StartCoroutine(ShowResultRoutine(onCompleted));
         return true;
     }
 
@@ -150,12 +156,12 @@ public sealed class ScreenTransitionController : MonoBehaviour
         Action onScreenCovered,
         Action onCompleted = null)
     {
-        if (IsTransitioning)
+        if (IsTransitioning || !isActiveAndEnabled)
         {
             return false;
         }
 
-        StartCoroutine(CloseResultAndTransitionRoutine(targetState, onScreenCovered, onCompleted));
+        motionVersion++;motionRoutine=StartCoroutine(CloseResultAndTransitionRoutine(targetState, onScreenCovered, onCompleted));
         return true;
     }
 
@@ -247,25 +253,27 @@ public sealed class ScreenTransitionController : MonoBehaviour
         SetRaceStatusValue(value, value == "GO!" ? "FULL THROTTLE" : "RACE START");
     }
 
-    private IEnumerator TransitionRoutine(
-        Gmanager.State targetState,
-        Action onScreenCovered,
-        Action onCompleted)
+    private IEnumerator TransitionRoutine(Gmanager.State targetState,Action onScreenCovered,Action onCompleted)
     {
-        IsTransitioning = true;
-        SetFadeInputBlocking(true);
+        int version=motionVersion;IsTransitioning=true;SetFadeInputBlocking(true);
+        try
+        {
+            yield return FadeTo(1f,fadeOutSeconds);
+            onScreenCovered?.Invoke();
+            if(version!=motionVersion)yield break;
+            SetScreenVisibility(targetState);
+            yield return null;
+            yield return FadeTo(0f,fadeInSeconds);
+        }
+        finally{FinishMotion(version);}
+        if(version==motionVersion)onCompleted?.Invoke();
+    }
 
-        yield return FadeTo(1f, fadeOutSeconds);
-        onScreenCovered?.Invoke();
-        SetScreenVisibility(targetState);
-
-        // カメラ切替を黒画面中の1フレームで反映してから表示を戻す。
-        yield return null;
-        yield return FadeTo(0f, fadeInSeconds);
-
-        SetFadeInputBlocking(false);
-        IsTransitioning = false;
-        onCompleted?.Invoke();
+    private void FinishMotion(int version)
+    {
+        if(version!=motionVersion)return;
+        motionRoutine=null;IsTransitioning=false;SetFadeInputBlocking(false);
+        transitionWipe?.SetCoverage(0,false);if(fadeCanvasGroup!=null)fadeCanvasGroup.alpha=0;
     }
 
     private IEnumerator ShowResultRoutine(Action onCompleted)
@@ -304,7 +312,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         {
             resultCanvasGroup.alpha = 1f;
         }
-        IsTransitioning = false;
+        IsTransitioning = false;motionRoutine=null;
         onCompleted?.Invoke();
     }
 
@@ -313,6 +321,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         Action onScreenCovered,
         Action onCompleted)
     {
+        int version=motionVersion;
         IsTransitioning = true;
         SetFadeInputBlocking(true);
         RefreshResultContent();
@@ -341,6 +350,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
         yield return FadeTo(1f, fadeOutSeconds);
         onScreenCovered?.Invoke();
+        if(version!=motionVersion)yield break;
         SetScreenVisibility(targetState);
         yield return null;
         yield return FadeTo(0f, fadeInSeconds);
@@ -348,7 +358,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         RestoreResultContent();
         RestoreResultRows(celebrateWinner: false);
         SetFadeInputBlocking(false);
-        IsTransitioning = false;
+        IsTransitioning = false;motionRoutine=null;
         onCompleted?.Invoke();
     }
 
@@ -359,23 +369,29 @@ public sealed class ScreenTransitionController : MonoBehaviour
             yield break;
         }
 
-        float startAlpha = fadeCanvasGroup.alpha;
-        if (duration <= 0f)
+        bool revealing=targetAlpha<.5f;
+        float start=transitionWipe!=null?transitionWipe.Coverage:1-targetAlpha;
+        fadeCanvasGroup.alpha=1;
+        float elapsed=0;double began=Time.realtimeSinceStartupAsDouble;
+        while(elapsed<duration)
         {
-            fadeCanvasGroup.alpha = targetAlpha;
-            yield break;
-        }
-
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            fadeCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, Mathf.Clamp01(elapsed / duration));
+            elapsed=(float)(Time.realtimeSinceStartupAsDouble-began);
+            transitionWipe?.SetCoverage(Mathf.Lerp(start,targetAlpha,Mathf.Clamp01(elapsed/Mathf.Max(.001f,duration))),revealing);
             yield return null;
         }
-
-        fadeCanvasGroup.alpha = targetAlpha;
+        transitionWipe?.SetCoverage(targetAlpha,revealing);
+        fadeCanvasGroup.alpha=targetAlpha>0?1:0;
     }
+
+    public void CancelTransition()
+    {
+        motionVersion++;if(motionRoutine!=null)StopCoroutine(motionRoutine);motionRoutine=null;
+        IsTransitioning=false;if(goalCelebration!=null)goalCelebration.HideImmediate();
+        RestoreResultContent();RestoreResultRows(false);
+        transitionWipe?.SetCoverage(0,false);
+        if(fadeCanvasGroup!=null){fadeCanvasGroup.alpha=0;fadeCanvasGroup.blocksRaycasts=false;fadeCanvasGroup.interactable=false;}
+    }
+    private void OnDisable()=>CancelTransition();
 
     private void SetScreenVisibility(Gmanager.State state)
     {
@@ -435,6 +451,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
         titlePrompt = NeonUI.Text(title, "StartPrompt", promptText,
             new Vector2(.66f,.15f), new Vector2(.97f,.21f), 18f, TextAlignmentOptions.Center);
         ArcadeUI.Hide(title,"News");
+        var entry=title.GetComponent<UIRevealSequence>();if(entry==null)entry=title.gameObject.AddComponent<UIRevealSequence>();
+        entry.Configure(title,new[]{"CircuitLogo","PlayerBadge","StartPrompt"},new Vector2(24,0),.035f,.28f);
     }
 
     private void InitializeFadeOverlay()
@@ -465,7 +483,9 @@ public sealed class ScreenTransitionController : MonoBehaviour
         fadeOverlay.SetAsLastSibling();
 
         Image fadeImage = overlayObject.GetComponent<Image>();
-        fadeImage.color = Color.black;
+        fadeImage.color = Color.clear;
+        var wipeRect=RacingUITheme.Rect(fadeOverlay,"RacingShutters",Vector2.zero,Vector2.one);
+        transitionWipe=wipeRect.GetComponent<RacingTransitionGraphic>();if(transitionWipe==null)transitionWipe=wipeRect.gameObject.AddComponent<RacingTransitionGraphic>();
         fadeImage.raycastTarget = true;
 
         fadeCanvasGroup = overlayObject.GetComponent<CanvasGroup>();
@@ -521,6 +541,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
             finishWarningText.gameObject.AddComponent<UIValuePulse>();
 
         SetStatusVisibility(showCountdown: false, showWarning: false);
+        var entry=onPlay.GetComponent<UIRevealSequence>();if(entry==null)entry=onPlay.gameObject.AddComponent<UIRevealSequence>();
+        entry.Configure(onPlay,new[]{"ModernHUD/Position","ModernHUD/Lap","ModernHUD/Time","ModernHUD/Speed","ModernHUD/Tachometer","ModernHUD/SteeringIndicator"},new Vector2(24,0),.03f,.24f);
     }
 
     private void BuildTitlePedalPanel(Transform title, int playerIndex, Vector2 anchorMin, Vector2 anchorMax, Color accent)

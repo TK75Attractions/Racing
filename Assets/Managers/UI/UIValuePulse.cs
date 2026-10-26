@@ -12,6 +12,7 @@ public sealed class UIValuePulse : MonoBehaviour
     private Quaternion baseRotation;
     private Color baseColor,accent,startColor;
     private float age,duration,rotation,direction,peakScale;
+    private double lastTick;
     public bool IsPlaying { get; private set; }
     private void Awake()=>Cache();
     private void Cache()
@@ -29,7 +30,7 @@ public sealed class UIValuePulse : MonoBehaviour
         startPosition=rect.anchoredPosition;
         if(!IsPlaying)startPosition-=Vector2.up*travel*24f;
         startScale=transform.localScale;startColor=label.color;
-        accent=color;rotation=angle;direction=travel;peakScale=scale;duration=seconds;age=0;IsPlaying=true;Apply(0);
+        accent=color;rotation=angle;direction=travel;peakScale=scale;duration=seconds;age=0;lastTick=Time.realtimeSinceStartupAsDouble;IsPlaying=true;Apply(0);
     }
     public void Tick(float dt)
     {
@@ -49,6 +50,6 @@ public sealed class UIValuePulse : MonoBehaviour
         IsPlaying=false;if(label==null)return;
         rect.anchoredPosition=basePosition;transform.localScale=baseScale;transform.localRotation=baseRotation;label.color=baseColor;
     }
-    private void Update()=>Tick(Time.unscaledDeltaTime);
+    private void Update(){if(!IsPlaying)return;double now=Time.realtimeSinceStartupAsDouble;Tick((float)(now-lastTick));lastTick=now;}
     private void OnDisable()=>ResetPose();
 }

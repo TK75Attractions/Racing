@@ -8,6 +8,7 @@ public sealed class UIRevealSequence : MonoBehaviour
     private Part[] parts;
     private Vector2 offset;
     private float age, stagger, duration;
+    private double lastTick;
     public bool IsPlaying { get; private set; }
     public void Configure(Transform scope, string[] paths, Vector2 from, float spacing=.045f, float seconds=UIMotion.RevealSeconds)
     {
@@ -22,7 +23,7 @@ public sealed class UIRevealSequence : MonoBehaviour
     }
     public void Play()
     {
-        if(parts==null)return; age=0; IsPlaying=true; Apply();
+        if(parts==null)return; age=0;lastTick=Time.realtimeSinceStartupAsDouble; IsPlaying=true; Apply();
     }
     public void Tick(float dt)
     {
@@ -52,5 +53,5 @@ public sealed class UIRevealSequence : MonoBehaviour
     }
     private void OnEnable(){if(Application.isPlaying)Play();}
     private void OnDisable()=>Cancel();
-    private void Update()=>Tick(Time.unscaledDeltaTime);
+    private void Update(){if(!IsPlaying)return;double now=Time.realtimeSinceStartupAsDouble;Tick((float)(now-lastTick));lastTick=now;}
 }
