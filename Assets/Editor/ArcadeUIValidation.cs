@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.IO;
+using System.Reflection;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -38,7 +39,18 @@ public static class ArcadeUIValidation
                 Require(hud.gameObject.activeSelf&&play.Find("CountdownStatus").gameObject.activeSelf,"Countdown must overlay the race HUD.");
                 Require(!play.Find("CountdownCourse").gameObject.activeSelf,"Countdown must not duplicate course/lap cards.");
                 Require(title.Find("News")==null||!title.Find("News").gameObject.activeSelf,"Title must omit the news strip.");
-                var speedLabel=hud.Find("Speed/Txt").GetComponent<TMP_Text>();Require(speedLabel.font==ArcadeUI.SpeedDigits&&speedLabel.fontSize>=150&&!speedLabel.enableAutoSizing,"Speed uses large ExtraBold digits without silent shrinking.");
+                var speedLabel=hud.Find("Speed/Txt").GetComponent<TMP_Text>();var tachLabel=hud.Find("Tachometer/Txt").GetComponent<TMP_Text>();
+                Require(speedLabel.font==ArcadeUI.SpeedDigits&&tachLabel.font==speedLabel.font&&Mathf.Approximately(speedLabel.fontSize,tachLabel.fontSize)&&speedLabel.fontSize>108&&speedLabel.fontSize<154&&!speedLabel.enableAutoSizing&&!tachLabel.enableAutoSizing,"Both instruments use the same intermediate ExtraBold size without shrinking.");
+                foreach(string name in new[]{"Speed","Tachometer"})foreach(string label in new[]{"Heading","Unit"})Require(hud.Find(name+"/"+label).GetComponent<TMP_Text>().fontSize>20,"Meter headings and units must be larger.");
+                var lap=new UILap();lap.Init(hud.Find("Lap"));var left=hud.Find("Lap/Ticks/Left").GetComponent<Image>();var right=hud.Find("Lap/Ticks/Right").GetComponent<Image>();
+                Require(left.color.a==1&&right.color.a<.3f,"First lap lights only the left segment.");lap.SetLap(2);Require(left.color.a==1&&right.color.a==1,"Second lap lights both segments.");lap.SetLap(1);Require(left.color.a==1&&right.color.a<.3f,"A new race resets the second segment.");
+                Require(hud.Find("Position").GetComponent<ArcadeSurfaceGraphic>()!=null&&hud.Find("Position").GetComponent<ArcadeSurfaceGraphic>().ShadowOffset.x>0,"Rank needs the shared plate and shadow.");
+                var itemHud=PreviewItemNotice(root.transform,"ブースト発動！","BOOST ON");
+                var toast=root.transform.Find("ItemHUD/Toast") as RectTransform;var status=root.transform.Find("ItemHUD/StatusPlate") as RectTransform;
+                Require(toast.anchorMin.x>=.7f&&status.anchorMin.x>=.7f&&toast.anchorMin.y>hud.Find("Tachometer").GetComponent<RectTransform>().anchorMax.y,"Toast and active effect must leave the central driving view clear.");
+                Require(toast.anchorMax.y<.683f&&status.anchorMax.y<toast.anchorMin.y&&status.anchorMin.y>.5f,"Notice, quiet rail, effect status and tachometer must not overlap.");
+                Require(toast.localScale==Vector3.one&&!toast.GetComponent<CanvasGroup>().blocksRaycasts,"Notices must not zoom or intercept controls.");
+                TickItemNotice(itemHud,1.7f);Require(toast.GetComponent<CanvasGroup>().alpha==0,"Expired notices must clear.");
                 var shadow=hud.Find("Time").GetComponent<ArcadeSurfaceGraphic>();Require(shadow.ShadowOffset.x>0&&shadow.ShadowOffset.y<0,"HUD shadows point down and right.");
                 var speedDial=hud.Find("Speed/Gauge").GetComponent<ArcadeDialGraphic>();speedDial.SetReading(0);var cold=speedDial.NeedleColor;speedDial.SetReading(240);Require(cold!=speedDial.NeedleColor,"Speed changes the needle colour.");
                 Require(title.Find("CircuitLogo/Artwork").GetComponent<RawImage>().texture!=null,"Supplied transparent logo must load.");
@@ -54,14 +66,14 @@ public static class ArcadeUIValidation
             }
             finally{UnityEngine.Object.DestroyImmediate(root);}
         }
-        Debug.Log("ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, ExtraBold digits, HUD shadows, speed colours, DNF, ending input gate, stable meshes.");
+        Debug.Log("ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, matched ExtraBold instruments, two lap segments, peripheral item notices, HUD shadows, speed colours, DNF, ending input gate, stable meshes.");
     }
     [MenuItem("Racing/UI/Capture Arcade Sport UI")]
     public static void Capture()
     {
         string[] paths={"ProjectSettings/GraphicsSettings.asset","ProjectSettings/QualitySettings.asset"};var bytes=Array.ConvertAll(paths,File.ReadAllBytes);
         try{Directory.CreateDirectory(Output);
-        foreach(int player in new[]{0,1})foreach(string state in new[]{"title","tutorial","countdown","race","spectator","quiet","boost","pause","settings","result","ending","broadcast","replay","pv"})CaptureView(player,state,1920,1080);
+        foreach(int player in new[]{0,1})foreach(string state in new[]{"title","tutorial","countdown","race","spectator","quiet","boost","item","pause","settings","result","ending","broadcast","replay","pv"})CaptureView(player,state,1920,1080);
         foreach(int player in new[]{0,1}){CaptureView(player,"race",1280,720);CaptureView(player,"race",3840,2160);}
         Debug.Log("ARCADE_UI_CAPTURE_PASS: "+Path.GetFullPath(Output));
         }finally{for(int i=0;i<paths.Length;i++)File.WriteAllBytes(paths[i],bytes[i]);}
@@ -117,10 +129,13 @@ public static class ArcadeUIValidation
             if(state=="quiet")ArcadeNoticeRail.Get(host.transform).Set(2,"P"+(player==0?2:1)+" 後方から接近");
             if(state=="boost")
             {
-                var toast=RacingUITheme.Rect(host.transform,"Boost",new Vector2(.31f,.57f),new Vector2(.69f,.74f));var face=toast.gameObject.AddComponent<ArcadeToastGraphic>();face.SetStyle(true,false);face.raycastTarget=false;
-                NeonUI.Icon(toast,"Icon",RacingIconGraphic.Icon.Bolt,new Vector2(.065f,.30f),new Vector2(.155f,.70f));
-                ArcadeUI.Label(toast,"Kicker","BOOST ON",new Vector2(.2f,.70f),new Vector2(.8f,.94f),22,ArcadeUI.For(player).Ink,true);
-                ArcadeUI.Label(toast,"Message","ブースト発動！",new Vector2(.2f,.21f),new Vector2(.8f,.69f),45,ArcadeUI.For(player).Ink).fontStyle=FontStyles.Italic;
+                PreviewItemNotice(host.transform,"ブースト発動！","BOOST ON");
+            }
+            if(state=="item")
+            {
+                PreviewItemNotice(host.transform,"ハンドル反転!","左右の操作が逆になります");
+                var status=host.transform.Find("ItemHUD/StatusPlate");status.gameObject.SetActive(true);status.Find("Status").GetComponent<TMP_Text>().text="ハンドル反転 / CONFUSED   3.2秒";
+                ArcadeNoticeRail.Get(host.transform).Set(2,"P"+(player==0?2:1)+" 後方から接近");
             }
             if(state=="pause"||state=="settings"){var menu=InterruptionMenuUI.Create(host.transform,null,null,null);menu.Show(false);if(state=="settings")host.transform.Find("InterruptionMenu/MenuCard/Options").GetComponent<Button>().onClick.Invoke();}
             if(state=="ending")ArcadeEndingUI.Get(host.transform).Show(null);
@@ -130,6 +145,14 @@ public static class ArcadeUIValidation
         }
         finally{RenderTexture.active=previous;GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=quality;UnityEngine.Object.DestroyImmediate(pixels);UnityEngine.Object.DestroyImmediate(target);EditorSceneManager.ClosePreviewScene(scene);}
     }
+    // Exercise the production toast, including its animation, rather than a separate mock layout.
+    private static PlayerItemHUD PreviewItemNotice(Transform parent,string title,string caption)
+    {
+        var hud=PlayerItemHUD.Create(parent);parent.Find("ItemHUD").gameObject.SetActive(true);
+        typeof(PlayerItemHUD).GetMethod("ShowToast",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(hud,new object[]{title,caption,Color.white});
+        TickItemNotice(hud,.1f);return hud;
+    }
+    private static void TickItemNotice(PlayerItemHUD hud,float seconds)=>typeof(PlayerItemHUD).GetMethod("UpdateToast",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(hud,new object[]{seconds});
     private static string Text(Transform parent,string path)=>parent.Find(path).GetComponent<TMP_Text>().text;
     private static void Require(bool condition,string message){if(!condition)throw new InvalidOperationException(message);}
 }
