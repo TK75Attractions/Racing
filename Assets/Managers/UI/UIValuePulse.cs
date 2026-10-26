@@ -22,6 +22,7 @@ public sealed class UIValuePulse : MonoBehaviour
         basePosition=rect!=null?rect.anchoredPosition:Vector2.zero;baseScale=transform.localScale;baseRotation=transform.localRotation;
         baseColor=label!=null?label.color:Color.white;
     }
+    public void SetRestColor(Color color){Cache();baseColor=color;if(!IsPlaying&&label!=null)label.color=color;}
     public void Play(Color color,float angle)=>StartPulse(color,angle,0,1.16f,.34f);
     public void PlayRank(Color color,int change)=>StartPulse(color,0,Mathf.Sign(change),1.15f,.38f);
     private void StartPulse(Color color,float angle,float travel,float scale,float seconds)

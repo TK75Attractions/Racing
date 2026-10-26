@@ -47,5 +47,6 @@ public sealed class SpectatorOverlayUI : MonoBehaviour
         RacingUITheme.Rule(plate,"LiveAccent",new Vector2(.025f,.22f),new Vector2(.035f,.78f),p.Primary);
         ArcadeUI.Label(plate,"Caption","LIVE / SPECTATOR",new Vector2(.08f,.60f),new Vector2(.95f,.90f),19,p.Soft,true);
         playerLabel=ArcadeUI.Label(plate,"PlayerLabel","プレイヤー 2 を観戦中",new Vector2(.08f,.15f),new Vector2(.95f,.60f),28,p.Paper);
+        var entrance=GetComponent<UIRevealSequence>();if(entrance==null)entrance=gameObject.AddComponent<UIRevealSequence>();entrance.Configure(transform,new[]{"PlayerPlate"},new Vector2(18,0),0,.24f);
     }
 }

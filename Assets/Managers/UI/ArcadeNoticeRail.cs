@@ -8,6 +8,7 @@ public sealed class ArcadeNoticeRail : MonoBehaviour
     private readonly string[] notices=new string[6];
     private RectTransform panel;
     private TMP_Text label;
+    private UIRevealSequence motion;
     private string shown;
     private int shownSource=-1;
     public static ArcadeNoticeRail Get(Transform canvas)
@@ -22,6 +23,7 @@ public sealed class ArcadeNoticeRail : MonoBehaviour
             rail.label=ArcadeUI.Label(rail.panel,"Text","",new Vector2(.045f,.1f),new Vector2(.96f,.90f),22,p.Paper,false,TextAlignmentOptions.Right);
             rail.label.textWrappingMode=TextWrappingModes.Normal;
             rail.label.fontSizeMin=20;
+            rail.motion=rail.panel.gameObject.AddComponent<UIRevealSequence>();rail.motion.Configure(rail.panel,new[]{"Text"},new Vector2(8,0),0,.16f);
             rail.panel.gameObject.SetActive(false);
         }
         return rail;
@@ -36,6 +38,7 @@ public sealed class ArcadeNoticeRail : MonoBehaviour
         var p=ArcadeUI.For(transform);bool critical=nextSource==InputInstruction;
         panel.GetComponent<ArcadeSurfaceGraphic>().color=critical?p.Accent:p.Ink;label.color=critical?p.Ink:p.Paper;
         panel.sizeDelta=new Vector2(Mathf.Clamp(label.GetPreferredValues(next).x+44,130,480),0);panel.gameObject.SetActive(next.Length>0);
+        if(Application.isPlaying&&next.Length>0)motion.Play();
     }
     public void Clear()
     {

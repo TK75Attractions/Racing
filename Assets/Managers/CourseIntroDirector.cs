@@ -149,6 +149,7 @@ public sealed class CourseIntroDirector : MonoBehaviour
         NeonUI.Text(root, "Details", "TSUKUKOMA CIRCUIT   /   " + laps + " LAPS   /   " + drivers + " DRIVERS", new Vector2(.047f,.026f), new Vector2(.85f,.07f), 20f, tint:ArcadeUI.For(rig.PlayerIndex).Soft);
         var outline=RacingUITheme.Rect(root,"CourseOutline",new Vector2(.85f,.025f),new Vector2(.96f,.145f));
         var map=outline.gameObject.AddComponent<NeonCourseOutlineGraphic>();map.Configure(Gmanager.Control!=null?Gmanager.Control.course:Object.FindFirstObjectByType<RaceCourse>());
+        var entry=root.gameObject.AddComponent<UIRevealSequence>();entry.Configure(root,new[]{"Preview","Course","Details","CourseOutline"},new Vector2(18,0),.035f,.28f);
         return group;
     }
     private void OnDisable() => Stop();

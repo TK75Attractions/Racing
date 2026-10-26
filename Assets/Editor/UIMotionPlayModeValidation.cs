@@ -19,6 +19,8 @@ public static class UIMotionPlayModeValidation
     private static UIValuePulse rank;
     private static RectTransform play;
     private static bool all;
+    private static int oldGoal,newGoal,buttonClicks;
+    private static RacingMenuButton button;
     public static void RunScreens()=>Start(false);
     public static void RunAll()=>Start(true);
     private static void Start(bool everything)
@@ -90,9 +92,43 @@ public static class UIMotionPlayModeValidation
         }
         catch(Exception ex){Debug.LogException(ex);Stop(1);}
     }
-    private static void StartAdditionalChecks(){Finish();}
-    private static void TickAdditionalChecks(double age){}
-    private static void Finish(){Debug.Log("UI_MOTION_PLAYMODE_PASS: actual shutter transition, one-shot callbacks, reentry rejection, cancellation, real OnDisable and unscaled rank playback.");Stop(0);}
+    private static void StartAdditionalChecks()
+    {
+        oldGoal=newGoal=buttonClicks=0;
+        ArcadeNoticeRail.Get(fixture.transform).Set(0,"ドリフト加速！");
+        Require(transition.TryPlayGoal("P1 / 1位","01:32.461",1.2f,()=>oldGoal++),"Goal starts.");Next(5);
+    }
+    private static void TickAdditionalChecks(double age)
+    {
+        if(phase==5&&age>.20)
+        {
+            Require(transition.TryPlayGoal("P2 / 2位","01:33.000",1.2f,()=>newGoal++),"A close finish replaces the goal motion.");Next(6);
+        }
+        else if(phase==6&&age>1.55)
+        {
+            Require(oldGoal==0&&newGoal==1&&!transition.IsTransitioning,"Only the replacement goal callback may run.");
+            transition.ApplyStateImmediate(Gmanager.State.Game);
+            button=NeonUI.Button(fixture.transform,"ProbeButton","決定","",RacingIconGraphic.Icon.Flag,Vector2.zero,Vector2.one,true,()=>buttonClicks++);button.PlayConfirmationSound=false;
+            var pointer=new UnityEngine.EventSystems.PointerEventData(null){button=UnityEngine.EventSystems.PointerEventData.InputButton.Left};
+            button.OnPointerClick(pointer);button.gameObject.SetActive(false);button.gameObject.SetActive(true);Next(7);
+        }
+        else if(phase==7&&age>.2)
+        {
+            Require(buttonClicks==0,"Real OnDisable must discard a pending confirmation.");
+            var pointer=new UnityEngine.EventSystems.PointerEventData(null){button=UnityEngine.EventSystems.PointerEventData.InputButton.Left};button.OnPointerClick(pointer);button.OnPointerClick(pointer);Next(8);
+        }
+        else if(phase==8&&age>.3)
+        {
+            Require(buttonClicks==1,"Repeated confirmation must run once at timeScale zero.");
+            transition.ShowCountdown(3);transition.ShowCountdown(3);transition.ShowCountdown(2);Next(9);
+        }
+        else if(phase==9&&age>.5)
+        {
+            transition.ClearRaceStatus();var counter=play.Find("CountdownStatus/RaceStatus");
+            Require(counter.localScale==Vector3.one&&!counter.GetComponent<UIValuePulse>().IsPlaying,"Countdown cancellation must restore the number.");Finish();
+        }
+    }
+    private static void Finish(){Debug.Log("UI_MOTION_PLAYMODE_PASS: actual shutter transition, one-shot callbacks, reentry rejection, cancellation, real OnDisable and unscaled rank playback; goal replacement, pending-button disable, repeated confirmation and countdown reset when running RunAll.");Stop(0);}
     private static void Stop(int code)
     {
         SessionState.SetBool(Active,false);EditorApplication.update-=Tick;Time.timeScale=1;
