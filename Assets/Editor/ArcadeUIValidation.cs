@@ -19,6 +19,7 @@ public static class ArcadeUIValidation
     {
         for(int player=0;player<2;player++)
         {
+            ValidatePeripheralDrivingNotices(player);
             var root=new GameObject("Arcade UI validation",typeof(RectTransform));
             try
             {
@@ -73,7 +74,7 @@ public static class ArcadeUIValidation
     {
         string[] paths={"ProjectSettings/GraphicsSettings.asset","ProjectSettings/QualitySettings.asset"};var bytes=Array.ConvertAll(paths,File.ReadAllBytes);
         try{Directory.CreateDirectory(Output);
-        foreach(int player in new[]{0,1})foreach(string state in new[]{"title","tutorial","countdown","race","spectator","quiet","boost","item","pause","settings","result","ending","broadcast","replay","pv"})CaptureView(player,state,1920,1080);
+        foreach(int player in new[]{0,1})foreach(string state in new[]{"title","tutorial","countdown","race","spectator","quiet","boost","item","drift","jump","pause","settings","result","ending","broadcast","replay","pv"})CaptureView(player,state,1920,1080);
         foreach(int player in new[]{0,1}){CaptureView(player,"race",1280,720);CaptureView(player,"race",3840,2160);}
         Debug.Log("ARCADE_UI_CAPTURE_PASS: "+Path.GetFullPath(Output));
         }finally{for(int i=0;i<paths.Length;i++)File.WriteAllBytes(paths[i],bytes[i]);}
@@ -117,7 +118,7 @@ public static class ArcadeUIValidation
             var host=new GameObject("Arcade canvas",typeof(RectTransform),typeof(Canvas),typeof(CanvasScaler));SceneManager.MoveGameObjectToScene(host,scene);var canvas=host.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceCamera;canvas.worldCamera=camera;canvas.planeDistance=1;
             var scaler=host.GetComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;scaler.referenceResolution=new Vector2(1920,1080);scaler.matchWidthOrHeight=.5f;ArcadeUI.Bind(host.transform,player);
             var backdrop=RacingUITheme.Rect(host.transform,"Backdrop",Vector2.zero,Vector2.one).gameObject.AddComponent<RawImage>();backdrop.texture=AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/ArcadeReference/"+(state=="title"||state=="result"||state=="ending"?"Campus.jpg":"Race.jpg"));backdrop.uvRect=new Rect(.143f,.143f,.714f,.714f);backdrop.raycastTarget=false;
-            var play=RacingUITheme.Rect(host.transform,"OnPlay",Vector2.zero,Vector2.one);var hud=RacingHUDBuilder.Build(play,player,2);
+            var play=RacingUITheme.Rect(host.transform,"OnPlay",Vector2.zero,Vector2.one);var gameUi=new OnPlayUIManager();gameUi.Init(play,null,player,2);var hud=play.Find("ModernHUD");
             hud.Find("Leaderboard").GetComponent<RacingLeaderboardUI>().SetPosition(2,8);
             var pos=new UIPosition();pos.Init(hud.Find("Position"));pos.SetPosition(2);var lap=new UILap();lap.Init(hud.Find("Lap"));lap.SetLap(2);var time=new UITime();time.Init(hud.Find("Time"));time.SetTotalTime(72.34f);
             var speed=new UISpeed();speed.Init(hud.Find("Speed"));speed.UpdateSpeedMeter(124,0);hud.GetComponent<ArcadeHUDTelemetry>().SetTelemetry(6200,.72f);hud.GetComponent<ArcadeHUDTelemetry>().SetLapDelta(-.42f);hud.Find("SteeringIndicator/Track").GetComponent<RacingSteeringIndicator>().SetState(-24f/90,-24f/90,60f/90);
@@ -126,6 +127,8 @@ public static class ArcadeUIValidation
             if(state=="tutorial"){play.gameObject.SetActive(false);var practice=new DrivingTutorialUI(host.transform,player);var lesson=new DrivingTutorialProgress();practice.Update(lesson,new DriveInputState{steering=-24,pedal=.65f},12,true);host.transform.Find("DrivingTutorial").SetAsLastSibling();}
             if(state=="countdown"){transition.ShowCountdown(3);speed.UpdateSpeedMeter(0,0);time.SetTotalTime(0);lap.SetLap(1);hud.GetComponent<ArcadeHUDTelemetry>().SetTelemetry(900,0);}
             if(state=="spectator")SpectatorOverlayUI.Create(host.transform,RacingUIFontCatalog.GetHUD(true)).Show(player==0?1:0);
+            if(state=="drift")gameUi.UpdateDriverNotice(null,null,true,coachingNotice:"ドリフト加速！");
+            if(state=="jump")gameUi.UpdateDriverNotice(null,null,true,jumpAhead:true);
             if(state=="quiet")ArcadeNoticeRail.Get(host.transform).Set(2,"P"+(player==0?2:1)+" 後方から接近");
             if(state=="boost")
             {
@@ -144,6 +147,31 @@ public static class ArcadeUIValidation
             Canvas.ForceUpdateCanvases();camera.Render();RenderTexture.active=target;pixels.ReadPixels(new Rect(0,0,width,height),0,0);pixels.Apply();File.WriteAllBytes(Path.Combine(Output,$"{state}-p{player+1}"+(width==1920?"":$"-{width}x{height}")+".png"),pixels.EncodeToPNG());
         }
         finally{RenderTexture.active=previous;GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=quality;UnityEngine.Object.DestroyImmediate(pixels);UnityEngine.Object.DestroyImmediate(target);EditorSceneManager.ClosePreviewScene(scene);}
+    }
+    private static void ValidatePeripheralDrivingNotices(int player)
+    {
+        var root=new GameObject("Peripheral notice QA",typeof(RectTransform));
+        try
+        {
+            ArcadeUI.Bind(root.transform,player);var play=RacingUITheme.Rect(root.transform,"OnPlay",Vector2.zero,Vector2.one);
+            var ui=new OnPlayUIManager();ui.Init(play,null,player);var rail=ArcadeNoticeRail.Get(root.transform);
+            Require(play.Find("ModernHUD/DriverNotice")==null,"Driving messages must not create a center overlay.");
+            var panel=root.transform.Find("QuietRaceNotice") as RectTransform;
+            Require(panel.anchorMin.x>=.9f&&panel.pivot.x==1&&panel.anchorMax.y<.75f,"Driving advice stays in the existing peripheral rail.");
+            foreach(string text in new[]{"ドリフト加速！","曲がってためる","少し逆に切って加速"})
+            {
+                ui.UpdateDriverNotice(null,null,false);ui.UpdateDriverNotice(null,null,true,coachingNotice:text);
+                Require(rail.Text==text&&panel.gameObject.activeSelf,"Every drift hint uses the peripheral rail.");
+            }
+            rail.Set(3,"P2 オイルでスリップ");ui.UpdateDriverNotice(null,null,true,jumpAhead:true);
+            Require(rail.Text.Contains("この先ジャンプ"),"Jump safety remains readable at the edge during item feedback.");
+            rail.Set(ArcadeNoticeRail.InputInstruction,"ペダルを離して再開");
+            Require(rail.Text=="ペダルを離して再開","Input recovery preempts other peripheral notices.");
+            rail.Set(ArcadeNoticeRail.InputInstruction,"");ui.UpdateDriverNotice(null,null,false);
+            Require(rail.Text=="P2 オイルでスリップ","Clearing driving advice preserves independent item feedback.");
+            ui.SetActive(false);Require(rail.Text==""&&!panel.gameObject.activeSelf,"Leaving the race clears every peripheral source.");
+        }
+        finally{UnityEngine.Object.DestroyImmediate(root);}
     }
     // Exercise the production toast, including its animation, rather than a separate mock layout.
     private static PlayerItemHUD PreviewItemNotice(Transform parent,string title,string caption)

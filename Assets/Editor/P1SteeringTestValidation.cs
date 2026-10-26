@@ -156,7 +156,7 @@ public static class P1SteeringTestValidation
             var normal = new Input(); var wheel = new Input(); var keys = new Input { IsConnected = false };
             var source = new P1SteeringTestInputSource(normal, keys) { Serial = wheel, Mode = P1SteeringTestMode.ConstantPedal, IsRacing = true };
             var gate = new PlayerDriveInputGate(source);
-            var notice = root.transform.Find("ModernHUD/DriverNotice");
+            var notice = root.transform.Find("QuietRaceNotice");
             var label = notice.Find("Text").GetComponent<TMPro.TMP_Text>();
             ui.UpdateDriverNotice(gate, null, true);
             Require(!notice.gameObject.activeSelf, "A connected constant pedal without a keyboard must not show a connection error.");
