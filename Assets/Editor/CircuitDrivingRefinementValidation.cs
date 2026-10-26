@@ -137,8 +137,8 @@ public static class CircuitDrivingRefinementValidation
             var so = new SerializedObject(course); so.FindProperty("generateRoad").boolValue = true;
             so.ApplyModifiedPropertiesWithoutUndo(); course.RebuildCache(); course.RebuildRoad();
             var guidance = course.transform.Find(RaceCourseRoad.RootName + "/Jump Guidance");
-            Require(guidance != null && guidance.GetComponentsInChildren<MeshFilter>().Length == 2 &&
-                guidance.GetComponentsInChildren<Collider>().Length == 0, "Ramp edges have contrast backing and add no collision.");
+            Require(guidance != null && guidance.GetComponentsInChildren<MeshFilter>().Length == 3 &&
+                guidance.GetComponentsInChildren<Collider>().Length == 0, "Ramp edges and gold flow have no collision.");
             var manager = inactive.AddComponent<Gmanager>(); manager.course = course; manager.state = Gmanager.State.Game; Gmanager.Control = manager;
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/car/car2.prefab");
             var car = UnityEngine.Object.Instantiate(prefab, new Vector3(0, 1.3f, 70), Quaternion.identity, root.transform);

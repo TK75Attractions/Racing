@@ -2,10 +2,23 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-/// <summary>High-contrast, flush ramp outlines. Never adds collision or covers the air gap.</summary>
+/// <summary>Flush ramp edges and a gold, flowing takeoff surface. No collision or paint over the air gap.</summary>
 public sealed class RaceJumpGuidance : MonoBehaviour
 {
-    private Material amber, ink;
+    private Material amber, ink, gold;
+    private RaceCourse course;
+    private float direction;
+    public void SetDirection(float sign)
+    {
+        direction = sign < 0 ? -1 : 1;
+        if (gold != null) gold.SetFloat("_Direction", direction);
+    }
+    private void Update()
+    {
+        var race = Gmanager.Control;
+        if (race != null && race.course == course && race.CourseProgressSign != direction)
+            SetDirection(race.CourseProgressSign);
+    }
     public static void Build(Transform owner, Transform root, List<Vector3> left, List<Vector3> right,
         List<float> distances, List<bool> road, bool closed)
     {
@@ -16,7 +29,16 @@ public sealed class RaceJumpGuidance : MonoBehaviour
         var guidance = host.AddComponent<RaceJumpGuidance>();
         guidance.amber = Material("Jump amber", new Color(1f, .66f, .055f));
         guidance.ink = Material("Jump outline contrast", new Color(.025f, .035f, .05f));
+        guidance.course = owner.GetComponent<RaceCourse>();
+        guidance.gold = new Material(Shader.Find("Racing/JumpGoldFlow")) { name = "Gold takeoff flow", hideFlags = HideFlags.DontSave };
+        float sign = 1; CheckpointSensor start = null;
+        foreach (var checkpoint in Object.FindObjectsByType<CheckpointSensor>(FindObjectsSortMode.None))
+            if (start == null || checkpoint.CheckpointIndex < start.CheckpointIndex) start = checkpoint;
+        if (start != null && guidance.course != null && guidance.course.TryGetNearestCenterLineDirection(start.transform.position, out var forward))
+            sign = Vector3.Dot(start.transform.forward, forward) < 0 ? -1 : 1;
+        guidance.SetDirection(sign);
         var backing = new List<Vector3>(); var bright = new List<Vector3>();
+        var gilded = new List<Vector3>(); var flowUV = new List<Vector2>(); var approachUV = new List<Vector2>();
         for (int i = 0; i < road.Count; i++)
         {
             if (!road[i]) continue;
@@ -29,6 +51,26 @@ public sealed class RaceJumpGuidance : MonoBehaviour
                 if (!road[index] && delta <= 24f) { near = true; break; }
             }
             if (!near) continue;
+            // Paint each solid approach only. The shader selects the active race direction,
+            // including reverse races, so landing arrows never invite a turn into the gap.
+            foreach (int approach in new[] { -1, 1 })
+            {
+                float runUp = 0; int cursor = i; bool found = false;
+                for (int step = 0; step < road.Count && runUp <= 18f; step++)
+                {
+                    if (!road[cursor]) { found = true; break; }
+                    runUp += distances[cursor + 1] - distances[cursor];
+                    cursor += approach;
+                    if (!closed && (cursor < 0 || cursor >= road.Count)) break;
+                    cursor = (cursor + road.Count) % road.Count;
+                }
+                if (!found) continue;
+                Vector3[] corners = { left[i], right[i], right[i + 1], left[i + 1] };
+                Vector2[] coords = { new Vector2(-1, distances[i]), new Vector2(1, distances[i]),
+                    new Vector2(1, distances[i + 1]), new Vector2(-1, distances[i + 1]) };
+                int[] order = Vector3.Cross(corners[1]-corners[0], corners[2]-corners[0]).y < 0 ? new[] {0,3,2,1} : new[] {0,1,2,3};
+                foreach (int k in order) { gilded.Add(corners[k] + Vector3.up * .045f); flowUV.Add(coords[k]); approachUV.Add(new Vector2(approach, runUp)); }
+            }
             foreach (int side in new[] { -1, 1 })
             {
                 Vector3 a = side < 0 ? left[i] : right[i], b = side < 0 ? left[i + 1] : right[i + 1];
@@ -50,19 +92,21 @@ public sealed class RaceJumpGuidance : MonoBehaviour
         }
         guidance.Mesh(owner, host.transform, "Dark outline", backing, guidance.ink);
         guidance.Mesh(owner, host.transform, "Amber ramp edges", bright, guidance.amber);
+        guidance.Mesh(owner, host.transform, "Gold animated takeoff", gilded, guidance.gold, flowUV, approachUV);
     }
     private static void Quad(List<Vector3> output, Vector3 a, Vector3 b, Vector3 c, Vector3 d, float offset)
     {
         if (Vector3.Cross(b - a, c - a).y < 0) { Vector3 swap = b; b = d; d = swap; }
         foreach (Vector3 v in new[] { a, b, c, d }) output.Add(v + Vector3.up * offset);
     }
-    private void Mesh(Transform owner, Transform root, string name, List<Vector3> vertices, Material material)
+    private void Mesh(Transform owner, Transform root, string name, List<Vector3> vertices, Material material, List<Vector2> uv = null, List<Vector2> uv2 = null)
     {
         var local = new Vector3[vertices.Count]; var triangles = new int[vertices.Count / 4 * 6];
         for (int i = 0; i < local.Length; i++) local[i] = owner.InverseTransformPoint(vertices[i]);
         for (int i = 0; i < vertices.Count / 4; i++)
         { int v = i * 4, t = i * 6; triangles[t] = v; triangles[t + 1] = v + 1; triangles[t + 2] = v + 2; triangles[t + 3] = v; triangles[t + 4] = v + 2; triangles[t + 5] = v + 3; }
         var mesh = new Mesh { name = name, hideFlags = HideFlags.DontSave, vertices = local, triangles = triangles };
+        if (uv != null) mesh.SetUVs(0, uv); if (uv2 != null) mesh.SetUVs(1, uv2);
         mesh.RecalculateNormals(); mesh.RecalculateBounds();
         var part = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer)) { hideFlags = HideFlags.DontSave };
         part.transform.SetParent(root, false); part.GetComponent<MeshFilter>().sharedMesh = mesh;
@@ -76,7 +120,7 @@ public sealed class RaceJumpGuidance : MonoBehaviour
     }
     private void OnDestroy()
     {
-        if (Application.isPlaying) { Destroy(amber); Destroy(ink); }
-        else { DestroyImmediate(amber); DestroyImmediate(ink); }
+        if (Application.isPlaying) { Destroy(amber); Destroy(ink); Destroy(gold); }
+        else { DestroyImmediate(amber); DestroyImmediate(ink); DestroyImmediate(gold); }
     }
 }
