@@ -6,6 +6,7 @@ public sealed class DrivingTutorialUI
 {
     public static readonly Color Cyan=ArcadeUI.Blue.Primary, Pink=ArcadeUI.Pink.Primary;
     private readonly GameObject root;
+    private readonly GameObject itemGuide;
     private readonly TMP_Text message,status,step;
     private readonly PreparationTimerUI timer;
     private readonly UISpeed speed=new UISpeed();
@@ -36,6 +37,8 @@ public sealed class DrivingTutorialUI
         message.textWrappingMode=TextWrappingModes.Normal;
         for(int i=0;i<3;i++)RacingUITheme.Rule(lesson,"Stage"+i,new Vector2(.37f+i*.19f,.13f),new Vector2(.54f+i*.19f,.16f),p.Soft);
         message.fontSizeMin=28f;
+        itemGuide = ItemGuideUI.Create(r, player);
+        itemGuide.SetActive(false);
     }
     public void Update(DrivingTutorialProgress lesson,DriveInputState input,float metersPerSecond,bool connected,string connectionNotice=null)
     {
@@ -46,8 +49,9 @@ public sealed class DrivingTutorialUI
         telemetry.SetTelemetry(engine!=null?engine.CurrentRpm:0,mover!=null?mover.NormalizedDriftCharge:0);
         float allowed=mover!=null?mover.SteeringInputLimit/Mathf.Max(.001f,mover.SteeringInputRange):1;
         float raw=input.steering/90f;steering.SetState(raw,Mathf.Clamp(raw,-allowed,allowed),allowed);
+        itemGuide.SetActive(connected && lesson.IsFinished);
         int stage=lesson.HasTimedOut?4:(int)lesson.CurrentStage;
-        string prompt=lesson.IsFinished?"もう一人の準備待ち\nそろったらレースへ":!connected?(!string.IsNullOrEmpty(connectionNotice)?connectionNotice:"接続を確認してください")+"\n係員に知らせてね":!lesson.PedalReleased?"まずペダルから\n足を離そう":stage==0?"ペダルを踏んで\n加速しよう":stage==1?"この先は右カーブ\n道にそって曲がろう":"光る箱に触れて\nアイテムを取ろう";
+        string prompt=lesson.IsFinished?"もう一人の準備待ち\nそろったらレースへ":!connected?(!string.IsNullOrEmpty(connectionNotice)?connectionNotice:"接続を確認してください")+"\n係員に知らせてね":!lesson.PedalReleased?"まずペダルから\n足を離そう":stage==0?"ペダルを踏んで\n加速しよう":stage==1?"この先は右カーブ\n道にそって曲がろう":"光る箱にふれよう\n自動で発動するよ";
         if(shownMessage!=prompt){message.text=prompt;shownMessage=prompt;}
         string heading=lesson.HasTimedOut?"練習時間終了":lesson.IsComplete?"アイテム獲得！ 準備完了":!connected?"接続待ち":"練習しよう";
         if(status.text!=heading)status.text=heading;

@@ -122,16 +122,16 @@ public sealed class PlayerItemHUD : MonoBehaviour
         switch (item)
         {
             case RaceItemType.Shield:
-                ShowToast("シールド", "接触した相手がスピン", ShieldColor);
+                ShowToast("シールド", "守る！ 相手に当たるとスピン", ShieldColor);
                 break;
             case RaceItemType.Rocket:
-                ShowToast("ロケット", "ROCKET  —  自動操縦で超加速", RocketColor);
+                ShowToast("ロケット", "自動操縦で加速！ 操作は不要", RocketColor);
                 break;
             case RaceItemType.Oil:
-                ShowToast("オイル", "後ろに設置", OilColor);
+                ShowToast("オイル", "後ろに油！ 踏むとすべるよ", OilColor);
                 break;
             case RaceItemType.Confuse:
-                ShowToast("コンフューズ", "相手のハンドルを反転", ConfuseColor);
+                ShowToast("コンフューズ", "相手のハンドルが左右逆に！", ConfuseColor);
                 break;
         }
         toastLifetime = 3.2f;
@@ -142,14 +142,14 @@ public sealed class PlayerItemHUD : MonoBehaviour
         switch (item)
         {
             case RaceItemType.Oil:
-                ShowToast("オイルを踏んだ!", "すべりやすくなっています", WarningColor);
+                ShowToast("オイルを踏んだ!", "ペダルをゆるめて立て直そう", WarningColor);
                 StartOilSplatter();
                 break;
             case RaceItemType.Confuse:
-                ShowToast("ハンドル反転!", "左右の操作が逆になります", ConfuseColor);
+                ShowToast("ハンドル反転!", "少しの間、右と左が逆になるよ", ConfuseColor);
                 break;
             case RaceItemType.Shield:
-                ShowToast("スピン!", "車の向きに気をつけて", WarningColor);
+                ShowToast("スピン!", "すぐに戻るよ！ 道の先を見よう", WarningColor);
                 break;
         }
         toastLifetime = 2.8f;
@@ -157,7 +157,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
     private void HandleChargeCollected()
     {
-        ShowToast("チャージ MAX", "ドリフト解放で加速", ChargeColor);
+        ShowToast("チャージ MAX", "カーブでハンドルを戻すと加速", ChargeColor);
         toastLifetime = 2.8f;
     }
 
@@ -260,27 +260,27 @@ public sealed class PlayerItemHUD : MonoBehaviour
         Color tint = Color.white;
         if (effects.IsRocketActive)
         {
-            text = $"自動操縦 / ROCKET   {effects.RocketTimeRemaining:0.0}秒";
+            text = $"自動操縦で加速中   {effects.RocketTimeRemaining:0.0}秒";
             tint = RocketColor;
         }
         else if (effects.IsSpinning)
         {
-            text = "スピン中 / SPIN";
+            text = "スピン中 / すぐに戻るよ";
             tint = WarningColor;
         }
         else if (effects.IsConfused)
         {
-            text = $"ハンドル反転 / CONFUSED   {effects.ConfuseTimeRemaining:0.0}秒";
+            text = $"左右が逆！   {effects.ConfuseTimeRemaining:0.0}秒";
             tint = ConfuseColor;
         }
         else if (effects.IsOiled)
         {
-            text = "すべっています / SLIPPING";
+            text = "すべるよ / ペダルをゆるめよう";
             tint = OilColor;
         }
         else if (effects.IsShieldActive)
         {
-            text = $"シールド / SHIELD   {effects.ShieldTimeRemaining:0.0}秒";
+            text = $"バリアで守る   {effects.ShieldTimeRemaining:0.0}秒";
             tint = ShieldColor;
         }
 

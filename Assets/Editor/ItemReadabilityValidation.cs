@@ -41,8 +41,32 @@ public static class ItemReadabilityValidation
                 "Rebinding must keep the real item event subscription.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); UnityEngine.Object.DestroyImmediate(car); }
+        ValidateGuideTiming();
         ArcadeUIValidation.Run();
         Debug.Log("ITEM_READABILITY_PASS: item captions, notice priority, readable duration, icons and rebind; existing item/UI regression.");
+    }
+    private static void ValidateGuideTiming()
+    {
+        var root = new GameObject("Item guide timing", typeof(RectTransform));
+        try
+        {
+            var practice = new DrivingTutorialUI(root.transform, 0);
+            var lesson = new DrivingTutorialProgress();
+            practice.Update(lesson, DriveInputState.Neutral, 0f, true);
+            var guide = root.transform.Find("DrivingTutorial/ItemGuide");
+            Require(!guide.gameObject.activeSelf, "The item list must not cover the learner's driving view.");
+            lesson.Tick(.01f,true,0,0,0,0); lesson.Tick(.7f,true,1,0,4,0); lesson.Tick(.7f,true,1,10,4,35);
+            practice.Update(lesson, DriveInputState.Neutral, 4f, true);
+            Require(!guide.gameObject.activeSelf, "Approaching the box requires the road and both instruments to stay clear.");
+            Require(lesson.CollectItem(true), "Only contact with the practice box should complete the lesson.");
+            practice.Update(lesson, DriveInputState.Neutral, 0f, true);
+            Require(guide.gameObject.activeSelf, "A stationary learner can use the waiting time to discover every item.");
+            foreach (string name in new[] { "Shield", "Rocket", "Oil", "Confuse", "Charge" })
+                Require(guide.Find(name+"/Effect").GetComponent<TMP_Text>().text.Length > 0,
+                    "Every item, including the charge crystal, needs an explanation.");
+            practice.Dispose();
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
     }
     private static void Call(object target, string method, params object[] args) =>
         target.GetType().GetMethod(method, Private).Invoke(target, args);
