@@ -23,10 +23,9 @@ public sealed class ScreenTransitionController : MonoBehaviour
     private CanvasGroup resultCanvasGroup;
     private RectTransform resultContent;
     private Vector2 resultContentBasePosition;
-    private readonly RectTransform[] resultRows = new RectTransform[5];
-    private readonly CanvasGroup[] resultRowGroups = new CanvasGroup[5];
-    private readonly Vector2[] resultRowBasePositions = new Vector2[5];
-    private TMP_Text resultWinnerLabel;
+    private UIRevealSequence resultReveal;
+    private TMP_Text resultRankLabel;
+    private UIValuePulse finishRankPulse;
     private GoalCelebrationUI goalCelebration;
     private SpectatorOverlayUI spectatorOverlay;
     private CanvasGroup fadeCanvasGroup;
@@ -278,88 +277,47 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     private IEnumerator ShowResultRoutine(Action onCompleted)
     {
-        IsTransitioning = true;
-        SetScreenVisibility(Gmanager.State.Result);
-        RefreshResultContent();
-        if (resultCanvasGroup != null)
+        int version=motionVersion;IsTransitioning=true;
+        try
         {
-            resultCanvasGroup.alpha = 0f;
-        }
-        PrepareResultRowsForEntrance();
-
-        float elapsed = 0f;
-        while (elapsed < resultEnterSeconds)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = resultEnterSeconds <= 0f ? 1f : Mathf.Clamp01(elapsed / resultEnterSeconds);
-            float eased = 1f - Mathf.Pow(1f - t, 3f);
-            if (resultCanvasGroup != null)
+            SetScreenVisibility(Gmanager.State.Result);RefreshResultContent();
+            if(resultCanvasGroup!=null)resultCanvasGroup.alpha=0;
+            resultReveal?.Play();
+            double began=Time.realtimeSinceStartupAsDouble;float elapsed=0;
+            while(elapsed<resultEnterSeconds)
             {
-                resultCanvasGroup.alpha = eased;
+                elapsed=(float)(Time.realtimeSinceStartupAsDouble-began);
+                if(resultCanvasGroup!=null)resultCanvasGroup.alpha=UIMotion.Out(resultEnterSeconds<=0?1:elapsed/resultEnterSeconds);
+                yield return null;
             }
-            if (resultContent != null)
-            {
-                resultContent.anchoredPosition = resultContentBasePosition + Vector2.right * Mathf.Lerp(170f, 0f, eased);
-                resultContent.localScale = Vector3.one * Mathf.Lerp(0.94f, 1f, eased);
-            }
-            AnimateResultRowsIn(t);
-            yield return null;
+            RestoreResultContent();RestoreResultRows(true);
+            if(resultCanvasGroup!=null)resultCanvasGroup.alpha=1;
         }
-
-        RestoreResultContent();
-        RestoreResultRows(celebrateWinner: true);
-        if (resultCanvasGroup != null)
-        {
-            resultCanvasGroup.alpha = 1f;
-        }
-        IsTransitioning = false;motionRoutine=null;
-        onCompleted?.Invoke();
+        finally{FinishMotion(version);}
+        if(version==motionVersion)onCompleted?.Invoke();
     }
 
-    private IEnumerator CloseResultAndTransitionRoutine(
-        Gmanager.State targetState,
-        Action onScreenCovered,
-        Action onCompleted)
+    private IEnumerator CloseResultAndTransitionRoutine(Gmanager.State targetState,Action onScreenCovered,Action onCompleted)
     {
-        int version=motionVersion;
-        IsTransitioning = true;
-        SetFadeInputBlocking(true);
-        RefreshResultContent();
-
-        // 決定時の全体フラッシュを見せてから退出を開始する。
-        yield return new WaitForSecondsRealtime(0.25f);
-
-        float elapsed = 0f;
-        while (elapsed < resultExitSeconds)
+        int version=motionVersion;IsTransitioning=true;SetFadeInputBlocking(true);RefreshResultContent();
+        try
         {
-            elapsed += Time.unscaledDeltaTime;
-            float t = resultExitSeconds <= 0f ? 1f : Mathf.Clamp01(elapsed / resultExitSeconds);
-            float eased = t * t;
-            if (resultCanvasGroup != null)
+            // The button already supplies a confirmation beat; do not add another hold.
+            double began=Time.realtimeSinceStartupAsDouble;float elapsed=0;
+            while(elapsed<resultExitSeconds)
             {
-                resultCanvasGroup.alpha = 1f - eased;
+                elapsed=(float)(Time.realtimeSinceStartupAsDouble-began);float t=resultExitSeconds<=0?1:Mathf.Clamp01(elapsed/resultExitSeconds);
+                resultReveal?.SampleExit(t);
+                if(resultCanvasGroup!=null)resultCanvasGroup.alpha=1f-.2f*UIMotion.In(t);
+                yield return null;
             }
-            if (resultContent != null)
-            {
-                resultContent.anchoredPosition = resultContentBasePosition + Vector2.left * Mathf.Lerp(0f, 150f, eased);
-                resultContent.localScale = Vector3.one * Mathf.Lerp(1f, 0.96f, eased);
-            }
-            AnimateResultRowsOut(t);
-            yield return null;
+            yield return FadeTo(1f,fadeOutSeconds);
+            onScreenCovered?.Invoke();if(version!=motionVersion)yield break;
+            SetScreenVisibility(targetState);yield return null;yield return FadeTo(0f,fadeInSeconds);
+            RestoreResultContent();RestoreResultRows(false);
         }
-
-        yield return FadeTo(1f, fadeOutSeconds);
-        onScreenCovered?.Invoke();
-        if(version!=motionVersion)yield break;
-        SetScreenVisibility(targetState);
-        yield return null;
-        yield return FadeTo(0f, fadeInSeconds);
-
-        RestoreResultContent();
-        RestoreResultRows(celebrateWinner: false);
-        SetFadeInputBlocking(false);
-        IsTransitioning = false;motionRoutine=null;
-        onCompleted?.Invoke();
+        finally{FinishMotion(version);}
+        if(version==motionVersion)onCompleted?.Invoke();
     }
 
     private IEnumerator FadeTo(float targetAlpha, float duration)
@@ -388,6 +346,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
         motionVersion++;if(motionRoutine!=null)StopCoroutine(motionRoutine);motionRoutine=null;
         IsTransitioning=false;if(goalCelebration!=null)goalCelebration.HideImmediate();
         RestoreResultContent();RestoreResultRows(false);
+        if(resultCanvasGroup!=null)resultCanvasGroup.alpha=1;
         transitionWipe?.SetCoverage(0,false);
         if(fadeCanvasGroup!=null){fadeCanvasGroup.alpha=0;fadeCanvasGroup.blocksRaycasts=false;fadeCanvasGroup.interactable=false;}
     }
@@ -648,120 +607,27 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     private void RefreshResultContent()
     {
-        if (resultRoot == null)
+        if(resultRoot==null)return;
+        Transform card=resultRoot.transform.Find("ResultPresentation/ResultCard");
+        var content=card!=null?card.GetComponent<RectTransform>():resultRoot.GetComponent<RectTransform>();
+        if(resultContent!=content){resultContent=content;if(content!=null)resultContentBasePosition=content.anchoredPosition;}
+        resultReveal=card!=null?card.GetComponent<UIRevealSequence>():null;
+        resultRankLabel=card!=null?card.Find("Finish/Rank")?.GetComponent<TMP_Text>():null;
+        if(resultRankLabel!=null)
         {
-            return;
+            finishRankPulse=resultRankLabel.GetComponent<UIValuePulse>();if(finishRankPulse==null)finishRankPulse=resultRankLabel.gameObject.AddComponent<UIValuePulse>();
+            finishRankPulse.ResetPose();
         }
-
-        Transform presentation = resultRoot.transform.Find("ResultPresentation");
-        Transform card = presentation != null ? presentation.Find("ResultCard") : null;
-        resultContent = card != null
-            ? card.GetComponent<RectTransform>()
-            : resultRoot.GetComponent<RectTransform>();
-        if (resultContent != null)
-        {
-            resultContentBasePosition = resultContent.anchoredPosition;
-        }
-
-        for (int index = 0; index < resultRows.Length; index++)
-        {
-            Transform row = card != null ? card.Find($"ResultRow{index + 1}") : null;
-            resultRows[index] = row != null ? row.GetComponent<RectTransform>() : null;
-            if (resultRows[index] == null)
-            {
-                continue;
-            }
-            resultRowBasePositions[index] = resultRows[index].anchoredPosition;
-            resultRowGroups[index] = row.GetComponent<CanvasGroup>();
-            if (resultRowGroups[index] == null)
-            {
-                resultRowGroups[index] = row.gameObject.AddComponent<CanvasGroup>();
-            }
-        }
-
-        Transform winner = card != null ? card.Find("Winner") : null;
-        resultWinnerLabel = winner != null ? winner.GetComponent<TMP_Text>() : null;
     }
-
     private void RestoreResultContent()
     {
-        if (resultContent == null)
-        {
-            return;
-        }
-
-        resultContent.anchoredPosition = resultContentBasePosition;
-        resultContent.localScale = Vector3.one;
+        resultReveal?.Cancel();if(finishRankPulse!=null)finishRankPulse.ResetPose();
+        if(resultContent==null)return;resultContent.anchoredPosition=resultContentBasePosition;resultContent.localScale=Vector3.one;
     }
-
-    private void PrepareResultRowsForEntrance()
-    {
-        for (int index = 0; index < resultRows.Length; index++)
-        {
-            if (resultRows[index] == null)
-            {
-                continue;
-            }
-            resultRows[index].anchoredPosition = resultRowBasePositions[index] + Vector2.right * (240f + index * 70f);
-            resultRows[index].localScale = Vector3.one * 0.9f;
-            resultRowGroups[index].alpha = 0f;
-        }
-    }
-
-    private void AnimateResultRowsIn(float normalizedTime)
-    {
-        for (int index = 0; index < resultRows.Length; index++)
-        {
-            if (resultRows[index] == null)
-            {
-                continue;
-            }
-            float rowTime = Mathf.Clamp01((normalizedTime - 0.08f - index * 0.09f) / 0.56f);
-            float eased = 1f - Mathf.Pow(1f - rowTime, 3f);
-            float overshoot = Mathf.Sin(rowTime * Mathf.PI) * 0.045f;
-            resultRowGroups[index].alpha = eased;
-            resultRows[index].anchoredPosition = resultRowBasePositions[index] + Vector2.right * Mathf.Lerp(240f + index * 70f, 0f, eased);
-            resultRows[index].localScale = Vector3.one * (Mathf.Lerp(0.9f, 1f, eased) + overshoot);
-        }
-    }
-
-    private void AnimateResultRowsOut(float normalizedTime)
-    {
-        for (int index = 0; index < resultRows.Length; index++)
-        {
-            if (resultRows[index] == null)
-            {
-                continue;
-            }
-            float rowTime = Mathf.Clamp01((normalizedTime - (resultRows.Length - 1 - index) * 0.08f) / 0.8f);
-            resultRowGroups[index].alpha = 1f - rowTime;
-            resultRows[index].anchoredPosition = resultRowBasePositions[index] + Vector2.left * (130f * rowTime);
-            resultRows[index].localScale = Vector3.one * Mathf.Lerp(1f, 0.94f, rowTime);
-        }
-    }
-
     private void RestoreResultRows(bool celebrateWinner)
     {
-        for (int index = 0; index < resultRows.Length; index++)
-        {
-            if (resultRows[index] == null)
-            {
-                continue;
-            }
-            resultRows[index].anchoredPosition = resultRowBasePositions[index];
-            resultRows[index].localScale = Vector3.one;
-            resultRowGroups[index].alpha = 1f;
-        }
-
-        if (celebrateWinner && resultWinnerLabel != null)
-        {
-            UIValuePulse pulse = resultWinnerLabel.GetComponent<UIValuePulse>();
-            if (pulse == null)
-            {
-                pulse = resultWinnerLabel.gameObject.AddComponent<UIValuePulse>();
-            }
-            pulse.Play(new Color(1f, 0.82f, 0.12f, 1f), -4f);
-        }
+        resultReveal?.Cancel();
+        if(celebrateWinner&&resultRankLabel!=null&&resultRankLabel.text!="DNF"&&resultRankLabel.text!="—")finishRankPulse.Play(ArcadeUI.For(transform).Accent,0);
     }
 
     private static GameObject InstantiateScreenBackground(Transform parent, string resourcePath, string objectName)

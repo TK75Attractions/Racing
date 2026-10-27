@@ -4,20 +4,21 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class UIRevealSequence : MonoBehaviour
 {
-    private struct Part { public RectTransform rect; public CanvasGroup group; public Vector2 position; public Vector3 scale; public float alpha; }
+    private struct Part { public RectTransform rect; public CanvasGroup group; public Vector2 position; public Vector3 scale; public float alpha,delay; }
     private Part[] parts;
     private Vector2 offset;
-    private float age, stagger, duration;
+    private float age, stagger, duration,maximumDelay;
     private double lastTick;
     public bool IsPlaying { get; private set; }
-    public void Configure(Transform scope, string[] paths, Vector2 from, float spacing=.045f, float seconds=UIMotion.RevealSeconds)
+    public void Configure(Transform scope, string[] paths, Vector2 from, float spacing=.045f, float seconds=UIMotion.RevealSeconds,float[] delays=null)
     {
-        Cancel(); parts=new Part[paths.Length]; offset=from; stagger=Mathf.Max(0,spacing); duration=Mathf.Max(.01f,seconds);
+        Cancel(); parts=new Part[paths.Length]; offset=from; stagger=Mathf.Max(0,spacing); duration=Mathf.Max(.01f,seconds);maximumDelay=0;
         for(int i=0;i<paths.Length;i++)
         {
             var rect=scope.Find(paths[i]) as RectTransform; if(rect==null)continue;
             var group=rect.GetComponent<CanvasGroup>();if(group==null)group=rect.gameObject.AddComponent<CanvasGroup>();
-            parts[i]=new Part{rect=rect,group=group,position=rect.anchoredPosition,scale=rect.localScale,alpha=group.alpha};
+            float delay=delays!=null&&i<delays.Length?Mathf.Max(0,delays[i]):i*stagger;maximumDelay=Mathf.Max(maximumDelay,delay);
+            parts[i]=new Part{rect=rect,group=group,position=rect.anchoredPosition,scale=rect.localScale,alpha=group.alpha,delay=delay};
         }
         if(Application.isPlaying&&isActiveAndEnabled)Play();
     }
@@ -28,17 +29,28 @@ public sealed class UIRevealSequence : MonoBehaviour
     public void Tick(float dt)
     {
         if(!IsPlaying)return; age+=Mathf.Max(0,dt); Apply();
-        if(age>=duration+Mathf.Max(0,parts.Length-1)*stagger)Cancel();
+        if(age>=duration+maximumDelay)Cancel();
     }
     private void Apply()
     {
         for(int i=0;i<parts.Length;i++)
         {
             Part p=parts[i]; if(p.rect==null)continue;
-            float t=Mathf.Clamp01((age-i*stagger)/duration), eased=UIMotion.Out(t);
+            float t=Mathf.Clamp01((age-p.delay)/duration), eased=UIMotion.Out(t);
             p.rect.anchoredPosition=p.position+offset*(1f-eased);
             p.rect.localScale=p.scale*(1f-.025f*(1f-eased)+.012f*UIMotion.Spring(t));
             p.group.alpha=p.alpha*eased;
+        }
+    }
+    public void SampleExit(float normalized)
+    {
+        IsPlaying=false;if(parts==null)return;
+        for(int i=0;i<parts.Length;i++)
+        {
+            Part p=parts[i];if(p.rect==null)continue;
+            float delay=maximumDelay>0?(maximumDelay-p.delay)/maximumDelay*.12f:0;
+            float t=Mathf.Clamp01((normalized-delay)/.88f),eased=UIMotion.In(t);
+            p.rect.anchoredPosition=p.position-offset*eased;p.rect.localScale=p.scale*(1-.025f*eased);p.group.alpha=p.alpha*(1-UIMotion.Out(t));
         }
     }
     public void Cancel()

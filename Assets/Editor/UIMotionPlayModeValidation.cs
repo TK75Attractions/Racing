@@ -19,7 +19,7 @@ public static class UIMotionPlayModeValidation
     private static UIValuePulse rank;
     private static RectTransform play;
     private static bool all;
-    private static int oldGoal,newGoal,buttonClicks;
+    private static int oldGoal,newGoal,buttonClicks,resultShown;
     private static RacingMenuButton button;
     public static void RunScreens()=>Start(false);
     public static void RunAll()=>Start(true);
@@ -125,10 +125,29 @@ public static class UIMotionPlayModeValidation
         else if(phase==9&&age>.5)
         {
             transition.ClearRaceStatus();var counter=play.Find("CountdownStatus/RaceStatus");
-            Require(counter.localScale==Vector3.one&&!counter.GetComponent<UIValuePulse>().IsPlaying,"Countdown cancellation must restore the number.");Finish();
+            Require(counter.localScale==Vector3.one&&!counter.GetComponent<UIValuePulse>().IsPlaying,"Countdown cancellation must restore the number.");
+            resultShown=0;Require(transition.TryShowResultAnimated(()=>resultShown++),"Result reveal starts.");Next(10);
+        }
+        else if(phase==10&&age>1.0)
+        {
+            var card=fixture.transform.Find("Result/ResultPresentation/ResultCard");
+            Require(resultShown==1&&!transition.IsTransitioning&&card.Find("Classification/ResultRow4").GetComponent<CanvasGroup>().alpha==1,"All result rows must finish once while time is paused.");
+            Require(transition.TryCloseResultAndTransition(Gmanager.State.Title,()=>covered++,()=>completed++),"Result exit starts.");
+            transition.ApplyStateImmediate(Gmanager.State.Result);Next(11);
+        }
+        else if(phase==11&&age>1.05)
+        {
+            Require(covered==2&&completed==1&&!transition.IsTransitioning,"Cancelling result exit must discard stale callbacks.");
+            var card=fixture.transform.Find("Result/ResultPresentation/ResultCard");
+            Require(card.Find("ResultMenu").GetComponent<CanvasGroup>().alpha==1&&((RectTransform)card).anchoredPosition==Vector2.zero,"Cancelled result exit leaves menus visible and panels correctly placed.");
+            transition.TryShowResultAnimated(()=>resultShown++);Next(12);
+        }
+        else if(phase==12&&age>1.0)
+        {
+            Require(resultShown==2&&!transition.IsTransitioning,"Repeated result entry must complete without drift.");Finish();
         }
     }
-    private static void Finish(){Debug.Log("UI_MOTION_PLAYMODE_PASS: actual shutter transition, one-shot callbacks, reentry rejection, cancellation, real OnDisable and unscaled rank playback; goal replacement, pending-button disable, repeated confirmation and countdown reset when running RunAll.");Stop(0);}
+    private static void Finish(){Debug.Log("UI_MOTION_PLAYMODE_PASS: actual shutter transition, one-shot callbacks, reentry rejection, cancellation, real OnDisable and unscaled rank playback; goal replacement, pending-button disable, repeated confirmation and countdown reset, staged result completion/replay and interrupted result exit when running RunAll.");Stop(0);}
     private static void Stop(int code)
     {
         SessionState.SetBool(Active,false);EditorApplication.update-=Tick;Time.timeScale=1;
