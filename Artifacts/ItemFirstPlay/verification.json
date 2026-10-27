@@ -1,0 +1,93 @@
+{
+  "dateJst": "2026-10-27",
+  "baseMain": "1b170d6",
+  "landscapeBranch": "c0d6158",
+  "sourceCommits": [
+    "36227f4",
+    "d98f045",
+    "38ab92d"
+  ],
+  "unity": "6000.3.9f1",
+  "editMode": {
+    "id": "2",
+    "testcasecount": "166",
+    "result": "Passed",
+    "total": "166",
+    "passed": "166",
+    "failed": "0",
+    "inconclusive": "0",
+    "skipped": "0",
+    "asserts": "0",
+    "engine-version": "3.5.0.0",
+    "clr-version": "4.0.30319.42000",
+    "start-time": "2026-10-27 14:19:08Z",
+    "end-time": "2026-10-27 14:19:12Z",
+    "duration": "4.8717222"
+  },
+  "core": {
+    "passed": 166,
+    "failed": 0
+  },
+  "unityValidation": [
+    "RaceItemValidation",
+    "ArcadeUIValidation",
+    "ItemReadabilityValidation",
+    "ItemFirstPlayCapture"
+  ],
+  "fixtureImages": {
+    "palettes": 2,
+    "widths": [
+      1280,
+      1920
+    ],
+    "states": [
+      "waiting-guide",
+      "Shield",
+      "Rocket",
+      "Oil",
+      "Confuse",
+      "charge",
+      "afflicted"
+    ],
+    "missingGlyphs": 0,
+    "overflow": 0,
+    "note": "HUD fixtures use the existing reference race background; practice images are actual driving."
+  },
+  "practice": {
+    "playersCompleted": 2,
+    "route": "accelerate > steer > actual item trigger > countdown",
+    "approachP1": {
+      "meters": 62.0,
+      "seconds": 2.5
+    },
+    "approachP2": {
+      "meters": 62.8,
+      "seconds": 2.51
+    },
+    "maximumSpeedMps": 26.078,
+    "verticalSpeedAfterSettlingMps": 0.0,
+    "completionCuesPerPlayer": 1
+  },
+  "race": {
+    "scenario": "human-fast-items-7101",
+    "termination": "both-humans-finished",
+    "officialSeconds": 135.50904846191406,
+    "physicsSeconds": 136.89242553710938,
+    "npcCount": 2,
+    "goalLaps": 2,
+    "humansFinished": 2,
+    "itemsUsed": 8,
+    "charges": 9,
+    "afflictions": 2,
+    "note": "P1 used one regular reset and one automatic recovery. CPU1 was still on lap1 when both humans finished. No forced pose, velocity, laps or finish from the agent. Confuse did not roll in this race; tested separately."
+  },
+  "knownEditorIssue": "SearchDatabase ArgumentOutOfRangeException during Play startup, before validation; existing issue.",
+  "unverified": [
+    "physical displays and controls",
+    "USB/HDMI audio",
+    "target PC FPS",
+    "Windows player build",
+    "first-time elementary-school players"
+  ],
+  "logs": "Logs/ItemFirstPlay/ (ignored)"
+}
