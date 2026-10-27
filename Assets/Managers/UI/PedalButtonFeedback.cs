@@ -21,8 +21,11 @@ public sealed class PedalButtonFeedback : MonoBehaviour
     private float progress, pointerProgress, focus, press, shownProgress, highlightAge=10f, confirmAge=10f;
     private Color accent;
     private int displayedPercent=-1;
+    private bool navigationSelection;
     public bool IsRetained => confirmed && retainStart;
     public bool HasGauge => gauge != null;
+    public bool IsNavigationSelected=>navigationSelection&&selected&&available;
+    public void UseNavigationSelection(){navigationSelection=true;surface.SetNavigationSelection(true,selected);dirty=true;}
 
     public void Bind(RacingPanelGraphic value)
     {
@@ -37,11 +40,19 @@ public sealed class PedalButtonFeedback : MonoBehaviour
     }
     public void Configure(Color color,RacingPanelGraphic.SurfaceStyle style=RacingPanelGraphic.SurfaceStyle.Primary)
     {
-        Image image=GetComponent<Image>();if(image!=null)image.enabled=false;
+        Image image=GetComponent<Image>();
+        if(image!=null)
+        {
+            bool hit=GetComponent<Selectable>()!=null;image.enabled=hit;
+            if(hit){image.color=Color.clear;image.raycastTarget=true;}
+        }
         Outline outline=GetComponent<Outline>();if(outline!=null)outline.enabled=false;
+        // NeonUI.Button already builds a face. Keep only the face owned by this
+        // feedback component; otherwise that old face covers the selection style.
+        var previous=transform.Find("ModernSurface");if(previous!=null)previous.gameObject.SetActive(false);
         RectTransform face=RacingUITheme.Rect(transform,"ButtonSurface",Vector2.zero,Vector2.one);face.SetAsFirstSibling();
         PedalButtonSurface graphic=face.GetComponent<PedalButtonSurface>() ?? face.gameObject.AddComponent<PedalButtonSurface>();
-        graphic.Configure(style,color);Bind(graphic);selected=false;confirmed=false;progress=pointerProgress=0;dirty=true;
+        graphic.Configure(style,color);Bind(graphic);navigationSelection=false;graphic.SetNavigationSelection(false,false);selected=false;confirmed=false;progress=pointerProgress=0;dirty=true;
     }
     public void CacheContent()
     {
@@ -72,7 +83,7 @@ public sealed class PedalButtonFeedback : MonoBehaviour
         amount=Mathf.Clamp01(amount);
         if(selected==isSelected && progress==amount)return;
         if(isSelected && !selected)highlightAge=0;
-        selected=isSelected;progress=amount;dirty=true;
+        selected=isSelected;progress=amount;surface?.SetNavigationSelection(navigationSelection,IsNavigationSelected);dirty=true;
     }
     public void SetPointerState(bool focused,bool pressed,bool interactable)
     {
@@ -92,7 +103,7 @@ public sealed class PedalButtonFeedback : MonoBehaviour
     {
         if(rect==null || surface==null)return;
         bool retained=IsRetained && available;
-        float targetFocus=available && (selected || pointerFocused || retained)?1f:0f;
+        float targetFocus=available && (selected || pointerFocused&&!navigationSelection || retained)?1f:0f;
         float targetPress=available && !retained && (pointerPressed || progress>0f || pointerProgress>0f || confirmAge<.10f)?1f:0f;
         float targetProgress=retained?1f:available?Mathf.Max(progress,pointerProgress):0f;
         bool moving=focus!=targetFocus || press!=targetPress || shownProgress!=targetProgress || highlightAge<.52f || confirmAge<.48f;
@@ -112,6 +123,7 @@ public sealed class PedalButtonFeedback : MonoBehaviour
         bool retained=IsRetained && available;
         Color tint=retained?RacingUITheme.Gold:surface.Style==RacingPanelGraphic.SurfaceStyle.Danger?NeonUI.Red:surface.Style==RacingPanelGraphic.SurfaceStyle.Primary?ArcadeUI.For(transform).Primary:accent;
         surface.SetButtonModifiers(!available,retained);
+        surface.SetNavigationSelection(navigationSelection,IsNavigationSelected);
         surface.SetState(focus,press,flash,tint);
         float scale=1f+focus*.022f+spring*.010f-press*.018f;
         Vector3 size=Vector3.Scale(baseScale,new Vector3(scale,scale,1));
@@ -127,7 +139,8 @@ public sealed class PedalButtonFeedback : MonoBehaviour
             {
                 Color color=available?item.tint:new Color(.55f,.59f,.67f,.72f);
                 if (available && !retained)
-                    color = Color.Lerp(item.tint * new Color(.78f,.78f,.78f,1f), ArcadeUI.For(transform).Ink, focus);
+                    color = navigationSelection?Color.Lerp(ArcadeUI.For(transform).Ink,ArcadeUI.For(transform).Paper,focus)
+                        :Color.Lerp(item.tint * new Color(.78f,.78f,.78f,1f), ArcadeUI.For(transform).Ink, focus);
                 if(item.graphic.color!=color)item.graphic.color=color;
             }
         }
@@ -136,7 +149,7 @@ public sealed class PedalButtonFeedback : MonoBehaviour
             gauge.SetVisual(shownProgress,tint,flash,!available);
             int percent=Mathf.RoundToInt(shownProgress*100f);
             if(displayedPercent!=percent){percentage.SetText("{0}%",percent);displayedPercent=percent;}
-            Color c=available?(retained?RacingUITheme.Gold:Color.Lerp(Color.white,new Color(.015f,.025f,.05f,1f),focus)):new Color(.55f,.59f,.67f,.72f);
+            Color c=available?(retained?ArcadeUI.For(transform).Ink:navigationSelection?Color.Lerp(ArcadeUI.For(transform).Ink,ArcadeUI.For(transform).Paper,focus):Color.Lerp(Color.white,new Color(.015f,.025f,.05f,1f),focus)):new Color(.55f,.59f,.67f,.72f);
             if(percentage.color!=c)percentage.color=c;
         }
         float sweep=available && highlightAge<.44f?Mathf.Clamp01(highlightAge/.44f):0;
@@ -157,6 +170,7 @@ public sealed class PedalButtonFeedback : MonoBehaviour
         selected=pointerFocused=pointerPressed=confirmed=false;progress=pointerProgress=focus=press=shownProgress=0;
         highlightAge=confirmAge=10f;dirty=true;displayedPercent=-1;
         surface?.SetButtonModifiers(false,false);surface?.SetState(0,0,0,accent);
+        surface?.SetNavigationSelection(navigationSelection,false);
         gauge?.SetVisual(0,accent,0,false);fx?.SetEffect(0,0,accent);
     }
 #if UNITY_EDITOR

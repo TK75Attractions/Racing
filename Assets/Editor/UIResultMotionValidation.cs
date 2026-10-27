@@ -13,6 +13,7 @@ public static class UIResultMotionValidation
             try
             {
                 var ui=new ResultUIManager();ui.Init(root.transform,player+1);
+                ValidateSelection(ui,root.transform,player);
                 var record=new RaceResultRecord{playerNumber=player+1,finishPosition=1,didFinish=true,totalRaceTime=92.461f};ui.ShowResults(record);
                 var card=root.transform.Find("ResultPresentation/ResultCard");var motion=card.GetComponent<UIRevealSequence>();
                 motion.Play();motion.Tick(.08f);
@@ -32,6 +33,30 @@ public static class UIResultMotionValidation
             finally{Object.DestroyImmediate(root);}
         }
         Debug.Log("UI_RESULT_MOTION_PASS: actual row bindings, staged headline/rank/time/classification, factual times/DNF, replay and exit interruption for both palettes.");
+    }
+    private static void ValidateSelection(ResultUIManager ui,Transform root,int player)
+    {
+        var menu=root.Find("ResultPresentation/ResultCard/ResultMenu");var palette=ArcadeUI.For(player);
+        var left=menu.Find("Option1").GetComponent<PedalButtonFeedback>();var right=menu.Find("Option2").GetComponent<PedalButtonFeedback>();
+        foreach(var button in new[]{left,right})
+        {
+            UIMotionValidation.Require(button.GetComponentsInChildren<RacingPanelGraphic>(false).Length==1,"Only the animated face may remain visible; an old face must not cover the selection.");
+            var hit=button.GetComponent<UnityEngine.UI.Image>();
+            UIMotionValidation.Require(hit.enabled&&hit.raycastTarget&&hit.color.a==0,"Restyling must preserve the transparent pointer hit target.");
+        }
+        var leftLabel=menu.Find("Option1/Label").GetComponent<TMP_Text>();var rightLabel=menu.Find("Option2/Label").GetComponent<TMP_Text>();
+        ui.SetMenuState(0,0);right.SetPointerState(true,false,true);
+        for(int i=0;i<120;i++){left.Tick(1f/60);right.Tick(1f/60);}
+        UIMotionValidation.Require(left.IsNavigationSelected&&!right.IsNavigationSelected&&leftLabel.color==palette.Paper&&rightLabel.color==palette.Ink,"Exactly the actual pedal choice gets reversed text contrast, even when the other button is hovered.");
+        ui.SetMenuState(1,.5f);
+        for(int i=0;i<120;i++){left.Tick(1f/60);right.Tick(1f/60);}
+        UIMotionValidation.Require(!left.IsNavigationSelected&&right.IsNavigationSelected&&leftLabel.color==palette.Ink&&rightLabel.color==palette.Paper,"Both result actions must exchange the same selected design, including the secondary action.");
+        long allocated=System.GC.GetAllocatedBytesForCurrentThread();
+        for(int i=0;i<1000;i++){left.Tick(1f/60);right.Tick(1f/60);}
+        allocated=System.GC.GetAllocatedBytesForCurrentThread()-allocated;
+        UIMotionValidation.Require(allocated==0,"A settled result selection must allocate nothing.");
+        Debug.Log("UI_RESULT_SELECTION_PASS: exclusive pedal choice, reversed text contrast, secondary-action selection and zero idle allocations / P"+(player+1));
+        ui.SetMenuState(0,0);
     }
 }
 #endif

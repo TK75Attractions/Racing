@@ -13,9 +13,16 @@ public class RacingPanelGraphic : MaskableGraphic
     private Color accent = RacingUITheme.Cyan;
     private float selection, pressure, confirmation;
     private bool disabled, waiting;
+    private bool navigationSelection, navigationChosen;
 
     public Color Accent => accent;
     public SurfaceStyle Style => style;
+
+    public void SetNavigationSelection(bool enabled,bool chosen)
+    {
+        if(navigationSelection==enabled&&navigationChosen==chosen)return;
+        navigationSelection=enabled;navigationChosen=chosen;SetVerticesDirty();
+    }
 
     public void SetButtonModifiers(bool unavailable, bool retained)
     {
@@ -50,7 +57,8 @@ public class RacingPanelGraphic : MaskableGraphic
         vh.Clear(); Rect r=rectTransform.rect;if(r.width<2||r.height<2)return;
         var p=ArcadeUI.For(transform);bool button=transform.parent!=null&&transform.parent.GetComponent<UnityEngine.UI.Selectable>()!=null;
         Color fill=style==SurfaceStyle.Panel?p.Ink:style==SurfaceStyle.Primary?p.Primary:style==SurfaceStyle.Danger?ArcadeUI.Hex("edb3b5"):p.Paper;
-        if(button)fill=Color.Lerp(fill,p.Soft,selection*.25f);
+        if(button)fill=navigationSelection?Color.Lerp(p.Paper,p.Ink,selection):Color.Lerp(fill,p.Soft,selection*.25f);
+        if(button&&waiting)fill=RacingUITheme.Gold;
         if(disabled)fill=Color.Lerp(fill,p.Ink,.6f);
         Rect shadow=r;shadow.position+=new Vector2(button||HardShadow?6:0,-(button||HardShadow?6:3));ArcadeSurfaceGraphic.Rounded(vh,shadow,HardShadow?Color.Lerp(p.Ink,Color.black,.38f):p.Ink,10);
         ArcadeSurfaceGraphic.Rounded(vh,r,fill*color,10);
@@ -62,6 +70,17 @@ public class RacingPanelGraphic : MaskableGraphic
             for(int i=0;i<20;i++){float a=Mathf.Lerp(223,-43,i/20f);ArcadeSurfaceGraphic.Arc(vh,c,radius,a,a-8,4,p.Ink);}
             Line(vh,c,ArcadeSurfaceGraphic.Point(c,radius*.76f,54),4,p.Ink,.5f);
         }
+        else if(navigationSelection&&navigationChosen&&!disabled)
+        {
+            // A solid pointer identifies the actual pedal choice even while the
+            // previous card's colour is easing out, or the other card is hovered.
+            int first=vh.currentVertCount;
+            Color pointer=waiting?p.Ink:Color.Lerp(p.Ink,p.Paper,selection);
+            vh.AddVert(new Vector2(r.xMin+18,r.center.y-10),pointer,Vector2.zero);
+            vh.AddVert(new Vector2(r.xMin+18,r.center.y+10),pointer,Vector2.up);
+            vh.AddVert(new Vector2(r.xMin+34,r.center.y),pointer,Vector2.one);
+            vh.AddTriangle(first,first+1,first+2);
+        }
         else for(int i=0;i<5;i++)
         {
             float y=r.center.y-19+i*8;
@@ -69,7 +88,19 @@ public class RacingPanelGraphic : MaskableGraphic
         }
         for(int i=0;i<5;i++)
             Line(vh,new Vector2(r.xMax-18-i*11,r.yMin+10),new Vector2(r.xMax-12-i*11,r.yMin+20),4,Alpha(p.Ink,.35f),.5f);
-
+        float frame=navigationSelection?(navigationChosen?1:0):selection;
+        if(!disabled&&frame>.001f)
+        {
+            Color edge=Alpha(navigationSelection?p.Primary:p.Ink,frame);float inset=5,length=Mathf.Min(24,r.height*.28f);
+            for(int corner=0;corner<4;corner++)
+            {
+                float x=corner%2==0?r.xMin+inset:r.xMax-inset,y=corner<2?r.yMax-inset:r.yMin+inset;
+                float dx=corner%2==0?length:-length,dy=corner<2?-length:length;
+                Line(vh,new Vector2(x,y),new Vector2(x+dx,y),3,edge,.7f);
+                Line(vh,new Vector2(x,y),new Vector2(x,y+dy),3,edge,.7f);
+            }
+            if(navigationSelection)Line(vh,new Vector2(r.xMin+46,r.yMin+11),new Vector2(r.xMax-34,r.yMin+11),3,edge,.7f);
+        }
     }
 
     private void Shape(Rect r, float inset, Vector2[] points)
