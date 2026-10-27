@@ -612,6 +612,9 @@ public sealed class ScreenTransitionController : MonoBehaviour
         var content=card!=null?card.GetComponent<RectTransform>():resultRoot.GetComponent<RectTransform>();
         if(resultContent!=content){resultContent=content;if(content!=null)resultContentBasePosition=content.anchoredPosition;}
         resultReveal=card!=null?card.GetComponent<UIRevealSequence>():null;
+        // OnEnable starts the reveal before this method runs. Cache the rank impulse
+        // only after restoring the layout, rather than adopting its temporary entry pose.
+        resultReveal?.Cancel();
         resultRankLabel=card!=null?card.Find("Finish/Rank")?.GetComponent<TMP_Text>():null;
         if(resultRankLabel!=null)
         {

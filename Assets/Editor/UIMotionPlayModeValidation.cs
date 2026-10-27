@@ -21,6 +21,8 @@ public static class UIMotionPlayModeValidation
     private static bool all;
     private static int oldGoal,newGoal,buttonClicks,resultShown;
     private static RacingMenuButton button;
+    private static Vector2 resultRankPosition;
+    private static Vector3 resultRankScale;
     public static void RunScreens()=>Start(false);
     public static void RunAll()=>Start(true);
     private static void Start(bool everything)
@@ -53,6 +55,8 @@ public static class UIMotionPlayModeValidation
                 position=new UIPosition();position.Init(hud.Find("Position"));rank=hud.Find("Position/Txt").GetComponent<UIValuePulse>();
                 var result=RacingUITheme.Rect(fixture.transform,"Result",Vector2.zero,Vector2.one);var results=new ResultUIManager();results.Init(result,1);
                 results.ShowResults(new RaceResultRecord{playerNumber=1,finishPosition=1,didFinish=true,totalRaceTime=92.461f});
+                var resultCard=result.Find("ResultPresentation/ResultCard");resultCard.GetComponent<UIRevealSequence>().Cancel();
+                var resultRank=(RectTransform)resultCard.Find("Finish/Rank");resultRankPosition=resultRank.anchoredPosition;resultRankScale=resultRank.localScale;
                 transition=fixture.AddComponent<ScreenTransitionController>();transition.Initialize(title,play,result,"","",0);transition.ApplyStateImmediate(Gmanager.State.Title);
                 Next(90);
             }
@@ -135,6 +139,7 @@ public static class UIMotionPlayModeValidation
         {
             var card=fixture.transform.Find("Result/ResultPresentation/ResultCard");
             Require(resultShown==1&&!transition.IsTransitioning&&card.Find("Classification/ResultRow4").GetComponent<CanvasGroup>().alpha==1,"All result rows must finish once while time is paused.");
+            RequireResultRankPose(card);
             Require(transition.TryCloseResultAndTransition(Gmanager.State.Title,()=>covered++,()=>completed++),"Result exit starts.");
             transition.ApplyStateImmediate(Gmanager.State.Result);Next(11);
         }
@@ -147,8 +152,14 @@ public static class UIMotionPlayModeValidation
         }
         else if(phase==12&&age>1.0)
         {
-            Require(resultShown==2&&!transition.IsTransitioning,"Repeated result entry must complete without drift.");Finish();
+            Require(resultShown==2&&!transition.IsTransitioning,"Repeated result entry must complete without drift.");
+            RequireResultRankPose(fixture.transform.Find("Result/ResultPresentation/ResultCard"));Finish();
         }
+    }
+    private static void RequireResultRankPose(Transform card)
+    {
+        var number=(RectTransform)card.Find("Finish/Rank");
+        Require(number.anchoredPosition==resultRankPosition&&number.localScale==resultRankScale,"First and repeated result rank impulses must settle to the original layout, not the reveal's starting pose.");
     }
     private static void Finish(){Debug.Log("UI_MOTION_PLAYMODE_PASS: actual shutter transition, one-shot callbacks, reentry rejection, cancellation, real OnDisable and unscaled rank playback; goal replacement, pending-button disable, repeated confirmation and countdown reset, staged result completion/replay and interrupted result exit when running RunAll.");Stop(0);}
     private static void Stop(int code)
