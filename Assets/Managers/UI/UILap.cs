@@ -69,6 +69,7 @@ public class UILap
 
     private void LapTextAnimation(int oldLap, int newLap)
     {
+        if(!Application.isPlaying)return;
         valuePulse?.Play(new Color(1f, 0.84f, 0.12f, 1f), -12f);
     }
 

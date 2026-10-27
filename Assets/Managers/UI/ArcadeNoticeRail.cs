@@ -34,11 +34,13 @@ public sealed class ArcadeNoticeRail : MonoBehaviour
         if(panel==null||label==null||source<0||source>=notices.Length)return;notices[source]=text;
         string next="";int nextSource=-1;
         for(int i=notices.Length-1;i>=0;i--)if(!string.IsNullOrEmpty(notices[i])){next=notices[i];nextSource=i;break;}
-        if(next==shown&&nextSource==shownSource)return;shown=next;shownSource=nextSource;label.text=next;
+        if(next==shown&&nextSource==shownSource)return;
+        bool entrance=nextSource!=shownSource||string.IsNullOrEmpty(shown);
+        shown=next;shownSource=nextSource;label.text=next;
         var p=ArcadeUI.For(transform);bool critical=nextSource==InputInstruction;
         panel.GetComponent<ArcadeSurfaceGraphic>().color=critical?p.Accent:p.Ink;label.color=critical?p.Ink:p.Paper;
         panel.sizeDelta=new Vector2(Mathf.Clamp(label.GetPreferredValues(next).x+44,130,480),0);panel.gameObject.SetActive(next.Length>0);
-        if(Application.isPlaying&&next.Length>0)motion.Play();
+        if(Application.isPlaying&&next.Length>0&&entrance)motion.Play();
     }
     public void Clear()
     {

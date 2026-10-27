@@ -95,7 +95,10 @@ public static class UIMotionPlayModeValidation
     private static void StartAdditionalChecks()
     {
         oldGoal=newGoal=buttonClicks=0;
-        ArcadeNoticeRail.Get(fixture.transform).Set(0,"ドリフト加速！");
+        var rail=ArcadeNoticeRail.Get(fixture.transform);rail.Set(0,"ドリフト加速！");
+        var notice=fixture.transform.Find("QuietRaceNotice");var noticeMotion=notice.GetComponent<UIRevealSequence>();noticeMotion.Tick(.08f);
+        float visible=notice.Find("Text").GetComponent<CanvasGroup>().alpha;rail.Set(0,"ドリフト加速");
+        Require(notice.Find("Text").GetComponent<CanvasGroup>().alpha==visible,"Changing numbers/copy from the same source must not restart a notice fade.");
         Require(transition.TryPlayGoal("P1 / 1位","01:32.461",1.2f,()=>oldGoal++),"Goal starts.");Next(5);
     }
     private static void TickAdditionalChecks(double age)

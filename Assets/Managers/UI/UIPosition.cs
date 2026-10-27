@@ -53,7 +53,7 @@ public class UIPosition
 
     private void PositionTextAnimation(int oldPosition, int newPosition)
     {
-        if (valuePulse == null)
+        if (valuePulse == null || !Application.isPlaying)
         {
             return;
         }

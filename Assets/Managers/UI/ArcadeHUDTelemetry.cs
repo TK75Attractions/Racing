@@ -4,6 +4,7 @@ using UnityEngine;
 /// <summary>Reads the viewed vehicle, including spectating, without synthesizing rpm from speed.</summary>
 public sealed class ArcadeHUDTelemetry : MonoBehaviour
 {
+    private static readonly Color Slower=ArcadeUI.Hex("ff876e");
     private int player,shownRpm=-1,shownBoost=-1,shownDelta=int.MinValue;
     private Transform viewedCar;
     private CarSoundController engine;
@@ -39,6 +40,6 @@ public sealed class ArcadeHUDTelemetry : MonoBehaviour
     {
         int next=seconds.HasValue?Mathf.RoundToInt(seconds.Value*100):int.MinValue;if(next==shownDelta)return;shownDelta=next;
         if(next==int.MinValue)delta.text="—";else delta.SetText(next<0?"−{0:0}.{1:00}":"+{0:0}.{1:00}",Mathf.Abs(next)/100,Mathf.Abs(next)%100);
-        delta.color=next<=0?ArcadeUI.For(transform).Secondary:ArcadeUI.Hex("ff876e");
+        delta.color=next<=0?ArcadeUI.For(transform).Secondary:Slower;
     }
 }

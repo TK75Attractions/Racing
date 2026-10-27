@@ -5,6 +5,8 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasRenderer))]
 public class ArcadeDialGraphic : MaskableGraphic
 {
+    private static readonly Color Mint=ArcadeUI.Hex("67d8c5"),Amber=ArcadeUI.Hex("f5d474"),Hot=ArcadeUI.Hex("ff682f"),
+        Redline=ArcadeUI.Hex("ff5b21"),DimRedline=ArcadeUI.Hex("d95724"),Brake=ArcadeUI.Hex("ff876e");
     public bool Tachometer { get; set; }
     private int segments, boostSegments, needleStep=-1, motionStep, flashStep;
     private float targetReading,targetBoost,boostFlash;
@@ -17,9 +19,9 @@ public class ArcadeDialGraphic : MaskableGraphic
     public static Color SpeedColor(float speed,ArcadeUI.Palette palette)
     {
         float t=Mathf.Clamp01(speed/240f);
-        if(t<.45f)return Color.Lerp(palette.Primary,ArcadeUI.Hex("67d8c5"),t/.45f);
-        if(t<.75f)return Color.Lerp(ArcadeUI.Hex("67d8c5"),ArcadeUI.Hex("f5d474"),(t-.45f)/.30f);
-        return Color.Lerp(ArcadeUI.Hex("f5d474"),ArcadeUI.Hex("ff682f"),(t-.75f)/.25f);
+        if(t<.45f)return Color.Lerp(palette.Primary,Mint,t/.45f);
+        if(t<.75f)return Color.Lerp(Mint,Amber,(t-.45f)/.30f);
+        return Color.Lerp(Amber,Hot,(t-.75f)/.25f);
     }
     public float Boost { get; private set; }
     public void SetReading(float value)
@@ -79,7 +81,7 @@ public class ArcadeDialGraphic : MaskableGraphic
         for(int i=0;i<48;i++)
         {
             bool red=Tachometer&&(i+.5f)/48>=7500f/9000;
-            Color tint=i<segments?(red?ArcadeUI.Hex("ff5b21"):Tachometer?p.Primary:SpeedColor((i+.5f)/48*240,p)):(red?ArcadeUI.Hex("d95724"):new Color(.58f,.67f,.73f,.44f));
+            Color tint=i<segments?(red?Redline:Tachometer?p.Primary:SpeedColor((i+.5f)/48*240,p)):(red?DimRedline:new Color(.58f,.67f,.73f,.44f));
             float a=Mathf.Lerp(223.2f,-43.2f,i/48f);ArcadeSurfaceGraphic.Arc(vh,c,radius*.98f,a,a-266.4f/48*.72f,Mathf.Max(8,r.width*.024f),tint);
             if(red)
             {
@@ -97,7 +99,7 @@ public class ArcadeDialGraphic : MaskableGraphic
         float needle=Mathf.Lerp(223.2f,-43.2f,Mathf.Max(0,needleStep)/270f);
         if(motionStep!=0)
         {
-            Color trail=motionStep>0?p.Secondary:ArcadeUI.Hex("ff876e");trail.a=.48f;
+            Color trail=motionStep>0?p.Secondary:Brake;trail.a=.48f;
             ArcadeSurfaceGraphic.Arc(vh,c,radius*1.04f,needle,needle+motionStep*1.3f,4,trail);
         }
         RacingPanelGraphic.Line(vh,ArcadeSurfaceGraphic.Point(c,radius*.75f,needle),ArcadeSurfaceGraphic.Point(c,radius*1.075f,needle),9,p.Ink,.5f);
