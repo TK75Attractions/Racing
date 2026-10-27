@@ -26,6 +26,24 @@ public static class UIMotionValidation
             pulse.PlayRank(Color.green,1);Require(rect.anchoredPosition.y<0,"Gaining a place slides up from below.");pulse.Tick(.09f);pulse.PlayRank(Color.red,-1);pulse.Tick(1);
             Require(!pulse.IsPlaying&&rect.anchoredPosition==Vector2.zero&&rect.localScale==Vector3.one&&text.color==ink,"Interrupted rank motion must settle exactly.");
             pulse.Play(Color.yellow,4);text.gameObject.SetActive(false);pulse.ResetPose();Require(text.color==ink&&rect.localScale==Vector3.one,"Cancelled number must not retain an impulse.");
+            text.gameObject.SetActive(true);pulse.PlayRank(Color.green,1);pulse.Tick(.03f);
+            Require(rect.localScale.y<1&&rect.localScale.x>1,"The number must compress before releasing its energy.");pulse.Tick(.11f);
+            Require(rect.localScale.y>rect.localScale.x&&rect.localScale.y>1,"The release must stretch vertically rather than uniformly zooming.");
+            var impact=text.transform.Find("NumberImpact").GetComponent<UINumberImpactGraphic>();
+            var populate=typeof(UINumberImpactGraphic).GetMethod("OnPopulateMesh",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic,null,new[]{typeof(VertexHelper)},null);
+            using(var vertices=new VertexHelper())
+            {
+                rect.sizeDelta=new Vector2(140,160);populate.Invoke(impact,new object[]{vertices});Require(vertices.currentVertCount>0&&!impact.raycastTarget,"Landing speed marks must be real geometry that cannot intercept input.");
+                UIVertex v=new UIVertex();for(int i=0;i<vertices.currentVertCount;i++){vertices.PopulateUIVertex(ref v,i);Require(rect.rect.Contains(new Vector2(v.position.x,v.position.y)),"Number accents stay inside their existing label bounds.");}
+                pulse.ResetPose();populate.Invoke(impact,new object[]{vertices});Require(vertices.currentVertCount==0,"Cancelled number accents must draw nothing.");
+            }
+            int impactCount=text.GetComponentsInChildren<UINumberImpactGraphic>(true).Length;
+            pulse.PlayRank(Color.green,1);pulse.Tick(.01f);
+            long impulseAllocated=GC.GetAllocatedBytesForCurrentThread();
+            for(int i=0;i<120;i++){if(i%30==0)pulse.PlayRank(Color.green,1);pulse.Tick(1f/60);}
+            impulseAllocated=GC.GetAllocatedBytesForCurrentThread()-impulseAllocated;
+            Require(impulseAllocated==0&&text.GetComponentsInChildren<UINumberImpactGraphic>(true).Length==impactCount,"Repeated number impulses reuse their accent geometry without managed allocations.");pulse.ResetPose();
+            Debug.Log("UI_NUMBER_IMPACT_PASS: compression, vertical punch, bounded non-interactive geometry, exact cancel and allocation-free repeated impulses.");
             var boardRoot=RacingUITheme.Rect(root.transform,"Board",Vector2.zero,Vector2.one);var board=boardRoot.gameObject.AddComponent<RacingLeaderboardUI>();board.Configure(0);board.SetPosition(3,5);board.Tick(1);
             Require(boardRoot.Find("Player0/Rank").GetComponent<TMP_Text>().text=="3","Classification must retain the actual rank.");
         }
