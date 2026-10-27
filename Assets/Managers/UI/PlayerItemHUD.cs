@@ -40,6 +40,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
     private bool wasBoosting;
     private DebugMover boostMover;
     private float toastAge = float.PositiveInfinity;
+    private float toastLifetime = ToastSeconds;
     private float oilAge = float.PositiveInfinity;
     private float oilHoldSeconds = 1.5f;
 
@@ -73,6 +74,8 @@ public sealed class PlayerItemHUD : MonoBehaviour
         }
 
         toastAge = float.PositiveInfinity;
+        wasBoosting = false;
+        boostMover = null;
         oilAge = float.PositiveInfinity;
         Refresh(0f);
     }
@@ -99,12 +102,19 @@ public sealed class PlayerItemHUD : MonoBehaviour
         var manager=Gmanager.Control;
         if(manager!=null){var car=manager.GetPlayerCarTransform(manager.GetAudioViewedPlayer(GetComponent<ArcadeDisplayTheme>()?.PlayerIndex??0));boostMover=car!=null?car.GetComponent<DebugMover>():null;}
         bool boosting=boostMover!=null&&(boostMover.IsDriftBoosting||boostMover.IsAccelerationPadBoosting||boostMover.IsSlipstreamBoosting);
-        if(boosting&&!wasBoosting)ShowToast("ブースト発動！","BOOST ON",ArcadeUI.For(transform).Primary);
+        if(boosting&&!wasBoosting)ShowBoostToast();
         wasBoosting=boosting;
         UpdateToast(deltaTime);
         UpdateOil(deltaTime);
         UpdateConfuse();
         UpdateStatus();
+    }
+
+    private void ShowBoostToast()
+    {
+        // A simultaneous pad/drift boost must not erase the item explanation.
+        if (toastAge < toastLifetime) return;
+        ShowToast("ブースト発動！", "BOOST ON", ArcadeUI.For(transform).Primary);
     }
 
     private void HandleItemUsed(RaceItemType item)
@@ -124,6 +134,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
                 ShowToast("コンフューズ", "相手のハンドルを反転", ConfuseColor);
                 break;
         }
+        toastLifetime = 3.2f;
     }
 
     private void HandleAfflicted(RaceItemType item)
@@ -141,11 +152,13 @@ public sealed class PlayerItemHUD : MonoBehaviour
                 ShowToast("スピン!", "車の向きに気をつけて", WarningColor);
                 break;
         }
+        toastLifetime = 2.8f;
     }
 
     private void HandleChargeCollected()
     {
         ShowToast("チャージ MAX", "ドリフト解放で加速", ChargeColor);
+        toastLifetime = 2.8f;
     }
 
     private void ShowToast(string title, string caption, Color tint)
@@ -154,19 +167,20 @@ public sealed class PlayerItemHUD : MonoBehaviour
         toastTitle.text = title;
         bool fast=title=="ロケット"||title=="ブースト発動！";
         toastFace?.SetStyle(fast,title.Contains("踏んだ")||title.Contains("反転")||title.Contains("スピン"));
-        if(toastIcon!=null)toastIcon.symbol=title.Contains("シールド")?RacingIconGraphic.Icon.Shield:title.Contains("ロケット")?RacingIconGraphic.Icon.Rocket:title.Contains("オイル")?RacingIconGraphic.Icon.Droplet:title.Contains("反転")?RacingIconGraphic.Icon.Swap:RacingIconGraphic.Icon.Bolt;
+        if(toastIcon!=null)toastIcon.symbol=title.Contains("シールド")?RacingIconGraphic.Icon.Shield:title.Contains("ロケット")?RacingIconGraphic.Icon.Rocket:title.Contains("オイル")?RacingIconGraphic.Icon.Droplet:(title.Contains("反転")||title.Contains("コンフューズ"))?RacingIconGraphic.Icon.Swap:RacingIconGraphic.Icon.Bolt;
         toastIcon?.SetVerticesDirty();
         toastTitle.color = ArcadeUI.For(transform).Ink;
         toastCaption.color=ArcadeUI.For(transform).Ink;
         toastTitle.fontStyle=fast?FontStyles.Italic:FontStyles.Normal;
-        toastCaption.text = title=="ロケット"?"ROCKET ON":caption;
+        toastCaption.text = caption;
+        toastLifetime = ToastSeconds;
         toastAge = 0f;
     }
 
     private void UpdateToast(float deltaTime)
     {
         toastAge += deltaTime;
-        if (toastAge >= ToastSeconds)
+        if (toastAge >= toastLifetime)
         {
             toastGroup.alpha = 0f;
             return;
@@ -175,7 +189,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
         // メーター上の定位置で短くフェード。拡大や中央への飛び出しは行いません。
         toastRect.localScale = Vector3.one;
         float fadeIn = Mathf.Clamp01(toastAge / .08f);
-        float fadeOut = Mathf.Clamp01((ToastSeconds - toastAge) / ToastFadeSeconds);
+        float fadeOut = Mathf.Clamp01((toastLifetime - toastAge) / ToastFadeSeconds);
         toastGroup.alpha = Mathf.Min(fadeIn, fadeOut);
     }
 
