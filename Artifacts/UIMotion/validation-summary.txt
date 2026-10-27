@@ -1,30 +1,22 @@
-motion_components_and_gc
+components_and_previews
+UI_NUMBER_IMPACT_PASS: compression, vertical punch, bounded non-interactive geometry, exact cancel and allocation-free repeated impulses.
 UI_MOTION_FOUNDATION_PASS: finite curves, directional ranks, interruption, replay, disable reset and classification.
 UI_MOTION_METERS_PASS: acceleration/braking response, finite values, settle, boost impulse, zero idle mesh rebuilds and zero idle managed allocations.
 UI_INTERACTION_MOTION_PASS: cancel/complete hold, one-shot confirmation, pending-action invalidation, menu reopen, ending input gate and zero idle button allocations.
 UI_TRANSITION_GEOMETRY_PASS: complete coverage, geometric reveal, clipped moving bands and no idle geometry.
 UI_RACE_EVENT_MOTION_PASS: peripheral guidance, lap reveal, no-zoom toast travel, finite notices and staged goal typography.
+UI_RESULT_SELECTION_PASS: exclusive pedal choice, reversed text contrast, secondary-action selection and zero idle allocations / P1
+UI_RESULT_SELECTION_PASS: exclusive pedal choice, reversed text contrast, secondary-action selection and zero idle allocations / P2
 UI_RESULT_MOTION_PASS: actual row bindings, staged headline/rank/time/classification, factual times/DNF, replay and exit interruption for both palettes.
 UI_MOTION_PERFORMANCE_PASS: real moving instrument mesh rebuilt 200 times with zero managed allocations after warm-up.
+UI_MOTION_CAPTURE_PASS: four production-component animation sequences at 960x540 / 25 fps.
 
-motion_player_loop_final
+interruption_and_player_loop
 UI_MOTION_PLAYMODE_PASS: actual shutter transition, one-shot callbacks, reentry rejection, cancellation, real OnDisable and unscaled rank playback; goal replacement, pending-button disable, repeated confirmation and countdown reset, staged result completion/replay and interrupted result exit when running RunAll.
 
-actual_race_flow_final
+actual_race_flow_and_result_selection
 BUTTON_HOLD_PLAYMODE_PASS: short hold cancels, full hold commits once, start retains after release, disabled input cannot commit.
 MULTIPLAYER_PLAYMODE_VALIDATION_PASS: actual acceleration, finish/spectator, held-pedal safety, retry without practice, two title returns, both withdrawals, withdrawal/timeout during goal, remaining-player finish; one-shot button, readiness, countdown, GO, player-local goal and results cues.
 
-actual_car_selection_final
-CAR_SELECTION_PLAY_MODE_PASS: independent P2-first start, pedal gauge, mixed selection/practice, confirmation release gate, tutorial timeout, synchronized race
-
-existing_ui_regressions_final
-DAILY_RANKING_VALIDATION_PASS: persistence, calendar rollover, exclusions, backup/error paths and P1/P2 result UI.
-RESULT_HIGHLIGHT_VALIDATION_PASS: per-player snapshot, factual fallback, DNF, AUTO label, compact presentation, 720p/1080p renders.
-ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, matched ExtraBold instruments, two lap segments, peripheral item notices, HUD shadows, speed colours, DNF, ending input gate, stable meshes.
-ARCADE_UI_CAPTURE_PASS: /Users/kenichirowada/.codex-workspaces/worktrees/ios-68533090-2770-45db-8758-a84c974b02cd/Racing/Artifacts/ArcadeSportUI
-
-deterministic_previews
-UI_MOTION_CAPTURE_PASS: four production-component animation sequences at 960x540 / 25 fps.
-
-editmode_final
+existing_editmode
 editmode-results.xml

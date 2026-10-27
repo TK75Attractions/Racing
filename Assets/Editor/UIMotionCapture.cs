@@ -13,6 +13,7 @@ using UnityEngine.UI;
 public static class UIMotionCapture
 {
     public const string Frames="/private/tmp/racing-ui-motion";
+    public static void RunValidated(){UIMotionPerformanceValidation.Run();Run();}
     public static void Run()
     {
         string[] settings={"ProjectSettings/GraphicsSettings.asset","ProjectSettings/QualitySettings.asset"};var original=Array.ConvertAll(settings,File.ReadAllBytes);
@@ -44,6 +45,7 @@ public static class UIMotionCapture
             UIPosition position=null;ArcadeDialGraphic speed=null,tach=null;TMP_Text speedText=null,rpm=null,boost=null;
             ScreenTransitionController transition=null;RacingTransitionGraphic wipe=null;CanvasGroup fade=null;PedalButtonFeedback button=null;UIRevealSequence reveal=null;UIValuePulse resultPulse=null;
             RectTransform play=null;Transform hud=null;
+            ResultUIManager resultUI=null;bool screenSwitched=false;
             if(clip=="hud-blue"||clip=="transition-blue")
             {
                 play=RacingUITheme.Rect(host.transform,"OnPlay",Vector2.zero,Vector2.one);hud=RacingHUDBuilder.Build(play,player,2);
@@ -64,7 +66,7 @@ public static class UIMotionCapture
             }
             if(clip=="result-pink")
             {
-                var result=RacingUITheme.Rect(host.transform,"Result",Vector2.zero,Vector2.one);var ui=new ResultUIManager();ui.Init(result,player+1);
+                var result=RacingUITheme.Rect(host.transform,"Result",Vector2.zero,Vector2.one);var ui=new ResultUIManager();resultUI=ui;ui.Init(result,player+1);
                 var session=new RaceSessionResult(4);
                 session.SetPlayerResult(0,new RaceResultRecord{playerNumber=1,finishPosition=2,didFinish=true,totalRaceTime=94.022f,goalLap=2,completedLaps=2});
                 session.SetPlayerResult(1,new RaceResultRecord{playerNumber=2,finishPosition=1,didFinish=true,totalRaceTime=92.461f,goalLap=2,completedLaps=2});
@@ -73,7 +75,7 @@ public static class UIMotionCapture
                 var card=result.Find("ResultPresentation/ResultCard");reveal=card.GetComponent<UIRevealSequence>();resultPulse=card.Find("Finish/Rank").gameObject.AddComponent<UIValuePulse>();reveal.Play();
             }
             var pulses=host.GetComponentsInChildren<UIValuePulse>(true);var sequences=host.GetComponentsInChildren<UIRevealSequence>(true);var feedback=host.GetComponentsInChildren<PedalButtonFeedback>(true);
-            for(int frame=0;frame<42;frame++)
+            for(int frame=0;frame<60;frame++)
             {
                 float t=frame/25f;
                 if(clip=="hud-blue")
@@ -87,9 +89,10 @@ public static class UIMotionCapture
                 }
                 else if(clip=="transition-blue")
                 {
-                    if(frame==16){transition.ApplyStateImmediate(Gmanager.State.Countdown);transition.ShowCountdown(3);play.GetComponent<UIRevealSequence>().Play();}
-                    float coverage=frame<6?0:frame<16?(frame-6)/10f:Mathf.Clamp01(1-(frame-16)/10f);
-                    wipe.SetCoverage(coverage,frame>=16);fade.alpha=coverage>0?1:0;
+                    float coverEnd=.24f+transition.CoverSeconds;
+                    if(!screenSwitched&&t>=coverEnd){transition.ApplyStateImmediate(Gmanager.State.Countdown);transition.ShowCountdown(3);play.GetComponent<UIRevealSequence>().Play();screenSwitched=true;}
+                    float coverage=t<.24f?0:t<coverEnd?(t-.24f)/transition.CoverSeconds:Mathf.Clamp01(1-(t-coverEnd)/transition.RevealSeconds);
+                    wipe.SetCoverage(coverage,screenSwitched);fade.alpha=coverage>0?1:0;
                 }
                 else if(clip=="buttons-pink")
                 {
@@ -97,12 +100,17 @@ public static class UIMotionCapture
                     button.SetState(true,amount,p.Primary);button.SetPointerState(true,amount>0,true);
                     if(frame==33)button.SetConfirmed(true);
                 }
-                else if(clip=="result-pink"&&frame==15)resultPulse.Play(p.Accent,0);
+                else if(clip=="result-pink")
+                {
+                    if(frame==15)resultPulse.Play(p.Accent,0);
+                    if(frame==32)resultUI.SetMenuState(1,0);
+                    if(frame==48)resultUI.SetMenuState(0,.5f);
+                }
                 if(frame>0){foreach(var s in sequences)s.Tick(1f/25);foreach(var pulse in pulses)pulse.Tick(1f/25);foreach(var f in feedback)f.Tick(1f/25);}
                 foreach(var label in host.GetComponentsInChildren<TMP_Text>(false))label.ForceMeshUpdate();
                 Canvas.ForceUpdateCanvases();camera.Render();RenderTexture.active=target;pixels.ReadPixels(new Rect(0,0,960,540),0,0);pixels.Apply();byte[] png=pixels.EncodeToPNG();
                 File.WriteAllBytes(Path.Combine(output,$"frame-{frame:000}.png"),png);
-                if(frame==12||frame==30)File.WriteAllBytes($"Artifacts/UIMotion/stills/{clip}-{frame:000}.png",png);
+                if(frame==12||frame==30||frame==42)File.WriteAllBytes($"Artifacts/UIMotion/stills/{clip}-{frame:000}.png",png);
             }
         }
         finally

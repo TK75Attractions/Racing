@@ -1,81 +1,66 @@
 {
   "unity": "6000.3.9f1",
   "branch": "codex/ui-motion",
-  "final_implementation_commit": "928cff18a0a03a9f5dd251c4b8fefa07f2835d61",
+  "final_implementation_commit": "568332533716ee0ed1274cd8721240be26e2e17a",
+  "changes": [
+    "Slower shutter: cover 0.48s, reveal 0.56s, symmetric easing and reduced off-screen travel.",
+    "Exclusive high-contrast result selection: dark face, light text, solid pointer, corner brackets and underline; duplicate legacy face hidden and pointer hit target preserved.",
+    "Numerical event motion: anticipation compression, vertical punch, directional slide, recoil and bounded landing marks cached once."
+  ],
   "checks": [
     {
-      "name": "motion_components_and_gc",
+      "name": "components_and_previews",
       "result": "passed",
-      "entry_log": "/private/tmp/ui-motion-final-performance.log",
+      "entry_log": "/private/tmp/ui-motion-refinements-capture.log",
       "evidence": [
+        "UI_NUMBER_IMPACT_PASS: compression, vertical punch, bounded non-interactive geometry, exact cancel and allocation-free repeated impulses.",
         "UI_MOTION_FOUNDATION_PASS: finite curves, directional ranks, interruption, replay, disable reset and classification.",
         "UI_MOTION_METERS_PASS: acceleration/braking response, finite values, settle, boost impulse, zero idle mesh rebuilds and zero idle managed allocations.",
         "UI_INTERACTION_MOTION_PASS: cancel/complete hold, one-shot confirmation, pending-action invalidation, menu reopen, ending input gate and zero idle button allocations.",
         "UI_TRANSITION_GEOMETRY_PASS: complete coverage, geometric reveal, clipped moving bands and no idle geometry.",
         "UI_RACE_EVENT_MOTION_PASS: peripheral guidance, lap reveal, no-zoom toast travel, finite notices and staged goal typography.",
+        "UI_RESULT_SELECTION_PASS: exclusive pedal choice, reversed text contrast, secondary-action selection and zero idle allocations / P1",
+        "UI_RESULT_SELECTION_PASS: exclusive pedal choice, reversed text contrast, secondary-action selection and zero idle allocations / P2",
         "UI_RESULT_MOTION_PASS: actual row bindings, staged headline/rank/time/classification, factual times/DNF, replay and exit interruption for both palettes.",
-        "UI_MOTION_PERFORMANCE_PASS: real moving instrument mesh rebuilt 200 times with zero managed allocations after warm-up."
+        "UI_MOTION_PERFORMANCE_PASS: real moving instrument mesh rebuilt 200 times with zero managed allocations after warm-up.",
+        "UI_MOTION_CAPTURE_PASS: four production-component animation sequences at 960x540 / 25 fps."
       ]
     },
     {
-      "name": "motion_player_loop_final",
+      "name": "interruption_and_player_loop",
       "result": "passed",
-      "entry_log": "/private/tmp/ui-motion-result-pose-after.log",
+      "entry_log": "/private/tmp/ui-motion-refinements-play-final.log",
       "evidence": [
         "UI_MOTION_PLAYMODE_PASS: actual shutter transition, one-shot callbacks, reentry rejection, cancellation, real OnDisable and unscaled rank playback; goal replacement, pending-button disable, repeated confirmation and countdown reset, staged result completion/replay and interrupted result exit when running RunAll."
       ]
     },
     {
-      "name": "actual_race_flow_final",
+      "name": "actual_race_flow_and_result_selection",
       "result": "passed",
-      "entry_log": "/private/tmp/ui-motion-race-flow-final.log",
+      "entry_log": "/private/tmp/ui-motion-refinements-race-flow-stable.log",
       "evidence": [
         "BUTTON_HOLD_PLAYMODE_PASS: short hold cancels, full hold commits once, start retains after release, disabled input cannot commit.",
         "MULTIPLAYER_PLAYMODE_VALIDATION_PASS: actual acceleration, finish/spectator, held-pedal safety, retry without practice, two title returns, both withdrawals, withdrawal/timeout during goal, remaining-player finish; one-shot button, readiness, countdown, GO, player-local goal and results cues."
-      ]
+      ],
+      "selection_checks": "Steering selects title, leaves P2 choice independent, then release/resteer selects retry before pedal confirmation."
     },
     {
-      "name": "actual_car_selection_final",
-      "result": "passed",
-      "entry_log": "/private/tmp/ui-motion-final-car-selection.log",
-      "evidence": [
-        "CAR_SELECTION_PLAY_MODE_PASS: independent P2-first start, pedal gauge, mixed selection/practice, confirmation release gate, tutorial timeout, synchronized race"
-      ]
-    },
-    {
-      "name": "existing_ui_regressions_final",
-      "result": "passed",
-      "entry_log": "/private/tmp/ui-motion-regression.log",
-      "evidence": [
-        "DAILY_RANKING_VALIDATION_PASS: persistence, calendar rollover, exclusions, backup/error paths and P1/P2 result UI.",
-        "RESULT_HIGHLIGHT_VALIDATION_PASS: per-player snapshot, factual fallback, DNF, AUTO label, compact presentation, 720p/1080p renders.",
-        "ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, matched ExtraBold instruments, two lap segments, peripheral item notices, HUD shadows, speed colours, DNF, ending input gate, stable meshes.",
-        "ARCADE_UI_CAPTURE_PASS: /Users/kenichirowada/.codex-workspaces/worktrees/ios-68533090-2770-45db-8758-a84c974b02cd/Racing/Artifacts/ArcadeSportUI"
-      ]
-    },
-    {
-      "name": "deterministic_previews",
-      "result": "passed",
-      "entry_log": "/private/tmp/ui-motion-capture.log",
-      "evidence": [
-        "UI_MOTION_CAPTURE_PASS: four production-component animation sequences at 960x540 / 25 fps."
-      ]
-    },
-    {
-      "name": "editmode_final",
+      "name": "existing_editmode",
       "result": "passed",
       "total": 166,
       "passed": 166,
       "failed": 0,
       "evidence": "editmode-results.xml",
-      "completed_utc": "2026-10-27 00:20:16Z"
+      "completed_utc": "2026-10-27 03:50:29Z"
     }
   ],
-  "regression_reproduced_then_fixed": "Initial result rank pulse cached an in-progress reveal pose; new Play Mode pose assertions fail before the fix and pass after it, for both first display and reentry.",
+  "fixture_notes": [
+    "During the active-effect HUD probe only, shield consumption on traffic contact is disabled and restored immediately after capture. This isolates the active-status assertion from contact timing; production item code/settings are unchanged."
+  ],
   "scope": [
-    "All automated component, GC, player-loop, full race-flow, car-selection, existing UI regression and EditMode checks passed on the final implementation commit.",
-    "GC measurements cover warmed target components on the executing thread, not whole-game GC or device FPS.",
-    "Previews use production components with explicit time stepping and fixture data; live captures use SampleScene with injected inputs and debug finish records.",
-    "Physical pedals, target display hardware and on-device performance were not tested."
+    "All listed checks passed with the final production implementation.",
+    "Allocation measurements cover warmed target component updates / instrument mesh rebuilds, not whole-game GC or device FPS.",
+    "Previews use actual production components with explicit time stepping (25 fps, 60 frames) and fixture values. Shutter playback uses the controller duration settings.",
+    "Live captures use SampleScene with injected input and debug finish records. Physical pedals, target display hardware and on-device performance were not tested."
   ]
 }

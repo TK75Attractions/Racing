@@ -1,1090 +1,1090 @@
 <?xml version="1.0" encoding="utf-8"?>
-<test-run id="2" testcasecount="166" result="Passed" total="166" passed="166" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:16Z" duration="4.7108216">
-  <test-suite type="TestSuite" id="1000" name="Race" fullname="Race" runstate="Runnable" testcasecount="166" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:16Z" duration="4.710822" total="166" passed="166" failed="0" inconclusive="0" skipped="0" asserts="0">
+<test-run id="2" testcasecount="166" result="Passed" total="166" passed="166" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:29Z" duration="4.9050333">
+  <test-suite type="TestSuite" id="1000" name="Race" fullname="Race" runstate="Runnable" testcasecount="166" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:29Z" duration="4.905033" total="166" passed="166" failed="0" inconclusive="0" skipped="0" asserts="0">
     <properties>
       <property name="platform" value="EditMode" />
     </properties>
-    <test-suite type="Assembly" id="1195" name="Racing.Multiplayer.EditModeTests.dll" fullname="/Users/kenichirowada/.codex-workspaces/worktrees/ios-68533090-2770-45db-8758-a84c974b02cd/Racing/Library/ScriptAssemblies/Racing.Multiplayer.EditModeTests.dll" runstate="Runnable" testcasecount="166" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:16Z" duration="4.704959" total="166" passed="166" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <test-suite type="Assembly" id="1195" name="Racing.Multiplayer.EditModeTests.dll" fullname="/Users/kenichirowada/.codex-workspaces/worktrees/ios-68533090-2770-45db-8758-a84c974b02cd/Racing/Library/ScriptAssemblies/Racing.Multiplayer.EditModeTests.dll" runstate="Runnable" testcasecount="166" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:29Z" duration="4.899646" total="166" passed="166" failed="0" inconclusive="0" skipped="0" asserts="0">
       <properties>
-        <property name="_PID" value="88641" />
+        <property name="_PID" value="16518" />
         <property name="_APPDOMAIN" value="Unity Child Domain" />
         <property name="platform" value="EditMode" />
         <property name="EditorOnly" value="True" />
       </properties>
-      <test-suite type="TestFixture" id="1001" name="AdaptiveAiPaceTests" fullname="AdaptiveAiPaceTests" classname="AdaptiveAiPaceTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.021561" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1001" name="AdaptiveAiPaceTests" fullname="AdaptiveAiPaceTests" classname="AdaptiveAiPaceTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.017628" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1005" name="AutoP2AccompaniesP1InsteadOfEscaping" fullname="AdaptiveAiPaceTests.AutoP2AccompaniesP1InsteadOfEscaping" methodname="AutoP2AccompaniesP1InsteadOfEscaping" classname="AdaptiveAiPaceTests" runstate="Runnable" seed="343330290" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.010356" asserts="0">
+        <test-case id="1005" name="AutoP2AccompaniesP1InsteadOfEscaping" fullname="AdaptiveAiPaceTests.AutoP2AccompaniesP1InsteadOfEscaping" methodname="AutoP2AccompaniesP1InsteadOfEscaping" classname="AdaptiveAiPaceTests" runstate="Runnable" seed="928013145" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.008800" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1003" name="CpuCanStillPassThenOfferACounterattackAtBothHumanPaces" fullname="AdaptiveAiPaceTests.CpuCanStillPassThenOfferACounterattackAtBothHumanPaces" methodname="CpuCanStillPassThenOfferACounterattackAtBothHumanPaces" classname="AdaptiveAiPaceTests" runstate="Runnable" seed="1153689133" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000314" asserts="0">
+        <test-case id="1003" name="CpuCanStillPassThenOfferACounterattackAtBothHumanPaces" fullname="AdaptiveAiPaceTests.CpuCanStillPassThenOfferACounterattackAtBothHumanPaces" methodname="CpuCanStillPassThenOfferACounterattackAtBothHumanPaces" classname="AdaptiveAiPaceTests" runstate="Runnable" seed="1567001765" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000235" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1007" name="ObservationIsTimeBasedAndRejectsInvalidTelemetry" fullname="AdaptiveAiPaceTests.ObservationIsTimeBasedAndRejectsInvalidTelemetry" methodname="ObservationIsTimeBasedAndRejectsInvalidTelemetry" classname="AdaptiveAiPaceTests" runstate="Runnable" seed="575629801" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000676" asserts="0">
+        <test-case id="1007" name="ObservationIsTimeBasedAndRejectsInvalidTelemetry" fullname="AdaptiveAiPaceTests.ObservationIsTimeBasedAndRejectsInvalidTelemetry" methodname="ObservationIsTimeBasedAndRejectsInvalidTelemetry" classname="AdaptiveAiPaceTests" runstate="Runnable" seed="1614715888" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000531" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1006" name="PaceObservationIgnoresShortStopsAndItemHitsButAdaptsToLongChanges" fullname="AdaptiveAiPaceTests.PaceObservationIgnoresShortStopsAndItemHitsButAdaptsToLongChanges" methodname="PaceObservationIgnoresShortStopsAndItemHitsButAdaptsToLongChanges" classname="AdaptiveAiPaceTests" runstate="Runnable" seed="461209316" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000252" asserts="0">
+        <test-case id="1006" name="PaceObservationIgnoresShortStopsAndItemHitsButAdaptsToLongChanges" fullname="AdaptiveAiPaceTests.PaceObservationIgnoresShortStopsAndItemHitsButAdaptsToLongChanges" methodname="PaceObservationIgnoresShortStopsAndItemHitsButAdaptsToLongChanges" classname="AdaptiveAiPaceTests" runstate="Runnable" seed="849519424" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000202" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1002" name="SlowPlayersGetNearbyContestsWithoutTheOldHighSpeedFloor" fullname="AdaptiveAiPaceTests.SlowPlayersGetNearbyContestsWithoutTheOldHighSpeedFloor" methodname="SlowPlayersGetNearbyContestsWithoutTheOldHighSpeedFloor" classname="AdaptiveAiPaceTests" runstate="Runnable" seed="840893803" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000081" asserts="0">
+        <test-case id="1002" name="SlowPlayersGetNearbyContestsWithoutTheOldHighSpeedFloor" fullname="AdaptiveAiPaceTests.SlowPlayersGetNearbyContestsWithoutTheOldHighSpeedFloor" methodname="SlowPlayersGetNearbyContestsWithoutTheOldHighSpeedFloor" classname="AdaptiveAiPaceTests" runstate="Runnable" seed="710085994" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000066" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1004" name="StrongPlayersAndCatchingUpRetainTheFullSpeedPotential" fullname="AdaptiveAiPaceTests.StrongPlayersAndCatchingUpRetainTheFullSpeedPotential" methodname="StrongPlayersAndCatchingUpRetainTheFullSpeedPotential" classname="AdaptiveAiPaceTests" runstate="Runnable" seed="146835662" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000077" asserts="0">
+        <test-case id="1004" name="StrongPlayersAndCatchingUpRetainTheFullSpeedPotential" fullname="AdaptiveAiPaceTests.StrongPlayersAndCatchingUpRetainTheFullSpeedPotential" methodname="StrongPlayersAndCatchingUpRetainTheFullSpeedPotential" classname="AdaptiveAiPaceTests" runstate="Runnable" seed="1684687776" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000070" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1008" name="CpuJumpSpacingTests" fullname="CpuJumpSpacingTests" classname="CpuJumpSpacingTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.001284" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1008" name="CpuJumpSpacingTests" fullname="CpuJumpSpacingTests" classname="CpuJumpSpacingTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.001035" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1009" name="ASlowerLeaderLimitsApproachSpeedBeforeBothCarsLeaveTheRoad" fullname="CpuJumpSpacingTests.ASlowerLeaderLimitsApproachSpeedBeforeBothCarsLeaveTheRoad" methodname="ASlowerLeaderLimitsApproachSpeedBeforeBothCarsLeaveTheRoad" classname="CpuJumpSpacingTests" runstate="Runnable" seed="2033500910" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000179" asserts="0">
+        <test-case id="1009" name="ASlowerLeaderLimitsApproachSpeedBeforeBothCarsLeaveTheRoad" fullname="CpuJumpSpacingTests.ASlowerLeaderLimitsApproachSpeedBeforeBothCarsLeaveTheRoad" methodname="ASlowerLeaderLimitsApproachSpeedBeforeBothCarsLeaveTheRoad" classname="CpuJumpSpacingTests" runstate="Runnable" seed="318036289" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000118" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1010" name="SpacingNeverRequestsAParkOnTheRampAndNeverAcceleratesTheCar" fullname="CpuJumpSpacingTests.SpacingNeverRequestsAParkOnTheRampAndNeverAcceleratesTheCar" methodname="SpacingNeverRequestsAParkOnTheRampAndNeverAcceleratesTheCar" classname="CpuJumpSpacingTests" runstate="Runnable" seed="1493622411" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000089" asserts="0">
+        <test-case id="1010" name="SpacingNeverRequestsAParkOnTheRampAndNeverAcceleratesTheCar" fullname="CpuJumpSpacingTests.SpacingNeverRequestsAParkOnTheRampAndNeverAcceleratesTheCar" methodname="SpacingNeverRequestsAParkOnTheRampAndNeverAcceleratesTheCar" classname="CpuJumpSpacingTests" runstate="Runnable" seed="1242090010" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000076" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1011" name="CpuRacePaceTests" fullname="CpuRacePaceTests" classname="CpuRacePaceTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.002477" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1011" name="CpuRacePaceTests" fullname="CpuRacePaceTests" classname="CpuRacePaceTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.002182" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1019" name="ACpuStillCatchingUpDoesNotEnterTheYieldWindowTooEarly" fullname="CpuRacePaceTests.ACpuStillCatchingUpDoesNotEnterTheYieldWindowTooEarly" methodname="ACpuStillCatchingUpDoesNotEnterTheYieldWindowTooEarly" classname="CpuRacePaceTests" runstate="Runnable" seed="878870186" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000297" asserts="0">
+        <test-case id="1019" name="ACpuStillCatchingUpDoesNotEnterTheYieldWindowTooEarly" fullname="CpuRacePaceTests.ACpuStillCatchingUpDoesNotEnterTheYieldWindowTooEarly" methodname="ACpuStillCatchingUpDoesNotEnterTheYieldWindowTooEarly" classname="CpuRacePaceTests" runstate="Runnable" seed="1995278572" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000246" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1017" name="ANearbyCpuCanCatchAndOvertakeInsteadOfOnlyFollowing" fullname="CpuRacePaceTests.ANearbyCpuCanCatchAndOvertakeInsteadOfOnlyFollowing" methodname="ANearbyCpuCanCatchAndOvertakeInsteadOfOnlyFollowing" classname="CpuRacePaceTests" runstate="Runnable" seed="1038046306" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000060" asserts="0">
+        <test-case id="1017" name="ANearbyCpuCanCatchAndOvertakeInsteadOfOnlyFollowing" fullname="CpuRacePaceTests.ANearbyCpuCanCatchAndOvertakeInsteadOfOnlyFollowing" methodname="ANearbyCpuCanCatchAndOvertakeInsteadOfOnlyFollowing" classname="CpuRacePaceTests" runstate="Runnable" seed="914565766" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000055" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1020" name="AStrandedPlayerDoesNotMakeCpuParkAndCatchupIsBounded" fullname="CpuRacePaceTests.AStrandedPlayerDoesNotMakeCpuParkAndCatchupIsBounded" methodname="AStrandedPlayerDoesNotMakeCpuParkAndCatchupIsBounded" classname="CpuRacePaceTests" runstate="Runnable" seed="1100684585" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000068" asserts="0">
+        <test-case id="1020" name="AStrandedPlayerDoesNotMakeCpuParkAndCatchupIsBounded" fullname="CpuRacePaceTests.AStrandedPlayerDoesNotMakeCpuParkAndCatchupIsBounded" methodname="AStrandedPlayerDoesNotMakeCpuParkAndCatchupIsBounded" classname="CpuRacePaceTests" runstate="Runnable" seed="1550108451" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000061" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1016" name="CpuThrottleAndBrakeUseTheSameRangeAsThePlayersPedal" fullname="CpuRacePaceTests.CpuThrottleAndBrakeUseTheSameRangeAsThePlayersPedal" methodname="CpuThrottleAndBrakeUseTheSameRangeAsThePlayersPedal" classname="CpuRacePaceTests" runstate="Runnable" seed="1326307073" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000105" asserts="0">
+        <test-case id="1016" name="CpuThrottleAndBrakeUseTheSameRangeAsThePlayersPedal" fullname="CpuRacePaceTests.CpuThrottleAndBrakeUseTheSameRangeAsThePlayersPedal" methodname="CpuThrottleAndBrakeUseTheSameRangeAsThePlayersPedal" classname="CpuRacePaceTests" runstate="Runnable" seed="2013227687" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000098" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1014" name="FastNearbyRivalsStillHaveAttackAndCounterattackWindows" fullname="CpuRacePaceTests.FastNearbyRivalsStillHaveAttackAndCounterattackWindows" methodname="FastNearbyRivalsStillHaveAttackAndCounterattackWindows" classname="CpuRacePaceTests" runstate="Runnable" seed="614386584" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000292" asserts="0">
+        <test-case id="1014" name="FastNearbyRivalsStillHaveAttackAndCounterattackWindows" fullname="CpuRacePaceTests.FastNearbyRivalsStillHaveAttackAndCounterattackWindows" methodname="FastNearbyRivalsStillHaveAttackAndCounterattackWindows" classname="CpuRacePaceTests" runstate="Runnable" seed="41205490" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000245" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1012" name="LegacyFastCpuComparisonRemainsAvailable" fullname="CpuRacePaceTests.LegacyFastCpuComparisonRemainsAvailable" methodname="LegacyFastCpuComparisonRemainsAvailable" classname="CpuRacePaceTests" runstate="Runnable" seed="1351035088" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000083" asserts="0">
+        <test-case id="1012" name="LegacyFastCpuComparisonRemainsAvailable" fullname="CpuRacePaceTests.LegacyFastCpuComparisonRemainsAvailable" methodname="LegacyFastCpuComparisonRemainsAvailable" classname="CpuRacePaceTests" runstate="Runnable" seed="2015799484" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000070" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1013" name="LegacyFastFloorsArePreservedForTheOffComparison" fullname="CpuRacePaceTests.LegacyFastFloorsArePreservedForTheOffComparison" methodname="LegacyFastFloorsArePreservedForTheOffComparison" classname="CpuRacePaceTests" runstate="Runnable" seed="1529113608" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000071" asserts="0">
+        <test-case id="1013" name="LegacyFastFloorsArePreservedForTheOffComparison" fullname="CpuRacePaceTests.LegacyFastFloorsArePreservedForTheOffComparison" methodname="LegacyFastFloorsArePreservedForTheOffComparison" classname="CpuRacePaceTests" runstate="Runnable" seed="2141172965" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000064" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1015" name="MaintainingTheTargetNeedsEnoughPedalToBalanceTheActualCarResistance" fullname="CpuRacePaceTests.MaintainingTheTargetNeedsEnoughPedalToBalanceTheActualCarResistance" methodname="MaintainingTheTargetNeedsEnoughPedalToBalanceTheActualCarResistance" classname="CpuRacePaceTests" runstate="Runnable" seed="318514037" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000068" asserts="0">
+        <test-case id="1015" name="MaintainingTheTargetNeedsEnoughPedalToBalanceTheActualCarResistance" fullname="CpuRacePaceTests.MaintainingTheTargetNeedsEnoughPedalToBalanceTheActualCarResistance" methodname="MaintainingTheTargetNeedsEnoughPedalToBalanceTheActualCarResistance" classname="CpuRacePaceTests" runstate="Runnable" seed="1824213534" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000066" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1018" name="TheCounterattackWindowGivesRoomWithoutStoppingInFrontOfThePlayer" fullname="CpuRacePaceTests.TheCounterattackWindowGivesRoomWithoutStoppingInFrontOfThePlayer" methodname="TheCounterattackWindowGivesRoomWithoutStoppingInFrontOfThePlayer" classname="CpuRacePaceTests" runstate="Runnable" seed="2035857416" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000061" asserts="0">
+        <test-case id="1018" name="TheCounterattackWindowGivesRoomWithoutStoppingInFrontOfThePlayer" fullname="CpuRacePaceTests.TheCounterattackWindowGivesRoomWithoutStoppingInFrontOfThePlayer" methodname="TheCounterattackWindowGivesRoomWithoutStoppingInFrontOfThePlayer" classname="CpuRacePaceTests" runstate="Runnable" seed="53706845" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000055" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1021" name="DailyRankingTests" fullname="DailyRankingTests" classname="DailyRankingTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.005620" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1021" name="DailyRankingTests" fullname="DailyRankingTests" classname="DailyRankingTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.004490" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1025" name="CourseRulesAndCalendarDatesAreSeparate" fullname="DailyRankingTests.CourseRulesAndCalendarDatesAreSeparate" methodname="CourseRulesAndCalendarDatesAreSeparate" classname="DailyRankingTests" runstate="Runnable" seed="893895135" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.002976" asserts="0">
+        <test-case id="1025" name="CourseRulesAndCalendarDatesAreSeparate" fullname="DailyRankingTests.CourseRulesAndCalendarDatesAreSeparate" methodname="CourseRulesAndCalendarDatesAreSeparate" classname="DailyRankingTests" runstate="Runnable" seed="50346737" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.002475" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1026" name="CpuDnfAutodriveAndDebugRunsCannotEnterTheBoard" fullname="DailyRankingTests.CpuDnfAutodriveAndDebugRunsCannotEnterTheBoard" methodname="CpuDnfAutodriveAndDebugRunsCannotEnterTheBoard" classname="DailyRankingTests" runstate="Runnable" seed="111969876" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000326" asserts="0">
+        <test-case id="1026" name="CpuDnfAutodriveAndDebugRunsCannotEnterTheBoard" fullname="DailyRankingTests.CpuDnfAutodriveAndDebugRunsCannotEnterTheBoard" methodname="CpuDnfAutodriveAndDebugRunsCannotEnterTheBoard" classname="DailyRankingTests" runstate="Runnable" seed="1354988601" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000228" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1023" name="DuplicateFinishIsIdempotentButAnotherPlayOfTheSameSeatIsANewAttempt" fullname="DailyRankingTests.DuplicateFinishIsIdempotentButAnotherPlayOfTheSameSeatIsANewAttempt" methodname="DuplicateFinishIsIdempotentButAnotherPlayOfTheSameSeatIsANewAttempt" classname="DailyRankingTests" runstate="Runnable" seed="33858644" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000124" asserts="0">
+        <test-case id="1023" name="DuplicateFinishIsIdempotentButAnotherPlayOfTheSameSeatIsANewAttempt" fullname="DailyRankingTests.DuplicateFinishIsIdempotentButAnotherPlayOfTheSameSeatIsANewAttempt" methodname="DuplicateFinishIsIdempotentButAnotherPlayOfTheSameSeatIsANewAttempt" classname="DailyRankingTests" runstate="Runnable" seed="2057778416" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000103" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1024" name="EqualDisplayedMillisecondsShareCompetitionRank" fullname="DailyRankingTests.EqualDisplayedMillisecondsShareCompetitionRank" methodname="EqualDisplayedMillisecondsShareCompetitionRank" classname="DailyRankingTests" runstate="Runnable" seed="824014478" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000234" asserts="0">
+        <test-case id="1024" name="EqualDisplayedMillisecondsShareCompetitionRank" fullname="DailyRankingTests.EqualDisplayedMillisecondsShareCompetitionRank" methodname="EqualDisplayedMillisecondsShareCompetitionRank" classname="DailyRankingTests" runstate="Runnable" seed="964950506" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000194" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1022" name="FastestAttemptWinsAndBothPlayersOfARaceShareItsNumber" fullname="DailyRankingTests.FastestAttemptWinsAndBothPlayersOfARaceShareItsNumber" methodname="FastestAttemptWinsAndBothPlayersOfARaceShareItsNumber" classname="DailyRankingTests" runstate="Runnable" seed="1787531379" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000238" asserts="0">
+        <test-case id="1022" name="FastestAttemptWinsAndBothPlayersOfARaceShareItsNumber" fullname="DailyRankingTests.FastestAttemptWinsAndBothPlayersOfARaceShareItsNumber" methodname="FastestAttemptWinsAndBothPlayersOfARaceShareItsNumber" classname="DailyRankingTests" runstate="Runnable" seed="197837634" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000211" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1027" name="InvalidTimesAndParticipantsAreRejected" fullname="DailyRankingTests.InvalidTimesAndParticipantsAreRejected" methodname="InvalidTimesAndParticipantsAreRejected" classname="DailyRankingTests" runstate="Runnable" seed="276732793" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000122" asserts="0">
+        <test-case id="1027" name="InvalidTimesAndParticipantsAreRejected" fullname="DailyRankingTests.InvalidTimesAndParticipantsAreRejected" methodname="InvalidTimesAndParticipantsAreRejected" classname="DailyRankingTests" runstate="Runnable" seed="1049615174" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000102" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1028" name="OwnRankIsAvailableBeyondTheTopFive" fullname="DailyRankingTests.OwnRankIsAvailableBeyondTheTopFive" methodname="OwnRankIsAvailableBeyondTheTopFive" classname="DailyRankingTests" runstate="Runnable" seed="1899502605" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000160" asserts="0">
+        <test-case id="1028" name="OwnRankIsAvailableBeyondTheTopFive" fullname="DailyRankingTests.OwnRankIsAvailableBeyondTheTopFive" methodname="OwnRankIsAvailableBeyondTheTopFive" classname="DailyRankingTests" runstate="Runnable" seed="739425221" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000135" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1029" name="DashboardInputLeaseTests" fullname="DashboardInputLeaseTests" classname="DashboardInputLeaseTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.003951" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1029" name="DashboardInputLeaseTests" fullname="DashboardInputLeaseTests" classname="DashboardInputLeaseTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.003080" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1030" name="IndependentLeasesExpireAndDelayedPressCannotUndoRelease" fullname="DashboardInputLeaseTests.IndependentLeasesExpireAndDelayedPressCannotUndoRelease" methodname="IndependentLeasesExpireAndDelayedPressCannotUndoRelease" classname="DashboardInputLeaseTests" runstate="Runnable" seed="904429446" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.001894" asserts="0">
+        <test-case id="1030" name="IndependentLeasesExpireAndDelayedPressCannotUndoRelease" fullname="DashboardInputLeaseTests.IndependentLeasesExpireAndDelayedPressCannotUndoRelease" methodname="IndependentLeasesExpireAndDelayedPressCannotUndoRelease" classname="DashboardInputLeaseTests" runstate="Runnable" seed="472754614" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.001586" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1033" name="InvalidKeysArgumentsAndTimestampsCannotAcquireControl" fullname="DashboardInputLeaseTests.InvalidKeysArgumentsAndTimestampsCannotAcquireControl" methodname="InvalidKeysArgumentsAndTimestampsCannotAcquireControl" classname="DashboardInputLeaseTests" runstate="Runnable" seed="2136728351" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000141" asserts="0">
+        <test-case id="1033" name="InvalidKeysArgumentsAndTimestampsCannotAcquireControl" fullname="DashboardInputLeaseTests.InvalidKeysArgumentsAndTimestampsCannotAcquireControl" methodname="InvalidKeysArgumentsAndTimestampsCannotAcquireControl" classname="DashboardInputLeaseTests" runstate="Runnable" seed="1323640490" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000095" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1031" name="OwnershipAndReacquisitionNeverReuseOldHeldInput" fullname="DashboardInputLeaseTests.OwnershipAndReacquisitionNeverReuseOldHeldInput" methodname="OwnershipAndReacquisitionNeverReuseOldHeldInput" classname="DashboardInputLeaseTests" runstate="Runnable" seed="2065116473" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000680" asserts="0">
+        <test-case id="1031" name="OwnershipAndReacquisitionNeverReuseOldHeldInput" fullname="DashboardInputLeaseTests.OwnershipAndReacquisitionNeverReuseOldHeldInput" methodname="OwnershipAndReacquisitionNeverReuseOldHeldInput" classname="DashboardInputLeaseTests" runstate="Runnable" seed="1163671583" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000556" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1032" name="PulsesAreOneSampleAndHeartbeatDoesNotRepeatThem" fullname="DashboardInputLeaseTests.PulsesAreOneSampleAndHeartbeatDoesNotRepeatThem" methodname="PulsesAreOneSampleAndHeartbeatDoesNotRepeatThem" classname="DashboardInputLeaseTests" runstate="Runnable" seed="1041282176" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000145" asserts="0">
+        <test-case id="1032" name="PulsesAreOneSampleAndHeartbeatDoesNotRepeatThem" fullname="DashboardInputLeaseTests.PulsesAreOneSampleAndHeartbeatDoesNotRepeatThem" methodname="PulsesAreOneSampleAndHeartbeatDoesNotRepeatThem" classname="DashboardInputLeaseTests" runstate="Runnable" seed="306200227" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000123" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1034" name="DriverNoticeQueueTests" fullname="DriverNoticeQueueTests" classname="DriverNoticeQueueTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.003379" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1034" name="DriverNoticeQueueTests" fullname="DriverNoticeQueueTests" classname="DriverNoticeQueueTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.002870" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1039" name="BriefConditionDropoutDoesNotBlinkAndEventuallyExpires" fullname="DriverNoticeQueueTests.BriefConditionDropoutDoesNotBlinkAndEventuallyExpires" methodname="BriefConditionDropoutDoesNotBlinkAndEventuallyExpires" classname="DriverNoticeQueueTests" runstate="Runnable" seed="2123059850" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.001329" asserts="0">
+        <test-case id="1039" name="BriefConditionDropoutDoesNotBlinkAndEventuallyExpires" fullname="DriverNoticeQueueTests.BriefConditionDropoutDoesNotBlinkAndEventuallyExpires" methodname="BriefConditionDropoutDoesNotBlinkAndEventuallyExpires" classname="DriverNoticeQueueTests" runstate="Runnable" seed="122611216" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.001135" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1041" name="DuplicateEventsAreConsumedOnceAndClearResetsTheRace" fullname="DriverNoticeQueueTests.DuplicateEventsAreConsumedOnceAndClearResetsTheRace" methodname="DuplicateEventsAreConsumedOnceAndClearResetsTheRace" classname="DriverNoticeQueueTests" runstate="Runnable" seed="24584059" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000343" asserts="0">
+        <test-case id="1041" name="DuplicateEventsAreConsumedOnceAndClearResetsTheRace" fullname="DriverNoticeQueueTests.DuplicateEventsAreConsumedOnceAndClearResetsTheRace" methodname="DuplicateEventsAreConsumedOnceAndClearResetsTheRace" classname="DriverNoticeQueueTests" runstate="Runnable" seed="549497622" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000315" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1036" name="GuidanceDoesNotReplaceACardBeforeItCanBeRead" fullname="DriverNoticeQueueTests.GuidanceDoesNotReplaceACardBeforeItCanBeRead" methodname="GuidanceDoesNotReplaceACardBeforeItCanBeRead" classname="DriverNoticeQueueTests" runstate="Runnable" seed="1428978317" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000088" asserts="0">
+        <test-case id="1036" name="GuidanceDoesNotReplaceACardBeforeItCanBeRead" fullname="DriverNoticeQueueTests.GuidanceDoesNotReplaceACardBeforeItCanBeRead" methodname="GuidanceDoesNotReplaceACardBeforeItCanBeRead" classname="DriverNoticeQueueTests" runstate="Runnable" seed="1599133717" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000084" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1038" name="ResolvedCriticalConditionDisappearsImmediately" fullname="DriverNoticeQueueTests.ResolvedCriticalConditionDisappearsImmediately" methodname="ResolvedCriticalConditionDisappearsImmediately" classname="DriverNoticeQueueTests" runstate="Runnable" seed="1658242319" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000070" asserts="0">
+        <test-case id="1038" name="ResolvedCriticalConditionDisappearsImmediately" fullname="DriverNoticeQueueTests.ResolvedCriticalConditionDisappearsImmediately" methodname="ResolvedCriticalConditionDisappearsImmediately" classname="DriverNoticeQueueTests" runstate="Runnable" seed="1810202432" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000072" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1035" name="SafetyInterruptsSuccessImmediatelyAndDoesNotReplayIt" fullname="DriverNoticeQueueTests.SafetyInterruptsSuccessImmediatelyAndDoesNotReplayIt" methodname="SafetyInterruptsSuccessImmediatelyAndDoesNotReplayIt" classname="DriverNoticeQueueTests" runstate="Runnable" seed="526801509" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000090" asserts="0">
+        <test-case id="1035" name="SafetyInterruptsSuccessImmediatelyAndDoesNotReplayIt" fullname="DriverNoticeQueueTests.SafetyInterruptsSuccessImmediatelyAndDoesNotReplayIt" methodname="SafetyInterruptsSuccessImmediatelyAndDoesNotReplayIt" classname="DriverNoticeQueueTests" runstate="Runnable" seed="1930375528" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000090" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1040" name="StalePendingConditionsNeverAppearAfterACriticalWarning" fullname="DriverNoticeQueueTests.StalePendingConditionsNeverAppearAfterACriticalWarning" methodname="StalePendingConditionsNeverAppearAfterACriticalWarning" classname="DriverNoticeQueueTests" runstate="Runnable" seed="425355818" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000078" asserts="0">
+        <test-case id="1040" name="StalePendingConditionsNeverAppearAfterACriticalWarning" fullname="DriverNoticeQueueTests.StalePendingConditionsNeverAppearAfterACriticalWarning" methodname="StalePendingConditionsNeverAppearAfterACriticalWarning" classname="DriverNoticeQueueTests" runstate="Runnable" seed="1032144696" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000074" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1037" name="UpdatedCurrentSourceNeverReplaysAnOlderMessage" fullname="DriverNoticeQueueTests.UpdatedCurrentSourceNeverReplaysAnOlderMessage" methodname="UpdatedCurrentSourceNeverReplaysAnOlderMessage" classname="DriverNoticeQueueTests" runstate="Runnable" seed="1410749583" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000090" asserts="0">
+        <test-case id="1037" name="UpdatedCurrentSourceNeverReplaysAnOlderMessage" fullname="DriverNoticeQueueTests.UpdatedCurrentSourceNeverReplaysAnOlderMessage" methodname="UpdatedCurrentSourceNeverReplaysAnOlderMessage" classname="DriverNoticeQueueTests" runstate="Runnable" seed="1227022022" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000089" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1042" name="DrivingTutorialProgressTests" fullname="DrivingTutorialProgressTests" classname="DrivingTutorialProgressTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.002645" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1042" name="DrivingTutorialProgressTests" fullname="DrivingTutorialProgressTests" classname="DrivingTutorialProgressTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.002401" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1044" name="EarlyCompletionStopsTimerAndRecoveryDoesNotResetDeadline" fullname="DrivingTutorialProgressTests.EarlyCompletionStopsTimerAndRecoveryDoesNotResetDeadline" methodname="EarlyCompletionStopsTimerAndRecoveryDoesNotResetDeadline" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="2110949345" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000603" asserts="0">
+        <test-case id="1044" name="EarlyCompletionStopsTimerAndRecoveryDoesNotResetDeadline" fullname="DrivingTutorialProgressTests.EarlyCompletionStopsTimerAndRecoveryDoesNotResetDeadline" methodname="EarlyCompletionStopsTimerAndRecoveryDoesNotResetDeadline" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="1328132641" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000579" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1047" name="ItemRequiresContactAfterSteeringAndWhileConnected" fullname="DrivingTutorialProgressTests.ItemRequiresContactAfterSteeringAndWhileConnected" methodname="ItemRequiresContactAfterSteeringAndWhileConnected" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="479544803" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000131" asserts="0">
+        <test-case id="1047" name="ItemRequiresContactAfterSteeringAndWhileConnected" fullname="DrivingTutorialProgressTests.ItemRequiresContactAfterSteeringAndWhileConnected" methodname="ItemRequiresContactAfterSteeringAndWhileConnected" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="70325587" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000125" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1049" name="PlayersProgressIndependentlyAndCompletionIsStable" fullname="DrivingTutorialProgressTests.PlayersProgressIndependentlyAndCompletionIsStable" methodname="PlayersProgressIndependentlyAndCompletionIsStable" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="540065770" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000150" asserts="0">
+        <test-case id="1049" name="PlayersProgressIndependentlyAndCompletionIsStable" fullname="DrivingTutorialProgressTests.PlayersProgressIndependentlyAndCompletionIsStable" methodname="PlayersProgressIndependentlyAndCompletionIsStable" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="966813127" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000138" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1050" name="RecoveryKeepsCompletedLessonsButClearsPartialHold" fullname="DrivingTutorialProgressTests.RecoveryKeepsCompletedLessonsButClearsPartialHold" methodname="RecoveryKeepsCompletedLessonsButClearsPartialHold" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="129543516" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000086" asserts="0">
+        <test-case id="1050" name="RecoveryKeepsCompletedLessonsButClearsPartialHold" fullname="DrivingTutorialProgressTests.RecoveryKeepsCompletedLessonsButClearsPartialHold" methodname="RecoveryKeepsCompletedLessonsButClearsPartialHold" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="238550422" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000086" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1046" name="SteeringRequiresRealHeadingChangeWhileMoving" fullname="DrivingTutorialProgressTests.SteeringRequiresRealHeadingChangeWhileMoving" methodname="SteeringRequiresRealHeadingChangeWhileMoving" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="1028510789" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000092" asserts="0">
+        <test-case id="1046" name="SteeringRequiresRealHeadingChangeWhileMoving" fullname="DrivingTutorialProgressTests.SteeringRequiresRealHeadingChangeWhileMoving" methodname="SteeringRequiresRealHeadingChangeWhileMoving" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="1729186931" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000093" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1048" name="TimedOutPracticeCannotCollectAnItem" fullname="DrivingTutorialProgressTests.TimedOutPracticeCannotCollectAnItem" methodname="TimedOutPracticeCannotCollectAnItem" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="1235961806" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000079" asserts="0">
+        <test-case id="1048" name="TimedOutPracticeCannotCollectAnItem" fullname="DrivingTutorialProgressTests.TimedOutPracticeCannotCollectAnItem" methodname="TimedOutPracticeCannotCollectAnItem" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="968116190" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000075" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1043" name="TimeoutEndsPracticeEvenWhenDisconnectedWithoutCompletingLessons" fullname="DrivingTutorialProgressTests.TimeoutEndsPracticeEvenWhenDisconnectedWithoutCompletingLessons" methodname="TimeoutEndsPracticeEvenWhenDisconnectedWithoutCompletingLessons" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="194492143" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000129" asserts="0">
+        <test-case id="1043" name="TimeoutEndsPracticeEvenWhenDisconnectedWithoutCompletingLessons" fullname="DrivingTutorialProgressTests.TimeoutEndsPracticeEvenWhenDisconnectedWithoutCompletingLessons" methodname="TimeoutEndsPracticeEvenWhenDisconnectedWithoutCompletingLessons" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="741713169" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000127" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1045" name="TitlePedalHoldCannotFinishAcceleration" fullname="DrivingTutorialProgressTests.TitlePedalHoldCannotFinishAcceleration" methodname="TitlePedalHoldCannotFinishAcceleration" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="758451468" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000108" asserts="0">
+        <test-case id="1045" name="TitlePedalHoldCannotFinishAcceleration" fullname="DrivingTutorialProgressTests.TitlePedalHoldCannotFinishAcceleration" methodname="TitlePedalHoldCannotFinishAcceleration" classname="DrivingTutorialProgressTests" runstate="Runnable" seed="1941727847" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000102" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1051" name="EdgeSteeringAssistTests" fullname="EdgeSteeringAssistTests" classname="EdgeSteeringAssistTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.001320" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1051" name="EdgeSteeringAssistTests" fullname="EdgeSteeringAssistTests" classname="EdgeSteeringAssistTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.001123" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1054" name="AnImminentDepartureOverridesOutwardSteeringAndFacesTheRoad" fullname="EdgeSteeringAssistTests.AnImminentDepartureOverridesOutwardSteeringAndFacesTheRoad" methodname="AnImminentDepartureOverridesOutwardSteeringAndFacesTheRoad" classname="EdgeSteeringAssistTests" runstate="Runnable" seed="2014790077" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000267" asserts="0">
+        <test-case id="1054" name="AnImminentDepartureOverridesOutwardSteeringAndFacesTheRoad" fullname="EdgeSteeringAssistTests.AnImminentDepartureOverridesOutwardSteeringAndFacesTheRoad" methodname="AnImminentDepartureOverridesOutwardSteeringAndFacesTheRoad" classname="EdgeSteeringAssistTests" runstate="Runnable" seed="841510001" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000244" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1055" name="AStationaryEdgeAndInvalidGeometryDoNotSteer" fullname="EdgeSteeringAssistTests.AStationaryEdgeAndInvalidGeometryDoNotSteer" methodname="AStationaryEdgeAndInvalidGeometryDoNotSteer" classname="EdgeSteeringAssistTests" runstate="Runnable" seed="468366229" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000068" asserts="0">
+        <test-case id="1055" name="AStationaryEdgeAndInvalidGeometryDoNotSteer" fullname="EdgeSteeringAssistTests.AStationaryEdgeAndInvalidGeometryDoNotSteer" methodname="AStationaryEdgeAndInvalidGeometryDoNotSteer" classname="EdgeSteeringAssistTests" runstate="Runnable" seed="1044162822" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000069" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1052" name="CentreAndInwardMotionReceiveNoCorrection" fullname="EdgeSteeringAssistTests.CentreAndInwardMotionReceiveNoCorrection" methodname="CentreAndInwardMotionReceiveNoCorrection" classname="EdgeSteeringAssistTests" runstate="Runnable" seed="2034669802" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000065" asserts="0">
+        <test-case id="1052" name="CentreAndInwardMotionReceiveNoCorrection" fullname="EdgeSteeringAssistTests.CentreAndInwardMotionReceiveNoCorrection" methodname="CentreAndInwardMotionReceiveNoCorrection" classname="EdgeSteeringAssistTests" runstate="Runnable" seed="1727792175" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000066" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1053" name="PredictedDepartureIsSymmetricAndBounded" fullname="EdgeSteeringAssistTests.PredictedDepartureIsSymmetricAndBounded" methodname="PredictedDepartureIsSymmetricAndBounded" classname="EdgeSteeringAssistTests" runstate="Runnable" seed="1826530742" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000071" asserts="0">
+        <test-case id="1053" name="PredictedDepartureIsSymmetricAndBounded" fullname="EdgeSteeringAssistTests.PredictedDepartureIsSymmetricAndBounded" methodname="PredictedDepartureIsSymmetricAndBounded" classname="EdgeSteeringAssistTests" runstate="Runnable" seed="345830762" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000068" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1056" name="FrameRateCounterTests" fullname="FrameRateCounterTests" classname="FrameRateCounterTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.001315" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1056" name="FrameRateCounterTests" fullname="FrameRateCounterTests" classname="FrameRateCounterTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.001197" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1057" name="CountsIntervalsAndUpdatesFromSixtyToThirtyFps" fullname="FrameRateCounterTests.CountsIntervalsAndUpdatesFromSixtyToThirtyFps" methodname="CountsIntervalsAndUpdatesFromSixtyToThirtyFps" classname="FrameRateCounterTests" runstate="Runnable" seed="989250815" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000298" asserts="0">
+        <test-case id="1057" name="CountsIntervalsAndUpdatesFromSixtyToThirtyFps" fullname="FrameRateCounterTests.CountsIntervalsAndUpdatesFromSixtyToThirtyFps" methodname="CountsIntervalsAndUpdatesFromSixtyToThirtyFps" classname="FrameRateCounterTests" runstate="Runnable" seed="550918676" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000272" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1058" name="IncludesStallsInTheMeasuredTime" fullname="FrameRateCounterTests.IncludesStallsInTheMeasuredTime" methodname="IncludesStallsInTheMeasuredTime" classname="FrameRateCounterTests" runstate="Runnable" seed="634766374" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000096" asserts="0">
+        <test-case id="1058" name="IncludesStallsInTheMeasuredTime" fullname="FrameRateCounterTests.IncludesStallsInTheMeasuredTime" methodname="IncludesStallsInTheMeasuredTime" classname="FrameRateCounterTests" runstate="Runnable" seed="1924554321" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000092" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1059" name="ReenableAndClockResetDiscardTheOldSample" fullname="FrameRateCounterTests.ReenableAndClockResetDiscardTheOldSample" methodname="ReenableAndClockResetDiscardTheOldSample" classname="FrameRateCounterTests" runstate="Runnable" seed="905088689" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000115" asserts="0">
+        <test-case id="1059" name="ReenableAndClockResetDiscardTheOldSample" fullname="FrameRateCounterTests.ReenableAndClockResetDiscardTheOldSample" methodname="ReenableAndClockResetDiscardTheOldSample" classname="FrameRateCounterTests" runstate="Runnable" seed="339993327" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000109" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1060" name="RetainsPrecisionAfterLongRunningSessions" fullname="FrameRateCounterTests.RetainsPrecisionAfterLongRunningSessions" methodname="RetainsPrecisionAfterLongRunningSessions" classname="FrameRateCounterTests" runstate="Runnable" seed="166238972" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000073" asserts="0">
+        <test-case id="1060" name="RetainsPrecisionAfterLongRunningSessions" fullname="FrameRateCounterTests.RetainsPrecisionAfterLongRunningSessions" methodname="RetainsPrecisionAfterLongRunningSessions" classname="FrameRateCounterTests" runstate="Runnable" seed="1888121419" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000074" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1061" name="HitProtectionWindowTests" fullname="HitProtectionWindowTests" classname="HitProtectionWindowTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.001056" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1061" name="HitProtectionWindowTests" fullname="HitProtectionWindowTests" classname="HitProtectionWindowTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000982" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1064" name="DisablingAndInvalidValuesNeverLeaveHiddenImmunity" fullname="HitProtectionWindowTests.DisablingAndInvalidValuesNeverLeaveHiddenImmunity" methodname="DisablingAndInvalidValuesNeverLeaveHiddenImmunity" classname="HitProtectionWindowTests" runstate="Runnable" seed="2011784070" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000267" asserts="0">
+        <test-case id="1064" name="DisablingAndInvalidValuesNeverLeaveHiddenImmunity" fullname="HitProtectionWindowTests.DisablingAndInvalidValuesNeverLeaveHiddenImmunity" methodname="DisablingAndInvalidValuesNeverLeaveHiddenImmunity" classname="HitProtectionWindowTests" runstate="Runnable" seed="1518985521" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000255" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1062" name="HitsCannotExtendAnEffectOrTheFollowingProtection" fullname="HitProtectionWindowTests.HitsCannotExtendAnEffectOrTheFollowingProtection" methodname="HitsCannotExtendAnEffectOrTheFollowingProtection" classname="HitProtectionWindowTests" runstate="Runnable" seed="596152220" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000086" asserts="0">
+        <test-case id="1062" name="HitsCannotExtendAnEffectOrTheFollowingProtection" fullname="HitProtectionWindowTests.HitsCannotExtendAnEffectOrTheFollowingProtection" methodname="HitsCannotExtendAnEffectOrTheFollowingProtection" classname="HitProtectionWindowTests" runstate="Runnable" seed="1938608474" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000080" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1063" name="LongEffectsAndTimeStepsHaveBoundedProtection" fullname="HitProtectionWindowTests.LongEffectsAndTimeStepsHaveBoundedProtection" methodname="LongEffectsAndTimeStepsHaveBoundedProtection" classname="HitProtectionWindowTests" runstate="Runnable" seed="1998089126" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000071" asserts="0">
+        <test-case id="1063" name="LongEffectsAndTimeStepsHaveBoundedProtection" fullname="HitProtectionWindowTests.LongEffectsAndTimeStepsHaveBoundedProtection" methodname="LongEffectsAndTimeStepsHaveBoundedProtection" classname="HitProtectionWindowTests" runstate="Runnable" seed="1625659109" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000070" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1065" name="LandingChallengeTests" fullname="LandingChallengeTests" classname="LandingChallengeTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.001308" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1065" name="LandingChallengeTests" fullname="LandingChallengeTests" classname="LandingChallengeTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.001264" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1066" name="ADesignatedFlightRequiresStableLandingAndAwardsOnlyOncePerLap" fullname="LandingChallengeTests.ADesignatedFlightRequiresStableLandingAndAwardsOnlyOncePerLap" methodname="ADesignatedFlightRequiresStableLandingAndAwardsOnlyOncePerLap" classname="LandingChallengeTests" runstate="Runnable" seed="1159459870" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000357" asserts="0">
+        <test-case id="1066" name="ADesignatedFlightRequiresStableLandingAndAwardsOnlyOncePerLap" fullname="LandingChallengeTests.ADesignatedFlightRequiresStableLandingAndAwardsOnlyOncePerLap" methodname="ADesignatedFlightRequiresStableLandingAndAwardsOnlyOncePerLap" classname="LandingChallengeTests" runstate="Runnable" seed="1832852947" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000346" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1069" name="BriefFlightAndLongFramesCannotCreateSuccess" fullname="LandingChallengeTests.BriefFlightAndLongFramesCannotCreateSuccess" methodname="BriefFlightAndLongFramesCannotCreateSuccess" classname="LandingChallengeTests" runstate="Runnable" seed="655196509" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000061" asserts="0">
+        <test-case id="1069" name="BriefFlightAndLongFramesCannotCreateSuccess" fullname="LandingChallengeTests.BriefFlightAndLongFramesCannotCreateSuccess" methodname="BriefFlightAndLongFramesCannotCreateSuccess" classname="LandingChallengeTests" runstate="Runnable" seed="2140327169" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000057" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1067" name="BumpsAndOneWheelTouchesCannotAwardLanding" fullname="LandingChallengeTests.BumpsAndOneWheelTouchesCannotAwardLanding" methodname="BumpsAndOneWheelTouchesCannotAwardLanding" classname="LandingChallengeTests" runstate="Runnable" seed="2021190584" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000107" asserts="0">
+        <test-case id="1067" name="BumpsAndOneWheelTouchesCannotAwardLanding" fullname="LandingChallengeTests.BumpsAndOneWheelTouchesCannotAwardLanding" methodname="BumpsAndOneWheelTouchesCannotAwardLanding" classname="LandingChallengeTests" runstate="Runnable" seed="1484972222" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000107" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1068" name="RecoveryCollisionAndTogglesCannotFarmAFlight" fullname="LandingChallengeTests.RecoveryCollisionAndTogglesCannotFarmAFlight" methodname="RecoveryCollisionAndTogglesCannotFarmAFlight" classname="LandingChallengeTests" runstate="Runnable" seed="791768397" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000090" asserts="0">
+        <test-case id="1068" name="RecoveryCollisionAndTogglesCannotFarmAFlight" fullname="LandingChallengeTests.RecoveryCollisionAndTogglesCannotFarmAFlight" methodname="RecoveryCollisionAndTogglesCannotFarmAFlight" classname="LandingChallengeTests" runstate="Runnable" seed="840470161" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000088" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1070" name="LapComparisonTests" fullname="LapComparisonTests" classname="LapComparisonTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.001315" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1070" name="LapComparisonTests" fullname="LapComparisonTests" classname="LapComparisonTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.001217" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1072" name="ComparesTimeAtTheSamePositionRatherThanWholeLapDuration" fullname="LapComparisonTests.ComparesTimeAtTheSamePositionRatherThanWholeLapDuration" methodname="ComparesTimeAtTheSamePositionRatherThanWholeLapDuration" classname="LapComparisonTests" runstate="Runnable" seed="30923387" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000545" asserts="0">
+        <test-case id="1072" name="ComparesTimeAtTheSamePositionRatherThanWholeLapDuration" fullname="LapComparisonTests.ComparesTimeAtTheSamePositionRatherThanWholeLapDuration" methodname="ComparesTimeAtTheSamePositionRatherThanWholeLapDuration" classname="LapComparisonTests" runstate="Runnable" seed="1884034439" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000499" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1071" name="FirstLapHasNoFabricatedDelta" fullname="LapComparisonTests.FirstLapHasNoFabricatedDelta" methodname="FirstLapHasNoFabricatedDelta" classname="LapComparisonTests" runstate="Runnable" seed="1943404203" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000069" asserts="0">
+        <test-case id="1071" name="FirstLapHasNoFabricatedDelta" fullname="LapComparisonTests.FirstLapHasNoFabricatedDelta" methodname="FirstLapHasNoFabricatedDelta" classname="LapComparisonTests" runstate="Runnable" seed="721727080" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000068" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1073" name="RetryDiscardsThePreviousRun" fullname="LapComparisonTests.RetryDiscardsThePreviousRun" methodname="RetryDiscardsThePreviousRun" classname="LapComparisonTests" runstate="Runnable" seed="369788789" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000085" asserts="0">
+        <test-case id="1073" name="RetryDiscardsThePreviousRun" fullname="LapComparisonTests.RetryDiscardsThePreviousRun" methodname="RetryDiscardsThePreviousRun" classname="LapComparisonTests" runstate="Runnable" seed="1109417252" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000087" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1074" name="LapTraversalTests" fullname="LapTraversalTests" classname="LapTraversalTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.001333" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1074" name="LapTraversalTests" fullname="LapTraversalTests" classname="LapTraversalTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.001277" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1076" name="FullCircuitArmsOnceAndEachNewLapNeedsAnotherCircuit" fullname="LapTraversalTests.FullCircuitArmsOnceAndEachNewLapNeedsAnotherCircuit" methodname="FullCircuitArmsOnceAndEachNewLapNeedsAnotherCircuit" classname="LapTraversalTests" runstate="Runnable" seed="1215091696" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000349" asserts="0">
+        <test-case id="1076" name="FullCircuitArmsOnceAndEachNewLapNeedsAnotherCircuit" fullname="LapTraversalTests.FullCircuitArmsOnceAndEachNewLapNeedsAnotherCircuit" methodname="FullCircuitArmsOnceAndEachNewLapNeedsAnotherCircuit" classname="LapTraversalTests" runstate="Runnable" seed="153752920" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000331" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1075" name="RepeatedForwardAndBackwardFinishCrossingsNeverArmALap" fullname="LapTraversalTests.RepeatedForwardAndBackwardFinishCrossingsNeverArmALap" methodname="RepeatedForwardAndBackwardFinishCrossingsNeverArmALap" classname="LapTraversalTests" runstate="Runnable" seed="2115638436" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000092" asserts="0">
+        <test-case id="1075" name="RepeatedForwardAndBackwardFinishCrossingsNeverArmALap" fullname="LapTraversalTests.RepeatedForwardAndBackwardFinishCrossingsNeverArmALap" methodname="RepeatedForwardAndBackwardFinishCrossingsNeverArmALap" classname="LapTraversalTests" runstate="Runnable" seed="1857641276" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000087" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1078" name="ReverseCircuitAndInvalidValuesDoNotArm" fullname="LapTraversalTests.ReverseCircuitAndInvalidValuesDoNotArm" methodname="ReverseCircuitAndInvalidValuesDoNotArm" classname="LapTraversalTests" runstate="Runnable" seed="373478963" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000077" asserts="0">
+        <test-case id="1078" name="ReverseCircuitAndInvalidValuesDoNotArm" fullname="LapTraversalTests.ReverseCircuitAndInvalidValuesDoNotArm" methodname="ReverseCircuitAndInvalidValuesDoNotArm" classname="LapTraversalTests" runstate="Runnable" seed="1120756468" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000073" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1077" name="TeleportsAndRecoveryCannotCompleteAnUnvisitedSection" fullname="LapTraversalTests.TeleportsAndRecoveryCannotCompleteAnUnvisitedSection" methodname="TeleportsAndRecoveryCannotCompleteAnUnvisitedSection" classname="LapTraversalTests" runstate="Runnable" seed="1285629757" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000104" asserts="0">
+        <test-case id="1077" name="TeleportsAndRecoveryCannotCompleteAnUnvisitedSection" fullname="LapTraversalTests.TeleportsAndRecoveryCannotCompleteAnUnvisitedSection" methodname="TeleportsAndRecoveryCannotCompleteAnUnvisitedSection" classname="LapTraversalTests" runstate="Runnable" seed="1889216089" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000101" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1079" name="PreparationCountdownTests" fullname="PreparationCountdownTests" classname="PreparationCountdownTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000933" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1079" name="PreparationCountdownTests" fullname="PreparationCountdownTests" classname="PreparationCountdownTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000868" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1082" name="EachScreenHasItsOwnTimeAndNegativeDeltaCannotAddTime" fullname="PreparationCountdownTests.EachScreenHasItsOwnTimeAndNegativeDeltaCannotAddTime" methodname="EachScreenHasItsOwnTimeAndNegativeDeltaCannotAddTime" classname="PreparationCountdownTests" runstate="Runnable" seed="1426730208" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000109" asserts="0">
+        <test-case id="1082" name="EachScreenHasItsOwnTimeAndNegativeDeltaCannotAddTime" fullname="PreparationCountdownTests.EachScreenHasItsOwnTimeAndNegativeDeltaCannotAddTime" methodname="EachScreenHasItsOwnTimeAndNegativeDeltaCannotAddTime" classname="PreparationCountdownTests" runstate="Runnable" seed="47819092" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000100" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1080" name="ExpiryOccursOnceAtTheBoundaryAndNeverGoesNegative" fullname="PreparationCountdownTests.ExpiryOccursOnceAtTheBoundaryAndNeverGoesNegative" methodname="ExpiryOccursOnceAtTheBoundaryAndNeverGoesNegative" classname="PreparationCountdownTests" runstate="Runnable" seed="1336034030" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000117" asserts="0">
+        <test-case id="1080" name="ExpiryOccursOnceAtTheBoundaryAndNeverGoesNegative" fullname="PreparationCountdownTests.ExpiryOccursOnceAtTheBoundaryAndNeverGoesNegative" methodname="ExpiryOccursOnceAtTheBoundaryAndNeverGoesNegative" classname="PreparationCountdownTests" runstate="Runnable" seed="362363470" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000116" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1081" name="StoppingPreservesTimeAndDoesNotExpire" fullname="PreparationCountdownTests.StoppingPreservesTimeAndDoesNotExpire" methodname="StoppingPreservesTimeAndDoesNotExpire" classname="PreparationCountdownTests" runstate="Runnable" seed="1188903518" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000084" asserts="0">
+        <test-case id="1081" name="StoppingPreservesTimeAndDoesNotExpire" fullname="PreparationCountdownTests.StoppingPreservesTimeAndDoesNotExpire" methodname="StoppingPreservesTimeAndDoesNotExpire" classname="PreparationCountdownTests" runstate="Runnable" seed="4803875" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000080" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1083" name="RaceAchievementSelectionTests" fullname="RaceAchievementSelectionTests" classname="RaceAchievementSelectionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000701" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1083" name="RaceAchievementSelectionTests" fullname="RaceAchievementSelectionTests" classname="RaceAchievementSelectionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000664" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1085" name="AutodrivenResultsAreLabelledAsTestsInsteadOfHumanAchievements" fullname="RaceAchievementSelectionTests.AutodrivenResultsAreLabelledAsTestsInsteadOfHumanAchievements" methodname="AutodrivenResultsAreLabelledAsTestsInsteadOfHumanAchievements" classname="RaceAchievementSelectionTests" runstate="Runnable" seed="224972303" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000122" asserts="0">
+        <test-case id="1085" name="AutodrivenResultsAreLabelledAsTestsInsteadOfHumanAchievements" fullname="RaceAchievementSelectionTests.AutodrivenResultsAreLabelledAsTestsInsteadOfHumanAchievements" methodname="AutodrivenResultsAreLabelledAsTestsInsteadOfHumanAchievements" classname="RaceAchievementSelectionTests" runstate="Runnable" seed="966036101" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000110" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1084" name="OnlyObservedEventsCanProduceAnAchievement" fullname="RaceAchievementSelectionTests.OnlyObservedEventsCanProduceAnAchievement" methodname="OnlyObservedEventsCanProduceAnAchievement" classname="RaceAchievementSelectionTests" runstate="Runnable" seed="539797572" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000089" asserts="0">
+        <test-case id="1084" name="OnlyObservedEventsCanProduceAnAchievement" fullname="RaceAchievementSelectionTests.OnlyObservedEventsCanProduceAnAchievement" methodname="OnlyObservedEventsCanProduceAnAchievement" classname="RaceAchievementSelectionTests" runstate="Runnable" seed="1988175925" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000086" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1086" name="RaceDisplayRoutingTests" fullname="RaceDisplayRoutingTests" classname="RaceDisplayRoutingTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000614" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1086" name="RaceDisplayRoutingTests" fullname="RaceDisplayRoutingTests" classname="RaceDisplayRoutingTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000546" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1087" name="BroadcastNeverTakesAPlayerOutput" fullname="RaceDisplayRoutingTests.BroadcastNeverTakesAPlayerOutput" methodname="BroadcastNeverTakesAPlayerOutput" classname="RaceDisplayRoutingTests" runstate="Runnable" seed="929488442" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000198" asserts="0">
+        <test-case id="1087" name="BroadcastNeverTakesAPlayerOutput" fullname="RaceDisplayRoutingTests.BroadcastNeverTakesAPlayerOutput" methodname="BroadcastNeverTakesAPlayerOutput" classname="RaceDisplayRoutingTests" runstate="Runnable" seed="1890945829" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000182" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1088" name="RaceFeatureSettingsTests" fullname="RaceFeatureSettingsTests" classname="RaceFeatureSettingsTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.005431" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1088" name="RaceFeatureSettingsTests" fullname="RaceFeatureSettingsTests" classname="RaceFeatureSettingsTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.004779" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1092" name="AnExplicitQueuedPresetSurvivesNextGroupWhileUnqueuedExperienceResets" fullname="RaceFeatureSettingsTests.AnExplicitQueuedPresetSurvivesNextGroupWhileUnqueuedExperienceResets" methodname="AnExplicitQueuedPresetSurvivesNextGroupWhileUnqueuedExperienceResets" classname="RaceFeatureSettingsTests" runstate="Runnable" seed="1463189172" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000375" asserts="0">
+        <test-case id="1092" name="AnExplicitQueuedPresetSurvivesNextGroupWhileUnqueuedExperienceResets" fullname="RaceFeatureSettingsTests.AnExplicitQueuedPresetSurvivesNextGroupWhileUnqueuedExperienceResets" methodname="AnExplicitQueuedPresetSurvivesNextGroupWhileUnqueuedExperienceResets" classname="RaceFeatureSettingsTests" runstate="Runnable" seed="2039527568" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000373" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1091" name="AQueuedPresetCannotChangeTheCurrentRace" fullname="RaceFeatureSettingsTests.AQueuedPresetCannotChangeTheCurrentRace" methodname="AQueuedPresetCannotChangeTheCurrentRace" classname="RaceFeatureSettingsTests" runstate="Runnable" seed="635347754" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000115" asserts="0">
+        <test-case id="1091" name="AQueuedPresetCannotChangeTheCurrentRace" fullname="RaceFeatureSettingsTests.AQueuedPresetCannotChangeTheCurrentRace" methodname="AQueuedPresetCannotChangeTheCurrentRace" classname="RaceFeatureSettingsTests" runstate="Runnable" seed="580268401" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000111" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1094" name="DebugCatalogContainsExactlyTheSixConfigurableFeaturesAndRejectsStandardIds" fullname="RaceFeatureSettingsTests.DebugCatalogContainsExactlyTheSixConfigurableFeaturesAndRejectsStandardIds" methodname="DebugCatalogContainsExactlyTheSixConfigurableFeaturesAndRejectsStandardIds" classname="RaceFeatureSettingsTests" runstate="Runnable" seed="1926696195" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.003580" asserts="0">
+        <test-case id="1094" name="DebugCatalogContainsExactlyTheSixConfigurableFeaturesAndRejectsStandardIds" fullname="RaceFeatureSettingsTests.DebugCatalogContainsExactlyTheSixConfigurableFeaturesAndRejectsStandardIds" methodname="DebugCatalogContainsExactlyTheSixConfigurableFeaturesAndRejectsStandardIds" classname="RaceFeatureSettingsTests" runstate="Runnable" seed="1395861641" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.003100" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1093" name="ExperienceRulesAndCustomStandardRulesDoNotMutateEachOther" fullname="RaceFeatureSettingsTests.ExperienceRulesAndCustomStandardRulesDoNotMutateEachOther" methodname="ExperienceRulesAndCustomStandardRulesDoNotMutateEachOther" classname="RaceFeatureSettingsTests" runstate="Runnable" seed="558794256" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000176" asserts="0">
+        <test-case id="1093" name="ExperienceRulesAndCustomStandardRulesDoNotMutateEachOther" fullname="RaceFeatureSettingsTests.ExperienceRulesAndCustomStandardRulesDoNotMutateEachOther" methodname="ExperienceRulesAndCustomStandardRulesDoNotMutateEachOther" classname="RaceFeatureSettingsTests" runstate="Runnable" seed="629504766" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000143" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1090" name="FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked" fullname="RaceFeatureSettingsTests.FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked" methodname="FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked" classname="RaceFeatureSettingsTests" runstate="Runnable" seed="1036391016" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000096" asserts="0">
+        <test-case id="1090" name="FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked" fullname="RaceFeatureSettingsTests.FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked" methodname="FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked" classname="RaceFeatureSettingsTests" runstate="Runnable" seed="804851221" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000090" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1089" name="TestAutodriveStartsOffWhileGameplayImprovementsStartOn" fullname="RaceFeatureSettingsTests.TestAutodriveStartsOffWhileGameplayImprovementsStartOn" methodname="TestAutodriveStartsOffWhileGameplayImprovementsStartOn" classname="RaceFeatureSettingsTests" runstate="Runnable" seed="119519982" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000114" asserts="0">
+        <test-case id="1089" name="TestAutodriveStartsOffWhileGameplayImprovementsStartOn" fullname="RaceFeatureSettingsTests.TestAutodriveStartsOffWhileGameplayImprovementsStartOn" methodname="TestAutodriveStartsOffWhileGameplayImprovementsStartOn" classname="RaceFeatureSettingsTests" runstate="Runnable" seed="691053166" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000110" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1095" name="RaceHighlightTimelineTests" fullname="RaceHighlightTimelineTests" classname="RaceHighlightTimelineTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.003071" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1095" name="RaceHighlightTimelineTests" fullname="RaceHighlightTimelineTests" classname="RaceHighlightTimelineTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.002647" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1096" name="PassingMomentsKeepTheirLeadInAndRejectDuplicateJitter" fullname="RaceHighlightTimelineTests.PassingMomentsKeepTheirLeadInAndRejectDuplicateJitter" methodname="PassingMomentsKeepTheirLeadInAndRejectDuplicateJitter" classname="RaceHighlightTimelineTests" runstate="Runnable" seed="1500164127" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000822" asserts="0">
+        <test-case id="1096" name="PassingMomentsKeepTheirLeadInAndRejectDuplicateJitter" fullname="RaceHighlightTimelineTests.PassingMomentsKeepTheirLeadInAndRejectDuplicateJitter" methodname="PassingMomentsKeepTheirLeadInAndRejectDuplicateJitter" classname="RaceHighlightTimelineTests" runstate="Runnable" seed="204707986" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000733" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1099" name="QuietFootageIsNotLabeledAsABattleAndFinishClipsEndBeforeRetirement" fullname="RaceHighlightTimelineTests.QuietFootageIsNotLabeledAsABattleAndFinishClipsEndBeforeRetirement" methodname="QuietFootageIsNotLabeledAsABattleAndFinishClipsEndBeforeRetirement" classname="RaceHighlightTimelineTests" runstate="Runnable" seed="1540673428" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000103" asserts="0">
+        <test-case id="1099" name="QuietFootageIsNotLabeledAsABattleAndFinishClipsEndBeforeRetirement" fullname="RaceHighlightTimelineTests.QuietFootageIsNotLabeledAsABattleAndFinishClipsEndBeforeRetirement" methodname="QuietFootageIsNotLabeledAsABattleAndFinishClipsEndBeforeRetirement" classname="RaceHighlightTimelineTests" runstate="Runnable" seed="750953588" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000093" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1098" name="QuietRacesHaveAFactualFallbackAndCandidateMemoryIsBounded" fullname="RaceHighlightTimelineTests.QuietRacesHaveAFactualFallbackAndCandidateMemoryIsBounded" methodname="QuietRacesHaveAFactualFallbackAndCandidateMemoryIsBounded" classname="RaceHighlightTimelineTests" runstate="Runnable" seed="7413838" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.001042" asserts="0">
+        <test-case id="1098" name="QuietRacesHaveAFactualFallbackAndCandidateMemoryIsBounded" fullname="RaceHighlightTimelineTests.QuietRacesHaveAFactualFallbackAndCandidateMemoryIsBounded" methodname="QuietRacesHaveAFactualFallbackAndCandidateMemoryIsBounded" classname="RaceHighlightTimelineTests" runstate="Runnable" seed="2001335685" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000988" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1097" name="StrongEventsWinOverlappingWindowsAndEndWithinTheRace" fullname="RaceHighlightTimelineTests.StrongEventsWinOverlappingWindowsAndEndWithinTheRace" methodname="StrongEventsWinOverlappingWindowsAndEndWithinTheRace" classname="RaceHighlightTimelineTests" runstate="Runnable" seed="2022410368" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000121" asserts="0">
+        <test-case id="1097" name="StrongEventsWinOverlappingWindowsAndEndWithinTheRace" fullname="RaceHighlightTimelineTests.StrongEventsWinOverlappingWindowsAndEndWithinTheRace" methodname="StrongEventsWinOverlappingWindowsAndEndWithinTheRace" classname="RaceHighlightTimelineTests" runstate="Runnable" seed="1391011020" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000106" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1100" name="RaceParticipantSessionTests" fullname="RaceParticipantSessionTests" classname="RaceParticipantSessionTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.003671" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1100" name="RaceParticipantSessionTests" fullname="RaceParticipantSessionTests" classname="RaceParticipantSessionTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.003378" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1111" name="AdaptiveGraceCannotStartAWindowOrShortenOne" fullname="RaceParticipantSessionTests.AdaptiveGraceCannotStartAWindowOrShortenOne" methodname="AdaptiveGraceCannotStartAWindowOrShortenOne" classname="RaceParticipantSessionTests" runstate="Runnable" seed="976155482" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000642" asserts="0">
+        <test-case id="1111" name="AdaptiveGraceCannotStartAWindowOrShortenOne" fullname="RaceParticipantSessionTests.AdaptiveGraceCannotStartAWindowOrShortenOne" methodname="AdaptiveGraceCannotStartAWindowOrShortenOne" classname="RaceParticipantSessionTests" runstate="Runnable" seed="2005758358" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000602" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1110" name="AdaptiveGraceRespectsDistanceAndKeepsTheOverallDeadline" fullname="RaceParticipantSessionTests.AdaptiveGraceRespectsDistanceAndKeepsTheOverallDeadline" methodname="AdaptiveGraceRespectsDistanceAndKeepsTheOverallDeadline" classname="RaceParticipantSessionTests" runstate="Runnable" seed="714366412" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000259" asserts="0">
+        <test-case id="1110" name="AdaptiveGraceRespectsDistanceAndKeepsTheOverallDeadline" fullname="RaceParticipantSessionTests.AdaptiveGraceRespectsDistanceAndKeepsTheOverallDeadline" methodname="AdaptiveGraceRespectsDistanceAndKeepsTheOverallDeadline" classname="RaceParticipantSessionTests" runstate="Runnable" seed="556638307" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000248" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1101" name="APlayerTenMetresFromTheLineCanFinishInsteadOfLosingTheRaceToTheGraceClock" fullname="RaceParticipantSessionTests.APlayerTenMetresFromTheLineCanFinishInsteadOfLosingTheRaceToTheGraceClock" methodname="APlayerTenMetresFromTheLineCanFinishInsteadOfLosingTheRaceToTheGraceClock" classname="RaceParticipantSessionTests" runstate="Runnable" seed="1713582911" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000162" asserts="0">
+        <test-case id="1101" name="APlayerTenMetresFromTheLineCanFinishInsteadOfLosingTheRaceToTheGraceClock" fullname="RaceParticipantSessionTests.APlayerTenMetresFromTheLineCanFinishInsteadOfLosingTheRaceToTheGraceClock" methodname="APlayerTenMetresFromTheLineCanFinishInsteadOfLosingTheRaceToTheGraceClock" classname="RaceParticipantSessionTests" runstate="Runnable" seed="1162057474" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000157" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1105" name="CpuFinishesDoNotStartHumanTimeout" fullname="RaceParticipantSessionTests.CpuFinishesDoNotStartHumanTimeout" methodname="CpuFinishesDoNotStartHumanTimeout" classname="RaceParticipantSessionTests" runstate="Runnable" seed="805140742" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000231" asserts="0">
+        <test-case id="1105" name="CpuFinishesDoNotStartHumanTimeout" fullname="RaceParticipantSessionTests.CpuFinishesDoNotStartHumanTimeout" methodname="CpuFinishesDoNotStartHumanTimeout" classname="RaceParticipantSessionTests" runstate="Runnable" seed="141127787" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000218" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1103" name="FinishApproachGraceDoesNotRewardStoppingReversingOrBeingFarAway" fullname="RaceParticipantSessionTests.FinishApproachGraceDoesNotRewardStoppingReversingOrBeingFarAway" methodname="FinishApproachGraceDoesNotRewardStoppingReversingOrBeingFarAway" classname="RaceParticipantSessionTests" runstate="Runnable" seed="573819587" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000076" asserts="0">
+        <test-case id="1103" name="FinishApproachGraceDoesNotRewardStoppingReversingOrBeingFarAway" fullname="RaceParticipantSessionTests.FinishApproachGraceDoesNotRewardStoppingReversingOrBeingFarAway" methodname="FinishApproachGraceDoesNotRewardStoppingReversingOrBeingFarAway" classname="RaceParticipantSessionTests" runstate="Runnable" seed="1927618238" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000075" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1104" name="FinishApproachNeverBypassesTheOverallOrMaximumHumanGraceDeadline" fullname="RaceParticipantSessionTests.FinishApproachNeverBypassesTheOverallOrMaximumHumanGraceDeadline" methodname="FinishApproachNeverBypassesTheOverallOrMaximumHumanGraceDeadline" classname="RaceParticipantSessionTests" runstate="Runnable" seed="1960953609" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000077" asserts="0">
+        <test-case id="1104" name="FinishApproachNeverBypassesTheOverallOrMaximumHumanGraceDeadline" fullname="RaceParticipantSessionTests.FinishApproachNeverBypassesTheOverallOrMaximumHumanGraceDeadline" methodname="FinishApproachNeverBypassesTheOverallOrMaximumHumanGraceDeadline" classname="RaceParticipantSessionTests" runstate="Runnable" seed="1082187130" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000074" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1109" name="GracePeriodRejectsLateFinishAndDuplicateWithdrawal" fullname="RaceParticipantSessionTests.GracePeriodRejectsLateFinishAndDuplicateWithdrawal" methodname="GracePeriodRejectsLateFinishAndDuplicateWithdrawal" classname="RaceParticipantSessionTests" runstate="Runnable" seed="1002793159" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000195" asserts="0">
+        <test-case id="1109" name="GracePeriodRejectsLateFinishAndDuplicateWithdrawal" fullname="RaceParticipantSessionTests.GracePeriodRejectsLateFinishAndDuplicateWithdrawal" methodname="GracePeriodRejectsLateFinishAndDuplicateWithdrawal" classname="RaceParticipantSessionTests" runstate="Runnable" seed="1424556043" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000190" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1106" name="HumanCompletionDoesNotWaitForCpu" fullname="RaceParticipantSessionTests.HumanCompletionDoesNotWaitForCpu" methodname="HumanCompletionDoesNotWaitForCpu" classname="RaceParticipantSessionTests" runstate="Runnable" seed="1976444902" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000164" asserts="0">
+        <test-case id="1106" name="HumanCompletionDoesNotWaitForCpu" fullname="RaceParticipantSessionTests.HumanCompletionDoesNotWaitForCpu" methodname="HumanCompletionDoesNotWaitForCpu" classname="RaceParticipantSessionTests" runstate="Runnable" seed="1390400134" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000163" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1107" name="OverallLimitAppliesWhenNobodyFinishes" fullname="RaceParticipantSessionTests.OverallLimitAppliesWhenNobodyFinishes" methodname="OverallLimitAppliesWhenNobodyFinishes" classname="RaceParticipantSessionTests" runstate="Runnable" seed="2116946775" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000111" asserts="0">
+        <test-case id="1107" name="OverallLimitAppliesWhenNobodyFinishes" fullname="RaceParticipantSessionTests.OverallLimitAppliesWhenNobodyFinishes" methodname="OverallLimitAppliesWhenNobodyFinishes" classname="RaceParticipantSessionTests" runstate="Runnable" seed="1457353742" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000107" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1102" name="TheFinishApproachChanceIsOnceOnlyAndCannotTurnWaitingIntoAnUnlimitedRace" fullname="RaceParticipantSessionTests.TheFinishApproachChanceIsOnceOnlyAndCannotTurnWaitingIntoAnUnlimitedRace" methodname="TheFinishApproachChanceIsOnceOnlyAndCannotTurnWaitingIntoAnUnlimitedRace" classname="RaceParticipantSessionTests" runstate="Runnable" seed="536900818" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000077" asserts="0">
+        <test-case id="1102" name="TheFinishApproachChanceIsOnceOnlyAndCannotTurnWaitingIntoAnUnlimitedRace" fullname="RaceParticipantSessionTests.TheFinishApproachChanceIsOnceOnlyAndCannotTurnWaitingIntoAnUnlimitedRace" methodname="TheFinishApproachChanceIsOnceOnlyAndCannotTurnWaitingIntoAnUnlimitedRace" classname="RaceParticipantSessionTests" runstate="Runnable" seed="625948459" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000070" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1108" name="WithdrawalCannotStealAFinishRank" fullname="RaceParticipantSessionTests.WithdrawalCannotStealAFinishRank" methodname="WithdrawalCannotStealAFinishRank" classname="RaceParticipantSessionTests" runstate="Runnable" seed="486333340" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000115" asserts="0">
+        <test-case id="1108" name="WithdrawalCannotStealAFinishRank" fullname="RaceParticipantSessionTests.WithdrawalCannotStealAFinishRank" methodname="WithdrawalCannotStealAFinishRank" classname="RaceParticipantSessionTests" runstate="Runnable" seed="905031930" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000113" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1112" name="RgpOperatorCommandTests" fullname="RgpOperatorCommandTests" classname="RgpOperatorCommandTests" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.021178" total="19" passed="19" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1112" name="RgpOperatorCommandTests" fullname="RgpOperatorCommandTests" classname="RgpOperatorCommandTests" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.019509" total="19" passed="19" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1118" name="AggregateImuHealthCannotInventAnUndiscoveredSecondDevice" fullname="RgpOperatorCommandTests.AggregateImuHealthCannotInventAnUndiscoveredSecondDevice" methodname="AggregateImuHealthCannotInventAnUndiscoveredSecondDevice" classname="RgpOperatorCommandTests" runstate="Runnable" seed="288977156" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.007561" asserts="0">
+        <test-case id="1118" name="AggregateImuHealthCannotInventAnUndiscoveredSecondDevice" fullname="RgpOperatorCommandTests.AggregateImuHealthCannotInventAnUndiscoveredSecondDevice" methodname="AggregateImuHealthCannotInventAnUndiscoveredSecondDevice" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1394430337" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.007316" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1123" name="AsyncFailureEarlyCompletionTimeoutAndResetHaveDefiniteResults" fullname="RgpOperatorCommandTests.AsyncFailureEarlyCompletionTimeoutAndResetHaveDefiniteResults" methodname="AsyncFailureEarlyCompletionTimeoutAndResetHaveDefiniteResults" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1982907293" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.002894" asserts="0">
+        <test-case id="1123" name="AsyncFailureEarlyCompletionTimeoutAndResetHaveDefiniteResults" fullname="RgpOperatorCommandTests.AsyncFailureEarlyCompletionTimeoutAndResetHaveDefiniteResults" methodname="AsyncFailureEarlyCompletionTimeoutAndResetHaveDefiniteResults" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1357085816" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.002667" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1113" name="CommandsUseOneSequenceAndRetryExactWireUntilMatchedAck" fullname="RgpOperatorCommandTests.CommandsUseOneSequenceAndRetryExactWireUntilMatchedAck" methodname="CommandsUseOneSequenceAndRetryExactWireUntilMatchedAck" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1444348827" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000922" asserts="0">
+        <test-case id="1113" name="CommandsUseOneSequenceAndRetryExactWireUntilMatchedAck" fullname="RgpOperatorCommandTests.CommandsUseOneSequenceAndRetryExactWireUntilMatchedAck" methodname="CommandsUseOneSequenceAndRetryExactWireUntilMatchedAck" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1648432646" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000779" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1114" name="CommandsValidateArgumentCountRangeAndDirectionBeforeWriting" fullname="RgpOperatorCommandTests.CommandsValidateArgumentCountRangeAndDirectionBeforeWriting" methodname="CommandsValidateArgumentCountRangeAndDirectionBeforeWriting" classname="RgpOperatorCommandTests" runstate="Runnable" seed="466529453" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000683" asserts="0">
+        <test-case id="1114" name="CommandsValidateArgumentCountRangeAndDirectionBeforeWriting" fullname="RgpOperatorCommandTests.CommandsValidateArgumentCountRangeAndDirectionBeforeWriting" methodname="CommandsValidateArgumentCountRangeAndDirectionBeforeWriting" classname="RgpOperatorCommandTests" runstate="Runnable" seed="901837383" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000632" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1130" name="FailedAutomaticCalibrationIsBoundedAndReadyHardwareIsUntouched" fullname="RgpOperatorCommandTests.FailedAutomaticCalibrationIsBoundedAndReadyHardwareIsUntouched" methodname="FailedAutomaticCalibrationIsBoundedAndReadyHardwareIsUntouched" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1331791596" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000482" asserts="0">
+        <test-case id="1130" name="FailedAutomaticCalibrationIsBoundedAndReadyHardwareIsUntouched" fullname="RgpOperatorCommandTests.FailedAutomaticCalibrationIsBoundedAndReadyHardwareIsUntouched" methodname="FailedAutomaticCalibrationIsBoundedAndReadyHardwareIsUntouched" classname="RgpOperatorCommandTests" runstate="Runnable" seed="415475566" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000443" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1115" name="FailedOperatorQueriesDoNotDestroyTheEstablishedSession" fullname="RgpOperatorCommandTests.FailedOperatorQueriesDoNotDestroyTheEstablishedSession" methodname="FailedOperatorQueriesDoNotDestroyTheEstablishedSession" classname="RgpOperatorCommandTests" runstate="Runnable" seed="15254094" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000206" asserts="0">
+        <test-case id="1115" name="FailedOperatorQueriesDoNotDestroyTheEstablishedSession" fullname="RgpOperatorCommandTests.FailedOperatorQueriesDoNotDestroyTheEstablishedSession" methodname="FailedOperatorQueriesDoNotDestroyTheEstablishedSession" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1162202625" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000192" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1125" name="FirmwareCanLockItsReferenceAfterCalibrationWithoutPrematureAngleZero" fullname="RgpOperatorCommandTests.FirmwareCanLockItsReferenceAfterCalibrationWithoutPrematureAngleZero" methodname="FirmwareCanLockItsReferenceAfterCalibrationWithoutPrematureAngleZero" classname="RgpOperatorCommandTests" runstate="Runnable" seed="286639206" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000766" asserts="0">
+        <test-case id="1125" name="FirmwareCanLockItsReferenceAfterCalibrationWithoutPrematureAngleZero" fullname="RgpOperatorCommandTests.FirmwareCanLockItsReferenceAfterCalibrationWithoutPrematureAngleZero" methodname="FirmwareCanLockItsReferenceAfterCalibrationWithoutPrematureAngleZero" classname="RgpOperatorCommandTests" runstate="Runnable" seed="237321567" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000720" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1116" name="HardwareEvidenceResetsAndUnmatchedAcksCannotClaimConnections" fullname="RgpOperatorCommandTests.HardwareEvidenceResetsAndUnmatchedAcksCannotClaimConnections" methodname="HardwareEvidenceResetsAndUnmatchedAcksCannotClaimConnections" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1277786255" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000402" asserts="0">
+        <test-case id="1116" name="HardwareEvidenceResetsAndUnmatchedAcksCannotClaimConnections" fullname="RgpOperatorCommandTests.HardwareEvidenceResetsAndUnmatchedAcksCannotClaimConnections" methodname="HardwareEvidenceResetsAndUnmatchedAcksCannotClaimConnections" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1182629483" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000385" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1121" name="LegacyFirmwareCannotSilentlyPretendToEnableSteeringOnly" fullname="RgpOperatorCommandTests.LegacyFirmwareCannotSilentlyPretendToEnableSteeringOnly" methodname="LegacyFirmwareCannotSilentlyPretendToEnableSteeringOnly" classname="RgpOperatorCommandTests" runstate="Runnable" seed="863429225" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000348" asserts="0">
+        <test-case id="1121" name="LegacyFirmwareCannotSilentlyPretendToEnableSteeringOnly" fullname="RgpOperatorCommandTests.LegacyFirmwareCannotSilentlyPretendToEnableSteeringOnly" methodname="LegacyFirmwareCannotSilentlyPretendToEnableSteeringOnly" classname="RgpOperatorCommandTests" runstate="Runnable" seed="592736074" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000336" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1126" name="LegacyFirmwareGetsOneAngleRequestAfterPostCalibrationSettling" fullname="RgpOperatorCommandTests.LegacyFirmwareGetsOneAngleRequestAfterPostCalibrationSettling" methodname="LegacyFirmwareGetsOneAngleRequestAfterPostCalibrationSettling" classname="RgpOperatorCommandTests" runstate="Runnable" seed="503315802" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000462" asserts="0">
+        <test-case id="1126" name="LegacyFirmwareGetsOneAngleRequestAfterPostCalibrationSettling" fullname="RgpOperatorCommandTests.LegacyFirmwareGetsOneAngleRequestAfterPostCalibrationSettling" methodname="LegacyFirmwareGetsOneAngleRequestAfterPostCalibrationSettling" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1674290700" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000445" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1131" name="ManualStartupCalibrationDoesNotTriggerAnAdditionalAutomaticRequest" fullname="RgpOperatorCommandTests.ManualStartupCalibrationDoesNotTriggerAnAdditionalAutomaticRequest" methodname="ManualStartupCalibrationDoesNotTriggerAnAdditionalAutomaticRequest" classname="RgpOperatorCommandTests" runstate="Runnable" seed="2001066892" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000235" asserts="0">
+        <test-case id="1131" name="ManualStartupCalibrationDoesNotTriggerAnAdditionalAutomaticRequest" fullname="RgpOperatorCommandTests.ManualStartupCalibrationDoesNotTriggerAnAdditionalAutomaticRequest" methodname="ManualStartupCalibrationDoesNotTriggerAnAdditionalAutomaticRequest" classname="RgpOperatorCommandTests" runstate="Runnable" seed="560945360" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000227" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1122" name="OperatorResultsMatchRequestsAndWaitForAsyncCompletion" fullname="RgpOperatorCommandTests.OperatorResultsMatchRequestsAndWaitForAsyncCompletion" methodname="OperatorResultsMatchRequestsAndWaitForAsyncCompletion" classname="RgpOperatorCommandTests" runstate="Runnable" seed="150710110" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000778" asserts="0">
+        <test-case id="1122" name="OperatorResultsMatchRequestsAndWaitForAsyncCompletion" fullname="RgpOperatorCommandTests.OperatorResultsMatchRequestsAndWaitForAsyncCompletion" methodname="OperatorResultsMatchRequestsAndWaitForAsyncCompletion" classname="RgpOperatorCommandTests" runstate="Runnable" seed="2095083454" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000725" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1128" name="P1OnlyCalibrationDoesNotWaitForUnusedP2OrPedalHardware" fullname="RgpOperatorCommandTests.P1OnlyCalibrationDoesNotWaitForUnusedP2OrPedalHardware" methodname="P1OnlyCalibrationDoesNotWaitForUnusedP2OrPedalHardware" classname="RgpOperatorCommandTests" runstate="Runnable" seed="549729965" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000298" asserts="0">
+        <test-case id="1128" name="P1OnlyCalibrationDoesNotWaitForUnusedP2OrPedalHardware" fullname="RgpOperatorCommandTests.P1OnlyCalibrationDoesNotWaitForUnusedP2OrPedalHardware" methodname="P1OnlyCalibrationDoesNotWaitForUnusedP2OrPedalHardware" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1925757649" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000282" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1119" name="PlayerSlotsFollowAddressesAndAnUnusedLostWheelCannotDisableTheOther" fullname="RgpOperatorCommandTests.PlayerSlotsFollowAddressesAndAnUnusedLostWheelCannotDisableTheOther" methodname="PlayerSlotsFollowAddressesAndAnUnusedLostWheelCannotDisableTheOther" classname="RgpOperatorCommandTests" runstate="Runnable" seed="611809221" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000422" asserts="0">
+        <test-case id="1119" name="PlayerSlotsFollowAddressesAndAnUnusedLostWheelCannotDisableTheOther" fullname="RgpOperatorCommandTests.PlayerSlotsFollowAddressesAndAnUnusedLostWheelCannotDisableTheOther" methodname="PlayerSlotsFollowAddressesAndAnUnusedLostWheelCannotDisableTheOther" classname="RgpOperatorCommandTests" runstate="Runnable" seed="552474672" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000312" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1129" name="SlowDiagnosticAckCannotDelayVerifiedStartupAnglePreparation" fullname="RgpOperatorCommandTests.SlowDiagnosticAckCannotDelayVerifiedStartupAnglePreparation" methodname="SlowDiagnosticAckCannotDelayVerifiedStartupAnglePreparation" classname="RgpOperatorCommandTests" runstate="Runnable" seed="886644789" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000219" asserts="0">
+        <test-case id="1129" name="SlowDiagnosticAckCannotDelayVerifiedStartupAnglePreparation" fullname="RgpOperatorCommandTests.SlowDiagnosticAckCannotDelayVerifiedStartupAnglePreparation" methodname="SlowDiagnosticAckCannotDelayVerifiedStartupAnglePreparation" classname="RgpOperatorCommandTests" runstate="Runnable" seed="655389129" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000191" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1124" name="StartupCalibratesOnceAndWaitsForVerifiedStatusBeforeZeroingAngle" fullname="RgpOperatorCommandTests.StartupCalibratesOnceAndWaitsForVerifiedStatusBeforeZeroingAngle" methodname="StartupCalibratesOnceAndWaitsForVerifiedStatusBeforeZeroingAngle" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1187066034" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000448" asserts="0">
+        <test-case id="1124" name="StartupCalibratesOnceAndWaitsForVerifiedStatusBeforeZeroingAngle" fullname="RgpOperatorCommandTests.StartupCalibratesOnceAndWaitsForVerifiedStatusBeforeZeroingAngle" methodname="StartupCalibratesOnceAndWaitsForVerifiedStatusBeforeZeroingAngle" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1784377817" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000402" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1120" name="SteeringOnlyModeNeedsAMatchedAcknowledgementAndNewTelemetryButNoPedals" fullname="RgpOperatorCommandTests.SteeringOnlyModeNeedsAMatchedAcknowledgementAndNewTelemetryButNoPedals" methodname="SteeringOnlyModeNeedsAMatchedAcknowledgementAndNewTelemetryButNoPedals" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1100565958" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000498" asserts="0">
+        <test-case id="1120" name="SteeringOnlyModeNeedsAMatchedAcknowledgementAndNewTelemetryButNoPedals" fullname="RgpOperatorCommandTests.SteeringOnlyModeNeedsAMatchedAcknowledgementAndNewTelemetryButNoPedals" methodname="SteeringOnlyModeNeedsAMatchedAcknowledgementAndNewTelemetryButNoPedals" classname="RgpOperatorCommandTests" runstate="Runnable" seed="504770139" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000455" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1117" name="TwoImusKeepSeparateIdentityFaultAndRecoveryEvidence" fullname="RgpOperatorCommandTests.TwoImusKeepSeparateIdentityFaultAndRecoveryEvidence" methodname="TwoImusKeepSeparateIdentityFaultAndRecoveryEvidence" classname="RgpOperatorCommandTests" runstate="Runnable" seed="391949585" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000475" asserts="0">
+        <test-case id="1117" name="TwoImusKeepSeparateIdentityFaultAndRecoveryEvidence" fullname="RgpOperatorCommandTests.TwoImusKeepSeparateIdentityFaultAndRecoveryEvidence" methodname="TwoImusKeepSeparateIdentityFaultAndRecoveryEvidence" classname="RgpOperatorCommandTests" runstate="Runnable" seed="761881913" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000401" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1127" name="TwoPlayerCalibrationWaitsForTheLateHandleDespiteAggregateImuOk" fullname="RgpOperatorCommandTests.TwoPlayerCalibrationWaitsForTheLateHandleDespiteAggregateImuOk" methodname="TwoPlayerCalibrationWaitsForTheLateHandleDespiteAggregateImuOk" classname="RgpOperatorCommandTests" runstate="Runnable" seed="378696745" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000347" asserts="0">
+        <test-case id="1127" name="TwoPlayerCalibrationWaitsForTheLateHandleDespiteAggregateImuOk" fullname="RgpOperatorCommandTests.TwoPlayerCalibrationWaitsForTheLateHandleDespiteAggregateImuOk" methodname="TwoPlayerCalibrationWaitsForTheLateHandleDespiteAggregateImuOk" classname="RgpOperatorCommandTests" runstate="Runnable" seed="1097872661" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:24Z" duration="0.000291" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1132" name="RgpSerialJournalTests" fullname="RgpSerialJournalTests" classname="RgpSerialJournalTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:16Z" duration="4.591073" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1132" name="RgpSerialJournalTests" fullname="RgpSerialJournalTests" classname="RgpSerialJournalTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:29Z" duration="4.788888" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1139" name="BoundedReplayReportsGapsAndResetsOnDeviceChange" fullname="RgpSerialJournalTests.BoundedReplayReportsGapsAndResetsOnDeviceChange" methodname="BoundedReplayReportsGapsAndResetsOnDeviceChange" classname="RgpSerialJournalTests" runstate="Runnable" seed="192585553" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.037744" asserts="0">
+        <test-case id="1139" name="BoundedReplayReportsGapsAndResetsOnDeviceChange" fullname="RgpSerialJournalTests.BoundedReplayReportsGapsAndResetsOnDeviceChange" methodname="BoundedReplayReportsGapsAndResetsOnDeviceChange" classname="RgpSerialJournalTests" runstate="Runnable" seed="1589647219" result="Passed" start-time="2026-10-27 03:50:24Z" end-time="2026-10-27 03:50:25Z" duration="0.037769" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1135" name="ContendedPendingCaptureIsBoundedAndReportsItsLoss" fullname="RgpSerialJournalTests.ContendedPendingCaptureIsBoundedAndReportsItsLoss" methodname="ContendedPendingCaptureIsBoundedAndReportsItsLoss" classname="RgpSerialJournalTests" runstate="Runnable" seed="1398019665" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.183641" asserts="0">
+        <test-case id="1135" name="ContendedPendingCaptureIsBoundedAndReportsItsLoss" fullname="RgpSerialJournalTests.ContendedPendingCaptureIsBoundedAndReportsItsLoss" methodname="ContendedPendingCaptureIsBoundedAndReportsItsLoss" classname="RgpSerialJournalTests" runstate="Runnable" seed="1956626268" result="Passed" start-time="2026-10-27 03:50:25Z" end-time="2026-10-27 03:50:25Z" duration="0.183584" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1138" name="InvalidTelemetryIsRetainedAndReconnectHasNoDuplicates" fullname="RgpSerialJournalTests.InvalidTelemetryIsRetainedAndReconnectHasNoDuplicates" methodname="InvalidTelemetryIsRetainedAndReconnectHasNoDuplicates" classname="RgpSerialJournalTests" runstate="Runnable" seed="148478813" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000287" asserts="0">
+        <test-case id="1138" name="InvalidTelemetryIsRetainedAndReconnectHasNoDuplicates" fullname="RgpSerialJournalTests.InvalidTelemetryIsRetainedAndReconnectHasNoDuplicates" methodname="InvalidTelemetryIsRetainedAndReconnectHasNoDuplicates" classname="RgpSerialJournalTests" runstate="Runnable" seed="1768721734" result="Passed" start-time="2026-10-27 03:50:25Z" end-time="2026-10-27 03:50:25Z" duration="0.000277" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1140" name="JsonEscapesDeviceTextAndConcurrentReadsRemainOrdered" fullname="RgpSerialJournalTests.JsonEscapesDeviceTextAndConcurrentReadsRemainOrdered" methodname="JsonEscapesDeviceTextAndConcurrentReadsRemainOrdered" classname="RgpSerialJournalTests" runstate="Runnable" seed="9796087" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.033287" asserts="0">
+        <test-case id="1140" name="JsonEscapesDeviceTextAndConcurrentReadsRemainOrdered" fullname="RgpSerialJournalTests.JsonEscapesDeviceTextAndConcurrentReadsRemainOrdered" methodname="JsonEscapesDeviceTextAndConcurrentReadsRemainOrdered" classname="RgpSerialJournalTests" runstate="Runnable" seed="729737728" result="Passed" start-time="2026-10-27 03:50:25Z" end-time="2026-10-27 03:50:25Z" duration="0.033110" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1134" name="PausedDashboardReaderCannotBlockAcquisitionAndReceiveTimeIsPreserved" fullname="RgpSerialJournalTests.PausedDashboardReaderCannotBlockAcquisitionAndReceiveTimeIsPreserved" methodname="PausedDashboardReaderCannotBlockAcquisitionAndReceiveTimeIsPreserved" classname="RgpSerialJournalTests" runstate="Runnable" seed="307844156" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000762" asserts="0">
+        <test-case id="1134" name="PausedDashboardReaderCannotBlockAcquisitionAndReceiveTimeIsPreserved" fullname="RgpSerialJournalTests.PausedDashboardReaderCannotBlockAcquisitionAndReceiveTimeIsPreserved" methodname="PausedDashboardReaderCannotBlockAcquisitionAndReceiveTimeIsPreserved" classname="RgpSerialJournalTests" runstate="Runnable" seed="62431542" result="Passed" start-time="2026-10-27 03:50:25Z" end-time="2026-10-27 03:50:25Z" duration="0.000790" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1133" name="PendingCaptureDrainsAfterReaderReleasesWithoutAnotherInputOrRead" fullname="RgpSerialJournalTests.PendingCaptureDrainsAfterReaderReleasesWithoutAnotherInputOrRead" methodname="PendingCaptureDrainsAfterReaderReleasesWithoutAnotherInputOrRead" classname="RgpSerialJournalTests" runstate="Runnable" seed="1765722072" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.000512" asserts="0">
+        <test-case id="1133" name="PendingCaptureDrainsAfterReaderReleasesWithoutAnotherInputOrRead" fullname="RgpSerialJournalTests.PendingCaptureDrainsAfterReaderReleasesWithoutAnotherInputOrRead" methodname="PendingCaptureDrainsAfterReaderReleasesWithoutAnotherInputOrRead" classname="RgpSerialJournalTests" runstate="Runnable" seed="825967705" result="Passed" start-time="2026-10-27 03:50:25Z" end-time="2026-10-27 03:50:25Z" duration="0.000520" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1137" name="RawReplayPreservesTelTransmitAndTerminatorsIndependently" fullname="RgpSerialJournalTests.RawReplayPreservesTelTransmitAndTerminatorsIndependently" methodname="RawReplayPreservesTelTransmitAndTerminatorsIndependently" classname="RgpSerialJournalTests" runstate="Runnable" seed="233988312" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:12Z" duration="0.029521" asserts="0">
+        <test-case id="1137" name="RawReplayPreservesTelTransmitAndTerminatorsIndependently" fullname="RgpSerialJournalTests.RawReplayPreservesTelTransmitAndTerminatorsIndependently" methodname="RawReplayPreservesTelTransmitAndTerminatorsIndependently" classname="RgpSerialJournalTests" runstate="Runnable" seed="2020720314" result="Passed" start-time="2026-10-27 03:50:25Z" end-time="2026-10-27 03:50:25Z" duration="0.023382" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1136" name="TelemetryDoesNotEvictHistoryAndCommandsAreIncluded" fullname="RgpSerialJournalTests.TelemetryDoesNotEvictHistoryAndCommandsAreIncluded" methodname="TelemetryDoesNotEvictHistoryAndCommandsAreIncluded" classname="RgpSerialJournalTests" runstate="Runnable" seed="2099800378" result="Passed" start-time="2026-10-27 00:20:12Z" end-time="2026-10-27 00:20:16Z" duration="4.303522" asserts="0">
+        <test-case id="1136" name="TelemetryDoesNotEvictHistoryAndCommandsAreIncluded" fullname="RgpSerialJournalTests.TelemetryDoesNotEvictHistoryAndCommandsAreIncluded" methodname="TelemetryDoesNotEvictHistoryAndCommandsAreIncluded" classname="RgpSerialJournalTests" runstate="Runnable" seed="889200436" result="Passed" start-time="2026-10-27 03:50:25Z" end-time="2026-10-27 03:50:29Z" duration="4.507589" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1141" name="RivalProximityTests" fullname="RivalProximityTests" classname="RivalProximityTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.002413" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1141" name="RivalProximityTests" fullname="RivalProximityTests" classname="RivalProximityTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.005576" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1142" name="AClosingFrontCarAndAFastRearCarBothWarn" fullname="RivalProximityTests.AClosingFrontCarAndAFastRearCarBothWarn" methodname="AClosingFrontCarAndAFastRearCarBothWarn" classname="RivalProximityTests" runstate="Runnable" seed="1622693803" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000306" asserts="0">
+        <test-case id="1142" name="AClosingFrontCarAndAFastRearCarBothWarn" fullname="RivalProximityTests.AClosingFrontCarAndAFastRearCarBothWarn" methodname="AClosingFrontCarAndAFastRearCarBothWarn" classname="RivalProximityTests" runstate="Runnable" seed="662113999" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.001162" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1145" name="ApproachingTheLineAndLappedCarsUsePhysicalCourseSeparation" fullname="RivalProximityTests.ApproachingTheLineAndLappedCarsUsePhysicalCourseSeparation" methodname="ApproachingTheLineAndLappedCarsUsePhysicalCourseSeparation" classname="RivalProximityTests" runstate="Runnable" seed="867519149" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000127" asserts="0">
+        <test-case id="1145" name="ApproachingTheLineAndLappedCarsUsePhysicalCourseSeparation" fullname="RivalProximityTests.ApproachingTheLineAndLappedCarsUsePhysicalCourseSeparation" methodname="ApproachingTheLineAndLappedCarsUsePhysicalCourseSeparation" classname="RivalProximityTests" runstate="Runnable" seed="1608554664" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000233" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1146" name="CloserAndFasterThreatsHaveStrongerWarningsWithinBounds" fullname="RivalProximityTests.CloserAndFasterThreatsHaveStrongerWarningsWithinBounds" methodname="CloserAndFasterThreatsHaveStrongerWarningsWithinBounds" classname="RivalProximityTests" runstate="Runnable" seed="800364735" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000088" asserts="0">
+        <test-case id="1146" name="CloserAndFasterThreatsHaveStrongerWarningsWithinBounds" fullname="RivalProximityTests.CloserAndFasterThreatsHaveStrongerWarningsWithinBounds" methodname="CloserAndFasterThreatsHaveStrongerWarningsWithinBounds" classname="RivalProximityTests" runstate="Runnable" seed="1608736874" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000116" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1144" name="DifferentDecksParallelSectionsAndOccludedCarsDoNotWarn" fullname="RivalProximityTests.DifferentDecksParallelSectionsAndOccludedCarsDoNotWarn" methodname="DifferentDecksParallelSectionsAndOccludedCarsDoNotWarn" classname="RivalProximityTests" runstate="Runnable" seed="1103458825" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000089" asserts="0">
+        <test-case id="1144" name="DifferentDecksParallelSectionsAndOccludedCarsDoNotWarn" fullname="RivalProximityTests.DifferentDecksParallelSectionsAndOccludedCarsDoNotWarn" methodname="DifferentDecksParallelSectionsAndOccludedCarsDoNotWarn" classname="RivalProximityTests" runstate="Runnable" seed="988885110" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000125" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1147" name="InvalidGeometryCannotProduceAWarning" fullname="RivalProximityTests.InvalidGeometryCannotProduceAWarning" methodname="InvalidGeometryCannotProduceAWarning" classname="RivalProximityTests" runstate="Runnable" seed="1196035452" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000097" asserts="0">
+        <test-case id="1147" name="InvalidGeometryCannotProduceAWarning" fullname="RivalProximityTests.InvalidGeometryCannotProduceAWarning" methodname="InvalidGeometryCannotProduceAWarning" classname="RivalProximityTests" runstate="Runnable" seed="1024604716" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000186" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1143" name="VeryCloseCarsWarnEvenAtEqualSpeedButSideBySideDoesNotFlicker" fullname="RivalProximityTests.VeryCloseCarsWarnEvenAtEqualSpeedButSideBySideDoesNotFlicker" methodname="VeryCloseCarsWarnEvenAtEqualSpeedButSideBySideDoesNotFlicker" classname="RivalProximityTests" runstate="Runnable" seed="716177045" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000096" asserts="0">
+        <test-case id="1143" name="VeryCloseCarsWarnEvenAtEqualSpeedButSideBySideDoesNotFlicker" fullname="RivalProximityTests.VeryCloseCarsWarnEvenAtEqualSpeedButSideBySideDoesNotFlicker" methodname="VeryCloseCarsWarnEvenAtEqualSpeedButSideBySideDoesNotFlicker" classname="RivalProximityTests" runstate="Runnable" seed="743273441" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000160" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1148" name="RoadRewardBudgetTests" fullname="RoadRewardBudgetTests" classname="RoadRewardBudgetTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.001067" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1148" name="RoadRewardBudgetTests" fullname="RoadRewardBudgetTests" classname="RoadRewardBudgetTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.003133" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1152" name="InvalidOrNegativeTimeCannotApplyAReward" fullname="RoadRewardBudgetTests.InvalidOrNegativeTimeCannotApplyAReward" methodname="InvalidOrNegativeTimeCannotApplyAReward" classname="RoadRewardBudgetTests" runstate="Runnable" seed="905445487" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000145" asserts="0">
+        <test-case id="1152" name="InvalidOrNegativeTimeCannotApplyAReward" fullname="RoadRewardBudgetTests.InvalidOrNegativeTimeCannotApplyAReward" methodname="InvalidOrNegativeTimeCannotApplyAReward" classname="RoadRewardBudgetTests" runstate="Runnable" seed="1302540887" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.001064" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1151" name="PendingLegacyAccelerationCountsTowardsTheSpeedLimit" fullname="RoadRewardBudgetTests.PendingLegacyAccelerationCountsTowardsTheSpeedLimit" methodname="PendingLegacyAccelerationCountsTowardsTheSpeedLimit" classname="RoadRewardBudgetTests" runstate="Runnable" seed="1051192763" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000080" asserts="0">
+        <test-case id="1151" name="PendingLegacyAccelerationCountsTowardsTheSpeedLimit" fullname="RoadRewardBudgetTests.PendingLegacyAccelerationCountsTowardsTheSpeedLimit" methodname="PendingLegacyAccelerationCountsTowardsTheSpeedLimit" classname="RoadRewardBudgetTests" runstate="Runnable" seed="1975625058" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000092" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1149" name="SimultaneousNewRewardsUseTheStrongerAcceleration" fullname="RoadRewardBudgetTests.SimultaneousNewRewardsUseTheStrongerAcceleration" methodname="SimultaneousNewRewardsUseTheStrongerAcceleration" classname="RoadRewardBudgetTests" runstate="Runnable" seed="246752893" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000063" asserts="0">
+        <test-case id="1149" name="SimultaneousNewRewardsUseTheStrongerAcceleration" fullname="RoadRewardBudgetTests.SimultaneousNewRewardsUseTheStrongerAcceleration" methodname="SimultaneousNewRewardsUseTheStrongerAcceleration" classname="RoadRewardBudgetTests" runstate="Runnable" seed="176528195" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000497" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1150" name="TheLastFrameOfLegacyBoostStillConsumesThisFramesBudget" fullname="RoadRewardBudgetTests.TheLastFrameOfLegacyBoostStillConsumesThisFramesBudget" methodname="TheLastFrameOfLegacyBoostStillConsumesThisFramesBudget" classname="RoadRewardBudgetTests" runstate="Runnable" seed="1012591690" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000058" asserts="0">
+        <test-case id="1150" name="TheLastFrameOfLegacyBoostStillConsumesThisFramesBudget" fullname="RoadRewardBudgetTests.TheLastFrameOfLegacyBoostStillConsumesThisFramesBudget" methodname="TheLastFrameOfLegacyBoostStillConsumesThisFramesBudget" classname="RoadRewardBudgetTests" runstate="Runnable" seed="178321415" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000073" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1153" name="SerialInputProtocolTests" fullname="SerialInputProtocolTests" classname="SerialInputProtocolTests" runstate="Runnable" testcasecount="18" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.015150" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1153" name="SerialInputProtocolTests" fullname="SerialInputProtocolTests" classname="SerialInputProtocolTests" runstate="Runnable" testcasecount="18" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.016344" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1154" name="AllCrcVectors" fullname="SerialInputProtocolTests.AllCrcVectors" methodname="AllCrcVectors" classname="SerialInputProtocolTests" runstate="Runnable" seed="1466276408" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.001780" asserts="0">
+        <test-case id="1154" name="AllCrcVectors" fullname="SerialInputProtocolTests.AllCrcVectors" methodname="AllCrcVectors" classname="SerialInputProtocolTests" runstate="Runnable" seed="2053198275" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.001342" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1156" name="AllHostInvalidVectors" fullname="SerialInputProtocolTests.AllHostInvalidVectors" methodname="AllHostInvalidVectors" classname="SerialInputProtocolTests" runstate="Runnable" seed="1109994119" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.002858" asserts="0">
+        <test-case id="1156" name="AllHostInvalidVectors" fullname="SerialInputProtocolTests.AllHostInvalidVectors" methodname="AllHostInvalidVectors" classname="SerialInputProtocolTests" runstate="Runnable" seed="1728100882" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.003583" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1155" name="AllHostValidVectors" fullname="SerialInputProtocolTests.AllHostValidVectors" methodname="AllHostValidVectors" classname="SerialInputProtocolTests" runstate="Runnable" seed="1138203322" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.002812" asserts="0">
+        <test-case id="1155" name="AllHostValidVectors" fullname="SerialInputProtocolTests.AllHostValidVectors" methodname="AllHostValidVectors" classname="SerialInputProtocolTests" runstate="Runnable" seed="1663367880" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.002942" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1164" name="CommandTimeoutEmitsOneNotificationPerFailedRequest" fullname="SerialInputProtocolTests.CommandTimeoutEmitsOneNotificationPerFailedRequest" methodname="CommandTimeoutEmitsOneNotificationPerFailedRequest" classname="SerialInputProtocolTests" runstate="Runnable" seed="975714960" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000286" asserts="0">
+        <test-case id="1164" name="CommandTimeoutEmitsOneNotificationPerFailedRequest" fullname="SerialInputProtocolTests.CommandTimeoutEmitsOneNotificationPerFailedRequest" methodname="CommandTimeoutEmitsOneNotificationPerFailedRequest" classname="SerialInputProtocolTests" runstate="Runnable" seed="166281128" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000670" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1170" name="DecoderResynchronizesAndExpiresPartialFrames" fullname="SerialInputProtocolTests.DecoderResynchronizesAndExpiresPartialFrames" methodname="DecoderResynchronizesAndExpiresPartialFrames" classname="SerialInputProtocolTests" runstate="Runnable" seed="111155568" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000270" asserts="0">
+        <test-case id="1170" name="DecoderResynchronizesAndExpiresPartialFrames" fullname="SerialInputProtocolTests.DecoderResynchronizesAndExpiresPartialFrames" methodname="DecoderResynchronizesAndExpiresPartialFrames" classname="SerialInputProtocolTests" runstate="Runnable" seed="1057669456" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000300" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1169" name="DifferentMajorStopsInputAndCommands" fullname="SerialInputProtocolTests.DifferentMajorStopsInputAndCommands" methodname="DifferentMajorStopsInputAndCommands" classname="SerialInputProtocolTests" runstate="Runnable" seed="88835628" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000222" asserts="0">
+        <test-case id="1169" name="DifferentMajorStopsInputAndCommands" fullname="SerialInputProtocolTests.DifferentMajorStopsInputAndCommands" methodname="DifferentMajorStopsInputAndCommands" classname="SerialInputProtocolTests" runstate="Runnable" seed="429639980" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000227" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1160" name="DuplicateOldAndWrappedTelSequences" fullname="SerialInputProtocolTests.DuplicateOldAndWrappedTelSequences" methodname="DuplicateOldAndWrappedTelSequences" classname="SerialInputProtocolTests" runstate="Runnable" seed="1686078298" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000320" asserts="0">
+        <test-case id="1160" name="DuplicateOldAndWrappedTelSequences" fullname="SerialInputProtocolTests.DuplicateOldAndWrappedTelSequences" methodname="DuplicateOldAndWrappedTelSequences" classname="SerialInputProtocolTests" runstate="Runnable" seed="627568025" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000334" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1168" name="DuplicateTelCannotRefreshTimeoutAndStateRecoveryNeedsNewTel" fullname="SerialInputProtocolTests.DuplicateTelCannotRefreshTimeoutAndStateRecoveryNeedsNewTel" methodname="DuplicateTelCannotRefreshTimeoutAndStateRecoveryNeedsNewTel" classname="SerialInputProtocolTests" runstate="Runnable" seed="1512108255" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000235" asserts="0">
+        <test-case id="1168" name="DuplicateTelCannotRefreshTimeoutAndStateRecoveryNeedsNewTel" fullname="SerialInputProtocolTests.DuplicateTelCannotRefreshTimeoutAndStateRecoveryNeedsNewTel" methodname="DuplicateTelCannotRefreshTimeoutAndStateRecoveryNeedsNewTel" classname="SerialInputProtocolTests" runstate="Runnable" seed="2116922530" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000230" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1158" name="HandshakeWorksWithoutBootEventsAndUsesOwnSequence" fullname="SerialInputProtocolTests.HandshakeWorksWithoutBootEventsAndUsesOwnSequence" methodname="HandshakeWorksWithoutBootEventsAndUsesOwnSequence" classname="SerialInputProtocolTests" runstate="Runnable" seed="446712756" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000274" asserts="0">
+        <test-case id="1158" name="HandshakeWorksWithoutBootEventsAndUsesOwnSequence" fullname="SerialInputProtocolTests.HandshakeWorksWithoutBootEventsAndUsesOwnSequence" methodname="HandshakeWorksWithoutBootEventsAndUsesOwnSequence" classname="SerialInputProtocolTests" runstate="Runnable" seed="1377265992" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000275" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1166" name="HelloResetsInputPendingCommandsAndSequenceTracking" fullname="SerialInputProtocolTests.HelloResetsInputPendingCommandsAndSequenceTracking" methodname="HelloResetsInputPendingCommandsAndSequenceTracking" classname="SerialInputProtocolTests" runstate="Runnable" seed="41858330" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000360" asserts="0">
+        <test-case id="1166" name="HelloResetsInputPendingCommandsAndSequenceTracking" fullname="SerialInputProtocolTests.HelloResetsInputPendingCommandsAndSequenceTracking" methodname="HelloResetsInputPendingCommandsAndSequenceTracking" classname="SerialInputProtocolTests" runstate="Runnable" seed="1642959402" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000373" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1171" name="LegacyAndNoncanonicalInvalidNumbersAreRejected" fullname="SerialInputProtocolTests.LegacyAndNoncanonicalInvalidNumbersAreRejected" methodname="LegacyAndNoncanonicalInvalidNumbersAreRejected" classname="SerialInputProtocolTests" runstate="Runnable" seed="275383212" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000227" asserts="0">
+        <test-case id="1171" name="LegacyAndNoncanonicalInvalidNumbersAreRejected" fullname="SerialInputProtocolTests.LegacyAndNoncanonicalInvalidNumbersAreRejected" methodname="LegacyAndNoncanonicalInvalidNumbersAreRejected" classname="SerialInputProtocolTests" runstate="Runnable" seed="2042277623" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000317" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1167" name="PreviousSessionAckDoesNotConsumeNewOpenRequest" fullname="SerialInputProtocolTests.PreviousSessionAckDoesNotConsumeNewOpenRequest" methodname="PreviousSessionAckDoesNotConsumeNewOpenRequest" classname="SerialInputProtocolTests" runstate="Runnable" seed="592840136" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000267" asserts="0">
+        <test-case id="1167" name="PreviousSessionAckDoesNotConsumeNewOpenRequest" fullname="SerialInputProtocolTests.PreviousSessionAckDoesNotConsumeNewOpenRequest" methodname="PreviousSessionAckDoesNotConsumeNewOpenRequest" classname="SerialInputProtocolTests" runstate="Runnable" seed="1442316997" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000269" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1163" name="RetriesUseIdenticalFrameAtOneSecondAndStopAfterTwo" fullname="SerialInputProtocolTests.RetriesUseIdenticalFrameAtOneSecondAndStopAfterTwo" methodname="RetriesUseIdenticalFrameAtOneSecondAndStopAfterTwo" classname="SerialInputProtocolTests" runstate="Runnable" seed="1388739144" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000162" asserts="0">
+        <test-case id="1163" name="RetriesUseIdenticalFrameAtOneSecondAndStopAfterTwo" fullname="SerialInputProtocolTests.RetriesUseIdenticalFrameAtOneSecondAndStopAfterTwo" methodname="RetriesUseIdenticalFrameAtOneSecondAndStopAfterTwo" classname="SerialInputProtocolTests" runstate="Runnable" seed="771026618" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000168" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1157" name="SharedFramingNegativesInEitherDirectionAreRejected" fullname="SerialInputProtocolTests.SharedFramingNegativesInEitherDirectionAreRejected" methodname="SharedFramingNegativesInEitherDirectionAreRejected" classname="SerialInputProtocolTests" runstate="Runnable" seed="172352534" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000529" asserts="0">
+        <test-case id="1157" name="SharedFramingNegativesInEitherDirectionAreRejected" fullname="SerialInputProtocolTests.SharedFramingNegativesInEitherDirectionAreRejected" methodname="SharedFramingNegativesInEitherDirectionAreRejected" classname="SerialInputProtocolTests" runstate="Runnable" seed="1029965634" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000577" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1161" name="StaleUsesReceiveTimeAndConfiguredRate" fullname="SerialInputProtocolTests.StaleUsesReceiveTimeAndConfiguredRate" methodname="StaleUsesReceiveTimeAndConfiguredRate" classname="SerialInputProtocolTests" runstate="Runnable" seed="2053649315" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000375" asserts="0">
+        <test-case id="1161" name="StaleUsesReceiveTimeAndConfiguredRate" fullname="SerialInputProtocolTests.StaleUsesReceiveTimeAndConfiguredRate" methodname="StaleUsesReceiveTimeAndConfiguredRate" classname="SerialInputProtocolTests" runstate="Runnable" seed="1289558351" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000429" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1162" name="StateChangesErrorsAndDisconnectImmediatelyInvalidateBothPlayers" fullname="SerialInputProtocolTests.StateChangesErrorsAndDisconnectImmediatelyInvalidateBothPlayers" methodname="StateChangesErrorsAndDisconnectImmediatelyInvalidateBothPlayers" classname="SerialInputProtocolTests" runstate="Runnable" seed="563167778" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000897" asserts="0">
+        <test-case id="1162" name="StateChangesErrorsAndDisconnectImmediatelyInvalidateBothPlayers" fullname="SerialInputProtocolTests.StateChangesErrorsAndDisconnectImmediatelyInvalidateBothPlayers" methodname="StateChangesErrorsAndDisconnectImmediatelyInvalidateBothPlayers" classname="SerialInputProtocolTests" runstate="Runnable" seed="921537640" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000911" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1159" name="TelemetryKeepsSixValuesAndRejectsPartialUpdate" fullname="SerialInputProtocolTests.TelemetryKeepsSixValuesAndRejectsPartialUpdate" methodname="TelemetryKeepsSixValuesAndRejectsPartialUpdate" classname="SerialInputProtocolTests" runstate="Runnable" seed="1760705473" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.001018" asserts="0">
+        <test-case id="1159" name="TelemetryKeepsSixValuesAndRejectsPartialUpdate" fullname="SerialInputProtocolTests.TelemetryKeepsSixValuesAndRejectsPartialUpdate" methodname="TelemetryKeepsSixValuesAndRejectsPartialUpdate" classname="SerialInputProtocolTests" runstate="Runnable" seed="614331058" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.001058" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1165" name="UnknownAckStatusCompletesWithoutRetryAndUnmatchedAckDoesNot" fullname="SerialInputProtocolTests.UnknownAckStatusCompletesWithoutRetryAndUnmatchedAckDoesNot" methodname="UnknownAckStatusCompletesWithoutRetryAndUnmatchedAckDoesNot" classname="SerialInputProtocolTests" runstate="Runnable" seed="1264435987" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000155" asserts="0">
+        <test-case id="1165" name="UnknownAckStatusCompletesWithoutRetryAndUnmatchedAckDoesNot" fullname="SerialInputProtocolTests.UnknownAckStatusCompletesWithoutRetryAndUnmatchedAckDoesNot" methodname="UnknownAckStatusCompletesWithoutRetryAndUnmatchedAckDoesNot" classname="SerialInputProtocolTests" runstate="Runnable" seed="1695261950" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000168" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1172" name="SlipstreamChargeTests" fullname="SlipstreamChargeTests" classname="SlipstreamChargeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.001081" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1172" name="SlipstreamChargeTests" fullname="SlipstreamChargeTests" classname="SlipstreamChargeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.001183" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1175" name="InvalidTimeCannotPoisonTheChargeState" fullname="SlipstreamChargeTests.InvalidTimeCannotPoisonTheChargeState" methodname="InvalidTimeCannotPoisonTheChargeState" classname="SlipstreamChargeTests" runstate="Runnable" seed="1360162475" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000181" asserts="0">
+        <test-case id="1175" name="InvalidTimeCannotPoisonTheChargeState" fullname="SlipstreamChargeTests.InvalidTimeCannotPoisonTheChargeState" methodname="InvalidTimeCannotPoisonTheChargeState" classname="SlipstreamChargeTests" runstate="Runnable" seed="201178792" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000189" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1173" name="OnlySustainedPursuitOfOneTargetAwardsABoost" fullname="SlipstreamChargeTests.OnlySustainedPursuitOfOneTargetAwardsABoost" methodname="OnlySustainedPursuitOfOneTargetAwardsABoost" classname="SlipstreamChargeTests" runstate="Runnable" seed="2086117803" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000131" asserts="0">
+        <test-case id="1173" name="OnlySustainedPursuitOfOneTargetAwardsABoost" fullname="SlipstreamChargeTests.OnlySustainedPursuitOfOneTargetAwardsABoost" methodname="OnlySustainedPursuitOfOneTargetAwardsABoost" classname="SlipstreamChargeTests" runstate="Runnable" seed="98490662" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000139" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1174" name="SwitchingCarsOrLeavingTheCorridorResetsProgress" fullname="SlipstreamChargeTests.SwitchingCarsOrLeavingTheCorridorResetsProgress" methodname="SwitchingCarsOrLeavingTheCorridorResetsProgress" classname="SlipstreamChargeTests" runstate="Runnable" seed="1886643680" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000120" asserts="0">
+        <test-case id="1174" name="SwitchingCarsOrLeavingTheCorridorResetsProgress" fullname="SlipstreamChargeTests.SwitchingCarsOrLeavingTheCorridorResetsProgress" methodname="SwitchingCarsOrLeavingTheCorridorResetsProgress" classname="SlipstreamChargeTests" runstate="Runnable" seed="1455448240" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000121" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1176" name="SteeringTractionTests" fullname="SteeringTractionTests" classname="SteeringTractionTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.001135" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1176" name="SteeringTractionTests" fullname="SteeringTractionTests" classname="SteeringTractionTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.001250" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1178" name="GripCorrectionIsBoundedBySpeedAndTimeWithoutOvershooting" fullname="SteeringTractionTests.GripCorrectionIsBoundedBySpeedAndTimeWithoutOvershooting" methodname="GripCorrectionIsBoundedBySpeedAndTimeWithoutOvershooting" classname="SteeringTractionTests" runstate="Runnable" seed="1021157427" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000175" asserts="0">
+        <test-case id="1178" name="GripCorrectionIsBoundedBySpeedAndTimeWithoutOvershooting" fullname="SteeringTractionTests.GripCorrectionIsBoundedBySpeedAndTimeWithoutOvershooting" methodname="GripCorrectionIsBoundedBySpeedAndTimeWithoutOvershooting" classname="SteeringTractionTests" runstate="Runnable" seed="1291769486" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000185" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1180" name="InvalidAndStationaryInputsCannotInjectMotion" fullname="SteeringTractionTests.InvalidAndStationaryInputsCannotInjectMotion" methodname="InvalidAndStationaryInputsCannotInjectMotion" classname="SteeringTractionTests" runstate="Runnable" seed="562407533" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000114" asserts="0">
+        <test-case id="1180" name="InvalidAndStationaryInputsCannotInjectMotion" fullname="SteeringTractionTests.InvalidAndStationaryInputsCannotInjectMotion" methodname="InvalidAndStationaryInputsCannotInjectMotion" classname="SteeringTractionTests" runstate="Runnable" seed="789675137" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000124" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1177" name="SmallSlipIsLeftAloneAndExcessIsRecoveredSymmetrically" fullname="SteeringTractionTests.SmallSlipIsLeftAloneAndExcessIsRecoveredSymmetrically" methodname="SmallSlipIsLeftAloneAndExcessIsRecoveredSymmetrically" classname="SteeringTractionTests" runstate="Runnable" seed="449801727" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000074" asserts="0">
+        <test-case id="1177" name="SmallSlipIsLeftAloneAndExcessIsRecoveredSymmetrically" fullname="SteeringTractionTests.SmallSlipIsLeftAloneAndExcessIsRecoveredSymmetrically" methodname="SmallSlipIsLeftAloneAndExcessIsRecoveredSymmetrically" classname="SteeringTractionTests" runstate="Runnable" seed="1142940980" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000073" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1179" name="YawFeedbackDampsRunawayRotationWithABoundedSymmetricResponse" fullname="SteeringTractionTests.YawFeedbackDampsRunawayRotationWithABoundedSymmetricResponse" methodname="YawFeedbackDampsRunawayRotationWithABoundedSymmetricResponse" classname="SteeringTractionTests" runstate="Runnable" seed="1293758110" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000074" asserts="0">
+        <test-case id="1179" name="YawFeedbackDampsRunawayRotationWithABoundedSymmetricResponse" fullname="SteeringTractionTests.YawFeedbackDampsRunawayRotationWithABoundedSymmetricResponse" methodname="YawFeedbackDampsRunawayRotationWithABoundedSymmetricResponse" classname="SteeringTractionTests" runstate="Runnable" seed="1671212008" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000073" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1181" name="TubeLineChallengeTests" fullname="TubeLineChallengeTests" classname="TubeLineChallengeTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.001481" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1181" name="TubeLineChallengeTests" fullname="TubeLineChallengeTests" classname="TubeLineChallengeTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.002942" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1182" name="EitherLaneAwardsOncePerLapAndPlayersAreIndependent" fullname="TubeLineChallengeTests.EitherLaneAwardsOncePerLapAndPlayersAreIndependent" methodname="EitherLaneAwardsOncePerLapAndPlayersAreIndependent" classname="TubeLineChallengeTests" runstate="Runnable" seed="1855359465" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000560" asserts="0">
+        <test-case id="1182" name="EitherLaneAwardsOncePerLapAndPlayersAreIndependent" fullname="TubeLineChallengeTests.EitherLaneAwardsOncePerLapAndPlayersAreIndependent" methodname="EitherLaneAwardsOncePerLapAndPlayersAreIndependent" classname="TubeLineChallengeTests" runstate="Runnable" seed="1216924057" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.001953" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1183" name="JoiningHalfwaySwitchingLaneOrReversingCannotCompleteTheLine" fullname="TubeLineChallengeTests.JoiningHalfwaySwitchingLaneOrReversingCannotCompleteTheLine" methodname="JoiningHalfwaySwitchingLaneOrReversingCannotCompleteTheLine" classname="TubeLineChallengeTests" runstate="Runnable" seed="725460114" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000091" asserts="0">
+        <test-case id="1183" name="JoiningHalfwaySwitchingLaneOrReversingCannotCompleteTheLine" fullname="TubeLineChallengeTests.JoiningHalfwaySwitchingLaneOrReversingCannotCompleteTheLine" methodname="JoiningHalfwaySwitchingLaneOrReversingCannotCompleteTheLine" classname="TubeLineChallengeTests" runstate="Runnable" seed="1028751195" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000091" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1184" name="LingeringAndTeleportingCannotAward" fullname="TubeLineChallengeTests.LingeringAndTeleportingCannotAward" methodname="LingeringAndTeleportingCannotAward" classname="TubeLineChallengeTests" runstate="Runnable" seed="901215692" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000074" asserts="0">
+        <test-case id="1184" name="LingeringAndTeleportingCannotAward" fullname="TubeLineChallengeTests.LingeringAndTeleportingCannotAward" methodname="LingeringAndTeleportingCannotAward" classname="TubeLineChallengeTests" runstate="Runnable" seed="377300273" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000080" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1185" name="OffAndRecoveryClearPendingButNeverEraseAnEarnedReward" fullname="TubeLineChallengeTests.OffAndRecoveryClearPendingButNeverEraseAnEarnedReward" methodname="OffAndRecoveryClearPendingButNeverEraseAnEarnedReward" classname="TubeLineChallengeTests" runstate="Runnable" seed="1828882223" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000073" asserts="0">
+        <test-case id="1185" name="OffAndRecoveryClearPendingButNeverEraseAnEarnedReward" fullname="TubeLineChallengeTests.OffAndRecoveryClearPendingButNeverEraseAnEarnedReward" methodname="OffAndRecoveryClearPendingButNeverEraseAnEarnedReward" classname="TubeLineChallengeTests" runstate="Runnable" seed="1714635393" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000074" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1186" name="TwoPlayerRaceSessionTests" fullname="TwoPlayerRaceSessionTests" classname="TwoPlayerRaceSessionTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.002493" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1186" name="TwoPlayerRaceSessionTests" fullname="TwoPlayerRaceSessionTests" classname="TwoPlayerRaceSessionTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.002544" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1192" name="BothWithdraw_EndWithTwoDistinctDnfRecords" fullname="TwoPlayerRaceSessionTests.BothWithdraw_EndWithTwoDistinctDnfRecords" methodname="BothWithdraw_EndWithTwoDistinctDnfRecords" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="445150391" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000441" asserts="0">
+        <test-case id="1192" name="BothWithdraw_EndWithTwoDistinctDnfRecords" fullname="TwoPlayerRaceSessionTests.BothWithdraw_EndWithTwoDistinctDnfRecords" methodname="BothWithdraw_EndWithTwoDistinctDnfRecords" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="1610516153" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000477" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1194" name="DnfWithoutTimeout_IsRejected" fullname="TwoPlayerRaceSessionTests.DnfWithoutTimeout_IsRejected" methodname="DnfWithoutTimeout_IsRejected" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="1330557492" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000087" asserts="0">
+        <test-case id="1194" name="DnfWithoutTimeout_IsRejected" fullname="TwoPlayerRaceSessionTests.DnfWithoutTimeout_IsRejected" methodname="DnfWithoutTimeout_IsRejected" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="357218143" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000093" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1190" name="DuplicateFinish_IsIgnored" fullname="TwoPlayerRaceSessionTests.DuplicateFinish_IsIgnored" methodname="DuplicateFinish_IsIgnored" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="1049466657" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000238" asserts="0">
+        <test-case id="1190" name="DuplicateFinish_IsIgnored" fullname="TwoPlayerRaceSessionTests.DuplicateFinish_IsIgnored" methodname="DuplicateFinish_IsIgnored" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="1806717774" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000256" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1187" name="FirstFinish_StartsFortySecondWindow" fullname="TwoPlayerRaceSessionTests.FirstFinish_StartsFortySecondWindow" methodname="FirstFinish_StartsFortySecondWindow" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="1283457284" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000126" asserts="0">
+        <test-case id="1187" name="FirstFinish_StartsFortySecondWindow" fullname="TwoPlayerRaceSessionTests.FirstFinish_StartsFortySecondWindow" methodname="FirstFinish_StartsFortySecondWindow" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="142776240" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000126" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1188" name="SecondFinish_CompletesRaceInArrivalOrder" fullname="TwoPlayerRaceSessionTests.SecondFinish_CompletesRaceInArrivalOrder" methodname="SecondFinish_CompletesRaceInArrivalOrder" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="555410636" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000115" asserts="0">
+        <test-case id="1188" name="SecondFinish_CompletesRaceInArrivalOrder" fullname="TwoPlayerRaceSessionTests.SecondFinish_CompletesRaceInArrivalOrder" methodname="SecondFinish_CompletesRaceInArrivalOrder" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="1189266508" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000113" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1189" name="Timeout_RequiresDnfForRemainingPlayer" fullname="TwoPlayerRaceSessionTests.Timeout_RequiresDnfForRemainingPlayer" methodname="Timeout_RequiresDnfForRemainingPlayer" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="262101805" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000188" asserts="0">
+        <test-case id="1189" name="Timeout_RequiresDnfForRemainingPlayer" fullname="TwoPlayerRaceSessionTests.Timeout_RequiresDnfForRemainingPlayer" methodname="Timeout_RequiresDnfForRemainingPlayer" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="2015214825" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000189" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1193" name="WithdrawalAfterFirstFinish_EndsWaitImmediately" fullname="TwoPlayerRaceSessionTests.WithdrawalAfterFirstFinish_EndsWaitImmediately" methodname="WithdrawalAfterFirstFinish_EndsWaitImmediately" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="1127861276" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000097" asserts="0">
+        <test-case id="1193" name="WithdrawalAfterFirstFinish_EndsWaitImmediately" fullname="TwoPlayerRaceSessionTests.WithdrawalAfterFirstFinish_EndsWaitImmediately" methodname="WithdrawalAfterFirstFinish_EndsWaitImmediately" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="565195747" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000096" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1191" name="WithdrawalBeforeFirstFinish_RemainingPlayerWinsWithoutWaiting" fullname="TwoPlayerRaceSessionTests.WithdrawalBeforeFirstFinish_RemainingPlayerWinsWithoutWaiting" methodname="WithdrawalBeforeFirstFinish_RemainingPlayerWinsWithoutWaiting" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="495015492" result="Passed" start-time="2026-10-27 00:20:16Z" end-time="2026-10-27 00:20:16Z" duration="0.000146" asserts="0">
+        <test-case id="1191" name="WithdrawalBeforeFirstFinish_RemainingPlayerWinsWithoutWaiting" fullname="TwoPlayerRaceSessionTests.WithdrawalBeforeFirstFinish_RemainingPlayerWinsWithoutWaiting" methodname="WithdrawalBeforeFirstFinish_RemainingPlayerWinsWithoutWaiting" classname="TwoPlayerRaceSessionTests" runstate="Runnable" seed="261605711" result="Passed" start-time="2026-10-27 03:50:29Z" end-time="2026-10-27 03:50:29Z" duration="0.000147" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
