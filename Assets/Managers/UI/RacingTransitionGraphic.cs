@@ -16,11 +16,13 @@ public sealed class RacingTransitionGraphic : MaskableGraphic
     {
         vh.Clear();if(Coverage<=0)return;
         Rect r=rectTransform.rect;var p=ArcadeUI.For(transform);
-        float margin=r.height*.4f;
+        // Only travel far enough beyond the edge to hide the slant. The old wide
+        // margin and ease-out spent most of the duration off screen or fully covered.
+        float margin=r.height*.16f;
         for(int i=0;i<5;i++)
         {
             float phase=revealing?1-Coverage:Coverage;
-            float t=UIMotion.Out(Mathf.Clamp01((phase-i*.035f)/.86f));
+            float t=UIMotion.InOut((phase-i*.045f)/.82f);
             float y0=r.yMin+r.height*i/5f,y1=r.yMin+r.height*(i+1)/5f;
             float edge=Mathf.Lerp(r.xMin-margin,r.xMax+margin,t);
             float bottom=edge+(y0-r.center.y)*.25f,top=edge+(y1-r.center.y)*.25f;

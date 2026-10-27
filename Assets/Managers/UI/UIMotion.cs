@@ -7,6 +7,7 @@ public static class UIMotion
     public const float RevealSeconds = .32f;
     public static float Out(float t) { t = Mathf.Clamp01(t); return 1f - (1f-t)*(1f-t)*(1f-t); }
     public static float In(float t) { t = Mathf.Clamp01(t); return t*t*t; }
+    public static float InOut(float t) { t = Mathf.Clamp01(t); return t*t*(3f-2f*t); }
     public static float Spring(float t) => Mathf.Sin(Mathf.Clamp01(t)*Mathf.PI*2f)*Mathf.Exp(-5f*Mathf.Clamp01(t));
     public static float Follow(float current, float target, float dt, float seconds, float epsilon = .001f)
     {

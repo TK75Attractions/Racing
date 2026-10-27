@@ -70,12 +70,17 @@ public static class UIMotionPlayModeValidation
                 var fade=fixture.transform.Find("ScreenFade").GetComponent<CanvasGroup>();Require(fade.alpha==0&&!fade.blocksRaycasts,"Cancellation must clear the screen and input blocker.");
                 transition.TryTransitionTo(Gmanager.State.Countdown,()=>covered++,()=>completed++);Next(2);
             }
-            else if(phase==2&&age>.85)
+            else if(phase==2&&age>.35)
+            {
+                var wipe=fixture.transform.Find("ScreenFade/RacingShutters").GetComponent<RacingTransitionGraphic>();
+                Require(transition.IsTransitioning&&covered==0&&completed==0&&wipe.Coverage>0&&wipe.Coverage<1,"The shutter must still visibly travel before the slower cover completes.");Next(22);
+            }
+            else if(phase==22&&age>.95)
             {
                 Require(covered==1&&completed==1&&!transition.IsTransitioning&&play.gameObject.activeSelf,"Transition completes exactly once at timeScale zero.");
                 transition.TryTransitionTo(Gmanager.State.Title,()=>{covered++;transition.ApplyStateImmediate(Gmanager.State.Game);},()=>completed++);Next(21);
             }
-            else if(phase==21&&age>.45)
+            else if(phase==21&&age>.70)
             {
                 Require(covered==2&&completed==1&&!transition.IsTransitioning&&play.gameObject.activeSelf,"A cover callback may replace the screen without executing the old reveal/completion.");
                 position.SetPosition(3);Next(3);
@@ -135,7 +140,7 @@ public static class UIMotionPlayModeValidation
             Require(counter.localScale==Vector3.one&&!counter.GetComponent<UIValuePulse>().IsPlaying,"Countdown cancellation must restore the number.");
             resultShown=0;Require(transition.TryShowResultAnimated(()=>resultShown++),"Result reveal starts.");Next(10);
         }
-        else if(phase==10&&age>1.0)
+        else if(phase==10&&age>1.20)
         {
             var card=fixture.transform.Find("Result/ResultPresentation/ResultCard");
             Require(resultShown==1&&!transition.IsTransitioning&&card.Find("Classification/ResultRow4").GetComponent<CanvasGroup>().alpha==1,"All result rows must finish once while time is paused.");
@@ -143,14 +148,14 @@ public static class UIMotionPlayModeValidation
             Require(transition.TryCloseResultAndTransition(Gmanager.State.Title,()=>covered++,()=>completed++),"Result exit starts.");
             transition.ApplyStateImmediate(Gmanager.State.Result);Next(11);
         }
-        else if(phase==11&&age>1.05)
+        else if(phase==11&&age>1.25)
         {
             Require(covered==2&&completed==1&&!transition.IsTransitioning,"Cancelling result exit must discard stale callbacks.");
             var card=fixture.transform.Find("Result/ResultPresentation/ResultCard");
             Require(card.Find("ResultMenu").GetComponent<CanvasGroup>().alpha==1&&((RectTransform)card).anchoredPosition==Vector2.zero,"Cancelled result exit leaves menus visible and panels correctly placed.");
             transition.TryShowResultAnimated(()=>resultShown++);Next(12);
         }
-        else if(phase==12&&age>1.0)
+        else if(phase==12&&age>1.20)
         {
             Require(resultShown==2&&!transition.IsTransitioning,"Repeated result entry must complete without drift.");
             RequireResultRankPose(fixture.transform.Find("Result/ResultPresentation/ResultCard"));Finish();

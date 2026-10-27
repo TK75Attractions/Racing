@@ -11,8 +11,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
     [SerializeField] private bool useArtworkLogo;
 
     [Header("Transition")]
-    [SerializeField, Min(0f)] private float fadeOutSeconds = 0.25f;
-    [SerializeField, Min(0f)] private float fadeInSeconds = 0.35f;
+    [SerializeField, Min(0f)] private float fadeOutSeconds = 0.48f;
+    [SerializeField, Min(0f)] private float fadeInSeconds = 0.56f;
     [SerializeField, Min(0f)] private float resultEnterSeconds = 0.55f;
     [SerializeField, Min(0f)] private float resultExitSeconds = 0.32f;
 
@@ -47,6 +47,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
     private Material titleLogoMaterial;
 
     public bool IsTransitioning { get; private set; }
+    public float CoverSeconds=>fadeOutSeconds;
+    public float RevealSeconds=>fadeInSeconds;
     public string RaceStatusText => finishWarningRoot != null && finishWarningRoot.activeSelf
         ? finishWarningText != null ? finishWarningText.text : string.Empty
         : raceStatus != null ? raceStatus.text : string.Empty;

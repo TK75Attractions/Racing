@@ -17,6 +17,11 @@ public static class UITransitionMotionValidation
             using(var vh=new VertexHelper())
             {
                 wipe.SetCoverage(0,false);populate.Invoke(wipe,new object[]{vh});UIMotionValidation.Require(vh.currentVertCount==0,"Open shutters draw nothing.");
+                wipe.SetCoverage(.5f,false);populate.Invoke(wipe,new object[]{vh});UIVertex middle=new UIVertex();
+                vh.PopulateUIVertex(ref middle,2);float firstEdge=middle.position.x;
+                UIMotionValidation.Require(firstEdge>rect.rect.xMin+rect.rect.width*.2f&&firstEdge<rect.rect.xMax-rect.rect.width*.1f,"At half-time, the leading shutter remains visibly within the screen.");
+                vh.PopulateUIVertex(ref middle,4*12+2);
+                UIMotionValidation.Require(middle.position.x<firstEdge,"Following bands must visibly trail the leader.");
                 foreach(bool reveal in new[]{false,true})
                 {
                     wipe.SetCoverage(1,reveal);populate.Invoke(wipe,new object[]{vh});UIVertex v=new UIVertex();
