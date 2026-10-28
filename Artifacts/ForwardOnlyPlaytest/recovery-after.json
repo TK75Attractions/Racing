@@ -1,0 +1,65 @@
+{
+    "passed": true,
+    "trials": [
+        {
+            "name": "static-high-center",
+            "passed": true,
+            "automaticRecoveries": 1,
+            "initialLap": 0,
+            "finalLap": 0,
+            "minGrounded": 0,
+            "secondsToRecovery": 4.000439167022705,
+            "forwardTravel": 0.0
+        },
+        {
+            "name": "dynamic-high-center",
+            "passed": true,
+            "automaticRecoveries": 1,
+            "initialLap": 0,
+            "finalLap": 0,
+            "minGrounded": 0,
+            "secondsToRecovery": 4.002159118652344,
+            "forwardTravel": 0.0
+        },
+        {
+            "name": "neutral-high-center",
+            "passed": true,
+            "automaticRecoveries": 0,
+            "initialLap": 0,
+            "finalLap": 0,
+            "minGrounded": 0,
+            "secondsToRecovery": -1.0,
+            "forwardTravel": 0.0
+        },
+        {
+            "name": "disconnected-high-center",
+            "passed": true,
+            "automaticRecoveries": 0,
+            "initialLap": 0,
+            "finalLap": 0,
+            "minGrounded": 0,
+            "secondsToRecovery": -1.0,
+            "forwardTravel": 0.0
+        },
+        {
+            "name": "static-occupied-reset",
+            "passed": true,
+            "automaticRecoveries": 0,
+            "initialLap": 0,
+            "finalLap": 0,
+            "minGrounded": 0,
+            "secondsToRecovery": -1.0,
+            "forwardTravel": 0.0
+        },
+        {
+            "name": "normal-forward-driving",
+            "passed": true,
+            "automaticRecoveries": 0,
+            "initialLap": 0,
+            "finalLap": 0,
+            "minGrounded": 0,
+            "secondsToRecovery": -1.0,
+            "forwardTravel": 99.8361587524414
+        }
+    ]
+}
