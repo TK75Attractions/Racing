@@ -1,7 +1,7 @@
 using System;
 
 /// <summary>Temporary dashboard input follows the same car/tutorial gates as a local keyboard.</summary>
-public sealed class DashboardDriveInputSource : IDriveInputSource, IDriveInputStatusSource, IDrivePedalReleaseObserver
+public sealed class DashboardDriveInputSource : IDriveInputSource, IDriveSteeringCalibration, IDriveInputStatusSource, IDrivePedalReleaseObserver
 {
     private readonly IDriveInputSource source;
     private readonly DashboardInputLease lease;
@@ -11,6 +11,7 @@ public sealed class DashboardDriveInputSource : IDriveInputSource, IDriveInputSt
     private long sampledGeneration;
     public int PlayerIndex => source.PlayerIndex;
     public string DeviceId => lease.IsActive(clock()) ? $"Dashboard P{PlayerIndex + 1}" : source.DeviceId;
+    public float FullSteeringInput => wasRemote || lease.IsActive(clock()) ? DriveSteeringCalibration.FullLockUnits : DriveSteeringCalibration.Range(source);
     public bool IsConnected => lease.IsActive(clock()) || source.IsConnected;
     public DriveConnectionState ConnectionState => lease.IsActive(clock()) ? DriveConnectionState.Ready : DriveInputStatus.Of(source);
     public DriveInputState CurrentState

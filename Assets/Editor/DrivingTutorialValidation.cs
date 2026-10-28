@@ -19,6 +19,9 @@ public static class DrivingTutorialValidation
     private static bool bound, capturedTurn, capturedStop, capturedDriving;
     private static StubInput[] inputs;
     private static IList practices;
+    private static readonly int[] completionCues = new int[2];
+    private static readonly bool[] checkedItemApproach = new bool[2];
+    private static readonly bool[] distantItemsChecked = new bool[2];
 
     private sealed class StubInput : IDriveInputSource
     {
@@ -44,12 +47,14 @@ public static class DrivingTutorialValidation
         {
             RacingHUDFontBuilder.Build();
             var font=UnityEditor.AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>("Assets/Resources/UI/HUD/Tutorial ExtraBold.asset");
-            Require(font.HasCharacters("光る箱に触れてアイテムを取ろう獲得"),"The item lesson must have all static Japanese glyphs.");
+            Require(font.HasCharacters("光る箱にふれよう自動で発動するよ獲得"),"The item lesson must have all static Japanese glyphs.");
         }
         InputManager input = UnityEngine.Object.FindFirstObjectByType<InputManager>();
         input.isDebugMode = true; input.isP1SerialP2KeyboardDebugMode = false;
         RaceRemoteFirebasePublisher publisher = UnityEngine.Object.FindFirstObjectByType<RaceRemoteFirebasePublisher>();
         if (publisher != null) publisher.enabled = false;
+        foreach (RaceDashboardBridge bridge in UnityEngine.Object.FindObjectsByType<RaceDashboardBridge>(FindObjectsSortMode.None))
+            bridge.enabled = false;
         SessionState.SetBool(PreviewKey + ".SelectDefaults", true);
         SessionState.SetBool(PreviewKey, true); SessionState.SetBool(ValidationKey, validate);
         Debug.Log("TUTORIAL_QA_START");
@@ -93,6 +98,9 @@ public static class DrivingTutorialValidation
                 }
                 ValidateRoad();
                 ValidateContinuousStages(tutorial);
+                Array.Clear(completionCues, 0, completionCues.Length);
+                RaceSoundEffects.Instance.CueQueued -= CountCompletion;
+                RaceSoundEffects.Instance.CueQueued += CountCompletion;
                 bound = true; began = Time.time;
                 Capture(manager, 0, "01-accelerate-p1.png"); Capture(manager, 1, "01-accelerate-p2.png");
             }
@@ -100,6 +108,13 @@ public static class DrivingTutorialValidation
             if (manager.state == Gmanager.State.Countdown || manager.state == Gmanager.State.Game)
             {
                 Require(peakSpeed > 10.5f, "Practice must accelerate beyond the old 10 m/s velocity clamp.");
+                for (int i = 0; i < practices.Count; i++)
+                {
+                    Require(Get<DrivingTutorialProgress>(practices[i], "lesson").IsComplete, "Both cars must actually collect a practice item.");
+                    Require(completionCues[i] == 1, $"P{i+1} must receive exactly one completion cue after pickup, got {completionCues[i]}.");
+                }
+                RaceSoundEffects.Instance.CueQueued -= CountCompletion;
+                Debug.Log("TUTORIAL_COMPLETION_CUES_PASS: one successful pickup cue per player.");
                 Debug.Log($"TUTORIAL_QA_PASSED: continuous stage transition, production input gates, actual accelerate/turn/item pickup, countdown. Peak speed: {peakSpeed:0.000} m/s. Maximum vertical speed after settling: {maximumVerticalSpeed:0.000} m/s");
                 SessionState.SetBool(ValidationKey, false);
                 if (Application.isBatchMode) EditorApplication.Exit(0);
@@ -118,6 +133,14 @@ public static class DrivingTutorialValidation
                     maximumVerticalSpeed = Mathf.Max(maximumVerticalSpeed, Mathf.Abs(body.linearVelocity.y));
                 if (i == 0 && !capturedDriving && Time.time - began > .9f && lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate)
                 { capturedDriving = true; Capture(manager, i, "05-accelerating.png"); }
+                if (lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem && !distantItemsChecked[i])
+                {
+                    var pickups = Get<System.Collections.Generic.List<TutorialItemPickup>>(practice, "pickups");
+                    Require(pickups.Count == 3 && pickups.All(p => Vector3.Distance(p.transform.position, body.position) > 40f),
+                        "New item placement must give both players more than 40m of actual driving room.");
+                    distantItemsChecked[i] = true;
+                    Debug.Log($"TUTORIAL_DISTANT_ITEMS_PASS: P{i + 1}, nearest box={pickups.Min(p => Vector3.Distance(p.transform.position, body.position)):F1}m.");
+                }
                 float pedal = 0f, steering = 0f;
                 if (lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate && Time.time - began > .6f + i * 2f) pedal = .65f;
                 if (lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer || lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem)
@@ -129,6 +152,16 @@ public static class DrivingTutorialValidation
                     float error=Vector3.SignedAngle(body.rotation*Vector3.forward,direction,Vector3.up);
                     pedal=.55f;steering=Mathf.Clamp(error*.45f,-10f,10f);
                     if (i == 0 && !capturedTurn) { capturedTurn = true; Capture(manager, i, "02-steer.png"); }
+                }
+                if (lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem && !checkedItemApproach[i])
+                {
+                    var pickups = Get<System.Collections.Generic.List<TutorialItemPickup>>(practice, "pickups");
+                    Require(pickups.Count == 3, "The learner must have three reachable lane choices.");
+                    float distance = Vector3.Distance(body.position, pickups[1].transform.position);
+                    float approachSeconds = distance / Mathf.Max(1f, Vector3.ProjectOnPlane(body.linearVelocity,Vector3.up).magnitude);
+                    Require(approachSeconds > 1.5f, "The first box must leave time to understand the automatic-use instruction.");
+                    checkedItemApproach[i] = true;
+                    Debug.Log($"TUTORIAL_ITEM_APPROACH_PASS: P{i+1} distance={distance:0.0}m, approach={approachSeconds:0.00}s.");
                 }
                 if (lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem && i == 0 && !capturedStop)
                 { capturedStop = true; Capture(manager, i, "03-item.png"); }
@@ -169,12 +202,32 @@ public static class DrivingTutorialValidation
             Require(Mathf.Abs(Mathf.DeltaAngle(Get<float>(practice, "startYaw"), 11f)) < .01f,
                 "The steering lesson measures heading from its actual entry orientation.");
             Debug.Log($"TUTORIAL_CONTINUITY_PASS: P{index + 1} position, heading, velocity and steering reference preserved.");
+            inputs[index].CurrentState = new DriveInputState { resetPressed = true };
+            tutorial.Tick(.01f);
+            Vector3 recovered = body.position;
+            body.position += Vector3.forward * 3f;
+            Vector3 afterRelease = body.position;
+            tutorial.Tick(.01f);
+            Require(Vector3.Distance(body.position, afterRelease) < .001f, "Holding reset must not repeatedly teleport the practice car.");
+            inputs[index].CurrentState = DriveInputState.Neutral;
+            tutorial.Tick(0f);
+            inputs[index].CurrentState = new DriveInputState { resetPressed = true };
+            tutorial.Tick(.01f);
+            Require(Vector3.Distance(body.position, recovered) < .001f, "A new reset press must still recover the practice car.");
+            Debug.Log($"TUTORIAL_RESET_EDGE_PASS: P{index + 1} held reset and deliberate repeat.");
             body.position = position; body.rotation = rotation; body.linearVelocity = velocity;
             Set(practice, "startYaw", rotation.eulerAngles.y);
             Set(practice, "lesson", new DrivingTutorialProgress());
+            Set(practice, "announcedStage", DrivingTutorialProgress.Stage.Accelerate);
+            Set(practice, "resetHeld", false);
             inputs[index].CurrentState = DriveInputState.Neutral;
             var gate = Get<PlayerDriveInputGate>(practice, "driveGate"); gate.Reset(); gate.SetBlocked(true);
         }
+    }
+
+    private static void CountCompletion(RaceSoundCue cue, int player)
+    {
+        if (cue == RaceSoundCue.Confirm && player >= 0 && player < completionCues.Length) completionCues[player]++;
     }
 
     private static void ValidateRoad()

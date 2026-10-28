@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-28",
+  "baseMain": "5aa1e8473c83ae127b838e04e90837e7bc948e21",
+  "coreTests": {
+    "passed": 170,
+    "failed": 0
+  },
+  "unityEditMode": {
+    "passed": 170,
+    "failed": 0
+  },
+  "displayValidation": "passed",
+  "audioPluginRejectionCases": [
+    "missing",
+    "invalid header",
+    "outdated bundled DLL"
+  ],
+  "manualHtmlReproduction": "identical",
+  "unverified": [
+    "Windows native DLL rebuild",
+    "Windows player build and launch",
+    "physical monitors",
+    "COM input",
+    "WASAPI audio"
+  ]
+}

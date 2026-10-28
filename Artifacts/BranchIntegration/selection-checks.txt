@@ -1,0 +1,1 @@
+CAR_SELECTION_PLAY_MODE_PASS: independent P2-first start, pedal gauge, mixed selection/practice, confirmation release gate, tutorial timeout, synchronized race

@@ -60,10 +60,10 @@ public class DebugMover : MonoBehaviour
     private float CorneringBoostScale => 1f - Mathf.Clamp01(corneringBrakingAcceleration / 4f);
 
     [Header("Drift")]
-    [Tooltip("ドリフトを開始する生のハンドル入力の絶対値（高速時の操舵補正前）。")]
+    [Tooltip("ドリフト開始入力（最大30の共通単位、高速補正前）。実ハンドル90度が30、既定値8は24度相当。")]
     [SerializeField, Min(0.01f)] private float driftStartHandle = 8f;
 
-    [Tooltip("チャージが最大速度でたまるハンドル入力の絶対値。")]
+    [Tooltip("チャージ最大速度の入力（最大30の共通単位）。既定値30は実ハンドル90度相当。")]
     [SerializeField, Min(0.01f)] private float driftFullChargeHandle = 30f;
 
     [SerializeField, Min(0f)] private float maxDriftCharge = 3f;
@@ -392,6 +392,37 @@ public class DebugMover : MonoBehaviour
         ApplyDriftSpinProtection(Time.fixedDeltaTime);
         ApplyVelocityResistance();
         ApplyCorneringBrake();
+        ApplyJumpRunUp(Time.fixedDeltaTime);
+    }
+
+    // A released pedal must not strand a new driver on the final ramp. This small
+    // run-up aid supplies forward acceleration only; the handle and launch physics stay live.
+    private void ApplyJumpRunUp(float dt)
+    {
+        Gmanager race = Gmanager.Control;
+        if (race == null || race.state != Gmanager.State.Game || race.course == null || IsInputSuppressed ||
+            GetComponent<NpcRaceDriver>() != null ||
+            inputSource == null || !inputSource.IsConnected ||
+            inputSource is PlayerDriveInputGate gate && (gate.IsBlocked || gate.NeedsPedalRelease) ||
+            rawPedalInput < -.1f || itemEffects != null && (itemEffects.BlocksDriverInput || itemEffects.IsRocketActive || itemEffects.IsOiled || itemEffects.IsConfused)) return;
+        RaceCourse course = race.course;
+        float raw = course.GetProgressDistance(rb.position);
+        if (!course.HasRoadAtProgress(raw) || !course.TryGetSampleAtProgress(raw, out var sample)) return;
+        Vector3 direction = sample.forward * race.CourseProgressSign;
+        if (Vector3.Dot(transform.forward, direction) < .8f ||
+            Vector3.Dot(transform.up, sample.up) < .85f ||
+            Mathf.Abs(Vector3.Dot(rb.position - sample.position, sample.right)) > sample.width * .5f - 1f) return;
+        bool approach = false;
+        for (float ahead = 1f; ahead <= 38f; ahead += 1f)
+            if (!course.HasRoadAtProgress(raw + ahead * race.CourseProgressSign)) { approach = true; break; }
+        if (!approach) return;
+        int contacts = 0;
+        foreach (TireForce tire in tires) if (tire.GetComponent<GroundCheck>().CheckNow()) contacts++;
+        if (contacts < 2) return;
+        Vector3 forward = Vector3.ProjectOnPlane(direction, GetDrivingUp()).normalized;
+        float speed = Vector3.Dot(rb.linearVelocity, forward);
+        if (speed < -.5f || speed >= 22f) return;
+        rb.AddForce(forward * Mathf.Min(22f - speed, 24f * Mathf.Max(0, dt)), ForceMode.VelocityChange);
     }
 
     public void SetInputSource(IDriveInputSource source)
@@ -679,7 +710,8 @@ public class DebugMover : MonoBehaviour
         rawPedalInput = input.pedal;
         appliedPedalInput = Mathf.Clamp(rawPedalInput, -1f, 1f);
         // コンフューズ中はハンドルを左右反転します。ドリフト判定も反転後の値で行います。
-        rawSteeringInput = input.steering * (itemEffects != null ? itemEffects.SteeringSign : 1f);
+        rawSteeringInput = DriveSteeringCalibration.CanonicalInput(input.steering, DriveSteeringCalibration.Range(inputSource))
+            * (itemEffects != null ? itemEffects.SteeringSign : 1f);
         if (itemEffects != null && itemEffects.BlocksDriverInput)
         {
             ClearUserInput();

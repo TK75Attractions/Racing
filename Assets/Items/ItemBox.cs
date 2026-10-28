@@ -31,16 +31,19 @@ public sealed class ItemBox : RaceItemPickup
         return true;
     }
 
-    protected override Mesh CreateVisualMesh() => ItemVisualFactory.CreateItemBox(boxSize);
+    protected override Mesh CreateVisualMesh() => ItemVisualFactory.CreateBox(boxSize);
 
-    protected override Material CreateVisualMaterial() => ItemVisualFactory.CreateItemBoxMaterial();
+    protected override Material CreateVisualMaterial() =>
+        ItemVisualFactory.CreateEmissiveMaterial("ItemBoxMaterial", Color.white, 1.3f, 0.65f);
 
     // 角を下にして傾けると、どの向きからでも箱だと分かりやすくなります。
+    protected override Texture2D CreateVisualTexture() => ItemVisualFactory.CreateMysteryBoxTexture();
+    protected override float GetVisualScale(float time) => 1f + .035f * Mathf.Sin(time * 3f);
     protected override Quaternion GetVisualTilt() => Quaternion.Euler(35f, 0f, 45f);
 
     protected override void AnimateVisual(float time)
     {
-        Color color = Color.HSVToRGB(Mathf.Repeat(time / hueCycleSeconds, 1f), 0.55f, 1f);
-        ItemVisualFactory.SetItemBoxHue(VisualMaterial, color);
+        Color color = Color.HSVToRGB(Mathf.Repeat(time / hueCycleSeconds, 1f), 0.14f, 1f);
+        ItemVisualFactory.SetEmissiveColor(VisualMaterial, color, 1.15f + .3f * Mathf.Sin(time * 3f));
     }
 }

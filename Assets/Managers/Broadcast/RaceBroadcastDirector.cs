@@ -36,6 +36,7 @@ public sealed class RaceBroadcastDirector : MonoBehaviour
     public RenderTexture Feed { get; private set; }
     public Camera WorldCamera => world;
     public Camera PresentationCamera => presenter;
+    public Canvas PresentationCanvas { get; private set; }
     public string Mode { get; private set; }="COURSE PV";
     public string Caption { get; private set; }="TSUKUKOMA CIRCUIT";
     public int RecordedFrames=>recorder?.Take.Count??0;
@@ -72,7 +73,7 @@ public sealed class RaceBroadcastDirector : MonoBehaviour
         presenter=presentationRoot.AddComponent<Camera>();presenter.clearFlags=CameraClearFlags.SolidColor;presenter.backgroundColor=Color.black;
         presenter.orthographic=true;presenter.orthographicSize=5;presenter.nearClipPlane=.1f;presenter.farClipPlane=20;presenter.cullingMask=1<<UiLayer;presenter.depth=100;presenter.targetDisplay=broadcastDisplay;
         var canvasObject=new GameObject("Broadcast canvas",typeof(RectTransform),typeof(Canvas),typeof(CanvasScaler));canvasObject.transform.SetParent(presentationRoot.transform,false);
-        var canvas=canvasObject.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceCamera;canvas.worldCamera=presenter;canvas.planeDistance=1;canvas.targetDisplay=broadcastDisplay;
+        var canvas=canvasObject.GetComponent<Canvas>();PresentationCanvas=canvas;canvas.renderMode=RenderMode.ScreenSpaceCamera;canvas.worldCamera=presenter;canvas.planeDistance=1;canvas.targetDisplay=broadcastDisplay;
         var scaler=canvasObject.GetComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;scaler.referenceResolution=new Vector2(1920,1080);scaler.matchWidthOrHeight=.5f;
         hud=new RaceBroadcastHUD(canvasObject.transform,Feed);
         foreach(Transform child in canvasObject.GetComponentsInChildren<Transform>(true))child.gameObject.layer=UiLayer;
@@ -83,7 +84,7 @@ public sealed class RaceBroadcastDirector : MonoBehaviour
     private bool Feature(RaceFeature feature)=>manager?.Features?.Settings.IsEnabled(feature)==true;
     private void RefreshWindow()
     {
-        bool wanted=Feature(RaceFeature.BroadcastScreen);
+        bool wanted=manager.IsMaintenanceActive||Feature(RaceFeature.BroadcastScreen);
         if(wanted==showWindow)return;showWindow=wanted;
         presenter.enabled=wanted;
         if(!wanted){output.enabled=false;return;}
@@ -95,7 +96,9 @@ public sealed class RaceBroadcastDirector : MonoBehaviour
     private void LateUpdate()
     {
         if(manager==null)return;
-        RefreshWindow();float dt=Time.unscaledDeltaTime;
+        RefreshWindow();
+        if(manager.IsMaintenanceActive){world.enabled=false;return;}
+        float dt=Time.unscaledDeltaTime;
         bool game=manager.state==Gmanager.State.Game;
         if(game&&!recordingWasGame)
         {

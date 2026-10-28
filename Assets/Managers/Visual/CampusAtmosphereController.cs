@@ -14,6 +14,7 @@ public sealed class CampusAtmosphereController : MonoBehaviour
     private readonly Dictionary<string,Material> variants=new Dictionary<string,Material>();
     private Gmanager manager; private RaceCourse course; private GameObject root;
     private readonly List<Mesh> meshes = new List<Mesh>();
+    private Texture2D concreteGrain;
     private Material[] palette; private bool applied, configured, night;
     private UniversalRenderPipelineAsset pipeline; private float shadowDistance; private int shadowResolution;
     private bool introShadows;
@@ -103,11 +104,32 @@ public sealed class CampusAtmosphereController : MonoBehaviour
     {
         string key=source.GetInstanceID()+category;if(variants.TryGetValue(key,out var found))return found;
         var mat=new Material(source){name=source.name+" / campus "+category};owned.Add(mat);variants.Add(key,mat);
-        Color color=category=="ground"?grass:category=="roof"?new Color(.23f,.30f,.33f):category=="glass"?new Color(.29f,.45f,.51f,.65f):
-            category=="frame"?new Color(.78f,.80f,.77f):new Color(.73f,.70f,.63f);
+        Color color=category=="ground"?grass:category=="roof"?new Color(.24f,.265f,.27f):category=="glass"?new Color(.19f,.27f,.30f,.78f):
+            category=="frame"?new Color(.54f,.57f,.56f):new Color(.60f,.605f,.57f);
         mat.SetColor("_BaseColor",color);mat.color=color;
-        if(mat.HasProperty("_Smoothness"))mat.SetFloat("_Smoothness",category=="glass"?.72f:.16f);
+        if(mat.HasProperty("_Smoothness"))mat.SetFloat("_Smoothness",category=="glass"?.56f:category=="frame"?.28f:.09f);
+        if(category=="wall" || category=="roof")
+        {
+            // Fine aggregate breaks up flat toy-like colour without adding geometry,
+            // moving colliders, or baking large textures into the imported school model.
+            if(concreteGrain==null) concreteGrain=BuildConcreteGrain();
+            mat.SetTexture("_BaseMap",concreteGrain);mat.SetTextureScale("_BaseMap",new Vector2(12,12));
+            mat.SetFloat("_Metallic",0f);
+        }
         return mat;
+    }
+    private static Texture2D BuildConcreteGrain()
+    {
+        const int size=128;
+        var texture=new Texture2D(size,size,TextureFormat.RGB24,true){name="Campus subtle concrete aggregate",wrapMode=TextureWrapMode.Repeat,filterMode=FilterMode.Trilinear};
+        var pixels=new Color[size*size];var random=new System.Random(261026);
+        for(int y=0;y<size;y++)for(int x=0;x<size;x++)
+        {
+            float coarse=Mathf.PerlinNoise(x*.085f,y*.085f)-.5f;
+            float grain=.94f+coarse*.045f+((float)random.NextDouble()-.5f)*.045f;
+            pixels[y*size+x]=new Color(grain,grain,grain);
+        }
+        texture.SetPixels(pixels);texture.Apply(true,true);return texture;
     }
     private void Tree(CampusSceneryMesh b,Vector3 p,float height,int index)
     {
@@ -321,5 +343,6 @@ public sealed class CampusAtmosphereController : MonoBehaviour
         foreach(var mesh in meshes)if(mesh!=null)Destroy(mesh);
         meshes.Clear();
         foreach(var material in owned)if(material!=null)Destroy(material);
+        if(concreteGrain!=null)Destroy(concreteGrain);
     }
 }

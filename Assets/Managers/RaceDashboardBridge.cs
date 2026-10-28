@@ -150,6 +150,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public bool inputAvailable, serialDebug, featurePanel, constantPaused, audioRefreshAvailable;
         public string[] deviceNames, deviceKeys, outputStatus, selectedDevices;
         public bool[] outputAvailable;
+        public bool maintenanceAvailable, maintenanceActive;
         public bool featuresAvailable, rulesLocked, hasQueuedPreset, canStartTestRace, bothPlayersAutodrive;
         public string activePreset, selectedPreset;
         public FeatureSnapshot[] features;
@@ -215,6 +216,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         race = GetComponent<Gmanager>();
         input = GetComponent<InputManager>();
         if (input != null) input.SerialLineProcessed += RecordSerialLine;
+        PlayerDriveInputGate.ReleaseChanged += RecordInputRelease;
         try
         {
             listener = new HttpListener();
@@ -401,6 +403,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             selected[i] = device >= 0 && device < keys.Length ? keys[device] : "";
         }
         return new SettingsSnapshot {
+            maintenanceAvailable = race?.MaintenanceAvailable ?? false, maintenanceActive = race?.IsMaintenanceActive ?? false,
             featuresAvailable = features != null, features = BuildFeatures(features), bothPlayersAutodrive = race?.BothPlayersAutodrive ?? false,
             activePreset = features?.ActivePreset.ToString() ?? "", selectedPreset = features?.SelectedPreset.ToString() ?? "",
             rulesLocked = features?.RulesLocked ?? false, hasQueuedPreset = features?.HasQueuedPreset ?? false,
@@ -424,6 +427,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         reason = "invalid_setting";
         string[] args = request.args ?? Array.Empty<string>();
         RaceFeatureController features = race?.Features;
+        if (request.command == "maintenance" && args.Length == 1 && (args[0] == "true" || args[0] == "false"))
+            return race != null && race.SetMaintenance(args[0] == "true");
         if (request.command == "feature" && args.Length == 2 && features != null &&
             RaceDebugFeatureCatalog.TryFind(args[0], out RaceFeature feature) && (args[1] == "true" || args[1] == "false"))
         { features.SetFeature(feature, args[1] == "true"); return true; }
@@ -693,6 +698,14 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     private static string Limit(string value, int maximum) =>
         string.IsNullOrEmpty(value) || value.Length <= maximum ? value : value.Substring(0, maximum);
 
+    private void RecordInputRelease(PlayerDriveInputGate gate, string transition)
+    {
+        string message = "P" + (gate.PlayerIndex + 1) + " " + transition +
+            " reason=" + gate.PedalReleaseReason + " connection=" + gate.ConnectionState;
+        (input?.SharedSerialInputSource?.Monitor ?? liveJournal).Diagnostic("INPUT_GATE", message);
+        RecordSerialLine("INPUT_GATE", message);
+    }
+
     private void RecordSerialLine(string status, string line)
     {
         var entry = new SerialEntry
@@ -700,7 +713,10 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             id = ++serialSequence, time = DateTime.Now.ToString("HH:mm:ss.fff"),
             status = status, line = line.Length > 512 ? line.Substring(0, 512) : line
         };
-        if (SerialInputProtocol.TryParse(line + "\n", out RgpFrame parsed) && parsed.Type == "TEL")
+        // Successful TEL has already passed the production receiver's CRC/schema checks.
+        // Avoid splitting/parsing the same 100 Hz frame again for display-only history.
+        if (status == "OK" && line.StartsWith("@TEL,", StringComparison.Ordinal) ||
+            SerialInputProtocol.TryParse(line + "\n", out RgpFrame parsed) && parsed.Type == "TEL")
         { latestTelemetry = entry; return; }
         serialLines.Enqueue(entry);
         if (IsSerialAlert(status, line))
@@ -887,6 +903,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         stopping = true;
         input?.ClearDashboardInputs();
         if (input != null) input.SerialLineProcessed -= RecordSerialLine;
+        PlayerDriveInputGate.ReleaseChanged -= RecordInputRelease;
         listener?.Close();
         listener = null;
         if (listenerThread != null && listenerThread.IsAlive) listenerThread.Join(500);

@@ -23,11 +23,14 @@ public static class BalancePlaytestValidation
         else if (Environment.GetEnvironmentVariable("RACING_VALIDATE_RESULT_UI") == "1") ResultHighlightValidation.Run();
         if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RACING_GEOMETRY_AUDIT_TRACE"))) RaceExperienceGeometryAudit.Run();
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
-        if (Environment.GetEnvironmentVariable("RACING_BROADCAST_CHECK") == "1")
-        {
-            var input = UnityEngine.Object.FindFirstObjectByType<InputManager>();
-            input.isDebugMode = true; input.isP1SerialP2KeyboardDebugMode = false;
-        }
+        // The agent supplies test input. Do not open cabinet serial ports, a dashboard
+        // listener or a remote publisher while rehearsing in a second Editor instance.
+        var input = UnityEngine.Object.FindFirstObjectByType<InputManager>();
+        input.isDebugMode = true; input.isP1SerialP2KeyboardDebugMode = false;
+        foreach (var bridge in UnityEngine.Object.FindObjectsByType<RaceDashboardBridge>(FindObjectsSortMode.None))
+            bridge.enabled = false;
+        foreach (var publisher in UnityEngine.Object.FindObjectsByType<RaceRemoteFirebasePublisher>(FindObjectsSortMode.None))
+            publisher.enabled = false;
         SessionState.SetBool(Key, true);
         Resume();
         EditorApplication.isPlaying = true;

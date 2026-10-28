@@ -1,0 +1,2 @@
+BUTTON_HOLD_PLAYMODE_PASS: short hold cancels, full hold commits once, start retains after release, disabled input cannot commit.
+MULTIPLAYER_PLAYMODE_VALIDATION_PASS: actual acceleration, finish/spectator, held-pedal safety, retry without practice, two title returns, both withdrawals, withdrawal/timeout during goal, remaining-player finish; one-shot button, readiness, countdown, GO, player-local goal and results cues.

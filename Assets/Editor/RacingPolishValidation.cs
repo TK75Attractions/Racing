@@ -147,13 +147,14 @@ public static class RacingPolishValidation
             lesson.Tick(.01f, true, 0f, 0f, 0f, 0f); ui.Update(lesson, DriveInputState.Neutral, 0f, true);
             Require(message.text == "ペダルを踏んで\n加速しよう", "Show acceleration first.");
             lesson.Tick(.7f, true, 1f, 0f, 4f, 0f); ui.Update(lesson, DriveInputState.Neutral, 4f, true);
-            Require(message.text.StartsWith("右カーブでハンドルを右へ"), "Show steering only after actual acceleration.");
+            Require(message.text.Contains("右カーブ"), "Show the upcoming right curve only after actual acceleration.");
             lesson.Tick(.7f, true, 1f, 10f, 4f, 30f); ui.Update(lesson, DriveInputState.Neutral, 4f, true);
-            Require(message.text.Contains("停車"), "Show stopping only after actual steering.");
+            Require(message.text.Contains("アイテム"), "Show item collection only after actual steering.");
             ui.Update(lesson, DriveInputState.Neutral, 4f, false);
             Require(message.text.Contains("接続"), "Disconnected controller replaces the action prompt.");
-            lesson.Tick(.7f, true, 0f, 0f, 0f, 30f); ui.Update(lesson, DriveInputState.Neutral, 0f, true);
-            Require(message.text.Contains("準備完了") && message.text.Contains("操作不要"), "Complete player sees the wait prompt.");
+            Require(lesson.CollectItem(true), "A real pickup completes the third lesson.");
+            ui.Update(lesson, DriveInputState.Neutral, 0f, true);
+            Require(message.text.Contains("準備待ち"), "Complete player sees the wait prompt.");
         }
         finally { UnityEngine.Object.DestroyImmediate(canvas); }
     }

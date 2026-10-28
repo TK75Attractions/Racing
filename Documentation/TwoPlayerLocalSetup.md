@@ -6,7 +6,7 @@
 - macOS（Metal）版は1台のモニターでもP1/P2を別ウィンドウで表示できます。Windows版のP2は追加ディスプレイが必要です。
 - `SampleScene` の `InputManager > Is Debug Mode` は通常プレイでは無効にすること
 
-現在の保存済み `SampleScene` は両者をキーボードで操作する検証設定です（`Is Debug Mode` ON、`Is P1 Serial P2 Keyboard Debug Mode` OFF）。P1はEnterまたはWを0.25秒押し、P2はRight Shiftまたは上矢印を0.25秒押すと、それぞれ車種選択へ進みます。車種を確定して両者の練習が完了するとレースが始まります。P1/P2ともESP32で操作する実機対戦では、両方のデバッグ設定を無効にしてください。
+現在の保存済み `SampleScene` は両者をESP32で操作する実機設定です（`Is Debug Mode` OFF、`Is P1 Serial P2 Keyboard Debug Mode` OFF）。キーボード検証では `Is Debug Mode` をONにします。P1はEnterまたはWを0.25秒押し、P2はRight Shiftまたは上矢印を0.25秒押すと、それぞれ車種選択へ進みます。車種を確定して両者の練習が完了するとレースが始まります。P1/P2ともESP32で操作する実機対戦では、両方のデバッグ設定を無効にしてください。
 
 ## 外付け2台へ自動で全画面表示（macOS / Metal）
 
@@ -37,7 +37,7 @@ Unityでは `Racing > Build > Mac Player Windows` を実行すると `Builds/Dis
 
 macOSプラグインは `Native~/RaceWindows/RaceWindows.mm` がソースで、`sh Native~/RaceWindows/build-macos.sh` でarm64/x86_64のUniversal dylibを生成します。Unityの別バージョンを使う場合は `UNITY_PLUGIN_HEADERS` でそのEditorの `Contents/PluginAPI` を指定します。生成物 `Assets/Plugins/RaceWindows/macOS/libRaceWindows.dylib` をPlayerに同梱してください。検証時だけ環境変数 `RACING_WINDOW_CAPTURE` にPNGの保存先を指定すると、P2に転送した10フレーム目の描画画像をGPUから読み戻して保存します。通常起動時には画像保存やCPUへの読み戻しは行いません。Editorではロードせず、これまでどおりGameビューを2つ開いてDisplay 1と `Player Two Display` をプレビューします。
 
-WindowsではUnityの追加ディスプレイを作成後に通常ウィンドウ枠へ変更し、クライアント領域に合わせて描画解像度を更新します。macOS版の実装はMetal専用です。Linuxや他の描画APIでのP2ウィンドウ化は対象外です。
+Windowsでは `Racing > Build > Windows x64` または `Tools/Build-Windows.ps1` でビルドします。詳細は [Windows対応](WindowsSupport.md) と [PC・Unity操作マニュアル](CustomerServiceManual.md) を参照してください。保存済みのP2指定（Display 3）が接続されていなければDisplay 2を使います。Unityの追加ディスプレイを作成後に通常ウィンドウ枠へ変更し、クライアント領域に合わせて描画解像度を更新します。macOS版の実装はMetal専用です。Linuxや他の描画APIでのP2ウィンドウ化は対象外です。
 
 2026-10-17、Unity 6000.3.9f1 / Apple M1でMacビルド、起動・レース描画・終了を確認しました。Editorの出力先／異なるサイズのターゲット再生成／UI倍率の検証と、Windows用コードのコンパイルも成功しています。Standaloneの検証レポートは `Logs/PlayerWindows/verified/report.json`（`errors: []`）、P1画像は `optimized.png`、P2へ転送した実描画画像は `p2-presented.png` です。P1/P2それぞれの車とHUD、上下方向を確認しました。外部モニターでのチラつき解消、OS操作によるウィンドウの連続リサイズ、Windows実行は未確認です。
 

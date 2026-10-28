@@ -104,6 +104,8 @@ Shader "Racing/Race Barrier Hex Frost"
                 float edgeAA = max(fwidth(edgeDistance), 0.001);
                 half edgeMask = 1.0h - smoothstep(_EdgeLineWidth - edgeAA,
                     _EdgeLineWidth + edgeAA, edgeDistance);
+                // Older/custom meshes without edge-distance UVs retain the normal hex surface.
+                edgeMask *= step(0.001, input.edgeDistances.x + input.edgeDistances.y);
                 color += _EdgeGlowColor.rgb * (_EdgeGlowIntensity * edgeMask);
                 alpha = max(alpha, edgeMask);
                 return half4(color, alpha);

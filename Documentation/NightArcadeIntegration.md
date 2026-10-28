@@ -2,6 +2,8 @@
 
 確認日：2026-10-26。統合ブランチ：`codex/night-ennichi-arcade-ui`。
 
+2026-10-28のmain取り込み後の状態は [mainとの統合確認](NightArcadeMainReconciliation.md) を参照。以下の画像と結果は10月26日時点の記録。
+
 新UIは `codex/arcade-sport-ui` の `6eb6360`（デザイン2）、夜景は `raymee/night-ennichi-visuals` の `c0d6158` を使用しています。両ブランチの履歴を保持してマージしました。
 
 ## 統合で調整した点

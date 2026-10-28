@@ -14,7 +14,7 @@ mcs -langversion:latest -define:UNITY_STANDALONE_OSX -r:System.Web.Extensions \
   Assets/Managers/RaceDashboardBridge.cs Assets/Managers/RaceAudioSettings.cs Assets/Managers/Multiplayer/Core/FrameRateCounter.cs Assets/Managers/Multiplayer/Core/SerialInputProtocol.cs \
   Assets/Managers/Multiplayer/Core/RgpHostSession.cs Assets/Managers/Multiplayer/Core/RgpSerialJournal.cs \
   Assets/Managers/Input/TwoPlayerSerialInputSource.cs Assets/Managers/Input/MacPseudoTerminalLineReader.cs \
-  Assets/Managers/Input/Esp32SerialConfiguration.cs Assets/Managers/Input/DriveInputState.cs
+  Assets/Managers/Input/Esp32SerialConfiguration.cs Assets/Managers/Input/DriveInputState.cs Assets/Managers/Input/PlayerDriveInputGate.cs
 mcs -langversion:latest -out:Temp/DashboardRelay/LiveInputTests.exe 'Tests~/DashboardRelay/LiveInputTests.cs' \
   Assets/Managers/Multiplayer/Core/DashboardInputLease.cs Assets/Managers/Input/DashboardDriveInputSource.cs \
   Assets/Managers/Input/DriveInputState.cs Assets/Managers/Input/LiveDriveInputSource.cs Assets/Managers/Input/PlayerDriveInputGate.cs

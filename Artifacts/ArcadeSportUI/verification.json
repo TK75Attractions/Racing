@@ -1,6 +1,6 @@
 {
   "unity": "6000.3.9f1",
-  "date": "2026-10-24 JST",
+  "date": "2026-10-26 JST",
   "base": "23ec146",
   "branch": "codex/arcade-sport-ui",
   "checks": {
@@ -18,7 +18,7 @@
     },
     "ui": {
       "result": "passed",
-      "summary": "ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, ExtraBold digits, HUD shadows, speed colours, DNF, ending input gate, stable meshes."
+      "summary": "ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, matched ExtraBold instruments, two lap segments, peripheral item notices, HUD shadows, speed colours, DNF, ending input gate, stable meshes."
     },
     "capture": {
       "result": "passed",
@@ -35,8 +35,8 @@
   },
   "editmode": {
     "result": "Passed",
-    "total": "152",
-    "passed": "152",
+    "total": "166",
+    "passed": "166",
     "failed": "0",
     "skipped": "0"
   },
@@ -51,5 +51,31 @@
       "3840x2160"
     ],
     "native_4k_frame_time_measured": false
+  },
+  "hud_revision": {
+    "date": "2026-10-26 JST",
+    "instruments": "130pt ExtraBold digits, 24pt headings and units; both palettes and three resolutions captured",
+    "lap_segments": "passed: lap 1 -> 2 -> 1",
+    "rank_card": "passed: shared background and shadow",
+    "notice": "passed: production layout, fixed scale, expiry and separation from quiet notices, active effect and tachometer",
+    "regression_log": "/private/tmp/arcade-hud-refinement.log",
+    "previous_checks": "Car selection and standalone ending checks retained from 2026-10-24; EditMode, UI/ranking regression and race flow rechecked after integrating latest main.",
+    "race_flow": "passed: actual item event, active effect timer, debug input retained with controls hidden, full finish/result/retry/withdrawal flow",
+    "race_flow_log": "/private/tmp/arcade-hud-race-flow.log"
+  },
+  "integrated_main": "54a7232",
+  "peripheral_driving_notices": {
+    "center_card": "not generated",
+    "drift_and_jump": "production layout checks and both palette captures passed",
+    "priority": "input/recovery > jump/safety > confirmed item effect > rear rival > front rival > driving guidance",
+    "input": "P1_STEERING_TEST_NOTICE_PASS and P1_STEERING_TEST_LOGIC_PASS; all status strings fit 720p",
+    "rules": "SKILL_GAMEPLAY_RULES_PASS and RACE_FEATURE_VALIDATION_PASS",
+    "logs": [
+      "/private/tmp/arcade-peripheral-notices.log",
+      "/private/tmp/arcade-peripheral-input.log",
+      "/private/tmp/arcade-peripheral-editmode.xml",
+      "/private/tmp/arcade-peripheral-race-flow.log"
+    ],
+    "race_flow": "MULTIPLAYER_PLAYMODE_VALIDATION_PASS after integrating main 54a7232"
   }
 }

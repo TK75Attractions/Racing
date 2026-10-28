@@ -1,0 +1,11 @@
+MAINTENANCE_PHASE_PASS: Title
+MAINTENANCE_PHASE_PASS: Title
+MAINTENANCE_TRANSITION_PASS: a selection transition stays frozen until maintenance clears.
+MAINTENANCE_PHASE_PASS: CarSelection
+MAINTENANCE_PHASE_PASS: Tutorial
+MAINTENANCE_PHASE_PASS: Countdown
+MAINTENANCE_UI_MOTION_PASS: frozen presentation clock, reveal pose, pending callback and keyboard input; exact one-shot resume.
+MAINTENANCE_PHASE_PASS: Game
+MAINTENANCE_PHASE_PASS: Goal
+MAINTENANCE_PHASE_PASS: Result
+MAINTENANCE_PLAYMODE_PASS: seven real phases, all three canvases, physics/timers/audio, disable/re-enable and a second Play session restoring persisted maintenance.

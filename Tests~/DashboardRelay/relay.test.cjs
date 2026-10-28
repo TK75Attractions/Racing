@@ -162,6 +162,26 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       assert.equal((await request('/api/connection')).json.canControl,true);
     });
     const remote={host:'race.test.ts.net',origin:'https://race.test.ts.net',user:'viewer@example.com'};
+    await t.test('maintenance uses operator authorization, freshness, deduplication and reversible game guards',async()=>{
+      const status=()=>request('/api/status');
+      const snapshot=(await status()).json;
+      assert.equal(snapshot.settings.maintenanceAvailable,true);
+      const body={id:crypto.randomUUID(),targetSession:snapshot.sessionId,expectedState:snapshot.state,
+        stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime,settingsRevision:snapshot.settingsRevision,command:'maintenance',args:['true']};
+      const viewer=await request('/api/action/settings',{...remote,method:'POST',body});assert.equal(viewer.status,403);
+      const on=await request('/api/action/settings',{method:'POST',origin:'http://127.0.0.1:8766',body});
+      assert.equal(on.status,200);assert.equal(on.json.settings.maintenanceActive,true);
+      assert.deepEqual((await request('/api/action/settings',{method:'POST',origin:'http://127.0.0.1:8766',body})).json,on.json);
+      const enabled=(await status()).json;
+      assert.equal(enabled.settings.canStartTestRace,false);
+      assert.ok(enabled.inputControl.players.every(player=>!player.available));
+      const start=await request('/api/action/start',{method:'POST',origin:'http://127.0.0.1:8766',body:{...body,id:crypto.randomUUID()}});
+      assert.equal(start.status,409);assert.equal((await status()).json.state,'Title');
+      const stale=await request('/api/action/settings',{method:'POST',origin:'http://127.0.0.1:8766',body:{...body,id:crypto.randomUUID(),args:['false']}});
+      assert.equal(stale.status,409);
+      const off=await request('/api/action/settings',{method:'POST',origin:'http://127.0.0.1:8766',body:{...body,id:crypto.randomUUID(),settingsRevision:enabled.settingsRevision,args:['false'],observedAt:enabled.serverTime}});
+      assert.equal(off.status,200);assert.equal(off.json.settings.maintenanceActive,false);
+    });
     await t.test('Serve identity, strict host/origin and operator authorization',async()=>{
       assert.equal((await request('/api/connection',{host:'evil.example'})).status,403);
       assert.equal((await request('/api/connection',{host:remote.host})).status,403);

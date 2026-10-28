@@ -10,6 +10,7 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
     [SerializeField] private MeshFilter tube;
     [SerializeField] private Material patternMaterial;
     [SerializeField] private Mesh bakedWallMesh;
+    [SerializeField] private Mesh bakedSourceMesh;
     [SerializeField] private Mesh readableWallSource;
     [SerializeField] private Vector3[] bakedRingCenters;
     [SerializeField] private float bakedLength;
@@ -44,11 +45,13 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
         Clear();
         if (!isActiveAndEnabled || tube == null || tube.sharedMesh == null || patternMaterial == null) return;
         Mesh displayMesh = tube.sharedMesh;
-        Mesh portalSource = readableWallSource != null ? readableWallSource : tube.sharedMesh;
+        bool smooth = tube.sharedMesh.name == TubeSurfaceGeometry.SmoothMeshName;
+        Mesh portalSource = smooth ? tube.sharedMesh : readableWallSource != null ? readableWallSource : tube.sharedMesh;
         Vector3[] centers = null;
         float length = patternMaterial.GetFloat("_TubeLength");
         bool reverse = false;
-        if (bakedWallMesh != null && bakedRingCenters != null && bakedRingCenters.Length > 1)
+        bool bakedMatches = bakedSourceMesh == tube.sharedMesh || (bakedSourceMesh == null && !smooth);
+        if (bakedMatches && bakedWallMesh != null && bakedRingCenters != null && bakedRingCenters.Length > 1)
         {
             displayMesh = bakedWallMesh;
             centers = new Vector3[bakedRingCenters.Length];
@@ -237,6 +240,7 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
     public void SetBakedWallMetadata(Mesh source, Mesh wall, Vector3[] centers, float length, bool reverse)
     {
         readableWallSource = source;
+        bakedSourceMesh = tube.sharedMesh;
         bakedWallMesh = wall;
         bakedRingCenters = new Vector3[centers.Length];
         for (int i = 0; i < centers.Length; i++) bakedRingCenters[i] = tube.transform.InverseTransformPoint(centers[i]);

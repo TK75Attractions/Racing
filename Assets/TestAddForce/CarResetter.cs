@@ -229,7 +229,7 @@ public class CarResetter : MonoBehaviour
         }
         debugMover?.SuppressInputAfterRespawn();
         GetComponent<CarItemEffects>()?.GrantRecoveryProtection(2f);
-        if (inputSource is PlayerDriveInputGate gate) gate.RequirePedalRelease();
+        if (inputSource is PlayerDriveInputGate gate) gate.RequirePedalRelease("course_reset");
 
         Debug.Log($"{name} Reset");
     }

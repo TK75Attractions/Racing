@@ -219,7 +219,7 @@ public class InputManager : MonoBehaviour
         {
             // A live change keeps the existing gate; constant mode supplies an acknowledged neutral sample.
             GameObject car = race.GetParticipant(0)?.Car ?? race.GetComponent<DrivingTutorialController>()?.GetPlayerCar(0);
-            if (car?.GetComponent<DebugMover>()?.InputSource is PlayerDriveInputGate gate) gate.RequirePedalRelease();
+            if (car?.GetComponent<DebugMover>()?.InputSource is PlayerDriveInputGate gate) gate.RequirePedalRelease("input_mode_changed");
         }
     }
 
@@ -380,7 +380,7 @@ public class InputManager : MonoBehaviour
 
     void OnGUI()
     {
-        if (!IsSerialDebugDisplayVisible)
+        if (Gmanager.Control?.IsMaintenanceActive == true || !IsSerialDebugDisplayVisible)
         {
             return;
         }

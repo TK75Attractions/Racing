@@ -67,7 +67,7 @@ public sealed class RaceFeatureController : MonoBehaviour
     }
     private void OnGUI()
     {
-        if (!PanelVisible) return;
+        if (manager?.IsMaintenanceActive == true || !PanelVisible) return;
         // Keep IMGUI in ASCII: the cabinet's default IMGUI font does not contain Japanese.
         float scale = Mathf.Clamp(Screen.height / 900f, .75f, 1.5f);
         Matrix4x4 previous = GUI.matrix;

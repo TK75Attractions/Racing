@@ -59,12 +59,57 @@ public static class NightArcadeIntegrationValidation
             Require(queue.Tick(.1f)?.Key == "curve", "Road warnings must interrupt a success event.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
-        const string report = "NIGHT_ARCADE_INTEGRATION_PASS: arcade bindings, five notice priorities, event scheduling, authored stereo PCM, positional vehicle mixer, per-player BGM fades and result/title routing.";
+        const string report = "NIGHT_ARCADE_INTEGRATION_PASS: arcade bindings, six notice priorities, event scheduling, authored stereo PCM, positional vehicle mixer, per-player BGM fades and result/title routing.";
         string output = Environment.GetEnvironmentVariable("RACING_NIGHT_UI_OUTPUT") ?? "Artifacts/NightArcadeIntegration";
         Directory.CreateDirectory(output);
         File.WriteAllText(Path.Combine(output, "integration-checks.txt"), report + "\n");
         Debug.Log(report);
     }
+    [MenuItem("Racing/UI/Prepare Night Arcade With Main")]
+    public static void PrepareWithMain()
+    {
+        CourseRenderChunkBuilder.Run();
+        TubeWallVisualPreparation.Run();
+        Debug.Log("NIGHT_ARCADE_MAIN_PREPARATION_PASS: render chunks and wall metadata rebuilt from the integrated scene.");
+    }
+
+    [MenuItem("Racing/UI/Validate Night Arcade With Main")]
+    public static void RunWithMain()
+    {
+        Run();
+        UIMotionValidation.RunMeters();
+        SkillGameplayValidation.Run();
+        BranchIntegrationValidation.RunPhysics();
+        CircuitVisualRefinementValidation.RunTube();
+        ValidateSmoothNightOverlay();
+        Debug.Log("NIGHT_ARCADE_MAIN_PASS: night scenery, peripheral notices, motion, input recovery, steering, smooth tube collision and matching night overlay.");
+    }
+
+    private static void ValidateSmoothNightOverlay()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
+        var course = UnityEngine.Object.FindFirstObjectByType<RaceCourse>();
+        course.RebuildCache();
+        course.RebuildRoad();
+        var patterns = course.GetComponent<TubeSpeedPatternController>();
+        Require(patterns != null && patterns.Tube.sharedMesh.name == TubeSurfaceGeometry.SmoothMeshName,
+            "Night patterns must use main's smooth tube surface.");
+        foreach (var chunks in patterns.Tube.GetComponentsInChildren<CourseRenderChunks>(true))
+            Require(chunks.sourceMesh == patterns.Tube.sharedMesh,
+                "Render chunks must follow the integrated tube instead of the previous surface.");
+        patterns.Rebuild();
+        var overlay = patterns.Tube.transform.Find(TubeSpeedPatternController.OverlayName);
+        Require(overlay != null, "The smooth tube must retain its night patterns.");
+        var mesh = overlay.GetComponent<MeshFilter>().sharedMesh;
+        Require(mesh.vertexCount == patterns.Tube.sharedMesh.vertexCount && mesh.uv2.Length == mesh.vertexCount,
+            "Night metadata must follow the smooth tube grid instead of the older baked FBX grid.");
+        patterns.Rebuild();
+        int count = 0;
+        foreach (Transform child in patterns.Tube.transform)
+            if (child.name == TubeSpeedPatternController.OverlayName) count++;
+        Require(count == 1, "Rebuilding the smooth tube must release the previous overlay.");
+    }
+
     private static void ValidateAuthoredScenery()
     {
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");

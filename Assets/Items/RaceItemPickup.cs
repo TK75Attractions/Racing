@@ -29,6 +29,7 @@ public abstract class RaceItemPickup : MonoBehaviour
     private Transform visualRoot;
     private Mesh runtimeMesh;
     private Material runtimeMaterial;
+    private Texture2D runtimeTexture;
     private float respawnTimeRemaining;
     private float phaseOffset;
 
@@ -112,6 +113,7 @@ public abstract class RaceItemPickup : MonoBehaviour
             float time = Time.time + phaseOffset;
             visualRoot.localPosition = Vector3.up * (hoverHeight + Mathf.Sin(time * 2.2f) * bobAmplitude);
             visualRoot.localRotation = Quaternion.Euler(0f, time * spinDegreesPerSecond, 0f) * GetVisualTilt();
+            visualRoot.localScale = Vector3.one * GetVisualScale(time);
             AnimateVisual(time);
         }
     }
@@ -140,6 +142,8 @@ public abstract class RaceItemPickup : MonoBehaviour
     protected abstract bool OnCollected(DebugMover mover, Rigidbody body, CarItemEffects effects);
     protected abstract Mesh CreateVisualMesh();
     protected abstract Material CreateVisualMaterial();
+    protected virtual Texture2D CreateVisualTexture() => null;
+    protected virtual float GetVisualScale(float time) => 1f;
     protected virtual Quaternion GetVisualTilt() => Quaternion.identity;
     protected virtual void AnimateVisual(float time) { }
 
@@ -175,7 +179,16 @@ public abstract class RaceItemPickup : MonoBehaviour
         visualRoot = visual.transform;
 
         runtimeMesh = CreateVisualMesh();
-        if (runtimeMaterial == null) runtimeMaterial = CreateVisualMaterial();
+        if (runtimeMaterial == null)
+        {
+            runtimeMaterial = CreateVisualMaterial();
+            runtimeTexture = CreateVisualTexture();
+            if (runtimeMaterial != null && runtimeTexture != null)
+            {
+                runtimeMaterial.mainTexture = runtimeTexture;
+                if (runtimeMaterial.HasProperty("_EmissionMap")) runtimeMaterial.SetTexture("_EmissionMap", runtimeTexture);
+            }
+        }
         visual.AddComponent<MeshFilter>().sharedMesh = runtimeMesh;
         MeshRenderer renderer = visual.AddComponent<MeshRenderer>();
         renderer.sharedMaterial = runtimeMaterial;
@@ -200,6 +213,8 @@ public abstract class RaceItemPickup : MonoBehaviour
         CleanupVisual();
         ItemVisualFactory.DestroyObject(runtimeMaterial);
         runtimeMaterial = null;
+        ItemVisualFactory.DestroyObject(runtimeTexture);
+        runtimeTexture = null;
     }
 
     protected virtual void OnDrawGizmosSelected()
