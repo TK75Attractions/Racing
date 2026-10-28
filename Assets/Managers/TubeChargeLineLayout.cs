@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>One non-physical optional side-line section, selected only on the actual tube's lower road.</summary>
+/// <summary>Places the existing acceleration pads on the actual tube floor. Legacy type name keeps settings compatible.</summary>
 public sealed class TubeChargeLineLayout : MonoBehaviour
 {
     public bool Available { get; private set; }
@@ -10,7 +10,7 @@ public sealed class TubeChargeLineLayout : MonoBehaviour
     private RaceCourse course;
     private float sign;
     private GameObject visuals;
-    private Material material;
+    public readonly System.Collections.Generic.List<AccelerationPad> Pads = new System.Collections.Generic.List<AccelerationPad>();
     public bool VisualsVisible => visuals != null && visuals.activeSelf;
     public void Configure(RaceCourse path, float direction)
     {
@@ -22,7 +22,7 @@ public sealed class TubeChargeLineLayout : MonoBehaviour
             if (!course.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample start) || start.width < 10f) continue;
             float offset = Mathf.Min(3.2f, start.width * .5f - 2.2f);
             bool safe = true;
-            for (float d = -6f; d <= TubeLineChallenge.Length + 6f; d += 3f)
+            for (float d = -12f; d <= 85f; d += 3f)
             {
                 float progress = raw + sign * d;
                 if (!course.HasRoadAtProgress(progress) || !course.TryGetSampleAtProgress(progress, out RaceCourse.CourseSample sample) ||
@@ -37,7 +37,7 @@ public sealed class TubeChargeLineLayout : MonoBehaviour
             if (!safe) continue;
             EntryProgress = raw; LaneOffset = offset; Available = true; BuildVisuals(); break;
         }
-        if (!Available) Debug.LogWarning("Tube charge line: no safe lower-road section; no reward line was created.");
+        if (!Available) Debug.LogWarning("Tube acceleration pads: no safe flat run-out; pads were not created.");
         ApplySwitch();
     }
     private bool LaneHasGround(RaceCourse.CourseSample sample, float offset)
@@ -57,43 +57,16 @@ public sealed class TubeChargeLineLayout : MonoBehaviour
     { if (visuals != null) visuals.SetActive(Available && RaceFeatureController.Enabled(RaceFeature.TubeChargeLines)); }
     private void BuildVisuals()
     {
-        if (visuals != null) { if (Application.isPlaying) Destroy(visuals); else DestroyImmediate(visuals); }
-        visuals = new GameObject("Optional tube charge lines"); visuals.transform.SetParent(transform, false);
-        visuals.hideFlags = HideFlags.DontSave;
-        if (material != null) { if (Application.isPlaying) Destroy(material); else DestroyImmediate(material); }
-        material = ItemVisualFactory.CreateEmissiveMaterial("Tube charge line", new Color(.25f, 1f, .75f), 2f, 1f);
-        foreach (int side in new[] { -1, 1 })
+        if(visuals!=null){if(Application.isPlaying)Destroy(visuals);else DestroyImmediate(visuals);}
+        Pads.Clear();visuals=new GameObject("Tube acceleration pads");visuals.transform.SetParent(transform,false);visuals.hideFlags=HideFlags.DontSave;
+        course.TryGetSampleAtProgress(EntryProgress+sign*4f,out var sample);
+        foreach(int side in new[]{-1,1})
         {
-            for (int rail = -1; rail <= 1; rail += 2)
-            {
-                var points = new Vector3[10];
-                for (int i = 0; i < points.Length; i++)
-                {
-                    course.TryGetSampleAtProgress(EntryProgress + sign * i * 2f, out RaceCourse.CourseSample sample);
-                    points[i] = sample.position + sample.right * (side * LaneOffset + rail * LaneTolerance) + sample.up * .08f;
-                }
-                MakeLine("Charge lane rail", points, .12f);
-            }
-            for (float d = 0; d <= TubeLineChallenge.Length; d += 6f)
-            {
-                course.TryGetSampleAtProgress(EntryProgress + sign * d, out RaceCourse.CourseSample sample);
-                Vector3 centre = sample.position + sample.right * side * LaneOffset + sample.up * .09f;
-                Vector3 forward = sample.forward * sign;
-                MakeLine("Charge direction", new[] { centre - forward * .7f - sample.right * .55f,
-                    centre + forward * .45f, centre - forward * .7f + sample.right * .55f }, .16f);
-            }
+            var host=new GameObject("Acceleration pad "+side);host.transform.SetParent(visuals.transform,false);
+            Vector3 position=sample.position+sample.right*(side*LaneOffset);
+            if(Physics.Raycast(position+sample.up*2f,-sample.up,out var hit,3.5f,Physics.DefaultRaycastLayers,QueryTriggerInteraction.Ignore))position=hit.point;
+            host.transform.SetPositionAndRotation(position+sample.up*.012f,Quaternion.LookRotation(sample.forward*sign,sample.up));
+            var pad=host.AddComponent<AccelerationPad>();pad.ConfigureTubePad(new Vector3(3.6f,.035f,8f));Pads.Add(pad);
         }
-    }
-    private void MakeLine(string label, Vector3[] points, float width)
-    {
-        var child = new GameObject(label); child.transform.SetParent(visuals.transform, false);
-        LineRenderer line = child.AddComponent<LineRenderer>(); line.sharedMaterial = material;
-        line.useWorldSpace = true; line.positionCount = points.Length; line.SetPositions(points);
-        line.widthMultiplier = width; line.numCapVertices = 2;
-        line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; line.receiveShadows = false;
-    }
-    private void OnDestroy()
-    {
-        if (material != null) { if (Application.isPlaying) Destroy(material); else DestroyImmediate(material); }
     }
 }

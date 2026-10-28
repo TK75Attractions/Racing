@@ -1,61 +1,39 @@
 using UnityEngine;
 
-/// <summary>Each human has an independent sequential gate and per-lap reward ledger.</summary>
+/// <summary>Tube-pad guidance and hit feedback. Legacy public names preserve achievements/settings.</summary>
 public sealed class TubeChargeLineController : MonoBehaviour
 {
-    private readonly TubeLineChallenge challenge = new TubeLineChallenge();
     private Gmanager manager;
     private RaceParticipant own;
     private DebugMover mover;
-    private CarResetter resetter;
-    private GroundCheck[] wheels;
-    private int recoveryCount;
     private float noticeUntil;
-    private string guidance = "";
+    private string guidance="";
     public TubeChargeLineLayout Layout { get; private set; }
     public int SuccessfulLines { get; private set; }
-    public bool Pending => challenge.IsPending;
-    public string Notice => RaceFeatureController.Enabled(RaceFeature.TubeChargeLines) && Time.time < noticeUntil ? "ライン成功！チャージ増加" : RaceFeatureController.Enabled(RaceFeature.TubeChargeLines) ? guidance : "";
-    public void Configure(Gmanager race, RaceParticipant driver)
+    public bool Pending => false;
+    public string Notice => RaceFeatureController.Enabled(RaceFeature.TubeChargeLines)?(Time.time<noticeUntil?"加速パネル！":guidance):"";
+    public void Configure(Gmanager race,RaceParticipant driver)
     {
-        manager = race; own = driver; mover = GetComponent<DebugMover>(); resetter = GetComponent<CarResetter>();
-        wheels = GetComponentsInChildren<GroundCheck>();
-        if (race.course == null) return;
-        Layout = race.course.GetComponent<TubeChargeLineLayout>() ?? race.course.gameObject.AddComponent<TubeChargeLineLayout>();
-        Layout.Configure(race.course, race.CourseProgressSign);
+        Unsubscribe();manager=race;own=driver;mover=GetComponent<DebugMover>();
+        if(race.course==null)return;
+        Layout=race.course.GetComponent<TubeChargeLineLayout>()??race.course.gameObject.AddComponent<TubeChargeLineLayout>();
+        Layout.Configure(race.course,race.CourseProgressSign);
+        foreach(var pad in Layout.Pads)pad.Activated+=OnActivated;
     }
-    public void Clear() { challenge.Clear(); noticeUntil = 0f; guidance = ""; }
-    private void OnDisable() { Clear(); }
-    private void FixedUpdate() { Tick(Time.fixedDeltaTime); }
+    private void OnActivated(DebugMover car)
+    {
+        if(car!=mover)return;SuccessfulLines++;noticeUntil=Time.time+1.5f;
+    }
+    public void Clear(){noticeUntil=0f;guidance="";}
+    private void OnDisable(){Clear();}
+    private void OnDestroy(){Unsubscribe();}
+    private void Unsubscribe(){if(Layout!=null)foreach(var pad in Layout.Pads)if(pad!=null)pad.Activated-=OnActivated;}
+    private void FixedUpdate(){Tick(Time.fixedDeltaTime);}
     public void Tick(float dt)
     {
-        if (resetter != null && recoveryCount != resetter.RecoveryCount)
-        { recoveryCount = resetter.RecoveryCount; Clear(); return; }
-        if (!CanDrive()) { Clear(); return; }
-        RaceCourse course = manager.course;
-        float raw = course.GetProgressDistance(own.Body.position);
-        if (!course.TryGetSampleAtProgress(raw, out RaceCourse.CourseSample sample)) { Clear(); return; }
-        int contacts = 0; foreach (GroundCheck wheel in wheels) if (wheel.CheckNow()) contacts++;
-        float lateral = Vector3.Dot(own.Body.position - sample.position, sample.right);
-        int lane = Mathf.Abs(Mathf.Abs(lateral) - Layout.LaneOffset) <= TubeChargeLineLayout.LaneTolerance ? (lateral < 0f ? -1 : 1) : 0;
-        bool eligible = contacts >= 2 && course.HasRoadAtProgress(raw) &&
-            Mathf.Abs(Vector3.Dot(own.Body.position - sample.position, sample.up)) < 2f &&
-            Vector3.Dot(own.Body.rotation * Vector3.forward, sample.forward * manager.CourseProgressSign) > .95f &&
-            Vector3.Dot(own.Body.rotation * Vector3.up, sample.up) > .95f;
-        float distance = Layout.DistanceFromEntry(raw);
-        int lap = manager.GetParticipantLap(own);
-        guidance = eligible && distance >= -25f && distance < -2f && !challenge.WasAwarded(lap) ? "横の光るラインでチャージ" : "";
-        if (!challenge.Tick(lap, lane, distance, eligible, dt)) return;
-        if (!mover.AddDriftCharge(.25f)) return; // Full charge gets no false success notification.
-        SuccessfulLines++; noticeUntil = Time.time + 1.5f;
-        own.Effects?.NotifyChargeCollected();
+        if(manager==null||manager.state!=Gmanager.State.Game||own?.IsRacing!=true||Layout?.Available!=true||
+            !RaceFeatureController.Enabled(RaceFeature.TubeChargeLines)){Clear();return;}
+        float distance=Layout.DistanceFromEntry(manager.course.GetProgressDistance(own.Body.position));
+        guidance=distance>=-25f&&distance<0f?"光るパネルをふむと加速！":"";
     }
-    private bool CanDrive() => manager != null && manager.state == Gmanager.State.Game && Layout != null && Layout.Available &&
-        own != null && !own.IsCpu && own.IsRacing && RaceFeatureController.Enabled(RaceFeature.TubeChargeLines) &&
-        mover != null && mover.enabled && !mover.IsInputSuppressed && mover.InputSource != null && mover.InputSource.IsConnected &&
-        !(mover.InputSource is PlayerDriveInputGate gate && (gate.IsBlocked || gate.NeedsPedalRelease)) &&
-        !(resetter != null && resetter.IsRecoveryPending) &&
-        Vector3.Dot(own.Body.linearVelocity, own.Body.rotation * Vector3.forward) >= 6f &&
-        (own.Effects == null || !(own.Effects.IsRocketActive || own.Effects.BlocksDriverInput || own.Effects.IsOiled ||
-            own.Effects.IsConfused || own.Effects.IsRecoveryProtected));
 }

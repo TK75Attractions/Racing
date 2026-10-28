@@ -96,7 +96,7 @@ public class ResultUIManager
         switch (RaceAchievementSelection.Select(facts))
         {
             case RaceAchievementKind.AutodriveTest: return "自動運転テストの記録";
-            case RaceAchievementKind.TubeLine: text=$"ライン達成 {facts.tubeLines}回！"; break;
+            case RaceAchievementKind.TubeLine: text=$"パネル加速 {facts.tubeLines}回！"; break;
             case RaceAchievementKind.Landing: text=$"着地成功 {facts.landings}回！"; break;
             case RaceAchievementKind.Drift: text=$"ドリフト加速 {facts.driftReleases}回！"; break;
             case RaceAchievementKind.Slipstream: text=$"追走加速 {facts.slipstreamBoosts}回！"; break;
