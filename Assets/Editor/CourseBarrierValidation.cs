@@ -11,7 +11,7 @@ public static class CourseBarrierValidation
 {
     [Serializable] private sealed class Report
     {
-        public int goalLaps, wallPaths, exteriorSamples, tubeSamples, missingSideHits, interiorWallNodes;
+        public int goalLaps, wallPaths, exteriorSamples, tubeSamples, missingSideHits, interiorWallNodes, portalTubeSideHits;
         public float courseLength, exteriorMeters, tubeMeters, maximumPhysicsExcursion, minimumPhysicsHeight;
         public int physicsTrials;
     }
@@ -62,14 +62,18 @@ public static class CourseBarrierValidation
         {
             course.TryGetSampleAtProgress(progress, out var sample);
             bool inside = TubeCeiling(tube, sample.position);
-            if (inside) { report.tubeSamples++; report.tubeMeters += .5f; continue; }
-            report.exteriorSamples++; report.exteriorMeters += .5f;
+            if (inside) { report.tubeSamples++; report.tubeMeters += .5f; }
+            else { report.exteriorSamples++; report.exteriorMeters += .5f; }
             foreach (int sign in new[] { -1, 1 })
             {
                 Vector3 side = sample.right * sign;
                 var ray = new Ray(sample.position + Vector3.up, side);
                 bool hit = false;
                 foreach (MeshCollider wall in walls) if (wall.Raycast(ray, out _, sample.width * .5f + 16)) { hit = true; break; }
+                // At a tangent portal the real tube side can begin before its ceiling.
+                // Check the combined collision envelope, including every interior sample.
+                if (!hit && tube.Raycast(ray, out _, sample.width * .5f + 16))
+                { hit = true; if (!inside) report.portalTubeSideHits++; }
                 if (!hit) { report.missingSideHits++; Debug.LogError("Unprotected edge at " + progress + ": " + sample.position + ", side " + sign); }
             }
         }
@@ -183,12 +187,15 @@ public static class CourseBarrierValidation
     {
         if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null) return;
         GameObject cameraObject = new GameObject("Barrier review camera");
-        var output = new RenderTexture(1280, 720, 24); var image = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+        var output = new RenderTexture(1280, 720, 24); Texture2D image = null;
         RenderTexture previous = RenderTexture.active;
         try
         {
             Camera camera = cameraObject.AddComponent<Camera>(); camera.nearClipPlane = .1f; camera.farClipPlane = 2000; camera.fieldOfView = 60;
             camera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(target - eye)); camera.targetTexture = output; camera.Render();
+            // The first SRP render can import assets and unload unreferenced transient objects.
+            // Allocate the CPU readback only after rendering so it cannot be collected mid-frame.
+            image = new Texture2D(1280, 720, TextureFormat.RGB24, false);
             RenderTexture.active = output; image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0); image.Apply(); File.WriteAllBytes(path, image.EncodeToPNG());
         }
         finally { RenderTexture.active = previous; output.Release(); UnityEngine.Object.DestroyImmediate(cameraObject); UnityEngine.Object.DestroyImmediate(output); UnityEngine.Object.DestroyImmediate(image); }

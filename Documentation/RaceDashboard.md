@@ -139,3 +139,7 @@ Dashboardリレーが画面の開閉と独立してUnityを監視する。使用
 [Apple/WebKitのiOS Web Push仕様](https://webkit.org/blog/13878/) / [採用ライブラリ](https://github.com/tpeczek/Lib.Net.Http.WebPush)
 
 macOSで常駐版を更新するときは、`Tools/DashboardRelay`内で `dotnet run -- --update-service` を実行できる。既存のTailscale接続先・操作権限・購読鍵を保ち、コードと配信資産を更新して再起動する。初回導入は従来のInstall Dashboard Serviceを使用する。
+
+## 全画面メンテナンス
+
+各ページ上部の「メンテナンスモード」から、P1・P2・観戦画面を一括でメンテナンス表示にできます。進行・入力・ゲーム音を止め、解除時には元の段階から再開します。再起動後も設定を保持します。管理画面は診断・解除を続けられます。[操作・検証・対応範囲](Maintenance.md)を参照してください。

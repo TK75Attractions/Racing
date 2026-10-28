@@ -1,0 +1,10 @@
+{
+    "connectedEdges": 4,
+    "seamLanes": 36,
+    "supportedPavingSamples": 1385,
+    "curveSegments": 11088,
+    "maximumFloorSeamGap": 0.00006103701889514923,
+    "maximumSampledStep": 0.004904270172119141,
+    "maximumFloorNormalAngle": 0.49098628759384158,
+    "maximumCurveTurn": 3.3869733810424806
+}

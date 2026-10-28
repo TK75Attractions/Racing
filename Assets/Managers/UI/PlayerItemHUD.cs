@@ -26,6 +26,9 @@ public sealed class PlayerItemHUD : MonoBehaviour
     private RectTransform root;
     private CanvasGroup toastGroup;
     private RectTransform toastRect;
+    private Vector2 toastBasePosition;
+    private int shownStatus=-1,shownStatusTenths=int.MinValue,ownerPlayer;
+    private Transform boostCar;
     private TMP_Text toastTitle;
     private TMP_Text toastCaption;
     private TMP_Text statusLabel;
@@ -40,6 +43,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
     private bool wasBoosting;
     private DebugMover boostMover;
     private float toastAge = float.PositiveInfinity;
+    private float toastLifetime = ToastSeconds;
     private float oilAge = float.PositiveInfinity;
     private float oilHoldSeconds = 1.5f;
 
@@ -73,7 +77,8 @@ public sealed class PlayerItemHUD : MonoBehaviour
         }
 
         toastAge = float.PositiveInfinity;
-        oilAge = float.PositiveInfinity;
+        oilAge = float.PositiveInfinity;shownStatus=-1;shownStatusTenths=int.MinValue;
+        wasBoosting = false; boostCar = null; boostMover = null;
         Refresh(0f);
     }
 
@@ -84,10 +89,10 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
     private void Update()
     {
-        Refresh(Time.deltaTime);
+        Refresh(Time.deltaTime,UIMotion.DeltaTime);
     }
 
-    private void Refresh(float deltaTime)
+    private void Refresh(float deltaTime,float uiDeltaTime=0)
     {
         if (root == null) return;
         bool visible = effects != null && effects.isActiveAndEnabled;
@@ -97,14 +102,21 @@ public sealed class PlayerItemHUD : MonoBehaviour
         int siblingIndex = GetTargetSiblingIndex();
         if (root.GetSiblingIndex() != siblingIndex) root.SetSiblingIndex(siblingIndex);
         var manager=Gmanager.Control;
-        if(manager!=null){var car=manager.GetPlayerCarTransform(manager.GetAudioViewedPlayer(GetComponent<ArcadeDisplayTheme>()?.PlayerIndex??0));boostMover=car!=null?car.GetComponent<DebugMover>():null;}
+        if(manager!=null){var car=manager.GetPlayerCarTransform(manager.GetAudioViewedPlayer(ownerPlayer));if(car!=boostCar){boostCar=car;boostMover=car!=null?car.GetComponent<DebugMover>():null;}}
         bool boosting=boostMover!=null&&(boostMover.IsDriftBoosting||boostMover.IsAccelerationPadBoosting||boostMover.IsSlipstreamBoosting);
-        if(boosting&&!wasBoosting)ShowToast("ブースト発動！","BOOST ON",ArcadeUI.For(transform).Primary);
+        if(boosting&&!wasBoosting)ShowBoostToast();
         wasBoosting=boosting;
-        UpdateToast(deltaTime);
+        UpdateToast(uiDeltaTime);
         UpdateOil(deltaTime);
         UpdateConfuse();
         UpdateStatus();
+    }
+
+    private void ShowBoostToast()
+    {
+        // A simultaneous pad/drift boost must not erase the item explanation.
+        if (toastAge < toastLifetime) return;
+        ShowToast("ブースト発動！", "BOOST ON", ArcadeUI.For(transform).Primary);
     }
 
     private void HandleItemUsed(RaceItemType item)
@@ -112,18 +124,19 @@ public sealed class PlayerItemHUD : MonoBehaviour
         switch (item)
         {
             case RaceItemType.Shield:
-                ShowToast("シールド", "接触した相手がスピン", ShieldColor);
+                ShowToast("シールド", "守る！ 相手に当たるとスピン", ShieldColor);
                 break;
             case RaceItemType.Rocket:
-                ShowToast("ロケット", "ROCKET  —  自動操縦で超加速", RocketColor);
+                ShowToast("ロケット", "自動操縦で加速！ 操作は不要", RocketColor);
                 break;
             case RaceItemType.Oil:
-                ShowToast("オイル", "後ろに設置", OilColor);
+                ShowToast("オイル", "後ろに油！ 踏むとすべるよ", OilColor);
                 break;
             case RaceItemType.Confuse:
-                ShowToast("コンフューズ", "相手のハンドルを反転", ConfuseColor);
+                ShowToast("コンフューズ", "相手のハンドルが左右逆に！", ConfuseColor);
                 break;
         }
+        toastLifetime = 3.2f;
     }
 
     private void HandleAfflicted(RaceItemType item)
@@ -131,42 +144,45 @@ public sealed class PlayerItemHUD : MonoBehaviour
         switch (item)
         {
             case RaceItemType.Oil:
-                ShowToast("オイルを踏んだ!", "すべりやすくなっています", WarningColor);
+                ShowToast("オイルを踏んだ!", "ペダルをゆるめて立て直そう", WarningColor);
                 StartOilSplatter();
                 break;
             case RaceItemType.Confuse:
-                ShowToast("ハンドル反転!", "左右の操作が逆になります", ConfuseColor);
+                ShowToast("ハンドル反転!", "少しの間、右と左が逆になるよ", ConfuseColor);
                 break;
             case RaceItemType.Shield:
-                ShowToast("スピン!", "車の向きに気をつけて", WarningColor);
+                ShowToast("スピン!", "すぐに戻るよ！ 道の先を見よう", WarningColor);
                 break;
         }
+        toastLifetime = 2.8f;
     }
 
     private void HandleChargeCollected()
     {
-        ShowToast("チャージ MAX", "ドリフト解放で加速", ChargeColor);
+        ShowToast("チャージ MAX", "カーブでハンドルを戻すと加速", ChargeColor);
+        toastLifetime = 2.8f;
     }
 
     private void ShowToast(string title, string caption, Color tint)
     {
-        if (toastTitle == null) return;
+        if (toastTitle == null || toastAge<.35f&&toastTitle.text==title) return;
         toastTitle.text = title;
         bool fast=title=="ロケット"||title=="ブースト発動！";
         toastFace?.SetStyle(fast,title.Contains("踏んだ")||title.Contains("反転")||title.Contains("スピン"));
-        if(toastIcon!=null)toastIcon.symbol=title.Contains("シールド")?RacingIconGraphic.Icon.Shield:title.Contains("ロケット")?RacingIconGraphic.Icon.Rocket:title.Contains("オイル")?RacingIconGraphic.Icon.Droplet:title.Contains("反転")?RacingIconGraphic.Icon.Swap:RacingIconGraphic.Icon.Bolt;
+        if(toastIcon!=null)toastIcon.symbol=title.Contains("シールド")?RacingIconGraphic.Icon.Shield:title.Contains("ロケット")?RacingIconGraphic.Icon.Rocket:title.Contains("オイル")?RacingIconGraphic.Icon.Droplet:(title.Contains("反転")||title.Contains("コンフューズ"))?RacingIconGraphic.Icon.Swap:RacingIconGraphic.Icon.Bolt;
         toastIcon?.SetVerticesDirty();
         toastTitle.color = ArcadeUI.For(transform).Ink;
         toastCaption.color=ArcadeUI.For(transform).Ink;
         toastTitle.fontStyle=fast?FontStyles.Italic:FontStyles.Normal;
-        toastCaption.text = title=="ロケット"?"ROCKET ON":caption;
+        toastCaption.text = caption;
+        toastLifetime = ToastSeconds;
         toastAge = 0f;
     }
 
     private void UpdateToast(float deltaTime)
     {
         toastAge += deltaTime;
-        if (toastAge >= ToastSeconds)
+        if (toastAge >= toastLifetime)
         {
             toastGroup.alpha = 0f;
             return;
@@ -174,8 +190,11 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
         // メーター上の定位置で短くフェード。拡大や中央への飛び出しは行いません。
         toastRect.localScale = Vector3.one;
+        float enter=UIMotion.Out(Mathf.Clamp01(toastAge/.18f));
+        float leave=UIMotion.In(Mathf.Clamp01((toastAge-(toastLifetime-ToastFadeSeconds))/ToastFadeSeconds));
+        toastRect.anchoredPosition=toastBasePosition+Vector2.right*(18f*(1-enter)+12f*leave);
         float fadeIn = Mathf.Clamp01(toastAge / .08f);
-        float fadeOut = Mathf.Clamp01((ToastSeconds - toastAge) / ToastFadeSeconds);
+        float fadeOut = Mathf.Clamp01((toastLifetime - toastAge) / ToastFadeSeconds);
         toastGroup.alpha = Mathf.Min(fadeIn, fadeOut);
     }
 
@@ -242,42 +261,27 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
     private void UpdateStatus()
     {
-        string text = string.Empty;
-        Color tint = Color.white;
-        if (effects.IsRocketActive)
+        int kind=0;float seconds=0;Color tint=Color.white;
+        if(effects.IsRocketActive){kind=1;seconds=effects.RocketTimeRemaining;tint=RocketColor;}
+        else if(effects.IsSpinning){kind=2;tint=WarningColor;}
+        else if(effects.IsConfused){kind=3;seconds=effects.ConfuseTimeRemaining;tint=ConfuseColor;}
+        else if(effects.IsOiled){kind=4;tint=OilColor;}
+        else if(effects.IsShieldActive){kind=5;seconds=effects.ShieldTimeRemaining;tint=ShieldColor;}
+        else if(effects.HitProtectionRemaining>0){kind=6;tint=ShieldColor;}
+        int tenths=Mathf.RoundToInt(seconds*10);
+        if(kind==shownStatus&&tenths==shownStatusTenths)return;
+        shownStatus=kind;shownStatusTenths=tenths;statusLabel.color=tint;
+        switch(kind)
         {
-            text = $"自動操縦 / ROCKET   {effects.RocketTimeRemaining:0.0}秒";
-            tint = RocketColor;
+            case 1:statusLabel.SetText("自動操縦で加速中   {0:0}.{1:0}秒",tenths/10,tenths%10);break;
+            case 2:statusLabel.text="スピン中 / すぐに戻るよ";break;
+            case 3:statusLabel.SetText("左右が逆！   {0:0}.{1:0}秒",tenths/10,tenths%10);break;
+            case 4:statusLabel.text="すべるよ / ペダルをゆるめよう";break;
+            case 5:statusLabel.SetText("バリアで守る   {0:0}.{1:0}秒",tenths/10,tenths%10);break;
+            case 6:statusLabel.text="保護中 / PROTECTED";break;
+            default:statusLabel.text="";break;
         }
-        else if (effects.IsSpinning)
-        {
-            text = "スピン中 / SPIN";
-            tint = WarningColor;
-        }
-        else if (effects.IsConfused)
-        {
-            text = $"ハンドル反転 / CONFUSED   {effects.ConfuseTimeRemaining:0.0}秒";
-            tint = ConfuseColor;
-        }
-        else if (effects.IsOiled)
-        {
-            text = "すべっています / SLIPPING";
-            tint = OilColor;
-        }
-        else if (effects.IsShieldActive)
-        {
-            text = $"シールド / SHIELD   {effects.ShieldTimeRemaining:0.0}秒";
-            tint = ShieldColor;
-        }
-
-        if (string.IsNullOrEmpty(text) && effects.HitProtectionRemaining > 0f)
-        {
-            text = "保護中 / PROTECTED"; tint = ShieldColor;
-        }
-
-        statusLabel.text = text;
-        statusLabel.color = tint;
-        statusRect.gameObject.SetActive(!string.IsNullOrEmpty(text));
+        statusRect.gameObject.SetActive(kind!=0);
     }
 
     private int GetTargetSiblingIndex()
@@ -292,7 +296,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
     private void Build(Transform canvasRoot)
     {
-        EnsureSprites();
+        EnsureSprites();ownerPlayer=GetComponent<ArcadeDisplayTheme>()?.PlayerIndex??0;
         Transform existing = canvasRoot.Find("ItemHUD");
         if (existing != null)
         {
@@ -319,6 +323,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
         toastRect = RacingHUDStyle.Plate(root, "Toast", new Vector2(.71f, .575f), new Vector2(.97f, .665f),
             RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
+        toastBasePosition=toastRect.anchoredPosition;
         toastRect.Find("ModernSurface").gameObject.SetActive(false);
         var arcadeFace=RacingUITheme.Rect(toastRect,"ArcadeFace",Vector2.zero,Vector2.one);arcadeFace.SetAsFirstSibling();
         toastFace=arcadeFace.gameObject.AddComponent<ArcadeToastGraphic>();toastFace.raycastTarget=false;

@@ -3,6 +3,7 @@ using UnityEngine;
 /// <summary>全プレイヤー共通の音量設定です。</summary>
 public static class RaceAudioSettings
 {
+    public static volatile bool MaintenanceMuted;
     private const string MasterKey = "Racing.Audio.Master";
     private const string BgmKey = "Racing.Audio.BGM";
     private const string EngineKey = "Racing.Audio.Engine";

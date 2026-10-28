@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<test-run result="Passed" total="167" passed="167" failed="0">
+<test-run result="Passed" total="170" passed="170" failed="0">
   <test-case name="AdaptiveAiPaceTests.SlowPlayersGetNearbyContestsWithoutTheOldHighSpeedFloor" result="Passed" />
   <test-case name="AdaptiveAiPaceTests.CpuCanStillPassThenOfferACounterattackAtBothHumanPaces" result="Passed" />
   <test-case name="AdaptiveAiPaceTests.StrongPlayersAndCatchingUpRetainTheFullSpeedPotential" result="Passed" />
@@ -45,8 +45,9 @@
   <test-case name="DrivingTutorialProgressTests.RecoveryKeepsCompletedLessonsButClearsPartialHold" result="Passed" />
   <test-case name="EdgeSteeringAssistTests.CentreAndInwardMotionReceiveNoCorrection" result="Passed" />
   <test-case name="EdgeSteeringAssistTests.PredictedDepartureIsSymmetricAndBounded" result="Passed" />
-  <test-case name="EdgeSteeringAssistTests.AnImminentDepartureOverridesOutwardSteeringAndFacesTheRoad" result="Passed" />
+  <test-case name="EdgeSteeringAssistTests.AnUnintendedDepartureFacesTheRoad" result="Passed" />
   <test-case name="EdgeSteeringAssistTests.AStationaryEdgeAndInvalidGeometryDoNotSteer" result="Passed" />
+  <test-case name="EdgeSteeringAssistTests.DeliberateWallEntryPreservesEitherSidesHandleAtAnySpeedLimit" result="Passed" />
   <test-case name="FrameRateCounterTests.CountsIntervalsAndUpdatesFromSixtyToThirtyFps" result="Passed" />
   <test-case name="FrameRateCounterTests.IncludesStallsInTheMeasuredTime" result="Passed" />
   <test-case name="FrameRateCounterTests.ReenableAndClockResetDiscardTheOldSample" result="Passed" />
@@ -65,6 +66,8 @@
   <test-case name="LapTraversalTests.FullCircuitArmsOnceAndEachNewLapNeedsAnotherCircuit" result="Passed" />
   <test-case name="LapTraversalTests.TeleportsAndRecoveryCannotCompleteAnUnvisitedSection" result="Passed" />
   <test-case name="LapTraversalTests.ReverseCircuitAndInvalidValuesDoNotArm" result="Passed" />
+  <test-case name="LapTraversalTests.FastFinishSweepCountsOnlyAnArmedForwardCircuit" result="Passed" />
+  <test-case name="LapTraversalTests.InvalidExcursionCannotBridgeAnUnvisitedGate" result="Passed" />
   <test-case name="PreparationCountdownTests.ExpiryOccursOnceAtTheBoundaryAndNeverGoesNegative" result="Passed" />
   <test-case name="PreparationCountdownTests.StoppingPreservesTimeAndDoesNotExpire" result="Passed" />
   <test-case name="PreparationCountdownTests.EachScreenHasItsOwnTimeAndNegativeDeltaCannotAddTime" result="Passed" />

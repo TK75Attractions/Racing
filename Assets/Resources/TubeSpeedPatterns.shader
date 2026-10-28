@@ -8,6 +8,8 @@ Shader "Racing/TubeSpeedPatterns"
         _TubeLength ("Tube Length (meters)", Float) = 1000
         _FlowSpeed ("Light Flow Speed (meters/second)", Range(0, 40)) = 14
         _SurfaceOffset ("Inner Surface Offset (meters)", Range(0.005, 0.1)) = 0.03
+        [Enum(UnityEngine.Rendering.CullMode)] _CullMode ("Visible Face", Float) = 1
+        _NormalDirection ("Interior Normal Direction", Float) = -1
     }
     SubShader
     {
@@ -18,7 +20,7 @@ Shader "Racing/TubeSpeedPatterns"
             Tags { "LightMode"="UniversalForward" }
             Blend One One
             ZWrite Off
-            Cull Front
+            Cull [_CullMode]
 
             HLSLPROGRAM
             #pragma target 3.0
@@ -28,7 +30,7 @@ Shader "Racing/TubeSpeedPatterns"
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Cyan, _Violet;
-                float _Intensity, _TubeLength, _FlowSpeed, _SurfaceOffset;
+                float _Intensity, _TubeLength, _FlowSpeed, _SurfaceOffset, _NormalDirection;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; };
@@ -36,9 +38,9 @@ Shader "Racing/TubeSpeedPatterns"
             Varyings Vert(Attributes input)
             {
                 Varyings output;
-                // The FBX normals face outward. Offset in world meters toward the interior.
-                output.positionWS = TransformObjectToWorld(input.positionOS.xyz) -
-                    TransformObjectToWorldNormal(input.normalOS) * _SurfaceOffset;
+                // Authored FBX normals face outward; the prepared grid uses inward normals.
+                output.positionWS = TransformObjectToWorld(input.positionOS.xyz) +
+                    TransformObjectToWorldNormal(input.normalOS) * (_SurfaceOffset * _NormalDirection);
                 output.positionCS = TransformWorldToHClip(output.positionWS);
                 output.uv = input.uv;
                 return output;

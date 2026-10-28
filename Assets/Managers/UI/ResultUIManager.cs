@@ -49,6 +49,9 @@ public class ResultUIManager
         dailyRankingPanel=new DailyRankingPanel(card);
         BuildMenu();
         (card.GetComponent<ResultReplayPanel>()??card.gameObject.AddComponent<ResultReplayPanel>()).Build(localPlayerNumber);
+        var reveal=card.GetComponent<UIRevealSequence>();if(reveal==null)reveal=card.gameObject.AddComponent<UIRevealSequence>();
+        reveal.Configure(card,new[]{"Header","Finish","Finish/Rank","Finish/Time","Classification/ResultRow1","Classification/ResultRow2","Classification/ResultRow3","Classification/ResultRow4","DailyRanking","ResultMenu","MenuHint"},
+            new Vector2(26,0),0,.22f,new[]{0f,.035f,.065f,.14f,.16f,.20f,.24f,.28f,.32f,.10f,.10f});
     }
     private void BuildMenu()
     {

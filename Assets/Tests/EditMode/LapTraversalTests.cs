@@ -36,4 +36,23 @@ public sealed class LapTraversalTests
         for(int i=99;i>=1;i--)lap.Observe(i/100.0,true);
         lap.Observe(double.NaN,true);Assert.That(lap.IsArmed,Is.False);
     }
+    [Test] public void FastFinishSweepCountsOnlyAnArmedForwardCircuit()
+    {
+        var lap = new LapTraversal(); lap.Rebase(0);
+        for (int i = 1; i <= 99; i++) lap.Observe(i / 100.0, true);
+        lap.Observe(.004, true);
+        Assert.That(lap.CrossedFinish, Is.True);
+        lap.Reset(); lap.Rebase(.99); lap.Observe(.004, true);
+        Assert.That(lap.CrossedFinish, Is.False, "A finish sweep cannot replace ordered gates.");
+    }
+    [Test] public void InvalidExcursionCannotBridgeAnUnvisitedGate()
+    {
+        var lap = new LapTraversal(); lap.Rebase(0);
+        for (int i = 1; i <= 20; i++) lap.Observe(i / 100.0, true);
+        for (int i = 21; i <= 40; i++) lap.Observe(i / 100.0, false);
+        for (int i = 41; i <= 99; i++) lap.Observe(i / 100.0, true);
+        lap.Observe(.004, true);
+        Assert.That(lap.IsArmed, Is.False);
+        Assert.That(lap.CrossedFinish, Is.False);
+    }
 }

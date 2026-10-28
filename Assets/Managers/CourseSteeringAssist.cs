@@ -33,6 +33,11 @@ public sealed class CourseSteeringAssist : MonoBehaviour
         float sign = manager.CourseProgressSign;
         float lateral = Vector3.Dot(position - here.position, here.right * sign);
         float predicted = Vector3.Dot(position + velocity * .55f - ahead.position, ahead.right * sign);
+        float halfWidth = Mathf.Min(here.width, ahead.width) * .5f;
+        float intent = EdgeSteeringAssist.WallRideIntent(driverAngle, lateral, predicted, halfWidth, limit);
+        // Releasing or turning inward restores departure protection. An intentional wall
+        // entry must also cancel the lingering return-to-road correction immediately.
+        if (intent >= .99f) { Clear(); return driverAngle; }
         float target = EdgeSteeringAssist.Correction(lateral, predicted, Mathf.Min(here.width, ahead.width) * .5f, limit);
         // The course band is not the tube's drivable boundary. Leave the complete tube to the driver.
         if ((target != 0f || CorrectionDegrees != 0f) && course.IsPointInsideTube(position))
@@ -46,7 +51,7 @@ public sealed class CourseSteeringAssist : MonoBehaviour
             Vector3.Dot(participant.Body.angularVelocity, drivingUp) * 6f, -limit, limit);
         float assisted = EdgeSteeringAssist.Blend(driverAngle, roadAngle, lateral, predicted,
             Mathf.Min(here.width, ahead.width) * .5f, limit);
-        if (target == 0f && Time.time < returnUntil) assisted = roadAngle;
+        if (target == 0f && Time.time < returnUntil && intent <= 0f) assisted = roadAngle;
         CorrectionDegrees = Mathf.MoveTowards(CorrectionDegrees, assisted - driverAngle, 90f * Mathf.Max(0f, dt));
         if (Mathf.Abs(CorrectionDegrees) > .1f) ActiveSeconds += dt;
         return Mathf.Clamp(driverAngle + CorrectionDegrees, -limit, limit);

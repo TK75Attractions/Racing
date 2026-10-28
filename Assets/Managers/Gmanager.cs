@@ -147,6 +147,54 @@ public class Gmanager : MonoBehaviour
     public bool IsCourseIntroPlaying => courseIntro != null && courseIntro.IsPlaying;
     public bool IsMenuSceneryPlaying => menuScenery != null && menuScenery.IsShowing;
     public RaceBroadcastDirector Broadcast { get; private set; }
+    public RaceMaintenanceController Maintenance { get; private set; }
+    public bool IsMaintenanceActive => Maintenance != null && Maintenance.IsActive;
+    public bool MaintenanceAvailable => Maintenance != null;
+    private readonly bool[] maintenanceMenuRelease = new bool[PlayerCount];
+    private readonly Dictionary<PlayerDriveInputGate, bool> maintenanceGateBlocks = new Dictionary<PlayerDriveInputGate, bool>();
+    public bool SetMaintenance(bool enabled)
+    {
+        if (Maintenance == null) return false;
+        Maintenance.SetActive(enabled); return true;
+    }
+    public void SetMaintenanceInputBlocked(bool blocked)
+    {
+        IManager?.ClearDashboardInputs();
+        foreach (var player in players)
+        {
+            var gate = player?.inputGate;
+            if (gate == null) continue;
+            if (blocked)
+            {
+                if (!maintenanceGateBlocks.ContainsKey(gate)) maintenanceGateBlocks.Add(gate, gate.IsBlocked);
+                gate.SetBlocked(true);
+            }
+            else
+            {
+                if (maintenanceGateBlocks.TryGetValue(gate, out bool previous)) gate.SetBlocked(previous);
+                gate.RequirePedalRelease("maintenance_ended");
+            }
+        }
+        if (!blocked)
+        {
+            maintenanceGateBlocks.Clear();
+            for (int i=0;i<PlayerCount;i++)
+            {
+                maintenanceMenuRelease[i] = true;
+                var player = players[i];
+                if (player?.preparationState != State.Title) continue;
+                player.titleInputArmed = false; player.readyHoldTimer = player.titleReleaseTimer = 0;
+            }
+        }
+    }
+    private DriveInputState GetMenuInput(int index)
+    {
+        DriveInputState input = IManager.GetInputState(index);
+        if (!maintenanceMenuRelease[index]) return input;
+        if (Mathf.Abs(input.pedal) <= .05f) maintenanceMenuRelease[index] = false;
+        return DriveInputState.Neutral;
+    }
+
     private CourseIntroDirector courseIntro;
     private MenuSceneryDirector menuScenery;
     public bool IsPreparing => state == State.Title || state == State.CarSelection || state == State.Tutorial;
@@ -177,13 +225,14 @@ public class Gmanager : MonoBehaviour
             remaining = lesson?.TimeRemaining ?? 0f; progress = lesson?.HoldProgress ?? 0f;
         }
     }
-    public bool IsDrivingEnabled => state == State.Game || ((state == State.CarSelection || state == State.Tutorial) &&
-        !finishingPreparation && drivingTutorial != null && drivingTutorial.HasAnyStarted);
-    public bool CanUseDashboardControls => !IsScreenTransitioning();
-    public bool CanDriveVehicle(Rigidbody body) => IsDrivingEnabled ||
-        (body != null && body.GetComponent<FinishRunController>()?.IsActive == true);
+    public bool IsDrivingEnabled => !IsMaintenanceActive && (state == State.Game || ((state == State.CarSelection || state == State.Tutorial) &&
+        !finishingPreparation && drivingTutorial != null && drivingTutorial.HasAnyStarted));
+    public bool CanUseDashboardControls => !IsMaintenanceActive && !IsScreenTransitioning();
+    public bool CanDriveVehicle(Rigidbody body) => !IsMaintenanceActive && (IsDrivingEnabled ||
+        (body != null && body.GetComponent<FinishRunController>()?.IsActive == true));
     public bool IsEngineAudioActive(Rigidbody body)
     {
+        if (IsMaintenanceActive) return false;
         if (body != null && body.GetComponent<FinishRunController>()?.IsActive == true) return true;
         if (state != State.Countdown && state != State.Game && state != State.Tutorial && state != State.CarSelection)
             return false;
@@ -273,6 +322,8 @@ public class Gmanager : MonoBehaviour
         ApplyStateImmediate(State.Title);
         SwitchCameraForState(State.Title);
         ResetTitleStartInputGate();
+        Maintenance = gameObject.AddComponent<RaceMaintenanceController>();
+        Maintenance.Configure(this, displayRigs, Broadcast);
         gameObject.AddComponent<RaceDashboardBridge>();
         gameObject.AddComponent<RaceRemoteFirebasePublisher>();
     }
@@ -280,9 +331,11 @@ public class Gmanager : MonoBehaviour
     public void Update()
     {
         float dt = Time.deltaTime;
+        if (IsMaintenanceActive && IManager == null) return;
         if (IManager != null)
         {
             IManager.UpdateInput(dt);
+            if (IsMaintenanceActive) return;
             if (state == State.Game && IManager.SteeringTestMode == P1SteeringTestMode.ConstantPedal)
                 dailyRanking?.ExcludePlayer(1);
             UpdateInterruptionMenuInput();
@@ -290,7 +343,7 @@ public class Gmanager : MonoBehaviour
             {
                 for (int i = 0; i < PlayerCount; i++)
                     if (players[i]?.preparationState == State.CarSelection && screenTransitions[i]?.IsTransitioning != true)
-                        players[i].carSelection?.TickInput(IManager.GetInputState(i), IManager.IsPlayerConnected(i), Time.unscaledDeltaTime,
+                        players[i].carSelection?.TickInput(GetMenuInput(i), IManager.IsPlayerConnected(i), Time.unscaledDeltaTime,
                             DriverInputNotice.Connection(IManager.GetPlayerInputSource(i)));
                 UpdateTitleStartInput(dt);
                 UpdateTitlePedalUI();
@@ -431,7 +484,7 @@ public class Gmanager : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!showDebugRaceControls || IManager == null || !IManager.IsAnyDebugMode || Features?.PanelVisible == true)
+        if (IsMaintenanceActive || !showDebugRaceControls || IManager == null || !IManager.IsAnyDebugMode || Features?.PanelVisible == true)
         {
             return;
         }
@@ -469,6 +522,7 @@ public class Gmanager : MonoBehaviour
 
     public void DebugPreviewResult()
     {
+        if (IsMaintenanceActive) return;
         ResetResultPlayerInputs();
         RaceSessionResult preview = new RaceSessionResult(PlayerCount + Mathf.Clamp(npcCount,0,2));
         preview.SetPlayerResult(0, new RaceResultRecord
@@ -493,7 +547,7 @@ public class Gmanager : MonoBehaviour
 
     private void AdvanceDebugLap(int playerIndex, bool finish)
     {
-        if (state != State.Game || lapManager == null || playerIndex < 0 || playerIndex >= players.Length)
+        if (IsMaintenanceActive || state != State.Game || lapManager == null || playerIndex < 0 || playerIndex >= players.Length)
         {
             return;
         }
@@ -510,7 +564,7 @@ public class Gmanager : MonoBehaviour
 
     public void ConfirmTitleStart(int playerIndex)
     {
-        if (!IsPreparing || playerIndex < 0 || playerIndex >= PlayerCount) return;
+        if (IsMaintenanceActive || !IsPreparing || playerIndex < 0 || playerIndex >= PlayerCount) return;
         PlayerRuntime player = players[playerIndex];
         if (player.preparationState != State.Title || screenTransitions[playerIndex]?.IsTransitioning == true) return;
         if (Features != null && !Features.Settings.RulesLocked)
@@ -527,6 +581,7 @@ public class Gmanager : MonoBehaviour
     // Dashboard/editor start enters selection for every player still at the title.
     public void StartGame()
     {
+        if (IsMaintenanceActive) return;
         if (!IsPreparing) return;
         for (int i = 0; i < PlayerCount; i++) ConfirmTitleStart(i);
     }
@@ -557,6 +612,7 @@ public class Gmanager : MonoBehaviour
 
     private void ConfirmCarSelection(int index)
     {
+        if (IsMaintenanceActive) return;
         PlayerRuntime player = players[index];
         if (!IsPreparing || player.preparationState != State.CarSelection || screenTransitions[index]?.IsTransitioning == true) return;
         TransitionPlayer(index, State.Tutorial, () => BeginPlayerTutorial(index));
@@ -564,6 +620,7 @@ public class Gmanager : MonoBehaviour
 
     private void CancelCarSelection(int index)
     {
+        if (IsMaintenanceActive) return;
         if (!IsPreparing || players[index].preparationState != State.CarSelection) return;
         TransitionPlayer(index, State.Title, () =>
         {
@@ -594,6 +651,7 @@ public class Gmanager : MonoBehaviour
     /// <summary>既存コード向けの互換入口です。通常の完走は CarFinished から処理します。</summary>
     public void ShowResult(RaceResultRecord resultRecord)
     {
+        if (IsMaintenanceActive) return;
         if (state != State.Game || IsScreenTransitioning() || (resultRecord != null && (resultRecord.isCpu || resultRecord.playerNumber > PlayerCount))) return;
 
         if (resultRecord == null)
@@ -630,6 +688,7 @@ public class Gmanager : MonoBehaviour
 
     public void ResetGame()
     {
+        if (IsMaintenanceActive) return;
         if (state != State.Result || IsScreenTransitioning()) return;
         ScreenTransitionController primary = screenTransitions[0];
         for (int index = 1; index < screenTransitions.Length; index++)
@@ -652,6 +711,7 @@ public class Gmanager : MonoBehaviour
 
     public void RetryGame()
     {
+        if (IsMaintenanceActive) return;
         if (state != State.Result || IsScreenTransitioning()) return;
         ScreenTransitionController primary = screenTransitions[0];
         for (int index = 1; index < screenTransitions.Length; index++)
@@ -786,6 +846,7 @@ public class Gmanager : MonoBehaviour
 
     public void StartAutodriveTestRace(bool bothPlayers = false)
     {
+        if (IsMaintenanceActive) return;
         if ((state != State.Title && state != State.Result) || IsScreenTransitioning()) return;
         if (!bothPlayers) Features.SetFeature(RaceFeature.PlayerTwoAutodrive, true);
         ClearCurrentRaceObjects(); BothPlayersAutodrive = bothPlayers;
@@ -1415,6 +1476,7 @@ public class Gmanager : MonoBehaviour
         IDriveInputSource source = IManager.GetPlayerInputSource(playerIndex);
         PlayerDriveInputGate gate = new PlayerDriveInputGate(source);
         players[playerIndex].inputGate = gate;
+        if (IsMaintenanceActive) { maintenanceGateBlocks[gate] = gate.IsBlocked; gate.SetBlocked(true); }
         playerCar.GetComponent<DebugMover>()?.SetInputSource(gate);
         playerCar.GetComponent<CarResetter>()?.SetInputSource(gate);
         playerCar.GetComponent<CarResetter>()?.SetCourse(course, lapManager);
@@ -1725,7 +1787,7 @@ public class Gmanager : MonoBehaviour
         {
             PlayerRuntime player = players[index];
             if (player == null || player.returnedToTitle || screenTransitions[index]?.IsTransitioning == true) continue;
-            DriveInputState input = IManager.GetInputState(index);
+            DriveInputState input = GetMenuInput(index);
             var ending=player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>();
             if(ending!=null&&ending.IsVisible){ending.TickInput(input.pedal,dt);continue;}
             if (!player.resultSteeringLatch && Mathf.Abs(input.steering) >= resultSteeringThreshold)
@@ -1817,7 +1879,7 @@ public class Gmanager : MonoBehaviour
         {
             PlayerRuntime player = players[index];
             if (player.preparationState != State.Title || screenTransitions[index]?.IsTransitioning == true) continue;
-            DriveInputState input = IManager.GetInputState(index);
+            DriveInputState input = GetMenuInput(index);
             if (!IManager.IsPlayerConnected(index))
             { player.titleInputArmed = false; player.titleReleaseTimer = player.readyHoldTimer = 0f; continue; }
             if (!player.titleInputArmed)

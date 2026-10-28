@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// <summary>Bakes terrain apertures without changing the supplied tube mesh.</summary>
+/// <summary>Bakes terrain clearance and a smooth tube; keeps the imported source intact.</summary>
 public static class TubeCoursePreparation
 {
     public const string ModelPath = "Assets/Scenes/1016こうしゃ.fbx";
@@ -32,12 +32,14 @@ public static class TubeCoursePreparation
         MeshFilter tube = null, ground = null;
         var entranceGrounds = new List<MeshFilter>();
         var trees = new List<MeshCollider>();
+        var replacedPortalWalls = new List<MeshRenderer>();
         foreach (GameObject root in scene.GetRootGameObjects())
             foreach (MeshFilter filter in root.GetComponentsInChildren<MeshFilter>(true))
             {
                 if (AssetDatabase.GetAssetPath(PrefabUtility.GetCorrespondingObjectFromSource(filter)) != ModelPath) continue;
                 if (filter.name == "BézierCurve.001") tube = filter;
                 if (filter.name == "Plane") ground = filter;
+                if (filter.name == "Plane.013" || filter.name == "Plane.017") replacedPortalWalls.Add(filter.GetComponent<MeshRenderer>());
                 if (filter.name == "Plane.012" || filter.name == "Plane.009" || filter.name == "Cube.001") entranceGrounds.Add(filter);
                 if (filter.name.StartsWith("tree", StringComparison.Ordinal) && filter.GetComponent<MeshCollider>() != null)
                     trees.Add(filter.GetComponent<MeshCollider>());
@@ -74,22 +76,12 @@ public static class TubeCoursePreparation
             PrefabUtility.RecordPrefabInstancePropertyModifications(floor.GetComponent<MeshCollider>());
         }
 
-        // FBX tube normals point outward. Keep the visual geometry intact and make its
-        // collision surface usable from inside as well as outside.
-        var tubeCollision = new Mesh { name = "Tube double sided collision", indexFormat = source.indexFormat };
-        tubeCollision.vertices = source.vertices;
-        int[] originalTriangles = source.triangles;
-        int[] triangles = new int[originalTriangles.Length * 2];
-        Array.Copy(originalTriangles, triangles, originalTriangles.Length);
-        for (int i = 0; i < originalTriangles.Length; i += 3)
-        {
-            int offset = originalTriangles.Length + i;
-            triangles[offset] = originalTriangles[i];
-            triangles[offset + 1] = originalTriangles[i + 2];
-            triangles[offset + 2] = originalTriangles[i + 1];
-        }
-        tubeCollision.triangles = triangles;
-        tubeCollision.RecalculateBounds();
+        // The source FBX includes non-local/duplicate triangles and a coarse profile.
+        // Rebuild local ring-grid quads, with C1 curves along and around the tube.
+        TubePortalProfile.InvalidateCache();
+        Mesh smooth = TubeSurfaceGeometry.BuildSmooth(source, tube.transform, out Mesh tubeCollision);
+        tube.sharedMesh = SaveMesh(smooth, DataFolder + "/TubeInteriorSmooth.asset");
+        PrefabUtility.RecordPrefabInstancePropertyModifications(tube);
         MeshCollider collider = tube.GetComponent<MeshCollider>();
         collider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation |
             MeshColliderCookingOptions.WeldColocatedVertices | MeshColliderCookingOptions.UseFastMidphase;
@@ -111,15 +103,25 @@ public static class TubeCoursePreparation
         material.SetFloat("_Cull", 0f);
         EditorUtility.SetDirty(material);
         MeshRenderer renderer = tube.GetComponent<MeshRenderer>();
-        var materials = new Material[source.subMeshCount];
+        var materials = new Material[tube.sharedMesh.subMeshCount];
         for (int i = 0; i < materials.Length; i++) materials[i] = material;
         renderer.sharedMaterials = materials;
         PrefabUtility.RecordPrefabInstancePropertyModifications(renderer);
+        course.RebuildRoad();
+        foreach (var patterns in UnityEngine.Object.FindObjectsByType<TubeSpeedPatternController>(FindObjectsSortMode.None)) patterns.Rebuild();
+        // These two coarse authored portal wings overlap the new continuous walls.
+        // Keep the source model intact, retire both render and collision in this scene.
+        foreach (MeshRenderer oldWall in replacedPortalWalls)
+        {
+            oldWall.enabled = false; PrefabUtility.RecordPrefabInstancePropertyModifications(oldWall);
+            MeshCollider oldCollider = oldWall.GetComponent<MeshCollider>();
+            if (oldCollider != null) { oldCollider.enabled = false; PrefabUtility.RecordPrefabInstancePropertyModifications(oldCollider); }
+        }
         AlignRaceMarkers(scene);
         AssetDatabase.SaveAssets();
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
-        Debug.Log($"TUBE_TERRAIN_PREPARATION_PASS: {rings.Count} rings, {cuts.Count} terrain apertures, original tube vertices retained.");
+        Debug.Log($"TUBE_TERRAIN_PREPARATION_PASS: {rings.Count} rings, {cuts.Count} terrain apertures, source FBX retained; smooth visual and matching double-sided collision baked.");
     }
 
     private static void AlignRaceMarkers(UnityEngine.SceneManagement.Scene scene)

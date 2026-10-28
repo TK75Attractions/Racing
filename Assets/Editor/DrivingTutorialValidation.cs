@@ -20,6 +20,8 @@ public static class DrivingTutorialValidation
     private static StubInput[] inputs;
     private static IList practices;
     private static readonly int[] completionCues = new int[2];
+    private static readonly bool[] checkedItemApproach = new bool[2];
+    private static readonly bool[] distantItemsChecked = new bool[2];
 
     private sealed class StubInput : IDriveInputSource
     {
@@ -45,12 +47,14 @@ public static class DrivingTutorialValidation
         {
             RacingHUDFontBuilder.Build();
             var font=UnityEditor.AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>("Assets/Resources/UI/HUD/Tutorial ExtraBold.asset");
-            Require(font.HasCharacters("光る箱に触れてアイテムを取ろう獲得"),"The item lesson must have all static Japanese glyphs.");
+            Require(font.HasCharacters("光る箱にふれよう自動で発動するよ獲得"),"The item lesson must have all static Japanese glyphs.");
         }
         InputManager input = UnityEngine.Object.FindFirstObjectByType<InputManager>();
         input.isDebugMode = true; input.isP1SerialP2KeyboardDebugMode = false;
         RaceRemoteFirebasePublisher publisher = UnityEngine.Object.FindFirstObjectByType<RaceRemoteFirebasePublisher>();
         if (publisher != null) publisher.enabled = false;
+        foreach (RaceDashboardBridge bridge in UnityEngine.Object.FindObjectsByType<RaceDashboardBridge>(FindObjectsSortMode.None))
+            bridge.enabled = false;
         SessionState.SetBool(PreviewKey + ".SelectDefaults", true);
         SessionState.SetBool(PreviewKey, true); SessionState.SetBool(ValidationKey, validate);
         Debug.Log("TUTORIAL_QA_START");
@@ -129,6 +133,14 @@ public static class DrivingTutorialValidation
                     maximumVerticalSpeed = Mathf.Max(maximumVerticalSpeed, Mathf.Abs(body.linearVelocity.y));
                 if (i == 0 && !capturedDriving && Time.time - began > .9f && lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate)
                 { capturedDriving = true; Capture(manager, i, "05-accelerating.png"); }
+                if (lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem && !distantItemsChecked[i])
+                {
+                    var pickups = Get<System.Collections.Generic.List<TutorialItemPickup>>(practice, "pickups");
+                    Require(pickups.Count == 3 && pickups.All(p => Vector3.Distance(p.transform.position, body.position) > 40f),
+                        "New item placement must give both players more than 40m of actual driving room.");
+                    distantItemsChecked[i] = true;
+                    Debug.Log($"TUTORIAL_DISTANT_ITEMS_PASS: P{i + 1}, nearest box={pickups.Min(p => Vector3.Distance(p.transform.position, body.position)):F1}m.");
+                }
                 float pedal = 0f, steering = 0f;
                 if (lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate && Time.time - began > .6f + i * 2f) pedal = .65f;
                 if (lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer || lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem)
@@ -140,6 +152,16 @@ public static class DrivingTutorialValidation
                     float error=Vector3.SignedAngle(body.rotation*Vector3.forward,direction,Vector3.up);
                     pedal=.55f;steering=Mathf.Clamp(error*.45f,-10f,10f);
                     if (i == 0 && !capturedTurn) { capturedTurn = true; Capture(manager, i, "02-steer.png"); }
+                }
+                if (lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem && !checkedItemApproach[i])
+                {
+                    var pickups = Get<System.Collections.Generic.List<TutorialItemPickup>>(practice, "pickups");
+                    Require(pickups.Count == 3, "The learner must have three reachable lane choices.");
+                    float distance = Vector3.Distance(body.position, pickups[1].transform.position);
+                    float approachSeconds = distance / Mathf.Max(1f, Vector3.ProjectOnPlane(body.linearVelocity,Vector3.up).magnitude);
+                    Require(approachSeconds > 1.5f, "The first box must leave time to understand the automatic-use instruction.");
+                    checkedItemApproach[i] = true;
+                    Debug.Log($"TUTORIAL_ITEM_APPROACH_PASS: P{i+1} distance={distance:0.0}m, approach={approachSeconds:0.00}s.");
                 }
                 if (lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem && i == 0 && !capturedStop)
                 { capturedStop = true; Capture(manager, i, "03-item.png"); }

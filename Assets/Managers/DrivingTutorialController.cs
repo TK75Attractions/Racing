@@ -138,6 +138,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
                 player.body.angularVelocity = Vector3.zero;
                 player.body.isKinematic = true;
             }
+            if (player.lesson.IsFinished) speed = 0f;
             player.ui.Update(player.lesson, input, speed, player.input.IsConnected, DriverInputNotice.Connection(player.input));
             complete &= player.lesson.IsFinished;
         }
@@ -177,7 +178,11 @@ public sealed class DrivingTutorialController : MonoBehaviour
             float distance = (point - local).sqrMagnitude;
             if (distance < best) { best = distance; nearest = d; }
         }
-        DrivingTutorialRoad.Sample(Mathf.Min(190f, nearest + 18f), out Vector3 center, out Vector3 tangent);
+        // A fast learner can already reach 90 km/h here. Leave time to see the box
+        // and the automatic-use instruction instead of spawning it under the bonnet.
+        float speed = Vector3.ProjectOnPlane(player.body.linearVelocity, Vector3.up).magnitude;
+        float approach = Mathf.Clamp(speed * 2.5f, 55f, 65f);
+        DrivingTutorialRoad.Sample(Mathf.Min(190f, nearest + approach), out Vector3 center, out Vector3 tangent);
         for (int lane = -1; lane <= 1; lane++)
         {
             var go = new GameObject("Practice item / drive through a box");go.transform.SetParent(player.world.transform, false);

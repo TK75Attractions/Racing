@@ -150,6 +150,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public bool inputAvailable, serialDebug, featurePanel, constantPaused, audioRefreshAvailable;
         public string[] deviceNames, deviceKeys, outputStatus, selectedDevices;
         public bool[] outputAvailable;
+        public bool maintenanceAvailable, maintenanceActive;
         public bool featuresAvailable, rulesLocked, hasQueuedPreset, canStartTestRace, bothPlayersAutodrive;
         public string activePreset, selectedPreset;
         public FeatureSnapshot[] features;
@@ -402,6 +403,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             selected[i] = device >= 0 && device < keys.Length ? keys[device] : "";
         }
         return new SettingsSnapshot {
+            maintenanceAvailable = race?.MaintenanceAvailable ?? false, maintenanceActive = race?.IsMaintenanceActive ?? false,
             featuresAvailable = features != null, features = BuildFeatures(features), bothPlayersAutodrive = race?.BothPlayersAutodrive ?? false,
             activePreset = features?.ActivePreset.ToString() ?? "", selectedPreset = features?.SelectedPreset.ToString() ?? "",
             rulesLocked = features?.RulesLocked ?? false, hasQueuedPreset = features?.HasQueuedPreset ?? false,
@@ -425,6 +427,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         reason = "invalid_setting";
         string[] args = request.args ?? Array.Empty<string>();
         RaceFeatureController features = race?.Features;
+        if (request.command == "maintenance" && args.Length == 1 && (args[0] == "true" || args[0] == "false"))
+            return race != null && race.SetMaintenance(args[0] == "true");
         if (request.command == "feature" && args.Length == 2 && features != null &&
             RaceDebugFeatureCatalog.TryFind(args[0], out RaceFeature feature) && (args[1] == "true" || args[1] == "false"))
         { features.SetFeature(feature, args[1] == "true"); return true; }
