@@ -20,6 +20,7 @@ public static class DrivingTutorialValidation
     private static StubInput[] inputs;
     private static IList practices;
     private static readonly int[] completionCues = new int[2];
+    private static readonly bool[,] capturedBriefings = new bool[2,TutorialGimmickBriefing.PageCount];
     private static readonly bool[] checkedItemApproach = new bool[2];
     private static readonly bool[] distantItemsChecked = new bool[2];
 
@@ -104,13 +105,15 @@ public static class DrivingTutorialValidation
                 bound = true; began = Time.time;
                 Capture(manager, 0, "01-accelerate-p1.png"); Capture(manager, 1, "01-accelerate-p2.png");
             }
-            if (Time.time - began > 55f) throw new Exception("The real practice drive did not reach the race countdown within 55 seconds.");
+            if (Time.time - began > 95f) throw new Exception("The real practice drive did not reach the race countdown within 95 seconds.");
             if (manager.state == Gmanager.State.Countdown || manager.state == Gmanager.State.Game)
             {
                 Require(peakSpeed > 10.5f, "Practice must accelerate beyond the old 10 m/s velocity clamp.");
                 for (int i = 0; i < practices.Count; i++)
                 {
                     Require(Get<DrivingTutorialProgress>(practices[i], "lesson").IsComplete, "Both cars must actually collect a practice item.");
+                    Require(Get<TutorialGimmickBriefing>(practices[i], "briefing").IsComplete, "Every course briefing must finish before countdown.");
+                    for(int page=0;page<TutorialGimmickBriefing.PageCount;page++)Require(capturedBriefings[i,page], "Every player must see every briefing page.");
                     Require(completionCues[i] == 1, $"P{i+1} must receive exactly one completion cue after pickup, got {completionCues[i]}.");
                 }
                 RaceSoundEffects.Instance.CueQueued -= CountCompletion;
@@ -140,6 +143,15 @@ public static class DrivingTutorialValidation
                         "New item placement must give both players more than 40m of actual driving room.");
                     distantItemsChecked[i] = true;
                     Debug.Log($"TUTORIAL_DISTANT_ITEMS_PASS: P{i + 1}, nearest box={pickups.Min(p => Vector3.Distance(p.transform.position, body.position)):F1}m.");
+                }
+                var briefing = Get<TutorialGimmickBriefing>(practice,"briefing");
+                if(lesson.IsFinished && !briefing.IsComplete && !capturedBriefings[i,briefing.Page])
+                {
+                    Require(body.isKinematic, "The car must stop before the course briefing.");
+                    Require(!manager.GetComponent<DrivingTutorialController>().AllComplete,"Do not skip the briefing when both driving lessons finish.");
+                    string directory=Path.Combine(Directory.GetCurrentDirectory(),"Artifacts/TutorialGimmicks/Live");Directory.CreateDirectory(directory);
+                    Capture(manager,i,Path.Combine(directory,$"page-{briefing.Page+1}-p{i+1}.png"));
+                    capturedBriefings[i,briefing.Page]=true;
                 }
                 float pedal = 0f, steering = 0f;
                 if (lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate && Time.time - began > .6f + i * 2f) pedal = .65f;

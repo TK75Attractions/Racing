@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-28",
+  "unity": "6000.3.9f1",
+  "core": {
+    "passed": 182,
+    "failed": 0
+  },
+  "editMode": {
+    "passed": 182,
+    "failed": 0
+  },
+  "ui": {
+    "pages": 3,
+    "players": [
+      1,
+      2
+    ],
+    "resolutions": [
+      "1280x720",
+      "1920x1080"
+    ],
+    "checks": [
+      "glyph coverage",
+      "text overflow",
+      "canvas renderer",
+      "non-blocking graphics",
+      "hide completed practice timer"
+    ],
+    "previewBackground": "reference image with production UI"
+  },
+  "flow": {
+    "result": "passed",
+    "allPlayersViewedEveryPage": true,
+    "stoppedWhileReading": true,
+    "countdownAfterBothBriefings": true,
+    "peakPracticeSpeedMps": 26.079,
+    "maxSettledVerticalSpeedMps": 0
+  },
+  "input": [
+    "held pedal",
+    "early press",
+    "new release after reconnection",
+    "invalid timing",
+    "independent players"
+  ],
+  "unverified": [
+    "physical ESP32 input",
+    "Windows hardware",
+    "child usability study"
+  ],
+  "knownEditorIssue": "Existing SearchDatabase startup exception; playthrough completed"
+}
