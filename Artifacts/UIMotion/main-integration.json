@@ -1,0 +1,45 @@
+{
+  "validated_commit": "d19082f2ec58d7928a29e8720faddea685fc765d",
+  "integrated_main": "64c0917024798f042318ce1b4c224b3bd7f99327",
+  "unity": "6000.3.9f1",
+  "conflict_resolution": "Preserve main's thicker speed/RPM/boost bars and reduced dial ticks together with damped movement, acceleration trails, boost impulse and cached colours.",
+  "editmode": {
+    "result": "passed",
+    "total": 169,
+    "passed": 169,
+    "failed": 0,
+    "completed_utc": "2026-10-28 09:17:50Z",
+    "evidence": "main-integration-editmode.xml"
+  },
+  "checks": [
+    {
+      "name": "UI components and allocation",
+      "result": "passed",
+      "evidence": [
+        "UI_NUMBER_IMPACT_PASS: compression, vertical punch, bounded non-interactive geometry, exact cancel and allocation-free repeated impulses.",
+        "UI_MOTION_FOUNDATION_PASS: finite curves, directional ranks, interruption, replay, disable reset and classification.",
+        "UI_MOTION_METERS_PASS: acceleration/braking response, finite values, settle, boost impulse, zero idle mesh rebuilds and zero idle managed allocations.",
+        "UI_INTERACTION_MOTION_PASS: cancel/complete hold, one-shot confirmation, pending-action invalidation, menu reopen, ending input gate and zero idle button allocations.",
+        "UI_TRANSITION_GEOMETRY_PASS: complete coverage, geometric reveal, clipped moving bands and no idle geometry.",
+        "UI_RACE_EVENT_MOTION_PASS: peripheral guidance, lap reveal, no-zoom toast travel, finite notices and staged goal typography.",
+        "UI_RESULT_SELECTION_PASS: exclusive pedal choice, reversed text contrast, secondary-action selection and zero idle allocations / P1",
+        "UI_RESULT_SELECTION_PASS: exclusive pedal choice, reversed text contrast, secondary-action selection and zero idle allocations / P2",
+        "UI_RESULT_MOTION_PASS: actual row bindings, staged headline/rank/time/classification, factual times/DNF, replay and exit interruption for both palettes.",
+        "UI_MOTION_PERFORMANCE_PASS: real moving instrument mesh rebuilt 200 times with zero managed allocations after warm-up."
+      ]
+    },
+    {
+      "name": "Integrated SampleScene race flow",
+      "result": "passed",
+      "evidence": [
+        "MULTIPLAYER_PLAYMODE_VALIDATION_PASS: actual acceleration, finish/spectator, held-pedal safety, retry without practice, two title returns, both withdrawals, withdrawal/timeout during goal, remaining-player finish; one-shot button, readiness, countdown, GO, player-local goal and results cues."
+      ]
+    }
+  ],
+  "live_captures": "../ArcadeSportUI/Live/",
+  "notes": [
+    "Main was merged into the feature branch without rebasing or checking out main.",
+    "Allocation measurements apply to warmed target components; device FPS/physical pedal hardware were not measured.",
+    "The active-effect HUD probe temporarily prevents shield consumption by contact and restores the setting; production item behaviour is unchanged."
+  ]
+}

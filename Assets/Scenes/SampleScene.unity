@@ -8028,8 +8028,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScreenTransitionController
   useArtworkLogo: 0
-  fadeOutSeconds: 0.25
-  fadeInSeconds: 0.35
+  fadeOutSeconds: 0.48
+  fadeInSeconds: 0.56
   resultEnterSeconds: 0.55
   resultExitSeconds: 0.32
 --- !u!1 &460993549 stripped

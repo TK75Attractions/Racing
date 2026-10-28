@@ -33,6 +33,7 @@ public static class MultiplayerPlayModeValidation
     private static Vector3 driveStart;
     private static readonly int[,] soundCounts = new int[2,RaceSoundBank.CueCount];
     private static int pressBefore, confirmBefore, confirmBeforeRetry;
+    private static bool shieldConsumption;
 
     private sealed class TestInput : IDriveInputSource
     {
@@ -191,7 +192,12 @@ public static class MultiplayerPlayModeValidation
                 case 106 when EditorApplication.timeSinceStartup-stageStartTime > 2d:
                     Require(Vector3.Distance(driveStart, manager.GetPlayerCarTransform(0).position) > 2f && manager.GetPlayerSpeed(0) > 3f, $"Actual pedal input must accelerate and move the production car: distance={Vector3.Distance(driveStart, manager.GetPlayerCarTransform(0).position):F2}, speed={manager.GetPlayerSpeed(0):F2}.");
                     Capture("race-p1.png");
-                    manager.GetPlayerCarTransform(0).GetComponent<CarItemEffects>().UseItem(RaceItemType.Shield,null);
+                    var itemEffects=manager.GetPlayerCarTransform(0).GetComponent<CarItemEffects>();
+                    var consume=typeof(CarItemEffects).GetField("consumeShieldOnHit",BindingFlags.Instance|BindingFlags.NonPublic);
+                    shieldConsumption=(bool)consume.GetValue(itemEffects);
+                    // This probe tests the active-effect HUD. A nearby rival may
+                    // legitimately consume the shield before the next render.
+                    consume.SetValue(itemEffects,false);itemEffects.UseItem(RaceItemType.Shield,null);
                     typeof(Gmanager).GetField("showDebugRaceControls",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(manager,false);
                     Require(manager.IManager.IsAnyDebugMode,"Hiding the race debug panel must preserve debug input.");
                     stageStartTime=EditorApplication.timeSinceStartup;stage=110;
@@ -200,8 +206,11 @@ public static class MultiplayerPlayModeValidation
                     var notice=FindComponentIncludingInactive<PlayerItemHUD>("GameManagers/MainCanvas");
                     var toast=notice.transform.Find("ItemHUD/Toast") as RectTransform;
                     Require(toast.GetComponent<CanvasGroup>().alpha>0&&toast.Find("Title").GetComponent<TMP_Text>().text=="シールド","Actual item events must show the production notification.");
-                    Require(toast.anchorMin.x>=.7f&&toast.localScale==Vector3.one&&notice.transform.Find("ItemHUD/StatusPlate").gameObject.activeSelf,"Item and remaining effect must stay at the edge without zooming.");
+                    var shield=manager.GetPlayerCarTransform(0).GetComponent<CarItemEffects>();
+                    bool statusVisible=notice.transform.Find("ItemHUD/StatusPlate").gameObject.activeSelf;
+                    Require(toast.anchorMin.x>=.7f&&toast.localScale==Vector3.one&&statusVisible,$"Item and remaining effect must stay at the edge without zooming: x={toast.anchorMin.x}, scale={toast.localScale}, status={statusVisible}, shield={shield.ShieldTimeRemaining}.");
                     Capture("item-p1.png");
+                    typeof(CarItemEffects).GetField("consumeShieldOnHit",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(shield,shieldConsumption);
                     ValidateFirstFinish();
                     stage = 3;
                     break;
@@ -232,6 +241,21 @@ public static class MultiplayerPlayModeValidation
                     SetPedals(0f);stageStartTime=EditorApplication.timeSinceStartup;stage=105;
                     break;
                 case 105 when EditorApplication.timeSinceStartup-stageStartTime > .3d:
+                    inputs[0].CurrentState = new DriveInputState { steering=90 };
+                    stageStartTime=EditorApplication.timeSinceStartup;stage=111;
+                    break;
+                case 111 when EditorApplication.timeSinceStartup-stageStartTime > .3d:
+                    var p1Menu=FindComponentIncludingInactive<ResultMenuAnimator>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/ResultMenu");
+                    Require(!p1Menu.transform.Find("Option1").GetComponent<PedalButtonFeedback>().IsNavigationSelected&&p1Menu.transform.Find("Option2").GetComponent<PedalButtonFeedback>().IsNavigationSelected,"Real steering must visibly choose the title action, with exactly one selected result button.");
+                    Require(FindComponentIncludingInactive<PedalButtonFeedback>("GameManagers/MainCanvas_P2/Result/ResultPresentation/ResultCard/ResultMenu/Option1").IsNavigationSelected,"P1 selection must not change P2's chosen result action.");
+                    Capture("result-selected-title-p1.png");
+                    inputs[0].CurrentState=new DriveInputState();stageStartTime=EditorApplication.timeSinceStartup;stage=112;
+                    break;
+                case 112 when EditorApplication.timeSinceStartup-stageStartTime > .2d:
+                    inputs[0].CurrentState=new DriveInputState{steering=-90};stageStartTime=EditorApplication.timeSinceStartup;stage=113;
+                    break;
+                case 113 when EditorApplication.timeSinceStartup-stageStartTime > .3d:
+                    Require(FindComponentIncludingInactive<PedalButtonFeedback>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/ResultMenu/Option1").IsNavigationSelected,"Releasing and steering again must visibly return to retry before confirmation.");
                     inputs[0].CurrentState = new DriveInputState { pedal = 1f };
                     stage=6;
                     break;
