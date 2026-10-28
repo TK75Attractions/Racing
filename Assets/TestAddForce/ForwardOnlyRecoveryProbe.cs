@@ -46,6 +46,9 @@ public sealed class ForwardOnlyRecoveryProbe : MonoBehaviour
         foreach (var bridge in FindObjectsByType<RaceDashboardBridge>(FindObjectsSortMode.None)) bridge.enabled = false;
         foreach (string method in new[] { "StartGameWhenScreenCovered", "CompleteGameStart", "StartRaceAfterCountdown" })
             typeof(Gmanager).GetMethod(method, Private).Invoke(race, null);
+        race.GetComponent<CourseIntroDirector>()?.Stop();
+        typeof(Gmanager).GetMethod("SwitchCameraForState", Private).Invoke(race, new object[] { Gmanager.State.Game });
+        foreach (var transition in FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None)) transition.ApplyStateImmediate(Gmanager.State.Game);
         race.enabled = false;
         foreach (var entry in race.Participants) if (entry.Index != 0) entry.Car.SetActive(false);
         var own = race.GetParticipant(0); body = own.Body; mover = own.Car.GetComponent<DebugMover>();
@@ -61,10 +64,15 @@ public sealed class ForwardOnlyRecoveryProbe : MonoBehaviour
             { found = true; break; }
         }
         if (!found) throw new InvalidOperationException("No flat fixture road");
+        if (Environment.GetEnvironmentVariable("RACING_RECOVERY_LANDING_ONLY") != "1")
+        {
         foreach (string kind in new[] { "static-high-center", "dynamic-high-center", "neutral-high-center", "disconnected-high-center" })
             yield return HighCenter(kind);
         yield return StaticOccupancy();
         yield return NormalRoad();
+        }
+        yield return MissedLanding();
+        yield return AirborneJump();
         report.passed = report.trials.TrueForAll(x => x.passed);
         File.WriteAllText(Path.Combine(folder, "report.json"), JsonUtility.ToJson(report, true));
         bool baseline = Environment.GetEnvironmentVariable("RACING_RECOVERY_BASELINE") == "1";
@@ -138,6 +146,36 @@ public sealed class ForwardOnlyRecoveryProbe : MonoBehaviour
         float travel = Vector3.Dot(body.position - start, anchor.forward * race.CourseProgressSign);
         report.trials.Add(new Trial { name = "normal-forward-driving", passed = travel > 10 && resetter.AutomaticRecoveryCount == before,
             automaticRecoveries = resetter.AutomaticRecoveryCount - before, forwardTravel = travel });
+    }
+    private IEnumerator MissedLanding()
+    {
+        yield return Prepare();
+        // Recorded at t=76.14 in forward-wall-stress/seed8106: below the landing
+        // ramp, shortly before virtual gate 2. The car used to drive out after 1.2s,
+        // missing that gate permanently and losing a complete lap.
+        Vector3 failedPosition = new Vector3(617.183f, .348f, 597.464f);
+        race.course.TryGetNearestRoadSample(failedPosition, out var road);
+        if (Vector3.Dot(failedPosition-road.position,road.up) > -2.5f ||
+            !race.course.IsJumpAhead(failedPosition,-race.CourseProgressSign,60f))
+            throw new InvalidOperationException("Recorded missed-landing fixture no longer matches the course.");
+        body.position = failedPosition; body.rotation = Quaternion.LookRotation(road.forward * race.CourseProgressSign, road.up);
+        body.linearVelocity = body.angularVelocity = Vector3.zero; Physics.SyncTransforms();
+        int before = resetter.AutomaticRecoveryCount, lap = laps.GetCarData(body).lapCount;
+        input.CurrentState = new DriveInputState { pedal = 1f };
+        float began = Time.time;
+        while (Time.time-began < .8f && resetter.AutomaticRecoveryCount == before) yield return new WaitForFixedUpdate();
+        report.trials.Add(new Trial { name = "recorded-missed-landing", initialLap = lap, finalLap = laps.GetCarData(body).lapCount,
+            automaticRecoveries = resetter.AutomaticRecoveryCount-before, secondsToRecovery = Time.time-began,
+            passed = resetter.AutomaticRecoveryCount == before+1 && Time.time-began < .6f && laps.GetCarData(body).lapCount == lap });
+    }
+    private IEnumerator AirborneJump()
+    {
+        yield return Prepare(); int before = resetter.AutomaticRecoveryCount;
+        body.position += anchor.up * 15f; body.linearVelocity = anchor.forward * race.CourseProgressSign * 22f;
+        Physics.SyncTransforms(); input.CurrentState = new DriveInputState { pedal = 1f };
+        yield return new WaitForSeconds(.8f);
+        report.trials.Add(new Trial { name = "normal-airborne-jump", automaticRecoveries = resetter.AutomaticRecoveryCount-before,
+            passed = resetter.AutomaticRecoveryCount == before });
     }
     private void Capture(string name)
     {

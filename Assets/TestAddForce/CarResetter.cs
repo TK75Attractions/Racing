@@ -13,7 +13,7 @@ public class CarResetter : MonoBehaviour
     private RaceCourse.CourseSample safeSample;
     private int safeLap;
     private bool hasSafeSample, resetHeld, manualPending;
-    private float unsafeSeconds, overturnedSeconds, stuckSeconds, wallStuckSeconds, supportedStuckSeconds;
+    private float unsafeSeconds, overturnedSeconds, stuckSeconds, wallStuckSeconds, supportedStuckSeconds, missedLandingSeconds;
     private Collider lastSupportCollider;
     private float lastSupportTime = float.NegativeInfinity;
     private Vector3 supportProgressPosition;
@@ -87,14 +87,22 @@ public class CarResetter : MonoBehaviour
             (rb.position.y < here.position.y - 4f && !course.IsPointInsideTube(rb.position));
         float dt = Time.fixedDeltaTime;
         unsafeSeconds = outside ? unsafeSeconds + dt : 0f;
+        // A missed landing can briefly drive underneath the ramp and rejoin before
+        // the normal off-course timeout, skipping an ordered lap gate forever.
+        // Recover below solid landing road, not during the intended airborne arc.
+        bool belowLanding = Vector3.Dot(rb.position - here.position, here.up) < -2.5f &&
+            course.HasRoadAtProgress(course.GetProgressDistance(rb.position)) &&
+            course.IsJumpAhead(rb.position, laps != null && laps.IsProgressReversed ? 1f : -1f, 60f) &&
+            !course.IsPointInsideTube(rb.position);
+        missedLandingSeconds = belowLanding ? missedLandingSeconds + dt : 0f;
         Vector3 recoveryUp = onTubeWall ? lastWallNormal : here.up;
         overturnedSeconds = Vector3.Dot(rb.rotation * Vector3.up, recoveryUp) < .2f && grounded < 2 ? overturnedSeconds + dt : 0f;
         bool pushing = inputSource != null && inputSource.IsConnected && Mathf.Abs(inputSource.CurrentState.pedal) > .4f;
         stuckSeconds = pushing && rb.linearVelocity.magnitude < .5f && grounded > 0 ? stuckSeconds + dt : 0f;
         UpdateWallStuckTimer(pushing, dt);
         UpdateSupportedStuckTimer(pushing, grounded, dt);
-        if (unsafeSeconds < 1.8f && overturnedSeconds < 2.5f && stuckSeconds < 4f && wallStuckSeconds < 4f && supportedStuckSeconds < 4f) return;
-        RecoveryReason = outside ? "off-course" : overturnedSeconds >= 2.5f ? "overturned" : "stuck";
+        if (missedLandingSeconds < .2f && unsafeSeconds < 1.8f && overturnedSeconds < 2.5f && stuckSeconds < 4f && wallStuckSeconds < 4f && supportedStuckSeconds < 4f) return;
+        RecoveryReason = missedLandingSeconds >= .2f ? "missed-landing" : outside ? "off-course" : overturnedSeconds >= 2.5f ? "overturned" : "stuck";
         IsRecoveryPending = true;
         if (TryResetCar(true)) AutomaticRecoveryCount++;
     }
@@ -174,7 +182,7 @@ public class CarResetter : MonoBehaviour
 
     private void ClearRecoveryTimers()
     {
-        unsafeSeconds = overturnedSeconds = stuckSeconds = wallStuckSeconds = supportedStuckSeconds = 0f;
+        unsafeSeconds = overturnedSeconds = stuckSeconds = wallStuckSeconds = supportedStuckSeconds = missedLandingSeconds = 0f;
         trackingWallProgress = trackingSupportProgress = false;
     }
 
