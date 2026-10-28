@@ -10,7 +10,7 @@
     "failed": 0
   },
   "ui": {
-    "pages": 3,
+    "pages": 4,
     "players": [
       1,
       2
@@ -19,34 +19,55 @@
       "1280x720",
       "1920x1080"
     ],
+    "actualCourseAndItemPhotographs": true,
     "checks": [
+      "photo loading",
       "glyph coverage",
       "text overflow",
-      "canvas renderer",
       "non-blocking graphics",
-      "hide completed practice timer"
-    ],
-    "previewBackground": "reference image with production UI"
+      "pickup highlight order",
+      "captions for all four random effects",
+      "timeout and independent completion"
+    ]
   },
-  "flow": {
+  "tubePads": {
+    "count": 2,
+    "boost": "existing AccelerationPad",
+    "instantSpeedBonusMps": 4,
+    "accelerationMps2": 10,
+    "durationSeconds": 1.25,
+    "physicalStep": false,
+    "oldChargeReward": false,
+    "playMode": "passed",
+    "entrySpeedMps": 12.18405,
+    "acceleratedSpeedMps": 16.44784,
+    "checks": [
+      "multiple collider deduplication",
+      "reverse rejection",
+      "disconnect rejection",
+      "respawn rejection",
+      "live OFF/ON",
+      "flush placement"
+    ]
+  },
+  "animations": {
+    "boxFrames": 40,
+    "padFrames": 24,
+    "fps": 8,
+    "padChangedPixelsTest": "passed"
+  },
+  "tutorialPlayMode": {
     "result": "passed",
-    "allPlayersViewedEveryPage": true,
+    "pagesPerPlayer": 4,
+    "players": 2,
     "stoppedWhileReading": true,
-    "countdownAfterBothBriefings": true,
-    "peakPracticeSpeedMps": 26.079,
-    "maxSettledVerticalSpeedMps": 0
+    "raceCountdownAfterBothComplete": true,
+    "peakPracticeSpeedMps": 26.078
   },
-  "input": [
-    "held pedal",
-    "early press",
-    "new release after reconnection",
-    "invalid timing",
-    "independent players"
-  ],
   "unverified": [
     "physical ESP32 input",
     "Windows hardware",
     "child usability study"
   ],
-  "knownEditorIssue": "Existing SearchDatabase startup exception; playthrough completed"
+  "knownEditorIssue": "Existing SearchDatabase startup exception"
 }

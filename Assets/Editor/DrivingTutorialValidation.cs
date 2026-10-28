@@ -145,7 +145,7 @@ public static class DrivingTutorialValidation
                     Debug.Log($"TUTORIAL_DISTANT_ITEMS_PASS: P{i + 1}, nearest box={pickups.Min(p => Vector3.Distance(p.transform.position, body.position)):F1}m.");
                 }
                 var briefing = Get<TutorialGimmickBriefing>(practice,"briefing");
-                if(lesson.IsFinished && !briefing.IsComplete && !capturedBriefings[i,briefing.Page])
+                if(lesson.IsFinished && !briefing.IsComplete && briefing.Elapsed >= .35f && !capturedBriefings[i,briefing.Page])
                 {
                     Require(body.isKinematic, "The car must stop before the course briefing.");
                     Require(!manager.GetComponent<DrivingTutorialController>().AllComplete,"Do not skip the briefing when both driving lessons finish.");
