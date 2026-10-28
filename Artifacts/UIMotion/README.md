@@ -35,7 +35,9 @@ Unity 6000.3.9f1 / `codex/ui-motion`。
 
 ## 検証範囲
 
-実行結果は [verification.json](verification.json)、演出と検証コマンドの対応は [Documentation/UIMotion.md](../../Documentation/UIMotion.md) を参照。
+最新main取り込み後の169件のテスト・UI部品・レースフローの確認は [main-integration.json](main-integration.json) を参照。
+
+モーション作成時点の実行結果は [verification.json](verification.json)、演出と検証コマンドの対応は [Documentation/UIMotion.md](../../Documentation/UIMotion.md) を参照。
 
 シールドの残り効果を検査する間だけ、検証用に衝突による消費を止め、確認後に元の設定へ戻す。表示確認が隣車との衝突タイミングに左右されないための条件固定で、製品のアイテム設定は変更しない。
 
