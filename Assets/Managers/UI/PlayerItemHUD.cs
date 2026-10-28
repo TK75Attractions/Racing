@@ -43,6 +43,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
     private bool wasBoosting;
     private DebugMover boostMover;
     private float toastAge = float.PositiveInfinity;
+    private float toastLifetime = ToastSeconds;
     private float oilAge = float.PositiveInfinity;
     private float oilHoldSeconds = 1.5f;
 
@@ -77,6 +78,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
         toastAge = float.PositiveInfinity;
         oilAge = float.PositiveInfinity;shownStatus=-1;shownStatusTenths=int.MinValue;
+        wasBoosting = false; boostCar = null; boostMover = null;
         Refresh(0f);
     }
 
@@ -102,7 +104,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
         var manager=Gmanager.Control;
         if(manager!=null){var car=manager.GetPlayerCarTransform(manager.GetAudioViewedPlayer(ownerPlayer));if(car!=boostCar){boostCar=car;boostMover=car!=null?car.GetComponent<DebugMover>():null;}}
         bool boosting=boostMover!=null&&(boostMover.IsDriftBoosting||boostMover.IsAccelerationPadBoosting||boostMover.IsSlipstreamBoosting);
-        if(boosting&&!wasBoosting)ShowToast("ブースト発動！","BOOST ON",ArcadeUI.For(transform).Primary);
+        if(boosting&&!wasBoosting)ShowBoostToast();
         wasBoosting=boosting;
         UpdateToast(uiDeltaTime);
         UpdateOil(deltaTime);
@@ -110,23 +112,31 @@ public sealed class PlayerItemHUD : MonoBehaviour
         UpdateStatus();
     }
 
+    private void ShowBoostToast()
+    {
+        // A simultaneous pad/drift boost must not erase the item explanation.
+        if (toastAge < toastLifetime) return;
+        ShowToast("ブースト発動！", "BOOST ON", ArcadeUI.For(transform).Primary);
+    }
+
     private void HandleItemUsed(RaceItemType item)
     {
         switch (item)
         {
             case RaceItemType.Shield:
-                ShowToast("シールド", "接触した相手がスピン", ShieldColor);
+                ShowToast("シールド", "守る！ 相手に当たるとスピン", ShieldColor);
                 break;
             case RaceItemType.Rocket:
-                ShowToast("ロケット", "ROCKET  —  自動操縦で超加速", RocketColor);
+                ShowToast("ロケット", "自動操縦で加速！ 操作は不要", RocketColor);
                 break;
             case RaceItemType.Oil:
-                ShowToast("オイル", "後ろに設置", OilColor);
+                ShowToast("オイル", "後ろに油！ 踏むとすべるよ", OilColor);
                 break;
             case RaceItemType.Confuse:
-                ShowToast("コンフューズ", "相手のハンドルを反転", ConfuseColor);
+                ShowToast("コンフューズ", "相手のハンドルが左右逆に！", ConfuseColor);
                 break;
         }
+        toastLifetime = 3.2f;
     }
 
     private void HandleAfflicted(RaceItemType item)
@@ -134,21 +144,23 @@ public sealed class PlayerItemHUD : MonoBehaviour
         switch (item)
         {
             case RaceItemType.Oil:
-                ShowToast("オイルを踏んだ!", "すべりやすくなっています", WarningColor);
+                ShowToast("オイルを踏んだ!", "ペダルをゆるめて立て直そう", WarningColor);
                 StartOilSplatter();
                 break;
             case RaceItemType.Confuse:
-                ShowToast("ハンドル反転!", "左右の操作が逆になります", ConfuseColor);
+                ShowToast("ハンドル反転!", "少しの間、右と左が逆になるよ", ConfuseColor);
                 break;
             case RaceItemType.Shield:
-                ShowToast("スピン!", "車の向きに気をつけて", WarningColor);
+                ShowToast("スピン!", "すぐに戻るよ！ 道の先を見よう", WarningColor);
                 break;
         }
+        toastLifetime = 2.8f;
     }
 
     private void HandleChargeCollected()
     {
-        ShowToast("チャージ MAX", "ドリフト解放で加速", ChargeColor);
+        ShowToast("チャージ MAX", "カーブでハンドルを戻すと加速", ChargeColor);
+        toastLifetime = 2.8f;
     }
 
     private void ShowToast(string title, string caption, Color tint)
@@ -157,19 +169,20 @@ public sealed class PlayerItemHUD : MonoBehaviour
         toastTitle.text = title;
         bool fast=title=="ロケット"||title=="ブースト発動！";
         toastFace?.SetStyle(fast,title.Contains("踏んだ")||title.Contains("反転")||title.Contains("スピン"));
-        if(toastIcon!=null)toastIcon.symbol=title.Contains("シールド")?RacingIconGraphic.Icon.Shield:title.Contains("ロケット")?RacingIconGraphic.Icon.Rocket:title.Contains("オイル")?RacingIconGraphic.Icon.Droplet:title.Contains("反転")?RacingIconGraphic.Icon.Swap:RacingIconGraphic.Icon.Bolt;
+        if(toastIcon!=null)toastIcon.symbol=title.Contains("シールド")?RacingIconGraphic.Icon.Shield:title.Contains("ロケット")?RacingIconGraphic.Icon.Rocket:title.Contains("オイル")?RacingIconGraphic.Icon.Droplet:(title.Contains("反転")||title.Contains("コンフューズ"))?RacingIconGraphic.Icon.Swap:RacingIconGraphic.Icon.Bolt;
         toastIcon?.SetVerticesDirty();
         toastTitle.color = ArcadeUI.For(transform).Ink;
         toastCaption.color=ArcadeUI.For(transform).Ink;
         toastTitle.fontStyle=fast?FontStyles.Italic:FontStyles.Normal;
-        toastCaption.text = title=="ロケット"?"ROCKET ON":caption;
+        toastCaption.text = caption;
+        toastLifetime = ToastSeconds;
         toastAge = 0f;
     }
 
     private void UpdateToast(float deltaTime)
     {
         toastAge += deltaTime;
-        if (toastAge >= ToastSeconds)
+        if (toastAge >= toastLifetime)
         {
             toastGroup.alpha = 0f;
             return;
@@ -178,10 +191,10 @@ public sealed class PlayerItemHUD : MonoBehaviour
         // メーター上の定位置で短くフェード。拡大や中央への飛び出しは行いません。
         toastRect.localScale = Vector3.one;
         float enter=UIMotion.Out(Mathf.Clamp01(toastAge/.18f));
-        float leave=UIMotion.In(Mathf.Clamp01((toastAge-(ToastSeconds-ToastFadeSeconds))/ToastFadeSeconds));
+        float leave=UIMotion.In(Mathf.Clamp01((toastAge-(toastLifetime-ToastFadeSeconds))/ToastFadeSeconds));
         toastRect.anchoredPosition=toastBasePosition+Vector2.right*(18f*(1-enter)+12f*leave);
         float fadeIn = Mathf.Clamp01(toastAge / .08f);
-        float fadeOut = Mathf.Clamp01((ToastSeconds - toastAge) / ToastFadeSeconds);
+        float fadeOut = Mathf.Clamp01((toastLifetime - toastAge) / ToastFadeSeconds);
         toastGroup.alpha = Mathf.Min(fadeIn, fadeOut);
     }
 
@@ -260,11 +273,11 @@ public sealed class PlayerItemHUD : MonoBehaviour
         shownStatus=kind;shownStatusTenths=tenths;statusLabel.color=tint;
         switch(kind)
         {
-            case 1:statusLabel.SetText("自動操縦 / ROCKET   {0:0}.{1:0}秒",tenths/10,tenths%10);break;
-            case 2:statusLabel.text="スピン中 / SPIN";break;
-            case 3:statusLabel.SetText("ハンドル反転 / CONFUSED   {0:0}.{1:0}秒",tenths/10,tenths%10);break;
-            case 4:statusLabel.text="すべっています / SLIPPING";break;
-            case 5:statusLabel.SetText("シールド / SHIELD   {0:0}.{1:0}秒",tenths/10,tenths%10);break;
+            case 1:statusLabel.SetText("自動操縦で加速中   {0:0}.{1:0}秒",tenths/10,tenths%10);break;
+            case 2:statusLabel.text="スピン中 / すぐに戻るよ";break;
+            case 3:statusLabel.SetText("左右が逆！   {0:0}.{1:0}秒",tenths/10,tenths%10);break;
+            case 4:statusLabel.text="すべるよ / ペダルをゆるめよう";break;
+            case 5:statusLabel.SetText("バリアで守る   {0:0}.{1:0}秒",tenths/10,tenths%10);break;
             case 6:statusLabel.text="保護中 / PROTECTED";break;
             default:statusLabel.text="";break;
         }

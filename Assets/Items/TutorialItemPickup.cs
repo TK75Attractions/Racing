@@ -15,7 +15,9 @@ public sealed class TutorialItemPickup : RaceItemPickup
         return true;
     }
     protected override Mesh CreateVisualMesh() => ItemVisualFactory.CreateBox(1.6f);
-    protected override Material CreateVisualMaterial() => ItemVisualFactory.CreateEmissiveMaterial("Practice item box", Color.cyan, 1.4f, .8f);
+    protected override Material CreateVisualMaterial() => ItemVisualFactory.CreateEmissiveMaterial("Practice item box", Color.white, 1.3f, .65f);
+    protected override Texture2D CreateVisualTexture() => ItemVisualFactory.CreateMysteryBoxTexture();
+    protected override float GetVisualScale(float time) => 1f + .035f * Mathf.Sin(time * 3f);
     protected override Quaternion GetVisualTilt() => Quaternion.Euler(35f, 0f, 45f);
-    protected override void AnimateVisual(float time) => ItemVisualFactory.SetEmissiveColor(VisualMaterial, Color.HSVToRGB(Mathf.Repeat(time / 2.5f, 1f), .55f, 1f), 1.4f);
+    protected override void AnimateVisual(float time) => ItemVisualFactory.SetEmissiveColor(VisualMaterial, Color.HSVToRGB(Mathf.Repeat(time / 2.5f, 1f), .14f, 1f), 1.15f + .3f * Mathf.Sin(time * 3f));
 }

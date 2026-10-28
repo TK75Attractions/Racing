@@ -187,12 +187,15 @@ public static class CourseBarrierValidation
     {
         if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null) return;
         GameObject cameraObject = new GameObject("Barrier review camera");
-        var output = new RenderTexture(1280, 720, 24); var image = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+        var output = new RenderTexture(1280, 720, 24); Texture2D image = null;
         RenderTexture previous = RenderTexture.active;
         try
         {
             Camera camera = cameraObject.AddComponent<Camera>(); camera.nearClipPlane = .1f; camera.farClipPlane = 2000; camera.fieldOfView = 60;
             camera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(target - eye)); camera.targetTexture = output; camera.Render();
+            // The first SRP render can import assets and unload unreferenced transient objects.
+            // Allocate the CPU readback only after rendering so it cannot be collected mid-frame.
+            image = new Texture2D(1280, 720, TextureFormat.RGB24, false);
             RenderTexture.active = output; image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0); image.Apply(); File.WriteAllBytes(path, image.EncodeToPNG());
         }
         finally { RenderTexture.active = previous; output.Release(); UnityEngine.Object.DestroyImmediate(cameraObject); UnityEngine.Object.DestroyImmediate(output); UnityEngine.Object.DestroyImmediate(image); }
