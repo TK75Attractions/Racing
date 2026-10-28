@@ -10,6 +10,7 @@ public class UILap
     [SerializeField] private TMP_Text lapText;
     [SerializeField] private int currentLap = 1;
     private UIValuePulse valuePulse;
+    private UIRevealSequence progressMotion;
     private TMP_Text totalText;
     private Image[] progressSegments = Array.Empty<Image>();
     private Color segmentColor;
@@ -46,6 +47,7 @@ public class UILap
         totalText = rootTransform != null ? rootTransform.Find("Total")?.GetComponent<TMP_Text>() : null;
         Transform ticks = rootTransform != null ? rootTransform.Find("Ticks") : null;
         progressSegments = ticks != null ? ticks.GetComponentsInChildren<Image>(true) : Array.Empty<Image>();
+        if(ticks!=null){progressMotion=ticks.GetComponent<UIRevealSequence>();if(progressMotion==null)progressMotion=ticks.gameObject.AddComponent<UIRevealSequence>();progressMotion.Configure(ticks,new[]{"Left","Right"},new Vector2(6,0),.04f,.20f);}
         segmentColor = ArcadeUI.For(rootTransform).Ink;
         UpdateText();
     }
@@ -54,17 +56,20 @@ public class UILap
     {
         lap = Mathf.Max(1, lap);
 
-        if (lap != currentLap)
+        bool changed=lap!=currentLap;
+        if (changed)
         {
             LapTextAnimation(currentLap, lap);
             currentLap = lap;
         }
 
         UpdateText();
+        if(changed&&Application.isPlaying)progressMotion?.Play();
     }
 
     private void LapTextAnimation(int oldLap, int newLap)
     {
+        if(!Application.isPlaying)return;
         valuePulse?.Play(new Color(1f, 0.84f, 0.12f, 1f), -12f);
     }
 

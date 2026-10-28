@@ -26,6 +26,9 @@ public sealed class PlayerItemHUD : MonoBehaviour
     private RectTransform root;
     private CanvasGroup toastGroup;
     private RectTransform toastRect;
+    private Vector2 toastBasePosition;
+    private int shownStatus=-1,shownStatusTenths=int.MinValue,ownerPlayer;
+    private Transform boostCar;
     private TMP_Text toastTitle;
     private TMP_Text toastCaption;
     private TMP_Text statusLabel;
@@ -74,9 +77,8 @@ public sealed class PlayerItemHUD : MonoBehaviour
         }
 
         toastAge = float.PositiveInfinity;
-        wasBoosting = false;
-        boostMover = null;
-        oilAge = float.PositiveInfinity;
+        oilAge = float.PositiveInfinity;shownStatus=-1;shownStatusTenths=int.MinValue;
+        wasBoosting = false; boostCar = null; boostMover = null;
         Refresh(0f);
     }
 
@@ -87,10 +89,10 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
     private void Update()
     {
-        Refresh(Time.deltaTime);
+        Refresh(Time.deltaTime,Time.unscaledDeltaTime);
     }
 
-    private void Refresh(float deltaTime)
+    private void Refresh(float deltaTime,float uiDeltaTime=0)
     {
         if (root == null) return;
         bool visible = effects != null && effects.isActiveAndEnabled;
@@ -100,11 +102,11 @@ public sealed class PlayerItemHUD : MonoBehaviour
         int siblingIndex = GetTargetSiblingIndex();
         if (root.GetSiblingIndex() != siblingIndex) root.SetSiblingIndex(siblingIndex);
         var manager=Gmanager.Control;
-        if(manager!=null){var car=manager.GetPlayerCarTransform(manager.GetAudioViewedPlayer(GetComponent<ArcadeDisplayTheme>()?.PlayerIndex??0));boostMover=car!=null?car.GetComponent<DebugMover>():null;}
+        if(manager!=null){var car=manager.GetPlayerCarTransform(manager.GetAudioViewedPlayer(ownerPlayer));if(car!=boostCar){boostCar=car;boostMover=car!=null?car.GetComponent<DebugMover>():null;}}
         bool boosting=boostMover!=null&&(boostMover.IsDriftBoosting||boostMover.IsAccelerationPadBoosting||boostMover.IsSlipstreamBoosting);
         if(boosting&&!wasBoosting)ShowBoostToast();
         wasBoosting=boosting;
-        UpdateToast(deltaTime);
+        UpdateToast(uiDeltaTime);
         UpdateOil(deltaTime);
         UpdateConfuse();
         UpdateStatus();
@@ -163,7 +165,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
     private void ShowToast(string title, string caption, Color tint)
     {
-        if (toastTitle == null) return;
+        if (toastTitle == null || toastAge<.35f&&toastTitle.text==title) return;
         toastTitle.text = title;
         bool fast=title=="ロケット"||title=="ブースト発動！";
         toastFace?.SetStyle(fast,title.Contains("踏んだ")||title.Contains("反転")||title.Contains("スピン"));
@@ -188,6 +190,9 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
         // メーター上の定位置で短くフェード。拡大や中央への飛び出しは行いません。
         toastRect.localScale = Vector3.one;
+        float enter=UIMotion.Out(Mathf.Clamp01(toastAge/.18f));
+        float leave=UIMotion.In(Mathf.Clamp01((toastAge-(toastLifetime-ToastFadeSeconds))/ToastFadeSeconds));
+        toastRect.anchoredPosition=toastBasePosition+Vector2.right*(18f*(1-enter)+12f*leave);
         float fadeIn = Mathf.Clamp01(toastAge / .08f);
         float fadeOut = Mathf.Clamp01((toastLifetime - toastAge) / ToastFadeSeconds);
         toastGroup.alpha = Mathf.Min(fadeIn, fadeOut);
@@ -256,42 +261,27 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
     private void UpdateStatus()
     {
-        string text = string.Empty;
-        Color tint = Color.white;
-        if (effects.IsRocketActive)
+        int kind=0;float seconds=0;Color tint=Color.white;
+        if(effects.IsRocketActive){kind=1;seconds=effects.RocketTimeRemaining;tint=RocketColor;}
+        else if(effects.IsSpinning){kind=2;tint=WarningColor;}
+        else if(effects.IsConfused){kind=3;seconds=effects.ConfuseTimeRemaining;tint=ConfuseColor;}
+        else if(effects.IsOiled){kind=4;tint=OilColor;}
+        else if(effects.IsShieldActive){kind=5;seconds=effects.ShieldTimeRemaining;tint=ShieldColor;}
+        else if(effects.HitProtectionRemaining>0){kind=6;tint=ShieldColor;}
+        int tenths=Mathf.RoundToInt(seconds*10);
+        if(kind==shownStatus&&tenths==shownStatusTenths)return;
+        shownStatus=kind;shownStatusTenths=tenths;statusLabel.color=tint;
+        switch(kind)
         {
-            text = $"自動操縦で加速中   {effects.RocketTimeRemaining:0.0}秒";
-            tint = RocketColor;
+            case 1:statusLabel.SetText("自動操縦で加速中   {0:0}.{1:0}秒",tenths/10,tenths%10);break;
+            case 2:statusLabel.text="スピン中 / すぐに戻るよ";break;
+            case 3:statusLabel.SetText("左右が逆！   {0:0}.{1:0}秒",tenths/10,tenths%10);break;
+            case 4:statusLabel.text="すべるよ / ペダルをゆるめよう";break;
+            case 5:statusLabel.SetText("バリアで守る   {0:0}.{1:0}秒",tenths/10,tenths%10);break;
+            case 6:statusLabel.text="保護中 / PROTECTED";break;
+            default:statusLabel.text="";break;
         }
-        else if (effects.IsSpinning)
-        {
-            text = "スピン中 / すぐに戻るよ";
-            tint = WarningColor;
-        }
-        else if (effects.IsConfused)
-        {
-            text = $"左右が逆！   {effects.ConfuseTimeRemaining:0.0}秒";
-            tint = ConfuseColor;
-        }
-        else if (effects.IsOiled)
-        {
-            text = "すべるよ / ペダルをゆるめよう";
-            tint = OilColor;
-        }
-        else if (effects.IsShieldActive)
-        {
-            text = $"バリアで守る   {effects.ShieldTimeRemaining:0.0}秒";
-            tint = ShieldColor;
-        }
-
-        if (string.IsNullOrEmpty(text) && effects.HitProtectionRemaining > 0f)
-        {
-            text = "保護中 / PROTECTED"; tint = ShieldColor;
-        }
-
-        statusLabel.text = text;
-        statusLabel.color = tint;
-        statusRect.gameObject.SetActive(!string.IsNullOrEmpty(text));
+        statusRect.gameObject.SetActive(kind!=0);
     }
 
     private int GetTargetSiblingIndex()
@@ -306,7 +296,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
     private void Build(Transform canvasRoot)
     {
-        EnsureSprites();
+        EnsureSprites();ownerPlayer=GetComponent<ArcadeDisplayTheme>()?.PlayerIndex??0;
         Transform existing = canvasRoot.Find("ItemHUD");
         if (existing != null)
         {
@@ -333,6 +323,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
         toastRect = RacingHUDStyle.Plate(root, "Toast", new Vector2(.71f, .575f), new Vector2(.97f, .665f),
             RacingHUDPlateGraphic.PlateShape.Notification, RacingHUDStyle.Teal);
+        toastBasePosition=toastRect.anchoredPosition;
         toastRect.Find("ModernSurface").gameObject.SetActive(false);
         var arcadeFace=RacingUITheme.Rect(toastRect,"ArcadeFace",Vector2.zero,Vector2.one);arcadeFace.SetAsFirstSibling();
         toastFace=arcadeFace.gameObject.AddComponent<ArcadeToastGraphic>();toastFace.raycastTarget=false;

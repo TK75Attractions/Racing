@@ -13,6 +13,8 @@ public sealed class DrivingTutorialUI
     private readonly ArcadeHUDTelemetry telemetry;
     private readonly RacingSteeringIndicator steering;
     private readonly int player;
+    private readonly UIValuePulse stepPulse;
+    private readonly UIRevealSequence lessonMotion;
     private string shownMessage;
     private int shownStage=-1;
     public DrivingTutorialUI(Transform canvas,int playerIndex)
@@ -39,6 +41,7 @@ public sealed class DrivingTutorialUI
         message.fontSizeMin=28f;
         itemGuide = ItemGuideUI.Create(r, player);
         itemGuide.SetActive(false);
+        stepPulse=step.gameObject.AddComponent<UIValuePulse>();lessonMotion=lesson.gameObject.AddComponent<UIRevealSequence>();lessonMotion.Configure(lesson,new[]{"Status","Message"},new Vector2(12,0),.025f,.22f);
     }
     public void Update(DrivingTutorialProgress lesson,DriveInputState input,float metersPerSecond,bool connected,string connectionNotice=null)
     {
@@ -55,7 +58,8 @@ public sealed class DrivingTutorialUI
         if(shownMessage!=prompt){message.text=prompt;shownMessage=prompt;}
         string heading=lesson.HasTimedOut?"練習時間終了":lesson.IsComplete?"アイテム獲得！ 準備完了":!connected?"接続待ち":"練習しよう";
         if(status.text!=heading)status.text=heading;
-        if(shownStage==stage)return;shownStage=stage;
+        if(shownStage==stage)return;bool changed=shownStage>=0;shownStage=stage;
+        if(changed&&Application.isPlaying){stepPulse.Play(ArcadeUI.For(player).Accent,0);lessonMotion.Play();}
         step.text=lesson.HasTimedOut?"!":lesson.IsComplete?"OK":(stage+1).ToString("00");
         var palette=ArcadeUI.For(player);
         for(int i=0;i<3;i++)

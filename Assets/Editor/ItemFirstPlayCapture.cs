@@ -23,6 +23,13 @@ public static class ItemFirstPlayCapture
         try { RunCapture(); }
         finally { for (int i = 0; i < settings.Length; i++) File.WriteAllBytes(settings[i], previous[i]); }
     }
+    public static void RunMainIntegration()
+    {
+        Run();
+        UIMotionPerformanceValidation.Run();
+        CircuitDrivingRefinementValidation.RunAll();
+        Debug.Log("ITEM_MAIN_INTEGRATION_PASS: item teaching and main UI motion, allocation checks, rocket, laps and jump regressions.");
+    }
     private static void RunCapture()
     {
         RacingHUDFontBuilder.Build();

@@ -1,0 +1,27 @@
+{
+  "unity": "6000.3.9f1",
+  "productRevision": "be715fbff05e09a4398b8228b5f953bc5c813a90",
+  "editMode": {
+    "result": "Passed",
+    "total": "169",
+    "passed": "169",
+    "failed": "0",
+    "skipped": "0"
+  },
+  "rocketPhysicsKmh": 240.0,
+  "tutorialItemDistanceMeters": [
+    55.0,
+    55.0
+  ],
+  "fullRegressionPassed": true,
+  "tube": {
+    "sourceVertices": 4699,
+    "smoothVertices": 99716,
+    "portalProfiles": 4,
+    "comparedColliderVertices": 44418,
+    "portalShoulders": 2,
+    "supportedShoulderSamples": 259,
+    "maximumSeamGap": 0.0,
+    "maximumSeamTangentAngle": 0.048456642776727676
+  }
+}

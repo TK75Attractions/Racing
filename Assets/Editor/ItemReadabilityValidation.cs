@@ -31,6 +31,11 @@ public static class ItemReadabilityValidation
             Call(hud, "UpdateToast", 2f);
             Require(root.transform.Find("ItemHUD/Toast").GetComponent<CanvasGroup>().alpha > 0f,
                 "A first-time reader needs more than 1.6 seconds for the item explanation.");
+            Require(Mathf.Abs(root.transform.Find("ItemHUD/Toast").GetComponent<RectTransform>().anchoredPosition.x) < .01f,
+                "The longer explanation must not start its exit using the old 1.6-second boost lifetime.");
+            Call(hud, "UpdateStatus");
+            Require(root.transform.Find("ItemHUD/StatusPlate/Status").GetComponent<TMP_Text>().text.Contains("自動操縦"),
+                "The cached status display must keep the beginner-friendly rocket guidance.");
             effects.UseItem(RaceItemType.Confuse, null);
             Require(icon.symbol == RacingIconGraphic.Icon.Swap, "Confuse acquisition must use the reversed-steering icon.");
             hud.Bind(null);

@@ -181,7 +181,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
         // A fast learner can already reach 90 km/h here. Leave time to see the box
         // and the automatic-use instruction instead of spawning it under the bonnet.
         float speed = Vector3.ProjectOnPlane(player.body.linearVelocity, Vector3.up).magnitude;
-        float approach = Mathf.Clamp(speed * 2.5f, 36f, 65f);
+        float approach = Mathf.Clamp(speed * 2.5f, 55f, 65f);
         DrivingTutorialRoad.Sample(Mathf.Min(190f, nearest + approach), out Vector3 center, out Vector3 tangent);
         for (int lane = -1; lane <= 1; lane++)
         {

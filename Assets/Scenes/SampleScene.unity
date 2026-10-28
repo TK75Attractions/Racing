@@ -419,6 +419,18 @@ PrefabInstance:
       propertyPath: m_Mesh
       value:
       objectReference: {fileID: 4300000, guid: 8aa170a99f4124bba86a5d55983c0b42, type: 2}
+    - target: {fileID: -4778691336992948130, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1175386909607220401, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6136698512906446090, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_Mesh
+      value:
+      objectReference: {fileID: 4300000, guid: 184ab81f490f94b4ba8da1f2fbf44f22, type: 2}
     - target: {fileID: 6500614012991000065, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
       value: 2
@@ -8016,8 +8028,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScreenTransitionController
   useArtworkLogo: 0
-  fadeOutSeconds: 0.25
-  fadeInSeconds: 0.35
+  fadeOutSeconds: 0.48
+  fadeInSeconds: 0.56
   resultEnterSeconds: 0.55
   resultExitSeconds: 0.32
 --- !u!1 &460993549 stripped
@@ -17047,7 +17059,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -17069,7 +17081,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30

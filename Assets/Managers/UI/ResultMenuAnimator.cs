@@ -13,7 +13,8 @@ public sealed class ResultMenuAnimator : MonoBehaviour
         {
             feedback[index] = cards[index].GetComponent<PedalButtonFeedback>();
             if (feedback[index] == null) feedback[index] = cards[index].gameObject.AddComponent<PedalButtonFeedback>();
-            feedback[index].Configure(index == 0 ? NeonUI.Pink : Accent, index == 0 ? RacingPanelGraphic.SurfaceStyle.Primary : RacingPanelGraphic.SurfaceStyle.Secondary);
+            feedback[index].Configure(ArcadeUI.For(transform).Primary,RacingPanelGraphic.SurfaceStyle.Secondary);
+            feedback[index].UseNavigationSelection();
             feedback[index].EnableGauge(index == 0);
         }
         SetState(0, 0f);

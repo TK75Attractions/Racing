@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public sealed class RaceBroadcastHUD
 {
     private readonly TMP_Text mode,caption,standings;
+    private readonly UIValuePulse modePulse;
     public RaceBroadcastHUD(Transform parent,RenderTexture feed)
     {
         var video=RacingUITheme.Rect(parent,"BroadcastVideo",Vector2.zero,Vector2.one);
@@ -16,10 +17,11 @@ public sealed class RaceBroadcastHUD
         var strip=NeonUI.Panel(parent,"BroadcastCaption",new Vector2(0,0),new Vector2(1,.17f));
         caption=NeonUI.Text(strip,"Action","CAMPUS MOTORSPORT",new Vector2(.02f,.43f),new Vector2(.98f,.95f),34f,italic:true);
         standings=NeonUI.Text(strip,"Standings","",new Vector2(.02f,.03f),new Vector2(.98f,.43f),23f,tint:ArcadeUI.For(parent).Soft);
+        modePulse=mode.gameObject.AddComponent<UIValuePulse>();var entry=badge.gameObject.AddComponent<UIRevealSequence>();entry.Configure(parent,new[]{"BroadcastBadge","BroadcastCaption"},new Vector2(18,0),.045f,.28f);
     }
     public void Update(string label,string action,string order)
     {
-        if(mode.text!=label)mode.text=label;
+        if(mode.text!=label){mode.text=label;if(Application.isPlaying)modePulse.Play(ArcadeUI.For(mode.transform).Primary,0);}
         if(caption.text!=action)caption.text=action;
         if(standings.text!=order)standings.text=order;
     }
