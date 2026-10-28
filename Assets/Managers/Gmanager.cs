@@ -223,6 +223,13 @@ public class Gmanager : MonoBehaviour
             DrivingTutorialProgress lesson = drivingTutorial?.GetPlayerProgress(index);
             step = lesson == null ? "Waiting" : lesson.HasTimedOut ? "TimedOut" : lesson.CurrentStage.ToString();
             remaining = lesson?.TimeRemaining ?? 0f; progress = lesson?.HoldProgress ?? 0f;
+            TutorialGimmickBriefing guide = drivingTutorial?.GetPlayerBriefing(index);
+            if (lesson?.IsFinished == true && guide != null && !guide.IsComplete)
+            {
+                step = "CourseGuide " + (guide.Page + 1) + "/" + TutorialGimmickBriefing.PageCount;
+                remaining = guide.SecondsRemaining;
+                progress = (guide.Page + guide.Elapsed / TutorialGimmickBriefing.PageSeconds) / TutorialGimmickBriefing.PageCount;
+            }
         }
     }
     public bool IsDrivingEnabled => !IsMaintenanceActive && (state == State.Game || ((state == State.CarSelection || state == State.Tutorial) &&
