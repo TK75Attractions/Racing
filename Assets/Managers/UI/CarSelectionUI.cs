@@ -17,6 +17,9 @@ public sealed class CarSelectionUI : MonoBehaviour
     private TMP_Text[] ratings;
     private RectTransform[] bars;
     private RacingPanelGraphic[] cards;
+    private PedalButtonFeedback[] cardFeedback;
+    private readonly float[] barTargets=new float[4];
+    private UIRevealSequence entryMotion,profileMotion;
     private TMP_Text[] selectedLabels;
         private readonly List<RenderTexture> thumbnails = new List<RenderTexture>();
     private readonly Dictionary<Selectable, bool> titleControls = new Dictionary<Selectable, bool>();
@@ -108,6 +111,8 @@ public sealed class CarSelectionUI : MonoBehaviour
             TextAlignmentOptions.Center, tint: NeonUI.Cyan);
         foreach (TMP_Text label in sheet.GetComponentsInChildren<TMP_Text>(true)) ApplyFont(label);
         ApplyArcadeLayout();
+        entryMotion=sheet.gameObject.AddComponent<UIRevealSequence>();entryMotion.Configure(sheet,new[]{"Heading","Performance"},new Vector2(30,0),.04f,.28f);
+        var performance=sheet.Find("Performance");profileMotion=performance.gameObject.AddComponent<UIRevealSequence>();profileMotion.Configure(performance,new[]{"ModelName","BodyType","Description"},new Vector2(16,0),.025f,.20f);
         // Connection notices share the HUD vocabulary, which is wider than the
         // car catalog's baked atlas (for example 通信 / 確認してください).
         TMP_FontAsset noticeFont = RacingUIFontCatalog.GetHUD(false);
@@ -180,7 +185,7 @@ public sealed class CarSelectionUI : MonoBehaviour
 
     private void BuildCards()
     {
-        cards = new RacingPanelGraphic[catalog.vehicles.Length]; selectedLabels = new TMP_Text[cards.Length];
+        cards = new RacingPanelGraphic[catalog.vehicles.Length];cardFeedback=new PedalButtonFeedback[catalog.vehicles.Length]; selectedLabels = new TMP_Text[cards.Length];
         count = Text(sheet, "VehicleCount", "", new Vector2(.06f, .119f), new Vector2(.94f, .145f), 15f, TextAlignmentOptions.Center, tint: NeonUI.Cyan);
         float gap = .017f, width = (.906f - gap * (cards.Length - 1)) / cards.Length;
         for (int i = 0; i < cards.Length; i++)
@@ -191,7 +196,8 @@ public sealed class CarSelectionUI : MonoBehaviour
             RectTransform card = NeonUI.Panel(sheet, "Vehicle" + i, new Vector2(left, .151f), new Vector2(left + width, .308f));
             cards[i] = card.Find("ModernSurface").GetComponent<RacingPanelGraphic>();
             Image hit = card.gameObject.AddComponent<Image>(); hit.color = Color.clear;
-            Button button = card.gameObject.AddComponent<Button>(); button.targetGraphic = hit; button.transition = Selectable.Transition.None;
+            RacingMenuButton button = card.gameObject.AddComponent<RacingMenuButton>();button.targetGraphic=hit;button.Configure(cards[i]);button.ConfirmationDelay=0;button.PlayConfirmationSound=false;
+            cardFeedback[i]=card.GetComponent<PedalButtonFeedback>();
             button.onClick.AddListener(() => SelectVehicle(index));
             RectTransform thumbnailRect = RacingUITheme.Rect(card, "Thumbnail", new Vector2(.015f, .29f), new Vector2(.59f, .97f));
             RawImage thumbnail = thumbnailRect.gameObject.AddComponent<RawImage>(); thumbnail.raycastTarget = false;
@@ -209,7 +215,7 @@ public sealed class CarSelectionUI : MonoBehaviour
         RacingPanelGraphic surface = rect.Find("ModernSurface").GetComponent<RacingPanelGraphic>();
         surface.Configure(RacingPanelGraphic.SurfaceStyle.Secondary, previous ? NeonUI.Cyan : NeonUI.Pink);
         Image hit = rect.gameObject.AddComponent<Image>(); hit.color = Color.clear;
-        Button button = rect.gameObject.AddComponent<Button>(); button.targetGraphic = hit; button.onClick.AddListener(action);
+        RacingMenuButton button=rect.gameObject.AddComponent<RacingMenuButton>();button.targetGraphic=hit;button.Configure(surface);button.ConfirmationDelay=0;button.PlayConfirmationSound=false;button.onClick.AddListener(action);
         NeonUI.Icon(rect, "Arrow", previous ? RacingIconGraphic.Icon.Back : RacingIconGraphic.Icon.Chevron, new Vector2(.12f, .20f), new Vector2(.88f, .80f));
     }
 
@@ -231,6 +237,7 @@ public sealed class CarSelectionUI : MonoBehaviour
         sheet.gameObject.SetActive(true); showroom.SetVisible(true); sheet.SetAsLastSibling();
         pedalHint.text = "ペダルを離してから踏み込む";
         for(int i=0;i<thumbnails.Count;i++)showroom.RenderThumbnail(catalog.vehicles[i],PlayerPaint,thumbnails[i]);
+        if(Application.isPlaying)for(int i=0;i<bars.Length;i++)bars[i].anchorMax=new Vector2(0,1);
         Refresh(true); UpdateFeedback();
     }
     public void SelectVehicle(int index)
@@ -344,18 +351,29 @@ public sealed class CarSelectionUI : MonoBehaviour
         description.text = vehicle.description; bodyType.text = vehicle.bodyType + "   /   ゲーム内性能・10段階評価";
         colorName.text = CarSelectionCatalog.PaintNames[draftPaint]; count.text = $"0{draftVehicle + 1} / 0{catalog.vehicles.Length}     SELECT YOUR MACHINE";
         float[] values = { vehicle.SpeedRating, vehicle.AccelerationRating, vehicle.HandlingRating, vehicle.DriftRating };
-        for (int i = 0; i < values.Length; i++) { ratings[i].text = values[i].ToString("0.0"); bars[i].anchorMax = new Vector2(values[i] / 10f, 1); }
+        for (int i = 0; i < values.Length; i++) { ratings[i].text = values[i].ToString("0.0"); barTargets[i]=values[i]/10f;if(!Application.isPlaying||!IsOpen)bars[i].anchorMax=new Vector2(barTargets[i],1); }
         for (int i = 0; i < cards.Length; i++)
         {
             bool selected = i == draftVehicle;
             cards[i].Configure(selected?RacingPanelGraphic.SurfaceStyle.Primary:RacingPanelGraphic.SurfaceStyle.Secondary,ArcadeUI.For(player).Primary);
             cards[i].SetState(selected ? 1f : 0f, 0f, 0f, selected ? NeonUI.Pink : NeonUI.Cyan);
+            cardFeedback[i].SetState(selected,0,ArcadeUI.For(player).Primary);
             selectedLabels[i].text = selected ? "選択中" : catalog.vehicles[i].bodyType;
             selectedLabels[i].color = ArcadeUI.For(player).Ink;
         }
-        if (changeModel) showroom.Show(vehicle, draftPaint); else showroom.SetPaint(draftPaint);
+        if(changeModel){showroom.Show(vehicle,draftPaint);if(Application.isPlaying)profileMotion?.Play();}else showroom.SetPaint(draftPaint);
         UpdateFocus();
     }
+    public void TickPresentation(float dt)
+    {
+        if(!IsOpen||bars==null)return;
+        for(int i=0;i<bars.Length;i++)
+        {
+            Vector2 a=bars[i].anchorMax;float next=UIMotion.Follow(a.x,barTargets[i],dt,.065f,.0005f);
+            if(a.x!=next){a.x=next;bars[i].anchorMax=a;}
+        }
+    }
+    private void Update()=>TickPresentation(UIMotion.DeltaTime);
     private void UpdateTitleSelection() => titleSelection.text = catalog.vehicles[committedVehicle].displayName;
     private void OnDisable() => Cancel();
     private void OnDestroy()

@@ -11,9 +11,13 @@ public sealed class RaceMaintenanceController : MonoBehaviour
     private readonly List<float> previousDistance = new List<float>();
     private Gmanager manager;
     private float previousTimeScale;
+    private double pauseBegan, pausedSeconds;
     private bool previousAudioPause, ownsPause, configured, resumeAfterDisable;
     public bool IsActive { get; private set; }
     public int ScreenCount => screens.Count;
+    // A monotonic presentation clock that excludes service downtime. Ordinary game pauses
+    // still animate on real time; only maintenance suspends UI motion and pending callbacks.
+    public double PresentationTime => (ownsPause ? pauseBegan : Time.realtimeSinceStartupAsDouble) - pausedSeconds;
 
     public void Configure(Gmanager race, PlayerDisplayRig[] players, RaceBroadcastDirector broadcast)
     {
@@ -42,6 +46,7 @@ public sealed class RaceMaintenanceController : MonoBehaviour
         IsActive = active;
         if (active)
         {
+            pauseBegan = Time.realtimeSinceStartupAsDouble;
             previousTimeScale = Time.timeScale; previousAudioPause = AudioListener.pause; ownsPause = true;
             Time.timeScale = 0; AudioListener.pause = true; RaceAudioSettings.MaintenanceMuted = true;
             previousDistance.Clear();
@@ -66,6 +71,7 @@ public sealed class RaceMaintenanceController : MonoBehaviour
     private void RestorePause()
     {
         if (!ownsPause) return;
+        pausedSeconds += Time.realtimeSinceStartupAsDouble - pauseBegan;
         Time.timeScale = previousTimeScale; AudioListener.pause = previousAudioPause;
         RaceAudioSettings.MaintenanceMuted = false;
         for (int i=0;i<outputCanvases.Count;i++) if (outputCanvases[i] != null) outputCanvases[i].planeDistance = previousDistance[i];

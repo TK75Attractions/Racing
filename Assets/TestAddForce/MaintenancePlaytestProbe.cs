@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.EventSystems;
 
 /// <summary>Opt-in rehearsal using the real scene, lifecycle, canvases, input gates and physics.</summary>
 public sealed class MaintenancePlaytestProbe : MonoBehaviour
@@ -70,6 +71,21 @@ public sealed class MaintenancePlaytestProbe : MonoBehaviour
             blockedGate=(PlayerDriveInputGate)runtime.GetValue(1).GetType().GetField("inputGate").GetValue(runtime.GetValue(1));
             original=heldGate.Source; heldGate.SwitchSource(held); blockedGate.SetBlocked(true);
         }
+        RectTransform motionFixture=null, movingCard=null; UIRevealSequence reveal=null;
+        RacingMenuButton pendingButton=null, blockedButton=null; int pendingActions=0, blockedActions=0;
+        if(capture)
+        {
+            var rigs=(PlayerDisplayRig[])typeof(Gmanager).GetField("displayRigs",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(manager);
+            motionFixture=RacingUITheme.Rect(rigs[0].Canvas.transform,"Maintenance motion QA",Vector2.zero,Vector2.one);
+            movingCard=RacingUITheme.Rect(motionFixture,"Card",Vector2.zero,Vector2.one);
+            reveal=motionFixture.gameObject.AddComponent<UIRevealSequence>();
+            reveal.Configure(motionFixture,new[]{"Card"},new Vector2(24,0),0,.2f);reveal.Play();
+            pendingButton=NeonUI.Button(motionFixture,"Pending","QA","",RacingIconGraphic.Icon.Back,Vector2.zero,Vector2.one,false,()=>pendingActions++);
+            pendingButton.PlayConfirmationSound=false;pendingButton.ConfirmationDelay=.2f;
+            blockedButton=NeonUI.Button(motionFixture,"Blocked","QA","",RacingIconGraphic.Icon.Back,Vector2.zero,Vector2.one,false,()=>blockedActions++);
+            blockedButton.PlayConfirmationSound=false;blockedButton.ConfirmationDelay=0;
+            pendingButton.OnSubmit(new BaseEventData(EventSystem.current));
+        }
         bool broadcastEnabled=manager.Features.Settings.IsEnabled(RaceFeature.BroadcastScreen);
         if(capture) manager.Features.SetFeature(RaceFeature.BroadcastScreen,false);
         bool oldPause=AudioListener.pause;
@@ -77,6 +93,13 @@ public sealed class MaintenancePlaytestProbe : MonoBehaviour
         Require(manager.Maintenance.ScreenCount == 3 && manager.IsMaintenanceActive && Time.timeScale == 0 && AudioListener.pause && RaceAudioSettings.MaintenanceMuted,
             "Every output, physics and audio must enter maintenance in " + phase);
         Require(!manager.CanUseDashboardControls && !manager.CanUseDashboardPlayerInput(0) && !manager.CanUseDashboardPlayerInput(1), "Race controls and input must be blocked.");
+        double presentationTime=UIMotion.Realtime;
+        Vector2 frozenCard=movingCard!=null?movingCard.anchoredPosition:Vector2.zero;
+        if(capture)
+        {
+            blockedButton.OnSubmit(new BaseEventData(EventSystem.current));
+            Require(blockedActions==0,"Keyboard confirmation must not act behind the maintenance overlay.");
+        }
         var screens=manager.transform.parent.GetComponentsInChildren<Canvas>(true);
         int visible=0;
         foreach(var canvas in screens)
@@ -89,6 +112,10 @@ public sealed class MaintenancePlaytestProbe : MonoBehaviour
         Require(visible==3,"All three real canvases must show maintenance.");
         manager.StartGame(); manager.StartAutodriveTestRace(); manager.ShowResult(); manager.RetryGame(); manager.ResetGame();
         yield return new WaitForSecondsRealtime(phase=="Goal"?3.5f:.3f);
+        Require(Math.Abs(UIMotion.Realtime-presentationTime)<.0001 && UIMotion.DeltaTime==0,
+            "Presentation clock must freeze without treating an ordinary game pause as maintenance.");
+        if(capture)Require(pendingActions==0 && blockedActions==0 && Vector2.Distance(movingCard.anchoredPosition,frozenCard)<.01f && reveal.IsPlaying,
+            $"Pending buttons/reveal advanced: pending={pendingActions}, blocked={blockedActions}, card={movingCard.anchoredPosition}, frozen={frozenCard}, playing={reveal.IsPlaying}.");
         Require(manager.GetPlayerPreparationState(0)==preparation[0] && manager.GetPlayerPreparationState(1)==preparation[1], "Maintenance must preserve individual preparation phases.");
         Require(manager.state.ToString()==phase && Mathf.Abs(manager.time-raceTime)<.001f && Mathf.Abs(manager.CountdownTimeRemaining-countdown)<.001f,"State and timers advanced behind maintenance: "+phase);
         for(int i=0;i<positions.Length;i++) Require(Vector3.Distance(positions[i],manager.Participants[i].Body.position)<.0001f,"A car moved while in maintenance.");
@@ -118,6 +145,15 @@ public sealed class MaintenancePlaytestProbe : MonoBehaviour
             Require(heldGate.CurrentState.pedal>.7f,"A deliberate pedal release must re-arm driving.");
             heldGate.SwitchSource(original); blockedGate.SetBlocked(false);
             manager.Features.SetFeature(RaceFeature.BroadcastScreen,broadcastEnabled);
+        }
+        if(capture)
+        {
+            blockedButton.OnSubmit(new BaseEventData(EventSystem.current));
+            yield return new WaitForSecondsRealtime(.35f);
+            Require(pendingActions==1 && blockedActions==1 && !reveal.IsPlaying,
+                "Resuming maintenance must finish the existing UI beat once and accept a new deliberate action.");
+            Destroy(motionFixture.gameObject);
+            Debug.Log("MAINTENANCE_UI_MOTION_PASS: frozen presentation clock, reveal pose, pending callback and keyboard input; exact one-shot resume.");
         }
         Debug.Log("MAINTENANCE_PHASE_PASS: "+phase);
     }

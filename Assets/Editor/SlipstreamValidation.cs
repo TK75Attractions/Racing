@@ -101,6 +101,10 @@ public static class SlipstreamValidation
             Physics.SyncTransforms();
             for (int i = 0; i < 20; i++) assist.Assist(0, 20, Vector3.up, .02f);
             Require(assist.CorrectionDegrees < -1f, "A grounded predicted right-edge departure must steer inward.");
+            Require(assist.Assist(20, 20, Vector3.up, .02f) == 20 && assist.CorrectionDegrees == 0,
+                "Deliberately steering onto the right barrier cancels even a pending return correction.");
+            body.position = new Vector3(-13, .35f, 100); body.linearVelocity = new Vector3(-4, 0, 10); Physics.SyncTransforms();
+            Require(assist.Assist(-20, 20, Vector3.up, .02f) == -20, "Left wall entry must be symmetric.");
             features.SetValidationFeature(RaceFeature.SteeringAssist, false);
             Require(assist.CorrectionDegrees == 0, "Live OFF must clear steering assistance immediately.");
             features.SetValidationFeature(RaceFeature.SteeringAssist, true);

@@ -9,21 +9,13 @@ using UnityEngine.UI;
 public sealed class GoalCelebrationUI : MonoBehaviour
 {
     private const int ConfettiCount = 54;
-    private static readonly Color[] ConfettiColors =
-    {
-        new Color(1f, 0.82f, 0.08f, 1f),
-        new Color(1f, 0.25f, 0.15f, 1f),
-        new Color(0.08f, 0.88f, 1f, 1f),
-        new Color(0.35f, 1f, 0.5f, 1f),
-        new Color(0.78f, 0.28f, 1f, 1f)
-    };
-
     private CanvasGroup canvasGroup;
     private RectTransform hero;
     private TMP_Text winnerText;
     private TMP_Text timeText;
     private GoalConfettiPiece[] confetti;
     private Coroutine routine;
+    private UIRevealSequence heroMotion;
 
     public static GoalCelebrationUI Create(Transform canvasRoot, TMP_FontAsset font)
     {
@@ -65,6 +57,7 @@ public sealed class GoalCelebrationUI : MonoBehaviour
         {
             confetti[index].Restart(index * 7919 + 17);
         }
+        heroMotion.Play();
         routine = StartCoroutine(PlayRoutine(Mathf.Max(1.2f, visibleSeconds), onCompleted));
     }
 
@@ -75,11 +68,15 @@ public sealed class GoalCelebrationUI : MonoBehaviour
             StopCoroutine(routine);
             routine = null;
         }
+        heroMotion?.Cancel();
+        if(hero!=null){hero.anchoredPosition=Vector2.zero;hero.localScale=Vector3.one;hero.localRotation=Quaternion.identity;}
+        if(canvasGroup!=null)canvasGroup.alpha=0;
         gameObject.SetActive(false);
     }
 
     private void Build(TMP_FontAsset font)
     {
+        var palette=ArcadeUI.For(transform);
         canvasGroup = GetComponent<CanvasGroup>();
         canvasGroup.alpha = 0f;
         canvasGroup.interactable = false;
@@ -87,9 +84,9 @@ public sealed class GoalCelebrationUI : MonoBehaviour
 
         GameObject glow = GetOrCreate("VictoryGlow", transform, typeof(Image));
         Anchor(glow.GetComponent<RectTransform>(), new Vector2(0f, 0.32f), new Vector2(1f, 0.73f));
-        glow.GetComponent<Image>().color = new Color(0.02f, 0.07f, 0.1f, 0.9f);
-        RacingUITheme.Rule(glow.transform, "TopEdge", new Vector2(0f, 0.995f), Vector2.one, RacingUITheme.Cyan);
-        RacingUITheme.Rule(glow.transform, "BottomEdge", Vector2.zero, new Vector2(1f, 0.005f), RacingPanelGraphic.Alpha(RacingUITheme.Cyan, 0.4f));
+        glow.GetComponent<Image>().color = new Color(palette.Ink.r,palette.Ink.g,palette.Ink.b,.9f);
+        RacingUITheme.Rule(glow.transform, "TopEdge", new Vector2(0f, 0.995f), Vector2.one, palette.Primary);
+        RacingUITheme.Rule(glow.transform, "BottomEdge", Vector2.zero, new Vector2(1f, 0.005f), RacingPanelGraphic.Alpha(palette.Primary, 0.4f));
 
         GameObject heroObject = GetOrCreate("Hero", transform, typeof(CanvasGroup));
         hero = heroObject.GetComponent<RectTransform>();
@@ -99,12 +96,16 @@ public sealed class GoalCelebrationUI : MonoBehaviour
             190f, Color.white, font);
         RacingHUDStyle.Label(hero, "JapaneseGoal", "ゴール!", .12f, .84f, .88f, .97f, 38f,
             RacingHUDStyle.Teal, TextAlignmentOptions.Center, bold: true);
+        goalText.font=ArcadeUI.SpeedDigits;goalText.fontSharedMaterial=goalText.font.material;goalText.fontStyle=FontStyles.Normal;
         goalText.characterSpacing = 7f;
         winnerText = CreateLabel(hero, "WinnerText", "PLAYER 1 WINS", new Vector2(0.12f, 0.2f), new Vector2(0.88f, 0.42f),
-            52f, new Color(1f, 0.84f, 0.12f, 1f), font);
+            52f, palette.Accent, font);
         timeText = CreateLabel(hero, "FinishTime", "00:00.000", new Vector2(0.25f, 0.02f), new Vector2(0.75f, 0.2f),
-            42f, new Color(0.78f, 0.94f, 1f, 1f), font);
+            42f, palette.Soft, font);
 
+        timeText.font=ArcadeUI.Digits;timeText.fontSharedMaterial=timeText.font.material;timeText.fontStyle=FontStyles.Normal;
+        heroMotion=hero.GetComponent<UIRevealSequence>();if(heroMotion==null)heroMotion=hero.gameObject.AddComponent<UIRevealSequence>();
+        heroMotion.Configure(hero,new[]{"GoalText","JapaneseGoal","WinnerText","FinishTime"},new Vector2(24,0),.07f,.26f);
         Transform confettiRoot = transform.Find("Confetti");
         if (confettiRoot == null)
         {
@@ -120,7 +121,7 @@ public sealed class GoalCelebrationUI : MonoBehaviour
         {
             GameObject pieceObject = GetOrCreate($"Piece{index:00}", confettiRoot, typeof(Image));
             Image pieceImage = pieceObject.GetComponent<Image>();
-            pieceImage.color = ConfettiColors[index % ConfettiColors.Length];
+            pieceImage.color = index%4==0?palette.Primary:index%4==1?palette.Secondary:index%4==2?palette.Accent:palette.Paper;
             pieceImage.raycastTarget = false;
             GoalConfettiPiece piece = pieceObject.GetComponent<GoalConfettiPiece>();
             if (piece == null)
@@ -134,44 +135,44 @@ public sealed class GoalCelebrationUI : MonoBehaviour
 
     private IEnumerator PlayRoutine(float visibleSeconds, Action onCompleted)
     {
-        float elapsed = 0f;
+        float elapsed = 0f;double began=UIMotion.Realtime;
         const float enterSeconds = 0.62f;
         while (elapsed < enterSeconds)
         {
-            elapsed += Gmanager.Control?.IsMaintenanceActive == true ? 0 : Time.unscaledDeltaTime;
+            if(UIMotion.IsPaused){yield return null;continue;}
+            elapsed=(float)(UIMotion.Realtime-began);
             float t = Mathf.Clamp01(elapsed / enterSeconds);
             float eased = 1f - Mathf.Pow(1f - t, 3f);
-            float overshoot = 1f + Mathf.Sin(t * Mathf.PI) * 0.12f;
             canvasGroup.alpha = eased;
-            hero.localScale = Vector3.one * Mathf.Lerp(0.62f, overshoot, eased);
-            hero.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(-7f, 0f, eased));
+            hero.anchoredPosition=Vector2.left*(64f*(1-eased));
+            hero.localScale=Vector3.one*(1f-.06f*(1-eased)+.025f*UIMotion.Spring(t));
+            hero.localRotation=Quaternion.Euler(0,0,-1.5f*(1-eased));
             yield return null;
         }
 
+        hero.anchoredPosition=Vector2.zero;
         hero.localScale = Vector3.one;
         hero.localRotation = Quaternion.identity;
         float holdSeconds = Mathf.Max(0f, visibleSeconds - enterSeconds - 0.45f);
         if (holdSeconds > 0f)
         {
-            float held = 0;
-            while (held < holdSeconds)
-            {
-                held += Gmanager.Control?.IsMaintenanceActive == true ? 0 : Time.unscaledDeltaTime;
-                yield return null;
-            }
+            double holdBegan = UIMotion.Realtime;
+            while (UIMotion.Realtime - holdBegan < holdSeconds) yield return null;
         }
 
-        elapsed = 0f;
+        elapsed = 0f;began=UIMotion.Realtime;
         const float exitSeconds = 0.45f;
         while (elapsed < exitSeconds)
         {
-            elapsed += Gmanager.Control?.IsMaintenanceActive == true ? 0 : Time.unscaledDeltaTime;
+            if(UIMotion.IsPaused){yield return null;continue;}
+            elapsed=(float)(UIMotion.Realtime-began);
             float t = Mathf.Clamp01(elapsed / exitSeconds);
             canvasGroup.alpha = 1f - t * t;
-            hero.localScale = Vector3.one * Mathf.Lerp(1f, 1.08f, t);
+            hero.anchoredPosition=Vector2.right*(28f*UIMotion.In(t));
             yield return null;
         }
 
+        while (UIMotion.IsPaused) yield return null;
         gameObject.SetActive(false);
         routine = null;
         onCompleted?.Invoke();
@@ -248,21 +249,22 @@ internal sealed class GoalConfettiPiece : MonoBehaviour
             rectTransform = GetComponent<RectTransform>();
         }
 
-        System.Random random = new System.Random(seed);
-        xOrigin = Mathf.Lerp(-940f, 940f, (float)random.NextDouble());
-        float y = Mathf.Lerp(520f, 1260f, (float)random.NextDouble());
-        fallSpeed = Mathf.Lerp(310f, 670f, (float)random.NextDouble());
-        spinSpeed = Mathf.Lerp(-420f, 420f, (float)random.NextDouble());
-        swaySpeed = Mathf.Lerp(1.7f, 4.1f, (float)random.NextDouble());
-        swayAmount = Mathf.Lerp(18f, 75f, (float)random.NextDouble());
-        phase = Mathf.Lerp(0f, Mathf.PI * 2f, (float)random.NextDouble());
+        uint state=(uint)seed;
+        xOrigin = Mathf.Lerp(-940f, 940f, Next01(ref state));
+        float y = Mathf.Lerp(520f, 1260f, Next01(ref state));
+        fallSpeed = Mathf.Lerp(310f, 670f, Next01(ref state));
+        spinSpeed = Mathf.Lerp(-420f, 420f, Next01(ref state));
+        swaySpeed = Mathf.Lerp(1.7f, 4.1f, Next01(ref state));
+        swayAmount = Mathf.Lerp(18f, 75f, Next01(ref state));
+        phase = Mathf.Lerp(0f, Mathf.PI * 2f, Next01(ref state));
         rectTransform.sizeDelta = new Vector2(
-            Mathf.Lerp(13f, 29f, (float)random.NextDouble()),
-            Mathf.Lerp(24f, 48f, (float)random.NextDouble()));
+            Mathf.Lerp(13f, 29f, Next01(ref state)),
+            Mathf.Lerp(24f, 48f, Next01(ref state)));
         rectTransform.anchoredPosition = new Vector2(xOrigin, y);
-        rectTransform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(0f, 360f, (float)random.NextDouble()));
+        rectTransform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(0f, 360f, Next01(ref state)));
     }
 
+    private static float Next01(ref uint state){state^=state<<13;state^=state>>17;state^=state<<5;return (state>>8)*(1f/16777216f);}
     private void Update()
     {
         if (rectTransform == null)
@@ -271,10 +273,10 @@ internal sealed class GoalConfettiPiece : MonoBehaviour
         }
 
         Vector2 position = rectTransform.anchoredPosition;
-        position.y -= fallSpeed * Time.unscaledDeltaTime;
+        position.y -= fallSpeed * UIMotion.DeltaTime;
         position.x = xOrigin + Mathf.Sin(Time.unscaledTime * swaySpeed + phase) * swayAmount;
         rectTransform.anchoredPosition = position;
-        rectTransform.Rotate(0f, spinSpeed * 0.35f * Time.unscaledDeltaTime, spinSpeed * Time.unscaledDeltaTime);
+        rectTransform.Rotate(0f, spinSpeed * 0.35f * UIMotion.DeltaTime, spinSpeed * UIMotion.DeltaTime);
 
         if (position.y < -620f)
         {

@@ -23,24 +23,94 @@ public static class ItemVisualFactory
         return Finish("ItemCrystalMesh", vertices, triangles);
     }
 
-    /// <summary>角を面取りしたような見た目の立方体です（面ごとに頂点を分けてフラットに陰影付けします）。</summary>
+    /// <summary>Six inset faces, twelve bevels and eight corners. Face UVs keep the symbol upright.</summary>
     public static Mesh CreateBox(float size)
     {
         var vertices = new List<Vector3>();
         var triangles = new List<int>();
-        float h = size * 0.5f;
-        Vector3[] corners =
+        var uv = new List<Vector2>();
+        float h = size * .5f, inset = h * .78f;
+        Vector3[] axes = { Vector3.right, Vector3.up, Vector3.forward };
+        for (int axis = 0; axis < 3; axis++)
+            foreach (float sign in new[] { -1f, 1f })
+            {
+                Vector3 normal = axes[axis] * sign, u = axes[(axis + 1) % 3], v = Vector3.Cross(normal, u);
+                Vector3 center = normal * h;
+                AddQuad(vertices, triangles, center - u * inset - v * inset, center + u * inset - v * inset,
+                    center + u * inset + v * inset, center - u * inset + v * inset);
+                Vector3 right = axis == 1 ? Vector3.right : Vector3.Cross(normal, Vector3.up);
+                Vector3 top = axis == 1 ? Vector3.forward * sign : Vector3.up;
+                for (int i = vertices.Count - 4; i < vertices.Count; i++)
+                {
+                    Vector3 local = vertices[i] - center;
+                    uv.Add(new Vector2(Vector3.Dot(local, right) / inset + 1f, Vector3.Dot(local, top) / inset + 1f) * .5f);
+                }
+            }
+        for (int a = 0; a < 3; a++) for (int b = a + 1; b < 3; b++)
+            foreach (float sa in new[] { -1f, 1f }) foreach (float sb in new[] { -1f, 1f })
+            {
+                Vector3 x = axes[a] * sa, y = axes[b] * sb, along = axes[3 - a - b] * inset;
+                Vector3 p = x * h + y * inset, q = x * inset + y * h;
+                AddBevel(vertices, triangles, uv, x + y, p - along, q - along, q + along, p + along);
+            }
+        foreach (float x in new[] { -1f, 1f }) foreach (float y in new[] { -1f, 1f }) foreach (float z in new[] { -1f, 1f })
+            AddBevel(vertices, triangles, uv, new Vector3(x, y, z),
+                new Vector3(x * h, y * inset, z * inset), new Vector3(x * inset, y * h, z * inset),
+                new Vector3(x * inset, y * inset, z * h));
+        Mesh mesh = Finish("BevelledMysteryBoxMesh", vertices, triangles);
+        mesh.SetUVs(0, uv);
+        return mesh;
+    }
+
+    private static void AddBevel(List<Vector3> vertices, List<int> triangles, List<Vector2> uv,
+        Vector3 normal, params Vector3[] points)
+    {
+        if (Vector3.Dot(Vector3.Cross(points[1] - points[0], points[2] - points[0]), normal) < 0f)
+            System.Array.Reverse(points);
+        int first = vertices.Count;
+        vertices.AddRange(points);
+        foreach (Vector3 unused in points) uv.Add(new Vector2(.025f, .025f));
+        for (int i = 1; i < points.Length - 1; i++)
+        { triangles.Add(first); triangles.Add(first + i); triangles.Add(first + i + 1); }
+    }
+
+    /// <summary>Small mipmapped circuit-pattern skin; no font dependency, lights or per-frame pixel uploads.</summary>
+    public static Texture2D CreateMysteryBoxTexture()
+    {
+        const int size = 128;
+        var pixels = new Color32[size * size];
+        Vector2[] question = { new Vector2(-.16f,.24f), new Vector2(-.13f,.33f), new Vector2(-.04f,.38f),
+            new Vector2(.09f,.36f), new Vector2(.17f,.28f), new Vector2(.16f,.18f), new Vector2(.05f,.09f),
+            new Vector2(0f,.04f), new Vector2(0f,-.09f) };
+        for (int y = 0; y < size; y++) for (int x = 0; x < size; x++)
         {
-            new Vector3(-h, -h, -h), new Vector3(h, -h, -h), new Vector3(h, h, -h), new Vector3(-h, h, -h),
-            new Vector3(-h, -h, h), new Vector3(h, -h, h), new Vector3(h, h, h), new Vector3(-h, h, h)
-        };
-        AddQuad(vertices, triangles, corners[0], corners[3], corners[2], corners[1]);
-        AddQuad(vertices, triangles, corners[5], corners[6], corners[7], corners[4]);
-        AddQuad(vertices, triangles, corners[4], corners[7], corners[3], corners[0]);
-        AddQuad(vertices, triangles, corners[1], corners[2], corners[6], corners[5]);
-        AddQuad(vertices, triangles, corners[3], corners[7], corners[6], corners[2]);
-        AddQuad(vertices, triangles, corners[4], corners[0], corners[1], corners[5]);
-        return Finish("ItemBoxMesh", vertices, triangles);
+            Vector2 point = new Vector2((x + .5f) / size - .5f, (y + .5f) / size - .5f);
+            float edge = Mathf.Max(Mathf.Abs(point.x), Mathf.Abs(point.y));
+            float stripe = Mathf.Repeat((point.x + point.y) * 8f, 1f) < .12f ? 1f : 0f;
+            Color color = Color.Lerp(new Color(.025f,.055f,.12f), new Color(.055f,.11f,.22f), stripe);
+            if (edge > .44f) color = new Color(.7f,.46f,.13f);
+            else if (edge > .395f && edge < .41f) color = new Color(.2f,.83f,1f);
+            float distance = Vector2.Distance(point, new Vector2(0f,-.25f)) - .055f;
+            for (int i = 0; i < question.Length - 1; i++)
+                distance = Mathf.Min(distance, DistanceToSegment(point, question[i], question[i+1]) - .045f);
+            color = Color.Lerp(color, new Color(.18f,.75f,1f), Mathf.Clamp01((.035f-distance)/.035f) * .65f);
+            color = Color.Lerp(color, new Color(1f,.97f,.72f), Mathf.Clamp01(.5f-distance*size));
+            // Four little sparkles remain readable as the cube turns.
+            Vector2 corner = new Vector2(Mathf.Abs(point.x)-.31f, Mathf.Abs(point.y)-.31f);
+            if (Mathf.Abs(corner.x) + Mathf.Abs(corner.y) < .035f) color = Color.white;
+            pixels[y * size + x] = color;
+        }
+        var texture = new Texture2D(size, size, TextureFormat.RGBA32, true)
+        { name = "MysteryBoxCircuitSkin", hideFlags = HideFlags.DontSave, wrapMode = TextureWrapMode.Clamp,
+            filterMode = FilterMode.Trilinear, anisoLevel = 2 };
+        texture.SetPixels32(pixels); texture.Apply(true, true);
+        return texture;
+    }
+
+    private static float DistanceToSegment(Vector2 point, Vector2 a, Vector2 b)
+    {
+        Vector2 segment = b - a;
+        return Vector2.Distance(point, a + segment * Mathf.Clamp01(Vector2.Dot(point - a, segment) / segment.sqrMagnitude));
     }
 
     /// <summary>シールド用の球です。</summary>

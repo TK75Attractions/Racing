@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -10,7 +9,8 @@ public sealed class RacingMenuButton : Button
     private PedalButtonFeedback feedback;
     private float holdSeconds, heldTime;
     private bool holding, keyboardHold, committing;
-    private Coroutine commitRoutine;
+    private float commitRemaining;
+    public float ConfirmationDelay { get; set; } = .08f;
     public float HoldSeconds=>holdSeconds;
     public bool PlayConfirmationSound { get; set; } = true;
     public void Configure(RacingPanelGraphic value)
@@ -31,6 +31,7 @@ public sealed class RacingMenuButton : Button
     }
     public override void OnPointerDown(PointerEventData data)
     {
+        if(UIMotion.IsPaused)return;
         base.OnPointerDown(data);
         if(data.button!=PointerEventData.InputButton.Left || !IsActive() || !IsInteractable() || committing || feedback.IsRetained)return;
         RaceSoundEffects.PlayForButton(RaceSoundCue.Press,transform);
@@ -46,16 +47,24 @@ public sealed class RacingMenuButton : Button
     {if(data.button==PointerEventData.InputButton.Left && holdSeconds==0)Commit();}
     public override void OnSubmit(BaseEventData data)
     {
-        if(!IsActive() || !IsInteractable() || committing || holding || feedback.IsRetained)return;
+        if(UIMotion.IsPaused || !IsActive() || !IsInteractable() || committing || holding || feedback.IsRetained)return;
         RaceSoundEffects.PlayForButton(RaceSoundCue.Press,transform);
         if(holdSeconds>0 && Keyboard.current!=null){holding=keyboardHold=true;heldTime=0;}
         else Commit();
     }
-    private void Update()
+    private void Update(){if(!UIMotion.IsPaused)Tick(UIMotion.DeltaTime);}
+    public void Tick(float dt)
     {
+        if(UIMotion.IsPaused)return;
+        if(committing)
+        {
+            commitRemaining-=Mathf.Max(0,dt);
+            if(commitRemaining<=0)CompleteCommit();
+            return;
+        }
         if(!holding)return;
         if(!IsInteractable() || (keyboardHold && !SubmitHeld())){CancelHold();return;}
-        heldTime+=Time.unscaledDeltaTime;feedback.SetPointerCharge(Mathf.Clamp01(heldTime/holdSeconds));
+        heldTime+=Mathf.Max(0,dt);feedback.SetPointerCharge(Mathf.Clamp01(heldTime/holdSeconds));
         if(heldTime>=holdSeconds){holding=keyboardHold=false;Commit();}
     }
     private static bool SubmitHeld()
@@ -65,23 +74,23 @@ public sealed class RacingMenuButton : Button
     }
     private void Commit()
     {
-        if(!IsActive() || !IsInteractable() || committing || feedback==null || feedback.IsRetained)return;
+        if(UIMotion.IsPaused || !IsActive() || !IsInteractable() || committing || feedback==null || feedback.IsRetained)return;
         committing=true;feedback.PlayConfirm();
         if (PlayConfirmationSound) RaceSoundEffects.PlayForButton(RaceSoundCue.Confirm,transform);
         if(holdSeconds>0)feedback.SetPointerCharge(1f);
-        commitRoutine=StartCoroutine(ConfirmThenInvoke());
+        commitRemaining=Mathf.Max(0,ConfirmationDelay);
+        if(commitRemaining==0)CompleteCommit();
     }
-    private IEnumerator ConfirmThenInvoke()
+    private void CompleteCommit()
     {
-        // Keep one visible press frame before an action closes the sheet or starts a fade.
-        yield return new WaitForSecondsRealtime(.10f);
-        if(IsActive() && IsInteractable())onClick.Invoke();
-        committing=false;commitRoutine=null;
-        if(!feedback.IsRetained)feedback.SetPointerCharge(0);
+        bool invoke=committing&&IsActive()&&IsInteractable();committing=false;commitRemaining=0;
+        if(feedback!=null&&!feedback.IsRetained)feedback.SetPointerCharge(0);
+        // Clear state first: an action may synchronously close or reopen this screen.
+        if(invoke)onClick.Invoke();
     }
     protected override void OnDisable()
     {
-        if(commitRoutine!=null)StopCoroutine(commitRoutine);commitRoutine=null;committing=false;CancelHold();base.OnDisable();
+        committing=false;commitRemaining=0;CancelHold();base.OnDisable();
     }
     public override void OnPointerEnter(PointerEventData data)
     {

@@ -40,3 +40,15 @@
 |`60beccb`|feat(maintenance): control all game displays from the operator dashboard|
 |`aa886fa`|fix(maintenance): show toggle results on every dashboard page|
 |`64a1b9b`|fix(maintenance): keep broadcast visible when its normal feature is off|
+
+## 最新mainとの統合（2026年10月28日）
+
+main `e013f77`（走行・UI演出・アイテム改善を含む）を取り込み、画面遷移・ゴール演出と静的フォントの競合を解消しました。全ての日本語を含む静的HUDフォントは381文字で再生成しています。
+
+UIは通常ポーズ中には実時間で動かし、メンテナンス中だけ停止時間を差し引く共通の表示時計を使います。遷移の取り消し・再入・一度だけのコールバックというmainの仕様を維持し、停止中の演出・決定保留ボタン・キーボード確認も止めます。解除時には停止直前の残り時間から再開し、一度だけ処理を完了します。管理HTTP処理の時計は変更しません。
+
+統合後の実シーン検証で全7段階・遷移中・3画面・再起動後の設定復元が成功しました。実際のUI演出の位置、保留ボタン、キーボード確認が停止し、解除後に再開することも確認しています。別のPlay Mode検証では、通常の `timeScale=0` でUI演出が動く既存仕様も維持できています。
+
+Core **169/169**、Unity EditMode **169/169**、UI演出・割当回帰、管理画面 **46/46**、実ブリッジ／中継 **30件成功**（任意の実PTY検査1件未実施）、Chrome全6ページ・PC/390px・通信断検査が成功しています。
+
+記録は `Artifacts/Maintenance/main-integration.json`、画像は同フォルダ、詳細ログは `Logs/Maintenance/MainIntegration/` へ保存しました。実機モニター・USB/HDMI音声・対象PCのFPS・Windows製品ビルド・本番Tailscale回線は引き続き未検証です。既存のEditor SearchDatabase例外はPlay起動時に発生します。ユーザーの指示に従ってPR #58からmainへ統合し、作業ブランチを保持します。

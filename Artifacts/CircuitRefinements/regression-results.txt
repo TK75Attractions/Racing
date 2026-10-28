@@ -1,0 +1,44 @@
+Unity 6000.3.9f1
+Product revision be715fbff05e09a4398b8228b5f953bc5c813a90
+
+CIRCUIT_ROCKET_PASS: landed pickup=240km/h; approach/flight=79.2km/h; expiry preserves fall; fresh contacts release cap.
+ORDERED_LAP_RULES_PASS: grid, repeated finish crossings, direction, two full circuits, duplicate entry.
+SKILL_GAMEPLAY_RULES_PASS
+CIRCUIT_LAP_PASS: two full circuits; barrier-width gates; high finish sweep; no trigger dependency; teleport and nearby-lane shortcuts blocked.
+CIRCUIT_ROCKET_PHYSICS_PASS: production car, fresh wheel contact, complete fixed ticks, actual=240.00km/h.
+CIRCUIT_JUMP_PASS: production car starts from rest on run-up with pedal released; blocked/disconnected/CPU waiting remain stopped; flush contrast outlines have no collider.
+PLAYER_AUTODRIVE_VALIDATION_PASS: real observations, connected gated source, manual handover, pedal release and pause preservation.
+LANDING_REWARD_VALIDATION_PASS: designated gap/reverse geometry, contact-flight-stable landing, independent live boost/feedback OFF.
+STEERING_ASSIST_VALIDATION_PASS: grounded edge prediction, live OFF, wall, air and disconnect.
+SLIPSTREAM_VALIDATION_PASS: real ground queries, pursuit, live OFF, stacked roads, occlusion, disconnect, reverse direction.
+TUBE_COURSE_VALIDATION_PASS: length=1904.2m, heading/5m=15.53°, grade=0.446, grade change/5m=0.086, retained ground=100.00 %, road folds/intersections=0.
+CIRCUIT_TUBE_PASS: {"sourceVertices":4699,"smoothVertices":99716,"portalProfiles":4,"comparedColliderVertices":44418,"portalShoulders":2,"supportedShoulderSamples":259,"maximumSeamGap":0.0,"maximumSeamTangentAngle":0.048456642776727679}
+RACE_BARRIER_PATH_VALIDATION_PASS
+WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.
+WALL_STUCK_RECOVERY_PASS: smooth driving, neutral/disconnected input, stale contacts, ungrounded jitter, sleeping contacts, safe road/lap preservation, reverse input, occupied-road retry.
+ORDERED_LAP_RULES_PASS: grid, repeated finish crossings, direction, two full circuits, duplicate entry.
+RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+RACE_COURSE_ROAD_VALIDATION_PASS: exact band mesh, upward collision, dash gaps, both red/white curbs, materials, slope, closed seam, transforms, undo, cleanup, narrow/empty paths, Rigidbody support and existing course regression checks.
+PlayerAudioValidation PASSED: opening/selection, independent tutorials and final laps, finish/spectator/results, individual title return, retry, single lap, stereo viewpoint, unchanged-rate device notification and no default-output leakage.
+TUBE_COURSE_VALIDATION_PASS: length=1904.2m, heading/5m=15.53°, grade=0.446, grade change/5m=0.086, retained ground=100.00 %, road folds/intersections=0.
+COURSE_EDGE_BARRIERS_PASS: {"goalLaps":2,"wallPaths":2,"exteriorSamples":1522,"tubeSamples":2287,"missingSideHits":0,"interiorWallNodes":0,"portalTubeSideHits":4,"courseLength":1904.192626953125,"exteriorMeters":761.0,"tubeMeters":1143.5,"maximumPhysicsExcursion":20.02073097229004,"minimumPhysicsHeight":0.7841799855232239,"physicsTrials":4}
+AUTHORED_TUBE_CONTAINMENT_PASS: 342 side/ceiling positions.
+WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.
+WALL_STUCK_RECOVERY_PASS: smooth driving, neutral/disconnected input, stale contacts, ungrounded jitter, sleeping contacts, safe road/lap preservation, reverse input, occupied-road retry.
+ORDERED_LAP_RULES_PASS: grid, repeated finish crossings, direction, two full circuits, duplicate entry.
+RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+TUBE_WALL_RECOVERY_PASS: 10 banks including ceiling, smooth/neutral/jitter/sleep states, reverse input, safe road and laps, true overturn, tube interior/exterior, portals and disabled surfaces.
+TUBE_BANK_PASS: bank=0, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=-90, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=-80, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=-60, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=60, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=80, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=90, finalSpeed=28.127, driftSpeed=20.000
+SLOPE_CAMERA_PASS: slope=-20, relativeViewPitch=-12.21
+SLOPE_CAMERA_PASS: slope=0, relativeViewPitch=-14.04
+SLOPE_CAMERA_PASS: slope=20, relativeViewPitch=-14.41
+CAMERA_STABILITY_PASS: rawJitter=0.12m filteredJitter=0.0029m
+STEERING_COMFORT_PASS response90=0.120s countersteer=0.020s centerNoise=0 movingNoiseRatio=0.250
+SLOPE_TUBE_DRIVING_VALIDATION_PASS
+CIRCUIT_FULL_REGRESSION_PASS
