@@ -21,3 +21,37 @@
 着地の後方60m以内で、実際に路面がある地点の下2.5mを超えて0.2秒滞在したときは、既存の安全地点へ復帰する。次のゲートを通り過ぎる前に路面へ戻し、アイテム効果も既存の復帰処理で解除する。コース内の通常の空中飛行やチューブ壁走行をこの条件に含めない。仮想ゲートの幅・順序・連続移動の検査・必要走行距離は変更していない。
 
 位置ログは `Artifacts/ForwardOnlyPlaytest/recorded-lap-positions.csv`。その実際の失敗位置を使ったPlay Mode再現では、修正前は0.8秒以内に復帰せず、修正後は約0.205秒で復帰した。通常ジャンプを含む8条件すべて成功。チューブ内342地点、10種類の傾きでの復帰、壁乗り、スロープの駆動力、カメラ、既存の順序付き周回検証も成功した。Coreテスト182件成功。
+
+## 修正後の反復走行
+
+Unity 6000.3.9f1 / macOS上で、初回4レースから問題を発見した後、修正後8レースを再走行した。SampleScene・本番車両・CPU2台・通常のアイテム判定を使い、プレイヤーの入力エージェントはアクセルとハンドルだけを操作する。前進ペダルを0〜1へ制限し、方向切替と手動リセットは禁止。通常レースの途中で車の位置・速度・周回・結果を強制変更しない。自動復帰は本番の機能を使う。CPUの既存入力・復帰処理は変更しない。試験開始時にだけ配置を作る8条件の再現試験とは区別する。
+
+| 修正後のケース | 結果 |
+| --- | --- |
+| 高速・アイテムあり / seed8101 | 2人とも2周完走 |
+| 高速・アイテムあり / seed8102 | 2人とも2周完走 |
+| 高速・アイテムなし | 2人とも2周完走 |
+| 低速と上級者 | 上級者は2周完走、低速車は時間切れ。復帰不能なし |
+| 強いハンドル操作・アイテムあり | 2人とも2周完走 |
+| 意図的な壁向き操舵 | 自動復帰1回後に2人とも2周完走 |
+| 12秒のアクセル解放後に再開 | 2人とも2周完走 |
+| 5秒の入力切断後に再接続・ペダル解放 | 2人とも2周完走 |
+
+プレイヤー16台分のうち15台が2周完走。低速ケースは目標12m/sの入力エージェントで、実際にはアクセル約30%で約9〜10m/sを維持する。時間切れを完走扱いにはしていない。これは実際の初心者の成績や理解度を示すものではない。
+
+`Tools/VerifyForwardOnlyPlaytest.py` は単なる「レース終了」を成功扱いにせず、全CSVと結果を監査する。低速ケース以外の未完走、後退入力、手動リセット、本番オートドライブの利用、切断・解放待ち中の入力、12秒を超えるアクセル操作中の進捗停止、プレイヤーとCPUの周回取りこぼしを失敗とする。停止・切断・壁向き操作・アイテム使用が実際に行われたことも確認する。初回の周回取りこぼしは検出し、修正後8レースは全項目成功した。
+
+証拠は `Artifacts/ForwardOnlyPlaytest/final-report.json`、`final-audit.json`、`first-pass-audit.json`。実走画面は `forward-driving.jpg`。全レースの詳細CSVは `Logs/ForwardOnly/Final/各ケース/`。乱数シードはアイテム抽選等を固定するが、物理やCPUのグローバル時刻依存挙動まで決定的にするものではない。
+
+再実行は、Unityを閉じた状態で次のように行う。`UNITY`は利用するEditor実行ファイル、`PROJECT`はこのプロジェクトの絶対パスに置き換える。
+
+```sh
+RACING_FORWARD_ONLY=1 RACING_BALANCE_OUTPUT=Logs/ForwardOnly/Repeat "$UNITY" -batchmode -projectPath "$PROJECT" -executeMethod BalancePlaytestValidation.RunBatch -logFile Logs/ForwardOnly/repeat.log
+python3 Tools/VerifyForwardOnlyPlaytest.py Logs/ForwardOnly/Repeat
+```
+
+個別の物理再現はEditorの `Racing > Playtest > Validate Forward-Only Recovery`、または `-executeMethod ForwardOnlyRecoveryValidation.Run`。バッチ実行では終了時にEditorを閉じる。通常のEditorメニューから実行した場合はPlay Modeを終了する。
+
+このmacOS環境の `-nographics` 実行は描画パイプライン初期化でEditorがクラッシュした。上の走行結果はすべて通常描画で取得した。既知のEditor SearchDatabase起動時例外はあるが、走行記録中の実行時エラーは0件。Windows実機・ESP32実機・小学生による操作評価は未検証。
+
+最終確認: Core 182件・Unity EditMode 182件とも失敗0件。8条件の実物理再現は、Editorメニューの未保存シーン保護を追加した最終版でもすべて成功した（`recovery-release.json`）。全体の検証条件と結果は `validation.json` に保存している。景観ブランチは作業開始・修正の区切り・PR反映前に確認し、`c0d6158` からの追加更新はなかった。

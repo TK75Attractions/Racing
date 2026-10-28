@@ -77,6 +77,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     private string output;
     private StreamWriter trace, events;
     private bool skillSuite;
+    private bool forwardOnly;
     private bool challengePlaytest;
     private float assistStressStarted = -1f;
     private readonly float[] nextDecisionAt = new float[2];
@@ -92,6 +93,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
 
     private IEnumerator Start()
     {
+        forwardOnly = Environment.GetEnvironmentVariable("RACING_FORWARD_ONLY") == "1";
         challengePlaytest = Environment.GetEnvironmentVariable("RACING_CHALLENGE_PLAYTEST") == "1";
         output = Environment.GetEnvironmentVariable("RACING_BALANCE_OUTPUT") ?? Path.GetFullPath("Artifacts/BalancePlaytest");
         Directory.CreateDirectory(output);
@@ -126,7 +128,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         };
         // The default pace benchmark uses the production observation driver. Explicit
         // novice/slow profiles remain available for usability and regression scenarios.
-        skillSuite = Environment.GetEnvironmentVariable("RACING_BALANCE_SKILL_SUITE") == "1";
+        skillSuite = forwardOnly || Environment.GetEnvironmentVariable("RACING_BALANCE_SKILL_SUITE") == "1";
         if (skillSuite)
         {
             plans = new[] {
@@ -149,6 +151,19 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                     SkillPlan("adaptive-fast-7203",7203,50,48,false,"human","human"),
                     SkillPlan("adaptive-auto-7204",7204,18,18,false,"human","human")};
             foreach (RunRecord plan in plans) if (plan.p1Profile == "human") plan.resetAssistance = true;
+            if (forwardOnly)
+            {
+                plans = new[] {
+                    SkillPlan("forward-items-8101",8101,50,48,true,"human","human"),
+                    SkillPlan("forward-items-8102",8102,50,48,true,"human","human"),
+                    SkillPlan("forward-control",8103,50,48,false,"human","human"),
+                    SkillPlan("forward-novice",8104,12,27,true,"novice","expert"),
+                    SkillPlan("forward-aggressive",8105,32,22,true,"aggressive","intermediate"),
+                    SkillPlan("forward-wall-stress",8106,50,48,true,"human","human"),
+                    SkillPlan("skill-stop-rejoin",8107,24,16,false,"intermediate","cautious"),
+                    SkillPlan("skill-disconnect-rejoin",8108,22,22,true,"intermediate","intermediate") };
+                foreach (RunRecord plan in plans) plan.resetAssistance = false;
+            }
             suite.methodology = "Actual SampleScene and production cars/CPUs/items. Human profiles decide every 0.18/0.22 seconds, slew the physical wheel at up to 360 degrees/second and pedal at 3/second, observe forward traffic, and use the fast road-speed planner with small steering noise. Course-following input agents also approximate novice, cautious, intermediate, expert and aggressive control using distinct speed, reaction intervals, steering noise and jump anticipation; they are not human usability subjects. Includes a 12-second stop, 5-second input disconnection and operator result action. Drivers use InputManager and production input gates; never force vehicle pose, velocity, laps or outcomes. An agent responds to the public pedal-release notice after 0.35 seconds with 0.3 seconds of neutral input. Novice/cautious agents respond to a visible jump notice after 0.35 seconds by targeting 24m/s; understanding that cue is an assumed response, not a human-study result. Preparation is bypassed. Random seeds do not guarantee deterministic physics. Official and physics clocks are recorded separately.";
             var sources = (IDriveInputSource[])typeof(InputManager).GetField("inputSources", Private).GetValue(manager.IManager);
             for (int i = 0; i < 2; i++)
@@ -157,6 +172,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 (manager.IManager.GetPlayerInputSource(i) as LiveDriveInputSource)?.SwitchSource(inputs[i], false);
             }
         }
+        if (forwardOnly) suite.methodology += " FORWARD-ONLY: player pedal is clamped to [0,1], no direction toggle or manual reset input; production automatic recovery remains active. Wall-stress adds a 1.6-second full steering mistake on a safe straight. CPU input is unchanged.";
         string filter = Environment.GetEnvironmentVariable("RACING_BALANCE_RUN");
         if (Environment.GetEnvironmentVariable("RACING_BROADCAST_CHECK") == "1") yield return new WaitForSecondsRealtime(3);
         foreach (RunRecord plan in plans)
@@ -195,7 +211,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             video.Begin(manager, folder);
         }
         trace = new StreamWriter(Path.Combine(folder, "trace.csv"));
-        trace.WriteLine("time,car,x,y,z,speed,progress,lap,checkpoint,position,pedal,steering,grounded,offCourse,rocket,confuse,oil,spin,cpuTargetSpeed,cpuRival,connected,needsRelease,recoveries,recoveryBlocked,appliedSteering,assistCorrection");
+        trace.WriteLine("time,car,x,y,z,speed,progress,lap,checkpoint,position,pedal,steering,grounded,offCourse,rocket,confuse,oil,spin,cpuTargetSpeed,cpuRival,connected,needsRelease,recoveries,recoveryBlocked,appliedSteering,assistCorrection,traversalTravel,traversalNextGate,traversalValid,lapProgress");
         events = new StreamWriter(Path.Combine(folder, "events.csv")); events.WriteLine("time,car,event,detail,x,y,z");
         inputs[0].CurrentState = inputs[1].CurrentState = DriveInputState.Neutral;
         for (int i = 0; i < 2; i++) { inputs[i].IsConnected = true; nextDecisionAt[i] = 0; heldDecision[i] = DriveInputState.Neutral; releaseRequestedAt[i]=releaseUntil[i]=jumpNoticedAt[i]=-1; }
@@ -411,7 +427,9 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 bool connected = run.name != "skill-disconnect-rejoin" || entry.Index != 1 || now < 45f || now >= 50f;
                 if (inputs[entry.Index].IsConnected != connected) Event(entry.Index, connected ? "input-reconnected" : "input-disconnected", "");
                 inputs[entry.Index].IsConnected = connected;
-                inputs[entry.Index].CurrentState = Drive(entry, grounded, speed, raw, reset);
+                DriveInputState requestedInput = Drive(entry, grounded, speed, raw, reset);
+                if (forwardOnly) { requestedInput.pedal = Mathf.Max(0f, requestedInput.pedal); requestedInput.resetPressed = false; }
+                inputs[entry.Index].CurrentState = requestedInput;
                 if(skillSuite && record.mover.InputSource is PlayerDriveInputGate gate && connected)
                 {
                     int i=entry.Index;
@@ -427,7 +445,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 var data = laps.GetCarData(body); var effects = entry.Effects;
                 var input = entry.IsCpu ? entry.Driver.CurrentState : record.mover.InputSource.CurrentState;
                 var gate=record.mover.InputSource as PlayerDriveInputGate;
-                trace.WriteLine(FormattableString.Invariant($"{now:F2},{entry.Label},{body.position.x:F3},{body.position.y:F3},{body.position.z:F3},{speed:F3},{laps.GetRaceProgressDistance(body):F3},{data.lapCount},{data.lastCheckpointIndex},{entry.Position},{input.pedal:F3},{input.steering:F3},{grounded},{offCourse},{effects.IsRocketActive},{effects.IsConfused},{effects.IsOiled},{effects.IsSpinning},{(entry.Driver?.TargetSpeed ?? 0):F3},{(entry.Driver?.RivalIndex ?? -1)},{(entry.IsCpu || record.mover.InputSource.IsConnected)},{gate?.NeedsPedalRelease??false},{(entry.IsCpu?entry.Driver.RecoveryCount:entry.Car.GetComponent<CarResetter>().RecoveryCount)},{entry.Driver?.RecoveryBlockedReason??""},{record.mover.AppliedSteeringAngle:F3},{(entry.Car.GetComponent<CourseSteeringAssist>()?.CorrectionDegrees ?? 0f):F3}"));
+                trace.WriteLine(FormattableString.Invariant($"{now:F2},{entry.Label},{body.position.x:F3},{body.position.y:F3},{body.position.z:F3},{speed:F3},{laps.GetRaceProgressDistance(body):F3},{data.lapCount},{data.lastCheckpointIndex},{entry.Position},{input.pedal:F3},{input.steering:F3},{grounded},{offCourse},{effects.IsRocketActive},{effects.IsConfused},{effects.IsOiled},{effects.IsSpinning},{(entry.Driver?.TargetSpeed ?? 0):F3},{(entry.Driver?.RivalIndex ?? -1)},{(entry.IsCpu || record.mover.InputSource.IsConnected)},{gate?.NeedsPedalRelease??false},{(entry.IsCpu?entry.Driver.RecoveryCount:entry.Car.GetComponent<CarResetter>().RecoveryCount)},{entry.Driver?.RecoveryBlockedReason??""},{record.mover.AppliedSteeringAngle:F3},{(entry.Car.GetComponent<CourseSteeringAssist>()?.CorrectionDegrees ?? 0f):F3},{data.traversal.Travel:F5},{typeof(LapTraversal).GetField("nextGate",Private).GetValue(data.traversal)},{data.traversalWasValid},{data.traversalProgress:F5}"));
             }
         }
         if (manager.GetParticipant(0).IsRacing && manager.GetParticipant(1).IsRacing &&
@@ -446,6 +464,17 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     {
         float sign = manager.CourseProgressSign;
         string fastProfile = entry.Index == 0 ? run.p1Profile : run.p2Profile;
+        if (run.name == "forward-wall-stress" && entry.Index == 0 && run.physicsSeconds > 15f)
+        {
+            manager.course.TryGetSampleAtProgress(raw, out var stressRoad);
+            manager.course.TryGetSampleAtProgress(raw + sign * 50f, out var stressFar);
+            if (assistStressStarted < 0f && grounded >= 2 && speed > 8f && stressRoad.width >= 16f &&
+                Vector3.Angle(stressRoad.forward, stressFar.forward) < 10f && !manager.course.IsPointInsideTube(entry.Body.position) &&
+                !manager.course.IsJumpAhead(entry.Body.position, sign, 80f))
+            { assistStressStarted = run.physicsSeconds; Event(entry.Index, "forward-steering-mistake", "full steering for 1.6 seconds; no reverse or reset"); }
+            if (assistStressStarted >= 0f && run.physicsSeconds - assistStressStarted < 1.6f)
+                return new DriveInputState { pedal = 1f, steering = 30f };
+        }
         if (fastProfile == "human")
         {
             int i = entry.Index;

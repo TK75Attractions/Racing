@@ -8,8 +8,11 @@ public static class ForwardOnlyRecoveryValidation
 {
     private const string Key = "Racing.ForwardOnlyRecovery";
     private static double began;
+    [MenuItem("Racing/Playtest/Validate Forward-Only Recovery")]
     public static void Run()
     {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode first.");
+        if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
         var input = UnityEngine.Object.FindFirstObjectByType<InputManager>();
         input.isDebugMode = true; input.isP1SerialP2KeyboardDebugMode = false;

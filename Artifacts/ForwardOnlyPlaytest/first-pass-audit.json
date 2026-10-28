@@ -1,0 +1,113 @@
+{
+  "passed": false,
+  "failures": [
+    "forward-wall-stress/P2: failed to finish",
+    "forward-wall-stress/P2: crossed the finish without earning a lap"
+  ],
+  "runs": [
+    {
+      "name": "forward-items-8101",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 1.8,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 1,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.6799995303153992,
+          "maxDemandWithoutProgress": 6.0,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-novice",
+      "termination": "human-grace-timeout",
+      "players": [
+        {
+          "label": "P1",
+          "finished": false,
+          "laps": 1,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-aggressive",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.039999984204769135,
+          "maxDemandWithoutProgress": 2.9,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-wall-stress",
+      "termination": "human-grace-timeout",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": false,
+          "laps": 1,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 1,
+          "maxSpeedStall": 0.119999960064888,
+          "maxDemandWithoutProgress": 1.1,
+          "manualResets": 0
+        }
+      ]
+    }
+  ]
+}
