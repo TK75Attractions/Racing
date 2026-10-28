@@ -324,6 +324,9 @@ public class Gmanager : MonoBehaviour
         ResetTitleStartInputGate();
         Maintenance = gameObject.AddComponent<RaceMaintenanceController>();
         Maintenance.Configure(this, displayRigs, Broadcast);
+        foreach (PlayerDisplayRig rig in displayRigs)
+            if (rig?.Canvas != null)
+                rig.Canvas.gameObject.AddComponent<SteeringLimitWarningUI>().Configure(this, rig.PlayerIndex);
         gameObject.AddComponent<RaceDashboardBridge>();
         gameObject.AddComponent<RaceRemoteFirebasePublisher>();
     }

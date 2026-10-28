@@ -89,6 +89,15 @@ public sealed class TwoPlayerSerialInputSource : IDisposable
             steering = input.Handle / configuration.SteeringDivisor };
     }
 
+    // Read the wire angle directly: driving calibration and pedal gates must not hide overtravel.
+    public bool TryGetPhysicalSteeringDegrees(int playerIndex, out float degrees)
+    {
+        degrees = 0f;
+        if (!IsConnected(playerIndex)) return false;
+        degrees = playerIndex == 0 ? session.PlayerOne.Handle : session.PlayerTwo.Handle;
+        return !float.IsNaN(degrees) && !float.IsInfinity(degrees);
+    }
+
     public bool IsConnected(int playerIndex)
     {
         // Catch-up FixedUpdate runs before Gmanager.Update after a slow frame. The
