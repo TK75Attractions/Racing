@@ -58,10 +58,10 @@ public sealed class DrivingTutorialUI
         float allowed=mover!=null?mover.SteeringInputLimit/Mathf.Max(.001f,mover.SteeringInputRange):1;
         float raw=input.steering/90f;steering.SetState(raw,Mathf.Clamp(raw,-allowed,allowed),allowed);
         bool explaining = lesson.IsFinished && briefing != null && !briefing.IsComplete;
-        instruments.SetActive(!explaining);
+        instruments.SetActive(!(lesson.IsFinished && briefing != null));
         preparationTimer.SetActive(!lesson.IsFinished);
-        itemGuide.SetActive(connected && lesson.IsFinished && !explaining);
-        gimmickGuide.Update(explaining ? briefing : null, connected);
+        itemGuide.SetActive(connected && lesson.IsFinished && briefing == null);
+        gimmickGuide.Update(lesson.IsFinished ? briefing : null, connected);
         int stage=lesson.HasTimedOut?4:(int)lesson.CurrentStage;
         string prompt=explaining?"レースの前に\nしかけを知ろう":lesson.IsFinished?"もう一人の準備待ち\nそろったらレースへ":!connected?(!string.IsNullOrEmpty(connectionNotice)?connectionNotice:"接続を確認してください")+"\n係員に知らせてね":!lesson.PedalReleased?"まずペダルから\n足を離そう":stage==0?"ペダルを踏んで\n加速しよう":stage==1?"この先は右カーブ\n道にそって曲がろう":"光る箱にふれよう\n自動で発動するよ";
         if(shownMessage!=prompt){message.text=prompt;shownMessage=prompt;}
