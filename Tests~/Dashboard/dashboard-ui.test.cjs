@@ -13,12 +13,19 @@ class Element {
   get textContent() { return this.children.map(child => typeof child === 'string' ? child : child.textContent).join(''); }
   set innerHTML(value) { this.children = [value]; }
   setAttribute(name,value) { this[name] = value; }
+  removeAttribute(name) { delete this[name]; }
+  focus() { this.focused = true; }
   append(...children) { this.children.push(...children); }
   replaceChildren(...children) { this.children = children; }
   querySelector() { return this.span ||= new Element(); }
 }
 function fixture() {
   const elements = new Map([...html.matchAll(/id="([^"]+)"/g)].map(match=>[match[1],new Element()]));
+  const pages = [...html.matchAll(/<section id="([^"]+)"[^>]*data-page="([^"]+)"/g)].map(match => {
+    const panel = elements.get(match[1]); panel.dataset.page = match[2]; return panel;
+  });
+  const navLinks = [...html.matchAll(/<a class="nav-item"[^>]*data-page-link="([^"]+)"/g)].map(match =>
+    Object.assign(new Element(), {dataset:{pageLink:match[1]}}));
   const buttons = [...html.matchAll(/data-action="([^"]+)"/g)].map(match=>Object.assign(new Element(),{dataset:{action:match[1]}}));
   const settingControls = [...html.matchAll(/<(input|select|button) id="([^"]+)"[^>]*data-setting="([^"]+)"([^>]*)>/g)].map(match => {
     const control = elements.get(match[2]); control.dataset.setting = match[3];
@@ -32,7 +39,7 @@ function fixture() {
     return button;
   }).filter(button=>button.dataset.inputHold||button.dataset.inputPulse||button.dataset.menuAction);
   const document = { getElementById(id) { assert.ok(elements.has(id), `Missing UI element ${id}`); return elements.get(id); },
-    createElement(){return new Element();}, querySelectorAll(selector){return selector==='[data-action]'?buttons:selector==='[data-setting]'?[...settingControls,...elements.get('settings-features').children.map(row=>row.children[0]).filter(child=>child?.dataset?.setting)]:selector==='[data-input-hold], [data-input-pulse]'?inputButtons.filter(button=>button.dataset.inputHold||button.dataset.inputPulse):selector==='[data-menu-action]'?inputButtons.filter(button=>button.dataset.menuAction):[];} };
+    createElement(){return new Element();}, querySelectorAll(selector){return selector==='[data-page]'?pages:selector==='.nav-item[data-page-link]'?navLinks:selector==='[data-action]'?buttons:selector==='[data-setting]'?[...settingControls,...elements.get('settings-features').children.map(row=>row.children[0]).filter(child=>child?.dataset?.setting)]:selector==='[data-input-hold], [data-input-pulse]'?inputButtons.filter(button=>button.dataset.inputHold||button.dataset.inputPulse):selector==='[data-menu-action]'?inputButtons.filter(button=>button.dataset.menuAction):[];} };
   let now = 100000;
   class ClockDate extends Date { static now() { return now; } }
   const context = vm.createContext({Date:ClockDate,document,location:{origin:'http://127.0.0.1:8765'},URL:{revokeObjectURL(){}}});
@@ -40,7 +47,7 @@ function fixture() {
   // Load the real render functions without timers, network polling or UI event handlers.
   vm.runInContext(script.slice(0,script.indexOf("document.querySelectorAll('[data-action]').forEach")),context);
   const render = (snapshot,options) => context.render(snapshot,options);
-  return {elements,buttons,inputButtons,context,render,advance(ms) { now += ms; }};
+  return {elements,buttons,inputButtons,pages,navLinks,context,render,advance(ms) { now += ms; }};
 }
 const base = {state:'Game',goalLap:2,players:[{number:1},{number:2}],serial:{lines:[]},participantCount:4,
   participants:Array.from({length:4},(_,index)=>({number:index+1,isCpu:index>=2,position:4-index,lap:1,
@@ -399,6 +406,7 @@ test('Repeated reports update one active issue and a recurrence restarts the rec
 
 test('Preview retries preserve good frames, decode before display, and release every replaced URL', async () => {
   const ui = fixture(); ui.render(base);
+  vm.runInContext("activePage = 'race'",ui.context);
   const revoked = []; let next = 0; let fail = false;
   ui.context.AbortSignal = AbortSignal;
   ui.context.URL = {createObjectURL: () => 'blob:'+(++next), revokeObjectURL: url => revoked.push(url)};
@@ -421,6 +429,7 @@ test('Preview retries preserve good frames, decode before display, and release e
 
 test('Preview fetches cannot overlap or restore stale images after a disconnect', async () => {
   const ui = fixture(); ui.render(base);
+  vm.runInContext("activePage = 'race'",ui.context);
   const revoked = []; const pending = []; let calls = 0;
   ui.context.AbortSignal = AbortSignal;
   ui.context.URL = {createObjectURL: () => 'blob:'+calls, revokeObjectURL: url => revoked.push(url)};
@@ -673,4 +682,67 @@ test('Recovery is available without takeover and never acquires a movement lease
   assert.equal(calls[0][1].command,'recover');assert.deepEqual(calls[0][1].args,['0']);
   ui.render({...base,inputControl:control},{canControl:false});
   assert.equal(ui.inputButtons.find(b=>b.dataset.inputPulse==='reset').disabled,true);
+});
+
+test('Functional navigation keeps one page visible, updates its location label, and supports old bookmarks',()=>{
+  const ui=fixture();
+  for(const page of ['home','race','devices','settings','remote','diagnostics']){
+    ui.context.showDashboardPage(page);
+    assert.deepEqual(ui.pages.filter(panel=>!panel.hidden).map(panel=>panel.dataset.page),[page]);
+    assert.equal(ui.navLinks.filter(link=>link['aria-current']==='page').length,1);
+    assert.equal(ui.navLinks.find(link=>link['aria-current']==='page').dataset.pageLink,page);
+    assert.ok(ui.elements.get('page-title').textContent.length>1);
+  }
+  assert.equal(ui.context.dashboardRoute('#hardware-title'),'devices');
+  assert.equal(ui.context.dashboardRoute('#settings'),'settings');
+  assert.equal(ui.context.dashboardRoute('#missing'),'home');
+  ui.context.showDashboardPage('missing');assert.equal(ui.elements.get('page-home').hidden,false);
+});
+
+test('Home clears stale player values and current issues while historical parse counts do not become alerts',()=>{
+  const ui=fixture();
+  const snapshot={...base,inputMode:'Keyboard P1/P2 (debug; serial disabled)',
+    players:[{number:1,connected:true,lap:1,speed:112.4},{number:2,connected:true,lap:0,speed:0}],
+    serial:{portOpen:false,errors:12,lines:[]}};
+  ui.render(snapshot);
+  assert.equal(ui.elements.get('home-lap-1').textContent,'1 / 2');
+  assert.equal(ui.elements.get('home-speed-1').textContent,'112 km/h');
+  assert.match(ui.elements.get('home-issue-list').textContent,/通知はありません.*実機入力は未使用/);
+  assert.equal(ui.elements.get('global-notice').hidden,true);
+  ui.render({...snapshot,players:[]});
+  assert.equal(ui.elements.get('home-lap-1').textContent,'—');
+  assert.equal(ui.elements.get('home-speed-1').textContent,'—');
+  ui.context.setConnection(false);
+  assert.match(ui.elements.get('home-issue-list').textContent,/接続待ち/);
+  assert.equal(ui.elements.get('global-notice').hidden,true);
+  assert.equal(ui.elements.get('home-input-mode').textContent,'—');
+});
+
+test('Home and every page summarize unresolved warnings, clear recovery, and treat neutral pedals as valid',()=>{
+  const ui=fixture(),hardware={...healthyHardware,imus:healthyHardware.imus.map(imu=>({...imu,status:'Ok'}))};
+  const ready={...base,sessionId:'home',inputMode:'Serial P1/P2',hardware,serial:{portOpen:true,errors:7,lines:[]}};
+  ui.render(ready);assert.equal(ui.elements.get('global-notice').hidden,true);
+  ui.render({...ready,hardware:{...hardware,inputFresh:false}});
+  assert.equal(ui.elements.get('global-notice').hidden,false);
+  assert.match(ui.elements.get('global-notice-detail').textContent,/入力の更新/);
+  ui.context.showDashboardPage('settings');assert.equal(ui.elements.get('global-notice').hidden,false);
+  ui.render(ready);assert.equal(ui.elements.get('global-notice').hidden,true);
+  ui.render({...ready,serial:{...ready.serial,lines:[{id:9,status:'TIMEOUT',line:'GET_STATUS'}]}});
+  assert.equal(ui.elements.get('global-notice').hidden,false);
+  assert.match(ui.elements.get('home-issue-list').textContent,/応答がありません/);
+  ui.render({...ready,sessionId:'next'});assert.equal(ui.elements.get('global-notice').hidden,true);
+});
+
+test('Navigating away releases an active remote lease and camera downloads run only on the race page',async()=>{
+  const ui=fixture(),calls=[];ui.context.AbortSignal=AbortSignal;ui.context.crypto={randomUUID:require('node:crypto').randomUUID};
+  ui.context.apiFetch=async(route,options)=>{calls.push([route,JSON.parse(options.body)]);return {json:async()=>({ok:true})};};
+  ui.render({...base,inputControl,sessionId:'navigation',stateRevision:5});
+  ui.context.showDashboardPage('remote');ui.context.beginRemoteInput(0);await new Promise(setImmediate);
+  ui.context.showDashboardPage('home');
+  assert.equal(calls.at(-1)[1].command,'release');assert.equal(calls.at(-1)[1].targetSession,'navigation');
+  assert.equal(ui.elements.get('keyboard-stop-0').disabled,true);
+  ui.context.apiFetch=async()=>{throw new Error('Home must not request camera frames');};
+  let downloads=0;ui.context.apiFetch=async()=>{downloads++;return {ok:false};};
+  await ui.context.refreshFrames();assert.equal(downloads,0);
+  ui.context.showDashboardPage('race');await new Promise(setImmediate);assert.equal(downloads,2);
 });

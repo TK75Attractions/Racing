@@ -32,6 +32,113 @@ let frameBusy = false;
 let frameGeneration = 0;
 const frameUrls = [null, null];
 
+const dashboardPages = {
+  home: ['ホーム', 'レースと機器の状況を、ひと目で。', 'HOME'],
+  race: ['レース運営', '進行の操作、プレイヤー映像、順位をまとめて確認。', 'RACE OPERATIONS'],
+  devices: ['機器・入力', '接続状態と、ハンドル・ペダルの反応を確認。', 'DEVICES & INPUT'],
+  settings: ['ゲーム設定', '音量・出力先・レースルールを調整。', 'GAME SETTINGS'],
+  remote: ['遠隔操作', 'プレイヤーを選び、必要なときだけ操作を引き受けます。', 'REMOTE CONTROL'],
+  diagnostics: ['診断・ログ', '現在の警告と、接続・操作の履歴を確認。', 'DIAGNOSTICS']
+};
+let activePage = 'home';
+
+function dashboardRoute(hash) {
+  const route = String(hash || '').replace(/^#/, '');
+  // Preserve older bookmarks into the former single-page dashboard.
+  const legacy = { 'hardware-title':'devices', 'serial-title':'diagnostics', 'settings-title':'settings',
+    'controls-title':'race', 'cameras-title':'race', 'keyboard-input-title':'remote' };
+  return Object.hasOwn(dashboardPages, route) ? route : legacy[route] || 'home';
+}
+
+function showDashboardPage(page, focus = false) {
+  if (!Object.hasOwn(dashboardPages, page)) page = 'home';
+  const changed = activePage !== page;
+  if (activePage === 'remote' && page !== 'remote') {
+    stopAllRemoteInputs();
+    renderRemoteInputs(latestSnapshot?.inputControl, latestInputAllowed);
+  }
+  activePage = page;
+  document.querySelectorAll('[data-page]').forEach(panel => { panel.hidden = panel.dataset.page !== page; });
+  document.querySelectorAll('.nav-item[data-page-link]').forEach(link => {
+    if (link.dataset.pageLink === page) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+  const [title, description, kicker] = dashboardPages[page];
+  const accent = document.createElement('span'); accent.className = 'accent'; accent.textContent = '.';
+  $('page-title').replaceChildren(title, accent);
+  $('page-description').textContent = description;
+  $('page-kicker').textContent = 'CONTROL DESK / ' + kicker;
+  document.title = `${title} | RACING CONTROL`;
+  // Invalidate any camera request belonging to the screen we just left.
+  if (changed) frameGeneration++;
+  if (focus) $('page-title').focus({preventScroll:true});
+  if (changed && page === 'race' && localMode) void refreshFrames();
+}
+
+function renderHome(snapshot) {
+  $('home-input-mode').textContent = !snapshot ? '—' : $('input-mode').textContent;
+  for (const n of [1, 2]) {
+    const player = snapshot?.players?.find(value => value.number === n);
+    const progress = snapshot?.playerProgress?.find(value => value.number === n);
+    const participant = snapshot?.participants?.find(value => value.number === n);
+    const status = $('home-player-status-' + n);
+    status.textContent = !snapshot ? '待機中' : progress ? labels[progress.state] || '状態確認中' : labels[snapshot.state] || '状態確認中';
+    status.classList.toggle('active', !!snapshot && !!player?.connected);
+    const detail = progress?.step === 'Withdrawn' ? '途中棄権・相手の走行を待機' :
+      participant?.status === 'Finished' ? '完走' : participant?.status === 'DNF' ? '未完走' :
+      progress?.step === 'Menu' ? '中断メニューを表示中' : snapshot ? details[progress?.state || snapshot.state] || '状態を確認中' : 'プレイヤーの状態を待っています';
+    $('home-player-detail-' + n).textContent = [progress?.carName, detail].filter(Boolean).join(' · ');
+    $('home-lap-' + n).textContent = player ? `${player.lap ?? 0} / ${snapshot.goalLap || '—'}` : '—';
+    $('home-speed-' + n).textContent = player && Number.isFinite(player.speed) ? `${Math.max(0, player.speed).toFixed(0)} km/h` : '—';
+  }
+  renderAttention(snapshot);
+}
+
+function renderAttention(snapshot) {
+  // Summarize current observations, never the cumulative parse-error counter.
+  const items = [];
+  if (!snapshot) items.push({text: localMode ? 'Unity の接続待ちです。ゲームPCで Play 中か確認してください。' : '遠隔データの接続を待っています。'});
+  else {
+    const serial = snapshot.serial || {}, h = snapshot.hardware;
+    const hardwareRequired = !/^keyboard/i.test(snapshot.settings?.inputMode || snapshot.inputMode || '') && HardwareDiagnostics.required(snapshot, 0);
+    if (hardwareRequired) {
+      if (!serial.portOpen) items.push({text:'実機のシリアル接続を確認してください。', issue:true});
+      else if (!h?.sessionOpen || !h.recent) items.push({text:'装置からの応答を待っています。', issue:true});
+      else if (h.state !== 'READY' || !h.calibrated || !h.angleLocked) items.push({text:'機器を準備中です。「機器・入力」で進行を確認できます。'});
+      else if (!h.inputFresh || h.invalidTelemetry) items.push({text:'実機入力の更新・形式を確認してください。', issue:true});
+      if (h?.sessionOpen && h.recent && ((h.ads === 'Fault' && HardwareDiagnostics.required(snapshot, 3)) ||
+          h.imus?.some((imu, index) => imu.status === 'Fault' && HardwareDiagnostics.required(snapshot, index + 1))))
+        items.push({text:'センサーに要確認の通知があります。「機器・入力」で対象を確認してください。', issue:true});
+    }
+    if (alertSession === (snapshot.sessionId || '')) {
+      for (const [key, item] of alertItems)
+        if (item.resolvedAt == null && key !== 'port') items.push({text:item.text, issue:true});
+    }
+    if (!items.length) items.push({text:hardwareRequired ? '現在、要確認の通知はありません。' : '現在、要確認の通知はありません。実機入力は未使用です。'});
+  }
+  const issues = items.filter(item => item.issue), count = issues.length;
+  $('global-notice').hidden = !count;
+  const title = `${count}件の確認が必要です`, detail = issues[0]?.text || '';
+  if ($('global-notice-title').textContent !== title) $('global-notice-title').textContent = title;
+  if ($('global-notice-detail').textContent !== detail) $('global-notice-detail').textContent = detail;
+  $('nav-issue-count').hidden = !count;
+  $('nav-issue-count').textContent = String(count);
+  $('home-issue-status').textContent = !snapshot ? '接続待ち' : count ? `${count}件 要確認` : items[0].text.includes('準備中') ? '準備中' : '通知なし';
+  $('home-issue-status').classList.toggle('fault', count > 0);
+  // Text nodes keep device-provided messages inert. Do not interrupt screen readers on every snapshot.
+  const signature = JSON.stringify(items.map(item => item.text));
+  if ($('home-issue-list').dataset.signature !== signature) {
+    $('home-issue-list').dataset.signature = signature;
+    $('home-issue-list').replaceChildren(...items.slice(0, 3).map(item => {
+      const li = document.createElement('li'); li.textContent = item.text; return li;
+    }));
+    if (items.length > 3) {
+      const li = document.createElement('li'); li.textContent = `ほか ${items.length - 3} 件は診断・ログで確認できます。`;
+      $('home-issue-list').append(li);
+    }
+  }
+}
+
 function setConnection(isConnected) {
   connected = isConnected;
   const badge = $('connection');
@@ -87,6 +194,7 @@ function setConnection(isConnected) {
       if (frameUrls[i - 1]) URL.revokeObjectURL(frameUrls[i - 1]);
       frameUrls[i - 1] = null;
     }
+    renderHome(null);
   }
 }
 
@@ -186,6 +294,7 @@ function render(snapshot, { canControl = localMode, canInput = canControl } = {}
   renderRaw(snapshot.rawLines || [], snapshot.rawGap || false);
   setSerialControls(canControl && snapshot.serial.portOpen && snapshot.hardware?.sessionOpen && snapshot.hardware?.recent);
   renderCommandResult(snapshot);
+  renderHome(snapshot);
 }
 
 const drivingLabels = { Stopped: '停止', Driving: '走行中', Airborne: '空中',
@@ -432,6 +541,7 @@ function renderSerialAlerts(serial, inputMode = '', snapshot = latestSnapshot) {
   for (const [key, item] of alertItems)
     if (key !== 'port' && !unique.has(item.entry.id) && item.resolvedAt != null && now - item.resolvedAt >= 10000) alertItems.delete(key);
   const signature = JSON.stringify(alerts);
+  renderAttention(snapshot);
   if (signature === serialAlertSignature) return;
   serialAlertSignature = signature;
   $('serial-alerts').hidden = !alerts.length;
@@ -897,7 +1007,7 @@ async function poll() {
 }
 
 async function refreshFrames() {
-  if (frameBusy || !connected) return;
+  if (frameBusy || !connected || activePage !== 'race') return;
   frameBusy = true;
   const generation = frameGeneration;
   try {
@@ -1217,6 +1327,20 @@ document.querySelectorAll('[data-action]').forEach((button) => {
     }
   });
 });
+
+document.querySelectorAll('[data-page-link]').forEach(link => link.addEventListener('click', event => {
+  event.preventDefault();
+  const page = dashboardRoute('#' + link.dataset.pageLink);
+  if (location.hash !== '#' + page) location.hash = page;
+  showDashboardPage(page, true);
+  window.scrollTo({top:0,behavior:'instant'});
+}));
+window.addEventListener('hashchange', () => {
+  if (location.hash === '#page-title') $('page-title').focus();
+  else showDashboardPage(dashboardRoute(location.hash), true);
+});
+showDashboardPage(dashboardRoute(location.hash));
+renderHome(null);
 
 $('raw-pause').addEventListener('click', () => {
   rawPaused = !rawPaused;

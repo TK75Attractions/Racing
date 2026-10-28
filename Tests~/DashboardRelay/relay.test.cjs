@@ -414,7 +414,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       const {chromium}=require('playwright');const browser=await chromium.launch({headless:true,channel:'chrome'});
       try{
         const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
-        await page.goto('http://127.0.0.1:8766/');await page.locator('#hardware-grid button').first().waitFor();
+        await page.goto('http://127.0.0.1:8766/#devices');await page.locator('#hardware-grid button').first().waitFor();
         await page.locator('#hardware-grid button').first().click();await page.locator('#diagnostics-dialog:visible').waitFor();
         assert.ok(await page.locator('#diagnostics-facts li').count()>0);
         assert.ok(await page.locator('#diagnostics-summary strong').textContent());
@@ -433,7 +433,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
       try {
         const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];
         page.on('pageerror',error=>errors.push(error.message));send('state:Title');
-        await page.goto('http://127.0.0.1:8766/');await page.locator('#keyboard-take-0:enabled').waitFor();
+        await page.goto('http://127.0.0.1:8766/#remote');await page.locator('#keyboard-take-0:enabled').waitFor();
         await page.locator('#keyboard-take-0').click();
         const accel=page.locator('[data-input-player="0"][data-input-hold="accelerate"]');
         await accel.hover();await page.mouse.down();
@@ -480,16 +480,18 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         assert.deepEqual(errors,[]);
       } finally {await browser.close();}
     });
-    if(process.env.RACING_BROWSER_TEST==='1') await t.test('actual browser: unified screen, numeric TEL, event history and race action',async()=>{
+    if(process.env.RACING_BROWSER_TEST==='1') await t.test('actual browser: functional pages, numeric TEL, event history and race action',async()=>{
       const {chromium}=require('playwright');
       const browser=await chromium.launch({headless:true,channel:'chrome'});
       try {
         const page=await browser.newPage({viewport:{width:1440,height:1100}});
         const errors=[];page.on('pageerror',error=>errors.push(error.message));
         send('state:Title');await page.goto('http://127.0.0.1:8766/');
+        await page.locator('.connection-details > summary').click();
         await page.getByText('ローカル / WebSocket',{exact:true}).waitFor();
         assert.equal(await page.locator('#share-url').inputValue(),'https://race.test.ts.net/');
         assert.equal(await page.locator('#share-dashboard').isVisible(),true);
+        await page.locator('.nav-item[href="#settings"]').click();
         await page.locator('#settings-master:enabled').waitFor();
         await page.locator('#settings-master').evaluate(control => {
           control.value = '47'; control.dispatchEvent(new Event('input', {bubbles:true}));
@@ -497,6 +499,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         });
         await page.locator('#settings-status').filter({hasText:'設定を反映しました'}).waitFor();
         await waitFor(async()=>(await request('/api/status')).json.settings.master===.47);
+        await page.locator('.advanced-settings > summary').click();
         await page.locator('#settings-inputMode:enabled').selectOption('keyboard');
         await waitFor(async()=>(await request('/api/status')).json.settings.inputMode==='keyboard');
         await page.locator('#settings-featurePanel:enabled').uncheck();
@@ -519,7 +522,9 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         send('rx:'+wire('EVT,500,0,STATE,READY'));
         send('rx:'+wire('TEL,501,0,-12.5,0.75,0,25,0,0.4'));
         send('rx:'+wire('ERR,502,0,WARN,HANDLE,ANGLE_REFERENCE_INVALID'));
+        await page.locator('.nav-item[href="#devices"]').click();
         await page.locator('#latest-tel').filter({hasText:'アクセル75.0%'}).waitFor();
+        await page.locator('.nav-item[href="#diagnostics"]').click();
         await page.locator('#serial-log').filter({hasText:'2人分の入力が使用可能'}).waitFor();
         assert.ok(!(await page.locator('#serial-log').innerText()).includes('@TEL,'));
         await page.locator('#raw-open').click();
@@ -532,9 +537,11 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         await page.locator('#raw-pause').click();
         await page.locator('#raw-close').click();
         assert.match(await page.locator('#serial-alert-list').innerText(),/基準角度が無効/);
+        await page.locator('.nav-item[href="#race"]').click();
         await page.locator('[data-action="start"]:enabled').waitFor();
         fs.mkdirSync(path.join(root,'Artifacts/DashboardRealtime'),{recursive:true});
         await page.screenshot({path:path.join(root,'Artifacts/DashboardRealtime/desktop.png'),fullPage:true});
+        await page.locator('.nav-item[href="#settings"]').click();
         await page.locator('.game-settings').screenshot({path:path.join(root,'Artifacts/DashboardRealtime/settings-desktop.png')});
         await page.locator('#settings-test-race:enabled').click();
         await page.locator('#game-state').filter({hasText:'カウントダウン'}).waitFor();
@@ -553,6 +560,7 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         send('rx:'+wire('EVT,503,0,I2C_RESTORED'));
         relay=spawn('dotnet',[path.join(root,'Tools/DashboardRelay/bin/Debug/net10.0/DashboardRelay.dll')],{cwd:root,env:{...process.env,RACING_DASHBOARD_ORIGIN:'https://race.test.ts.net',RACING_DASHBOARD_OPERATORS:'operator@example.com'}});
         relay.stdout.resume();relay.stderr.resume();
+        await page.locator('.nav-item[href="#diagnostics"]').click();
         await page.locator('#serial-log').filter({hasText:'センサーとの接続が復旧'}).waitFor();
         assert.deepEqual(errors,[]);
       } finally {await browser.close();}
@@ -612,7 +620,8 @@ test('Serial Lab → real PTY receiver → production bridge → WebSocket, 100 
       const {chromium}=require('playwright');const browser=await chromium.launch({headless:true,channel:'chrome'});
       try {
         const page=await browser.newPage({viewport:{width:1440,height:1100}});const errors=[];page.on('pageerror',error=>errors.push(error.message));
-        await page.goto('http://127.0.0.1:8766/');
+        await page.goto('http://127.0.0.1:8766/#devices');
+        await page.locator('.advanced-device > summary').click();
         await page.locator('#serial-send:enabled').waitFor();
         assert.match(await page.locator('#hardware-grid').innerText(),/通信中/);
         assert.match(await page.locator('#hardware-grid').innerText(),/動作確認済み/);
@@ -620,7 +629,9 @@ test('Serial Lab → real PTY receiver → production bridge → WebSocket, 100 
         await page.selectOption('#serial-command','GET_CONFIG');await page.click('#serial-send');
         await page.locator('#serial-command-badge').filter({hasText:'完了'}).waitFor();
         assert.match(await page.locator('#serial-command-values').innerText(),/入力の送信頻度/);
+        await page.locator('.nav-item[href="#diagnostics"]').click();
         await page.locator('#serial-log').filter({hasText:'入力の送信頻度'}).waitFor();
+        await page.locator('#raw-open').click();
         await page.locator('#raw-log').filter({hasText:'@TEL,'}).waitFor();
         await page.screenshot({path:path.join(root,'Artifacts/DashboardRealtime/operator-desktop.png'),fullPage:true});
         await page.setViewportSize({width:390,height:844});
