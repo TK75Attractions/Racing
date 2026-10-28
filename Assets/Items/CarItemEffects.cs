@@ -96,7 +96,7 @@ public sealed class CarItemEffects : MonoBehaviour
         if (gentle && !lastGentleEnabled) { ClearHarmfulEffects(); hitProtection.Clear(); }
         lastProtectionEnabled = protect; lastGentleEnabled = gentle;
     }
-    public void ClearHarmfulEffects()
+    public void ClearHarmfulEffects(bool cancelPendingOil = true)
     {
         if (spinTimeRemaining > 0f && body != null && !body.isKinematic)
         {
@@ -105,13 +105,14 @@ public sealed class CarItemEffects : MonoBehaviour
         oilTimeRemaining = confuseTimeRemaining = spinTimeRemaining = 0f;
         confuseSource = null;
         confuseWallReported = false;
-        oilDropTimeRemaining = -1f;
+        if (cancelPendingOil) oilDropTimeRemaining = -1f;
         if (body != null) body.maxAngularVelocity = originalMaxAngularVelocity;
     }
     private bool AcceptAffliction(float duration)
     {
         ApplyFeatureSwitches();
-        if (RaceFeatureController.Enabled(RaceFeature.ExperienceItems)) return false;
+        if (RaceFeatureController.Enabled(RaceFeature.ExperienceItems) ||
+            Gmanager.Control != null && Gmanager.Control.IsDebuffProtected(body)) return false;
         if (!RaceFeatureController.Enabled(RaceFeature.HitProtection)) return true;
         Gmanager race = Gmanager.Control;
         if (race != null && race.course != null &&

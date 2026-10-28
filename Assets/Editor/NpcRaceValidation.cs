@@ -62,18 +62,21 @@ public static class NpcRaceValidation
                 GameObject vehicle = new GameObject("Item target " + i); vehicle.transform.SetParent(root.transform);
                 Rigidbody body = vehicle.AddComponent<Rigidbody>();
                 CarItemEffects effects = vehicle.AddComponent<CarItemEffects>();
-                entries.Add(new RaceParticipant { Index = i, IsCpu = i >= 2, Car = vehicle, Body = body, Effects = effects, Position = i + 1,
+                entries.Add(new RaceParticipant { Index = i, IsCpu = i >= 2, Car = vehicle, Body = body, Effects = effects, Position = i == 0 ? 4 : i == 1 ? 1 : i == 2 ? 3 : 2,
                     Progress = i == 0 ? 100 : i == 1 ? 300 : i == 2 ? 125 : 140 });
             }
             manager.TryGetItemContext(entries[0].Body, out int position, out CarItemEffects target);
-            if (position != 1 || target != entries[2].Effects) throw new InvalidOperationException("Closest ahead CPU was not an item target");
+            if (position != 4 || target != entries[2].Effects) throw new InvalidOperationException("Closest ahead CPU was not an item target");
             entries[2].Result = new RaceResultRecord();
             manager.TryGetItemContext(entries[0].Body, out position, out target);
             if (target != entries[3].Effects) throw new InvalidOperationException("Finished CPU remained an item target");
             entries[3].Result = new RaceResultRecord { didFinish = false }; entries[0].Progress = 400;
             manager.TryGetItemContext(entries[0].Body, out position, out target);
-            if (target != entries[1].Effects) throw new InvalidOperationException("Closest chasing human was not an item target");
-            Debug.Log("NPC_ITEM_TARGETS_PASS: four entries, nearest ahead CPU, finished/withdrawn exclusion, human chasing target");
+            if (target != entries[1].Effects) throw new InvalidOperationException("Remaining human ahead was not an item target");
+            entries[0].Position = 1; entries[1].Position = 2;
+            manager.TryGetItemContext(entries[0].Body, out position, out target);
+            if (target != null) throw new InvalidOperationException("Leader must not target a chasing human");
+            Debug.Log("NPC_ITEM_TARGETS_PASS: four entries, nearest ranked CPU ahead, finished/withdrawn exclusion, no backwards attack");
         }
         finally { entries.Clear(); UnityEngine.Object.DestroyImmediate(root); }
     }

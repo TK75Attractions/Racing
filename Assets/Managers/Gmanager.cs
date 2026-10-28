@@ -1027,6 +1027,11 @@ public class Gmanager : MonoBehaviour
             RaceParticipant entry = orderedParticipants[i]; entry.Position = i + 1;
             if (!entry.IsCpu) players[entry.Index].displayedRacePosition = entry.Position;
         }
+        // A hit may itself drop a car to last: release the remaining affliction immediately.
+        foreach (RaceParticipant entry in participants)
+            if (IsDebuffProtected(entry.Body) && entry.Effects != null &&
+                (entry.Effects.IsOiled || entry.Effects.IsConfused || entry.Effects.IsSpinning))
+                entry.Effects.ClearHarmfulEffects(cancelPendingOil: false);
     }
 
     private int CompareParticipants(RaceParticipant a, RaceParticipant b)
@@ -1957,7 +1962,7 @@ public class Gmanager : MonoBehaviour
 
     /// <summary>
     /// アイテム抽選用に、指定車両の現在順位と、妨害対象になる相手車両の効果を返します。
-    /// 相手がゴール済み・中断済みの場合、opponentEffects は null です。
+    /// 自分より前に妨害可能な走行中の車がいない場合、opponentEffects は null です。
     /// </summary>
     /// <summary>
     /// コース中心線の進行距離が増える向きにレースが進むなら 1、逆なら -1 です。
@@ -1972,16 +1977,32 @@ public class Gmanager : MonoBehaviour
         RaceParticipant participant = FindParticipant(target);
         if (participant == null || !participant.IsRacing) return false;
         racePosition = participant.Position;
-        float nearest = float.MaxValue;
+        int lastRacingPosition = LastRacingPosition();
+        int nearestPosition = 0;
         foreach (RaceParticipant candidate in participants)
         {
             if (candidate == participant || !candidate.IsRacing || candidate.Effects == null || !candidate.Effects.isActiveAndEnabled) continue;
-            float distance = Mathf.Abs(candidate.Progress - participant.Progress);
-            // Prefer the closest car ahead; at the front, target the closest chasing car.
-            float score = candidate.Progress >= participant.Progress ? distance : distance + (course != null ? course.TotalLength : 10000f);
-            if (score < nearest) { nearest = score; opponentEffects = candidate.Effects; }
+            // Rank includes lap progress and tie handling; never fall back to attacking a car behind.
+            if (!RaceDebuffPolicy.CanTarget(racePosition, candidate.Position, participants.Count, lastRacingPosition)) continue;
+            if (candidate.Position > nearestPosition)
+            { nearestPosition = candidate.Position; opponentEffects = candidate.Effects; }
         }
         return true;
+    }
+
+    private int LastRacingPosition()
+    {
+        int last = 0;
+        foreach (RaceParticipant entry in participants)
+            if (entry.IsRacing) last = Mathf.Max(last, entry.Position);
+        return last;
+    }
+
+    public bool IsDebuffProtected(Rigidbody body)
+    {
+        RaceParticipant entry = FindParticipant(body);
+        return state == State.Game && entry?.IsRacing == true &&
+            RaceDebuffPolicy.IsProtected(entry.Position, participants.Count, LastRacingPosition());
     }
 
     private bool HasSpawnedCars()
