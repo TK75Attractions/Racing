@@ -310,6 +310,12 @@ public static class TwoPlayerDisplayFactory
         // Editor Game views preview virtual displays even with one physical monitor.
         if (Application.isPlaying && !Application.isEditor && !RacePlayerWindows.UsesNativeWindow)
         {
+            int availableDisplay = RaceDisplayRouting.PlayerTwoDisplay(playerTwoDisplayIndex, Display.displays.Length);
+            if (availableDisplay >= 1 && availableDisplay != playerTwoDisplayIndex)
+            {
+                Debug.LogWarning($"P2 Display {playerTwoDisplayIndex + 1} is unavailable; using Display {availableDisplay + 1} on this PC.");
+                playerTwoDisplayIndex = availableDisplay;
+            }
             if (Display.displays.Length <= playerTwoDisplayIndex)
             {
                 Debug.LogError($"P2 Display {playerTwoDisplayIndex + 1} is unavailable; {Display.displays.Length} displays connected. Check GManager > Displays > Player Two Display.");

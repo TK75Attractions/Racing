@@ -86,7 +86,8 @@ public class Gmanager : MonoBehaviour
     [Header("Displays")]
     [Tooltip("P1 uses the main game window. On macOS, P2 opens a movable window on this preferred screen (or the main screen if unavailable). In the Editor, this is P2's Game view display number.")]
     [SerializeField, Range(2, 8)] private int playerTwoDisplay = 2;
-    public int PlayerTwoDisplayIndex => playerTwoDisplay - 1;
+    public int PlayerTwoDisplayIndex => displayRigs != null && displayRigs.Length > 1 && displayRigs[1] != null
+        ? displayRigs[1].DisplayIndex : playerTwoDisplay - 1;
 
     [Header("UI")]
     [SerializeField] private OnPlayUIManager onPlayUIManager;
