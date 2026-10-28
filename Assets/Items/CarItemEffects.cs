@@ -35,7 +35,7 @@ public sealed class CarItemEffects : MonoBehaviour
     [Tooltip("発動直後に保証する最低速度（m/s）。")]
     [SerializeField, Min(0f)] private float rocketStartSpeed = 35f;
     [Tooltip("ロケットの最高速度（m/s）。")]
-    [SerializeField, Min(1f)] private float rocketTopSpeed = 65f;
+    [SerializeField, Min(1f)] private float rocketTopSpeed = 240f / 3.6f;
     [Tooltip("最高速度へ向かう加速度（m/s²）。")]
     [SerializeField, Min(0f)] private float rocketAcceleration = 45f;
     [Tooltip("コース中心線上の目標点を、何秒先の位置に置くか。")]
@@ -52,6 +52,7 @@ public sealed class CarItemEffects : MonoBehaviour
     [Tooltip("踏切へ向かう減速の強さ（m/s²）。")]
     [SerializeField, Min(1f)] private float rocketJumpBraking = 65f;
     private bool protectRocketJump;
+    private GroundCheck[] rocketGroundChecks;
 
     [Header("Oil")]
     [Tooltip("オイルを踏んだ後に滑る時間（秒）。")]
@@ -181,6 +182,7 @@ public sealed class CarItemEffects : MonoBehaviour
     {
         body = GetComponent<Rigidbody>();
         mover = GetComponent<DebugMover>();
+        rocketGroundChecks = GetComponentsInChildren<GroundCheck>();
         mover?.BindItemEffects(this);
         originalMaxAngularVelocity = body.maxAngularVelocity;
     }
@@ -424,9 +426,17 @@ public sealed class CarItemEffects : MonoBehaviour
         if (course == null || !protectRocketJump) return float.PositiveInfinity;
         float progress = course.GetProgressDistance(body.position);
         float direction = Gmanager.Control.CourseProgressSign;
-        // The landing run-out stays capped so a late pickup cannot reaccelerate
-        // in midair or overshoot the first bend immediately after landing.
-        for (float offset = -60f; offset <= 90f; offset += 1f)
+        // A gap behind a grounded car is already cleared. The old fixed 60m run-out
+        // could consume almost the entire Rocket at 22m/s, even for a pickup AFTER landing.
+        // Query contacts now: TireForce.IsGrounded is stale while autopilot bypasses tire forces.
+        bool grounded = false;
+        if (rocketGroundChecks != null)
+            foreach (GroundCheck wheel in rocketGroundChecks) grounded |= wheel.CheckNow();
+        if (!grounded)
+            for (float offset = -60f; offset < 0f; offset += 1f)
+                if (!course.HasRoadAtProgress(progress + offset * direction)) return rocketJumpSpeed;
+        // Retain the braking envelope on approach and the limit throughout the actual gap.
+        for (float offset = 0f; offset <= 90f; offset += 1f)
         {
             if (course.HasRoadAtProgress(progress + offset * direction)) continue;
             float brakingDistance = Mathf.Max(0f, offset - 18f);
