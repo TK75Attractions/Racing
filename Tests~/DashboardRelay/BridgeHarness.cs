@@ -77,10 +77,13 @@ public class Gmanager
     public enum State { Title, CarSelection, Tutorial, Countdown, Game, Result }
     public State state=State.Title;
     public RaceFeatureController Features = new RaceFeatureController();
-    public bool CanUseDashboardControls=>true;
+    public bool IsMaintenanceActive { get; private set; }
+    public bool MaintenanceAvailable=>true;
+    public bool SetMaintenance(bool active){IsMaintenanceActive=active;((InputManager)Harness.Components[typeof(InputManager)]).ClearDashboardInputs();return true;}
+    public bool CanUseDashboardControls=>!IsMaintenanceActive;
     private readonly bool[] menus={false,false};
-    public bool CanUseDashboardPlayerInput(int i)=>(state==State.Title||state==State.CarSelection||state==State.Tutorial||state==State.Game||state==State.Result)&&!menus[i];
-    public bool CanRecoverDashboardPlayer(int i)=>(state==State.Game||state==State.Tutorial)&&!menus[i];
+    public bool CanUseDashboardPlayerInput(int i)=>!IsMaintenanceActive&&(state==State.Title||state==State.CarSelection||state==State.Tutorial||state==State.Game||state==State.Result)&&!menus[i];
+    public bool CanRecoverDashboardPlayer(int i)=>!IsMaintenanceActive&&(state==State.Game||state==State.Tutorial)&&!menus[i];
     public bool TryDashboardRecovery(int i){if(!CanRecoverDashboardPlayer(i))return false;Harness.MenuActions++;return true;}
     public bool IsDashboardMenuOpen(int i)=>menus[i];
     public bool ToggleDashboardEscape(){if(state!=State.Game)return false;bool close=menus[0]||menus[1];menus[0]=menus[1]=!close;((InputManager)Harness.Components[typeof(InputManager)]).ClearDashboardInputs();return true;}

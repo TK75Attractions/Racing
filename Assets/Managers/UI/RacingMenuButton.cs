@@ -31,6 +31,7 @@ public sealed class RacingMenuButton : Button
     }
     public override void OnPointerDown(PointerEventData data)
     {
+        if(UIMotion.IsPaused)return;
         base.OnPointerDown(data);
         if(data.button!=PointerEventData.InputButton.Left || !IsActive() || !IsInteractable() || committing || feedback.IsRetained)return;
         RaceSoundEffects.PlayForButton(RaceSoundCue.Press,transform);
@@ -46,14 +47,15 @@ public sealed class RacingMenuButton : Button
     {if(data.button==PointerEventData.InputButton.Left && holdSeconds==0)Commit();}
     public override void OnSubmit(BaseEventData data)
     {
-        if(!IsActive() || !IsInteractable() || committing || holding || feedback.IsRetained)return;
+        if(UIMotion.IsPaused || !IsActive() || !IsInteractable() || committing || holding || feedback.IsRetained)return;
         RaceSoundEffects.PlayForButton(RaceSoundCue.Press,transform);
         if(holdSeconds>0 && Keyboard.current!=null){holding=keyboardHold=true;heldTime=0;}
         else Commit();
     }
-    private void Update()=>Tick(Time.unscaledDeltaTime);
+    private void Update(){if(!UIMotion.IsPaused)Tick(UIMotion.DeltaTime);}
     public void Tick(float dt)
     {
+        if(UIMotion.IsPaused)return;
         if(committing)
         {
             commitRemaining-=Mathf.Max(0,dt);
@@ -72,7 +74,7 @@ public sealed class RacingMenuButton : Button
     }
     private void Commit()
     {
-        if(!IsActive() || !IsInteractable() || committing || feedback==null || feedback.IsRetained)return;
+        if(UIMotion.IsPaused || !IsActive() || !IsInteractable() || committing || feedback==null || feedback.IsRetained)return;
         committing=true;feedback.PlayConfirm();
         if (PlayConfirmationSound) RaceSoundEffects.PlayForButton(RaceSoundCue.Confirm,transform);
         if(holdSeconds>0)feedback.SetPointerCharge(1f);

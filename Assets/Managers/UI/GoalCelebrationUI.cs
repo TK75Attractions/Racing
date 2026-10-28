@@ -135,11 +135,12 @@ public sealed class GoalCelebrationUI : MonoBehaviour
 
     private IEnumerator PlayRoutine(float visibleSeconds, Action onCompleted)
     {
-        float elapsed = 0f;double began=Time.realtimeSinceStartupAsDouble;
+        float elapsed = 0f;double began=UIMotion.Realtime;
         const float enterSeconds = 0.62f;
         while (elapsed < enterSeconds)
         {
-            elapsed=(float)(Time.realtimeSinceStartupAsDouble-began);
+            if(UIMotion.IsPaused){yield return null;continue;}
+            elapsed=(float)(UIMotion.Realtime-began);
             float t = Mathf.Clamp01(elapsed / enterSeconds);
             float eased = 1f - Mathf.Pow(1f - t, 3f);
             canvasGroup.alpha = eased;
@@ -155,20 +156,23 @@ public sealed class GoalCelebrationUI : MonoBehaviour
         float holdSeconds = Mathf.Max(0f, visibleSeconds - enterSeconds - 0.45f);
         if (holdSeconds > 0f)
         {
-            yield return new WaitForSecondsRealtime(holdSeconds);
+            double holdBegan = UIMotion.Realtime;
+            while (UIMotion.Realtime - holdBegan < holdSeconds) yield return null;
         }
 
-        elapsed = 0f;began=Time.realtimeSinceStartupAsDouble;
+        elapsed = 0f;began=UIMotion.Realtime;
         const float exitSeconds = 0.45f;
         while (elapsed < exitSeconds)
         {
-            elapsed=(float)(Time.realtimeSinceStartupAsDouble-began);
+            if(UIMotion.IsPaused){yield return null;continue;}
+            elapsed=(float)(UIMotion.Realtime-began);
             float t = Mathf.Clamp01(elapsed / exitSeconds);
             canvasGroup.alpha = 1f - t * t;
             hero.anchoredPosition=Vector2.right*(28f*UIMotion.In(t));
             yield return null;
         }
 
+        while (UIMotion.IsPaused) yield return null;
         gameObject.SetActive(false);
         routine = null;
         onCompleted?.Invoke();
@@ -269,10 +273,10 @@ internal sealed class GoalConfettiPiece : MonoBehaviour
         }
 
         Vector2 position = rectTransform.anchoredPosition;
-        position.y -= fallSpeed * Time.unscaledDeltaTime;
+        position.y -= fallSpeed * UIMotion.DeltaTime;
         position.x = xOrigin + Mathf.Sin(Time.unscaledTime * swaySpeed + phase) * swayAmount;
         rectTransform.anchoredPosition = position;
-        rectTransform.Rotate(0f, spinSpeed * 0.35f * Time.unscaledDeltaTime, spinSpeed * Time.unscaledDeltaTime);
+        rectTransform.Rotate(0f, spinSpeed * 0.35f * UIMotion.DeltaTime, spinSpeed * UIMotion.DeltaTime);
 
         if (position.y < -620f)
         {

@@ -373,7 +373,7 @@ public sealed class CarSelectionUI : MonoBehaviour
             if(a.x!=next){a.x=next;bars[i].anchorMax=a;}
         }
     }
-    private void Update()=>TickPresentation(Time.unscaledDeltaTime);
+    private void Update()=>TickPresentation(UIMotion.DeltaTime);
     private void UpdateTitleSelection() => titleSelection.text = catalog.vehicles[committedVehicle].displayName;
     private void OnDisable() => Cancel();
     private void OnDestroy()

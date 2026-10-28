@@ -3,6 +3,9 @@ using UnityEngine;
 /// <summary>Shared timings and curves. Scenery stays still; only the relevant UI moves.</summary>
 public static class UIMotion
 {
+    public static bool IsPaused => Gmanager.Control?.IsMaintenanceActive == true;
+    public static double Realtime => Gmanager.Control?.Maintenance?.PresentationTime ?? Time.realtimeSinceStartupAsDouble;
+    public static float DeltaTime => IsPaused ? 0f : Time.unscaledDeltaTime;
     public const float ResponseSeconds = .16f;
     public const float RevealSeconds = .32f;
     public static float Out(float t) { t = Mathf.Clamp01(t); return 1f - (1f-t)*(1f-t)*(1f-t); }

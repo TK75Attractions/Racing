@@ -68,7 +68,7 @@ public class ArcadeDialGraphic : MaskableGraphic
         int flash=Mathf.RoundToInt(Mathf.Sin(boostFlash/.3f*Mathf.PI)*12);
         if(motionStep!=next||flashStep!=flash){motionStep=next;flashStep=flash;SetVerticesDirty();}
     }
-    private void Update()=>Tick(Time.unscaledDeltaTime);
+    private void Update()=>Tick(UIMotion.DeltaTime);
     protected override void OnEnable(){base.OnEnable();raycastTarget=false;SnapNextSample();}
     protected override void OnDisable(){base.OnDisable();SnapNextSample();}
     protected override void OnPopulateMesh(VertexHelper vh)

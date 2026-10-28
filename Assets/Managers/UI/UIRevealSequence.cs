@@ -24,7 +24,7 @@ public sealed class UIRevealSequence : MonoBehaviour
     }
     public void Play()
     {
-        if(parts==null)return; age=0;lastTick=Time.realtimeSinceStartupAsDouble; IsPlaying=true; Apply();
+        if(parts==null)return; age=0;lastTick=UIMotion.Realtime; IsPlaying=true; Apply();
     }
     public void Tick(float dt)
     {
@@ -65,5 +65,5 @@ public sealed class UIRevealSequence : MonoBehaviour
     }
     private void OnEnable(){if(Application.isPlaying)Play();}
     private void OnDisable()=>Cancel();
-    private void Update(){if(!IsPlaying)return;double now=Time.realtimeSinceStartupAsDouble;Tick((float)(now-lastTick));lastTick=now;}
+    private void Update(){if(!IsPlaying)return;double now=UIMotion.Realtime;if(UIMotion.IsPaused){lastTick=now;return;}Tick((float)(now-lastTick));lastTick=now;}
 }

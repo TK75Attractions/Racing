@@ -38,7 +38,7 @@ public sealed class UIValuePulse : MonoBehaviour
         startPosition=rect.anchoredPosition;
         if(!IsPlaying)startPosition-=Vector2.up*travel*24f;
         startScale=transform.localScale;startRotation=transform.localRotation;startColor=label.color;
-        accent=color;rotation=angle;direction=travel;duration=seconds;age=0;lastTick=Time.realtimeSinceStartupAsDouble;IsPlaying=true;Apply(0);
+        accent=color;rotation=angle;direction=travel;duration=seconds;age=0;lastTick=UIMotion.Realtime;IsPlaying=true;Apply(0);
     }
     public void Tick(float dt)
     {
@@ -67,6 +67,6 @@ public sealed class UIValuePulse : MonoBehaviour
         rect.anchoredPosition=basePosition;transform.localScale=baseScale;transform.localRotation=baseRotation;label.color=baseColor;
         impact?.SetImpulse(1,0,baseColor);
     }
-    private void Update(){if(!IsPlaying)return;double now=Time.realtimeSinceStartupAsDouble;Tick((float)(now-lastTick));lastTick=now;}
+    private void Update(){if(!IsPlaying)return;double now=UIMotion.Realtime;if(UIMotion.IsPaused){lastTick=now;return;}Tick((float)(now-lastTick));lastTick=now;}
     private void OnDisable()=>ResetPose();
 }

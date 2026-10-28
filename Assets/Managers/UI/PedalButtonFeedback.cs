@@ -98,7 +98,7 @@ public sealed class PedalButtonFeedback : MonoBehaviour
         if(confirmed==value)return;confirmed=value;dirty=true;if(value)PlayConfirm();
     }
     public void PlayConfirm(){confirmAge=0;dirty=true;}
-    private void Update()=>Tick(Time.unscaledDeltaTime);
+    private void Update()=>Tick(UIMotion.DeltaTime);
     public void Tick(float deltaTime)
     {
         if(rect==null || surface==null)return;

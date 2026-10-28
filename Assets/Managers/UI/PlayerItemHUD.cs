@@ -89,7 +89,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
 
     private void Update()
     {
-        Refresh(Time.deltaTime,Time.unscaledDeltaTime);
+        Refresh(Time.deltaTime,UIMotion.DeltaTime);
     }
 
     private void Refresh(float deltaTime,float uiDeltaTime=0)

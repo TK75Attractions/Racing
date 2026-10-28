@@ -260,6 +260,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
         try
         {
             yield return FadeTo(1f,fadeOutSeconds);
+            yield return WaitForMaintenance();
+            if(version!=motionVersion)yield break;
             onScreenCovered?.Invoke();
             if(version!=motionVersion)yield break;
             SetScreenVisibility(targetState);
@@ -267,7 +269,16 @@ public sealed class ScreenTransitionController : MonoBehaviour
             yield return FadeTo(0f,fadeInSeconds);
         }
         finally{FinishMotion(version);}
-        if(version==motionVersion)onCompleted?.Invoke();
+        if(version==motionVersion)
+        {
+            yield return WaitForMaintenance();
+            if(version==motionVersion)onCompleted?.Invoke();
+        }
+    }
+
+    private static IEnumerator WaitForMaintenance()
+    {
+        while (UIMotion.IsPaused) yield return null;
     }
 
     private void FinishMotion(int version)
@@ -285,10 +296,11 @@ public sealed class ScreenTransitionController : MonoBehaviour
             SetScreenVisibility(Gmanager.State.Result);RefreshResultContent();
             if(resultCanvasGroup!=null)resultCanvasGroup.alpha=0;
             resultReveal?.Play();
-            double began=Time.realtimeSinceStartupAsDouble;float elapsed=0;
+            double began=UIMotion.Realtime;float elapsed=0;
             while(elapsed<resultEnterSeconds)
             {
-                elapsed=(float)(Time.realtimeSinceStartupAsDouble-began);
+                if(UIMotion.IsPaused){yield return null;continue;}
+                elapsed=(float)(UIMotion.Realtime-began);
                 if(resultCanvasGroup!=null)resultCanvasGroup.alpha=UIMotion.Out(resultEnterSeconds<=0?1:elapsed/resultEnterSeconds);
                 yield return null;
             }
@@ -296,7 +308,11 @@ public sealed class ScreenTransitionController : MonoBehaviour
             if(resultCanvasGroup!=null)resultCanvasGroup.alpha=1;
         }
         finally{FinishMotion(version);}
-        if(version==motionVersion)onCompleted?.Invoke();
+        if(version==motionVersion)
+        {
+            yield return WaitForMaintenance();
+            if(version==motionVersion)onCompleted?.Invoke();
+        }
     }
 
     private IEnumerator CloseResultAndTransitionRoutine(Gmanager.State targetState,Action onScreenCovered,Action onCompleted)
@@ -305,21 +321,28 @@ public sealed class ScreenTransitionController : MonoBehaviour
         try
         {
             // The button already supplies a confirmation beat; do not add another hold.
-            double began=Time.realtimeSinceStartupAsDouble;float elapsed=0;
+            double began=UIMotion.Realtime;float elapsed=0;
             while(elapsed<resultExitSeconds)
             {
-                elapsed=(float)(Time.realtimeSinceStartupAsDouble-began);float t=resultExitSeconds<=0?1:Mathf.Clamp01(elapsed/resultExitSeconds);
+                if(UIMotion.IsPaused){yield return null;continue;}
+                elapsed=(float)(UIMotion.Realtime-began);float t=resultExitSeconds<=0?1:Mathf.Clamp01(elapsed/resultExitSeconds);
                 resultReveal?.SampleExit(t);
                 if(resultCanvasGroup!=null)resultCanvasGroup.alpha=1f-.2f*UIMotion.In(t);
                 yield return null;
             }
             yield return FadeTo(1f,fadeOutSeconds);
+            yield return WaitForMaintenance();
+            if(version!=motionVersion)yield break;
             onScreenCovered?.Invoke();if(version!=motionVersion)yield break;
             SetScreenVisibility(targetState);yield return null;yield return FadeTo(0f,fadeInSeconds);
             RestoreResultContent();RestoreResultRows(false);
         }
         finally{FinishMotion(version);}
-        if(version==motionVersion)onCompleted?.Invoke();
+        if(version==motionVersion)
+        {
+            yield return WaitForMaintenance();
+            if(version==motionVersion)onCompleted?.Invoke();
+        }
     }
 
     private IEnumerator FadeTo(float targetAlpha, float duration)
@@ -332,10 +355,11 @@ public sealed class ScreenTransitionController : MonoBehaviour
         bool revealing=targetAlpha<.5f;
         float start=transitionWipe!=null?transitionWipe.Coverage:1-targetAlpha;
         fadeCanvasGroup.alpha=1;
-        float elapsed=0;double began=Time.realtimeSinceStartupAsDouble;
+        float elapsed=0;double began=UIMotion.Realtime;
         while(elapsed<duration)
         {
-            elapsed=(float)(Time.realtimeSinceStartupAsDouble-began);
+            if(UIMotion.IsPaused){yield return null;continue;}
+            elapsed=(float)(UIMotion.Realtime-began);
             transitionWipe?.SetCoverage(Mathf.Lerp(start,targetAlpha,Mathf.Clamp01(elapsed/Mathf.Max(.001f,duration))),revealing);
             yield return null;
         }

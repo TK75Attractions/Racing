@@ -115,7 +115,7 @@ public sealed class CarSelectionShowroom : MonoBehaviour
     }
 
     public void RenderNow() { RenderTo(target); dirty = false; }
-    private void Update() => TickRotation(Time.unscaledDeltaTime);
+    private void Update() => TickRotation(UIMotion.DeltaTime);
     private void LateUpdate()
     {
         if (dirty && model != null && Time.unscaledTime - lastRenderTime >= 1f / 30f)

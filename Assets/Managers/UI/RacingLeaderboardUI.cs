@@ -78,7 +78,7 @@ public sealed class RacingLeaderboardUI : MonoBehaviour
             Vector2 p=rows[i].anchoredPosition;p.y=UIMotion.Follow(p.y,0,dt,.065f,.025f);rows[i].anchoredPosition=p;
         }
     }
-    private void Update()=>Tick(Time.unscaledDeltaTime);
+    private void Update()=>Tick(UIMotion.DeltaTime);
     private void OnEnable(){snap=true;}
     private void OnDisable(){snap=true;for(int i=0;i<rows.Length;i++)if(rows[i]!=null)rows[i].anchoredPosition=Vector2.zero;}
 }
