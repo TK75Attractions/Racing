@@ -19,7 +19,17 @@ public static class EdgeSteeringAssist
         float correction = Correction(lateral, predicted, halfWidth, limit);
         if (correction == 0f || !Finite(driverAngle) || !Finite(roadAngle)) return driverAngle;
         float risk = Math.Min(1f, Math.Abs(correction) / Math.Max(.01f, Math.Min(18f, limit)));
-        return driverAngle + (Math.Max(-limit, Math.Min(limit, roadAngle)) - driverAngle) * risk;
+        return driverAngle + (Math.Max(-limit, Math.Min(limit, roadAngle)) - driverAngle) * risk *
+            (1f - WallRideIntent(driverAngle, lateral, predicted, halfWidth, limit));
+    }
+    /// <summary>Near the edge, a sustained outward handle request belongs to the driver.</summary>
+    public static float WallRideIntent(float driverAngle, float lateral, float predicted, float halfWidth, float limit)
+    {
+        if (!Finite(driverAngle) || !Finite(lateral) || !Finite(predicted) || !Finite(halfWidth) || !Finite(limit) || limit <= 0) return 0;
+        float side = Math.Sign(predicted);
+        float edge = Math.Max(0f, Math.Min(1f, (lateral * side - (halfWidth - 4f)) / 2f));
+        float handle = Math.Max(0f, Math.Min(1f, (driverAngle * side / limit - .15f) / .35f));
+        return edge * handle;
     }
     private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 }

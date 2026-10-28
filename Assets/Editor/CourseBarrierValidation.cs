@@ -11,7 +11,7 @@ public static class CourseBarrierValidation
 {
     [Serializable] private sealed class Report
     {
-        public int goalLaps, wallPaths, exteriorSamples, tubeSamples, missingSideHits, interiorWallNodes;
+        public int goalLaps, wallPaths, exteriorSamples, tubeSamples, missingSideHits, interiorWallNodes, portalTubeSideHits;
         public float courseLength, exteriorMeters, tubeMeters, maximumPhysicsExcursion, minimumPhysicsHeight;
         public int physicsTrials;
     }
@@ -62,14 +62,18 @@ public static class CourseBarrierValidation
         {
             course.TryGetSampleAtProgress(progress, out var sample);
             bool inside = TubeCeiling(tube, sample.position);
-            if (inside) { report.tubeSamples++; report.tubeMeters += .5f; continue; }
-            report.exteriorSamples++; report.exteriorMeters += .5f;
+            if (inside) { report.tubeSamples++; report.tubeMeters += .5f; }
+            else { report.exteriorSamples++; report.exteriorMeters += .5f; }
             foreach (int sign in new[] { -1, 1 })
             {
                 Vector3 side = sample.right * sign;
                 var ray = new Ray(sample.position + Vector3.up, side);
                 bool hit = false;
                 foreach (MeshCollider wall in walls) if (wall.Raycast(ray, out _, sample.width * .5f + 16)) { hit = true; break; }
+                // At a tangent portal the real tube side can begin before its ceiling.
+                // Check the combined collision envelope, including every interior sample.
+                if (!hit && tube.Raycast(ray, out _, sample.width * .5f + 16))
+                { hit = true; if (!inside) report.portalTubeSideHits++; }
                 if (!hit) { report.missingSideHits++; Debug.LogError("Unprotected edge at " + progress + ": " + sample.position + ", side " + sign); }
             }
         }

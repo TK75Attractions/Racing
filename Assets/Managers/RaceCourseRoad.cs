@@ -34,6 +34,7 @@ public static class RaceCourseRoad
     }
 
     public const string RootName = "Generated Race Course Road";
+    public const int ShoulderSegments = 16;
     private const float PaintOffset = 0.01f;
 
     private struct Vertex
@@ -128,6 +129,7 @@ public static class RaceCourseRoad
 
         BuildTubeShoulders(owner, root.transform, center, left, right, distances, roadSegments, settings);
         RaceCourseBarriers.Build(root.transform, center, left, right, closedLoop, settings);
+        RaceJumpGuidance.Build(owner, root.transform, left, right, distances, roadSegments, closedLoop);
 
         // Paint is clipped against each surface triangle, so it follows curves, width changes
         // and slopes without crossing below a twisted road quad. Only the road has a collider.
@@ -167,49 +169,108 @@ public static class RaceCourseRoad
         markingObject.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
     }
 
+    private struct ShoulderRow
+    {
+        public Vector3 edge, center, side;
+        public float distance;
+        public bool inside, portal, connect;
+    }
     private static void BuildTubeShoulders(Transform owner, Transform root, List<Vector3> center,
         List<Vector3> left, List<Vector3> right, List<float> distances, List<bool> segments, Settings settings)
     {
-        MeshCollider wall = settings.tubeInterior;
-        if (wall == null || !wall.enabled) return;
-        var vertices = new Vector3[center.Count * 4];
-        var uv = new Vector2[vertices.Length];
-        var triangles = new List<int>();
-        bool previousFilled = false;
-        for (int i = 0; i < center.Count; i++)
+        MeshCollider tube = settings.tubeInterior;
+        if (tube == null || !tube.enabled) return;
+        var vertices = new List<Vector3>(); var uv = new List<Vector2>(); var triangles = new List<int>();
+        foreach (int sign in new[] {-1, 1})
         {
-            Vector3 side = (right[i] - left[i]).normalized;
-            float halfWidth = Vector3.Distance(left[i], right[i]) * .5f;
-            bool hitLeft = wall.Raycast(new Ray(center[i], -side), out RaycastHit lh, 25f);
-            bool hitRight = wall.Raycast(new Ray(center[i], side), out RaycastHit rh, 25f);
-            bool filled = hitLeft && hitRight && lh.distance >= halfWidth - .1f && rh.distance >= halfWidth - .1f;
-            Vector3 outerLeft = filled ? lh.point - side * .05f : left[i];
-            Vector3 outerRight = filled ? rh.point + side * .05f : right[i];
-            Vector3[] row = { outerLeft, left[i], right[i], outerRight };
-            for (int j = 0; j < 4; j++)
+            var edge = sign < 0 ? left : right;
+            var rows = new List<ShoulderRow>();
+            ShoulderRow At(int i, float t)
             {
-                vertices[i * 4 + j] = owner.InverseTransformPoint(row[j]);
-                uv[i * 4 + j] = new Vector2(Vector3.Dot(row[j] - center[i], side), distances[i]);
+                var row = new ShoulderRow { edge = Vector3.Lerp(edge[i-1],edge[i],t), center = Vector3.Lerp(center[i-1],center[i],t),
+                    side = (Vector3.Lerp(right[i-1],right[i],t)-Vector3.Lerp(left[i-1],left[i],t)).normalized,
+                    distance = Mathf.Lerp(distances[i-1],distances[i],t), connect = segments[i-1] };
+                row.inside = TubePortalProfile.IsInsideAtEdge(tube,row.edge,row.center,row.side); return row;
             }
-            if (i > 0 && segments[i - 1] && (filled || previousFilled))
+            rows.Add(At(1,0));
+            for (int i=1;i<center.Count;i++)
             {
-                int a = (i - 1) * 4, b = i * 4;
-                triangles.AddRange(new[] { a, b, a + 1, a + 1, b, b + 1,
-                    a + 2, b + 2, a + 3, a + 3, b + 2, b + 3 });
+                bool near = TubePortalProfile.TryGetEndFrame(tube,edge[i],out _,out _);
+                int steps = near ? Mathf.Max(1,Mathf.CeilToInt(Vector3.Distance(edge[i-1],edge[i])/.4f)) : 1;
+                for (int step=1;step<=steps;step++)
+                {
+                    var next = At(i,step/(float)steps); var previous = rows[rows.Count-1];
+                    if (segments[i-1] && previous.inside != next.inside)
+                    {
+                        float low=(step-1)/(float)steps, high=step/(float)steps;
+                        for (int n=0;n<18;n++) { float t=(low+high)*.5f; if (At(i,t).inside==previous.inside) low=t; else high=t; }
+                        var portal=At(i,(low+high)*.5f); portal.inside=true; portal.portal=true; rows.Add(portal);
+                    }
+                    rows.Add(next);
+                }
             }
-            previousFilled = filled;
+            var portals = rows.FindAll(row => row.portal);
+            bool lastFilled=false; int lastIndex=-1;
+            foreach (var row in rows)
+            {
+                Vector3 outer=row.edge; bool filled=row.inside;
+                Vector3 outward=row.side*sign, probe=row.edge;
+                if (filled && TubePortalProfile.TryGetEndFrame(tube,row.edge,out var mouth,out var normal))
+                {
+                    Vector3 portalSide=Vector3.Cross(Vector3.up,normal).normalized;
+                    if (Vector3.Dot(portalSide,outward)<0) portalSide=-portalSide;
+                    float t=Mathf.SmoothStep(0,1,Mathf.Clamp01(-Vector3.Dot(row.edge-mouth,normal)/8));
+                    outward=Vector3.Slerp(portalSide,outward,t).normalized;
+                    // Continue the tube's longitudinal tangent through the paved join.
+                    // Let the outer floor regain the road grade over eight metres,
+                    // while its inner edge stays exactly on the existing road.
+                    float best=float.PositiveInfinity, height=row.edge.y;
+                    foreach (var portal in portals)
+                    {
+                        float delta=(portal.edge-row.edge).sqrMagnitude;
+                        if(delta<best) { best=delta; height=portal.edge.y; }
+                    }
+                    probe.y=Mathf.Lerp(height,row.edge.y,t);
+                }
+                if (filled && row.portal)
+                {
+                    var profile=TubePortalProfile.Create(tube,row.edge,outward,32);
+                    if (profile!=null) outer=profile.points[0]; else filled=false;
+                }
+                else if (filled)
+                {
+                    if (tube.Raycast(new Ray(probe-outward*.05f,outward),out var hit,25)) outer=hit.point;
+                    else filled=false;
+                }
+                int index=vertices.Count;
+                for (int k=0;k<=ShoulderSegments;k++)
+                {
+                    float t=k/(float)ShoulderSegments;
+                    vertices.Add(owner.InverseTransformPoint(Vector3.Lerp(row.edge,outer,t)));
+                    uv.Add(new Vector2(Vector3.Distance(row.edge,outer)*t,row.distance));
+                }
+                if (filled && lastFilled && row.connect && lastIndex>=0)
+                {
+                    int a=lastIndex,b=index;
+                    bool flip=Vector3.Cross(vertices[b]-vertices[a],vertices[a+ShoulderSegments]-vertices[a]+vertices[b+ShoulderSegments]-vertices[b]).y<0;
+                    for(int k=0;k<ShoulderSegments;k++)
+                    {
+                        int c=a+k,d=b+k;
+                        triangles.AddRange(flip ? new[] {c,c+1,d,c+1,d+1,d} : new[] {c,d,c+1,c+1,d,d+1});
+                    }
+                }
+                lastFilled=filled; lastIndex=index;
+            }
         }
-        if (triangles.Count == 0) return;
-        Mesh mesh = NewMesh("TubeRoadShoulders", vertices.Length);
-        mesh.vertices = vertices; mesh.uv = uv; mesh.SetTriangles(triangles, 0);
+        if (triangles.Count==0) return;
+        Mesh mesh=NewMesh("TubeRoadShoulders",vertices.Count);
+        mesh.SetVertices(vertices); mesh.SetUVs(0,uv); mesh.SetTriangles(triangles,0);
         mesh.RecalculateNormals(); mesh.RecalculateBounds(); mesh.RecalculateTangents();
-        GameObject part = CreatePart(root, "Tube Road Shoulders", mesh,
-            new[] { settings.asphaltMaterial != null ? settings.asphaltMaterial : LoadMaterial("Asphalt") });
+        GameObject part=CreatePart(root,"Tube Road Shoulders",mesh,
+            new[] {settings.asphaltMaterial!=null ? settings.asphaltMaterial : LoadMaterial("Asphalt")});
         if (settings.generateCollider)
         {
-            MeshCollider collider = part.AddComponent<MeshCollider>();
-            collider.sharedMaterial = settings.colliderMaterial;
-            collider.sharedMesh = mesh;
+            var collider=part.AddComponent<MeshCollider>(); collider.sharedMaterial=settings.colliderMaterial; collider.sharedMesh=mesh;
         }
     }
 

@@ -20,6 +20,7 @@ public static class DrivingTutorialValidation
     private static StubInput[] inputs;
     private static IList practices;
     private static readonly int[] completionCues = new int[2];
+    private static readonly bool[] distantItemsChecked = new bool[2];
 
     private sealed class StubInput : IDriveInputSource
     {
@@ -129,6 +130,14 @@ public static class DrivingTutorialValidation
                     maximumVerticalSpeed = Mathf.Max(maximumVerticalSpeed, Mathf.Abs(body.linearVelocity.y));
                 if (i == 0 && !capturedDriving && Time.time - began > .9f && lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate)
                 { capturedDriving = true; Capture(manager, i, "05-accelerating.png"); }
+                if (lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem && !distantItemsChecked[i])
+                {
+                    var pickups = Get<System.Collections.Generic.List<TutorialItemPickup>>(practice, "pickups");
+                    Require(pickups.Count == 3 && pickups.All(p => Vector3.Distance(p.transform.position, body.position) > 40f),
+                        "New item placement must give both players more than 40m of actual driving room.");
+                    distantItemsChecked[i] = true;
+                    Debug.Log($"TUTORIAL_DISTANT_ITEMS_PASS: P{i + 1}, nearest box={pickups.Min(p => Vector3.Distance(p.transform.position, body.position)):F1}m.");
+                }
                 float pedal = 0f, steering = 0f;
                 if (lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate && Time.time - began > .6f + i * 2f) pedal = .65f;
                 if (lesson.CurrentStage == DrivingTutorialProgress.Stage.Steer || lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem)
