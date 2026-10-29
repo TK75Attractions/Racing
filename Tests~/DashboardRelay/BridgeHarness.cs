@@ -19,11 +19,13 @@ namespace UnityEngine
         private static readonly Dictionary<string,float> Values = new Dictionary<string,float>();
         public static float GetFloat(string key,float fallback)=>Values.TryGetValue(key,out float v)?v:fallback;
         public static void SetFloat(string key,float value)=>Values[key]=value;
+        public static int GetInt(string key,int fallback)=>(int)GetFloat(key,fallback);
+        public static void SetInt(string key,int value)=>SetFloat(key,value);
         public static void Save() { }
     }
     public static class AudioListener { public static float volume; }
     public static class Application { public static bool runInBackground; public static string streamingAssetsPath; }
-    public static class Time { private static readonly Stopwatch Clock = Stopwatch.StartNew(); public static double realtimeSinceStartupAsDouble => Clock.Elapsed.TotalSeconds; public static float realtimeSinceStartup => (float)realtimeSinceStartupAsDouble; public static float time => realtimeSinceStartup; }
+    public static class Time { private static readonly Stopwatch Clock = Stopwatch.StartNew(); public static double realtimeSinceStartupAsDouble => Clock.Elapsed.TotalSeconds; public static float realtimeSinceStartup => (float)realtimeSinceStartupAsDouble; public static float time => realtimeSinceStartup; public static float unscaledTime => realtimeSinceStartup; }
     public static class Debug { public static void Log(object value) => Console.WriteLine(value); public static void LogWarning(object value) => Console.Error.WriteLine(value); public static void LogError(object value) => Console.Error.WriteLine(value); }
     public static class JsonUtility { public static string ToJson(object value) => new JavaScriptSerializer().Serialize(value); public static T FromJson<T>(string value) => new JavaScriptSerializer().Deserialize<T>(value); }
     public static class Mathf { public static float Clamp01(float v)=>Clamp(v,0,1); public static float Clamp(float v,float a,float b)=>Math.Max(a,Math.Min(v,b)); public static float Round(float v)=>(float)Math.Round(v); public static float Max(float a,float b)=>Math.Max(a,b); }
@@ -107,6 +109,7 @@ public class Gmanager
     public int GetParticipantLap(RaceParticipant p)=>0; public float GetParticipantSpeed(RaceParticipant p)=>0;
     public UnityEngine.Camera GetPlayerCaptureCamera(int i)=>null;
     public byte[] CapturePlayerFrame(int i)=>null;
+    public void RequestDashboardPlayerFrame(int i, Action<byte[]> completed)=>completed(null);
 }
 public enum P1SteeringTestMode { Normal, KeyboardPedal, ConstantPedal }
 public class RaceFeatureController {

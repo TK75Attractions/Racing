@@ -89,7 +89,7 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
     if (alive && snapshot && Date.now() - lastStateAt < 3000 && Date.now() - lastFrames > 2000) {
       lastFrames = Date.now(); void refreshFrames();
     }
-  }, 33);
+  }, 100);
   async function measure() {
     const started = performance.now();
     try { const response = await apiFetch('/api/connection', { signal: AbortSignal.timeout(3000) });

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -19,6 +20,24 @@ public sealed class NativeResolutionUI : MonoBehaviour
     private UniversalRenderPipelineAsset pipeline;
     private float savedScale;
     private bool routed, scaleOverridden, capturing;
+    private RenderTexture previewTexture;
+    private RenderTexture screenPreview;
+    private Coroutine screenCopy;
+    private readonly List<Action<byte[]>> previewRequests = new List<Action<byte[]>>();
+    private bool previewReadback;
+    private byte[] previewJpeg;
+    private double previewAt = double.NegativeInfinity;
+
+    /// <summary>Copy a normally rendered frame; never resize cameras or rebuild the HUD for HTTP.</summary>
+    public void RequestDashboardPreview(Action<byte[]> completed)
+    {
+        if (!isActiveAndEnabled || ui == null || !ui.isActiveAndEnabled || !SystemInfo.supportsAsyncGPUReadback)
+        { completed(null); return; }
+        if (previewJpeg != null && Time.realtimeSinceStartupAsDouble - previewAt < 1)
+        { completed(previewJpeg); return; }
+        if (previewRequests.Count >= 8) { completed(null); return; }
+        previewRequests.Add(completed);
+    }
 
     public void Configure(Camera worldBase, Camera main, Camera front, Camera uiCamera, Canvas canvas)
     {
@@ -137,8 +156,114 @@ public sealed class NativeResolutionUI : MonoBehaviour
     private void EndCamera(ScriptableRenderContext context, Camera camera)
     {
         if (camera != ui) return;
+        if (!capturing && previewRequests.Count > 0 && !previewReadback && screenCopy == null)
+        {
+            if (ui.targetTexture != null) CopyDashboardPreview(context);
+            else screenCopy = StartCoroutine(CopyScreenPreview());
+        }
         RestoreScale();
         if (!capturing) RestoreTargets(); // Before RenderGraphDisplayOutput presents P2.
+    }
+
+    private void CopyDashboardPreview(ScriptableRenderContext context)
+    {
+        EnsurePreviewTexture();
+        var commands = CommandBufferPool.Get("Racing.Dashboard.FrameCopy");
+        try
+        {
+            commands.Blit(ui.targetTexture, previewTexture);
+            previewReadback = true;
+            commands.RequestAsyncReadback(previewTexture, 0, TextureFormat.RGBA32, CompleteDashboardPreview);
+            context.ExecuteCommandBuffer(commands);
+            // URP has already submitted this camera before endCameraRendering.
+            // Submit the copy/readback too; otherwise a final-camera request can be discarded.
+            context.Submit();
+        }
+        finally { CommandBufferPool.Release(commands); }
+    }
+
+    private IEnumerator CopyScreenPreview()
+    {
+        // The native Game-view backbuffer may be flipped or have a viewport origin.
+        // ScreenCapture resolves that layout after the whole normal frame is complete.
+        yield return new WaitForEndOfFrame();
+        screenCopy = null;
+        if (!isActiveAndEnabled || previewRequests.Count == 0) yield break;
+        int width = Mathf.Max(1, Screen.width), height = Mathf.Max(1, Screen.height);
+        if (screenPreview != null && (screenPreview.width != width || screenPreview.height != height))
+        {
+            screenPreview.Release(); Destroy(screenPreview); screenPreview = null;
+        }
+        if (screenPreview == null)
+        {
+            screenPreview = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32)
+                { name = "Dashboard screen copy", hideFlags = HideFlags.DontSave };
+            screenPreview.Create();
+        }
+        EnsurePreviewTexture();
+        ScreenCapture.CaptureScreenshotIntoRenderTexture(screenPreview);
+        if (SystemInfo.graphicsUVStartsAtTop)
+            Graphics.Blit(screenPreview, previewTexture, new Vector2(1, -1), new Vector2(0, 1));
+        else Graphics.Blit(screenPreview, previewTexture);
+        previewReadback = true;
+        AsyncGPUReadback.Request(previewTexture, 0, TextureFormat.RGBA32, CompleteDashboardPreview);
+    }
+
+    private void EnsurePreviewTexture()
+    {
+        if (previewTexture != null) return;
+        previewTexture = new RenderTexture(640, 360, 0, RenderTextureFormat.ARGB32)
+            { name = "Dashboard frame copy", hideFlags = HideFlags.DontSave };
+        previewTexture.Create();
+    }
+
+    private void CompleteDashboardPreview(AsyncGPUReadbackRequest request)
+    {
+        Texture2D pixels = null;
+        byte[] jpeg = null;
+        try
+        {
+            if (!request.hasError && isActiveAndEnabled)
+            {
+                pixels = new Texture2D(640, 360, TextureFormat.RGBA32, false);
+                pixels.LoadRawTextureData(request.GetData<byte>());
+                jpeg = pixels.EncodeToJPG(65);
+                previewJpeg = jpeg;
+                previewAt = Time.realtimeSinceStartupAsDouble;
+            }
+        }
+        finally
+        {
+            if (pixels != null) Destroy(pixels);
+            previewReadback = false;
+            var callbacks = previewRequests.ToArray();
+            previewRequests.Clear();
+            foreach (var callback in callbacks) callback(jpeg);
+            if (!isActiveAndEnabled) ReleasePreview();
+        }
+    }
+
+    private void ReleasePreview()
+    {
+        if (screenCopy != null) StopCoroutine(screenCopy);
+        screenCopy = null;
+        previewJpeg = null;
+        var callbacks = previewRequests.ToArray();
+        previewRequests.Clear();
+        foreach (var callback in callbacks) callback(null);
+        if (previewReadback) return;
+        if (previewTexture != null)
+        {
+            previewTexture.Release();
+            if (Application.isPlaying) Destroy(previewTexture); else DestroyImmediate(previewTexture);
+            previewTexture = null;
+        }
+        if (screenPreview != null)
+        {
+            screenPreview.Release();
+            if (Application.isPlaying) Destroy(screenPreview); else DestroyImmediate(screenPreview);
+            screenPreview = null;
+        }
     }
 
     private void EndContext(ScriptableRenderContext context, List<Camera> cameras)
@@ -244,6 +369,7 @@ public sealed class NativeResolutionUI : MonoBehaviour
         RenderPipelineManager.endCameraRendering -= EndCamera;
         RenderPipelineManager.endContextRendering -= EndContext;
         RestoreScale(); RestoreTargets(); ReleaseTexture();
+        ReleasePreview();
         if (backdrop != null) backdrop.enabled = false;
     }
 

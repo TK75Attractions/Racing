@@ -258,6 +258,14 @@ public class Gmanager : MonoBehaviour
     public byte[] CapturePlayerFrame(int index) => index >= 0 && index < displayRigs.Length
         ? displayRigs[index]?.CaptureJpeg(640, 360) : null;
 
+    public void RequestDashboardPlayerFrame(int index, Action<byte[]> completed)
+    {
+        var preview = index >= 0 && index < displayRigs.Length
+            ? displayRigs[index]?.CameraRoot?.GetComponent<NativeResolutionUI>() : null;
+        if (preview == null) completed(null);
+        else preview.RequestDashboardPreview(completed);
+    }
+
     public Camera GetPlayerViewCamera(int index) => index >= 0 && index < displayRigs.Length ? displayRigs[index]?.MainCamera : null;
 
     public Transform GetPlayerCarTransform(int index) => index >= 0 && index < PlayerCount ? players[index]?.car?.transform : null;
