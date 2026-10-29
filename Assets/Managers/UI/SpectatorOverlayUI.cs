@@ -30,7 +30,7 @@ public sealed class SpectatorOverlayUI : MonoBehaviour
 
     public void Show(int watchedPlayerIndex)
     {
-        playerLabel.text = $"プレイヤー {Mathf.Clamp(watchedPlayerIndex, 0, 1) + 1} を観戦中";
+        playerLabel.text = $"P{Mathf.Clamp(watchedPlayerIndex, 0, 1) + 1} のレース";
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
     }
@@ -43,10 +43,11 @@ public sealed class SpectatorOverlayUI : MonoBehaviour
     private void Build(TMP_FontAsset font)
     {
         var p=ArcadeUI.For(transform);
-        var plate=ArcadeUI.Panel(transform,"PlayerPlate",new Vector2(.31f,.855f),new Vector2(.56f,.955f),p.Ink);
+        var plate=ArcadeUI.Panel(transform,"PlayerPlate",new Vector2(.49f,.855f),new Vector2(.565f,.955f),p.Ink);
+        LiveBroadcastBadge.Create(transform,"SpectatorLive",new Vector2(.365f,.845f),new Vector2(.48f,.97f));
         RacingUITheme.Rule(plate,"LiveAccent",new Vector2(.025f,.22f),new Vector2(.035f,.78f),p.Primary);
-        ArcadeUI.Label(plate,"Caption","LIVE / SPECTATOR",new Vector2(.08f,.60f),new Vector2(.95f,.90f),19,p.Soft,true);
-        playerLabel=ArcadeUI.Label(plate,"PlayerLabel","プレイヤー 2 を観戦中",new Vector2(.08f,.15f),new Vector2(.95f,.60f),28,p.Paper);
+        ArcadeUI.Label(plate,"Caption","かんせん",new Vector2(.08f,.62f),new Vector2(.95f,.90f),17,p.Soft,true);
+        playerLabel=ArcadeUI.Label(plate,"PlayerLabel","P2 のレース",new Vector2(.08f,.15f),new Vector2(.95f,.60f),28,p.Paper);
         var entrance=GetComponent<UIRevealSequence>();if(entrance==null)entrance=gameObject.AddComponent<UIRevealSequence>();entrance.Configure(transform,new[]{"PlayerPlate"},new Vector2(18,0),0,.24f);
     }
 }
