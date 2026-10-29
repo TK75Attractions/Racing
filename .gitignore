@@ -130,3 +130,8 @@ InitTestScene*.unity*
 !/Tests~/DashboardPush/PushTests.csproj
 /Tests~/DashboardPush/bin/
 /Tests~/DashboardPush/obj/
+
+# Operator updater's standalone host regression harness.
+!/Tests~/OperatorUpdate/HostTests.csproj
+/Tests~/OperatorUpdate/bin/
+/Tests~/OperatorUpdate/obj/

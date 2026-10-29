@@ -759,3 +759,24 @@ test('Speaker delay sends player and integer milliseconds without volume scaling
   await ui.context.submitSetting(control);
   assert.deepEqual(sent,[{action:'settings',command:'outputDelay',args:['1','230'],settingsRevision:3}]);
 });
+
+
+test('Independent updater stays usable while Unity is disconnected and respects relay permission',()=>{
+  const ui=fixture();ui.context.setConnection(false);
+  vm.runInContext("operatorStatus={available:true,busy:false,canControl:true,message:'Unity停止中でも更新できます。'};renderOperatorUpdate();",ui.context);
+  assert.equal(ui.elements.get('operator-update').disabled,false);
+  ui.context.setConnection(false);
+  assert.equal(ui.elements.get('operator-update').disabled,false,'disconnect render preserves independent updater');
+  vm.runInContext("operatorStatus.canControl=false;renderOperatorUpdate();",ui.context);
+  assert.equal(ui.elements.get('operator-update').disabled,true);
+});
+test('Offline button posts to the independent endpoint and renders the real failure',async()=>{
+  const ui=fixture(),sent=[];ui.context.AbortSignal=AbortSignal;ui.context.crypto={randomUUID:()=> 'offline-update'};
+  ui.context.captureUpdate=(route,options)=>{sent.push([route,options]);};
+  vm.runInContext("operatorStatus={available:true,busy:false,canControl:true};operatorPolling=true;renderOperatorUpdate();apiFetch=async(route,options)=>{captureUpdate(route,options);return {json:async()=>({ok:false,message:'Git認証に失敗しました。'})};};",ui.context);
+  const button=ui.elements.get('operator-update');button.blur=()=>{};
+  await ui.context.submitSetting(button);
+  assert.equal(sent.length,1);assert.equal(sent[0][0],'/api/operator-update');
+  assert.deepEqual(JSON.parse(sent[0][1].body),{id:'offline-update'});
+  assert.equal(ui.elements.get('settings-status').textContent,'Git認証に失敗しました。');
+});

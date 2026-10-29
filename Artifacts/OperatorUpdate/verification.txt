@@ -1,0 +1,11 @@
+2026-10-30 operator update validation
+PASS: Dashboard relay .NET 10 build, zero warnings/errors.
+PASS: Dashboard UI 52/52 tests, including the independent button while Unity is disconnected.
+PASS: updater pipeline 11/11 tests using real Git remotes/worktrees and fake Unity/app launchers: dirty files and branch/main preserved; fetched main isolated; cleanup; default Unity resolution; duplicate lock; network/build/disk failures before shutdown.
+PASS: host regression checks: offline update, permission, idempotency, progress, reconnect, fresh state anchor, active race maintenance handoff, exact failure message, shared updater lock.
+PASS: production RaceOperatorUpdate compiled/exercised against Editor API stubs: active race enters maintenance; Editor Play stops without closing the Editor; PID 0 handoff; edit-mode update without a race scene; worker completion.
+PASS: production bridge regression on a separate ephemeral loopback port: update accepts unrelated settings/phase changes; settings retain state guards; duplicate update ID; wrong session and expired requests rejected.
+PASS: Unity 6000.3.9f1 full project script compilation in an isolated copy before the final maintenance/guard adjustment; final production updater and bridge compiled/exercised by the targeted regression harnesses.
+PASS: installed macOS Dashboard helper refreshed; existing route/operator policy/push subscriptions preserved. Invalid request and missing Origin rejected (400/403).
+PASS: actual Git fetch and installed Unity resolution. Actual disk-space preflight rejects before ready/shutdown.
+LIMITATION: full game build/launch was not run; this PC has insufficient free disk for an independent Unity build. Windows PowerShell launch was not exercised on Windows.

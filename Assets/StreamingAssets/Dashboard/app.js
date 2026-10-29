@@ -8,6 +8,7 @@ let rawElements = new Map();
 let canSendSerial = false;
 let latestCanControl = false;
 let settingsBusy = false;
+let operatorStatus = null, operatorBusy = false, operatorPolling = false;
 let lastMaintenanceActive = null;
 let featureSignature = null;
 const featureElements = new Map();
@@ -1089,6 +1090,39 @@ function renderMaintenance(settings) {
   $('maintenance-stop').hidden = !active;
 }
 
+function renderOperatorUpdate() {
+  if (!operatorStatus || !localMode) return;
+  $('operator-update-status').textContent = operatorStatus.message || '更新状況を確認しています。';
+  $('operator-update-log').textContent = operatorStatus.logFolder ? 'ログ: ' + operatorStatus.logFolder : '';
+  $('operator-update').disabled = operatorBusy || !operatorStatus.canControl || !operatorStatus.available || operatorStatus.busy;
+}
+async function pollOperatorUpdate() {
+  if (!localMode || operatorPolling) return;
+  operatorPolling = true;
+  try {
+    const response = await apiFetch('/api/operator-update', { signal: AbortSignal.timeout(5000) });
+    if (response.ok) { operatorStatus = await response.json(); renderOperatorUpdate(); }
+    else if (operatorStatus) { operatorStatus = {message:'更新サービスに接続できません。管理画面の常駐プログラムを確認してください。'}; renderOperatorUpdate(); }
+  } catch {
+    if (operatorStatus) { operatorStatus = {message:'更新サービスに接続できません。管理画面の常駐プログラムを確認してください。'}; renderOperatorUpdate(); }
+  } finally { operatorPolling = false; }
+}
+async function submitOperatorUpdate(control) {
+  if (control.disabled || operatorBusy || !operatorStatus?.canControl || !operatorStatus.available) return;
+  operatorBusy = true; renderOperatorUpdate();
+  const id = crypto.randomUUID();
+  try {
+    const response = await apiFetch('/api/operator-update', { method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id}), signal:AbortSignal.timeout(12000) });
+    const result = await response.json();
+    operatorStatus = {...operatorStatus, message:result.message, logFolder:result.logFolder, available:false};
+    renderOperatorUpdate();
+    $('settings-status').textContent = result.message;
+  } catch {
+    $('settings-status').textContent = '更新開始を確認できません。進行状況とログを確認してください。';
+  } finally { operatorBusy = false; control.blur(); await pollOperatorUpdate(); }
+}
+
 function renderSettings(settings, canControl) {
   renderMaintenance(settings);
   $('operator-update-status').textContent = connected ? settings?.updateStatus ?? '更新機能のあるバージョンで起動してください。' : 'Unity の接続を待っています。更新中は接続が切れ、新しいアプリの起動後に再接続します。';
@@ -1109,6 +1143,7 @@ function renderSettings(settings, canControl) {
     if (command === 'refreshDevices') available = !!settings?.audioRefreshAvailable;
     control.disabled = !enabled || !available;
   });
+  renderOperatorUpdate();
   if (settingsBusy) return;
   for (const name of ['master', 'bgm', 'engine', 'effects', 'constantPedal']) {
     const control = $('settings-' + name);
@@ -1149,6 +1184,7 @@ function renderSettings(settings, canControl) {
 }
 
 async function submitSetting(control) {
+  if (control.dataset.setting === 'updateAndRun' && operatorStatus) { await submitOperatorUpdate(control); return; }
   if (!connected || !localMode || !latestCanControl || !latestSnapshot?.settings || settingsBusy || control.disabled) return;
   const command = control.dataset.setting;
   let args;
@@ -1193,6 +1229,8 @@ async function submitSetting(control) {
     renderSettings(connected ? latestSnapshot?.settings : null, connected && latestCanControl);
     $('settings-status').textContent = result?.ok ? (command === 'maintenance' ? (args[0] === 'true' ? '全ゲーム画面をメンテナンス表示にしました。' : 'メンテナンスを解除しました。') : command === 'testRace' ? 'テストレースを開始しました。' : '設定を反映しました。') : result ?
       result.reason === 'audio_unavailable' ? '出力機器を開けませんでした。接続を確認して再検出してください。' :
+      command === 'updateAndRun' && result.reason && !['state_changed','settings_changed'].includes(result.reason) ? result.reason :
+      command === 'updateAndRun' ? result.settings?.updateStatus ?? 'ゲーム状態が変わりました。タイトル・結果・メンテナンス画面で実行してください。' :
       '設定またはゲーム状態が変わりました。最新の表示を確認して操作してください。' :
       '反映結果を確認できません。最新の設定を確認してください。操作は再送していません。';
     if (command === 'maintenance') $('maintenance-feedback').textContent = $('settings-status').textContent;
@@ -1400,6 +1438,12 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 if (localMode) {
+  void pollOperatorUpdate(); setInterval(pollOperatorUpdate, 2000);
+  document.addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && event.altKey && (event.code === 'KeyU' || event.key?.toLowerCase() === 'u')) {
+      event.preventDefault(); void submitSetting($('operator-update'));
+    }
+  });
   import('./live.js').then(({ startLive }) => startLive({ render, setConnection, renderTelemetry, refreshFrames, apiFetch }))
     .then(controller => { liveController = controller; })
     .catch(() => {

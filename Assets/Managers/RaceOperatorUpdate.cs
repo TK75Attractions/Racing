@@ -13,21 +13,29 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
     private double requestedAt;
     private Gmanager race;
     public bool Busy => worker != null;
-    public string Status { get; private set; } = "最新mainを取得し、Unityを終了してビルド・起動します。Ctrl/Cmd + Alt + U";
-    public bool Available => !Busy && CanLeaveRace && FindProject() != null && File.Exists(FindUnity());
-    private bool CanLeaveRace => race != null && (race.IsMaintenanceActive || race.state == Gmanager.State.Title || race.state == Gmanager.State.Result);
+    public string Status { get; private set; } = "最新mainを別フォルダーでビルド・起動します。Ctrl/Cmd + Alt + U";
+    public bool Available => !Busy && FindProject() != null && File.Exists(FindUnity());
+    private bool CanLeaveRace
+    {
+        get
+        {
+#if UNITY_EDITOR
+            if (!UnityEditor.EditorApplication.isPlaying) return true;
+#endif
+            return race != null && (race.IsMaintenanceActive || race.state == Gmanager.State.Title || race.state == Gmanager.State.Result);
+        }
+    }
 
     private void Awake() => race = GetComponent<Gmanager>();
     public void Configure(Gmanager manager) => race = manager;
 
     public bool Request()
     {
-        if (!Available) { Status = "タイトル・結果・メンテナンス画面で実行してください。プロジェクトとUnity Editorも必要です。"; return false; }
-#if UNITY_EDITOR
-        for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
-            if (UnityEngine.SceneManagement.SceneManager.GetSceneAt(i).isDirty)
-            { Status = "未保存のシーンがあります。保存してから更新してください。"; return false; }
-#endif
+        if (Busy) return false;
+        if (FindProject() == null) { Status = "更新元プロジェクトが見つかりません。RACING_PROJECT_PATHを設定してください。"; return false; }
+        if (!File.Exists(FindUnity())) { Status = "Unity Editorが見つかりません。RACING_UNITY_PATHを設定してください。"; return false; }
+        if (!CanLeaveRace && (race == null || !race.SetMaintenance(true)))
+        { Status = "メンテナンスに切り替えられないため更新を開始できません。"; return false; }
         try
         {
             string project = FindProject();
@@ -37,14 +45,18 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
             Directory.CreateDirectory(requestFolder);
             string runner = Path.Combine(requestFolder, name);
             File.Copy(Path.Combine(project, "Tools", "OperatorUpdate", name), runner);
-            string args = Quote(runner) + " " + Quote(project) + " " + Quote(FindUnity()) + " " + Process.GetCurrentProcess().Id + " " + Quote(requestFolder);
+            int parentPid = Process.GetCurrentProcess().Id;
+#if UNITY_EDITOR
+            parentPid = 0; // Leave the working Editor and unsaved scenes open.
+#endif
+            string args = Quote(runner) + " " + Quote(project) + " " + Quote(FindUnity()) + " " + parentPid + " " + Quote(requestFolder);
             worker = Process.Start(new ProcessStartInfo {
                 FileName = windows ? "powershell.exe" : "/bin/bash",
                 Arguments = windows ? "-NoProfile -ExecutionPolicy Bypass -File " + args : args,
                 WorkingDirectory = project, UseShellExecute = false, CreateNoWindow = true
             });
             requestedAt = Time.realtimeSinceStartupAsDouble;
-            Status = "更新前チェック中。成功するとUnityを終了します。ログ: " + requestFolder;
+            Status = "更新を開始しました。ログ: " + requestFolder;
             return true;
         }
         catch (Exception error) { worker = null; Status = "更新開始に失敗: " + error.Message; return false; }
@@ -65,15 +77,17 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
         if (worker == null) return;
         if (File.Exists(Path.Combine(requestFolder, "failed")) || worker.HasExited)
         {
-            Status = "更新を停止しました。未コミット変更・Git・Unityの設定を確認してください。ログ: " + requestFolder;
+            Status = (File.Exists(Path.Combine(requestFolder, "status.txt")) ? File.ReadAllText(Path.Combine(requestFolder, "status.txt")).Trim() : "更新を停止しました。") + " ログ: " + requestFolder;
             worker.Dispose(); worker = null;
             return;
         }
         if (File.Exists(Path.Combine(requestFolder, "ready")))
         {
-            // The worker rechecks Git after shutdown, then builds into a fresh directory.
+            // A built player exits after preflight; an Editor retains unsaved work.
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.Exit(0);
+            // Leave scenes open, but release the running game's devices before launching the new player.
+            if (UnityEditor.EditorApplication.isPlaying) UnityEditor.EditorApplication.isPlaying = false;
+            return;
 #else
             Application.Quit();
 #endif
