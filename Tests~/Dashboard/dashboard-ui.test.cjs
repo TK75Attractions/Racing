@@ -738,3 +738,26 @@ test('Update button sends an argument-free updateAndRun command',async()=>{
   assert.deepEqual(sent,[{action:'settings',command:'updateAndRun',args:[],settingsRevision:3}]);
   assert.equal(button.disabled,true);
 });
+
+test('Per-output delay controls show milliseconds and require an operator',()=>{
+  const ui=fixture();const settings={outputDelayMs:[180,0]};
+  ui.render({...base,settings},{canControl:true});
+  assert.equal(ui.elements.get('settings-delay-0').value,180);
+  assert.equal(ui.elements.get('settings-delay-1').value,0);
+  assert.equal(ui.elements.get('settings-delay-0-value').textContent,'180 ms');
+  assert.equal(ui.elements.get('settings-delay-0').disabled,false);
+  ui.render({...base,settings},{canControl:false});
+  assert.equal(ui.elements.get('settings-delay-0').disabled,true);
+  ui.render({...base,settings:{}},{canControl:true});
+  assert.equal(ui.elements.get('settings-delay-1').disabled,true);
+});
+test('Speaker delay sends player and integer milliseconds without volume scaling',async()=>{
+  const ui=fixture(),sent=[];
+  ui.context.AbortSignal=AbortSignal;ui.context.crypto={randomUUID:()=> 'delay-request'};
+  ui.context.recordDelay=(action,payload)=>sent.push({action,...JSON.parse(JSON.stringify(payload))});
+  vm.runInContext("liveController={command:async(action,payload)=>{recordDelay(action,payload);return {ok:true,settingsRevision:4,settings:{outputDelayMs:[0,230]}};}}",ui.context);
+  ui.render({...base,sessionId:'s',settingsRevision:3,settings:{outputDelayMs:[0,0]}});
+  const control=ui.elements.get('settings-delay-1');control.value=230;control.blur=()=>{};
+  await ui.context.submitSetting(control);
+  assert.deepEqual(sent,[{action:'settings',command:'outputDelay',args:['1','230'],settingsRevision:3}]);
+});
