@@ -57,6 +57,7 @@ public sealed class RaceMaintenanceController : MonoBehaviour
                 // ahead of retained world depth, without changing URP's read-only clearDepth.
                 if (canvas.worldCamera != null) canvas.planeDistance = canvas.worldCamera.nearClipPlane + .01f;
             }
+            manager.GetComponent<RaceBackgroundMusic>()?.SetMaintenanceMusic(true);
         }
         else RestorePause();
         manager.SetMaintenanceInputBlocked(active);
@@ -71,6 +72,7 @@ public sealed class RaceMaintenanceController : MonoBehaviour
     private void RestorePause()
     {
         if (!ownsPause) return;
+        if (manager != null) manager.GetComponent<RaceBackgroundMusic>()?.SetMaintenanceMusic(false);
         pausedSeconds += Time.realtimeSinceStartupAsDouble - pauseBegan;
         Time.timeScale = previousTimeScale; AudioListener.pause = previousAudioPause;
         RaceAudioSettings.MaintenanceMuted = false;

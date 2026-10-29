@@ -14,13 +14,15 @@ public sealed class PlayerAudioCapture : MonoBehaviour
     private int stream;
     private int bgmPlayer = -1;
     private int sourcePlayer = -1;
+    private bool maintenanceMusic;
     private volatile float p1Left, p1Right, p2Left, p2Right;
     private float nextDiagnosticTime;
 
-    public void ConfigureMusic(RaceAudioOutput audioOutput, int player)
+    public void ConfigureMusic(RaceAudioOutput audioOutput, int player, bool maintenance = false)
     {
         output = audioOutput;
         bgmPlayer = player;
+        maintenanceMusic = maintenance;
         stream = 0;
         source = GetComponent<AudioSource>();
     }
@@ -89,8 +91,8 @@ public sealed class PlayerAudioCapture : MonoBehaviour
         // Appended AFTER EngineAudioCore, so this filter receives synthesized PCM.
         if (!ReferenceEquals(output, null))
         {
-            if (bgmPlayer <= 0) output.Submit(0, stream, data, channels, p1Left, p1Right);
-            if (bgmPlayer != 0) output.Submit(1, stream, data, channels, p2Left, p2Right);
+            if (bgmPlayer <= 0) output.Submit(0, stream, data, channels, p1Left, p1Right, maintenanceMusic);
+            if (bgmPlayer != 0) output.Submit(1, stream, data, channels, p2Left, p2Right, maintenanceMusic);
         }
         Array.Clear(data, 0, data.Length);
     }
