@@ -291,6 +291,9 @@ public class Gmanager : MonoBehaviour
             return;
         }
 
+        // Establish a single visible screen before touching external devices.
+        // ScreenTransitionController.Awake can run before or after this Awake.
+        transform.parent?.Find("MainCanvas")?.GetComponent<ScreenTransitionController>()?.PrepareStartupVisibility();
         IManager = GetComponent<InputManager>();
         IManager?.Init();
         ResolveLapManager();
