@@ -191,8 +191,8 @@ public sealed class AccelerationPad : MonoBehaviour
         renderer.sharedMaterial = GetVisualMaterial();
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         renderer.receiveShadows = false;
-        var arrows=new GameObject("Rotating arrows");arrows.transform.SetParent(visual.transform,false);arrows.transform.localPosition=new Vector3(0f,1.25f,0f);
-        arrows.AddComponent<RotatingBoostArrows>().Configure(padColor);
+        var arrows=new GameObject("Forward arrows");arrows.transform.SetParent(visual.transform,false);arrows.transform.localPosition=new Vector3(0f,padSize.y+.06f,0f);
+        arrows.AddComponent<ForwardBoostArrows>().Configure(padColor,padSize.z,padSize.x);
 
     }
 
