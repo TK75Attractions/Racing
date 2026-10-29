@@ -213,7 +213,7 @@ function setGoalLap(value) {
 }
 
 function updateFlow(state) {
-  const order = ['Title', 'CarSelection', 'Tutorial', 'Countdown', 'Game', 'Goal', 'Result'];
+  const order = ['Title', 'Tutorial', 'Countdown', 'Game', 'Goal', 'Result'];
   const position = order.indexOf(state);
   document.querySelectorAll('[data-flow-state]').forEach((step, index) => {
     step.classList.toggle('current', position === index);

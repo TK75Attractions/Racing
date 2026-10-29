@@ -62,14 +62,14 @@ public static class PlayerAudioValidation
             Set(players.GetValue(0), "preparationState", Gmanager.State.Tutorial);
             manager.state = Gmanager.State.Tutorial;
             AdvanceMusic(music);
-            Require(sources[0].clip.name == "TachibanaMoroe" && sources[1].clip.name == "Race_Opening_v3",
+            Require(sources[0].clip.name == "Race_Opening_v3" && sources[1].clip.name == "Race_Opening_v3",
                 "Each screen must select tutorial or opening music independently of the shared state.");
             Set(players.GetValue(1), "preparationState", Gmanager.State.Tutorial);
             AdvanceMusic(music);
-            Require(sources.All(s => s.clip.name == "TachibanaMoroe"), "Both tutorial screens must use TachibanaMoroe.");
+            Require(sources.All(s => s.clip.name == "Race_Opening_v3"), "Both tutorial screens must keep the opening track.");
             manager.state = Gmanager.State.Countdown;
             typeof(RaceBackgroundMusic).GetMethod("Tick", Private).Invoke(music, new object[] { 0f });
-            Require(sources.All(s => s.clip.name == "TachibanaMoroe"), "Track changes must fade out before replacing the current clip.");
+            Require(sources.All(s => s.clip.name == "Race_Opening_v3"), "Track changes must fade out before replacing the current clip.");
             AdvanceMusic(music);
             Require(sources.All(s => s.clip.name == "racegame_v3"), "Countdown must use the new race track.");
             manager.state = Gmanager.State.Game;

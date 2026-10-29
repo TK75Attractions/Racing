@@ -262,20 +262,20 @@ test('Hardware shows both IMUs and validates independent pedal values including 
   ui.render({...base,serial:{portOpen:true,lines:[]},hardware:healthyHardware},{canControl:false});
   assert.equal(ui.elements.get('serial-send').disabled,true);
 });
-test('Players can select cars and practice independently, including timeouts and waiting',()=>{
+test('Players practice independently, including timeouts and waiting',()=>{
   const ui=fixture();
   ui.render({...base,state:'Tutorial',playerProgress:[
     {number:1,state:'Tutorial',step:'Steer',carName:'ROADSTER',remaining:39.2,progress:.5},
-    {number:2,state:'CarSelection',step:'Paint',carName:'SPORT CAR',remaining:12.2,progress:0}]});
+    {number:2,state:'Title',step:'Waiting',remaining:0,progress:0}]});
   const cards=ui.elements.get('player-progress').children;
   assert.match(cards[0].textContent,/P1 \/ チュートリアル.*旋回.*ROADSTER.*40 秒/);
-  assert.match(cards[1].textContent,/P2 \/ 車選択.*カラーを選択中.*13 秒/);
+  assert.match(cards[1].textContent,/P2 \/ タイトル.*練習の開始を待機/);
   assert.equal(cards[0].children.at(-1).value,.5);
-  assert.match(ui.elements.get('flow-state').textContent,/3 \/ 7/);
+  assert.match(ui.elements.get('flow-state').textContent,/2 \/ 6/);
   ui.render({...base,state:'Tutorial',playerProgress:[{number:1,state:'Tutorial',step:'TimedOut'}]});
   assert.match(ui.elements.get('player-progress').textContent,/制限時間終了・相手の完了を待機/);
   ui.context.setConnection(false);assert.match(ui.elements.get('player-progress').textContent,/状態待機/);
-  assert.equal([...html.matchAll(/data-flow-state=/g)].length,7);
+  assert.equal([...html.matchAll(/data-flow-state=/g)].length,6);
 });
 test('Raw display pauses rendering, bounds history, and resumes with fresh data',()=>{
   const ui=fixture();ui.elements.get('raw-dialog').open=true;const raws=Array.from({length:600},(_,id)=>({id,time:'',direction:'RX',line:'raw'+id+'\n'}));
@@ -289,10 +289,10 @@ test('Raw display pauses rendering, bounds history, and resumes with fresh data'
   assert.match(ui.elements.get('raw-log').textContent,/new/);
 });
 
-test('Race buttons advance selection and tutorial with mixed player preparation',()=>{
+test('Race buttons start practice and handle mixed player preparation',()=>{
   const ui=fixture(), enabled=()=>ui.buttons.filter(button=>!button.disabled).map(button=>button.dataset.action);
-  ui.render({...base,state:'CarSelection'}); assert.deepEqual(enabled(),['tutorial']);
-  ui.render({...base,state:'Tutorial',playerProgress:[{state:'Tutorial'},{state:'CarSelection'}]});
+  ui.render({...base,state:'Title'}); assert.deepEqual(enabled(),['start']);
+  ui.render({...base,state:'Tutorial',playerProgress:[{state:'Tutorial'},{state:'Title'}]});
   assert.deepEqual(enabled(),['tutorial']);
   ui.render({...base,state:'Tutorial',playerProgress:[{state:'Tutorial'},{state:'Tutorial'}]});
   assert.deepEqual(enabled(),['countdown']);
