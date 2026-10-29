@@ -53,15 +53,15 @@ public static class PlayerAudioValidation
             Require(sources.Length == 2 && sources[0] != sources[1], "Each player needs an independent source.");
             manager.state = Gmanager.State.Title;
             AdvanceMusic(music);
-            Require(sources.All(s => s.clip != null && s.clip.name == "Race_Opening_v2"), "Title must use the opening track.");
+            Require(sources.All(s => s.clip != null && s.clip.name == "Race_Opening_v3"), "Title must use the opening track.");
             Set(players.GetValue(0), "preparationState", Gmanager.State.CarSelection);
             manager.state = Gmanager.State.CarSelection;
             AdvanceMusic(music);
-            Require(sources.All(s => s.clip.name == "Race_Opening_v2"), "Car selection and the other title screen must keep the opening track.");
+            Require(sources.All(s => s.clip.name == "Race_Opening_v3"), "Car selection and the other title screen must keep the opening track.");
             Set(players.GetValue(0), "preparationState", Gmanager.State.Tutorial);
             manager.state = Gmanager.State.Tutorial;
             AdvanceMusic(music);
-            Require(sources[0].clip.name == "TachibanaMoroe" && sources[1].clip.name == "Race_Opening_v2",
+            Require(sources[0].clip.name == "TachibanaMoroe" && sources[1].clip.name == "Race_Opening_v3",
                 "Each screen must select tutorial or opening music independently of the shared state.");
             Set(players.GetValue(1), "preparationState", Gmanager.State.Tutorial);
             AdvanceMusic(music);
@@ -85,24 +85,24 @@ public static class PlayerAudioValidation
             laps.GetCarData(bodies[1]).lapCount = 0;
             Set(players.GetValue(0), "result", new RaceResultRecord { didFinish = true });
             AdvanceMusic(music);
-            Require(sources[0].clip.name == "finish_v2" && sources[1].clip.name == "racegame_v3",
+            Require(sources[0].clip.name == "finishv4" && sources[1].clip.name == "racegame_v3",
                 "The goal celebration must start finish music only for the finisher.");
             Set(players.GetValue(0), "isSpectating", true);
             AdvanceMusic(music);
-            Require(manager.GetAudioViewedPlayer(0) == 1 && sources[0].clip.name == "finish_v2",
+            Require(manager.GetAudioViewedPlayer(0) == 1 && sources[0].clip.name == "finishv4",
                 "A finisher must retain finish music while spectating the other player.");
             Set(players.GetValue(0), "result", new RaceResultRecord { didFinish = false });
             AdvanceMusic(music);
             Require(sources[0].clip == sources[1].clip, "A DNF spectator still follows the watched player's race music.");
             manager.state = Gmanager.State.Goal;
             AdvanceMusic(music);
-            Require(sources.All(s => s.clip.name == "finish_v2"), "The shared goal scene must use finish music.");
+            Require(sources.All(s => s.clip.name == "finishv4"), "The shared goal scene must use finish music.");
             manager.state = Gmanager.State.Result;
             AdvanceMusic(music);
-            Require(sources.All(s => s.clip.name == "finish_v2"), "Results must keep finish music.");
+            Require(sources.All(s => s.clip.name == "result_v3"), "Results must use the dedicated result track.");
             Set(players.GetValue(0), "returnedToTitle", true);
             AdvanceMusic(music);
-            Require(sources[0].clip.name == "Race_Opening_v2" && sources[1].clip.name == "finish_v2",
+            Require(sources[0].clip.name == "Race_Opening_v3" && sources[1].clip.name == "result_v3",
                 "Returning one screen to the title must not change the other result screen.");
             laps.ResetRace();
             for (int i = 0; i < 2; i++)

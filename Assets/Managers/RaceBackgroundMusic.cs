@@ -5,9 +5,10 @@ using UnityEngine;
 [RequireComponent(typeof(RaceAudioOutput))]
 public sealed class RaceBackgroundMusic : MonoBehaviour
 {
-    private const string MenuClipPath = "Audio/BGM/Race_Opening_v2";
+    private const string MenuClipPath = "Audio/BGM/Race_Opening_v3";
     private const string TutorialClipPath = "Audio/BGM/TachibanaMoroe";
-    private const string FinishClipPath = "Audio/BGM/finish_v2";
+    private const string FinishClipPath = "Audio/BGM/finishv4";
+    private const string ResultClipPath = "Audio/BGM/result_v3";
     private const string RaceClipPath = "Audio/BGM/racegame_v3";
     private const string FinalLapClipPath = "Audio/BGM/racegame_v3_final lap";
     [SerializeField, Range(0f, 1f)] private float volume = 0.9f;
@@ -19,7 +20,7 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
     private readonly bool[] switching = new bool[2];
     private readonly AudioSource[] maintenanceSources = new AudioSource[2];
     private readonly RaceSoundEffectsMixer[] maintenanceMixers = new RaceSoundEffectsMixer[2];
-    private AudioClip menuClip, tutorialClip, finishClip, raceClip, finalLapClip;
+    private AudioClip menuClip, tutorialClip, finishClip, resultClip, raceClip, finalLapClip;
     private AudioClip silentClip;
 
     private void Awake()
@@ -29,6 +30,7 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
         menuClip = Resources.Load<AudioClip>(MenuClipPath);
         tutorialClip = Resources.Load<AudioClip>(TutorialClipPath);
         finishClip = Resources.Load<AudioClip>(FinishClipPath);
+        resultClip = Resources.Load<AudioClip>(ResultClipPath);
         raceClip = Resources.Load<AudioClip>(RaceClipPath);
         finalLapClip = Resources.Load<AudioClip>(FinalLapClipPath);
         silentClip = AudioClip.Create("Silent effects clock",512,1,AudioSettings.outputSampleRate,false);
@@ -50,8 +52,8 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
             sourceObject.AddComponent<PlayerAudioCapture>().ConfigureMusic(GetComponent<RaceAudioOutput>(), player);
         }
         RaceAudioSettings.ApplyMaster();
-        if (menuClip == null || tutorialClip == null || finishClip == null || raceClip == null || finalLapClip == null)
-            Debug.LogError($"RaceBackgroundMusic: BGMの読み込み失敗。Menu={menuClip != null}, Tutorial={tutorialClip != null}, Finish={finishClip != null}, Race={raceClip != null}, FinalLap={finalLapClip != null}", this);
+        if (menuClip == null || tutorialClip == null || finishClip == null || resultClip == null || raceClip == null || finalLapClip == null)
+            Debug.LogError($"RaceBackgroundMusic: BGMの読み込み失敗。Menu={menuClip != null}, Tutorial={tutorialClip != null}, Finish={finishClip != null}, Result={resultClip != null}, Race={raceClip != null}, FinalLap={finalLapClip != null}", this);
     }
 
     private void Update()
@@ -84,8 +86,10 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
                     desired = tutorialClip;
                     break;
                 case Gmanager.State.Goal:
-                case Gmanager.State.Result:
                     desired = finishClip;
+                    break;
+                case Gmanager.State.Result:
+                    desired = resultClip;
                     break;
                 default:
                     desired = gameManager.IsPlayerOnFinalLap(viewedPlayer) ? finalLapClip : raceClip;
