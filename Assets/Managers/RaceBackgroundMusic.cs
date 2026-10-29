@@ -96,7 +96,7 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
                     desired = menuClip;
                     break;
                 case Gmanager.State.Tutorial:
-                    desired = tutorialClip;
+                    desired = menuClip;
                     break;
                 case Gmanager.State.Goal:
                     desired = finishClip;

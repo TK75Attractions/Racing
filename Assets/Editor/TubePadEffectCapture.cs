@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using Object=UnityEngine.Object;
 
-/// <summary>Records the real floor shader and rotating arrows without editing the photographs.</summary>
+/// <summary>Records the real floor shader and forward arrows without editing the photographs.</summary>
 public static class TubePadEffectCapture
 {
  public static void Run()
@@ -23,7 +23,7 @@ public static class TubePadEffectCapture
    for(int i=0;i<24;i++)
    {
     float time=i/8f;
-    foreach(var arrow in layout.GetComponentsInChildren<RotatingBoostArrows>())arrow.SetPhase(time);
+    foreach(var arrow in layout.GetComponentsInChildren<ForwardBoostArrows>())arrow.SetPhase(time);
     foreach(var renderer in layout.GetComponentsInChildren<MeshRenderer>())if(renderer.sharedMaterial.HasProperty("_PreviewTime"))renderer.sharedMaterial.SetFloat("_PreviewTime",time);
     camera.Render();if(image==null)image=new Texture2D(960,540,TextureFormat.RGB24,false);RenderTexture.active=output;image.ReadPixels(new Rect(0,0,960,540),0,0);image.Apply();
     File.WriteAllBytes($"{directory}/frame-{i:000}.png",image.EncodeToPNG());
@@ -31,7 +31,7 @@ public static class TubePadEffectCapture
     if(i==4)
     {var current=image.GetPixels32();int changed=0;for(int k=0;k<current.Length;k++)if(Math.Abs(current[k].r-first[k].r)+Math.Abs(current[k].g-first[k].g)+Math.Abs(current[k].b-first[k].b)>40)changed++;if(changed<current.Length/500)throw new InvalidOperationException("Boost arrows did not visibly animate");}
    }
-   Debug.Log("TUBE_PAD_ANIMATION_CAPTURE_PASS: actual shader flow and rotating arrow pixels change between phases.");
+   Debug.Log("TUBE_PAD_ANIMATION_CAPTURE_PASS: actual shader flow and forward arrow pixels change between phases.");
   }
   finally
   {

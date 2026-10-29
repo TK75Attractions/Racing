@@ -19,6 +19,8 @@ public sealed class DrivingTutorialController : MonoBehaviour
         public float startYaw;
         public float recoveryTimer;
         public bool resetHeld;
+        public float itemProgress;
+        public float missedItemSeconds;
         public DrivingTutorialProgress.Stage announcedStage;
         public readonly List<TutorialItemPickup> pickups = new List<TutorialItemPickup>();
     }
@@ -107,12 +109,15 @@ public sealed class DrivingTutorialController : MonoBehaviour
             // The pedal held to confirm a car must be released before it can accelerate the practice car.
             if (player.driveGate.IsBlocked && player.input.IsConnected && Mathf.Abs(input.pedal) <= .05f)
                 player.driveGate.SetBlocked(false);
-            Vector3 local = player.car.transform.position - player.world.transform.position;
+            Vector3 local = player.body.position - player.world.transform.position;
             float speed = Vector3.ProjectOnPlane(player.body.linearVelocity, Vector3.up).magnitude;
             bool escaped = local.y < -2f || Mathf.Abs(local.x - 38f) > 95f || Mathf.Abs(local.z) > 92f;
             bool overturned = Vector3.Dot(player.car.transform.up, Vector3.up) < .3f;
             player.recoveryTimer = overturned ? player.recoveryTimer + dt : 0f;
-            if (!player.lesson.IsFinished && (escaped || player.recoveryTimer > 1.5f || resetPressed))
+            float progress = DrivingTutorialRoad.NearestProgress(local);
+            bool missedItem = player.lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem && player.pickups.Count > 0 && progress > player.itemProgress + 5f;
+            player.missedItemSeconds = missedItem ? player.missedItemSeconds + dt : 0f;
+            if (!player.lesson.IsFinished && (escaped || player.recoveryTimer > 1.5f || resetPressed || player.missedItemSeconds >= .5f))
             {
                 Recover(player);
                 speed = 0f;
@@ -157,35 +162,34 @@ public sealed class DrivingTutorialController : MonoBehaviour
 
     private static void Recover(Practice player)
     {
-        bool first = player.lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate;
-        player.body.position = player.world.transform.position + new Vector3(0f, 1.3f, first ? -48f : -12f);
-        player.body.rotation = Quaternion.identity;
+        bool collecting = player.lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem;
+        float recoveryProgress = collecting ? Mathf.Max(0f, player.itemProgress - 28f) :
+            player.lesson.CurrentStage == DrivingTutorialProgress.Stage.Accelerate ? 16f : 52f;
+        DrivingTutorialRoad.Sample(recoveryProgress, out Vector3 point, out Vector3 direction);
+        player.body.position = player.world.transform.position + point + Vector3.up * 1.3f;
+        player.body.rotation = Quaternion.LookRotation(direction);
         player.body.linearVelocity = Vector3.zero;
         player.body.angularVelocity = Vector3.zero;
         player.startYaw = 0f;
-        player.recoveryTimer = 0f;
+        player.recoveryTimer = player.missedItemSeconds = 0f;
         player.lesson.ResetCurrentAttempt();
         player.mover.SuppressInputAfterRespawn();
-        if (player.lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem) PlaceItems(player);
+        if (collecting) PlaceItems(player, player.itemProgress);
+        Physics.SyncTransforms();
     }
 
-    private static void PlaceItems(Practice player)
+    private static void PlaceItems(Practice player, float fixedProgress = -1f)
     {
         foreach (var pickup in player.pickups) if (pickup != null) Destroy(pickup.gameObject);
         player.pickups.Clear();
         Vector3 local = player.body.position - player.world.transform.position;
-        float nearest = 0f, best = float.PositiveInfinity;
-        for (float d = 0; d <= 190f; d += 1f)
-        {
-            DrivingTutorialRoad.Sample(d, out Vector3 point, out _);
-            float distance = (point - local).sqrMagnitude;
-            if (distance < best) { best = distance; nearest = d; }
-        }
+        float nearest = DrivingTutorialRoad.NearestProgress(local);
         // A fast learner can already reach 90 km/h here. Leave time to see the box
         // and the automatic-use instruction instead of spawning it under the bonnet.
         float speed = Vector3.ProjectOnPlane(player.body.linearVelocity, Vector3.up).magnitude;
         float approach = Mathf.Clamp(speed * 2.5f, 55f, 65f);
-        DrivingTutorialRoad.Sample(Mathf.Min(190f, nearest + approach), out Vector3 center, out Vector3 tangent);
+        player.itemProgress = fixedProgress >= 0f ? fixedProgress : Mathf.Min(170f, nearest + approach);
+        DrivingTutorialRoad.Sample(player.itemProgress, out Vector3 center, out Vector3 tangent);
         for (int lane = -1; lane <= 1; lane++)
         {
             var go = new GameObject("Practice item / drive through a box");go.transform.SetParent(player.world.transform, false);
@@ -247,7 +251,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
             float z = -70f + i * 12f;
             Box(root, $"LightPylon{i}", new Vector3(-24f, 3f, z), new Vector3(.35f, 6f, .35f), cyan, false);
             Box(root, $"CityBlock{i}", new Vector3(110f, 4f + i % 3 * 3f, z),
-                new Vector3(8f, 8f + i % 3 * 6f, 7f), asphalt, false);
+                new Vector3(8f, 8f + i % 3 * 6f, 7f), asphalt, true);
         }
         GameObject lamp = new GameObject("Practice key light", typeof(Light));
         lamp.transform.SetParent(root, false);

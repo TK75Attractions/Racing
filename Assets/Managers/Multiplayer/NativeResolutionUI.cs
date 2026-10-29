@@ -9,6 +9,7 @@ using UnityEngine.UI;
 /// <summary>Upscale the world first, then draw the existing camera-space UI at output resolution.</summary>
 public sealed class NativeResolutionUI : MonoBehaviour
 {
+    public const int PreviewWidth = 1920, PreviewHeight = 1080, PreviewQuality = 90;
     private Camera world, ui;
     private Camera[] worldCameras;
     private Canvas hud, backdrop;
@@ -212,7 +213,7 @@ public sealed class NativeResolutionUI : MonoBehaviour
     private void EnsurePreviewTexture()
     {
         if (previewTexture != null) return;
-        previewTexture = new RenderTexture(640, 360, 0, RenderTextureFormat.ARGB32)
+        previewTexture = new RenderTexture(PreviewWidth, PreviewHeight, 0, RenderTextureFormat.ARGB32)
             { name = "Dashboard frame copy", hideFlags = HideFlags.DontSave };
         previewTexture.Create();
     }
@@ -225,9 +226,9 @@ public sealed class NativeResolutionUI : MonoBehaviour
         {
             if (!request.hasError && isActiveAndEnabled)
             {
-                pixels = new Texture2D(640, 360, TextureFormat.RGBA32, false);
+                pixels = new Texture2D(PreviewWidth, PreviewHeight, TextureFormat.RGBA32, false);
                 pixels.LoadRawTextureData(request.GetData<byte>());
-                jpeg = pixels.EncodeToJPG(65);
+                jpeg = pixels.EncodeToJPG(PreviewQuality);
                 previewJpeg = jpeg;
                 previewAt = Time.realtimeSinceStartupAsDouble;
             }

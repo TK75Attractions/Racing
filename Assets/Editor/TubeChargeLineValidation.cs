@@ -32,7 +32,7 @@ public static class TubeChargeLineValidation
                 Require(pad.GetComponentsInChildren<Collider>().Length==1,"Arrow effects must be nonphysical");
                 Require(course.IsPointInsideTube(pad.transform.position+Vector3.up),"Pad must lie inside the tube");
                 Require(Physics.Raycast(pad.transform.position+pad.transform.up*1f,-pad.transform.up,out var hit,2f,Physics.DefaultRaycastLayers,QueryTriggerInteraction.Ignore)&&Mathf.Abs(Vector3.Dot(hit.point-pad.transform.position,pad.transform.up))<.05f,"Pad must be flush with the road");
-                var arrow=pad.GetComponentInChildren<RotatingBoostArrows>();var forward=arrow.transform.forward;var rotation=arrow.transform.rotation;arrow.SetPhase(.8f);Require(Quaternion.Angle(rotation,arrow.transform.rotation)>20f,"Arrow effect must visibly rotate");Require(Vector3.Dot(forward,arrow.transform.forward)>.999f,"Rotation must retain the road direction");
+                var arrow=pad.GetComponentInChildren<ForwardBoostArrows>();arrow.SetPhase(0);var position=arrow.transform.GetChild(0).localPosition;arrow.SetPhase(.25f);Require(arrow.transform.GetChild(0).localPosition.z>position.z,"Arrow must travel forward along the pad");Require(arrow.transform.localRotation==Quaternion.identity,"Pad arrows must not rotate");
                 Require(pad.GetComponentInChildren<MeshRenderer>().sharedMaterial.shader.name=="Racing/AccelerationPadFlow","Flowing arrow material is required");
             }
             var first=layout.Pads[0];car.transform.SetPositionAndRotation(first.transform.position+first.transform.up*.7f,first.transform.rotation);body.position=car.transform.position;body.rotation=car.transform.rotation;body.linearVelocity=first.transform.forward*10f;Physics.SyncTransforms();
@@ -48,7 +48,7 @@ public static class TubeChargeLineValidation
             features.SetValidationFeature(RaceFeature.TubeChargeLines,false);Require(!layout.VisualsVisible&&!first.TryActivate(mover)&&controller.Notice.Length==0,"OFF hides and disables the pads");
             features.SetValidationFeature(RaceFeature.TubeChargeLines,true);Require(layout.VisualsVisible,"ON restores the pads");
             car.transform.rotation=Quaternion.LookRotation(-first.transform.forward,first.transform.up);body.rotation=car.transform.rotation;Physics.SyncTransforms();Require(!first.TryActivate(mover),"Wrong-way travel cannot collect the tube boost");
-            Debug.Log("TUBE_ACCELERATION_VALIDATION_PASS: two real pads, flush triggers, no old lines, existing speed boost not charge, feedback, rotation direction, OFF/ON and wrong-way rejection.");
+            Debug.Log("TUBE_ACCELERATION_VALIDATION_PASS: two real pads, flush triggers, no old lines, existing speed boost not charge, feedback, forward arrow travel, OFF/ON and wrong-way rejection.");
         }
         finally{Gmanager.Control=previous;Object.DestroyImmediate(root);if(layout!=null){var pads=course.transform.Find("Tube acceleration pads");if(pads!=null)Object.DestroyImmediate(pads.gameObject);Object.DestroyImmediate(layout);}}
     }

@@ -55,7 +55,7 @@ public sealed class DrivingTutorialProgress
     {
         // Recovery preserves completed lessons but never carries a partial hold through a teleport.
         holdSeconds = 0f;
-        if (CurrentStage == Stage.Accelerate) PedalReleased = false;
+        // Recovery preserves the initial observed release.
     }
 
     public bool CollectItem(bool connected)

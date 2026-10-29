@@ -1,0 +1,1 @@
+PASS: opening music throughout tutorial; fixed-car title-to-practice flow; missed pickup restores the same three lanes ahead; solid black buildings; preserved release state; forward arrows with upward faces; two-second wrong-way recovery; held pedal resumes; independent center warning; three full-HD live frame captures; removed plaza poles.

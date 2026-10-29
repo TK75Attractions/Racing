@@ -27,6 +27,14 @@ public sealed class RaceAudioOperatorPanel : MonoBehaviour
         if (GUILayout.Button("Noisy venue")) RaceAudioSettings.ApplyVenuePreset(RaceAudioSettings.VenuePreset.NoisyVenue);
         GUILayout.EndHorizontal();
         GUILayout.Label("Current: "+RaceAudioSettings.Preset+"  Master "+Mathf.RoundToInt(RaceAudioSettings.Master*100f)+"% / Effects "+Mathf.RoundToInt(RaceAudioSettings.Effects*100f)+"%");
+        for (int player = 0; player < 2; player++)
+        {
+            int current = RaceAudioSettings.OutputDelayMs(player);
+            GUILayout.Label("P" + (player + 1) + " output delay: " + current + " ms");
+            int next = Mathf.RoundToInt(GUILayout.HorizontalSlider(current, 0, RaceAudioSettings.MaximumOutputDelayMs) / 10f) * 10;
+            if (next != current) RaceAudioSettings.SetOutputDelayMs(player, next);
+        }
+        GUILayout.Label("Delay the faster speaker to match Bluetooth.");
         bool diagnostics=GUILayout.Toggle(RaceAudioSettings.DiagnosticsEnabled,"Log opponent distance and stereo pan");
         if (diagnostics!=RaceAudioSettings.DiagnosticsEnabled) RaceAudioSettings.SetDiagnostics(diagnostics);
         GUI.DragWindow(new Rect(0,0,10000,20));

@@ -14,6 +14,16 @@ public static class RaceAudioSettings
 
     public enum VenuePreset { Standard, Quiet, NoisyVenue, Custom }
 
+    public const int MaximumOutputDelayMs = 500;
+    public static int OutputDelayMs(int player) => Mathf.Clamp(PlayerPrefs.GetInt("Racing.Audio.Delay.P" + player, 0), 0, MaximumOutputDelayMs);
+    public static void SetOutputDelayMs(int player, int milliseconds)
+    {
+        if (player < 0 || player > 1) return;
+        PlayerPrefs.SetInt("Racing.Audio.Delay.P" + player, Mathf.Clamp(milliseconds, 0, MaximumOutputDelayMs));
+        PlayerPrefs.Save();
+        RaceAudioOutput.Instance?.RefreshDelaySettings();
+    }
+
     public static float Master => PlayerPrefs.GetFloat(MasterKey, 1f);
     public static float Bgm => PlayerPrefs.GetFloat(BgmKey, 0.8f);
     public static float Engine => PlayerPrefs.GetFloat(EngineKey, 0.45f);

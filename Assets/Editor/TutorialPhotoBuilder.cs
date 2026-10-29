@@ -15,6 +15,24 @@ public static class TutorialPhotoBuilder
     private static readonly List<GameObject> temporary=new List<GameObject>();
     private static GameObject prefab;
     private static RaceCourse course;
+    public static void UpdateAcceleration()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
+        course=Object.FindFirstObjectByType<RaceCourse>();prefab=Object.FindFirstObjectByType<Gmanager>().carPrefab;
+        course.RebuildCache();course.RebuildRoad();Physics.SyncTransforms();
+        try
+        {
+            var light=New("Photography fill");var lamp=light.AddComponent<Light>();lamp.type=LightType.Directional;lamp.intensity=1.2f;light.transform.rotation=Quaternion.Euler(40,-25,0);
+            var layout=course.GetComponent<TubeChargeLineLayout>()??course.gameObject.AddComponent<TubeChargeLineLayout>();layout.Configure(course,-1f);
+            Require(layout.Available&&layout.Pads.Count==2,"Need two real tube pads.");
+            course.transform.Find("Tube acceleration pads").gameObject.SetActive(true);
+            var pad=layout.Pads[0];var forward=pad.transform.forward;var up=pad.transform.up;
+            Car(pad.transform.position-forward*3.5f+up*.65f,Quaternion.LookRotation(forward,up));
+            Capture("Acceleration",pad.transform.position-forward*12f+up*6f,pad.transform.position+forward*3f+up*.65f);
+            AssetDatabase.ImportAsset(Output+"/Acceleration.png",ImportAssetOptions.ForceSynchronousImport);
+        }
+        finally {foreach(var item in temporary)if(item!=null)Object.DestroyImmediate(item);temporary.Clear();}
+    }
     public static void Run()
     {
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
@@ -92,6 +110,7 @@ public static class TutorialPhotoBuilder
     private static void Capture(string name,Vector3 eye,Vector3 target,CarItemEffects effects=null,RaceItemType item=RaceItemType.None)
     {
         foreach(var arrow in Object.FindObjectsByType<RotatingBoostArrows>(FindObjectsSortMode.None))arrow.SetPhase(.4f);
+        foreach(var arrow in Object.FindObjectsByType<ForwardBoostArrows>(FindObjectsSortMode.None))arrow.SetPhase(.4f);
         var host=new GameObject("Tutorial photograph camera");var camera=host.AddComponent<Camera>();camera.enabled=false;
         camera.transform.SetPositionAndRotation(eye,Quaternion.LookRotation(target-eye));camera.nearClipPlane=.1f;camera.farClipPlane=1200;camera.fieldOfView=55f;
         GameObject overlay=null;

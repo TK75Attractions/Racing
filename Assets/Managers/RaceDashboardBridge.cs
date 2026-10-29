@@ -146,6 +146,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     [Serializable] private sealed class SettingsSnapshot
     {
         public float master, bgm, engine, effects, constantPedal;
+        public int[] outputDelayMs;
         public string inputMode, steeringMode;
         public bool inputAvailable, serialDebug, featurePanel, constantPaused, audioRefreshAvailable;
         public string[] deviceNames, deviceKeys, outputStatus, selectedDevices;
@@ -424,6 +425,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             rulesLocked = features?.RulesLocked ?? false, hasQueuedPreset = features?.HasQueuedPreset ?? false,
             canStartTestRace = features != null && race.CanUseDashboardControls &&
                 (race.state == Gmanager.State.Title || race.state == Gmanager.State.Result),
+            outputDelayMs = new[] { RaceAudioSettings.OutputDelayMs(0), RaceAudioSettings.OutputDelayMs(1) },
             master = RaceAudioSettings.Master, bgm = RaceAudioSettings.Bgm,
             engine = RaceAudioSettings.Engine, effects = RaceAudioSettings.Effects,
             inputAvailable = input != null, inputMode = input?.InputMode ?? "",
@@ -472,6 +474,9 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             }
             PlayerPrefs.Save(); return true;
         }
+        if (request.command == "outputDelay" && args.Length == 2 && (args[0] == "0" || args[0] == "1") &&
+            int.TryParse(args[1], out int milliseconds) && milliseconds >= 0 && milliseconds <= RaceAudioSettings.MaximumOutputDelayMs)
+        { RaceAudioSettings.SetOutputDelayMs(args[0] == "0" ? 0 : 1, milliseconds); return true; }
         if (request.command == "device" && args.Length == 2 && (args[0] == "0" || args[0] == "1"))
         {
             RaceAudioOutput output = RaceAudioOutput.Instance;
