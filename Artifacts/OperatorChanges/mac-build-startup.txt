@@ -1,0 +1,1 @@
+PASS: OperatorPlayerBuild.Build produced Builds/Operator/Verified/Race.app; app launched; production dashboard /api/status responded; state=Title; updateAvailable=True; no startup exceptions in player log.
