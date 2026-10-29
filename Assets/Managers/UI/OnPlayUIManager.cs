@@ -21,6 +21,7 @@ public class OnPlayUIManager
     private int noticePlayer;
     private ArcadeNoticeRail quiet;
     private ArcadeHUDTelemetry telemetry;
+    private WrongWayNotice wrongWayNotice;
     private readonly LapComparison lapComparison=new LapComparison();
     private int comparedPlayer=-1;
 
@@ -49,6 +50,7 @@ public class OnPlayUIManager
         Transform hud = RacingHUDBuilder.Build(parent, playerIndex, totalLaps);
         quiet=ArcadeNoticeRail.Get(parent.parent != null ? parent.parent : parent);telemetry=hud.GetComponent<ArcadeHUDTelemetry>();
         noticePlayer = playerIndex;
+        wrongWayNotice = WrongWayNotice.Create(parent.parent != null ? parent.parent : parent, playerIndex);
         notices.Clear();
         // Disable any legacy center card left by a previous initialization.
         Transform legacyNotice = hud.Find("DriverNotice");
@@ -91,6 +93,7 @@ public class OnPlayUIManager
         Transform car = manager != null ? manager.GetPlayerCarTransform(noticePlayer) : null;
         if (!racing || gate?.IsBlocked == true)
         {
+            wrongWayNotice?.SetState(false,0);
             notices.Clear();
             ShowDriverNotice(null);
             car?.GetComponent<DriftCoachingUI>()?.Notices.Clear();
@@ -150,7 +153,7 @@ public class OnPlayUIManager
             if (course.TryGetSampleAtProgress(progress, out RaceCourse.CourseSample here))
             {
                 DebugMover mover = car.GetComponent<DebugMover>();
-                wrong = mover != null && mover.SpeedMetersPerSecond > 2f && Vector3.Dot(car.forward, here.forward * sign) < -.35f;
+                wrong = car.GetComponent<CarResetter>()?.IsWrongWay == true;
                 // Sample successive tangents: endpoint angles alone miss S bends.
                 Vector3 previous = here.forward;
                 for (int i = 1; i <= 4; i++)
@@ -161,7 +164,8 @@ public class OnPlayUIManager
                     }
             }
         }
-        Condition("wrongWay", wrong, "逆走：進行方向を確認", DriverNoticePriority.Danger, now);
+        wrongWayNotice?.SetState(wrong, car != null ? car.GetComponent<CarResetter>()?.WrongWaySeconds ?? 0f : 0f);
+        notices.Release("wrongWay");
         Condition("curve", curve && !wrong, "急カーブ：手前で減速", DriverNoticePriority.Safety, now);
     }
 

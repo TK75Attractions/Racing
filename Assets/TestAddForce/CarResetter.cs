@@ -26,6 +26,8 @@ public class CarResetter : MonoBehaviour
     private readonly Collider[] occupants = new Collider[32];
     private static readonly float[] RecoverySides = {0f,-1f,1f};
     public int RecoveryCount { get; private set; }
+    public float WrongWaySeconds { get; private set; }
+    public bool IsWrongWay => WrongWaySeconds > 0f;
     public int AutomaticRecoveryCount { get; private set; }
     public bool IsRecoveryPending { get; private set; }
     public string RecoveryReason { get; private set; }
@@ -86,6 +88,16 @@ public class CarResetter : MonoBehaviour
         bool outside = !course.IsPointInsideDrivingArea(rb.position) ||
             (rb.position.y < here.position.y - 4f && !course.IsPointInsideTube(rb.position));
         float dt = Time.fixedDeltaTime;
+        float sign = laps != null && laps.IsProgressReversed ? -1f : 1f;
+        bool backwards = Vector3.Dot(rb.linearVelocity, here.forward * sign) < -2f;
+        bool stillFacingBack = WrongWaySeconds > 0f && Vector3.Dot(transform.forward, here.forward * sign) < -.35f;
+        WrongWaySeconds = grounded >= 2 && (backwards || stillFacingBack) ? WrongWaySeconds + dt : 0f;
+        if (WrongWaySeconds >= 2f)
+        {
+            RecoveryReason = "wrong-way"; IsRecoveryPending = true;
+            if (TryResetCar(true)) AutomaticRecoveryCount++;
+            return;
+        }
         unsafeSeconds = outside ? unsafeSeconds + dt : 0f;
         // A missed landing can briefly drive underneath the ramp and rejoin before
         // the normal off-course timeout, skipping an ordered lap gate forever.
@@ -184,6 +196,7 @@ public class CarResetter : MonoBehaviour
     {
         unsafeSeconds = overturnedSeconds = stuckSeconds = wallStuckSeconds = supportedStuckSeconds = missedLandingSeconds = 0f;
         trackingWallProgress = trackingSupportProgress = false;
+        WrongWaySeconds = 0f;
     }
 
     private void OnDisable()
@@ -265,7 +278,7 @@ public class CarResetter : MonoBehaviour
         }
         debugMover?.SuppressInputAfterRespawn();
         GetComponent<CarItemEffects>()?.GrantRecoveryProtection(2f);
-        if (inputSource is PlayerDriveInputGate gate) gate.RequirePedalRelease("course_reset");
+        // Course recovery resumes a connected held pedal after the short settle time.
 
         Debug.Log($"{name} Reset");
     }
