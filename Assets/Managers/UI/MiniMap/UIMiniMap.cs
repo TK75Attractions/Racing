@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 画面左下に出すレース中のミニマップです。
+/// 画面上部に出すレース中のミニマップです。
 /// コース形状は <see cref="RaceCourse"/> のキャッシュから初期化時に1度だけ組み立て、
 /// 毎フレームの処理は車マーカーの移動と回転だけに抑えています。
 /// </summary>
@@ -17,7 +17,7 @@ public class UIMiniMap
 
     [Header("Layout")]
     [SerializeField] private Vector2 mapSize = new Vector2(300f, 210f);
-    [SerializeField] private Vector2 screenMargin = new Vector2(40f, 40f);
+    [SerializeField] private Vector2 screenMargin = new Vector2(380f, 40f);
     [SerializeField, Min(0f)] private float padding = 14f;
     [SerializeField] private float mapRotationDegrees = 0f;
     [SerializeField, Min(1f)] private float markerSize = 20f;
@@ -76,19 +76,21 @@ public class UIMiniMap
         background.enabled = false;
         Transform oldSurface = rect.Find("ModernSurface");
         if (oldSurface != null) oldSurface.gameObject.SetActive(false);
-        RectTransform frame = RacingHUDStyle.Plate(rect, "MapFrame", new Vector2(0f, -.25f), new Vector2(1f, 1.30f),
-            RacingHUDPlateGraphic.PlateShape.Map, RacingHUDStyle.Teal);
+        var palette = ArcadeUI.For(ownPlayerIndex);
+        RectTransform frame = ArcadeUI.Panel(rect, "MapFrame", new Vector2(0f, -.25f), new Vector2(1f, 1.30f), palette.Ink);
+        var legacyPlate = frame.GetComponent<RacingHUDPlateGraphic>();
+        if (legacyPlate != null) legacyPlate.enabled = false;
         frame.SetAsFirstSibling();
-        RacingHUDStyle.Heading(frame, "コースマップ", "COURSE MAP", .08f, .81f, .92f, .97f, RacingHUDStyle.JapaneseSize);
-        RacingHUDStyle.Label(frame, "You", "あなた / YOU", .12f, .03f, .49f, .14f, RacingHUDStyle.CaptionSize, RacingHUDStyle.Text);
-        RacingHUDStyle.Label(frame, "Rival", "あいて / RIVAL", .59f, .03f, .97f, .14f, RacingHUDStyle.CaptionSize, RacingHUDStyle.Text);
-        LegendMarker(frame, "YouMarker", .045f, NeonUI.Pink);
-        LegendMarker(frame, "RivalMarker", .515f, Color.white);
-        LegendMarker(frame, "CpuMarker", .515f, new Color(1f,.8f,.25f));
-        RectTransform cpuLegend = frame.Find("CpuMarker") as RectTransform;
-        cpuLegend.anchorMin = new Vector2(.525f,.17f); cpuLegend.anchorMax = new Vector2(.555f,.20f);
-        cpuLegend.GetComponent<MiniMapMarkerGraphic>().Configure(true);
-        RacingHUDStyle.Label(frame, "CPU", "CPU", .59f, .14f, .97f, .24f, RacingHUDStyle.CaptionSize, new Color(1f,.8f,.25f));
+        ArcadeUI.HUDShadow(frame);
+        ArcadeUI.Label(frame, "Heading", "コースマップ", new Vector2(.07f,.82f), new Vector2(.93f,.98f), 22f, palette.Paper);
+        RacingUITheme.Rule(frame, "Accent", new Vector2(0,.98f), Vector2.one, palette.Primary);
+        ArcadeUI.Label(frame, "You", "自分", new Vector2(.15f,.03f), new Vector2(.34f,.14f), 17f, palette.Paper);
+        ArcadeUI.Label(frame, "Rival", "相手", new Vector2(.46f,.03f), new Vector2(.65f,.14f), 17f, palette.Paper);
+        ArcadeUI.Label(frame, "CPU", "CPU", new Vector2(.78f,.03f), new Vector2(.97f,.14f), 17f, palette.Paper);
+        LegendMarker(frame, "YouMarker", .065f, palette.Primary);
+        LegendMarker(frame, "RivalMarker", .38f, palette.Paper);
+        LegendMarker(frame, "CpuMarker", .70f, palette.Accent);
+        frame.Find("CpuMarker").GetComponent<MiniMapMarkerGraphic>().Configure(true);
 
         RectTransform viewport = (RectTransform)(rect.Find("Viewport") ?? CreateChild(rect, "Viewport", typeof(RectMask2D)).transform);
         viewport.anchorMin = Vector2.zero;
@@ -105,14 +107,14 @@ public class UIMiniMap
             if (oldGraphic != null) oldGraphic.SetParent(content, false);
         }
 
-        borderGraphic = EnsureGraphic<MiniMapTrackGraphic>(content, "Border", trackBorderColor);
-        borderGraphic.WidthScale = .22f * trackBorderScale;
-        trackGraphic = EnsureGraphic<MiniMapTrackGraphic>(content, "Track", trackColor);
-        trackGraphic.WidthScale = .22f;
+        borderGraphic = EnsureGraphic<MiniMapTrackGraphic>(content, "Border", palette.Ink);
+        borderGraphic.WidthScale = .50f * trackBorderScale;
+        trackGraphic = EnsureGraphic<MiniMapTrackGraphic>(content, "Track", new Color(palette.Paper.r, palette.Paper.g, palette.Paper.b, .65f));
+        trackGraphic.WidthScale = .50f;
 
         for (int index = 0; index < MarkerCount; index++)
         {
-            Color markerColor = index == ownPlayerIndex ? NeonUI.Pink : index >= 2 ? new Color(1f,.8f,.25f) : Color.white;
+            Color markerColor = index == ownPlayerIndex ? palette.Primary : index >= 2 ? palette.Accent : palette.Paper;
             markers[index] = EnsureGraphic<MiniMapMarkerGraphic>(content, $"Marker_P{index + 1}", markerColor);
             RectTransform markerRect = markers[index].rectTransform;
             markerRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -200,7 +202,7 @@ public class UIMiniMap
     {
         if (root != null)
         {
-            root.SetActive(isActive);
+            root.SetActive(isActive && projector.IsValid);
         }
     }
 
@@ -232,12 +234,11 @@ public class UIMiniMap
         if (rect == null) return;
 
         // UICamera が 16:9 にレターボックスされるため、Canvas の端がそのまま可視端になります。
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.zero;
-        rect.pivot = Vector2.zero;
+        rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 1f);
         rect.sizeDelta = mapSize;
-        // The course projection keeps its original dimensions; the bilingual header sits above it.
-        rect.anchoredPosition = new Vector2(screenMargin.x, screenMargin.y + mapSize.y * .25f);
+        // The course projection keeps its original dimensions; the map heading sits above it.
+        rect.anchoredPosition = new Vector2(screenMargin.x, -screenMargin.y - mapSize.y * .30f);
         rect.localScale = Vector3.one;
         rect.localRotation = Quaternion.identity;
     }
