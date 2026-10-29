@@ -9,7 +9,7 @@ public static class AudioBufferingValidation
     [MenuItem("Racing/Validation/Audio Buffering")]
     public static void Run()
     {
-        foreach (string track in new[] { "Race_Opening_v2", "finish_v2", "racegame_v3", "racegame_v3_final lap" })
+        foreach (string track in new[] { "Race_Opening_v3", "finishv4", "result_v3", "racegame_v3", "racegame_v3_final lap" })
         {
             string streamedPath = $"Assets/Resources/Audio/BGM/{track}.mp3";
             var streamedImporter = AssetImporter.GetAtPath(streamedPath) as AudioImporter;
@@ -36,7 +36,7 @@ public static class AudioBufferingValidation
         ulong count = (ulong)output.GetMethod("ra_get_underruns", native).Invoke(null, new object[] { -1 });
         Require(count == 0, "Native diagnostics must handle absent outputs safely.");
 #endif
-        Debug.Log($"AUDIO_BUFFERING_VALIDATION_PASS: four long stereo tracks stream; predecoded tutorial {clip.frequency}Hz/{clip.channels}ch; native buffer/diagnostic entry points loaded; no output device opened.");
+        Debug.Log($"AUDIO_BUFFERING_VALIDATION_PASS: five long stereo tracks stream; predecoded tutorial {clip.frequency}Hz/{clip.channels}ch; native buffer/diagnostic entry points loaded; no output device opened.");
     }
 
     private static void Require(bool condition, string message)

@@ -53,15 +53,16 @@ public static class PlayerAudioValidation
             Require(sources.Length == 2 && sources[0] != sources[1], "Each player needs an independent source.");
             manager.state = Gmanager.State.Title;
             AdvanceMusic(music);
-            Require(sources.All(s => s.clip != null && s.clip.name == "Race_Opening_v2"), "Title must use the opening track.");
+            ValidateTransport(music, sources);
+            Require(sources.All(s => s.clip != null && s.clip.name == "Race_Opening_v3"), "Title must use the opening track.");
             Set(players.GetValue(0), "preparationState", Gmanager.State.CarSelection);
             manager.state = Gmanager.State.CarSelection;
             AdvanceMusic(music);
-            Require(sources.All(s => s.clip.name == "Race_Opening_v2"), "Car selection and the other title screen must keep the opening track.");
+            Require(sources.All(s => s.clip.name == "Race_Opening_v3"), "Car selection and the other title screen must keep the opening track.");
             Set(players.GetValue(0), "preparationState", Gmanager.State.Tutorial);
             manager.state = Gmanager.State.Tutorial;
             AdvanceMusic(music);
-            Require(sources[0].clip.name == "TachibanaMoroe" && sources[1].clip.name == "Race_Opening_v2",
+            Require(sources[0].clip.name == "TachibanaMoroe" && sources[1].clip.name == "Race_Opening_v3",
                 "Each screen must select tutorial or opening music independently of the shared state.");
             Set(players.GetValue(1), "preparationState", Gmanager.State.Tutorial);
             AdvanceMusic(music);
@@ -85,24 +86,24 @@ public static class PlayerAudioValidation
             laps.GetCarData(bodies[1]).lapCount = 0;
             Set(players.GetValue(0), "result", new RaceResultRecord { didFinish = true });
             AdvanceMusic(music);
-            Require(sources[0].clip.name == "finish_v2" && sources[1].clip.name == "racegame_v3",
+            Require(sources[0].clip.name == "finishv4" && sources[1].clip.name == "racegame_v3",
                 "The goal celebration must start finish music only for the finisher.");
             Set(players.GetValue(0), "isSpectating", true);
             AdvanceMusic(music);
-            Require(manager.GetAudioViewedPlayer(0) == 1 && sources[0].clip.name == "finish_v2",
+            Require(manager.GetAudioViewedPlayer(0) == 1 && sources[0].clip.name == "finishv4",
                 "A finisher must retain finish music while spectating the other player.");
             Set(players.GetValue(0), "result", new RaceResultRecord { didFinish = false });
             AdvanceMusic(music);
             Require(sources[0].clip == sources[1].clip, "A DNF spectator still follows the watched player's race music.");
             manager.state = Gmanager.State.Goal;
             AdvanceMusic(music);
-            Require(sources.All(s => s.clip.name == "finish_v2"), "The shared goal scene must use finish music.");
+            Require(sources.All(s => s.clip.name == "finishv4"), "The shared goal scene must use finish music.");
             manager.state = Gmanager.State.Result;
             AdvanceMusic(music);
-            Require(sources.All(s => s.clip.name == "finish_v2"), "Results must keep finish music.");
+            Require(sources.All(s => s.clip.name == "result_v3"), "Results must use the dedicated result track.");
             Set(players.GetValue(0), "returnedToTitle", true);
             AdvanceMusic(music);
-            Require(sources[0].clip.name == "Race_Opening_v2" && sources[1].clip.name == "finish_v2",
+            Require(sources[0].clip.name == "Race_Opening_v3" && sources[1].clip.name == "result_v3",
                 "Returning one screen to the title must not change the other result screen.");
             laps.ResetRace();
             for (int i = 0; i < 2; i++)
@@ -165,11 +166,39 @@ public static class PlayerAudioValidation
         }
     }
 
+    private static void ValidateTransport(RaceBackgroundMusic music, AudioSource[] sources)
+    {
+        var epochs = (System.Collections.Generic.Dictionary<AudioClip, double>)Get(music, "clipEpochs");
+        AudioClip clip = sources[0].clip;
+        double epoch = epochs[clip];
+        var start = typeof(RaceBackgroundMusic).GetMethod("StartOnTransport", Private);
+        // Join several seconds later, then after a complete loop. Both must use
+        // the same transport rather than restarting their local track at zero.
+        foreach (double offset in new[] { 4.0, (double)clip.samples / clip.frequency + 7.0 })
+        {
+            double at = epoch + offset;
+            start.Invoke(music, new object[] { 1, clip, at });
+            int expected = (int)(Math.Floor(offset * clip.frequency) % clip.samples);
+            Require(Math.Abs(sources[1].timeSamples - expected) <= 1, "Late join/loop must seek to the shared sample position.");
+            Require(epochs[clip] == epoch, "Joining must not reset the transport for the other output.");
+        }
+        double boundary = AudioSettings.dspTime + .2;
+        start.Invoke(music, new object[] { 0, clip, boundary });
+        start.Invoke(music, new object[] { 1, clip, boundary });
+        Require(sources[0].timeSamples == sources[1].timeSamples, "Same-boundary starts must select the identical PCM sample.");
+    }
+
     private static void AdvanceMusic(RaceBackgroundMusic music)
     {
         // Advance the real fade deterministically; edit-mode Update has no reliable frame delta.
         MethodInfo tick = typeof(RaceBackgroundMusic).GetMethod("Tick", Private);
-        for (int frame = 0; frame < 20; frame++) tick.Invoke(music, new object[] { .05f });
+        for (int frame = 0; frame < 20; frame++)
+        {
+            // Sources are inactive in this fixture; simulate passing their DSP start.
+            var starts = (double[])Get(music, "playbackStarts");
+            starts[0] = starts[1] = 0;
+            tick.Invoke(music, new object[] { .05f });
+        }
     }
 
     private static GameObject Child(Transform parent, string name)

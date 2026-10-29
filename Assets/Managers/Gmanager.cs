@@ -297,6 +297,7 @@ public class Gmanager : MonoBehaviour
 
     public void Awake()
     {
+        if (GetComponent<RaceOperatorUpdate>() == null) gameObject.AddComponent<RaceOperatorUpdate>();
         if (Control == null) Control = this;
         else
         {
@@ -964,6 +965,7 @@ public class Gmanager : MonoBehaviour
             Vector3 spawnPosition = basePosition + gridRight * startGridSpacing * side;
             player.car = Instantiate(carPrefab, spawnPosition, spawnRotation);
             player.car.name = $"Player{playerIndex + 1}_Car";
+            RaceGridPlacement.Ground(player.car);
             player.isSpectating = false;
             foreach (AudioSource source in player.car.GetComponentsInChildren<AudioSource>(true))
             {
@@ -1055,8 +1057,11 @@ public class Gmanager : MonoBehaviour
         for (int cpu = 0; cpu < Mathf.Clamp(npcCount, 0, 2); cpu++)
         {
             int index = PlayerCount + cpu;
-            GameObject vehicle = Instantiate(carPrefab, position - rotation * Vector3.forward * 7f + right * startGridSpacing * (cpu == 0 ? -.5f : .5f), rotation);
+            GameObject vehicle = Instantiate(carPrefab, position - rotation * Vector3.forward * 14f + right * startGridSpacing * (cpu == 0 ? -.5f : .5f), rotation);
             vehicle.name = $"CPU{cpu + 1}_Car";
+            // Keep the CPU row behind the chase lenses, including their near planes.
+            // It is kinematic throughout the intro/countdown, so seat it before freezing.
+            RaceGridPlacement.Ground(vehicle);
             CarNightGlow nightGlow = vehicle.GetComponent<CarNightGlow>() ?? vehicle.AddComponent<CarNightGlow>();
             nightGlow.Configure(index);
             if (vehicle.GetComponent<CarBodyMotion>() == null) vehicle.AddComponent<CarBodyMotion>();

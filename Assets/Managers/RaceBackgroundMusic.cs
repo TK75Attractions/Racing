@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>画面ごとのBGMと、ゲーム停止中も流すメンテナンス用BGMを管理します。</summary>
@@ -5,9 +6,10 @@ using UnityEngine;
 [RequireComponent(typeof(RaceAudioOutput))]
 public sealed class RaceBackgroundMusic : MonoBehaviour
 {
-    private const string MenuClipPath = "Audio/BGM/Race_Opening_v2";
+    private const string MenuClipPath = "Audio/BGM/Race_Opening_v3";
     private const string TutorialClipPath = "Audio/BGM/TachibanaMoroe";
-    private const string FinishClipPath = "Audio/BGM/finish_v2";
+    private const string FinishClipPath = "Audio/BGM/finishv4";
+    private const string ResultClipPath = "Audio/BGM/result_v3";
     private const string RaceClipPath = "Audio/BGM/racegame_v3";
     private const string FinalLapClipPath = "Audio/BGM/racegame_v3_final lap";
     [SerializeField, Range(0f, 1f)] private float volume = 0.9f;
@@ -19,8 +21,12 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
     private readonly bool[] switching = new bool[2];
     private readonly AudioSource[] maintenanceSources = new AudioSource[2];
     private readonly RaceSoundEffectsMixer[] maintenanceMixers = new RaceSoundEffectsMixer[2];
-    private AudioClip menuClip, tutorialClip, finishClip, raceClip, finalLapClip;
+    private AudioClip menuClip, tutorialClip, finishClip, resultClip, raceClip, finalLapClip;
     private AudioClip silentClip;
+    // DSP time stops with AudioListener.pause, so maintenance preserves the transport.
+    private readonly Dictionary<AudioClip, double> clipEpochs = new Dictionary<AudioClip, double>();
+    private readonly List<AudioClip> expiredClips = new List<AudioClip>();
+    private readonly double[] playbackStarts = new double[2];
 
     private void Awake()
     {
@@ -29,6 +35,7 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
         menuClip = Resources.Load<AudioClip>(MenuClipPath);
         tutorialClip = Resources.Load<AudioClip>(TutorialClipPath);
         finishClip = Resources.Load<AudioClip>(FinishClipPath);
+        resultClip = Resources.Load<AudioClip>(ResultClipPath);
         raceClip = Resources.Load<AudioClip>(RaceClipPath);
         finalLapClip = Resources.Load<AudioClip>(FinalLapClipPath);
         silentClip = AudioClip.Create("Silent effects clock",512,1,AudioSettings.outputSampleRate,false);
@@ -50,8 +57,8 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
             sourceObject.AddComponent<PlayerAudioCapture>().ConfigureMusic(GetComponent<RaceAudioOutput>(), player);
         }
         RaceAudioSettings.ApplyMaster();
-        if (menuClip == null || tutorialClip == null || finishClip == null || raceClip == null || finalLapClip == null)
-            Debug.LogError($"RaceBackgroundMusic: BGMの読み込み失敗。Menu={menuClip != null}, Tutorial={tutorialClip != null}, Finish={finishClip != null}, Race={raceClip != null}, FinalLap={finalLapClip != null}", this);
+        if (menuClip == null || tutorialClip == null || finishClip == null || resultClip == null || raceClip == null || finalLapClip == null)
+            Debug.LogError($"RaceBackgroundMusic: BGMの読み込み失敗。Menu={menuClip != null}, Tutorial={tutorialClip != null}, Finish={finishClip != null}, Result={resultClip != null}, Race={raceClip != null}, FinalLap={finalLapClip != null}", this);
     }
 
     private void Update()
@@ -68,6 +75,14 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
             return; // Keep the paused gameplay tracks and their fades at the exact same position.
         }
         SetMaintenanceMusic(false);
+        // Retire a transport after both outputs have left it. A new race starts at zero.
+        expiredClips.Clear();
+        foreach (var transport in clipEpochs)
+            if (sources[0].clip != transport.Key && sources[1].clip != transport.Key)
+                expiredClips.Add(transport.Key);
+        foreach (AudioClip clip in expiredClips) clipEpochs.Remove(clip);
+        AudioSettings.GetDSPBufferSize(out int bufferFrames, out _);
+        double startAt = AudioSettings.dspTime + System.Math.Max(.1, 2.0 * bufferFrames / AudioSettings.outputSampleRate);
         for (int player = 0; player < sources.Length; player++)
         {
             AudioSource source = sources[player];
@@ -84,8 +99,10 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
                     desired = tutorialClip;
                     break;
                 case Gmanager.State.Goal:
-                case Gmanager.State.Result:
                     desired = finishClip;
+                    break;
+                case Gmanager.State.Result:
+                    desired = resultClip;
                     break;
                 default:
                     desired = gameManager.IsPlayerOnFinalLap(viewedPlayer) ? finalLapClip : raceClip;
@@ -94,9 +111,8 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
             desired = desired ?? silentClip;
             if (source.clip == null)
             {
-                source.clip = desired;
                 requestedClips[player] = desired;
-                if (desired != null && source.isActiveAndEnabled) source.Play();
+                StartOnTransport(player, desired, startAt);
             }
             else if (requestedClips[player] != desired)
             {
@@ -109,16 +125,32 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
                 transitionGains[player] = Mathf.MoveTowards(transitionGains[player], 0f, dt / .35f);
                 if (transitionGains[player] <= 0f)
                 {
-                    source.clip = requestedClips[player];
-                    source.time = 0f;
-                    if (source.isActiveAndEnabled) source.Play();
+                    StartOnTransport(player, requestedClips[player], startAt);
                     switching[player] = false;
                 }
             }
-            else
+            else if (AudioSettings.dspTime >= playbackStarts[player])
                 transitionGains[player] = Mathf.MoveTowards(transitionGains[player], 1f, dt / .55f);
             mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm * RaceAudioSettings.NotificationDuck * transitionGains[player]);
         }
+    }
+
+    private void StartOnTransport(int player, AudioClip clip, double startAt)
+    {
+        AudioSource source = sources[player];
+        source.Stop();
+        source.clip = clip;
+        if (!clipEpochs.TryGetValue(clip, out double epoch))
+        {
+            epoch = startAt;
+            clipEpochs.Add(clip, epoch);
+        }
+        // Both new sources use one scheduled DSP boundary. A late joiner seeks
+        // to that same transport, including across loop boundaries.
+        double elapsed = System.Math.Max(0, startAt - epoch);
+        source.timeSamples = (int)(System.Math.Floor(elapsed * clip.frequency) % clip.samples);
+        playbackStarts[player] = startAt;
+        if (source.isActiveAndEnabled) source.PlayScheduled(startAt);
     }
 
     public void SetMaintenanceMusic(bool active)

@@ -1094,6 +1094,7 @@ function renderMaintenance(settings) {
 
 function renderSettings(settings, canControl) {
   renderMaintenance(settings);
+  $('operator-update-status').textContent = connected ? settings?.updateStatus ?? '更新機能のあるバージョンで起動してください。' : 'Unity の接続を待っています。更新中は接続が切れ、新しいアプリの起動後に再接続します。';
   renderFeatureSettings(settings);
   const enabled = connected && localMode && canControl && !!settings && !settingsBusy;
   document.querySelectorAll('[data-setting]').forEach(control => {
@@ -1103,6 +1104,7 @@ function renderSettings(settings, canControl) {
       available = !!settings?.inputAvailable;
     if (['constantPedal', 'constantPaused'].includes(command)) available &&= settings?.steeringMode === 'ConstantPedal';
     if (['feature', 'preset', 'allFeaturesOff'].includes(command)) available = !!settings?.featuresAvailable;
+    if (command === 'updateAndRun') available = settings?.updateAvailable === true && settings?.updateBusy !== true;
     if (command === 'maintenance') available = settings?.maintenanceAvailable === true;
     if (command === 'testRace') available = !!settings?.canStartTestRace;
     if (command === 'device') available = !!settings?.outputAvailable?.[Number(control.dataset.settingArg)];
@@ -1153,7 +1155,7 @@ async function submitSetting(control) {
   else if (command === 'volume') args = [control.dataset.settingArg, String(Number(control.value) / 100)];
   else if (command === 'device') args = [control.dataset.settingArg, control.value];
   else if (command === 'testRace') args = control.dataset.settingArg === 'both' ? ['both'] : [];
-  else if (['refreshDevices', 'allFeaturesOff'].includes(command)) args = [];
+  else if (['refreshDevices', 'allFeaturesOff', 'updateAndRun'].includes(command)) args = [];
   else if (command === 'constantPedal') args = [String(Number(control.value) / 100)];
   else args = [control.type === 'checkbox' ? String(control.checked) : control.value];
   const requestedSession = latestSnapshot.sessionId;
