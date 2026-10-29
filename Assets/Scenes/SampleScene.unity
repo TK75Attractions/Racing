@@ -499,6 +499,10 @@ PrefabInstance:
       propertyPath: m_Mesh
       value: 
       objectReference: {fileID: 4300000, guid: c14a0588f302f41569eae40b4071a322, type: 2}
+    - target: {fileID: -2721606235092323842, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: -2036472721373001367, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
       value: 2
@@ -547,6 +551,10 @@ PrefabInstance:
       propertyPath: m_MeshLodSelectionBias
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 2454896018090832084, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3724796516150971620, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
       value: 2
@@ -554,6 +562,10 @@ PrefabInstance:
     - target: {fileID: 3802489966895491949, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4511075456817119720, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4677869001304601685, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_MeshLodSelectionBias
@@ -577,6 +589,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6745302439343835087, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
       propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6881711279046530820, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8265173612288410850, guid: 8d9f032962a84a75abcf085b6ec35373, type: 3}
@@ -6027,7 +6043,6 @@ MonoBehaviour:
   lapManager: {fileID: 0}
   secondPlaceTimeoutSeconds: 40
   maximumHumanFinishGraceSeconds: 180
-  carSelectionTimeLimitSeconds: 30
   tutorialTimeLimitSeconds: 60
   npcCount: 2
   maximumRaceSeconds: 360
