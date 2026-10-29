@@ -28,6 +28,7 @@ public class Gmanager : MonoBehaviour
         public int resultSelection;
         public float resultConfirmTimer;
         public bool resultConfirmArmed;
+        public float resultDisplayElapsed;
         public bool returnedToTitle;
         public PlayerDriveInputGate inputGate;
         public InterruptionMenuUI interruptionMenu;
@@ -78,7 +79,7 @@ public class Gmanager : MonoBehaviour
 
     [Header("CPU opponents (rehearsal)")]
     [SerializeField, Range(0, 2)] private int npcCount = 2;
-    [SerializeField, Min(60f)] private float maximumRaceSeconds = 360f;
+    [SerializeField, Min(60f)] private float maximumRaceSeconds = 180f;
 
     [Header("Displays")]
     [Tooltip("P1 uses the main game window. On macOS, P2 opens a movable window on this preferred screen (or the main screen if unavailable). In the Editor, this is P2's Game view display number.")]
@@ -118,6 +119,9 @@ public class Gmanager : MonoBehaviour
     private readonly ScreenTransitionController[] screenTransitions = new ScreenTransitionController[PlayerCount];
     private PlayerDisplayRig[] displayRigs = new PlayerDisplayRig[0];
     private float resultReturnInputDelayTimer;
+    private readonly PreRaceCountdown preparationClock = new PreRaceCountdown();
+    public float PreparationTimeRemaining => preparationClock.Remaining;
+    public const float ResultDisplaySeconds = 15f;
     private bool finishingPreparation;
     private float countdownTimeRemaining;
     private float goMessageTimeRemaining;
@@ -290,6 +294,7 @@ public class Gmanager : MonoBehaviour
 
     public void Awake()
     {
+        StartAreaCeilingCollision.EnsureForScene(gameObject.scene);
         if (GetComponent<RaceOperatorUpdate>() == null) gameObject.AddComponent<RaceOperatorUpdate>();
         if (Control == null) Control = this;
         else
@@ -359,6 +364,9 @@ public class Gmanager : MonoBehaviour
             }
             else if (!IsScreenTransitioning() && state == State.Result) UpdateResultReturnInput(dt);
         }
+
+        if (state == State.Result) UpdateResultDisplay(Time.unscaledDeltaTime);
+        UpdatePreparationDeadline(Time.unscaledDeltaTime);
 
         if ((state == State.CarSelection || state == State.Tutorial) && !finishingPreparation)
         {
@@ -627,8 +635,15 @@ public class Gmanager : MonoBehaviour
         if (player.preparationState != State.Title || screenTransitions[playerIndex]?.IsTransitioning == true) return;
         if (Features != null && !Features.Settings.RulesLocked)
         { Features.Settings.BeginPreparation(); ApplyFeatureRules(); }
-        soundEffects?.Play(RaceSoundCue.Ready, playerIndex);
-        TransitionPlayer(playerIndex, State.Tutorial, () => BeginPlayerTutorial(playerIndex));
+        preparationClock.Start();
+        // One group shares a deadline; the second screen cannot wait indefinitely at title.
+        for (int i = 0; i < PlayerCount; i++)
+        {
+            if (players[i].preparationState != State.Title || screenTransitions[i]?.IsTransitioning == true) continue;
+            int index = i;
+            soundEffects?.Play(RaceSoundCue.Ready, index);
+            TransitionPlayer(index, State.Tutorial, () => BeginPlayerTutorial(index));
+        }
     }
 
     // Title input and the operator both start practice directly, using the fixed player car.
@@ -643,11 +658,8 @@ public class Gmanager : MonoBehaviour
     {
         if (!IsPreparing || !CanUseDashboardControls || finishingPreparation) return false;
         bool advanced = false;
-        for (int i = 0; i < PlayerCount; i++)
-        {
-            if (players[i].preparationState == State.Title)
-            { int index = i; TransitionPlayer(index, State.Tutorial, () => BeginPlayerTutorial(index)); advanced = true; }
-        }
+        foreach (var player in players) advanced |= player.preparationState == State.Title;
+        StartGame();
         return advanced;
     }
 
@@ -854,7 +866,7 @@ public class Gmanager : MonoBehaviour
         screenTransitions[index]?.ClearRaceStatus();
         if (drivingTutorial == null) drivingTutorial = gameObject.AddComponent<DrivingTutorialController>();
         drivingTutorial.BeginPlayer(carPrefab, IManager, displayRigs, index,
-            null, tutorialTimeLimitSeconds);
+            null, Mathf.Min(tutorialTimeLimitSeconds, DrivingTutorialProgress.DefaultTimeLimitSeconds));
         SwitchPlayerCameraForState(players[index], State.Tutorial);
     }
 
@@ -901,7 +913,7 @@ public class Gmanager : MonoBehaviour
         allowDailyRecording &= FindFirstObjectByType<BalancePlaytestAgent>() == null;
 #endif
         dailyRanking.BeginRace(DailyRaceRanking.BoardKey(course, GoalLap, CourseProgressSign, Features.Settings.ActivePreset),
-            GoalLap, CourseProgressSign < 0, Features.Settings.ActivePreset == RacePreset.Experience, allowDailyRecording && !BothPlayersAutodrive);
+            GoalLap, CourseProgressSign < 0, false, allowDailyRecording && !BothPlayersAutodrive);
         countdownTimeRemaining = Mathf.Max(0f, raceCountdownSeconds);
         lastCountdownSound = -1;
         goMessageTimeRemaining = 0f;
@@ -1100,6 +1112,20 @@ public class Gmanager : MonoBehaviour
         }
     }
 
+    private void UpdatePreparationDeadline(float dt)
+    {
+        if (!preparationClock.IsRunning) return;
+        preparationClock.Tick(dt);
+        if (state == State.Tutorial && preparationClock.MustLeavePractice && !finishingPreparation && !IsScreenTransitioning())
+            AdvanceDashboardToCountdown();
+        if (state == State.Countdown && preparationClock.MustFinishIntro)
+        {
+            courseIntro?.Stop();
+            countdownTimeRemaining = Mathf.Min(countdownTimeRemaining, preparationClock.Remaining);
+            if (countdownTimeRemaining <= 0f && !finishingPreparation) StartRaceAfterCountdown();
+        }
+    }
+
     private void UpdateRaceCountdown(float dt)
     {
         if (IsCourseIntroPlaying)
@@ -1143,6 +1169,7 @@ public class Gmanager : MonoBehaviour
         countdownTimeRemaining = 0f;
         goMessageTimeRemaining = Mathf.Max(0f, goMessageSeconds);
         state = State.Game;
+        preparationClock.Stop();
         soundEffects?.PlayForAll(RaceSoundCue.Go);
         lapManager?.ResumeRace();
         foreach (RaceParticipant entry in participants) entry.Driver?.SetDriving(true);
@@ -1418,6 +1445,7 @@ public class Gmanager : MonoBehaviour
     private void ClearCurrentRaceObjects()
     {
         BothPlayersAutodrive = false;
+        preparationClock.Reset();
         courseIntro?.Stop();
         drivingTutorial?.End();
         finishingPreparation = false;
@@ -1807,10 +1835,29 @@ public class Gmanager : MonoBehaviour
         if(option != 0 || state != State.Result || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount || players[playerIndex].returnedToTitle) return;
         soundEffects?.Play(RaceSoundCue.Confirm, playerIndex);
         resultUIManagers[playerIndex]?.PlayConfirm(option);
+        ShowExitPrompt(playerIndex);
+    }
+
+    private void ShowExitPrompt(int playerIndex)
+    {
         var ending=ArcadeEndingUI.Get(players[playerIndex].displayRig.CanvasRoot.transform);
         if(ending.IsVisible)return;
         players[playerIndex].titleCamera.Priority=20;players[playerIndex].displayRig.RaceCamera.Priority=10;
         ending.Show(()=>ReturnPlayerToTitle(playerIndex));
+    }
+
+    private void UpdateResultDisplay(float dt)
+    {
+        // Count only time actually presenting each player's result, independently of pedal input.
+        for (int i = 0; i < PlayerCount; i++)
+        {
+            var player = players[i];
+            if (player == null || player.returnedToTitle || screenTransitions[i]?.IsTransitioning == true ||
+                player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>()?.IsVisible == true ||
+                resultUIManagers[i]?.IsVisible != true) continue;
+            player.resultDisplayElapsed += Mathf.Max(0f, dt);
+            if (player.resultDisplayElapsed >= ResultDisplaySeconds) ShowExitPrompt(i);
+        }
     }
 
     private void UpdateResultReturnInput(float dt)
@@ -1858,6 +1905,7 @@ public class Gmanager : MonoBehaviour
             player.resultSelection = 0;
             player.resultConfirmTimer = 0f;
             player.resultConfirmArmed = false;
+            player.resultDisplayElapsed = 0f;
             player.returnedToTitle = false;
         }
     }

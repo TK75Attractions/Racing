@@ -34,41 +34,33 @@ public sealed class RaceFeatureSettingsTests
         settings.SetFeature(RaceFeature.DriftCoaching, true);
         Assert.AreEqual(RaceFeatureSettings.StandardFeatures, settings.Enabled);
     }
-    [Test] public void AQueuedPresetCannotChangeTheCurrentRace()
+    [Test] public void RemovedPresetCannotChangeRulesOrEnableGentleItems()
     {
         var settings = new RaceFeatureSettings();
         settings.BeginPreparation();
-        settings.SelectPreset(RacePreset.Experience);
+        settings.SelectPreset((RacePreset)1);
         Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
+        Assert.AreEqual(RacePreset.Standard, settings.SelectedPreset);
+        Assert.IsFalse(settings.HasQueuedPreset);
         Assert.IsFalse(settings.IsEnabled(RaceFeature.ExperienceItems));
-        settings.BeginPreparation();
-        Assert.AreEqual(RacePreset.Experience, settings.ActivePreset);
-        Assert.IsTrue(settings.IsEnabled(RaceFeature.ExperienceItems));
         settings.ResetForNextGroup();
         Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
         Assert.IsFalse(settings.RulesLocked);
     }
-    [Test] public void AnExplicitQueuedPresetSurvivesNextGroupWhileUnqueuedExperienceResets()
+    [Test] public void NormalRulesCapTheRaceAtThreeMinutesEvenWithLegacySceneSettings()
+    {
+        var rules = new RaceRuleSet(RacePreset.Standard, 2, 360, 40, 180);
+        Assert.AreEqual(2, rules.GoalLaps);
+        Assert.AreEqual(180, rules.MaximumSeconds);
+        Assert.AreEqual(180, rules.MaximumGraceSeconds);
+    }
+    [Test] public void IndependentGentleItemAssistanceSurvivesPreparation()
     {
         var settings = new RaceFeatureSettings();
+        settings.SetFeature(RaceFeature.ExperienceItems, true);
         settings.BeginPreparation();
-        settings.SelectPreset(RacePreset.Experience);
-        settings.ResetForNextGroup();
-        Assert.AreEqual(RacePreset.Experience, settings.ActivePreset);
-        Assert.IsFalse(settings.HasQueuedPreset);
-        settings.BeginPreparation();
-        settings.ResetForNextGroup();
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.ExperienceItems));
         Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
-    }
-    [Test] public void ExperienceRulesAndCustomStandardRulesDoNotMutateEachOther()
-    {
-        var standard = new RaceRuleSet(RacePreset.Standard, 3, 240, 25, 120);
-        var experience = new RaceRuleSet(RacePreset.Experience, 3, 240, 25, 120);
-        Assert.AreEqual(3, standard.GoalLaps);
-        Assert.AreEqual(240, standard.MaximumSeconds);
-        Assert.AreEqual(1, experience.GoalLaps);
-        Assert.AreEqual(180, experience.MaximumSeconds);
-        Assert.AreEqual(90, experience.MaximumGraceSeconds);
     }
     private static void settingsStandardCannotBeDisabled()
     {

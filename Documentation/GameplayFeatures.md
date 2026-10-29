@@ -14,10 +14,9 @@ Macでファンクションキーがメディア操作に割り当てられて�
 
 ## レース設定
 
-- **Standard**：シーンの周回数・制限時間を使用します（通常2周、360秒、先着後40〜180秒）。
-- **Experience**：1周、最大180秒、先着後の猶予は基本40秒〜最大90秒。どちらも全体上限が優先します。
-- 最初のプレイヤーが車選択へ入った時点で、両者の周回と締切を固定します。準備中・走行中のプリセット操作は **次レースへの予約** です。現在と予約先をパネルに併記します。
-- リトライは選択中のプリセットを使います。次の組でタイトルへ戻すと通常はStandardへ戻りますが、明示的に予約したプリセットがあれば予約を優先します。
+- 通常レースのみ、2周・最大180秒。体験プリセットと予約選択は廃止しました。
+- スタート操作からレース開始まで、両者共通で最大60秒。結果は15秒後に退出案内へ切り替わります。
+- 最初のスタート操作で周回と締切を固定します。詳細は[画面と時間制限](ScreenTimeLimits.md)を参照。
 - **Gentle items** は走行中に即時切替できます。ONでは1位はシールド、2位以下はロケット。CPUは従来どおりアイテムを取得しません。
 - 「All added features OFF」は追加機能をまとめて無効にします。周回・締切は途中変更しません。
 
@@ -62,15 +61,7 @@ RACING_BALANCE_TIME_SCALE=3 RACING_BALANCE_OUTPUT=/private/tmp/racing-feature-pl
 Tools/RunBalancePlaytest.sh
 ```
 
-体験プリセットを最初から指定する実走は、次のように行います。
-
-```sh
-RACING_FEATURE_PRESET=experience RACING_BALANCE_RUN=items-402 \
-RACING_BALANCE_TIME_SCALE=3 RACING_BALANCE_OUTPUT=/private/tmp/racing-feature-experience \
-Tools/RunBalancePlaytest.sh
-```
-
-切替プローブはStandard／Experienceの両方に対応し、開始時のプリセットへ復元します。`RACING_CHALLENGE_PLAYTEST=1`を併用すると、検証用の人間代替入力がチューブ左右のラインを狙います。車の位置・速度は変更せず、通常のハンドルとペダルだけを使います。
+切替プローブは通常レースを使用します。`RACING_CHALLENGE_PLAYTEST=1`を併用すると、検証用の人間代替入力がチューブ左右のラインを狙います。車の位置・速度は変更せず、通常のハンドルとペダルだけを使います。
 
 通常の自動試走はコース端を避けるため、ハンドルアシストの介入時間が0でも正常です。外れそうな入力での補正の成立は、実接地を使ったUnity検証で別に確認しています。
 

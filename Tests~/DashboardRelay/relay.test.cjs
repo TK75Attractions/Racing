@@ -531,8 +531,8 @@ test('production bridge → relay → WebSocket integration', {timeout:90000}, a
         await waitFor(async()=>!(await request('/api/status')).json.settings.features.find(feature=>feature.id==='SteeringAssist').enabled);
         send('feature:CampusAtmosphere');
         await page.waitForFunction(()=>!document.getElementById('settings-feature-CampusAtmosphere').checked);
-        await page.locator('#settings-preset:enabled').selectOption('Experience');
-        await page.locator('#settings-rules').filter({hasText:'予約済み'}).waitFor();
+        assert.equal(await page.locator('#settings-preset').count(),0);
+        await page.locator('#settings-rules').filter({hasText:'制限時間180秒'}).waitFor();
         assert.equal((await request('/api/status')).json.settings.activePreset,'Standard');
         await page.locator('#settings-all-off:enabled').click();
         await waitFor(async()=>(await request('/api/status')).json.settings.features.every(feature=>!feature.enabled));

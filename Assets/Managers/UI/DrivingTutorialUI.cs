@@ -12,6 +12,7 @@ public sealed class DrivingTutorialUI
     private readonly PreparationTimerUI timer;
     private readonly GameObject preparationTimer;
     private readonly GameObject instruments;
+    private readonly GameObject currentInstruction;
     private readonly UISpeed speed=new UISpeed();
     private readonly ArcadeHUDTelemetry telemetry;
     private readonly RacingSteeringIndicator steering;
@@ -35,6 +36,7 @@ public sealed class DrivingTutorialUI
         timer=new PreparationTimerUI(r,new Vector2(.82f,.88f),new Vector2(.97f,.96f),tutorial:true);
         preparationTimer=r.Find("PreparationTimer").gameObject;
         var lesson=ArcadeUI.Panel(r,"CurrentInstruction",new Vector2(.31f,.775f),new Vector2(.69f,.975f),p.Ink);
+        currentInstruction=lesson.gameObject;
         step=TutorialText.Label(lesson,"Step","01",new Vector2(.045f,.28f),new Vector2(.28f,.85f),104,p.Soft,true,TextAlignmentOptions.Center);step.fontStyle=FontStyles.Italic;
         TutorialText.Label(lesson,"Total","/ 03",new Vector2(.06f,.13f),new Vector2(.26f,.30f),22,p.Paper,true,TextAlignmentOptions.Center);
         RacingUITheme.Rule(lesson,"Divider",new Vector2(.31f,.16f),new Vector2(.315f,.89f),p.Primary);
@@ -60,6 +62,7 @@ public sealed class DrivingTutorialUI
         bool explaining = lesson.IsFinished && briefing != null && !briefing.IsComplete;
         instruments.SetActive(!(lesson.IsFinished && briefing != null));
         preparationTimer.SetActive(!lesson.IsFinished);
+        currentInstruction.SetActive(!lesson.IsFinished);
         itemGuide.SetActive(connected && lesson.IsFinished && briefing == null);
         gimmickGuide.Update(lesson.IsFinished ? briefing : null, connected);
         int stage=lesson.HasTimedOut?4:(int)lesson.CurrentStage;

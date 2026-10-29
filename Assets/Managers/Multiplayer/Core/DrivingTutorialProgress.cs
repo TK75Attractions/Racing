@@ -7,7 +7,7 @@ public sealed class DrivingTutorialProgress
     public Stage CurrentStage { get; private set; }
     public bool PedalReleased { get; private set; }
     public bool IsComplete => CurrentStage == Stage.Complete;
-    public const float DefaultTimeLimitSeconds = 60f;
+    public const float DefaultTimeLimitSeconds = 35f;
     public bool HasTimedOut => countdown.HasExpired;
     public bool IsFinished => IsComplete || HasTimedOut;
     public float TimeRemaining => countdown.RemainingSeconds;

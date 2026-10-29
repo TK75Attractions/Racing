@@ -1,0 +1,2 @@
+PASS: actual start-side roof bounds; positive-scale slab; no duplicates; 12 production chassis/layer upward/downward collision trials at 10/30/80 m/s and 0.02s physics steps, including roof edge.
+PASS: prominent LIVE badge on current footage only; hidden for REPLAY and COURSE PV; noninteractive overlay; spectator identity retained; description hidden; watched P1/P2 colors on all four edges; overlay hides after spectating. UI captures use a recorded race reference as background.

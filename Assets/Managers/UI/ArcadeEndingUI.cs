@@ -22,7 +22,7 @@ public sealed class ArcadeEndingUI : MonoBehaviour
             ArcadeUI.Logo(r,new Vector2(.33f,.71f),new Vector2(.67f,.88f));
             var thanks=ArcadeUI.Panel(r,"Thanks",new Vector2(.29f,.27f),new Vector2(.71f,.67f),p.Ink);
             var label=ArcadeUI.Label(thanks,"Message","プレイありがとう\nございました！",new Vector2(.06f,.29f),new Vector2(.94f,.92f),68,p.Paper,false,TextAlignmentOptions.Center);label.textWrappingMode=TextWrappingModes.Normal;
-            ArcadeUI.Label(thanks,"Again","また遊びにきてね。",new Vector2(.08f,.08f),new Vector2(.92f,.27f),25,p.Soft,false,TextAlignmentOptions.Center);
+            var exit=ArcadeUI.Label(thanks,"Again","ペダルから あしをはなし、\nゆっくり おりてね。",new Vector2(.08f,.06f),new Vector2(.92f,.30f),29,p.Soft,false,TextAlignmentOptions.Center);exit.textWrappingMode=TextWrappingModes.Normal;
             var back=NeonUI.Button(r,"Back","タイトルへ戻る","",RacingIconGraphic.Icon.Home,new Vector2(.38f,.115f),new Vector2(.62f,.215f),true,ui.Finish);back.ConfigureHold(.65f,false);ui.feedback=back.GetComponent<PedalButtonFeedback>();
             var entrance=r.gameObject.AddComponent<UIRevealSequence>();entrance.Configure(r,new[]{"CircuitLogo","Thanks"},new Vector2(0,-20),.045f,.30f);
             r.gameObject.SetActive(false);

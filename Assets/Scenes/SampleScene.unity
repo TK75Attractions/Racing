@@ -6043,9 +6043,9 @@ MonoBehaviour:
   lapManager: {fileID: 0}
   secondPlaceTimeoutSeconds: 40
   maximumHumanFinishGraceSeconds: 180
-  tutorialTimeLimitSeconds: 60
+  tutorialTimeLimitSeconds: 35
   npcCount: 2
-  maximumRaceSeconds: 360
+  maximumRaceSeconds: 180
   playerTwoDisplay: 3
   onPlayUIManager:
     position:

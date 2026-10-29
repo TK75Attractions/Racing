@@ -22,7 +22,7 @@ public sealed class DailyRankingPlaytestProbe : MonoBehaviour
             history = Path.Combine(output,"history-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(history);
             store = new DailyRaceRanking(history);
             store.BeginRace(DailyRaceRanking.BoardKey(manager.course,manager.GoalLap,manager.CourseProgressSign,manager.Features.Settings.ActivePreset),
-                manager.GoalLap,manager.CourseProgressSign<0,manager.Features.Settings.ActivePreset==RacePreset.Experience,true);
+                manager.GoalLap,manager.CourseProgressSign<0,false,true);
             typeof(Gmanager).GetField("dailyRanking",Private).SetValue(manager,store);
         }
         if (store == null || checkedResult || manager.state != Gmanager.State.Result || manager.LatestSessionResult?.dailyRanking == null) return;

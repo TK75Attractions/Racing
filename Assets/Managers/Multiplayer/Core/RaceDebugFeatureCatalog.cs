@@ -14,7 +14,7 @@ public static class RaceDebugFeatureCatalog
     }
 
     public static IReadOnlyList<Entry> Entries { get; } = Array.AsReadOnly(new[] {
-        new Entry(RaceFeature.ExperienceItems, "Gentle items (shield / rocket only)", "体験向けアイテム（シールド・ロケットのみ）"),
+        new Entry(RaceFeature.ExperienceItems, "Gentle items (shield / rocket only)", "やさしいアイテム（シールド・ロケットのみ）"),
         new Entry(RaceFeature.SteeringAssist, "Course edge steering assist", "コース端のステアリング補助"),
         new Entry(RaceFeature.FastAiPace, "Fast AI pace (2 laps / 120s target)", "速いCPUペース（2周・120秒目標）"),
         new Entry(RaceFeature.PlayerTwoAutodrive, "P2 test autodrive (manual on OFF)", "P2のテスト自動運転（OFFで手動）"),

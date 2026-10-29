@@ -80,9 +80,6 @@ public static class BalancePlaytestValidation
             Gmanager.Control.Features.SetValidationFeature(RaceFeature.CpuRacing, false);
         if (Environment.GetEnvironmentVariable("RACING_P2_AUTO") == "1" && !Gmanager.Control.Features.Settings.RulesLocked)
             Gmanager.Control.Features.SetValidationFeature(RaceFeature.PlayerTwoAutodrive, true);
-        if (Environment.GetEnvironmentVariable("RACING_FEATURE_PRESET") == "experience" &&
-            !Gmanager.Control.Features.Settings.RulesLocked)
-            Gmanager.Control.Features.SelectPreset(RacePreset.Experience);
         if (Environment.GetEnvironmentVariable("RACING_FEATURE_PLAYTEST") == "1" &&
             UnityEngine.Object.FindFirstObjectByType<GameplayFeaturePlaytestProbe>() == null)
             Gmanager.Control.gameObject.AddComponent<GameplayFeaturePlaytestProbe>();

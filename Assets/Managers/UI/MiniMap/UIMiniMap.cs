@@ -84,7 +84,7 @@ public class UIMiniMap
         ArcadeUI.HUDShadow(frame);
         ArcadeUI.Label(frame, "Heading", "コースマップ", new Vector2(.07f,.82f), new Vector2(.93f,.98f), 22f, palette.Paper);
         RacingUITheme.Rule(frame, "Accent", new Vector2(0,.98f), Vector2.one, palette.Primary);
-        ArcadeUI.Label(frame, "You", "自分", new Vector2(.15f,.03f), new Vector2(.34f,.14f), 17f, palette.Paper);
+        ArcadeUI.Label(frame, "You", "じぶん", new Vector2(.15f,.03f), new Vector2(.34f,.14f), 17f, palette.Paper);
         ArcadeUI.Label(frame, "Rival", "相手", new Vector2(.46f,.03f), new Vector2(.65f,.14f), 17f, palette.Paper);
         ArcadeUI.Label(frame, "CPU", "CPU", new Vector2(.78f,.03f), new Vector2(.97f,.14f), 17f, palette.Paper);
         LegendMarker(frame, "YouMarker", .065f, palette.Primary);

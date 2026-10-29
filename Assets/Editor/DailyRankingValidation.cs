@@ -66,7 +66,7 @@ public static class DailyRankingValidation
         Require(!failed.Snapshot().saved && failed.Snapshot().rows.Count==1,"Report a write failure while retaining the current attempt in memory.");
         string key=DailyRaceRanking.BoardKey(null,2,1,RacePreset.Standard);
         Require(key==DailyRaceRanking.BoardKey(null,2,1,RacePreset.Standard) && key!=DailyRaceRanking.BoardKey(null,1,1,RacePreset.Standard) &&
-            key!=DailyRaceRanking.BoardKey(null,2,-1,RacePreset.Standard) && key!=DailyRaceRanking.BoardKey(null,2,1,RacePreset.Experience),"Separate rule boards deterministically.");
+            key!=DailyRaceRanking.BoardKey(null,2,-1,RacePreset.Standard) && key!=DailyRaceRanking.BoardKey(null,2,1,(RacePreset)1),"Separate rule boards deterministically.");
     }
     private static void Capture(string output)
     {

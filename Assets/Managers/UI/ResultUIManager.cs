@@ -14,6 +14,7 @@ public class ResultUIManager
     private TMP_Text localRank,localTime,menuHint;
     private ResultMenuAnimator menuAnimator;
     private DailyRankingPanel dailyRankingPanel;
+    public bool IsVisible => card != null && card.gameObject.activeInHierarchy;
     public string AchievementText=>FormatHighlight(currentSessionResult?.GetPlayerResult(localPlayerNumber-1));
     public RaceResultRecord CurrentResult=>currentResult;
     public RaceSessionResult CurrentSessionResult=>currentSessionResult;

@@ -14,13 +14,6 @@ using Object=UnityEngine.Object;
 /// <summary>Production tutorial pages at both output sizes, plus completion/timeout gating.</summary>
 public static class TutorialGimmickCapture
 {
-    private static float animationTime=-1f;
-    public static void CaptureAnimation()
-    {
-        try { for(int i=0;i<40;i++){animationTime=i/8f;Capture(0,1280,2);} }
-        finally { animationTime=-1f; }
-        Debug.Log("TUTORIAL_ITEM_ANIMATION_CAPTURE_PASS: forty real UI frames, box contact/removal and automatic effect photos.");
-    }
     public static void Run()
     {
         string[] settings={"ProjectSettings/GraphicsSettings.asset","ProjectSettings/QualitySettings.asset"};
@@ -30,7 +23,7 @@ public static class TutorialGimmickCapture
             RacingHUDFontBuilder.Build();
             ValidateCompletionGate();
             foreach(int player in new[]{0,1})foreach(int width in new[]{1280,1920})for(int page=0;page<TutorialGimmickBriefing.PageCount;page++)Capture(player,width,page);
-            Debug.Log("TUTORIAL_GIMMICK_UI_PASS: all four photographic pages, both players, 720p/1080p; glyphs, overflow, input transparency; independent completion and timed-out practice still receive the briefing.");
+            Debug.Log("TUTORIAL_GIMMICK_UI_PASS: both essential photographic pages, both players, 720p/1080p; glyphs, overflow, input transparency; independent completion and timed-out practice still receive the briefing.");
         }
         finally { for(int i=0;i<settings.Length;i++)File.WriteAllBytes(settings[i],previous[i]); }
     }
@@ -81,7 +74,7 @@ public static class TutorialGimmickCapture
             host.transform.Find("DrivingTutorial").SetAsLastSibling();
             var lesson=new DrivingTutorialProgress();lesson.Tick(.1f,true,0,0,0,0);lesson.Tick(.7f,true,1,0,4,0);lesson.Tick(.7f,true,1,10,4,35);lesson.CollectItem(true);
             var briefing=new TutorialGimmickBriefing();
-            for(int i=0;i<page;i++)for(int tick=0;tick<101;tick++)briefing.Tick(.1f,false,0f);
+            for(int i=0;i<page;i++)briefing.Tick(TutorialGimmickBriefing.PageSeconds,false,0f);
             Require(briefing.Page==page,"Capture page setup");
             ui.Update(lesson,DriveInputState.Neutral,0,true,null,briefing);
             target=new RenderTexture(width,width*9/16,24);target.Create();camera.targetTexture=target;camera.Render();Canvas.ForceUpdateCanvases();
@@ -106,15 +99,15 @@ public static class TutorialGimmickCapture
             {
                 foreach(float time in new[]{2f,4.5f,7f,9.5f})
                 { flow.SetPhase(time);foreach(var text in flow.GetComponentsInChildren<TMP_Text>()){text.ForceMeshUpdate();Require(!text.isTextOverflowing,"Pickup caption overflow: "+text.text);} }
-                flow.SetPhase(animationTime>=0f?animationTime:2f);
+                flow.SetPhase(2f);
             }
             camera.Render();var active=RenderTexture.active;
             try { RenderTexture.active=target;image=new Texture2D(width,width*9/16,TextureFormat.RGB24,false);image.ReadPixels(new Rect(0,0,width,width*9/16),0,0);image.Apply(); }
             finally { RenderTexture.active=active; }
             string directory="Artifacts/TutorialGimmicks/Preview";Directory.CreateDirectory(directory);
-            // Keep eight full-size review images; all sixteen combinations are validated.
-            if(animationTime>=0f){string frames="Logs/TutorialRealPhotos/Animation";Directory.CreateDirectory(frames);File.WriteAllBytes($"{frames}/frame-{Mathf.RoundToInt(animationTime*8):000}.png",image.EncodeToPNG());}
-            else if(width==1920)File.WriteAllBytes($"{directory}/page-{page+1}-p{player+1}.png",image.EncodeToPNG());
+            // Keep four full-size review images; all eight combinations are validated.
+
+            if(width==1920)File.WriteAllBytes($"{directory}/page-{page+1}-p{player+1}.png",image.EncodeToPNG());
         }
         finally
         {
