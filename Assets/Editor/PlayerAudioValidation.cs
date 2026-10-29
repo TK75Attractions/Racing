@@ -53,6 +53,7 @@ public static class PlayerAudioValidation
             Require(sources.Length == 2 && sources[0] != sources[1], "Each player needs an independent source.");
             manager.state = Gmanager.State.Title;
             AdvanceMusic(music);
+            ValidateTransport(music, sources);
             Require(sources.All(s => s.clip != null && s.clip.name == "Race_Opening_v3"), "Title must use the opening track.");
             Set(players.GetValue(0), "preparationState", Gmanager.State.CarSelection);
             manager.state = Gmanager.State.CarSelection;
@@ -165,11 +166,39 @@ public static class PlayerAudioValidation
         }
     }
 
+    private static void ValidateTransport(RaceBackgroundMusic music, AudioSource[] sources)
+    {
+        var epochs = (System.Collections.Generic.Dictionary<AudioClip, double>)Get(music, "clipEpochs");
+        AudioClip clip = sources[0].clip;
+        double epoch = epochs[clip];
+        var start = typeof(RaceBackgroundMusic).GetMethod("StartOnTransport", Private);
+        // Join several seconds later, then after a complete loop. Both must use
+        // the same transport rather than restarting their local track at zero.
+        foreach (double offset in new[] { 4.0, (double)clip.samples / clip.frequency + 7.0 })
+        {
+            double at = epoch + offset;
+            start.Invoke(music, new object[] { 1, clip, at });
+            int expected = (int)(Math.Floor(offset * clip.frequency) % clip.samples);
+            Require(Math.Abs(sources[1].timeSamples - expected) <= 1, "Late join/loop must seek to the shared sample position.");
+            Require(epochs[clip] == epoch, "Joining must not reset the transport for the other output.");
+        }
+        double boundary = AudioSettings.dspTime + .2;
+        start.Invoke(music, new object[] { 0, clip, boundary });
+        start.Invoke(music, new object[] { 1, clip, boundary });
+        Require(sources[0].timeSamples == sources[1].timeSamples, "Same-boundary starts must select the identical PCM sample.");
+    }
+
     private static void AdvanceMusic(RaceBackgroundMusic music)
     {
         // Advance the real fade deterministically; edit-mode Update has no reliable frame delta.
         MethodInfo tick = typeof(RaceBackgroundMusic).GetMethod("Tick", Private);
-        for (int frame = 0; frame < 20; frame++) tick.Invoke(music, new object[] { .05f });
+        for (int frame = 0; frame < 20; frame++)
+        {
+            // Sources are inactive in this fixture; simulate passing their DSP start.
+            var starts = (double[])Get(music, "playbackStarts");
+            starts[0] = starts[1] = 0;
+            tick.Invoke(music, new object[] { .05f });
+        }
     }
 
     private static GameObject Child(Transform parent, string name)
