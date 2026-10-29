@@ -71,7 +71,7 @@ public sealed class GameplayFeaturePlaytestProbe : MonoBehaviour
                 Require(features.PanelVisible, "F8 must open the debug panel through the real player update loop.");
                 features.PanelVisible = false;
                 InputSystem.QueueStateEvent(keyboard, new KeyboardState());
-                features.SelectPreset(originalPreset == RacePreset.Standard ? RacePreset.Experience : RacePreset.Standard);
+                features.SelectPreset((RacePreset)1);
                 Require(race.GoalLap == originalLaps && features.Settings.ActivePreset == originalPreset,
                     "A live preset selection must not alter current lap rules.");
                 features.SetValidationFeature(RaceFeature.ExperienceItems, true);

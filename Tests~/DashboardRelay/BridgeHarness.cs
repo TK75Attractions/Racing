@@ -100,7 +100,7 @@ public class Gmanager
     public bool IsPreparing=>state==State.Title;
     public float time=>UnityEngine.Time.time;
     public float CountdownTimeRemaining=>0;
-    public int GoalLap=>Features.Settings.ActivePreset==RacePreset.Experience?1:2;
+    public int GoalLap=>2;
     public List<RaceParticipant> Participants=new List<RaceParticipant>();
     public void StartAutodriveTestRace(bool both=false){BothPlayersAutodrive=both;Features.SetFeature(RaceFeature.PlayerTwoAutodrive,true);Features.Settings.BeginPreparation();state=State.Countdown;Harness.Applied++;}
     public void StartGame(){Features.Settings.BeginPreparation();state=State.Countdown;Harness.Applied++;}

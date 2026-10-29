@@ -1066,14 +1066,11 @@ function renderFeatureSettings(settings) {
   $('settings-feature-count').textContent = features.length ?
     `${features.filter(feature => feature.enabled).length} / ${features.length} 項目がON` :
     'F8設定を取得できません。Unity の接続・バージョンを確認してください。';
-  const presets = { Standard: '標準', Experience: '体験（1周・180秒）' };
-  const select = $('settings-preset');
-  if (document.activeElement !== select) select.value = settings?.selectedPreset ?? '';
   $('settings-rules').textContent = settings?.featuresAvailable ?
-    `現在：${presets[settings.activePreset] ?? '未確認'} / ${latestSnapshot?.goalLap ?? '—'}周　次回：${presets[settings.selectedPreset] ?? '未確認'}${settings.hasQueuedPreset ? '（予約済み）' : ''}` : '';
-  $('settings-rule-help').textContent = settings?.featuresAvailable ? settings.rulesLocked ?
-    '今回の周回・制限時間は確定済みです。プリセットの変更は次のレースから適用されます。' :
-    'プリセットは今の準備から適用されます。各機能のON/OFFはすぐに反映されます。' : '';
+    `通常レース / ${latestSnapshot?.goalLap ?? '—'}周 / 制限時間180秒` : '';
+  $('settings-rule-help').textContent = settings?.featuresAvailable ?
+    '練習開始からレース開始まで最大60秒。結果は15秒後に退出案内へ切り替わります。' : '';
+
 }
 
 function renderMaintenance(settings) {
@@ -1103,7 +1100,7 @@ function renderSettings(settings, canControl) {
     if (['inputMode', 'steeringMode', 'constantPedal', 'constantPaused', 'serialDebug'].includes(command))
       available = !!settings?.inputAvailable;
     if (['constantPedal', 'constantPaused'].includes(command)) available &&= settings?.steeringMode === 'ConstantPedal';
-    if (['feature', 'preset', 'allFeaturesOff'].includes(command)) available = !!settings?.featuresAvailable;
+    if (['feature', 'allFeaturesOff'].includes(command)) available = !!settings?.featuresAvailable;
     if (command === 'updateAndRun') available = settings?.updateAvailable === true && settings?.updateBusy !== true;
     if (command === 'maintenance') available = settings?.maintenanceAvailable === true;
     if (command === 'testRace') available = !!settings?.canStartTestRace;

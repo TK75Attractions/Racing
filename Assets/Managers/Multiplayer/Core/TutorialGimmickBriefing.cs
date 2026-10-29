@@ -3,9 +3,9 @@ using System;
 /// <summary>A short, stationary course briefing. A held pedal never skips a page.</summary>
 public sealed class TutorialGimmickBriefing
 {
-    public const int PageCount = 4;
-    public const float PageSeconds = 10f;
-    public const float MinimumReadSeconds = 4f;
+    public const int PageCount = 2;
+    public const float PageSeconds = 4f;
+    public const float MinimumReadSeconds = 2f;
     public int Page { get; private set; }
     public float Elapsed { get; private set; }
     public bool IsComplete => Page >= PageCount;
@@ -16,7 +16,7 @@ public sealed class TutorialGimmickBriefing
     public void Tick(float dt, bool connected, float pedal)
     {
         if (IsComplete || float.IsNaN(dt) || float.IsInfinity(dt) || dt <= 0f) return;
-        Elapsed += Math.Min(dt, .1f); // A stalled frame must not skip an explanation.
+        Elapsed += dt; // Use real elapsed time so a slow frame cannot extend the group deadline.
         bool valid = connected && !float.IsNaN(pedal) && !float.IsInfinity(pedal);
         if (!valid) released = false; // Reconnection needs a new, observed release.
         bool down = valid && pedal >= .25f;
@@ -24,6 +24,8 @@ public sealed class TutorialGimmickBriefing
         bool advance = CanAdvance && released && down && !pedalDown;
         pedalDown = down;
         if (!advance && Elapsed < PageSeconds) return;
-        Page++; Elapsed = 0f; released = false;
+        if (advance) { Page++; Elapsed = 0f; }
+        else while (!IsComplete && Elapsed >= PageSeconds) { Elapsed -= PageSeconds; Page++; }
+        released = false;
     }
 }

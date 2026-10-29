@@ -40,7 +40,7 @@ public sealed class FinishRunValidationProbe : MonoBehaviour, IDriveInputSource
             if (!launching && (manager.state == Gmanager.State.Title || manager.state == Gmanager.State.Result) && manager.CanUseDashboardControls)
             {
                 launching = true; bound = false; switchedOff = false; bot.Clear();
-                manager.Features.SelectPreset(RacePreset.Experience);
+                manager.Features.SelectPreset(RacePreset.Standard);
                 manager.Features.SetValidationFeature(RaceFeature.FinishRun, trial != 2);
                 foreach (RaceItemPickup pickup in UnityEngine.Object.FindObjectsByType<RaceItemPickup>(FindObjectsSortMode.None)) pickup.gameObject.SetActive(false);
                 manager.StartAutodriveTestRace();

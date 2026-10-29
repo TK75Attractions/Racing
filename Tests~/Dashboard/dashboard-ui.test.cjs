@@ -550,19 +550,18 @@ test('HTTP settings use guarded requests, display acknowledged values and query 
   assert.match(calls[1][0],/^\/api\/command\//);
   assert.match(ui.elements.get('settings-status').textContent,/操作は再送していません/);
 });
-const f8Settings={...settings,featuresAvailable:true,activePreset:'Standard',selectedPreset:'Experience',rulesLocked:true,
-  hasQueuedPreset:true,canStartTestRace:false,features:[{id:'SteeringAssist',label:'スリップストリーム加速',enabled:true},
+const f8Settings={...settings,featuresAvailable:true,activePreset:'Standard',selectedPreset:'Standard',rulesLocked:true,
+  hasQueuedPreset:false,canStartTestRace:false,features:[{id:'SteeringAssist',label:'スリップストリーム加速',enabled:true},
     {id:'PlayerTwoAutodrive',label:'P2自動 <script>',enabled:false}]};
-test('F8 controls show live switches and queued rules, synchronize without rebuilding, and disable on disconnect',()=>{
+test('F8 controls show live switches and the fixed three-minute race, synchronize without rebuilding, and disable on disconnect',()=>{
   const ui=fixture();ui.render({...base,settings:f8Settings});
   const rows=ui.elements.get('settings-features').children,slip=rows[0].children[0];
   assert.equal(rows.length,2);assert.equal(slip.dataset.settingArg,'SteeringAssist');
   assert.equal(slip.checked,true);assert.equal(slip.disabled,false);
   assert.equal(rows[1].children[1].textContent,'P2自動 <script>');
   assert.equal(ui.elements.get('settings-feature-count').textContent,'1 / 2 項目がON');
-  assert.match(ui.elements.get('settings-rules').textContent,/現在：標準.*2周.*次回：体験.*予約済み/);
-  assert.match(ui.elements.get('settings-rule-help').textContent,/次のレース/);
-  assert.equal(ui.elements.get('settings-preset').value,'Experience');
+  assert.match(ui.elements.get('settings-rules').textContent,/通常レース.*2周.*180秒/);
+  assert.match(ui.elements.get('settings-rule-help').textContent,/最大60秒.*15秒後/);
   assert.equal(ui.elements.get('settings-test-race').disabled,true);
   ui.render({...base,settings:{...f8Settings,features:f8Settings.features.map(feature=>({...feature,enabled:false})),canStartTestRace:true}});
   assert.equal(ui.elements.get('settings-features').children[0].children[0],slip);
@@ -572,11 +571,10 @@ test('F8 controls show live switches and queued rules, synchronize without rebui
   assert.equal(ui.elements.get('settings-all-off').disabled,true);
   ui.context.setConnection(false);
   assert.equal(ui.elements.get('settings-features').children.length,0);
-  assert.equal(ui.elements.get('settings-preset').disabled,true);
   ui.render(base);
   assert.match(ui.elements.get('settings-feature-count').textContent,/取得できません/);
 });
-test('F8 feature, preset, all-off and test-start requests use the shared guarded settings transport',async()=>{
+test('F8 feature, all-off and test-start requests use the shared guarded settings transport',async()=>{
   const ui=fixture();ui.context.AbortSignal=AbortSignal;ui.context.crypto={randomUUID:require('node:crypto').randomUUID};
   ui.context.poll=async()=>{};
   const calls=[];ui.context.apiFetch=async(route,options)=>{
@@ -585,12 +583,12 @@ test('F8 feature, preset, all-off and test-start requests use the shared guarded
   ui.render({...base,settings:{...f8Settings,canStartTestRace:true},sessionId:'current',settingsRevision:5});
   const slip=ui.elements.get('settings-features').children[0].children[0];slip.checked=false;slip.blur=()=>{};
   await ui.context.submitSetting(slip);
-  for(const [id,value] of [['settings-preset','Experience'],['settings-all-off'],['settings-test-race']]){
+  for(const [id,value] of [['settings-all-off'],['settings-test-race']]){
     const control=ui.elements.get(id);control.value=value;control.blur=()=>{};
     await ui.context.submitSetting(control);
   }
   assert.deepEqual(calls.map(request=>[request.command,request.args]),
-    [['feature',['SteeringAssist','false']],['preset',['Experience']],['allFeaturesOff',[]],['testRace',[]]]);
+    [['feature',['SteeringAssist','false']],['allFeaturesOff',[]],['testRace',[]]]);
   assert.ok(calls.every(request=>request.settingsRevision===5&&request.targetSession==='current'));
   assert.match(ui.elements.get('settings-status').textContent,/テストレースを開始しました/);
 });

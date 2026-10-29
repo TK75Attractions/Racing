@@ -9,17 +9,17 @@ public static class RaceFeatureValidation
     public static void Run()
     {
         var settings = new RaceFeatureSettings();
-        settings.SelectPreset(RacePreset.Experience);
+        settings.SelectPreset((RacePreset)1);
         settings.BeginPreparation();
         settings.SelectPreset(RacePreset.Standard);
-        Require(settings.ActivePreset == RacePreset.Experience, "Live presets must not change lap rules.");
+        Require(settings.ActivePreset == RacePreset.Standard, "Live presets must not change lap rules.");
         settings.SetValidationFeature(RaceFeature.All, false);
         Require(settings.Enabled == RaceFeature.None, "All switches must be independently disabled during a race.");
         settings.BeginPreparation();
         Require(settings.ActivePreset == RacePreset.Standard, "Queued rules must apply at the next start.");
-        var rules = new RaceRuleSet(RacePreset.Experience, 2, 360, 40, 180);
-        Require(rules.GoalLaps == 1 && rules.MaximumSeconds == 180 && rules.MaximumGraceSeconds == 90,
-            "Experience limits must match the UI and race session.");
+        var rules = new RaceRuleSet(RacePreset.Standard, 2, 360, 40, 180);
+        Require(rules.GoalLaps == 2 && rules.MaximumSeconds == 180 && rules.MaximumGraceSeconds == 180,
+            "Only the normal three-minute race may run.");
         ValidateCoachingAndItems();
         SlipstreamValidation.Run();
         RacingHUDFontBuilder.Build();

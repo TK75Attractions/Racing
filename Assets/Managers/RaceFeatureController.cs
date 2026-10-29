@@ -95,13 +95,7 @@ public sealed class RaceFeatureController : MonoBehaviour
             if (current != next) SetFeature(entry.Feature, next);
         }
         GUILayout.Space(8);
-        GUILayout.Label("Rules now: " + Settings.ActivePreset + " / " + (manager != null ? manager.GoalLap : 2) + " lap(s)");
-        GUILayout.Label(Settings.RulesLocked ? "Lap/time preset below applies to the NEXT race." : "Choose rules before either player starts.");
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Standard: scene rules")) SelectPreset(RacePreset.Standard);
-        if (GUILayout.Button("Experience: 1 lap")) SelectPreset(RacePreset.Experience);
-        GUILayout.EndHorizontal();
-        GUILayout.Label("Next preset: " + Settings.SelectedPreset);
+        GUILayout.Label("Race: " + (manager != null ? manager.GoalLap : 2) + " laps / maximum 180 seconds");
         GUILayout.Space(8);
         GUILayout.Label("Rendering quality (saved):");
         RaceRenderBudget budget = RaceRenderBudget.Instance;

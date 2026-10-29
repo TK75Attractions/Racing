@@ -1,6 +1,6 @@
 using System;
 
-public enum RacePreset { Standard, Experience }
+public enum RacePreset { Standard }
 
 [Flags]
 public enum RaceFeature
@@ -63,8 +63,8 @@ public sealed class RaceFeatureSettings
     }
     public void SelectPreset(RacePreset preset)
     {
-        if (preset != RacePreset.Standard && preset != RacePreset.Experience) return;
-        SelectedPreset = preset;
+        if (preset != RacePreset.Standard) return;
+        SelectedPreset = RacePreset.Standard;
         if (!RulesLocked) ApplyPreset();
         else HasQueuedPreset = true;
     }
@@ -88,7 +88,7 @@ public sealed class RaceFeatureSettings
     {
         ActivePreset = SelectedPreset;
         HasQueuedPreset = false;
-        SetFeature(RaceFeature.ExperienceItems, ActivePreset == RacePreset.Experience);
+        // The sole race mode does not override independent item assistance settings.
     }
 }
 
@@ -99,10 +99,10 @@ public sealed class RaceRuleSet
     public readonly float MaximumSeconds, GraceSeconds, MaximumGraceSeconds;
     public RaceRuleSet(RacePreset preset, int standardLaps, float standardMaximum, float grace, float maximumGrace)
     {
-        Preset = preset;
-        GoalLaps = preset == RacePreset.Experience ? 1 : Math.Max(1, standardLaps);
-        MaximumSeconds = preset == RacePreset.Experience ? 180f : Math.Max(1f, standardMaximum);
+        Preset = RacePreset.Standard;
+        GoalLaps = Math.Max(1, standardLaps);
+        MaximumSeconds = Math.Min(180f, Math.Max(1f, standardMaximum));
         GraceSeconds = Math.Max(0f, grace);
-        MaximumGraceSeconds = preset == RacePreset.Experience ? 90f : Math.Max(GraceSeconds, maximumGrace);
+        MaximumGraceSeconds = Math.Max(GraceSeconds, maximumGrace);
     }
 }
