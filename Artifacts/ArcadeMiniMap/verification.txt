@@ -1,0 +1,2 @@
+PASS: MiniMapValidation projection, aspect ratio, camera heading, own-car centering, distant marker inset, independent P1/P2 map ownership, and non-overlap with current runtime HUD.
+PASS: ArcadeMiniMapCapture actual scene progression: title/practice hidden, race visible, all four cars bound, own car centered, owner palette, item toast/status separate. p1.jpg and p2.jpg are 1920x1080 frames captured from Unity's production dashboard preview path.

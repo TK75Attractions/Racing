@@ -6071,7 +6071,7 @@ MonoBehaviour:
     miniMap:
       root: {fileID: 0}
       mapSize: {x: 300, y: 210}
-      screenMargin: {x: 40, y: 40}
+      screenMargin: {x: 380, y: 40}
       padding: 14
       mapRotationDegrees: 0
       markerSize: 20

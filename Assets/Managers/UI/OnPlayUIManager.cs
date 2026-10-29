@@ -62,8 +62,8 @@ public class OnPlayUIManager
         lap.Init(hud.Find("Lap"));
         time.Init(hud.Find("Time"));
         speed.Init(hud.Find("Speed"));
-        // ミニマップはノードが無ければ自前で生成するため、OnPlay ルートごと渡します。
-        // The approved HUD has no minimap; retain the data adapter for display ownership.
+        miniMap.Init(hud, course, playerIndex);
+        miniMap.SetActive(false); // The practice road is separate from the race course.
         initialized = true;
     }
 
@@ -76,6 +76,7 @@ public class OnPlayUIManager
         SetTime(totalSeconds, lapSeconds);
         SetSpeed(speedValue);
         speed.UpdateBoostGauge(padBoostRemainingSeconds, padBoostDurationSeconds);
+        miniMap.SetActive(Gmanager.Control != null && Gmanager.Control.state == Gmanager.State.Game);
         miniMap.UpdateMarkers();
     }
 
