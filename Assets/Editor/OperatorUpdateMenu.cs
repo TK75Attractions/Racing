@@ -10,8 +10,7 @@ public static class OperatorUpdateMenu
     {
         if (pending != null && pending.Busy) return;
         var race = Object.FindFirstObjectByType<Gmanager>();
-        if (race == null) { Debug.LogWarning("SampleSceneを開いてから更新してください。"); return; }
-        if (EditorApplication.isPlaying)
+        if (EditorApplication.isPlaying && race != null)
         {
             var service = race.GetComponent<RaceOperatorUpdate>();
             if (service != null && !service.Request()) Debug.LogWarning(service.Status);

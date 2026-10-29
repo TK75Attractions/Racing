@@ -445,7 +445,12 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         string[] args = request.args ?? Array.Empty<string>();
         RaceFeatureController features = race?.Features;
         if (request.command == "updateAndRun" && args.Length == 0)
-            return race != null && race.GetComponent<RaceOperatorUpdate>()?.Request() == true;
+        {
+            var updater = race != null ? race.GetComponent<RaceOperatorUpdate>() : null;
+            bool started = updater?.Request() == true;
+            reason = started ? "" : updater?.Status ?? "更新機能がありません。";
+            return started;
+        }
         if (request.command == "maintenance" && args.Length == 1 && (args[0] == "true" || args[0] == "false"))
             return race != null && race.SetMaintenance(args[0] == "true");
         if (request.command == "feature" && args.Length == 2 && features != null &&
@@ -824,8 +829,9 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         }
         ObserveState();
         long age = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - request.observedAt;
-        bool accepted = request.targetSession == liveSession && request.stateRevision == stateRevision &&
-            age >= -1000 && age <= 15000 && race != null && race.state.ToString() == request.expectedState;
+        bool update = action == "settings" && request.command == "updateAndRun" && (request.args == null || request.args.Length == 0);
+        bool accepted = request.targetSession == liveSession && age >= -1000 && age <= 15000 && race != null &&
+            (update || request.stateRevision == stateRevision && race.state.ToString() == request.expectedState);
         // Clearing this controller's own input is safe even after a transition or stale snapshot.
         bool release = action == "input" && request.command == "release";
         if (release) accepted = request.targetSession == liveSession;
@@ -844,7 +850,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             else if (action == "settings")
             {
                 reason = "settings_changed";
-                accepted = request.settingsRevision == settingsRevision && ApplySettings(request, out reason);
+                // Updating does not overwrite settings; unrelated device/status changes must not reject it.
+                accepted = (request.command == "updateAndRun" || request.settingsRevision == settingsRevision) && ApplySettings(request, out reason);
             }
             else accepted = TryApplyRemoteAction(action, request.expectedState);
         }
