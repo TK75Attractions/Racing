@@ -173,7 +173,7 @@ public sealed class PlayerDisplayRig
             RenderTexture.active = thumbnail;
             pixels.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             pixels.Apply();
-            return pixels.EncodeToJPG(65);
+            return pixels.EncodeToJPG(NativeResolutionUI.PreviewQuality);
         }
         finally
         {

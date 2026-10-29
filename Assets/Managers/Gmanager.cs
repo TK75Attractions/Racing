@@ -263,7 +263,7 @@ public class Gmanager : MonoBehaviour
     }
 
     public byte[] CapturePlayerFrame(int index) => index >= 0 && index < displayRigs.Length
-        ? displayRigs[index]?.CaptureJpeg(640, 360) : null;
+        ? displayRigs[index]?.CaptureJpeg(NativeResolutionUI.PreviewWidth, NativeResolutionUI.PreviewHeight) : null;
 
     public void RequestDashboardPlayerFrame(int index, Action<byte[]> completed)
     {
