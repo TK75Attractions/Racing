@@ -1,0 +1,1 @@
+PASS: opening/finish/results routing; shared DSP sample positions and late joins across loops; maintenance regression; static grid placement and missing-road handling; four grounded cars before countdown; both chase lenses clear of CPUs; rendered P1/P2 world views contain visible pixels.

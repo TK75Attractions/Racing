@@ -1,0 +1,1 @@
+PASS: real Unity runtime launches external updater with quoted paths, dirty-repo preflight fails, no shutdown marker, Unity remains open.
