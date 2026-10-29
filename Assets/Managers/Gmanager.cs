@@ -27,7 +27,6 @@ public class Gmanager : MonoBehaviour
         public float readyHoldTimer;
         public int resultSelection;
         public float resultConfirmTimer;
-        public bool resultSteeringLatch;
         public bool resultConfirmArmed;
         public bool returnedToTitle;
         public PlayerDriveInputGate inputGate;
@@ -102,7 +101,6 @@ public class Gmanager : MonoBehaviour
     [SerializeField] private float resultReturnPedalThreshold = 0.8f;
     [SerializeField] private float resultReturnHoldSeconds = 1f;
     [SerializeField] private float resultReturnInputDelaySeconds = 3f;
-    [SerializeField, Range(0.1f, 1f)] private float resultSteeringThreshold = 0.45f;
     [SerializeField, Min(1.2f)] private float goalCelebrationSeconds = 5.5f;
 
     [Header("Debug UI")]
@@ -1829,10 +1827,9 @@ public class Gmanager : MonoBehaviour
 
     public void SelectResultOption(int playerIndex, int option)
     {
-        if(option < 0 || option > 1 || state != State.Result || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount || players[playerIndex].returnedToTitle) return;
-        soundEffects?.Play(option == 0 ? RaceSoundCue.Confirm : RaceSoundCue.Cancel, playerIndex);
+        if(option != 0 || state != State.Result || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount || players[playerIndex].returnedToTitle) return;
+        soundEffects?.Play(RaceSoundCue.Confirm, playerIndex);
         resultUIManagers[playerIndex]?.PlayConfirm(option);
-        if(option == 0) { RetryGame(); return; }
         var ending=ArcadeEndingUI.Get(players[playerIndex].displayRig.CanvasRoot.transform);
         if(ending.IsVisible)return;
         players[playerIndex].titleCamera.Priority=20;players[playerIndex].displayRig.RaceCamera.Priority=10;
@@ -1858,18 +1855,8 @@ public class Gmanager : MonoBehaviour
             DriveInputState input = GetMenuInput(index);
             var ending=player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>();
             if(ending!=null&&ending.IsVisible){ending.TickInput(input.pedal,dt);continue;}
-            if (!player.resultSteeringLatch && Mathf.Abs(input.steering) >= resultSteeringThreshold)
-            {
-                player.resultSelection = 1 - player.resultSelection;
-                soundEffects?.Play(RaceSoundCue.Select, index);
-                player.resultSteeringLatch = true;
-                player.resultConfirmTimer = 0f;
-            }
-            else if (Mathf.Abs(input.steering) < resultSteeringThreshold * 0.45f)
-            {
-                player.resultSteeringLatch = false;
-            }
-            // Finishing with the pedal down must never confirm the default retry option.
+            player.resultSelection = 0;
+            // Finishing with the pedal down must never advance the results automatically.
             if (!player.resultConfirmArmed)
             {
                 player.resultConfirmArmed = Mathf.Abs(input.pedal) <= 0.05f;
@@ -1883,7 +1870,6 @@ public class Gmanager : MonoBehaviour
             if (player.resultConfirmTimer < Mathf.Max(0.01f, resultReturnHoldSeconds)) continue;
             player.resultConfirmTimer = 0f;
             SelectResultOption(index, player.resultSelection);
-            if (player.resultSelection == 0) return;
         }
     }
 
@@ -1894,7 +1880,6 @@ public class Gmanager : MonoBehaviour
             if (player == null) continue;
             player.resultSelection = 0;
             player.resultConfirmTimer = 0f;
-            player.resultSteeringLatch = false;
             player.resultConfirmArmed = false;
             player.returnedToTitle = false;
         }
