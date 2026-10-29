@@ -106,8 +106,10 @@
             </fieldset>
             <fieldset><legend>オーディオ出力</legend>
               <label for="settings-output-0">P1 出力</label><select id="settings-output-0" data-setting="device" data-setting-arg="0" disabled></select><p id="settings-output-0-status" class="control-note"></p>
+              <label for="settings-delay-0">P1 追加遅延<output id="settings-delay-0-value">0 ms</output></label><input id="settings-delay-0" type="range" min="0" max="500" step="10" data-setting="outputDelay" data-setting-arg="0" disabled>
               <label for="settings-output-1">P2 出力</label><select id="settings-output-1" data-setting="device" data-setting-arg="1" disabled></select><p id="settings-output-1-status" class="control-note"></p>
-              <button id="settings-refresh" type="button" data-setting="refreshDevices" disabled>出力機器を再検出</button>
+              <label for="settings-delay-1">P2 追加遅延<output id="settings-delay-1-value">0 ms</output></label><input id="settings-delay-1" type="range" min="0" max="500" step="10" data-setting="outputDelay" data-setting-arg="1" disabled>
+              <p class="control-note">Bluetoothより早く聞こえる側の遅延を増やして、音を合わせてください。</p><button id="settings-refresh" type="button" data-setting="refreshDevices" disabled>出力機器を再検出</button>
             </fieldset>
 
 

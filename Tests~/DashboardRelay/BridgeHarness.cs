@@ -126,6 +126,7 @@ public class RaceFeatureController {
     public void SelectPreset(RacePreset preset)=>Settings.SelectPreset(preset);
 }
 public class RaceAudioOutput {
+    public void RefreshDelaySettings() { }
     public static RaceAudioOutput Instance = new RaceAudioOutput();
     public bool CanRefreshDevices => true;
     public string[] DeviceNames = { "USB P1", "HDMI P2" }, DeviceKeys = { "usb-key", "hdmi-key" };

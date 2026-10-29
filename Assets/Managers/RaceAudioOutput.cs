@@ -18,6 +18,22 @@ public sealed class RaceAudioOutput : MonoBehaviour
     private string[] deviceKeys = Array.Empty<string>();
     private readonly int[] selected = { -1, -1 };
     private readonly string[] status = { "未接続", "未接続" };
+    private readonly OutputAudioDelay[,] delays = new OutputAudioDelay[2, 5];
+    private readonly bool[,] delayMaintenance = new bool[2, 5];
+    private readonly int[] delayFrames = new int[2];
+    public void RefreshDelaySettings()
+    {
+        for (int player = 0; player < 2; player++)
+            System.Threading.Volatile.Write(ref delayFrames[player], RaceAudioSettings.OutputDelayMs(player) * sampleRate / 1000);
+    }
+    private void ConfigureDelays()
+    {
+        AudioSettings.GetDSPBufferSize(out int frames, out _);
+        for (int player = 0; player < 2; player++)
+        for (int stream = 0; stream < 5; stream++)
+            delays[player, stream] = new OutputAudioDelay(sampleRate * RaceAudioSettings.MaximumOutputDelayMs / 1000, Mathf.Max(16384, frames));
+        RefreshDelaySettings();
+    }
     private bool available;
     private bool pluginLoaded;
     public bool CanRefreshDevices => pluginLoaded;
@@ -43,6 +59,7 @@ public sealed class RaceAudioOutput : MonoBehaviour
     {
         Instance = this;
         sampleRate = AudioSettings.outputSampleRate;
+        ConfigureDelays();
         AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
         try
         {
@@ -166,8 +183,12 @@ public sealed class RaceAudioOutput : MonoBehaviour
     public void Submit(int player, int stream, float[] samples, int channels, float leftGain, float rightGain, bool maintenanceMusic = false)
     {
         // The dedicated service track may pass only during maintenance; gameplay never does.
-        if (accepting && RaceAudioSettings.MaintenanceMuted == maintenanceMusic && channels > 0)
-            ra_push(player, stream, samples, samples.Length / channels, channels, leftGain, rightGain);
+        if (!accepting || RaceAudioSettings.MaintenanceMuted != maintenanceMusic || channels <= 0 || player < 0 || player > 1 || stream < 0 || stream >= 5) return;
+        int frames = samples.Length / channels;
+        if (delayMaintenance[player, stream] != maintenanceMusic)
+        { delays[player, stream]?.Reset(); delayMaintenance[player, stream] = maintenanceMusic; }
+        float[] delayed = delays[player, stream]?.Process(samples, channels, System.Threading.Volatile.Read(ref delayFrames[player]));
+        if (delayed != null) ra_push(player, stream, delayed, frames, 2, leftGain, rightGain);
     }
 
     private void Update()
@@ -198,6 +219,7 @@ public sealed class RaceAudioOutput : MonoBehaviour
         if (updatedRate == sampleRate) return;
         accepting = false;
         sampleRate = updatedRate;
+        ConfigureDelays();
         RefreshDevices();
         accepting = available;
     }

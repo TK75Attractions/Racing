@@ -1107,6 +1107,7 @@ function renderSettings(settings, canControl) {
     if (command === 'updateAndRun') available = settings?.updateAvailable === true && settings?.updateBusy !== true;
     if (command === 'maintenance') available = settings?.maintenanceAvailable === true;
     if (command === 'testRace') available = !!settings?.canStartTestRace;
+    if (command === 'outputDelay') available = Array.isArray(settings?.outputDelayMs);
     if (command === 'device') available = !!settings?.outputAvailable?.[Number(control.dataset.settingArg)];
     if (command === 'refreshDevices') available = !!settings?.audioRefreshAvailable;
     control.disabled = !enabled || !available;
@@ -1124,6 +1125,9 @@ function renderSettings(settings, canControl) {
     else control.value = settings?.[name] ?? '';
   }
   for (let player = 0; player < 2; player++) {
+    const delay = $('settings-delay-' + player);
+    if (document.activeElement !== delay) delay.value = settings?.outputDelayMs?.[player] ?? 0;
+    $('settings-delay-' + player + '-value').textContent = delay.value + ' ms';
     const select = $('settings-output-' + player);
     if (document.activeElement !== select) {
       const options = [['', '出力なし'], ...(settings?.deviceKeys || []).map((key, index) => [key, settings.deviceNames[index]])];
@@ -1153,6 +1157,7 @@ async function submitSetting(control) {
   let args;
   if (command === 'feature') args = [control.dataset.settingArg, String(control.checked)];
   else if (command === 'volume') args = [control.dataset.settingArg, String(Number(control.value) / 100)];
+  else if (command === 'outputDelay') args = [control.dataset.settingArg, String(Number(control.value))];
   else if (command === 'device') args = [control.dataset.settingArg, control.value];
   else if (command === 'testRace') args = control.dataset.settingArg === 'both' ? ['both'] : [];
   else if (['refreshDevices', 'allFeaturesOff', 'updateAndRun'].includes(command)) args = [];
