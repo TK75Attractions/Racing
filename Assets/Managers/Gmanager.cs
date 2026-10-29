@@ -294,6 +294,7 @@ public class Gmanager : MonoBehaviour
 
     public void Awake()
     {
+        StartAreaCeilingCollision.EnsureForScene(gameObject.scene);
         if (GetComponent<RaceOperatorUpdate>() == null) gameObject.AddComponent<RaceOperatorUpdate>();
         if (Control == null) Control = this;
         else
