@@ -312,7 +312,7 @@ public static class DrivingTutorialValidation
             foreach (UnityEngine.UI.Graphic graphic in rig.Canvas.GetComponentsInChildren<UnityEngine.UI.Graphic>()) graphic.SetVerticesDirty();
             Canvas.ForceUpdateCanvases();
             ScriptableRenderContext.EmitGeometryForCamera(rig.UiCamera);
-            RenderPipeline.SubmitRenderRequest(camera, new RenderPipeline.StandardRequest { destination = texture });
+            rig.RenderToTarget(texture);
             RenderTexture.active = texture;
             image.ReadPixels(new Rect(0, 0, 1672, 940), 0, 0); image.Apply();
             File.WriteAllBytes(Path.Combine(directory, filename), image.EncodeToPNG());

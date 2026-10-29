@@ -5,6 +5,7 @@ public sealed class EngineSynth
 {
     private const double Tau = Math.PI * 2.0;
     private readonly int sampleRate;
+    private readonly int vehicleProfile;
     private readonly float smooth, gainSmooth, roomSmooth;
     private readonly Biquad exhaustBody, exhaustBark, intake;
     private readonly TunnelReverb reverb;
@@ -16,16 +17,20 @@ public sealed class EngineSynth
     private float popCooldown;
     public int SampleRate => sampleRate;
 
-    public EngineSynth(int rate, uint seed = 0x51f15e7u)
+    public EngineSynth(int rate, uint seed = 0x51f15e7u, int profile = 0)
     {
         sampleRate = Math.Max(8000, rate);
+        vehicleProfile = Math.Max(0, Math.Min(2, profile));
         random = seed == 0 ? 1u : seed;
         firePhase = (random & 0xffff) / 65536.0;
         crankPhase = firePhase * .5;
         smooth = Coefficient(.035f); gainSmooth = Coefficient(.012f); roomSmooth = Coefficient(.24f);
-        exhaustBody = new Biquad(sampleRate, 105, 1.1);
-        exhaustBark = new Biquad(sampleRate, 420, .85);
-        intake = new Biquad(sampleRate, 1150, .7);
+        // Three close exhaust resonances add a little vehicle identity without changing RPM or load.
+        double[] bodyHz = { 105, 98, 114 };
+        double[] barkHz = { 420, 390, 465 };
+        exhaustBody = new Biquad(sampleRate, bodyHz[vehicleProfile], 1.1);
+        exhaustBark = new Biquad(sampleRate, barkHz[vehicleProfile], .85);
+        intake = new Biquad(sampleRate, vehicleProfile == 1 ? 1080 : vehicleProfile == 2 ? 1220 : 1150, .7);
         reverb = new TunnelReverb(sampleRate);
     }
 

@@ -123,6 +123,28 @@ public sealed class PlayerDisplayRig
             if (RacePlayerWindows.UsesNativeWindow) output.ConfigureWindow(outputCameras, DisplayIndex, BackImageCamera);
             else if (DisplayIndex < Display.displays.Length) output.Configure(outputCameras, DisplayIndex, BackImageCamera);
         }
+
+        // Subscribe after P2's output resize callback, so its native-sized target
+        // is known before splitting the world and UI for this frame.
+        if (CameraRoot != null && BackImageCamera != null && UiCamera != null && Canvas != null)
+        {
+            var nativeUi = CameraRoot.GetComponent<NativeResolutionUI>() ?? CameraRoot.AddComponent<NativeResolutionUI>();
+            nativeUi.Configure(BackImageCamera, MainCamera, FrontCamera, UiCamera, Canvas);
+        }
+    }
+
+    public void RenderToTarget(RenderTexture destination)
+    {
+        var nativeUi = CameraRoot != null ? CameraRoot.GetComponent<NativeResolutionUI>() : null;
+        if (nativeUi == null) throw new System.InvalidOperationException("Native-resolution UI is unavailable.");
+        var output = CameraRoot.GetComponent<RenderGraphDisplayOutput>();
+        bool previous = output != null && output.CapturingPreview;
+        try
+        {
+            if (output != null) output.CapturingPreview = true;
+            nativeUi.RenderToTarget(destination);
+        }
+        finally { if (output != null) output.CapturingPreview = previous; }
     }
 
     public byte[] CaptureJpeg(int width, int height)
@@ -147,22 +169,7 @@ public sealed class PlayerDisplayRig
             RenderTexture.active = thumbnail;
             GL.Clear(true, true, Color.black);
             UnityEngine.Canvas.ForceUpdateCanvases();
-            if (Canvas != null && UiCamera != null && canvasMode == RenderMode.ScreenSpaceCamera)
-            {
-                // URP render requests do not emit ScreenSpaceCamera canvas geometry.
-                // Preserve its laid-out pose and submit the same live UI as world geometry.
-                RectTransform rect = (RectTransform)Canvas.transform;
-                Vector3 position = rect.position, scale = rect.localScale;
-                Quaternion rotation = rect.rotation; Vector2 size = rect.rect.size;
-                Canvas.renderMode = RenderMode.WorldSpace;
-                rect.SetPositionAndRotation(position, rotation); rect.localScale = scale; rect.sizeDelta = size;
-                foreach (UnityEngine.UI.Graphic graphic in Canvas.GetComponentsInChildren<UnityEngine.UI.Graphic>()) graphic.SetVerticesDirty();
-                UnityEngine.Canvas.ForceUpdateCanvases();
-                ScriptableRenderContext.EmitGeometryForCamera(UiCamera);
-            }
-            var request = new RenderPipeline.StandardRequest { destination = thumbnail };
-            if (!RenderPipeline.SupportsRenderRequest(camera, request)) return null;
-            RenderPipeline.SubmitRenderRequest(camera, request);
+            RenderToTarget(thumbnail);
             RenderTexture.active = thumbnail;
             pixels.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             pixels.Apply();

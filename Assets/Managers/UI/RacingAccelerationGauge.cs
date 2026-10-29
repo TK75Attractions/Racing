@@ -15,6 +15,7 @@ public sealed class RacingAccelerationGauge : MaskableGraphic
     private DebugMover mover;
     private Rigidbody body;
     private TMP_Text caption;
+    private RacingIconGraphic stateIcon;
     private bool hasSpeed;
     private float previousSpeed, filteredAcceleration;
 
@@ -25,6 +26,12 @@ public sealed class RacingAccelerationGauge : MaskableGraphic
     {
         player = index;
         caption = text;
+        if (caption != null)
+        {
+            stateIcon = NeonUI.Icon(caption.transform.parent, "AccelerationIcon", RacingIconGraphic.Icon.Accelerate,
+                new Vector2(.25f,.73f), new Vector2(.29f,.83f));
+            stateIcon.gameObject.SetActive(false);
+        }
         raycastTarget = false;
         ResetMeasurement();
     }
@@ -100,6 +107,13 @@ public sealed class RacingAccelerationGauge : MaskableGraphic
             string text = next > 0 ? "加速" : next < 0 ? "減速" : "一定速";
             if (caption.text != text) caption.text = text;
             caption.color = next > 0 ? NeonUI.Cyan : next < 0 ? NeonUI.Red : RacingHUDStyle.Muted;
+        }
+        if (stateIcon != null)
+        {
+            stateIcon.gameObject.SetActive(next != 0);
+            var symbol = next > 0 ? RacingIconGraphic.Icon.Accelerate : RacingIconGraphic.Icon.Decelerate;
+            if (stateIcon.symbol != symbol) { stateIcon.symbol = symbol; stateIcon.SetVerticesDirty(); }
+            stateIcon.color = next > 0 ? NeonUI.Cyan : NeonUI.Red;
         }
     }
 

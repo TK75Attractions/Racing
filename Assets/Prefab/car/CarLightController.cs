@@ -57,6 +57,7 @@ public sealed class CarLightController : MonoBehaviour
     [SerializeField] private Color taillightColor = new Color(1f, 0.07f, 0.04f);
     [SerializeField, Range(0f, 4f)] private float taillightGlow = 0.9f;
     [SerializeField, Range(0f, 8f)] private float brakeGlow = 3.4f;
+    [SerializeField, Range(0f, 8f)] private float reverseGlow = 1.2f;
     [Tooltip("ブレーキと判定するペダル入力（負方向）のしきい値。")]
     [SerializeField, Range(0.01f, 1f)] private float brakePedalThreshold = 0.15f;
     [Tooltip("テールランプを実光源としても点灯します。1オブジェクトが受けられる追加ライト数の上限に注意してください。")]
@@ -92,6 +93,7 @@ public sealed class CarLightController : MonoBehaviour
     private readonly List<Material> taillightEmissives = new List<Material>();
     private readonly List<Material> ownedMaterials = new List<Material>();
     private DebugMover mover;
+    private Rigidbody carBody;
     private Material headlightMaterial, taillightMaterial;
     private Mesh lampMesh;
     private Transform lampRoot;
@@ -103,6 +105,7 @@ public sealed class CarLightController : MonoBehaviour
     private void Awake()
     {
         mover = GetComponent<DebugMover>();
+        carBody = GetComponent<Rigidbody>();
     }
 
     private void OnEnable()
@@ -117,6 +120,7 @@ public sealed class CarLightController : MonoBehaviour
         lampsOn = ShouldLampsBeOn();
         lampBlend = Mathf.MoveTowards(lampBlend, lampsOn ? 1f : 0f, Time.deltaTime / Mathf.Max(0.01f, fadeSeconds));
         braking = IsBrakePedalPressed();
+        bool reversing = IsMovingBackward();
 
         foreach (Light light in headlights)
         {
@@ -127,16 +131,19 @@ public sealed class CarLightController : MonoBehaviour
 
         float headGlow = headlightGlow * lampBlend;
         // ブレーキランプは昼夜を問わず点灯し、消灯時のテール点灯だけをシチュエーションに従わせます。
-        float tailGlow = Mathf.Max(taillightGlow * lampBlend, braking ? brakeGlow : 0f);
+        float tailGlow = braking ? brakeGlow : reversing ? reverseGlow : taillightGlow * lampBlend;
+        Color activeTailColor = reversing && !braking ? Color.white : taillightColor;
+        if (taillightMaterial != null) taillightMaterial.SetColor(ColorId, activeTailColor);
         if (headlightMaterial != null) headlightMaterial.SetFloat(IntensityId, headGlow);
         if (taillightMaterial != null) taillightMaterial.SetFloat(IntensityId, tailGlow);
         ApplyEmission(headlightEmissives, headlightColor, headGlow);
-        ApplyEmission(taillightEmissives, taillightColor, tailGlow);
+        ApplyEmission(taillightEmissives, activeTailColor, tailGlow);
 
         float tailRatio = brakeGlow > 0f ? Mathf.Clamp01(tailGlow / brakeGlow) : 0f;
         foreach (Light light in taillights)
         {
             if (light == null) continue;
+            light.color = activeTailColor;
             light.enabled = tailRatio > 0.001f;
             light.intensity = taillightLightIntensity * tailRatio;
         }
@@ -158,6 +165,12 @@ public sealed class CarLightController : MonoBehaviour
     {
         if (mover == null || Gmanager.Control == null || !Gmanager.Control.IsDrivingEnabled) return false;
         return mover.PedalInput < -brakePedalThreshold;
+    }
+
+    private bool IsMovingBackward()
+    {
+        if (carBody == null || !carBody.gameObject.activeInHierarchy) return false;
+        return transform.InverseTransformDirection(carBody.linearVelocity).z < -0.5f;
     }
 
     private bool Build()

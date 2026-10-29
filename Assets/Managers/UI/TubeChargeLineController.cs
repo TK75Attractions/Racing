@@ -8,6 +8,8 @@ public sealed class TubeChargeLineController : MonoBehaviour
     private DebugMover mover;
     private float noticeUntil;
     private string guidance="";
+    public DriverNoticeSignal Notices { get; } = new DriverNoticeSignal();
+    public string Guidance => RaceFeatureController.Enabled(RaceFeature.TubeChargeLines) ? guidance : "";
     public TubeChargeLineLayout Layout { get; private set; }
     public int SuccessfulLines { get; private set; }
     public bool Pending => false;
@@ -23,8 +25,9 @@ public sealed class TubeChargeLineController : MonoBehaviour
     private void OnActivated(DebugMover car)
     {
         if(car!=mover)return;SuccessfulLines++;noticeUntil=Time.time+1.5f;
+        Notices.Publish("加速パネル！",DriverNoticePriority.Success,1.5f);
     }
-    public void Clear(){noticeUntil=0f;guidance="";}
+    public void Clear(){noticeUntil=0f;guidance="";Notices.Clear();}
     private void OnDisable(){Clear();}
     private void OnDestroy(){Unsubscribe();}
     private void Unsubscribe(){if(Layout!=null)foreach(var pad in Layout.Pads)if(pad!=null)pad.Activated-=OnActivated;}

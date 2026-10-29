@@ -39,6 +39,12 @@ public static class TubeChargeLineValidation
             bool activated=first.TryActivate(mover);
             Require(activated&&mover.IsAccelerationPadBoosting,"Touching the panel must start the existing acceleration boost: activated="+activated+", pad="+first.isActiveAndEnabled+", mover="+mover.isActiveAndEnabled+", suppression="+mover.IsInputSuppressed+", drive="+race.IsDrivingEnabled+", connected="+mover.InputSource.IsConnected+", dot="+Vector3.Dot(mover.transform.forward,first.transform.forward));
             Require(controller.SuccessfulLines==1&&mover.NormalizedDriftCharge==0f,"Panel gives acceleration and feedback, not line charge");
+            Require(controller.Notices.Text=="加速パネル！","The pad must publish main's one-shot success signal");
+            var notices=new DriverNoticeQueue();controller.Notices.Drain(notices,"tubeSuccess",0);
+            Require(notices.Tick(0)?.Text=="加速パネル！"&&notices.Current.Priority==DriverNoticePriority.Success,
+                "The integrated HUD must receive acceleration feedback at success priority");
+            controller.Notices.Drain(notices,"tubeSuccess",.1f);
+            Require(notices.Tick(2)==null,"A consumed pad event must not repeat on every HUD update");
             features.SetValidationFeature(RaceFeature.TubeChargeLines,false);Require(!layout.VisualsVisible&&!first.TryActivate(mover)&&controller.Notice.Length==0,"OFF hides and disables the pads");
             features.SetValidationFeature(RaceFeature.TubeChargeLines,true);Require(layout.VisualsVisible,"ON restores the pads");
             car.transform.rotation=Quaternion.LookRotation(-first.transform.forward,first.transform.up);body.rotation=car.transform.rotation;Physics.SyncTransforms();Require(!first.TryActivate(mover),"Wrong-way travel cannot collect the tube boost");

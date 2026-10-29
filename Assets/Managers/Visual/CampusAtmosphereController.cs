@@ -30,6 +30,10 @@ public sealed class CampusAtmosphereController : MonoBehaviour
     public void Configure(Gmanager race, RaceCourse road)
     {
         if(configured)return; manager=race;course=road;
+        // Authored night scenery already owns its materials, trees and lighting.
+        // Do not replace those assets with the generated daytime campus palette.
+        foreach (var sceneRoot in race.gameObject.scene.GetRootGameObjects())
+            if (sceneRoot.name == "NightEnnichi") return;
         var campus=GameObject.Find("1016こうしゃ");if(campus==null)return;
         configured=true;
         palette=new[]{Make("Grass",grass),Make("Foliage olive",new Color(.26f,.39f,.17f)),Make("Foliage green",new Color(.15f,.31f,.21f)),

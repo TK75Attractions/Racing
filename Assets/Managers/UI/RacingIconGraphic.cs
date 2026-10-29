@@ -5,7 +5,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class RacingIconGraphic : MaskableGraphic
 {
-    public enum Icon { Back, Pedal, Chevron, Flag, Car, Gear, Book, Power, Home, Retry, Course, Bolt, DoubleChevron, Shield, Rocket, Droplet, Swap }
+    public enum Icon { Back, Pedal, Chevron, Flag, Car, Gear, Book, Power, Home, Retry, Course, Bolt, DoubleChevron, Shield, Rocket, Droplet, Swap, Warning, Success, Accelerate, Decelerate }
     public Icon symbol;
     private VertexHelper mesh;
     private Color ink;
@@ -19,6 +19,18 @@ public sealed class RacingIconGraphic : MaskableGraphic
         aa = 1f / Mathf.Max(.1f, canvas != null ? canvas.scaleFactor : 1f);
         switch (symbol)
         {
+            case Icon.Warning:
+                Path(.055f, new Vector2(0,.42f), new Vector2(-.43f,-.34f), new Vector2(.43f,-.34f), new Vector2(0,.42f));
+                Path(.07f, new Vector2(0,.19f), new Vector2(0,-.09f)); Circle(new Vector2(0,-.23f),.045f,true); break;
+            case Icon.Success:
+                Circle(Vector2.zero,.43f,false,.045f);
+                Path(.08f,new Vector2(-.25f,0),new Vector2(-.06f,-.19f),new Vector2(.27f,.23f)); break;
+            case Icon.Accelerate:
+                Path(.075f,new Vector2(-.27f,.05f),new Vector2(0,.34f),new Vector2(.27f,.05f));
+                Path(.075f,new Vector2(0,-.35f),new Vector2(0,.31f)); break;
+            case Icon.Decelerate:
+                Path(.075f,new Vector2(-.27f,-.05f),new Vector2(0,-.34f),new Vector2(.27f,-.05f));
+                Path(.075f,new Vector2(0,.35f),new Vector2(0,-.31f)); break;
             case Icon.Back: Path(.08f, new Vector2(.16f,.32f),new Vector2(-.16f,0),new Vector2(.16f,-.32f)); break;
             case Icon.Chevron: Path(.07f, new Vector2(-.12f,.29f),new Vector2(.14f,0),new Vector2(-.12f,-.29f)); break;
             case Icon.DoubleChevron:

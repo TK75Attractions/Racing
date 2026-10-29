@@ -1,0 +1,128 @@
+{
+  "mainParent": "0d6ec99363c2e7a02e3cea7a0a34d6964f6a424a",
+  "featureParent": "3611bfe4803fae30e187ea1200fb53a015781a82",
+  "corePassed": 182,
+  "editModePassed": 182,
+  "raceAudit": {
+    "passed": true,
+    "failures": [],
+    "runs": [
+      {
+        "name": "forward-wall-stress",
+        "termination": "both-humans-finished",
+        "players": [
+          {
+            "label": "P1",
+            "finished": true,
+            "laps": 2,
+            "automaticRecoveries": 0,
+            "missedLapWraps": 0,
+            "maxSpeedStall": 0.0,
+            "maxDemandWithoutProgress": 0.36,
+            "manualResets": 0
+          },
+          {
+            "label": "P2",
+            "finished": true,
+            "laps": 2,
+            "automaticRecoveries": 0,
+            "missedLapWraps": 0,
+            "maxSpeedStall": 0.019999992102384567,
+            "maxDemandWithoutProgress": 2.1,
+            "manualResets": 0
+          }
+        ]
+      }
+    ]
+  },
+  "recovery": {
+    "passed": true,
+    "trials": [
+      {
+        "name": "static-high-center",
+        "passed": true,
+        "automaticRecoveries": 1,
+        "initialLap": 0,
+        "finalLap": 0,
+        "minGrounded": 0,
+        "secondsToRecovery": 4.003069877624512,
+        "forwardTravel": 0.0
+      },
+      {
+        "name": "dynamic-high-center",
+        "passed": true,
+        "automaticRecoveries": 1,
+        "initialLap": 0,
+        "finalLap": 0,
+        "minGrounded": 0,
+        "secondsToRecovery": 4.003248691558838,
+        "forwardTravel": 0.0
+      },
+      {
+        "name": "neutral-high-center",
+        "passed": true,
+        "automaticRecoveries": 0,
+        "initialLap": 0,
+        "finalLap": 0,
+        "minGrounded": 0,
+        "secondsToRecovery": -1.0,
+        "forwardTravel": 0.0
+      },
+      {
+        "name": "disconnected-high-center",
+        "passed": true,
+        "automaticRecoveries": 0,
+        "initialLap": 0,
+        "finalLap": 0,
+        "minGrounded": 0,
+        "secondsToRecovery": -1.0,
+        "forwardTravel": 0.0
+      },
+      {
+        "name": "static-occupied-reset",
+        "passed": true,
+        "automaticRecoveries": 0,
+        "initialLap": 0,
+        "finalLap": 0,
+        "minGrounded": 0,
+        "secondsToRecovery": -1.0,
+        "forwardTravel": 0.0
+      },
+      {
+        "name": "normal-forward-driving",
+        "passed": true,
+        "automaticRecoveries": 0,
+        "initialLap": 0,
+        "finalLap": 0,
+        "minGrounded": 0,
+        "secondsToRecovery": -1.0,
+        "forwardTravel": 103.56726837158203
+      },
+      {
+        "name": "recorded-missed-landing",
+        "passed": true,
+        "automaticRecoveries": 1,
+        "initialLap": 0,
+        "finalLap": 0,
+        "minGrounded": 0,
+        "secondsToRecovery": 0.2164764404296875,
+        "forwardTravel": 0.0
+      },
+      {
+        "name": "normal-airborne-jump",
+        "passed": true,
+        "automaticRecoveries": 0,
+        "initialLap": 0,
+        "finalLap": 0,
+        "minGrounded": 0,
+        "secondsToRecovery": -1.0,
+        "forwardTravel": 0.0
+      }
+    ]
+  },
+  "hudGlyphCounts": {
+    "Tutorial ExtraBold.asset": 410,
+    "MPLUS HUD Bold.asset": 410,
+    "MPLUS HUD Medium.asset": 410
+  }
+}

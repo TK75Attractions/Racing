@@ -29,7 +29,8 @@ public static class RacingHUDFontBuilder
             importer.maxTextureSize = 2048;
             importer.SaveAndReimport();
         }
-        string[] sources = Directory.GetFiles("Assets/Managers/UI", "*.cs", SearchOption.AllDirectories);
+        string[] sources = Directory.GetFiles("Assets/Managers/UI", "*.cs", SearchOption.AllDirectories)
+            .Concat(new[] { "Assets/Managers/Gmanager.cs" }).ToArray();
         string corpus = new string(Enumerable.Range(32, 95).Select(c => (char)c).ToArray());
         foreach (string source in sources)
             foreach (Match match in Regex.Matches(File.ReadAllText(source), "\"([^\"\\r\\n]*)\""))

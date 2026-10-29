@@ -1,17 +1,27 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-/// <summary>Layers emissive patterns on the authored or prepared tube; owns no mesh or collider.</summary>
+/// <summary>One ring-grid wall overlay with distance/curvature data; never changes the source or collision.</summary>
 [ExecuteAlways, DisallowMultipleComponent]
 public sealed class TubeSpeedPatternController : MonoBehaviour
 {
     public const string OverlayName = "Tube Speed Light Patterns";
     [SerializeField] private MeshFilter tube;
     [SerializeField] private Material patternMaterial;
+    [SerializeField] private Mesh bakedWallMesh;
+    [SerializeField] private Mesh bakedSourceMesh;
+    [SerializeField] private Mesh readableWallSource;
+    [SerializeField] private Vector3[] bakedRingCenters;
+    [SerializeField] private float bakedLength;
+    [SerializeField] private bool bakedReverse;
 
-    private Material smoothPatternMaterial;
     public MeshFilter Tube => tube;
     public Material PatternMaterial => patternMaterial;
+
+    private Mesh overlayMesh;
+    private GameObject ownedOverlay;
+    private TubePortalVisualController portals;
 
     private void OnEnable() => Rebuild();
 
@@ -34,22 +44,50 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
     {
         Clear();
         if (!isActiveAndEnabled || tube == null || tube.sharedMesh == null || patternMaterial == null) return;
+        Mesh displayMesh = tube.sharedMesh;
+        bool smooth = tube.sharedMesh.name == TubeSurfaceGeometry.SmoothMeshName;
+        Mesh portalSource = smooth ? tube.sharedMesh : readableWallSource != null ? readableWallSource : tube.sharedMesh;
+        Vector3[] centers = null;
+        float length = patternMaterial.GetFloat("_TubeLength");
+        bool reverse = false;
+        bool bakedMatches = bakedSourceMesh == tube.sharedMesh || (bakedSourceMesh == null && !smooth);
+        if (bakedMatches && bakedWallMesh != null && bakedRingCenters != null && bakedRingCenters.Length > 1)
+        {
+            displayMesh = bakedWallMesh;
+            centers = new Vector3[bakedRingCenters.Length];
+            for (int i = 0; i < centers.Length; i++) centers[i] = tube.transform.TransformPoint(bakedRingCenters[i]);
+            length = bakedLength;
+            reverse = bakedReverse;
+        }
+        else if (portalSource.isReadable && portalSource.vertexCount > 0 &&
+            portalSource.uv.Length == portalSource.vertexCount)
+        {
+            overlayMesh = BuildWallMetadata(portalSource, out centers, out length, out reverse);
+            displayMesh = overlayMesh;
+        }
+        else
+        {
+            // Drawing the imported mesh needs no CPU access. Retain the legacy overlay
+            // even before the Editor bake has been run; never hide all wall visuals.
+            Debug.LogWarning("Tube wall metadata is unavailable; using the original mesh overlay. Run TubeWallVisualPreparation.Run in the Editor.", this);
+        }
         GameObject overlay = new GameObject(OverlayName, typeof(MeshFilter), typeof(MeshRenderer))
         { hideFlags = HideFlags.DontSave, layer = tube.gameObject.layer };
+        ownedOverlay = overlay;
         overlay.transform.SetParent(tube.transform, false);
-        overlay.GetComponent<MeshFilter>().sharedMesh = tube.sharedMesh;
-        Material display = patternMaterial;
-        if (tube.sharedMesh.name == TubeSurfaceGeometry.SmoothMeshName)
+        overlay.GetComponent<MeshFilter>().sharedMesh = displayMesh;
+        if (centers != null)
         {
-            smoothPatternMaterial = new Material(patternMaterial) { name = "Smooth tube light patterns", hideFlags = HideFlags.DontSave };
-            smoothPatternMaterial.SetFloat("_CullMode", (float)CullMode.Back);
-            smoothPatternMaterial.SetFloat("_NormalDirection", 1f);
-            display = smoothPatternMaterial;
+            portals = overlay.AddComponent<TubePortalVisualController>();
+            portals.Build(tube, centers, reverse, portalSource);
         }
-        var materials = new Material[tube.sharedMesh.subMeshCount];
-        for (int i = 0; i < materials.Length; i++) materials[i] = display;
+        var materials = new Material[displayMesh.subMeshCount];
+        for (int i = 0; i < materials.Length; i++) materials[i] = patternMaterial;
         MeshRenderer renderer = overlay.GetComponent<MeshRenderer>();
         renderer.sharedMaterials = materials;
+        var properties = new MaterialPropertyBlock();
+        properties.SetFloat("_TubeLength", length);
+        renderer.SetPropertyBlock(properties);
         renderer.shadowCastingMode = ShadowCastingMode.Off;
         renderer.receiveShadows = false;
         renderer.lightProbeUsage = LightProbeUsage.Off;
@@ -64,12 +102,167 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
         Clear();
     }
 
+    // The imported triangles contain duplicate faces and span distant rings/profile
+    // samples. Rebuild ONLY the visual overlay from the authored UV grid so distance
+    // and profile coordinates interpolate locally, including the ceiling seam.
+    private Mesh BuildWallMetadata(Mesh source, out Vector3[] centers, out float length, out bool reverse)
+    {
+        Vector3[] vertices = source.vertices;
+        Vector2[] uv = source.uv;
+        var groups = new SortedDictionary<int, Dictionary<int, Vector3>>();
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            int key = Mathf.RoundToInt(uv[i].x * 1000000f);
+            if (!groups.TryGetValue(key, out var ring)) groups.Add(key, ring = new Dictionary<int, Vector3>());
+            if (uv[i].y < .999f) ring[Mathf.RoundToInt(uv[i].y * 1000000f)] = tube.transform.TransformPoint(vertices[i]);
+        }
+        centers = new Vector3[groups.Count];
+        var indices = new Dictionary<int, int>();
+        int index = 0;
+        foreach (var pair in groups)
+        {
+            foreach (Vector3 point in pair.Value.Values) centers[index] += point;
+            centers[index] /= Mathf.Max(1, pair.Value.Count);
+            indices.Add(pair.Key, index++);
+        }
+        var distances = new float[centers.Length];
+        for (int i = 1; i < centers.Length; i++) distances[i] = distances[i - 1] + Vector3.Distance(centers[i - 1], centers[i]);
+        length = centers.Length == 0 ? 0f : distances[centers.Length - 1];
+        reverse = false;
+        RaceCourse course = GetComponent<RaceCourse>();
+        if (course != null && centers.Length > 1)
+        {
+            course.RebuildCache();
+            // The checkpoint heading determines race direction, as in LapManager.
+            float sign = 1f;
+            CheckpointSensor start = null;
+            foreach (CheckpointSensor checkpoint in FindObjectsByType<CheckpointSensor>(FindObjectsSortMode.None))
+                if (start == null || checkpoint.CheckpointIndex < start.CheckpointIndex ||
+                    (checkpoint.CheckpointIndex == start.CheckpointIndex && checkpoint.transform.GetSiblingIndex() < start.transform.GetSiblingIndex()))
+                    start = checkpoint;
+            if (start != null && course.TryGetNearestCenterLineDirection(start.transform.position, out Vector3 startDirection))
+                sign = Vector3.Dot(start.transform.forward, startDirection) < 0f ? -1f : 1f;
+            if (course.TryGetNearestCenterLineDirection(centers[0], out Vector3 direction))
+                reverse = Vector3.Dot(centers[1] - centers[0], direction * sign) < 0f;
+        }
+        var metadata = new List<Vector4>(vertices.Length);
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            int r = indices[Mathf.RoundToInt(uv[i].x * 1000000f)];
+            int before = Mathf.Max(0, r - 1), after = Mathf.Min(centers.Length - 1, r + 1);
+            Vector3 incoming = (centers[r] - centers[before]).normalized;
+            Vector3 outgoing = (centers[after] - centers[r]).normalized;
+            Vector3 curvature = outgoing - incoming;
+            if (before == r || after == r) curvature = Vector3.zero;
+            float span = Mathf.Max(1f, (distances[after] - distances[before]) * .5f);
+            float bend = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.006f, .035f, curvature.magnitude / span));
+            Vector3 radial = (tube.transform.TransformPoint(vertices[i]) - centers[r]).normalized;
+            float outer = Mathf.Max(0f, Vector3.Dot(radial, -curvature.normalized)) * bend;
+            float turn = Mathf.Sign(Vector3.Dot(Vector3.Cross(incoming, outgoing), Vector3.up)) * bend * (reverse ? -1f : 1f);
+            metadata.Add(new Vector4(reverse ? length - distances[r] : distances[r], outer, turn, bend));
+        }
+        var grid = new SortedDictionary<int, SortedDictionary<int, int>>();
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            int ringKey = Mathf.RoundToInt(uv[i].x * 1000000f);
+            if (!grid.TryGetValue(ringKey, out var profile))
+                grid.Add(ringKey, profile = new SortedDictionary<int, int>());
+            profile[Mathf.RoundToInt(uv[i].y * 1000000f)] = i;
+        }
+        var positions = new List<Vector3>();
+        var normals = new List<Vector3>();
+        var coordinates = new List<Vector2>();
+        var wallData = new List<Vector4>();
+        var triangles = new List<int>();
+        SortedDictionary<int, int> previous = null;
+        int ringIndex = 0;
+        foreach (var ring in grid.Values)
+        {
+            var current = new SortedDictionary<int, int>();
+            foreach (var sample in ring)
+            {
+                int i = sample.Value;
+                current.Add(sample.Key, positions.Count);
+                positions.Add(vertices[i]);
+                Vector3 radial = (tube.transform.TransformPoint(vertices[i]) - centers[ringIndex]).normalized;
+                // A single radial normal per grid sample avoids cracks from imported
+                // hard-normal splits when the shader offsets the overlay inward.
+                normals.Add(tube.transform.localToWorldMatrix.transpose.MultiplyVector(radial).normalized);
+                coordinates.Add(uv[i]);
+                wallData.Add(metadata[i]);
+            }
+            if (previous != null)
+            {
+                if (previous.Count != current.Count)
+                    throw new System.InvalidOperationException("Tube overlay requires matching UV profiles in every ring.");
+                int lastKey = -1;
+                foreach (int key in current.Keys)
+                {
+                    if (!previous.ContainsKey(key))
+                        throw new System.InvalidOperationException("Tube overlay UV profile is incomplete.");
+                    if (lastKey >= 0)
+                    {
+                        AddWallTriangle(triangles, positions, normals, previous[lastKey], current[lastKey], current[key]);
+                        AddWallTriangle(triangles, positions, normals, previous[lastKey], current[key], previous[key]);
+                    }
+                    lastKey = key;
+                }
+            }
+            previous = current;
+            ringIndex++;
+        }
+        var mesh = new Mesh { name = "Tube wall local UV ring grid", hideFlags = HideFlags.DontSave,
+            indexFormat = positions.Count > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16 };
+        mesh.SetVertices(positions);
+        mesh.SetNormals(normals);
+        mesh.SetUVs(0, coordinates);
+        mesh.SetUVs(1, wallData);
+        mesh.SetTriangles(triangles, 0);
+        mesh.RecalculateBounds();
+        return mesh;
+    }
+
+    private static void AddWallTriangle(List<int> triangles, List<Vector3> positions, List<Vector3> normals, int a, int b, int c)
+    {
+        // Cull Front renders the interior, so every overlay face must face outward.
+        if (Vector3.Dot(Vector3.Cross(positions[b] - positions[a], positions[c] - positions[a]), normals[a]) < 0f)
+        {
+            int swap = b; b = c; c = swap;
+        }
+        triangles.Add(a); triangles.Add(b); triangles.Add(c);
+    }
+
+#if UNITY_EDITOR
+    // The Editor builder uses exactly the same metadata calculation as the runtime fallback.
+    public Mesh CreateBakedWallMetadata(Mesh source, out Vector3[] centers, out float length, out bool reverse)
+        => BuildWallMetadata(source, out centers, out length, out reverse);
+
+    public void SetBakedWallMetadata(Mesh source, Mesh wall, Vector3[] centers, float length, bool reverse)
+    {
+        readableWallSource = source;
+        bakedSourceMesh = tube.sharedMesh;
+        bakedWallMesh = wall;
+        bakedRingCenters = new Vector3[centers.Length];
+        for (int i = 0; i < centers.Length; i++) bakedRingCenters[i] = tube.transform.InverseTransformPoint(centers[i]);
+        bakedLength = length;
+        bakedReverse = reverse;
+    }
+#endif
+
     private void Clear()
     {
-        if (smoothPatternMaterial != null)
+        if (portals != null) portals.Release();
+        portals = null;
+        if (overlayMesh != null)
         {
-            if (Application.isPlaying) Destroy(smoothPatternMaterial); else DestroyImmediate(smoothPatternMaterial);
-            smoothPatternMaterial = null;
+            if (Application.isPlaying) Destroy(overlayMesh); else DestroyImmediate(overlayMesh);
+            overlayMesh = null;
+        }
+        if (ownedOverlay != null)
+        {
+            ownedOverlay.SetActive(false);
+            if (Application.isPlaying) Destroy(ownedOverlay); else DestroyImmediate(ownedOverlay);
+            ownedOverlay = null;
         }
         if (tube == null) return;
         // Find transient children too, so script reloads do not duplicate the overlay.
@@ -77,6 +270,8 @@ public sealed class TubeSpeedPatternController : MonoBehaviour
         {
             GameObject child = tube.transform.GetChild(i).gameObject;
             if (child.name != OverlayName || (child.hideFlags & HideFlags.DontSave) != HideFlags.DontSave) continue;
+            var portal = child.GetComponent<TubePortalVisualController>();
+            if (portal != null) portal.Release();
             child.SetActive(false);
             if (Application.isPlaying) Destroy(child); else DestroyImmediate(child);
         }

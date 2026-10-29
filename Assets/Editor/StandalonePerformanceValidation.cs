@@ -61,6 +61,20 @@ public static class StandalonePerformanceValidation
         BuildPlayer("Builds/StandalonePerformance/Race.app", BuildOptions.Development);
     }
 
+    // No scene/asset saves or PlayerSettings changes, including when the build fails.
+    public static void BuildWindows()
+    {
+        string path = Environment.GetEnvironmentVariable("RACING_PERFORMANCE_BUILD");
+        if (string.IsNullOrWhiteSpace(path))
+            path = Path.Combine(Path.GetTempPath(), "RacingPerformance", Guid.NewGuid().ToString("N"), "Race.exe");
+        else
+        {
+            path = Path.GetFullPath(path);
+            if (!path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) path = Path.Combine(path, "Race.exe");
+        }
+        BuildPlayer(path, BuildOptions.Development, BuildTarget.StandaloneWindows64);
+    }
+
     public static void BuildRelease()
     {
         Validate();
@@ -103,12 +117,12 @@ public static class StandalonePerformanceValidation
         BuildRelease();
     }
 
-    private static void BuildPlayer(string path, BuildOptions options)
+    private static void BuildPlayer(string path, BuildOptions options, BuildTarget target = BuildTarget.StandaloneOSX)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path));
         var result = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
             scenes = new[] { "Assets/Scenes/SampleScene.unity" }, locationPathName = path,
-            target = BuildTarget.StandaloneOSX, options = options
+            target = target, options = options
         });
         Require(result.summary.result == BuildResult.Succeeded, "Standalone build failed: " + result.summary.result);
         Debug.Log("STANDALONE_PERFORMANCE_BUILD_PASS: " + path);

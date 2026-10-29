@@ -61,6 +61,8 @@ public sealed class NeonAndonLight : MonoBehaviour
 
     [Header("路面を照らすライト")]
     [SerializeField] private LampMode mode = LampMode.Auto;
+    [SerializeField, Tooltip("無効にすると発光材質のみを使い、リアルタイムライトを生成しません。")]
+    private bool createRealtimeLight = true;
     [SerializeField] private LampShape lampShape = LampShape.Spot;
     [SerializeField, Min(0f)] private float lightIntensity = 14f;
     [SerializeField, Min(0.5f)] private float lightRange = 22f;
@@ -113,6 +115,9 @@ public sealed class NeonAndonLight : MonoBehaviour
     private void OnEnable()
     {
         if (!built) built = Build();
+        // OnValidate can precede OnEnable during loading. That build already uses
+        // the serialized values, so do not destroy and upload everything again.
+        if (built) dirty = false;
     }
 
     private void OnDisable()
@@ -219,7 +224,7 @@ public sealed class NeonAndonLight : MonoBehaviour
             AddRenderer("Ring", BuildHoverRingMesh(), neonMaterial, false, hoverRingRoot);
         }
 
-        CreateLight();
+        if (createRealtimeLight) CreateLight();
         appliedBlend = -1f;
         return true;
     }

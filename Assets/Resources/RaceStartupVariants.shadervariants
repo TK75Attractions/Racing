@@ -1,0 +1,320 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!200 &20000000
+ShaderVariantCollection:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RaceStartupVariants
+  m_Shaders:
+  - first: {fileID: 4800000, guid: 5bdf0dc0f9260a648837b78aa94a2861, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: c7d41a9b5e2f4c8d90b3a6e1f7d24c02, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: b7f939bd4cce480e9d03aca6f689e670, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: 730573dbb4bc3490fa2a76f67055068a, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: c6349e3d0459aad4ba6523570188413e, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: 7b41e9d5c26f4a3d8e05f1a9c3d20b02, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: 9b37f92e8d234f82b49d8053a6b53cb7, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: 2c69ef07e4a34f1288d89d58fbf1e652, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: d3f28c6a41b74e5db0c917e6a2f83c02, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: 959b7f037f2615149b4f65259684c518, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+      - keywords: FOG_EXP
+        passType: 13
+      - keywords: FOG_EXP2
+        passType: 13
+      - keywords: FOG_LINEAR
+        passType: 13
+  - first: {fileID: 4800000, guid: 02e2aeb834443634da356e4f6f30146c, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+      - keywords: FOG_EXP
+        passType: 13
+      - keywords: FOG_EXP2
+        passType: 13
+      - keywords: FOG_LINEAR
+        passType: 13
+  - first: {fileID: 4800000, guid: d3a52bd13439405ab39b437539436345, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: 7d8a5e9833d24bcc9e35794e67f32b11, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: 27a02559ad6a3499ea4cf7165efb143e, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: a0a46414465df48b8ba289e3d6fd38cb, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: efbba3f7903b486984008e28da08b003, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: efbba3f7903b486984008e28da08b002, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+  - first: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _ALPHAMODULATE_ON _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _ALPHAMODULATE_ON _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _ALPHAMODULATE_ON _MAIN_LIGHT_SHADOWS_CASCADE _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _ALPHAMODULATE_ON _MAIN_LIGHT_SHADOWS_CASCADE _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _ALPHAMODULATE_ON _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _ALPHAMODULATE_ON _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _EMISSION
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _EMISSION _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _EMISSION _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _EMISSION FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP _SHADOWS_SOFT_HIGH
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP _SHADOWS_SOFT_HIGH FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _OCCLUSIONMAP _SHADOWS_SOFT_HIGH _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _OCCLUSIONMAP _SHADOWS_SOFT_HIGH _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _OCCLUSIONMAP _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _OCCLUSIONMAP _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _NORMALMAP
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _NORMALMAP FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _OCCLUSIONMAP _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _OCCLUSIONMAP _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS FOG_EXP2
+        passType: 13
+      - keywords: _ALPHAMODULATE_ON _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ALPHAMODULATE_ON _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _ALPHAMODULATE_ON _MAIN_LIGHT_SHADOWS_CASCADE _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ALPHAMODULATE_ON _MAIN_LIGHT_SHADOWS_CASCADE _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _ALPHAMODULATE_ON _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ALPHAMODULATE_ON _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _EMISSION
+        passType: 13
+      - keywords: _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
+      - keywords: _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH
+        passType: 13
+      - keywords: _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH FOG_EXP2
+        passType: 13
+      - keywords: _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE FOG_EXP2
+        passType: 13
+      - keywords: _EMISSION _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _EMISSION _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _EMISSION FOG_EXP2
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP _SHADOWS_SOFT_HIGH
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP _SHADOWS_SOFT_HIGH FOG_EXP2
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _NORMALMAP FOG_EXP2
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _OCCLUSIONMAP _SHADOWS_SOFT_HIGH _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _OCCLUSIONMAP _SHADOWS_SOFT_HIGH _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A FOG_EXP2
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _OCCLUSIONMAP _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _OCCLUSIONMAP _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A FOG_EXP2
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A FOG_EXP2
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT_HIGH FOG_EXP2
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A FOG_EXP2
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE FOG_EXP2
+        passType: 13
+      - keywords: _NORMALMAP
+        passType: 13
+      - keywords: _NORMALMAP FOG_EXP2
+        passType: 13
+      - keywords: _OCCLUSIONMAP _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+      - keywords: _OCCLUSIONMAP _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A FOG_EXP2
+        passType: 13
+      - keywords: _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        passType: 13
+      - keywords: _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A FOG_EXP2
+        passType: 13
+      - keywords: _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: FOG_EXP2
+        passType: 13
+  - first: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+      - keywords: FOG_EXP2
+        passType: 13
+  - first: {fileID: 4800000, guid: 0406db5a14f94604a8c57ccfbc9f3b46, type: 3}
+    second:
+      variants:
+      - keywords:
+        passType: 13
+      - keywords: _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _SURFACE_TYPE_TRANSPARENT FOG_EXP2
+        passType: 13
+      - keywords: FOG_EXP2
+        passType: 13

@@ -1,0 +1,30 @@
+[
+  {
+    "check": "editmode",
+    "exitCode": 0,
+    "seconds": 18.47,
+    "total": 152,
+    "passed": 152,
+    "failed": 0
+  },
+  {
+    "check": "integration",
+    "exitCode": 0,
+    "seconds": 14.78
+  },
+  {
+    "check": "car-selection",
+    "exitCode": 0,
+    "seconds": 26.8
+  },
+  {
+    "check": "ending",
+    "exitCode": 0,
+    "seconds": 21.18
+  },
+  {
+    "check": "flow",
+    "exitCode": 0,
+    "seconds": 149.86
+  }
+]

@@ -79,12 +79,16 @@ public class UIMiniMap
         RectTransform frame = RacingHUDStyle.Plate(rect, "MapFrame", new Vector2(0f, -.25f), new Vector2(1f, 1.30f),
             RacingHUDPlateGraphic.PlateShape.Map, RacingHUDStyle.Teal);
         frame.SetAsFirstSibling();
-        RacingHUDStyle.Heading(frame, "コースマップ", "COURSE MAP", .08f, .81f, .92f, .97f, 22f);
-        RacingHUDStyle.Label(frame, "You", "あなた / YOU", .12f, .03f, .49f, .14f, 15f, RacingHUDStyle.Text);
-        RacingHUDStyle.Label(frame, "Rival", "あいて / RIVAL", .59f, .03f, .97f, .14f, 15f, RacingHUDStyle.Text);
+        RacingHUDStyle.Heading(frame, "コースマップ", "COURSE MAP", .08f, .81f, .92f, .97f, RacingHUDStyle.JapaneseSize);
+        RacingHUDStyle.Label(frame, "You", "あなた / YOU", .12f, .03f, .49f, .14f, RacingHUDStyle.CaptionSize, RacingHUDStyle.Text);
+        RacingHUDStyle.Label(frame, "Rival", "あいて / RIVAL", .59f, .03f, .97f, .14f, RacingHUDStyle.CaptionSize, RacingHUDStyle.Text);
         LegendMarker(frame, "YouMarker", .045f, NeonUI.Pink);
         LegendMarker(frame, "RivalMarker", .515f, Color.white);
-        RacingHUDStyle.Label(frame, "CPU", "CPU", .59f, .14f, .97f, .24f, 13f, new Color(1f,.8f,.25f));
+        LegendMarker(frame, "CpuMarker", .515f, new Color(1f,.8f,.25f));
+        RectTransform cpuLegend = frame.Find("CpuMarker") as RectTransform;
+        cpuLegend.anchorMin = new Vector2(.525f,.17f); cpuLegend.anchorMax = new Vector2(.555f,.20f);
+        cpuLegend.GetComponent<MiniMapMarkerGraphic>().Configure(true);
+        RacingHUDStyle.Label(frame, "CPU", "CPU", .59f, .14f, .97f, .24f, RacingHUDStyle.CaptionSize, new Color(1f,.8f,.25f));
 
         RectTransform viewport = (RectTransform)(rect.Find("Viewport") ?? CreateChild(rect, "Viewport", typeof(RectMask2D)).transform);
         viewport.anchorMin = Vector2.zero;
@@ -114,7 +118,9 @@ public class UIMiniMap
             markerRect.anchorMin = new Vector2(0.5f, 0.5f);
             markerRect.anchorMax = new Vector2(0.5f, 0.5f);
             markerRect.pivot = new Vector2(0.5f, 0.5f);
-            markerRect.sizeDelta = new Vector2(markerSize, markerSize);
+            float size = markerSize * (index == ownPlayerIndex ? 1.35f : index >= 2 ? .65f : 1f);
+            markerRect.sizeDelta = new Vector2(size, size);
+            markers[index].Configure(index >= 2);
             markerRect.localScale = Vector3.one;
             markers[index].gameObject.SetActive(false);
         }
@@ -175,7 +181,17 @@ public class UIMiniMap
             if (!marker.gameObject.activeSelf) marker.gameObject.SetActive(true);
 
             RectTransform markerRect = marker.rectTransform;
-            markerRect.anchoredPosition = projector.ToLocal(car.position);
+            Vector2 projected = projector.ToLocal(car.position);
+            Vector2 viewportPosition = (Vector2)(rotation * projected) + content.anchoredPosition;
+            // Inset by the rotated marker's bounding radius; no cropped arrows at map edges.
+            float inset = markerRect.sizeDelta.magnitude * .5f + 3f;
+            Vector2 half = mapSize * .5f - Vector2.one * inset;
+            float ratio = Mathf.Max(Mathf.Abs(viewportPosition.x) / Mathf.Max(1f,half.x),
+                Mathf.Abs(viewportPosition.y) / Mathf.Max(1f,half.y));
+            bool atEdge = ratio > 1f;
+            if (atEdge) viewportPosition /= ratio;
+            markerRect.anchoredPosition = (Vector2)(Quaternion.Inverse(rotation) * (viewportPosition - content.anchoredPosition));
+            marker.Configure(index >= 2, atEdge);
             markerRect.localRotation = Quaternion.Euler(0f, 0f, projector.ToLocalAngle(car.eulerAngles.y));
         }
     }
@@ -228,7 +244,7 @@ public class UIMiniMap
 
     private static void LegendMarker(Transform parent, string name, float x, Color tint)
     {
-        RectTransform marker = RacingUITheme.Rect(parent, name, new Vector2(x, .062f), new Vector2(x + .05f, .11f));
+        RectTransform marker = RacingUITheme.Rect(parent, name, new Vector2(x, .062f), new Vector2(x + (name == "YouMarker" ? .05f : .04f), name == "YouMarker" ? .11f : .102f));
         MiniMapMarkerGraphic graphic = marker.GetComponent<MiniMapMarkerGraphic>() ?? marker.gameObject.AddComponent<MiniMapMarkerGraphic>();
         graphic.color = tint;
         graphic.raycastTarget = false;

@@ -80,3 +80,19 @@ public sealed class DriverNoticeQueue
 
     public void Clear() { pending.Clear(); lastShown.Clear(); Current = null; }
 }
+
+/// <summary>Mailbox only; presentation timing belongs to the HUD queue.</summary>
+public sealed class DriverNoticeSignal
+{
+    public string Text { get; private set; } = "";
+    private DriverNoticePriority priority;
+    private float duration;
+    public void Publish(string text, DriverNoticePriority kind, float seconds)
+    { Text = text; priority = kind; duration = seconds; }
+    public void Clear() { Text = ""; }
+    public void Drain(DriverNoticeQueue queue, string key, float now)
+    {
+        if (Text.Length == 0) return;
+        queue.Submit(key, Text, priority, now, duration); Clear();
+    }
+}

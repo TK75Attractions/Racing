@@ -18,7 +18,7 @@ public sealed class TunnelReverb
     public void Process(float dry, float amount, out float left, out float right)
     {
         // Only enclosed engine energy enters the room; the tail decays naturally after the exit.
-        float send = dry * amount;
+        float send = dry * amount * .72f;
         early[cursor] = send;
         float l = Read(tapLeft), r = Read(tapRight), far = Read(tapFar);
         cursor = (cursor + 1) % early.Length;
@@ -26,8 +26,8 @@ public sealed class TunnelReverb
         float b = combs[1].Process(send + l * .18f);
         float c = combs[2].Process(send + r * .18f);
         float d = combs[3].Process(send + far * .18f);
-        left = dry * (1f + amount * .12f) + l * .22f + far * .11f + (a + c + d * .5f) * .16f;
-        right = dry * (1f + amount * .12f) + r * .22f + far * .11f + (b + d + c * .5f) * .16f;
+        left = dry * (1f + amount * .04f) + l * .15f + far * .07f + (a + c + d * .5f) * .11f;
+        right = dry * (1f + amount * .04f) + r * .15f + far * .07f + (b + d + c * .5f) * .11f;
     }
     private float Read(int distance) => early[(cursor - distance + early.Length) % early.Length];
     private sealed class Delay
@@ -40,7 +40,7 @@ public sealed class TunnelReverb
         {
             buffer = new float[Math.Max(1, (int)(rate * seconds))];
             damping = 1f - (float)Math.Exp(-2 * Math.PI * 2800 / rate);
-            feedback = (float)Math.Pow(.001, seconds / 1.35); // RT60 ~= 1.35 seconds.
+            feedback = (float)Math.Pow(.001, seconds / .95); // Shorter RT60 keeps overlapping engines distinct.
         }
         public float Process(float input)
         {

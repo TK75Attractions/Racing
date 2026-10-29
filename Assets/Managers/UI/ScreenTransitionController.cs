@@ -53,6 +53,22 @@ public sealed class ScreenTransitionController : MonoBehaviour
         ? finishWarningText != null ? finishWarningText.text : string.Empty
         : raceStatus != null ? raceStatus.text : string.Empty;
 
+    private void Awake()
+    {
+        // This must not depend on Gmanager completing serial, rendering or audio
+        // initialization. A saved preview can otherwise expose all screens at once.
+        PrepareStartupVisibility();
+    }
+
+    public void PrepareStartupVisibility()
+    {
+        titleRoot = transform.Find("Title")?.gameObject;
+        onPlayRoot = transform.Find("OnPlay")?.gameObject;
+        resultRoot = transform.Find("Result")?.gameObject;
+        SetScreenVisibility(Gmanager.State.Title);
+        transform.Find("Goal")?.gameObject.SetActive(false);
+    }
+
     public void Initialize(
         Transform title,
         Transform onPlay,
@@ -67,6 +83,9 @@ public sealed class ScreenTransitionController : MonoBehaviour
         onPlayRoot = onPlay != null ? onPlay.gameObject : null;
 
         resultRoot = result != null ? result.gameObject : null;
+        // Hide inactive screens before constructing fonts and generated UI as well
+        // as at the end of Gmanager.Awake, so partial initialization is still safe.
+        SetScreenVisibility(Gmanager.State.Title);
         if (resultRoot != null)
         {
             resultCanvasGroup = resultRoot.GetComponent<CanvasGroup>();
@@ -172,7 +191,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
             promptText = "もう一人の結果操作待ち\nそのまま待っていてね";
         if (titlePrompt != null && titlePrompt.text != promptText)
         {
-            titlePrompt.text = promptText;
+            RacingHUDStyle.SetText(titlePrompt, promptText, true);
         }
     }
 

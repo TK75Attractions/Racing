@@ -4,6 +4,80 @@ using UnityEngine;
 /// <summary>アイテム系オブジェクトの見た目を、外部アセットなしで生成するヘルパーです。</summary>
 public static class ItemVisualFactory
 {
+    /// <summary>半透明の箱、発光する稜線、両面の疑問符を一つの低コストなメッシュにまとめます。</summary>
+    public static Mesh CreateItemBox(float size)
+    {
+        var vertices = new List<Vector3>();
+        var colors = new List<Color>();
+        var triangles = new List<int>();
+        float h = size * 0.5f;
+        Vector3[] corners =
+        {
+            new Vector3(-h, -h, -h), new Vector3(h, -h, -h), new Vector3(h, h, -h), new Vector3(-h, h, -h),
+            new Vector3(-h, -h, h), new Vector3(h, -h, h), new Vector3(h, h, h), new Vector3(-h, h, h)
+        };
+
+        // Low-opacity panels are double sided; the emissive frame remains visible from every angle.
+        AddDoubleSidedQuad(vertices, colors, triangles, corners[0], corners[3], corners[2], corners[1], new Color(1f, 0f, 0f, 0.13f));
+        AddDoubleSidedQuad(vertices, colors, triangles, corners[5], corners[6], corners[7], corners[4], new Color(1f, 0f, 0f, 0.13f));
+        AddDoubleSidedQuad(vertices, colors, triangles, corners[4], corners[7], corners[3], corners[0], new Color(1f, 0f, 0f, 0.13f));
+        AddDoubleSidedQuad(vertices, colors, triangles, corners[1], corners[2], corners[6], corners[5], new Color(1f, 0f, 0f, 0.13f));
+        AddDoubleSidedQuad(vertices, colors, triangles, corners[3], corners[7], corners[6], corners[2], new Color(1f, 0f, 0f, 0.13f));
+        AddDoubleSidedQuad(vertices, colors, triangles, corners[4], corners[0], corners[1], corners[5], new Color(1f, 0f, 0f, 0.13f));
+
+        float frameWidth = size * 0.035f;
+        for (int i = 0; i < corners.Length; i++)
+        {
+            for (int j = i + 1; j < corners.Length; j++)
+            {
+                Vector3 delta = corners[j] - corners[i];
+                if (Mathf.Abs(delta.x) + Mathf.Abs(delta.y) + Mathf.Abs(delta.z) > size * 1.01f) continue;
+                AddBox(vertices, colors, triangles, (corners[i] + corners[j]) * 0.5f,
+                    Quaternion.FromToRotation(Vector3.up, delta.normalized), new Vector3(frameWidth, delta.magnitude + frameWidth, frameWidth),
+                    new Color(1f, 0f, 0f, 1f));
+            }
+        }
+
+        // A custom ribbon stroke avoids font assets. Two mirrored strokes make the glyph readable while spinning.
+        float scale = size * 0.58f;
+        Vector2[] question =
+        {
+            new Vector2(-0.30f, 0.23f), new Vector2(-0.30f, 0.40f), new Vector2(-0.18f, 0.50f),
+            new Vector2(0.05f, 0.52f), new Vector2(0.24f, 0.43f), new Vector2(0.27f, 0.27f),
+            new Vector2(0.20f, 0.14f), new Vector2(0.02f, 0.02f), new Vector2(0.02f, -0.13f)
+        };
+        float glyphZ = size * 0.17f;
+        for (int side = -1; side <= 1; side += 2)
+        {
+            float z = side * glyphZ;
+            for (int i = 0; i < question.Length - 1; i++)
+                AddRibbonSegment(vertices, colors, triangles, question[i] * scale, question[i + 1] * scale,
+                    z, size * 0.055f, new Color(0f, 0f, 0f, 1f));
+            AddBox(vertices, colors, triangles, new Vector3(0.02f * scale, -0.34f * scale, z),
+                Quaternion.identity, new Vector3(size * 0.105f, size * 0.105f, size * 0.035f), new Color(0f, 0f, 0f, 1f));
+        }
+
+        Mesh mesh = new Mesh { name = "ItemBoxNeonMesh", hideFlags = HideFlags.DontSave };
+        mesh.SetVertices(vertices);
+        mesh.SetColors(colors);
+        mesh.SetTriangles(triangles, 0);
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        return mesh;
+    }
+
+    public static Material CreateItemBoxMaterial()
+    {
+        Shader shader = Shader.Find("Racing/Neon Item Box");
+        if (shader == null) return CreateTransparentMaterial("ItemBoxMaterial", Color.magenta);
+        return new Material(shader) { name = "ItemBoxMaterial", hideFlags = HideFlags.DontSave };
+    }
+
+    public static void SetItemBoxHue(Material material, Color color)
+    {
+        if (material != null && material.HasProperty("_HueColor")) material.SetColor("_HueColor", color);
+    }
+
     /// <summary>縦長の八面体（クリスタル）です。原点が中心です。</summary>
     public static Mesh CreateCrystal(float radius, float height)
     {
@@ -237,6 +311,53 @@ public static class ItemVisualFactory
         vertices.Add(a); vertices.Add(b); vertices.Add(c); vertices.Add(d);
         triangles.Add(start); triangles.Add(start + 1); triangles.Add(start + 2);
         triangles.Add(start); triangles.Add(start + 2); triangles.Add(start + 3);
+    }
+
+    private static void AddDoubleSidedQuad(List<Vector3> vertices, List<Color> colors, List<int> triangles,
+        Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color)
+    {
+        AddQuadColored(vertices, colors, triangles, a, b, c, d, color);
+        AddQuadColored(vertices, colors, triangles, d, c, b, a, color);
+    }
+
+    private static void AddQuadColored(List<Vector3> vertices, List<Color> colors, List<int> triangles,
+        Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color)
+    {
+        int start = vertices.Count;
+        vertices.Add(a); vertices.Add(b); vertices.Add(c); vertices.Add(d);
+        colors.Add(color); colors.Add(color); colors.Add(color); colors.Add(color);
+        triangles.Add(start); triangles.Add(start + 1); triangles.Add(start + 2);
+        triangles.Add(start); triangles.Add(start + 2); triangles.Add(start + 3);
+    }
+
+    private static void AddRibbonSegment(List<Vector3> vertices, List<Color> colors, List<int> triangles,
+        Vector2 a, Vector2 b, float z, float halfWidth, Color color)
+    {
+        Vector2 perpendicular = (b - a).normalized * halfWidth;
+        Vector3 p0 = new Vector3(a.x - perpendicular.x, a.y - perpendicular.y, z);
+        Vector3 p1 = new Vector3(a.x + perpendicular.x, a.y + perpendicular.y, z);
+        Vector3 p2 = new Vector3(b.x + perpendicular.x, b.y + perpendicular.y, z);
+        Vector3 p3 = new Vector3(b.x - perpendicular.x, b.y - perpendicular.y, z);
+        AddDoubleSidedQuad(vertices, colors, triangles, p0, p1, p2, p3, color);
+    }
+
+    private static void AddBox(List<Vector3> vertices, List<Color> colors, List<int> triangles,
+        Vector3 center, Quaternion rotation, Vector3 dimensions, Color color)
+    {
+        Vector3 h = dimensions * 0.5f;
+        Vector3[] c =
+        {
+            center + rotation * new Vector3(-h.x, -h.y, -h.z), center + rotation * new Vector3(h.x, -h.y, -h.z),
+            center + rotation * new Vector3(h.x, h.y, -h.z), center + rotation * new Vector3(-h.x, h.y, -h.z),
+            center + rotation * new Vector3(-h.x, -h.y, h.z), center + rotation * new Vector3(h.x, -h.y, h.z),
+            center + rotation * new Vector3(h.x, h.y, h.z), center + rotation * new Vector3(-h.x, h.y, h.z)
+        };
+        AddDoubleSidedQuad(vertices, colors, triangles, c[0], c[3], c[2], c[1], color);
+        AddDoubleSidedQuad(vertices, colors, triangles, c[5], c[6], c[7], c[4], color);
+        AddDoubleSidedQuad(vertices, colors, triangles, c[4], c[7], c[3], c[0], color);
+        AddDoubleSidedQuad(vertices, colors, triangles, c[1], c[2], c[6], c[5], color);
+        AddDoubleSidedQuad(vertices, colors, triangles, c[3], c[7], c[6], c[2], color);
+        AddDoubleSidedQuad(vertices, colors, triangles, c[4], c[0], c[1], c[5], color);
     }
 
     private static Mesh Finish(string name, List<Vector3> vertices, List<int> triangles)

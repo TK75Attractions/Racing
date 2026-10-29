@@ -41,7 +41,11 @@ Ratings are ten-point game balance values. Acceleration changes drive force; spe
 
 P1 is always circuit blue and P2 is always pink, including thumbnails, practice, race and retries. Saved paint preferences are ignored and there are no paint controls. Only the selected vehicle is saved; browsing and cancelling do not change it. The sedan replaces chassis meshes while retaining the production physics rig, wheel positions, collider and FWD drivetrain. SPORT GT-R shares the coupe model with a different performance grade.
 
+選択した車種は車体性能に加えて、エンジン排気の共鳴プロファイルと小さな排気パフの色を切り替えます。3種類の差は控えめで、ギア・回転数・出力ゲインは共通です。パフはアクセル入力中だけ少量を発生させます。
+
 The preview uses mesh copies without driving scripts or colliders. Its local point lights are isolated by range, layer and distance so they do not affect the other player's practice area. The native 1920×1080 preview renders at up to 30 frames per second while rotating; retained thumbnails are refreshed when the screen opens, after URP has initialized. The showroom is inactive while closed, and its private textures/materials are released on teardown. The sedan's legacy materials are copied to URP-compatible materials. Coupe preview wheels come from the complete wheel prefab.
+
+Car body paint, dark plastic/interior, metal wheel parts, glass and rubber use the shared surface recipe. Run **Racing > Visuals > Build Car Material Tuning** after changing source car materials; showroom copies receive the same recipe without modifying their source assets.
 
 ## Configuration and validation
 
@@ -56,3 +60,7 @@ Unity -batchmode -projectPath /path/to/Racing -executeMethod CarSelectionValidat
 1920×1080 screenshots go to `Artifacts/CarSelection`; other sizes go to the temporary `RacingCarSelectionCaptures` directory. The command updates the dedicated static M PLUS Bold atlas when new text is added.
 
 **Racing > UI > Validate Car Selection in Play Mode** tests P2-first start, a held start pedal, visible hold progress, independent tutorial entry, driving while P1 selects, confirmation pedal release, tutorial timeout stopping the car, and synchronized race spawning. It simulates one completed lesson and times out the other for the final race gate; it is an integration smoke test, not a full driving playthrough. Use `-executeMethod CarSelectionPlayModeValidation.Run` without `-quit` in batch mode. **Racing > Tutorial > Validate and Capture** additionally exercises the real driving lessons; its editor driver chooses the saved/default cars automatically to reach practice.
+
+## 2026-10-21: 車の特徴と構図（44）
+
+性能説明は設定済みの最高速・ハンドリング倍率の比較から「曲がりやすい / カーブが得意」「直線で伸びる / カーブは早めに減速」「バランス型 / 速さと曲がりやすさを両立」を表示する。数値評価と併記し、倍率そのものは変更しない。プレビューは注視点を車体の高さへ戻して画角を38度へ広げ、回転中も車が収まりやすくした（サムネイルは26度を維持）。接続待ちは係員への案内を表示する。新文言は既存の **Validate and Capture Car Selection** のフォント収集対象。リードは同コマンドでアトラスを再生成し、全車・全塗装・回転中・両プレイヤーで文字と車体の重なりを確認する。Unityでの実画面確認は未実施。
