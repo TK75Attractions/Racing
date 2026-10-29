@@ -21,6 +21,8 @@ internal static class MacDashboardService
         string staging=Path.Combine(Path.GetTempPath(),"racing-dashboard-update-"+Guid.NewGuid().ToString("N"));
         var files=Directory.EnumerateFiles(AppContext.BaseDirectory,"*.dll").Select(Path.GetFileName).Cast<string>().ToList();
         files.AddRange(new[]{"DashboardRelay.deps.json","DashboardRelay.runtimeconfig.json"});
+        string? project=OperatorUpdateHost.FindProject();
+        if(project!=null){File.WriteAllText(Path.Combine(AppContext.BaseDirectory,"operator-project.txt"),project);files.Add("operator-project.txt");}
         files.AddRange(Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory,"Dashboard")).Select(file=>Path.Combine("Dashboard",Path.GetFileName(file))));
         var previous=new List<string>();bool stopped=false;
         try
@@ -98,6 +100,8 @@ internal static class MacDashboardService
             return;
         }
         Directory.CreateDirectory(service); Directory.CreateDirectory(agents); Directory.CreateDirectory(logs);
+        string? project=OperatorUpdateHost.FindProject();
+        if(project!=null)File.WriteAllText(Path.Combine(service,"operator-project.txt"),project);
         foreach (string name in new[] { "DashboardRelay.dll", "DashboardRelay.deps.json", "DashboardRelay.runtimeconfig.json" })
             File.Copy(Path.Combine(AppContext.BaseDirectory, name), Path.Combine(service, name), true);
         // Web Push's managed encryption/protocol libraries must accompany the relay.

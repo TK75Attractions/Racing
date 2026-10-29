@@ -65,6 +65,7 @@ var app = builder.Build();
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(10) });
 using var client = new HttpClient(new SocketsHttpHandler { UseProxy = false, MaxConnectionsPerServer = 32 })
 { BaseAddress = new Uri("http://127.0.0.1:8765"), Timeout = Timeout.InfiniteTimeSpan };
+using var operatorUpdate = new OperatorUpdateHost(client);
 string? allowedOrigin = Environment.GetEnvironmentVariable("RACING_DASHBOARD_ORIGIN")?.TrimEnd('/');
 var operators = (Environment.GetEnvironmentVariable("RACING_DASHBOARD_OPERATORS") ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
 int activeSockets = 0;
@@ -129,6 +130,26 @@ app.Run(async context =>
         }
         catch (Exception error) when (error is JsonException or BadHttpRequestException or IOException or UnauthorizedAccessException)
         { if (!context.Response.HasStarted) context.Response.StatusCode=400; }
+        return;
+    }
+    if (path == "/api/operator-update")
+    {
+        context.Response.Headers.CacheControl = "no-store";
+        if (context.Request.Method == "GET")
+            await context.Response.WriteAsJsonAsync(await operatorUpdate.Status(canControl));
+        else if (context.Request.Method == "POST" && canControl)
+        {
+            try
+            {
+                using var body = await JsonDocument.ParseAsync(context.Request.Body,cancellationToken:context.RequestAborted);
+                string id = HardwareAlertMonitor.Text(body.RootElement,"id");
+                if (id.Length == 0 || id.Length > 80) { context.Response.StatusCode=400; return; }
+                await context.Response.WriteAsJsonAsync(await operatorUpdate.Start(id));
+            }
+            catch (Exception error) when (error is JsonException or BadHttpRequestException)
+            { context.Response.StatusCode=400; }
+        }
+        else context.Response.StatusCode=403;
         return;
     }
     if (path == "/api/connection")
