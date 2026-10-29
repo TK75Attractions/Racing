@@ -42,6 +42,18 @@ public sealed class DrivingTutorialRoad : MonoBehaviour
         }
     }
 
+    public static float NearestProgress(Vector3 localPosition)
+    {
+        float result = 0f, best = float.PositiveInfinity;
+        for (float d = 0; d <= 197f; d += .5f)
+        {
+            Sample(d, out Vector3 point, out _);
+            float distance = new Vector2(point.x - localPosition.x, point.z - localPosition.z).sqrMagnitude;
+            if (distance < best) { best = distance; result = d; }
+        }
+        return result;
+    }
+
     public static void Sample(float distance, out Vector3 center, out Vector3 tangent)
     {
         float turnLength = 30f * Mathf.PI * .5f;
