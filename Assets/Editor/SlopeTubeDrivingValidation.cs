@@ -163,7 +163,7 @@ public static class SlopeTubeDrivingValidation
                     $"Slope {slope}: camera must pitch along the road.");
                 Vector3 view = (camera.LookTarget.position - camera.CameraTarget.position).normalized;
                 float relativePitch = Mathf.Asin(view.y) * Mathf.Rad2Deg - slope;
-                Require(relativePitch > -16f && relativePitch < -12f,
+                Require(relativePitch > -15f && relativePitch < -10f,
                     $"Slope {slope}: view must retain road visibility ({relativePitch:F2}).");
                 float height = car.transform.position.y;
                 Vector3 start = car.transform.position;

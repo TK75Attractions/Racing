@@ -19,7 +19,7 @@ public sealed class RaceLightningDirector : MonoBehaviour
     [SerializeField, Min(0f)] private float overtakeMaxDistance = 30f;
     [SerializeField, Min(0f)] private float overtakeWidth = 0.22f;
     [SerializeField, Min(0.01f)] private float overtakeDuration = 0.4f;
-    [SerializeField, Range(0f, 1f)] private float overtakerScreenFlash = 0.35f;
+    [SerializeField, Range(0f, 1f)] private float overtakerScreenFlash = 0.12f;
     [Tooltip("抜かれた側のカメラへ伝える揺れの強さ。")]
     [SerializeField, Range(0f, 1f)] private float overtakenCameraImpact = 0.3f;
     [SerializeField, Range(0f, 1f)] private float overtakeSoundVolume = 0.6f;
@@ -29,13 +29,13 @@ public sealed class RaceLightningDirector : MonoBehaviour
     [Tooltip("車の前方、この距離（m）に落とします。")]
     [SerializeField, Min(0f)] private float finalLapStrikeAhead = 50f;
     [Tooltip("コースを塞がないよう、左右どちらかへずらす距離（m）。")]
-    [SerializeField, Min(0f)] private float finalLapStrikeSideOffset = 14f;
+    [SerializeField, Min(0f)] private float finalLapStrikeSideOffset = 24f;
     [Tooltip("稲妻が始まる高さ（m）。")]
     [SerializeField, Min(1f)] private float finalLapStrikeHeight = 90f;
     [SerializeField, Min(0f)] private float finalLapWidth = 1.1f;
     [SerializeField, Min(0.01f)] private float finalLapDuration = 0.55f;
     [SerializeField] private Color finalLapColor = new Color(0.7f, 0.78f, 1f, 1f);
-    [SerializeField, Range(0f, 1f)] private float finalLapScreenFlash = 1f;
+    [SerializeField, Range(0f, 1f)] private float finalLapScreenFlash = 0.2f;
     [SerializeField, Range(0f, 1f)] private float finalLapCameraImpact = 0.35f;
     [Tooltip("落雷の瞬間から、ゴロゴロという遠雷が届くまでの時間（秒）。")]
     [SerializeField, Min(0f)] private float finalLapRumbleDelay = 0.35f;
@@ -46,6 +46,16 @@ public sealed class RaceLightningDirector : MonoBehaviour
     private VManager volumeManager;
     private int lastLeaderIndex = -1;
     private float nextOvertakeTime;
+    [SerializeField, HideInInspector] private int visibilityDefaultsVersion;
+
+    private void OnEnable()
+    {
+        if (visibilityDefaultsVersion != 0) return;
+        if (overtakerScreenFlash == .35f) overtakerScreenFlash = .12f;
+        if (finalLapScreenFlash == 1f) finalLapScreenFlash = .2f;
+        if (finalLapStrikeSideOffset == 14f) finalLapStrikeSideOffset = 24f;
+        visibilityDefaultsVersion = 1;
+    }
 
     /// <summary>画面の光と揺れを、各プレイヤーの画面へ届けるための参照を受け取ります。</summary>
     public void Configure(VManager manager, RaceSpeedVisualController[] visuals)

@@ -2,6 +2,8 @@ using UnityEngine;
 
 /// <summary>Marks the configured tube interior as drivable, including its steep sides.</summary>
 [DisallowMultipleComponent]
+// Editor road builders also query Contains/IsPointInside; OnEnable must run there too.
+[ExecuteAlways]
 [RequireComponent(typeof(MeshCollider))]
 public sealed class TubeDriveSurface : MonoBehaviour
 {

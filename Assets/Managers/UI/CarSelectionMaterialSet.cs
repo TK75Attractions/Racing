@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -25,7 +26,7 @@ public sealed class CarSelectionMaterialSet : MonoBehaviour
             Color emission = source.GetColor("_EmissionColor"); material.SetColor("_EmissionColor", emission);
             if (emission.maxColorComponent > .001f) material.EnableKeyword("_EMISSION");
         }
-        if (source.name.Contains("Paint")) { material.SetFloat("_Metallic", .28f); material.SetFloat("_Smoothness", .82f); }
+        ApplySurfaceTuning(material, source.name);
         if (color.a < .99f)
         {
             material.SetFloat("_Surface", 1f); material.SetFloat("_Blend", 0f);
@@ -36,6 +37,32 @@ public sealed class CarSelectionMaterialSet : MonoBehaviour
         }
         copies.Add(source, material);
         return material;
+    }
+    public static void ApplySurfaceTuning(Material material, string materialName)
+    {
+        if (material == null || string.IsNullOrEmpty(materialName)) return;
+        string name = materialName.Replace(" (Instance)", string.Empty);
+        float metallic, smoothness;
+        Color? tint = null;
+        if (name.StartsWith("Body1", StringComparison.OrdinalIgnoreCase) || name.IndexOf("Paint", StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("RMCar26_Body", StringComparison.OrdinalIgnoreCase) >= 0)
+        { metallic = .32f; smoothness = .88f; }
+        else if (name.IndexOf("glass", StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("window", StringComparison.OrdinalIgnoreCase) >= 0)
+        { metallic = .18f; smoothness = .96f; tint = new Color(.12f, .18f, .24f, 1f); }
+        else if (name.IndexOf("rubber", StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("tire", StringComparison.OrdinalIgnoreCase) >= 0)
+        { metallic = 0f; smoothness = .2f; tint = new Color(.075f, .075f, .08f, 1f); }
+        else if (name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("ring", StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("metal", StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("exhaust", StringComparison.OrdinalIgnoreCase) >= 0)
+        { metallic = .92f; smoothness = .78f; }
+        else if (name.IndexOf("black", StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("bottom", StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("interior", StringComparison.OrdinalIgnoreCase) >= 0)
+        { metallic = .05f; smoothness = .3f; tint = new Color(.09f, .095f, .105f, 1f); }
+        else return;
+        if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", metallic);
+        if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", smoothness);
+        if (material.HasProperty("_Glossiness")) material.SetFloat("_Glossiness", smoothness);
+        if (tint.HasValue)
+        {
+            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", tint.Value);
+            if (material.HasProperty("_Color")) material.SetColor("_Color", tint.Value);
+        }
     }
     private static void CopyTexture(Material source, Material target, string from, string to)
     {

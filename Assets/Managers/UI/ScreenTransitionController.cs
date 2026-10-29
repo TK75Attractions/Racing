@@ -172,7 +172,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
             promptText = "もう一人の結果操作待ち\nそのまま待っていてね";
         if (titlePrompt != null && titlePrompt.text != promptText)
         {
-            titlePrompt.text = promptText;
+            RacingHUDStyle.SetText(titlePrompt, promptText, true);
         }
     }
 

@@ -8,11 +8,11 @@ public sealed class DriftCoachingUI : MonoBehaviour
     private CarItemEffects effects;
     private TireForce[] tires;
     private int playerIndex;
-    private float messageUntil, lastHintAt = -100f;
-    private string message = "";
+    private float lastHintAt = -100f;
+    public DriverNoticeSignal Notices { get; } = new DriverNoticeSignal();
     private bool turnHintShown, releaseHintShown;
     public int SuccessfulReleases { get; private set; }
-    public string Notice => RaceFeatureController.Enabled(RaceFeature.DriftCoaching) && Time.time < messageUntil && (effects == null || !(effects.IsConfused || effects.IsOiled || effects.IsSpinning)) ? message : "";
+    public string Notice => RaceFeatureController.Enabled(RaceFeature.DriftCoaching) && (effects == null || !(effects.IsConfused || effects.IsOiled || effects.IsSpinning)) ? Notices.Text : "";
 
     public void Configure(Gmanager race, DebugMover car, int index)
     {
@@ -20,7 +20,7 @@ public sealed class DriftCoachingUI : MonoBehaviour
         effects = GetComponent<CarItemEffects>(); tires = GetComponentsInChildren<TireForce>();
         mover.DriftBoostReleased += OnRelease;
     }
-    public void ClearNotice() { message = ""; messageUntil = 0f; }
+    public void ClearNotice() { Notices.Clear(); }
     private void OnDestroy() { if (mover != null) mover.DriftBoostReleased -= OnRelease; }
     private void OnRelease(float normalizedCharge)
     {
@@ -31,7 +31,7 @@ public sealed class DriftCoachingUI : MonoBehaviour
     }
     private void Show(string text, float seconds)
     {
-        message = text; messageUntil = Time.time + seconds; lastHintAt = Time.time;
+        Notices.Publish(text, text == "ドリフト加速！" ? DriverNoticePriority.Success : DriverNoticePriority.Guidance, seconds); lastHintAt = Time.time;
     }
     private void Update()
     {
@@ -40,7 +40,7 @@ public sealed class DriftCoachingUI : MonoBehaviour
             mover.InputSource == null || !mover.InputSource.IsConnected ||
             mover.InputSource is PlayerDriveInputGate gate && (gate.NeedsPedalRelease || gate.IsBlocked) ||
             effects != null && (effects.BlocksDriverInput || effects.IsRocketActive || effects.IsConfused || effects.IsOiled))
-        { message = ""; messageUntil = 0f; return; }
+        { Notices.Clear(); return; }
         if (SuccessfulReleases > 0 || Time.time - lastHintAt < 4f || !SafeRoadAhead()) return;
         if (mover.NormalizedDriftCharge >= .2f && !releaseHintShown && mover.IsDrifting)
         {

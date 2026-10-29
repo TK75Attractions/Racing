@@ -20,6 +20,7 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
     private bool recoveryActive;
     private bool limitedDepenetration;
     private float savedDepenetrationVelocity;
+    private float nextScrapeAudioTime;
 
     private void Awake()
     {
@@ -147,9 +148,21 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
         // 既に外へ離れている場合、別のタイヤから同じ衝突通知が来ても反発を重ねません。
         wallNormal = Vector3.ProjectOnPlane(wallNormal, Vector3.up).normalized;
         float incomingSpeed = Mathf.Abs(Vector3.Dot(collision.relativeVelocity, wallNormal));
+        if (incomingSpeed >= 1.2f)
+            RaceSoundEffects.PlayVehicleCue(incomingSpeed >= 8f ? RaceVehicleAudioCue.HeavyImpact : RaceVehicleAudioCue.LightImpact,
+                collision.GetContact(0).point,Mathf.Clamp01(incomingSpeed/18f));
         float outwardSpeed = Vector3.Dot(body.linearVelocity, wallNormal);
         if (outwardSpeed < incomingSpeed)
             body.linearVelocity += wallNormal * (incomingSpeed - outwardSpeed);
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        if (Time.unscaledTime<nextScrapeAudioTime || !TryGetWallNormal(collision,out _) || collision.contactCount==0) return;
+        float scrapeSpeed=Vector3.ProjectOnPlane(collision.relativeVelocity,collision.GetContact(0).normal).magnitude;
+        if (scrapeSpeed<3f) return;
+        nextScrapeAudioTime=Time.unscaledTime+.24f;
+        RaceSoundEffects.PlayVehicleCue(RaceVehicleAudioCue.Scrape,collision.GetContact(0).point,Mathf.Clamp01(scrapeSpeed/16f));
     }
 
     private bool TryGetWallNormal(Collision collision, out Vector3 wallNormal)

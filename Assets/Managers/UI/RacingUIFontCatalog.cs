@@ -14,6 +14,13 @@ public sealed class RacingUIFontCatalog : ScriptableObject
     private Material japaneseUIMaterial;
     private static TMP_FontAsset hudMedium, hudBold;
 
+    public static TMP_FontAsset GetHUDForText(string text, bool bold)
+    {
+        TMP_FontAsset font = GetHUD(bold);
+        return font != null && (string.IsNullOrEmpty(text) || font.HasCharacters(text))
+            ? font : Get(FontRole.Japanese);
+    }
+
     public static TMP_FontAsset GetHUD(bool bold)
     {
         if (bold)

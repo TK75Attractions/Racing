@@ -1,0 +1,1032 @@
+{
+    "scene": "Assets/Scenes/SampleScene.unity",
+    "mode": "fixed",
+    "variant": "full",
+    "contactSheet": "contact-sheet.png",
+    "fixedPoints": [
+        {
+            "name": "01-start-grid",
+            "distanceMeters": 48.65657424926758
+        },
+        {
+            "name": "02-school-front",
+            "distanceMeters": 1723.5074462890625
+        },
+        {
+            "name": "03-tube-entry",
+            "distanceMeters": 1621.1575927734375
+        },
+        {
+            "name": "04-tube-inner",
+            "distanceMeters": 1029.2498779296875
+        },
+        {
+            "name": "05-tube-exit",
+            "distanceMeters": 447.3421630859375
+        },
+        {
+            "name": "06-jump-approach",
+            "distanceMeters": 1685.33642578125
+        },
+        {
+            "name": "07-sharp-curve",
+            "distanceMeters": 1706.7276611328125
+        }
+    ],
+    "skipped": [],
+    "courseLengthMeters": 1904.192626953125,
+    "spacingMeters": 119.01203918457031,
+    "directionSign": -1.0,
+    "complete": true,
+    "error": "",
+    "resolutions": [
+        {
+            "x": 1280,
+            "y": 720
+        },
+        {
+            "x": 1920,
+            "y": 1080
+        }
+    ],
+    "captureRenderScale": 0.550000011920929,
+    "resolutionSheet": "resolution-sheet.png",
+    "frames": [
+        {
+            "file": "01-start-grid-still.png",
+            "location": "01-start-grid",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 0.0,
+            "distanceMeters": 48.65657424926758,
+            "actualDistanceMeters": 48.65657424926758,
+            "placedPosition": {
+                "x": 441.15728759765627,
+                "y": 3.387996196746826,
+                "z": 788.2132568359375
+            },
+            "position": {
+                "x": 441.15728759765627,
+                "y": 3.388000726699829,
+                "z": 788.2132568359375
+            },
+            "forward": {
+                "x": 0.9989261627197266,
+                "y": -1.875370543302779e-7,
+                "z": -0.04633164405822754
+            },
+            "placedRotation": {
+                "x": 4.105686457478441e-9,
+                "y": 0.7233012914657593,
+                "z": -1.1175870895385743e-8,
+                "w": 0.6905328631401062
+            },
+            "rotation": {
+                "x": 5.969411631667754e-8,
+                "y": 0.7233021855354309,
+                "z": -7.450580596923828e-8,
+                "w": 0.6905319690704346
+            },
+            "cameraPosition": {
+                "x": 435.3651428222656,
+                "y": 5.385839462280273,
+                "z": 788.4820556640625
+            },
+            "cameraRotation": {
+                "x": 0.07699846476316452,
+                "y": 0.7188012003898621,
+                "z": -0.08065488934516907,
+                "w": 0.6862149238586426
+            },
+            "speedMetersPerSecond": 0.0,
+            "images": [
+                {
+                    "file": "01-start-grid-still.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "01-start-grid-still-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "01-start-grid-moving.png",
+            "location": "01-start-grid",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 25.0,
+            "distanceMeters": 48.65657424926758,
+            "actualDistanceMeters": 48.65657424926758,
+            "placedPosition": {
+                "x": 426.17340087890627,
+                "y": 3.387995958328247,
+                "z": 788.9083251953125
+            },
+            "position": {
+                "x": 441.15728759765627,
+                "y": 3.387995958328247,
+                "z": 788.2132568359375
+            },
+            "forward": {
+                "x": 0.9989262223243713,
+                "y": -1.928693649233537e-9,
+                "z": -0.046329379081726077
+            },
+            "placedRotation": {
+                "x": -3.246816504542949e-8,
+                "y": 0.7233019471168518,
+                "z": -4.842877388000488e-8,
+                "w": 0.6905326247215271
+            },
+            "rotation": {
+                "x": -2.5055442165466958e-9,
+                "y": 0.7233014106750488,
+                "z": -3.725290298461914e-9,
+                "w": 0.6905328035354614
+            },
+            "cameraPosition": {
+                "x": 434.97540283203127,
+                "y": 5.773609638214111,
+                "z": 788.5
+            },
+            "cameraRotation": {
+                "x": 0.07534731179475784,
+                "y": 0.7189836502075195,
+                "z": -0.07892312854528427,
+                "w": 0.6864083409309387
+            },
+            "speedMetersPerSecond": 25.00001335144043,
+            "images": [
+                {
+                    "file": "01-start-grid-moving.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "01-start-grid-moving-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "02-school-front-still.png",
+            "location": "02-school-front",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 0.0,
+            "distanceMeters": 1723.5074462890625,
+            "actualDistanceMeters": 1723.5074462890625,
+            "placedPosition": {
+                "x": 523.7913818359375,
+                "y": 9.13359260559082,
+                "z": 610.4732055664063
+            },
+            "position": {
+                "x": 523.7913818359375,
+                "y": 9.13359260559082,
+                "z": 610.4732055664063
+            },
+            "forward": {
+                "x": 0.8970528841018677,
+                "y": 0.2567784786224365,
+                "z": -0.3596680164337158
+            },
+            "placedRotation": {
+                "x": -0.07162125408649445,
+                "y": 0.8214038014411926,
+                "z": 0.10787122696638107,
+                "w": 0.5554550290107727
+            },
+            "rotation": {
+                "x": -0.07162188738584519,
+                "y": 0.821403980255127,
+                "z": 0.10787211358547211,
+                "w": 0.5554545521736145
+            },
+            "cameraPosition": {
+                "x": 518.56103515625,
+                "y": 9.764490127563477,
+                "z": 612.5703125
+            },
+            "cameraRotation": {
+                "x": -0.00253168772906065,
+                "y": 0.8282883167266846,
+                "z": 0.003742687636986375,
+                "w": 0.560283899307251
+            },
+            "speedMetersPerSecond": 0.0,
+            "images": [
+                {
+                    "file": "02-school-front-still.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "02-school-front-still-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "02-school-front-moving.png",
+            "location": "02-school-front",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 25.0,
+            "distanceMeters": 1723.5074462890625,
+            "actualDistanceMeters": 1723.5074462890625,
+            "placedPosition": {
+                "x": 511.8651123046875,
+                "y": 5.498181343078613,
+                "z": 618.5695190429688
+            },
+            "position": {
+                "x": 523.7913818359375,
+                "y": 9.133599281311036,
+                "z": 610.4732055664063
+            },
+            "forward": {
+                "x": 0.8847267627716065,
+                "y": 0.2521805763244629,
+                "z": -0.39199990034103396
+            },
+            "placedRotation": {
+                "x": -0.03727658838033676,
+                "y": 0.9193634986877441,
+                "z": 0.09037812054157257,
+                "w": 0.3810694217681885
+            },
+            "rotation": {
+                "x": -0.07162124663591385,
+                "y": 0.821403980255127,
+                "z": 0.1078711599111557,
+                "w": 0.5554547309875488
+            },
+            "cameraPosition": {
+                "x": 519.018798828125,
+                "y": 10.093964576721192,
+                "z": 613.02978515625
+            },
+            "cameraRotation": {
+                "x": -0.0008876689826138318,
+                "y": 0.8481139540672302,
+                "z": 0.00142096693161875,
+                "w": 0.5298112630844116
+            },
+            "speedMetersPerSecond": 25.00000762939453,
+            "images": [
+                {
+                    "file": "02-school-front-moving.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "02-school-front-moving-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "03-tube-entry-still.png",
+            "location": "03-tube-entry",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 0.0,
+            "distanceMeters": 1621.1575927734375,
+            "actualDistanceMeters": 1621.1575927734375,
+            "placedPosition": {
+                "x": 621.9840087890625,
+                "y": 9.15824031829834,
+                "z": 598.9605712890625
+            },
+            "position": {
+                "x": 621.9840087890625,
+                "y": 9.158256530761719,
+                "z": 598.9605712890625
+            },
+            "forward": {
+                "x": 0.9846703410148621,
+                "y": -0.14032192528247834,
+                "z": 0.10360613465309143
+            },
+            "placedRotation": {
+                "x": 0.05224202200770378,
+                "y": 0.667434811592102,
+                "z": -0.0470937080681324,
+                "w": 0.7413395643234253
+            },
+            "rotation": {
+                "x": 0.0522419698536396,
+                "y": 0.6674338579177856,
+                "z": -0.047093674540519717,
+                "w": 0.7413404583930969
+            },
+            "cameraPosition": {
+                "x": 616.2689208984375,
+                "y": 11.936988830566407,
+                "z": 598.3591918945313
+            },
+            "cameraRotation": {
+                "x": 0.1293509155511856,
+                "y": 0.6588744521141052,
+                "z": -0.11645426601171494,
+                "w": 0.731840968132019
+            },
+            "speedMetersPerSecond": 0.0,
+            "images": [
+                {
+                    "file": "03-tube-entry-still.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "03-tube-entry-still-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "03-tube-entry-moving.png",
+            "location": "03-tube-entry",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 25.0,
+            "distanceMeters": 1621.1575927734375,
+            "actualDistanceMeters": 1621.1575927734375,
+            "placedPosition": {
+                "x": 607.4716186523438,
+                "y": 12.424405097961426,
+                "z": 598.0042114257813
+            },
+            "position": {
+                "x": 621.9840087890625,
+                "y": 9.15824031829834,
+                "z": 598.9605712890625
+            },
+            "forward": {
+                "x": 0.9846704602241516,
+                "y": -0.14032204449176789,
+                "z": 0.10360344499349594
+            },
+            "placedRotation": {
+                "x": 0.11517688632011414,
+                "y": 0.6948381662368774,
+                "z": -0.11397496610879898,
+                "w": 0.7006747722625732
+            },
+            "rotation": {
+                "x": 0.05224200338125229,
+                "y": 0.6674348711967468,
+                "z": -0.04709372669458389,
+                "w": 0.7413392663002014
+            },
+            "cameraPosition": {
+                "x": 616.4638061523438,
+                "y": 12.796875,
+                "z": 598.5090942382813
+            },
+            "cameraRotation": {
+                "x": 0.1504589021205902,
+                "y": 0.6600712537765503,
+                "z": -0.1373535841703415,
+                "w": 0.7230505347251892
+            },
+            "speedMetersPerSecond": 25.0000057220459,
+            "images": [
+                {
+                    "file": "03-tube-entry-moving.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "03-tube-entry-moving-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "04-tube-inner-still.png",
+            "location": "04-tube-inner",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 0.0,
+            "distanceMeters": 1029.2498779296875,
+            "actualDistanceMeters": 1029.2498779296875,
+            "placedPosition": {
+                "x": 580.6627807617188,
+                "y": -24.612051010131837,
+                "z": 176.22869873046876
+            },
+            "position": {
+                "x": 580.6627807617188,
+                "y": -24.612051010131837,
+                "z": 176.22869873046876
+            },
+            "forward": {
+                "x": -0.9922811985015869,
+                "y": -5.91553543927148e-7,
+                "z": 0.12400799989700318
+            },
+            "placedRotation": {
+                "x": 1.6241301636910067e-8,
+                "y": -0.6618137955665588,
+                "z": 1.4901161193847657e-8,
+                "w": 0.7496685981750488
+            },
+            "rotation": {
+                "x": 2.2825668111181586e-7,
+                "y": -0.6618127822875977,
+                "z": 1.8998980522155763e-7,
+                "w": 0.7496693730354309
+            },
+            "cameraPosition": {
+                "x": 586.4171142578125,
+                "y": -22.61225700378418,
+                "z": 175.50958251953126
+            },
+            "cameraRotation": {
+                "x": 0.08359213173389435,
+                "y": -0.6576859951019287,
+                "z": 0.07379576563835144,
+                "w": 0.7449937462806702
+            },
+            "speedMetersPerSecond": 0.0,
+            "images": [
+                {
+                    "file": "04-tube-inner-still.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "04-tube-inner-still-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "04-tube-inner-moving.png",
+            "location": "04-tube-inner",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 25.0,
+            "distanceMeters": 1029.2498779296875,
+            "actualDistanceMeters": 1029.2498779296875,
+            "placedPosition": {
+                "x": 595.629638671875,
+                "y": -24.612051010131837,
+                "z": 175.3428192138672
+            },
+            "position": {
+                "x": 580.6627807617188,
+                "y": -24.612051010131837,
+                "z": 176.22869873046876
+            },
+            "forward": {
+                "x": -0.9922816753387451,
+                "y": 1.3084905603477637e-8,
+                "z": 0.12400466203689575
+            },
+            "placedRotation": {
+                "x": 6.052005119272508e-8,
+                "y": -0.7029409408569336,
+                "z": 4.842877388000488e-8,
+                "w": 0.7112488746643066
+            },
+            "rotation": {
+                "x": 1.139028427132871e-9,
+                "y": -0.6618140339851379,
+                "z": -1.1175870895385743e-8,
+                "w": 0.749668300151825
+            },
+            "cameraPosition": {
+                "x": 586.0849609375,
+                "y": -22.226886749267579,
+                "z": 175.75796508789063
+            },
+            "cameraRotation": {
+                "x": 0.08094016462564469,
+                "y": -0.6665237545967102,
+                "z": 0.07315479218959809,
+                "w": 0.7374573349952698
+            },
+            "speedMetersPerSecond": 25.000009536743165,
+            "images": [
+                {
+                    "file": "04-tube-inner-moving.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "04-tube-inner-moving-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "05-tube-exit-still.png",
+            "location": "05-tube-exit",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 0.0,
+            "distanceMeters": 447.3421630859375,
+            "actualDistanceMeters": 447.3421936035156,
+            "placedPosition": {
+                "x": 280.8072204589844,
+                "y": 5.195695877075195,
+                "z": 566.828125
+            },
+            "position": {
+                "x": 280.8072204589844,
+                "y": 5.1957106590271,
+                "z": 566.828125
+            },
+            "forward": {
+                "x": -0.08678710460662842,
+                "y": 0.021287020295858384,
+                "z": 0.9959994554519653
+            },
+            "placedRotation": {
+                "x": -0.010634200647473336,
+                "y": -0.043441612273454669,
+                "z": -0.00045246747322380543,
+                "w": 0.9989994168281555
+            },
+            "rotation": {
+                "x": -0.010634498670697213,
+                "y": -0.04344185069203377,
+                "z": -0.0004524555988609791,
+                "w": 0.9989994764328003
+            },
+            "cameraPosition": {
+                "x": 281.31048583984377,
+                "y": 7.074919700622559,
+                "z": 561.052490234375
+            },
+            "cameraRotation": {
+                "x": 0.10156357288360596,
+                "y": -0.04321921989321709,
+                "z": 0.004416526760905981,
+                "w": 0.993880033493042
+            },
+            "speedMetersPerSecond": 0.0,
+            "images": [
+                {
+                    "file": "05-tube-exit-still.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "05-tube-exit-still-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "05-tube-exit-moving.png",
+            "location": "05-tube-exit",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 25.0,
+            "distanceMeters": 447.3421630859375,
+            "actualDistanceMeters": 447.3421936035156,
+            "placedPosition": {
+                "x": 281.7181701660156,
+                "y": 4.289490699768066,
+                "z": 551.86083984375
+            },
+            "position": {
+                "x": 280.8072204589844,
+                "y": 5.195693492889404,
+                "z": 566.828125
+            },
+            "forward": {
+                "x": -0.08678658306598664,
+                "y": 0.02128630317747593,
+                "z": 0.9959995150566101
+            },
+            "placedRotation": {
+                "x": -0.045616548508405688,
+                "y": -0.017604632303118707,
+                "z": -0.0007307471241801977,
+                "w": 0.9988040924072266
+            },
+            "rotation": {
+                "x": -0.010634137317538262,
+                "y": -0.04344158619642258,
+                "z": -0.0004524670075625181,
+                "w": 0.9989994168281555
+            },
+            "cameraPosition": {
+                "x": 281.2318420410156,
+                "y": 7.2326741218566898,
+                "z": 561.2648315429688
+            },
+            "cameraRotation": {
+                "x": 0.08256090432405472,
+                "y": -0.038342807441949847,
+                "z": 0.003178830724209547,
+                "w": 0.9958431124687195
+            },
+            "speedMetersPerSecond": 25.000001907348634,
+            "images": [
+                {
+                    "file": "05-tube-exit-moving.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "05-tube-exit-moving-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "06-jump-approach-still.png",
+            "location": "06-jump-approach",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 0.0,
+            "distanceMeters": 1685.33642578125,
+            "actualDistanceMeters": 1685.33642578125,
+            "placedPosition": {
+                "x": 559.0355834960938,
+                "y": 16.557748794555665,
+                "z": 598.0489501953125
+            },
+            "position": {
+                "x": 559.0355834960938,
+                "y": 16.557748794555665,
+                "z": 598.0489501953125
+            },
+            "forward": {
+                "x": 0.9947162866592407,
+                "y": 0.08570308983325958,
+                "z": -0.05651962012052536
+            },
+            "placedRotation": {
+                "x": -0.029047667980194093,
+                "y": 0.7262353301048279,
+                "z": 0.03156261891126633,
+                "w": 0.6861070394515991
+            },
+            "rotation": {
+                "x": -0.029047543182969095,
+                "y": 0.7262342572212219,
+                "z": 0.031562551856040958,
+                "w": 0.6861081123352051
+            },
+            "cameraPosition": {
+                "x": 553.2573852539063,
+                "y": 18.19112205505371,
+                "z": 598.3772583007813
+            },
+            "cameraRotation": {
+                "x": 0.0558941476047039,
+                "y": 0.7244757413864136,
+                "z": -0.05916030332446098,
+                "w": 0.6844784617424011
+            },
+            "speedMetersPerSecond": 0.0,
+            "images": [
+                {
+                    "file": "06-jump-approach-still.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "06-jump-approach-still-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "06-jump-approach-moving.png",
+            "location": "06-jump-approach",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 25.0,
+            "distanceMeters": 1685.33642578125,
+            "actualDistanceMeters": 1685.33642578125,
+            "placedPosition": {
+                "x": 544.8878784179688,
+                "y": 14.514297485351563,
+                "z": 602.4778442382813
+            },
+            "position": {
+                "x": 559.0355834960938,
+                "y": 16.55775260925293,
+                "z": 598.0489501953125
+            },
+            "forward": {
+                "x": 0.9947161674499512,
+                "y": 0.08570335805416107,
+                "z": -0.05652255937457085
+            },
+            "placedRotation": {
+                "x": -0.051565948873758319,
+                "y": 0.8084238171577454,
+                "z": 0.07213729619979859,
+                "w": 0.5818840861320496
+            },
+            "rotation": {
+                "x": -0.02904767356812954,
+                "y": 0.7262352705001831,
+                "z": 0.03156263381242752,
+                "w": 0.6861069202423096
+            },
+            "cameraPosition": {
+                "x": 553.2340698242188,
+                "y": 18.199310302734376,
+                "z": 599.576416015625
+            },
+            "cameraRotation": {
+                "x": 0.0331026166677475,
+                "y": 0.7898099422454834,
+                "z": -0.04279286414384842,
+                "w": 0.6109610199928284
+            },
+            "speedMetersPerSecond": 25.000009536743165,
+            "images": [
+                {
+                    "file": "06-jump-approach-moving.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "06-jump-approach-moving-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "07-sharp-curve-still.png",
+            "location": "07-sharp-curve",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 0.0,
+            "distanceMeters": 1706.7276611328125,
+            "actualDistanceMeters": 1706.7276611328125,
+            "placedPosition": {
+                "x": 539.00634765625,
+                "y": 13.25820255279541,
+                "z": 604.6805419921875
+            },
+            "position": {
+                "x": 539.00634765625,
+                "y": 13.25820255279541,
+                "z": 604.6805419921875
+            },
+            "forward": {
+                "x": 0.9085201025009155,
+                "y": 0.21408060193061829,
+                "z": -0.3588324189186096
+            },
+            "placedRotation": {
+                "x": -0.0605735220015049,
+                "y": 0.8220374584197998,
+                "z": 0.08901029825210571,
+                "w": 0.5591627359390259
+            },
+            "rotation": {
+                "x": -0.06057373434305191,
+                "y": 0.8220385909080505,
+                "z": 0.08901028335094452,
+                "w": 0.5591608881950378
+            },
+            "cameraPosition": {
+                "x": 533.736328125,
+                "y": 14.024165153503418,
+                "z": 606.761962890625
+            },
+            "cameraRotation": {
+                "x": 0.004175823647528887,
+                "y": 0.82682204246521,
+                "z": -0.006139000412076712,
+                "w": 0.5624145865440369
+            },
+            "speedMetersPerSecond": 0.0,
+            "images": [
+                {
+                    "file": "07-sharp-curve-still.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "07-sharp-curve-still-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "07-sharp-curve-moving.png",
+            "location": "07-sharp-curve",
+            "state": "Game",
+            "requestedSpeedMetersPerSecond": 25.0,
+            "distanceMeters": 1706.7276611328125,
+            "actualDistanceMeters": 1706.7276611328125,
+            "placedPosition": {
+                "x": 525.3955078125,
+                "y": 9.5889310836792,
+                "z": 609.8489990234375
+            },
+            "position": {
+                "x": 539.00634765625,
+                "y": 13.258218765258789,
+                "z": 604.6805419921875
+            },
+            "forward": {
+                "x": 0.9085217714309692,
+                "y": 0.21408027410507203,
+                "z": -0.3588285744190216
+            },
+            "placedRotation": {
+                "x": -0.07274182140827179,
+                "y": 0.8137145638465881,
+                "z": 0.10558170080184937,
+                "w": 0.5669485330581665
+            },
+            "rotation": {
+                "x": -0.0605735220015049,
+                "y": 0.8220373392105103,
+                "z": 0.08901025354862213,
+                "w": 0.5591628551483154
+            },
+            "cameraPosition": {
+                "x": 534.2054443359375,
+                "y": 14.372275352478028,
+                "z": 606.5404052734375
+            },
+            "cameraRotation": {
+                "x": -0.0037103472277522089,
+                "y": 0.8251289129257202,
+                "z": 0.00541950948536396,
+                "w": 0.5649063587188721
+            },
+            "speedMetersPerSecond": 25.000015258789064,
+            "images": [
+                {
+                    "file": "07-sharp-curve-moving.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "07-sharp-curve-moving-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "08-practice.png",
+            "location": "practice",
+            "state": "Tutorial",
+            "requestedSpeedMetersPerSecond": 0.0,
+            "distanceMeters": 0.0,
+            "actualDistanceMeters": 0.0,
+            "placedPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "position": {
+                "x": -0.000006281346031755675,
+                "y": 3000.347900390625,
+                "z": -48.0
+            },
+            "forward": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "placedRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.0
+            },
+            "rotation": {
+                "x": 7.450580596923828e-9,
+                "y": -0.0000640309663140215,
+                "z": -4.272409093175611e-9,
+                "w": 1.0
+            },
+            "cameraPosition": {
+                "x": 0.000701904296875,
+                "y": 3002.35302734375,
+                "z": -53.7999267578125
+            },
+            "cameraRotation": {
+                "x": 0.078823983669281,
+                "y": -0.00006028276766301133,
+                "z": 0.000004766558049595915,
+                "w": 0.9968885779380798
+            },
+            "speedMetersPerSecond": 0.0005049409810453653,
+            "images": [
+                {
+                    "file": "08-practice.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "08-practice-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        },
+        {
+            "file": "09-result.png",
+            "location": "result",
+            "state": "Result",
+            "requestedSpeedMetersPerSecond": 0.0,
+            "distanceMeters": 0.0,
+            "actualDistanceMeters": 0.0,
+            "placedPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "position": {
+                "x": 431.26068115234377,
+                "y": 3.3479957580566408,
+                "z": 790.6744995117188
+            },
+            "forward": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "placedRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.0
+            },
+            "rotation": {
+                "x": 1.804078220146721e-9,
+                "y": 0.7202244400978088,
+                "z": 1.796143322962962e-8,
+                "w": 0.6937411427497864
+            },
+            "cameraPosition": {
+                "x": 360.0,
+                "y": 260.0,
+                "z": 1030.0
+            },
+            "cameraRotation": {
+                "x": 0.05225175991654396,
+                "y": 0.9432007074356079,
+                "z": -0.2746819257736206,
+                "w": 0.17942167818546296
+            },
+            "speedMetersPerSecond": 3.2782554626464846e-7,
+            "images": [
+                {
+                    "file": "09-result.png",
+                    "width": 1280,
+                    "height": 720,
+                    "worldRenderScale": 0.550000011920929
+                },
+                {
+                    "file": "09-result-1920x1080.png",
+                    "width": 1920,
+                    "height": 1080,
+                    "worldRenderScale": 0.550000011920929
+                }
+            ]
+        }
+    ]
+}

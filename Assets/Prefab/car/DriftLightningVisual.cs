@@ -22,13 +22,15 @@ public sealed class DriftLightningVisual : MonoBehaviour
     [Tooltip("解放時に車体の両脇を走る稲妻の太さ（m）。")]
     [SerializeField, Min(0f)] private float releaseWidth = 0.16f;
     [Tooltip("解放時の稲妻が車体の前へ伸びる距離（m）。")]
-    [SerializeField, Min(0f)] private float releaseReach = 5f;
+    [SerializeField, Min(0f)] private float releaseReach = 3.5f;
+    [Tooltip("解放時の稲妻を車幅の外へ離し、前方の進路を空けます（m）。")]
+    [SerializeField, Min(0f)] private float releaseSideClearance = 1.2f;
     [SerializeField, Min(0.01f)] private float releaseDuration = 0.32f;
     [Tooltip("解放時に車体の周りで弾けさせる放電の本数。")]
     [SerializeField, Min(0)] private int releaseArcBurst = 6;
     [SerializeField, Min(0f)] private float releaseLightIntensity = 12f;
     [Tooltip("解放時に、このプレイヤーの画面を白く光らせる強さ。")]
-    [SerializeField, Range(0f, 1f)] private float releaseScreenFlash = 0.45f;
+    [SerializeField, Range(0f, 1f)] private float releaseScreenFlash = 0.12f;
     [Tooltip("解放時に、このプレイヤーのカメラへ伝える揺れの強さ。")]
     [SerializeField, Range(0f, 1f)] private float releaseCameraImpact = 0.2f;
     [SerializeField, Range(0f, 1f)] private float releaseSoundVolume = 0.55f;
@@ -48,6 +50,15 @@ public sealed class DriftLightningVisual : MonoBehaviour
     private int playerIndex = -1;
     private VManager volumeManager;
     private RaceSpeedVisualController raceVisuals;
+    [SerializeField, HideInInspector] private int visibilityDefaultsVersion;
+
+    private void OnEnable()
+    {
+        if (visibilityDefaultsVersion != 0) return;
+        if (releaseReach == 5f) releaseReach = 3.5f;
+        if (releaseScreenFlash == .45f) releaseScreenFlash = .12f;
+        visibilityDefaultsVersion = 1;
+    }
 
     private void Awake()
     {
@@ -139,9 +150,9 @@ public sealed class DriftLightningVisual : MonoBehaviour
         {
             color = fullColor,
             width = releaseWidth,
-            jaggedness = 0.22f,
+            jaggedness = 0.08f,
             subdivisions = 5,
-            branchCount = 2,
+            branchCount = 0,
             duration = releaseDuration,
             regenerateInterval = 0.05f,
             lightIntensity = releaseLightIntensity,
@@ -153,11 +164,11 @@ public sealed class DriftLightningVisual : MonoBehaviour
         for (int side = -1; side <= 1; side += 2)
         {
             Vector3 start = new Vector3(
-                center.x + side * extents.x * 0.9f,
+                center.x + side * (extents.x + releaseSideClearance),
                 center.y + extents.y * 0.3f,
                 center.z - extents.z - 1f);
             Vector3 end = new Vector3(
-                center.x + side * extents.x * 0.5f,
+                center.x + side * (extents.x + releaseSideClearance),
                 center.y,
                 center.z + extents.z + releaseReach);
             LightningEffects.Strike(new LightningAnchor(transform, start), new LightningAnchor(transform, end), style);

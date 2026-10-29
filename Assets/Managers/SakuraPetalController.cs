@@ -50,6 +50,12 @@ public sealed class SakuraPetalController : MonoBehaviour
     [SerializeField, Range(0.02f, 1f)] private float petalSize = 0.17f;
     [SerializeField, Range(0f, 0.5f)] private float petalSizeVariation = 0.06f;
 
+    [Header("進路の視界確保")]
+    [SerializeField, Min(0f)] private float nearClearDistance = 4f;
+    [SerializeField, Min(0f)] private float centralClearDistance = 35f;
+    [Tooltip("近距離の中央から花びらを除く楕円の半径（Viewport比）。")]
+    [SerializeField] private Vector2 centralClearRadius = new Vector2(.3f, .3f);
+
     [Header("Runtime Monitor")]
     [SerializeField] private float measuredSpeed;
     [SerializeField] private float currentRate;
@@ -66,6 +72,7 @@ public sealed class SakuraPetalController : MonoBehaviour
         public Vector3 direction = Vector3.forward;
         public float speed;
         public bool hasPreviousPosition;
+        public ParticleSystem.Particle[] particles;
     }
 
     private readonly Dictionary<Camera, PetalEmitter> emitters = new Dictionary<Camera, PetalEmitter>();
@@ -94,6 +101,27 @@ public sealed class SakuraPetalController : MonoBehaviour
         // 花びらはワールド空間にあるため、各プレイヤーの分がそのカメラだけに描画されるようにします。
         foreach (var pair in emitters)
             pair.Value.system.GetComponent<ParticleSystemRenderer>().enabled = pair.Key == camera;
+        if (emitters.TryGetValue(camera, out PetalEmitter emitter)) ClearDrivingView(emitter, camera);
+    }
+
+    private void ClearDrivingView(PetalEmitter emitter, Camera camera)
+    {
+        int capacity = emitter.system.main.maxParticles;
+        if (emitter.particles == null || emitter.particles.Length < capacity)
+            emitter.particles = new ParticleSystem.Particle[capacity];
+        int count = emitter.system.GetParticles(emitter.particles);
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 viewport = camera.WorldToViewportPoint(emitter.particles[i].position);
+            if (viewport.z <= 0f) continue;
+            float x = (viewport.x - .5f) / Mathf.Max(.01f, centralClearRadius.x);
+            float y = (viewport.y - .5f) / Mathf.Max(.01f, centralClearRadius.y);
+            // Recheck existing world-space petals too: driving/turning can bring them into the corridor.
+            if (viewport.z < nearClearDistance ||
+                (viewport.z < centralClearDistance && x * x + y * y < 1f))
+                emitter.particles[i].remainingLifetime = 0f;
+        }
+        emitter.system.SetParticles(emitter.particles, count);
     }
 
     // OnValidate may run outside the main thread. Unity objects are updated in LateUpdate.

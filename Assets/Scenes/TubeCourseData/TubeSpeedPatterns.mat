@@ -26,7 +26,12 @@ Material:
     m_Ints: []
     m_Floats:
     - _FlowSpeed: 14
-    - _Intensity: 2.4
+    - _Intensity: 1.5
+    - _ShowArrows: 1
+    - _ShowBands: 1
+    - _ShowLabels: 1
+    - _ShowOuter: 1
+    - _ShowRibs: 1
     - _SurfaceOffset: 0.03
     - _TubeLength: 1193.3789
     m_Colors:

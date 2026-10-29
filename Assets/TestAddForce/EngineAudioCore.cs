@@ -10,6 +10,7 @@ public class EngineAudioCore : MonoBehaviour
     private volatile int shiftSerial;
     private AudioSource source;
     private AudioClip clock;
+    private int vehicleProfile;
 #if UNITY_EDITOR
     private PreviewRecording recording;
     private sealed class PreviewRecording
@@ -62,7 +63,7 @@ public class EngineAudioCore : MonoBehaviour
     {
         int rate = Math.Max(8000, AudioSettings.outputSampleRate);
         // Publish a fully initialized processor; the old callback may finish on the previous instance.
-        Volatile.Write(ref synth, new EngineSynth(rate, unchecked((uint)GetInstanceID())));
+        Volatile.Write(ref synth, new EngineSynth(rate, unchecked((uint)GetInstanceID()), vehicleProfile));
         source.spatialBlend = 0f; source.dopplerLevel = 0f;
         // A silent looping clock keeps OnAudioFilterRead active even when the prefab has no clip.
         if (clock != null) Destroy(clock);
@@ -74,6 +75,14 @@ public class EngineAudioCore : MonoBehaviour
     {
         targetRpm = rpm; targetLoad = load; targetGain = gain;
         combustion = fuel; shiftSerial = shift; boost = boostAmount; tunnel = enclosure;
+    }
+
+    /// <summary>Publish a fully initialized DSP with a mild vehicle-specific exhaust resonance.</summary>
+    public void ConfigureVehicleProfile(int profile)
+    {
+        vehicleProfile = Mathf.Clamp(profile, 0, 2);
+        int rate = Math.Max(8000, AudioSettings.outputSampleRate);
+        Volatile.Write(ref synth, new EngineSynth(rate, unchecked((uint)GetInstanceID()), vehicleProfile));
     }
     private void OnAudioFilterRead(float[] data, int channels)
     {

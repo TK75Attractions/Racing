@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-28",
+  "branch": "codex/night-ennichi-arcade-ui",
+  "branchBefore": "2f6264fe01cd9cdc07df0577401413ecb5c45c76",
+  "main": "b21b790d7063b6964b7ff5f53828e121286c45b0",
+  "unity": "6000.3.9f1",
+  "platform": "macOS / Metal",
+  "mainModified": false,
+  "pushed": false,
+  "editMode": {
+    "total": 170,
+    "passed": 170,
+    "failed": 0
+  },
+  "dashboard": {
+    "total": 60,
+    "passed": 59,
+    "failed": 0,
+    "skipped": 1,
+    "skipReason": "Browser diagnosis test is opt-in."
+  },
+  "runs": [
+    {
+      "name": "prepare",
+      "method": "NightArcadeIntegrationValidation.PrepareWithMain",
+      "exitCode": 0,
+      "seconds": 25.4
+    },
+    {
+      "name": "integration",
+      "method": "NightArcadeIntegrationValidation.RunWithMain",
+      "exitCode": 0,
+      "seconds": 24.2
+    },
+    {
+      "name": "selection",
+      "method": "CarSelectionPlayModeValidation.Run",
+      "exitCode": 0,
+      "seconds": 36.5
+    },
+    {
+      "name": "ending",
+      "method": "ArcadeEndingPlayModeValidation.Run",
+      "exitCode": 0,
+      "seconds": 26.1
+    },
+    {
+      "name": "flow",
+      "method": "MultiplayerPlayModeValidation.RunBatch",
+      "exitCode": 0,
+      "seconds": 148.3
+    },
+    {
+      "name": "maintenance",
+      "method": "MaintenanceModeValidation.RunBatch",
+      "exitCode": 0,
+      "seconds": 59.3
+    },
+    {
+      "name": "course",
+      "method": "NightArcadeIntegrationValidation.CaptureCourse",
+      "exitCode": 0,
+      "seconds": 50.3
+    }
+  ],
+  "finalIntegration": {
+    "passed": true,
+    "shaderErrors": 0,
+    "projectExceptions": 0,
+    "editorSearchExceptions": 0
+  },
+  "course": {
+    "complete": true,
+    "frames": 16,
+    "resolution": "1920x1080",
+    "renderScale3D": 0.55,
+    "uiScale": 1,
+    "skipped": []
+  },
+  "limits": [
+    "Physical dual displays, cabinet controls, venue speakers and Windows player performance were not tested.",
+    "Existing night replay cameras can be occluded by sakura; title framing remains a design follow-up."
+  ]
+}

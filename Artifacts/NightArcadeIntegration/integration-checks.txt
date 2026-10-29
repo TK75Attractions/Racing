@@ -1,0 +1,1 @@
+NIGHT_ARCADE_INTEGRATION_PASS: arcade bindings, five notice priorities, event scheduling, authored stereo PCM, positional vehicle mixer, per-player BGM fades and result/title routing.

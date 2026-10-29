@@ -87,6 +87,7 @@ public static class DriftChargeValidation
 
     private static void ValidateScreenEffect()
     {
+        LightningValidation.EnsureVolumeManagerInitialized();
         GameObject root = new GameObject("Drift charge volume validation");
         VolumeProfile shared = ScriptableObject.CreateInstance<VolumeProfile>();
         VolumeStack stack = VolumeManager.instance.CreateStack();

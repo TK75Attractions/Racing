@@ -48,11 +48,28 @@ public static class SkillGameplayValidation
             var label=notice.Find("Text").GetComponent<TMPro.TMP_Text>();
             Require(notice.gameObject.activeSelf&&label.text=="接続を確認してください","Lost input needs an actionable notice.");
             _=gate.CurrentState; source.IsConnected=true; ui.UpdateDriverNotice(gate,null,true);
-            Require(label.text=="ペダルを離して再開","Reconnection must explain the pedal release latch.");
+            Require(label.text=="ペダルを離して再開","Resolved connection instructions must immediately yield to the release latch.");
             ui.UpdateDriverNotice(gate,null,false);
             Require(!notice.gameObject.activeSelf,"Finished drivers must not see stale control notices.");
+            ui.UpdateDriverNotice(gate,null,true);
+            Require(label.text=="ペダルを離して再開","Reconnection must explain the pedal release latch.");
+            ui.UpdateDriverNotice(gate,null,false);
             ui.UpdateDriverNotice(null,null,true,true);
             Require(notice.gameObject.activeSelf&&label.text.Contains("ジャンプ"),"A gap needs an advance driving cue.");
+
+            var queue = new DriverNoticeQueue();
+            queue.Submit("success", "着地成功！", DriverNoticePriority.Success, 0f);
+            Require(queue.Tick(0f).Key == "success", "Success must enter the shared queue.");
+            queue.Submit("jump", "ジャンプ", DriverNoticePriority.Safety, .1f, condition:true);
+            Require(queue.Tick(.1f).Key == "jump", "Safety must immediately preempt success.");
+            queue.Submit("line", "ライン成功！", DriverNoticePriority.Success, .2f);
+            queue.Release("jump");
+            Require(queue.Tick(.89f).Key == "jump", "A cleared warning must remain for at least 0.8 seconds.");
+            Require(queue.Tick(.91f).Key == "line", "Queued success must follow the warning.");
+            queue.Submit("repeat", "ライン成功！", DriverNoticePriority.Success, 1f);
+            Require(queue.Tick(2.5f) == null, "The same success must not flash again within the cooldown.");
+            queue.Submit("old", "古い成功", DriverNoticePriority.Success, 3f);
+            Require(queue.Tick(7.1f) == null, "Stale pending success must be discarded.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }

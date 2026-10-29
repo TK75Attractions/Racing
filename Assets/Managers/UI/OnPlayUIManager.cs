@@ -86,35 +86,83 @@ public class OnPlayUIManager
 
     public void UpdateDriverNotice(PlayerDriveInputGate gate, CarResetter resetter, bool racing, bool jumpAhead = false, string coachingNotice = "", bool slipstreamBoosting = false, string challengeNotice = "", string tubeNotice = "", bool autodrive = false)
     {
-        float now = UnityEngine.Time.unscaledTime;
+        float now = (float)UIMotion.Realtime;
+        Gmanager manager = Gmanager.Control;
+        Transform car = manager != null ? manager.GetPlayerCarTransform(noticePlayer) : null;
         if (!racing || gate?.IsBlocked == true)
         {
             notices.Clear();
             ShowDriverNotice(null);
+            car?.GetComponent<DriftCoachingUI>()?.Notices.Clear();
+            car?.GetComponent<LandingRewardController>()?.Notices.Clear();
+            car?.GetComponent<TubeChargeLineController>()?.Notices.Clear();
+            displayedNotice = "";
             return;
         }
-        string inputNotice = gate == null ? "" : DriverInputNotice.Connection(gate.Source);
-        string pedalNotice = DriverInputNotice.Pedal(gate?.Source);
-        string critical = inputNotice.Length > 0 ? inputNotice :
-            resetter != null && resetter.IsRecoveryPending ? "コース復帰待ち" :
-            gate != null && gate.NeedsPedalRelease ? DriverInputNotice.Release(gate.Source) :
-            pedalNotice;
-        Condition("input", critical, DriverNoticePriority.Critical, now);
-        Condition("jump", jumpAhead ? "この先ジャンプ：まっすぐ加速" : "", DriverNoticePriority.Safety, now);
-        Condition("returned", resetter != null && UnityEngine.Time.time - resetter.LastRecoveryTime < 1.5f ? "コースへ復帰しました" : "", DriverNoticePriority.Guidance, now);
-        Condition("landing", challengeNotice, DriverNoticePriority.Success, now);
-        Condition("tube", tubeNotice, DriverNoticePriority.Guidance, now);
-        Condition("coaching", coachingNotice, DriverNoticePriority.Guidance, now);
-        Condition("slipstream", slipstreamBoosting ? "追走で加速！" : "", DriverNoticePriority.Success, now);
+        Condition("connection", gate != null && !gate.IsConnected, DriverInputNotice.Connection(gate?.Source), DriverNoticePriority.Critical, now);
+        Condition("recovery", resetter != null && resetter.IsRecoveryPending, "コース復帰待ち", DriverNoticePriority.Critical, now);
+        Condition("pedal", gate != null && gate.IsConnected && gate.NeedsPedalRelease, DriverInputNotice.Release(gate?.Source), DriverNoticePriority.Critical, now);
+        Condition("pedalMode", !string.IsNullOrEmpty(DriverInputNotice.Pedal(gate?.Source)), DriverInputNotice.Pedal(gate?.Source), DriverNoticePriority.Guidance, now);
+        Condition("returned", resetter != null && UnityEngine.Time.time - resetter.LastRecoveryTime < 1.5f, "コースへ復帰しました", DriverNoticePriority.Guidance, now);
+        Condition("jump", jumpAhead, "この先ジャンプ：まっすぐ加速", DriverNoticePriority.Safety, now);
+        UpdateRoadNotices(manager, car, now);
+        if (car != null)
+        {
+            var coach = car.GetComponent<DriftCoachingUI>();
+            var landing = car.GetComponent<LandingRewardController>();
+            var tube = car.GetComponent<TubeChargeLineController>();
+            if (RaceFeatureController.Enabled(RaceFeature.DriftCoaching)) coach?.Notices.Drain(notices, "coaching", now);
+            else notices.Cancel("coaching");
+            if (RaceFeatureController.Enabled(RaceFeature.LandingFeedback)) landing?.Notices.Drain(notices, "landing", now);
+            else notices.Cancel("landing");
+            if (RaceFeatureController.Enabled(RaceFeature.TubeChargeLines)) tube?.Notices.Drain(notices, "tubeSuccess", now);
+            else notices.Cancel("tubeSuccess");
+            Condition("tube", !string.IsNullOrEmpty(tube?.Guidance), tube?.Guidance, DriverNoticePriority.Guidance, now);
+        }
+        else
+        {
+            Condition("coaching", !string.IsNullOrEmpty(coachingNotice), coachingNotice,
+                coachingNotice == "ドリフト加速！" ? DriverNoticePriority.Success : DriverNoticePriority.Guidance, now);
+            Condition("landing", !string.IsNullOrEmpty(challengeNotice), challengeNotice, DriverNoticePriority.Success, now);
+            Condition("tube", !string.IsNullOrEmpty(tubeNotice), tubeNotice,
+                tubeNotice == "ライン成功！チャージ増加" ? DriverNoticePriority.Success : DriverNoticePriority.Guidance, now);
+        }
+        Condition("slipstream", slipstreamBoosting, "追走で加速！", DriverNoticePriority.Success, now);
         int viewedPlayer = gate != null && gate.PlayerIndex >= 0 ? gate.PlayerIndex : noticePlayer;
-        Condition("auto", autodrive ? "P" + (viewedPlayer + 1) + " 自動運転テスト中" : "", DriverNoticePriority.Success, now);
+        Condition("auto", autodrive, "P" + (viewedPlayer + 1) + " 自動運転テスト中", DriverNoticePriority.Guidance, now);
         ShowDriverNotice(notices.Tick(now));
     }
 
-    private void Condition(string key, string text, DriverNoticePriority priority, float now)
+    private void Condition(string key, bool active, string text, DriverNoticePriority priority, float now)
     {
-        if (!string.IsNullOrEmpty(text)) notices.Submit(key, text, priority, now, condition: true);
+        if (active) notices.Submit(key, text, priority, now, condition: true);
         else notices.Release(key);
+    }
+
+    private void UpdateRoadNotices(Gmanager manager, Transform car, float now)
+    {
+        bool wrong = false, curve = false;
+        RaceCourse course = manager != null ? manager.course : null;
+        if (course != null && course.HasValidPath && car != null)
+        {
+            float progress = course.GetProgressDistance(car.position);
+            float sign = manager.CourseProgressSign;
+            if (course.TryGetSampleAtProgress(progress, out RaceCourse.CourseSample here))
+            {
+                DebugMover mover = car.GetComponent<DebugMover>();
+                wrong = mover != null && mover.SpeedMetersPerSecond > 2f && Vector3.Dot(car.forward, here.forward * sign) < -.35f;
+                // Sample successive tangents: endpoint angles alone miss S bends.
+                Vector3 previous = here.forward;
+                for (int i = 1; i <= 4; i++)
+                    if (course.TryGetSampleAtProgress(progress + sign * i * 12f, out RaceCourse.CourseSample ahead))
+                    {
+                        curve |= course.HasRoadAtProgress(progress + sign * i * 12f) && Vector3.Angle(previous, ahead.forward) / 12f > 1.5f;
+                        previous = ahead.forward;
+                    }
+            }
+        }
+        Condition("wrongWay", wrong, "逆走：進行方向を確認", DriverNoticePriority.Danger, now);
+        Condition("curve", curve && !wrong, "急カーブ：手前で減速", DriverNoticePriority.Safety, now);
     }
 
     private void ShowDriverNotice(DriverNoticeQueue.Notice notice)

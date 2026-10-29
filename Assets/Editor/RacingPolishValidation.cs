@@ -141,7 +141,7 @@ public static class RacingPolishValidation
         {
             var lesson = new DrivingTutorialProgress();
             TMP_Text message = canvas.transform.Find("DrivingTutorial/CurrentInstruction/Message").GetComponent<TMP_Text>();
-            Require(canvas.transform.Find("DrivingTutorial/Lessons") == null, "No bottom instruction strip remains.");
+            Require(canvas.transform.Find("DrivingTutorial/Lessons") == null, "The legacy multi-lesson strip must stay retired; one compact current-action card is shown.");
             ui.Update(lesson, DriveInputState.Neutral, 0f, true);
             Require(message.text.Contains("まずペダル"), "Only pedal release is shown before starting.");
             lesson.Tick(.01f, true, 0f, 0f, 0f, 0f); ui.Update(lesson, DriveInputState.Neutral, 0f, true);

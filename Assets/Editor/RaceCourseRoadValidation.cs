@@ -62,6 +62,9 @@ public static class RaceCourseRoadValidation
         foreach (MeshRenderer renderer in Road(course).GetComponentsInChildren<MeshRenderer>())
             foreach (Material material in renderer.sharedMaterials)
                 Require(material != null && material.shader != null && material.shader.name == "Universal Render Pipeline/Lit", "Build-safe road materials.");
+        Material curbWhite = Road(course).Find("Road Markings").GetComponent<MeshRenderer>().sharedMaterials[2];
+        Require(curbWhite.IsKeywordEnabled("_EMISSION") && curbWhite.GetColor("_EmissionColor").maxColorComponent > 1f,
+            "Curb white uses weak HDR emission on a dedicated material.");
     }
 
     private static void ValidatePaint(RaceCourse course)
@@ -72,8 +75,9 @@ public static class RaceCourseRoadValidation
         foreach (float x in new[] { -4.8f, 4.8f })
         {
             Require(PaintedAt(mesh, new Vector2(x, 1f), 1), "Both curbs start red.");
-            Require(PaintedAt(mesh, new Vector2(x, 3f), 0), "Both curbs alternate white.");
+            Require(PaintedAt(mesh, new Vector2(x, 3f), 2), "Both curbs alternate white.");
         }
+        Require(mesh.subMeshCount == 3, "Center line stays on the non-emissive white material.");
         foreach (Vector3 vertex in mesh.vertices)
             Require(Mathf.Abs(vertex.x) <= 5.001f && vertex.y > 0f, "Paint stays inside road, above surface.");
     }
@@ -141,7 +145,8 @@ public static class RaceCourseRoadValidation
         }
         Mesh paint = Paint(course);
         Vector3[] vertices = paint.vertices;
-        int[] indices = paint.triangles;
+        // Raised curb tops/fascias do not lie on the original road plane.
+        int[] indices = paint.GetTriangles(0);
         for (int i = 0; i < indices.Length; i += 3)
         {
             Vector3 local = (vertices[indices[i]] + vertices[indices[i + 1]] + vertices[indices[i + 2]]) / 3f;

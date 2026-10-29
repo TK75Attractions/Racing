@@ -61,6 +61,10 @@ public static class MultiDisplayValidation
                 "P2 must be able to skip Display 2 and use Display 3.");
             foreach (PlayerDisplayRig rig in rigs)
             {
+                Require(rig.CameraRoot.GetComponent<NativeResolutionUI>() != null &&
+                    rig.UiCamera.GetUniversalAdditionalCameraData().renderType == CameraRenderType.Base &&
+                    !rig.BackImageCamera.GetUniversalAdditionalCameraData().cameraStack.Contains(rig.UiCamera),
+                    "UI must be an independent native-resolution composite after the world stack.");
                 Require(rig.Canvas.worldCamera == rig.UiCamera && rig.Canvas.worldCamera.targetDisplay == rig.DisplayIndex,
                     "Screen-space camera Canvas must use its player's UI camera and output.");
                 foreach (Camera camera in Cameras(rig))

@@ -4,6 +4,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 /// <summary>Smoke test of the production two-player title, tutorial and race spawning path.</summary>
 [InitializeOnLoad]
@@ -63,13 +64,7 @@ public static class CarSelectionPlayModeValidation
             double age = EditorApplication.timeSinceStartup - phaseBegan;
             if (phase == 0 && manager.state == Gmanager.State.Title)
             {
-                var pipeline=UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
-                if(pipeline!=null)
-                {
-                    float before=pipeline.renderScale;pipeline.renderScale=.5f;
-                    var native=manager.gameObject.AddComponent<RaceRenderBudget>();Require(pipeline.renderScale==1f,"The build policy preserves native UI resolution.");
-                    UnityEngine.Object.DestroyImmediate(native);pipeline.renderScale=before;
-                }
+                ValidateNativeResolution(manager);
                 screens = new CarSelectionUI[2];
                 foreach (CarSelectionUI screen in UnityEngine.Object.FindObjectsByType<CarSelectionUI>(FindObjectsInactive.Include, FindObjectsSortMode.None)) screens[screen.PlayerIndex] = screen;
                 Require(screens[0] != null && screens[1] != null, "Each player receives a selection screen");
@@ -186,6 +181,35 @@ public static class CarSelectionPlayModeValidation
         Require((car.transform.Find("SelectedVehicleBody") != null) == sedan, "Selected body reaches the production car");
         Vector4 expected = sedan ? new Vector4(1.1f, .9f, 1.15f, .9f) : new Vector4(.95f, 1.15f, .9f, 1.15f);
         Require(car.GetComponent<DebugMover>().VehicleMultipliers == expected, "Selected grade reaches production driving settings");
+    }
+    private static void ValidateNativeResolution(Gmanager manager)
+    {
+        var pipeline = GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+        if (pipeline == null) return;
+        var rigs = (PlayerDisplayRig[])typeof(Gmanager).GetField("displayRigs", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(manager);
+        PlayerDisplayRig rig = rigs[0];
+        float before = pipeline.renderScale;
+        bool worldReduced = false, uiNative = false;
+        System.Action<ScriptableRenderContext, Camera> observe = (context, camera) =>
+        {
+            if (camera == rig.BackImageCamera) worldReduced = Mathf.Abs(pipeline.renderScale - .5f) < .001f;
+            if (camera == rig.UiCamera) uiNative = Mathf.Abs(pipeline.renderScale - 1f) < .001f;
+        };
+        var target = RenderTexture.GetTemporary(320, 180, 24);
+        try
+        {
+            pipeline.renderScale = .5f;
+            RenderPipelineManager.beginCameraRendering += observe;
+            rig.RenderToTarget(target);
+            Require(worldReduced && uiNative, "World rendering may scale down while the arcade UI renders at native resolution.");
+            Require(Mathf.Abs(pipeline.renderScale - .5f) < .001f, "UI capture must restore the world render scale.");
+        }
+        finally
+        {
+            RenderPipelineManager.beginCameraRendering -= observe;
+            pipeline.renderScale = before;
+            RenderTexture.ReleaseTemporary(target);
+        }
     }
     private static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
     private static void Finish(int code)
