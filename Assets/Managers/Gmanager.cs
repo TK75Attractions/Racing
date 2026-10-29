@@ -290,6 +290,7 @@ public class Gmanager : MonoBehaviour
 
     public void Awake()
     {
+        if (GetComponent<RaceOperatorUpdate>() == null) gameObject.AddComponent<RaceOperatorUpdate>();
         if (Control == null) Control = this;
         else
         {

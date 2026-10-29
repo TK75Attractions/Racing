@@ -151,6 +151,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public string[] deviceNames, deviceKeys, outputStatus, selectedDevices;
         public bool[] outputAvailable;
         public bool maintenanceAvailable, maintenanceActive;
+        public bool updateAvailable, updateBusy;
+        public string updateStatus;
         public bool featuresAvailable, rulesLocked, hasQueuedPreset, canStartTestRace, bothPlayersAutodrive;
         public string activePreset, selectedPreset;
         public FeatureSnapshot[] features;
@@ -413,7 +415,9 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             int device = output?.GetSelectedDevice(i) ?? -1;
             selected[i] = device >= 0 && device < keys.Length ? keys[device] : "";
         }
+        var updater = race != null ? race.GetComponent<RaceOperatorUpdate>() : null;
         return new SettingsSnapshot {
+            updateAvailable = updater?.Available ?? false, updateBusy = updater?.Busy ?? false, updateStatus = updater?.Status ?? "更新機能がありません。",
             maintenanceAvailable = race?.MaintenanceAvailable ?? false, maintenanceActive = race?.IsMaintenanceActive ?? false,
             featuresAvailable = features != null, features = BuildFeatures(features), bothPlayersAutodrive = race?.BothPlayersAutodrive ?? false,
             activePreset = features?.ActivePreset.ToString() ?? "", selectedPreset = features?.SelectedPreset.ToString() ?? "",
@@ -438,6 +442,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         reason = "invalid_setting";
         string[] args = request.args ?? Array.Empty<string>();
         RaceFeatureController features = race?.Features;
+        if (request.command == "updateAndRun" && args.Length == 0)
+            return race != null && race.GetComponent<RaceOperatorUpdate>()?.Request() == true;
         if (request.command == "maintenance" && args.Length == 1 && (args[0] == "true" || args[0] == "false"))
             return race != null && race.SetMaintenance(args[0] == "true");
         if (request.command == "feature" && args.Length == 2 && features != null &&

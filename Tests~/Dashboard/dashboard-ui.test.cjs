@@ -711,3 +711,30 @@ test('Maintenance submits explicit on/off through the existing versioned setting
   assert.equal(ui.elements.get('maintenance-stop').hidden,false);
   assert.match(ui.elements.get('maintenance-feedback').textContent,/全ゲーム画面/);
 });
+
+test('Updater requires current operator access, availability and no running update',()=>{
+  const ui=fixture();
+  const settings={updateAvailable:true,updateBusy:false,updateStatus:'Ready to update'};
+  ui.render({...base,settings},{canControl:true});
+  assert.equal(ui.elements.get('operator-update').disabled,false);
+  assert.equal(ui.elements.get('operator-update-status').textContent,'Ready to update');
+  for(const settingsValue of [undefined,{}, {...settings,updateAvailable:false},{...settings,updateBusy:true}]) {
+    ui.render({...base,settings:settingsValue},{canControl:true});
+    assert.equal(ui.elements.get('operator-update').disabled,true);
+  }
+  ui.render({...base,settings},{canControl:false});
+  assert.equal(ui.elements.get('operator-update').disabled,true);
+  ui.context.setConnection(false);
+  assert.match(ui.elements.get('operator-update-status').textContent,/接続/);
+});
+test('Update button sends an argument-free updateAndRun command',async()=>{
+  const ui=fixture(),sent=[];
+  ui.context.AbortSignal=AbortSignal;ui.context.crypto={randomUUID:()=> 'update-request'};
+  ui.context.recordUpdate=(action,payload)=>sent.push({action,...JSON.parse(JSON.stringify(payload))});
+  vm.runInContext("liveController={command:async(action,payload)=>{recordUpdate(action,payload);return {ok:true,settingsRevision:4,settings:{updateAvailable:false,updateBusy:true,updateStatus:'Checking'}};}}",ui.context);
+  ui.render({...base,sessionId:'s',settingsRevision:3,settings:{updateAvailable:true,updateBusy:false}});
+  const button=ui.elements.get('operator-update');button.blur=()=>{};
+  await ui.context.submitSetting(button);
+  assert.deepEqual(sent,[{action:'settings',command:'updateAndRun',args:[],settingsRevision:3}]);
+  assert.equal(button.disabled,true);
+});
