@@ -91,7 +91,7 @@ public static class StartRoofAndLiveValidation
             File.WriteAllText(Folder+"/verification.txt","PASS: actual start-side roof bounds; positive-scale slab; no duplicates; "+trials+" production chassis/layer upward/downward collision trials at 10/30/80 m/s and 0.02s physics steps, including roof edge.\n");
             GraphicsSettings.defaultRenderPipeline=null; QualitySettings.renderPipeline=null;
             CaptureHUD();
-            File.AppendAllText(Folder+"/verification.txt","PASS: prominent LIVE badge on current footage only; hidden for REPLAY and COURSE PV; noninteractive overlay; spectator identity retained. UI captures use a recorded race reference as background.\n");
+            File.AppendAllText(Folder+"/verification.txt","PASS: prominent LIVE badge on current footage only; hidden for REPLAY and COURSE PV; noninteractive overlay; spectator identity retained; description hidden; watched P1/P2 colors on all four edges; overlay hides after spectating. UI captures use a recorded race reference as background.\n");
             Debug.Log("START_ROOF_AND_LIVE_VALIDATION_PASS: "+trials+" collision trials and live/replay/PV presentation.");
         }
         finally
@@ -140,7 +140,28 @@ public static class StartRoofAndLiveValidation
         foreach(var text in spectator.GetComponentsInChildren<TMPro.TMP_Text>())
         { text.ForceMeshUpdate();Require(!text.isTextOverflowing,"LIVE text must fit: "+text.text);Require(text.font.HasCharacters(text.text),"LIVE glyphs: "+text.text); }
         foreach(var child in host.GetComponentsInChildren<Transform>(true))child.gameObject.layer=30;
-        Save(cam,output,"spectator.jpg");
+        foreach (int watched in new[]{0,1})
+        {
+            spectator.Show(watched);
+            Require(!spectator.transform.Find("SpectatorLive/Description").gameObject.activeSelf,"Spectators do not need the race-in-progress description.");
+            foreach (string edgeName in new[]{"FrameLeft","FrameRight","FrameTop","FrameBottom"})
+            {
+                var edge=spectator.transform.Find(edgeName).GetComponent<Image>();
+                Require(edge.color==ArcadeUI.For(watched).Primary&&!edge.raycastTarget,"Frame must use the watched player color and pass input through.");
+                var rect=(RectTransform)edge.transform;
+                var corners=new Vector3[4];rect.GetWorldCorners(corners);
+                var lower=host.transform.InverseTransformPoint(corners[0]);
+                var upper=host.transform.InverseTransformPoint(corners[2]);
+                var screen=((RectTransform)host.transform).rect;
+                Require(edgeName=="FrameRight"||Mathf.Abs(lower.x-screen.xMin)<.1f,"Frame must reach left edge.");
+                Require(edgeName=="FrameLeft"||Mathf.Abs(upper.x-screen.xMax)<.1f,"Frame must reach right edge.");
+                Require(edgeName=="FrameTop"||Mathf.Abs(lower.y-screen.yMin)<.1f,"Frame must reach bottom edge.");
+                Require(edgeName=="FrameBottom"||Mathf.Abs(upper.y-screen.yMax)<.1f,"Frame must reach top edge.");
+            }
+            Save(cam,output,watched==0?"spectator-p1.jpg":"spectator.jpg");
+        }
+        spectator.Hide();
+        Require(!spectator.gameObject.activeSelf,"Spectator frame must hide with the overlay.");
         Object.DestroyImmediate(host);
         cam.targetTexture=null;Object.DestroyImmediate(cam.gameObject);Object.DestroyImmediate(output);Object.DestroyImmediate(feed);
     }
