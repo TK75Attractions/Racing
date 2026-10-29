@@ -7,7 +7,7 @@ public sealed class DashboardDriveInputSource : IDriveInputSource, IDriveSteerin
     private readonly DashboardInputLease lease;
     private readonly Func<double> clock;
     private DriveInputState remoteState;
-    private bool wasRemote, needsLocalRelease;
+    private bool wasRemote, needsLocalRelease, localReleasedDuringRemote;
     private long sampledGeneration;
     public int PlayerIndex => source.PlayerIndex;
     public string DeviceId => lease.IsActive(clock()) ? $"Dashboard P{PlayerIndex + 1}" : source.DeviceId;
@@ -22,7 +22,6 @@ public sealed class DashboardDriveInputSource : IDriveInputSource, IDriveSteerin
             if (lease.IsActive(clock())) return DriveInputState.Neutral; // Await the next sampled input frame.
             DriveInputState local = source.CurrentState;
             if (!needsLocalRelease) return local;
-            if (source.IsConnected && Math.Abs(local.pedal) <= .05f) needsLocalRelease = false;
             return DriveInputState.Neutral;
         }
     }
@@ -32,8 +31,14 @@ public sealed class DashboardDriveInputSource : IDriveInputSource, IDriveSteerin
     {
         double now = clock();
         bool active = lease.IsActive(now);
-        if (wasRemote && !active) needsLocalRelease = true;
         bool entering = active && (!wasRemote || sampledGeneration != lease.Generation);
+        if (entering) localReleasedDuringRemote = false;
+        bool localReleased = source.IsConnected && Math.Abs(source.CurrentState.pedal) <= .05f;
+        // Observe the real device even while menus/cars are not consuming input. A release
+        // made while the operator owns the controls must also count toward the handover.
+        if (active && localReleased) localReleasedDuringRemote = true;
+        if (wasRemote && !active) needsLocalRelease = !localReleasedDuringRemote;
+        if (!active && localReleased) needsLocalRelease = false;
         wasRemote = active; sampledGeneration = lease.Generation;
         // Publish a neutral frame before the first button edge so existing release gates can arm.
         if (entering) { remoteState = DriveInputState.Neutral; return; }
@@ -44,6 +49,11 @@ public sealed class DashboardDriveInputSource : IDriveInputSource, IDriveSteerin
             resetPressed = (buttons & DashboardInputButtons.Reset) != 0, readyPressed = (buttons & DashboardInputButtons.Ready) != 0
         };
     }
-    public void PedalReleaseObserved() { if (!wasRemote) (source as IDrivePedalReleaseObserver)?.PedalReleaseObserved(); }
+    public void PedalReleaseObserved()
+    {
+        // A suppressed held pedal is synthetic neutral, not a physical release.
+        if (!wasRemote && source.IsConnected && Math.Abs(source.CurrentState.pedal) <= .05f)
+            (source as IDrivePedalReleaseObserver)?.PedalReleaseObserved();
+    }
     public void Dispose() { } // InputManager owns the real devices.
 }
