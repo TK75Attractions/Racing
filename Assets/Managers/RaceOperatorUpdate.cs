@@ -101,15 +101,18 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
     private static string FindUnity()
     {
         string configured = Environment.GetEnvironmentVariable("RACING_UNITY_PATH");
-        if (!string.IsNullOrWhiteSpace(configured)) return configured;
+        if (!string.IsNullOrWhiteSpace(configured)) return ResolveEditorExecutable(configured);
 #if UNITY_EDITOR
-        return UnityEditor.EditorApplication.applicationPath;
+        return ResolveEditorExecutable(UnityEditor.EditorApplication.applicationPath);
 #else
         bool windows = Application.platform == RuntimePlatform.WindowsPlayer;
         return windows ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Unity", "Hub", "Editor", Application.unityVersion, "Editor", "Unity.exe")
             : "/Applications/Unity/Hub/Editor/" + Application.unityVersion + "/Unity.app/Contents/MacOS/Unity";
 #endif
     }
+
+    private static string ResolveEditorExecutable(string path) =>
+        path.EndsWith(".app", StringComparison.OrdinalIgnoreCase) ? Path.Combine(path, "Contents", "MacOS", "Unity") : path;
 
     // Windows CRT argument quoting also works for ProcessStartInfo's Unix argv parser.
     private static string Quote(string value)

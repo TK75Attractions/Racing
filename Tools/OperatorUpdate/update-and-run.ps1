@@ -34,7 +34,7 @@ try {
     Invoke-Git merge --ff-only origin/main
     $originalPlugin = Join-Path $Request 'original-RaceAudio.dll'
     Copy-Item -LiteralPath (Join-Path $Repo 'Assets\Plugins\RaceAudio\Windows\RaceAudio.dll') -Destination $originalPlugin
-    & cmd.exe /c 'Native~\RaceAudio\build-windows.cmd' 
+    & cmd.exe /c 'Native~\RaceAudio\build-windows.cmd'
     if ($LASTEXITCODE -ne 0) { throw 'Native audio build failed.' }
     $version = Get-Date -Format 'yyyyMMdd-HHmmss'
     $env:RACING_OPERATOR_BUILD = Join-Path $Repo "Builds\Operator\$version-$PID\Race.exe"

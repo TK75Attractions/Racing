@@ -18,7 +18,7 @@ public static class OperatorUpdateMenu
             return;
         }
         // Edit-mode requests need an Editor tick while waiting for Git preflight.
-        var root = new GameObject("Operator update") { hideFlags = HideFlags.HideAndDontSave };
+        var root = EditorUtility.CreateGameObjectWithHideFlags("Operator update", HideFlags.HideAndDontSave);
         root.SetActive(false);
         pending = root.AddComponent<RaceOperatorUpdate>(); pending.Configure(race);
         if (!pending.Request()) { Debug.LogWarning(pending.Status); Object.DestroyImmediate(root); pending = null; return; }
