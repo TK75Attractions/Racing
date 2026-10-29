@@ -138,13 +138,33 @@ public static class LiveInputTests
         local.IsConnected=true;now=1.1;
         Require(car.CurrentState.pedal==0f,"The getter must expire remote acceleration even before the next Update.");
         dashboard.UpdateInput(.02f);Require(car.CurrentState.pedal==0f,"Do not resume a held physical pedal on remote disconnect.");
-        local.State=DriveInputState.Neutral;_=car.CurrentState;
+        local.State=DriveInputState.Neutral;dashboard.UpdateInput(.02f);_=car.CurrentState;
         local.State=new DriveInputState {pedal=.8f};Require(car.CurrentState.pedal==.8f,"Physical input resumes after release.");
         Require(lease.TryApply("second",1,"begin",DashboardInputButtons.Brake,now,out _),"A new owner can acquire an expired lease.");
         Require(car.CurrentState.pedal==0f,"Do not expose stale movement from the previous controller.");
         dashboard.UpdateInput(.02f);now+=.02;dashboard.UpdateInput(.02f);
         Require(car.CurrentState.pedal==-1f,"New owner supplies its own input.");
         lease.Clear();Require(car.CurrentState.pedal==0f,"Transition/stop clears cached remote input immediately.");
+        dashboard.UpdateInput(.02f);
+        Require(car.CurrentState.pedal==0f,"A local pedal held throughout takeover stays gated.");
+        int acknowledgements=local.Acknowledged;
+        _=car.CurrentState;
+        Require(local.Acknowledged==acknowledgements,"Synthetic neutral cannot acknowledge a held physical pedal.");
+        // Release at the title while nobody reads input, then press before the first menu read.
+        local.State=DriveInputState.Neutral;dashboard.UpdateInput(.02f);
+        local.State=new DriveInputState {pedal=.9f};dashboard.UpdateInput(.02f);
+        Require(car.CurrentState.pedal==.9f,"Release must be observed by the input update even without a consumer.");
+        Require(lease.TryApply("third",1,"begin",0,now,out _),"Take over at title.");
+        dashboard.UpdateInput(.02f);
+        local.State=DriveInputState.Neutral;dashboard.UpdateInput(.02f);
+        local.State=new DriveInputState {pedal=.7f};dashboard.UpdateInput(.02f);
+        Require(lease.TryApply("third",2,"release",0,now,out _),"Explicit stop.");
+        dashboard.UpdateInput(.02f);
+        Require(car.CurrentState.pedal==.7f,"A release during takeover allows the user to start after explicit stop.");
+        Require(lease.TryApply("third",3,"begin",0,now,out _),"Take over before timeout.");
+        dashboard.UpdateInput(.02f);local.State=DriveInputState.Neutral;dashboard.UpdateInput(.02f);
+        local.State=new DriveInputState {pedal=.6f};now+=2;dashboard.UpdateInput(.02f);
+        Require(car.CurrentState.pedal==.6f,"Timeout restores input after a previously observed physical release.");
         Console.WriteLine("DASHBOARD_INPUT_PASS: real gate handover, independent button samples, expiry between frames, local release and owner replacement.");
     }
 }

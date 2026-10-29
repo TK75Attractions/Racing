@@ -163,9 +163,10 @@ public sealed class RaceAudioOutput : MonoBehaviour
     }
 
     // Called on Unity's audio thread. Never access Unity objects or PlayerPrefs here.
-    public void Submit(int player, int stream, float[] samples, int channels, float leftGain, float rightGain)
+    public void Submit(int player, int stream, float[] samples, int channels, float leftGain, float rightGain, bool maintenanceMusic = false)
     {
-        if (accepting && !RaceAudioSettings.MaintenanceMuted && channels > 0)
+        // The dedicated service track may pass only during maintenance; gameplay never does.
+        if (accepting && RaceAudioSettings.MaintenanceMuted == maintenanceMusic && channels > 0)
             ra_push(player, stream, samples, samples.Length / channels, channels, leftGain, rightGain);
     }
 

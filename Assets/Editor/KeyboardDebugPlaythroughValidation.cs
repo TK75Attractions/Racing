@@ -197,10 +197,10 @@ public static class KeyboardDebugPlaythroughValidation
                 break;
 
             case Step.ResultRetry:
-                // P1 がペダル長押しで「もう一度」を選びます（両者リトライ）。
-                drivers[0].ResultConfirm(age, toggle: false);
+                // 再挑戦は管理者操作で検証。プレイヤーの結果メニューは「次へ」のみ。
+                if (age > 4.5 && manager.state == Gmanager.State.Result && !manager.IsTransitioning()) manager.RetryGame();
                 if (manager.state == Gmanager.State.Countdown || manager.state == Gmanager.State.Game)
-                { Log("retry from result by keyboard"); round = 1; To(Step.RetryRace); }
+                { Log("retry from result by operator"); round = 1; To(Step.RetryRace); }
                 else if (age > 15) throw new InvalidOperationException($"Result retry failed (state {manager.state}).");
                 break;
 
@@ -214,7 +214,7 @@ public static class KeyboardDebugPlaythroughValidation
                 break;
 
             case Step.ResultTitle:
-                // 両プレイヤーがハンドルで「タイトルへ」を選び、ペダル長押しで戻ります。
+                // 両プレイヤーが「次へ」を長押しし、エンディングを経て戻ります。
                 drivers[0].ResultConfirm(age, toggle: true);
                 drivers[1].ResultConfirm(age, toggle: true);
                 if (manager.state == Gmanager.State.Title && !manager.IsTransitioning())
@@ -327,6 +327,7 @@ public static class KeyboardDebugPlaythroughValidation
         private readonly Key pedal, brake, left, right, ready, reset;
         private Gmanager manager;
         private double phaseBegan;
+        private double endingBegan = -1;
         private int phase;
         private int startVehicle = -1;
         private Vector3 raceStart;
@@ -483,6 +484,13 @@ public static class KeyboardDebugPlaythroughValidation
         public void ResultConfirm(double age, bool toggle)
         {
             if (manager.state != Gmanager.State.Result || manager.IsPlayerReturnedToTitle(index)) return;
+            var canvas = GameObject.Find("GameManagers").transform.Find(index == 0 ? "MainCanvas" : "MainCanvas_P2");
+            if (canvas.GetComponent<ArcadeEndingUI>()?.IsVisible == true)
+            {
+                if (endingBegan < 0) endingBegan = Time.realtimeSinceStartupAsDouble;
+                if (Time.realtimeSinceStartupAsDouble - endingBegan > .3) Hold(pedal);
+                return;
+            }
             // 入力受付の待ち時間の後、離して確定を有効にし、必要ならハンドルで項目を切り替えてから長押しします。
             if (age < 3.6) return;
             if (toggle && age > 3.8 && age < 4.0) Hold(right);
@@ -491,6 +499,7 @@ public static class KeyboardDebugPlaythroughValidation
 
         public void ResetForNextRound()
         {
+            endingBegan = -1;
             startVehicle = -1;
             ChangedVehicle = LessonCompleted = false;
         }

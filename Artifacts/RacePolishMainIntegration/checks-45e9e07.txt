@@ -1,0 +1,45 @@
+latest-integration.log: MAINTENANCE_MUSIC_VALIDATION_PASS
+latest-integration.log: TUBE_ACCELERATION_VALIDATION_PASS: two real pads, flush triggers, no old lines, existing speed boost not charge, feedback, rotation direction, OFF/ON and wrong-way rejection.
+latest-integration.log: STEERING_ITEM_FAIRNESS_PASS: both players at 720p/1080p, no text overflow or missing glyphs; threshold, release, input transparency, maintenance suppression; forward targets, finished/disabled exclusions, all three afflictions and last-place recovery.
+latest-integration.log: HUD_FONT_BUILD_PASS: static medium and bold, 410 characters.
+latest-integration.log: TUTORIAL_GIMMICK_UI_PASS: all four photographic pages, both players, 720p/1080p; glyphs, overflow, input transparency; independent completion and timed-out practice still receive the briefing.
+latest-integration.log: HUD_FONT_BUILD_PASS: static medium and bold, 410 characters.
+latest-integration.log: ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, matched ExtraBold instruments, two lap segments, peripheral item notices, HUD shadows, speed colours, DNF, ending input gate, stable meshes.
+latest-integration.log: SOUND_EFFECTS_AUDIO_CORE_PASS: 19 imported WAVs, PCM settings, stereo, resampling, overlap headroom, player routing, duplicate suppression and independent mute.
+latest-integration.log: ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, matched ExtraBold instruments, two lap segments, peripheral item notices, HUD shadows, speed colours, DNF, ending input gate, stable meshes.
+latest-integration.log: SOUND_EFFECTS_VALIDATION_PASS: file-backed cues, independent player routing, native output compatibility and audio settings UI.
+latest-integration.log: NIGHT_ARCADE_INTEGRATION_PASS: arcade bindings, six notice priorities, event scheduling, authored stereo PCM, positional vehicle mixer, per-player BGM fades and result/title routing.
+latest-integration.log: UI_NUMBER_IMPACT_PASS: compression, vertical punch, bounded non-interactive geometry, exact cancel and allocation-free repeated impulses.
+latest-integration.log: UI_MOTION_FOUNDATION_PASS: finite curves, directional ranks, interruption, replay, disable reset and classification.
+latest-integration.log: UI_MOTION_METERS_PASS: acceleration/braking response, finite values, settle, boost impulse, zero idle mesh rebuilds and zero idle managed allocations.
+latest-integration.log: ORDERED_LAP_RULES_PASS: grid, repeated finish crossings, direction, two full circuits, duplicate entry.
+latest-integration.log: SKILL_GAMEPLAY_RULES_PASS
+latest-integration.log: STEERING_COMFORT_PASS response90=0.120s countersteer=0.020s centerNoise=0 movingNoiseRatio=0.250
+latest-integration.log: STEERING_COMFORT_PASS response90=0.120s countersteer=0.020s centerNoise=0 movingNoiseRatio=0.250
+latest-integration.log: HIGH_SPEED_CORNERING_PASS: 31 production-car trials, boost, trajectory, +/-60 degree banks, small corrections, center noise, airborne, blocked, disconnect, live OFF and steering/drift regressions.
+latest-integration.log: ABRUPT_STEERING_PASS: 86 real-car trials, small/full abrupt lock, reversals, boost, flat/+/-60 banks, air, oil, spin and live OFF/ON.
+latest-integration.log: BRANCH_INTEGRATION_PHYSICS_PASS
+latest-integration.log: TUBE_COURSE_VALIDATION_PASS: length=1904.2m, heading/5m=15.53°, grade=0.446, grade change/5m=0.086, retained ground=100.00 %, road folds/intersections=0.
+latest-integration.log: CIRCUIT_TUBE_PASS: {"sourceVertices":4699,"smoothVertices":99716,"portalProfiles":4,"comparedColliderVertices":44484,"portalShoulders":2,"supportedShoulderSamples":288,"maximumSeamGap":0.0,"maximumSeamTangentAngle":1.2788596153259278}
+latest-integration.log: NIGHT_ARCADE_MAIN_PASS: night scenery, peripheral notices, motion, input recovery, steering, smooth tube collision and matching night overlay.
+latest-integration.log: RACE_POLISH_MAIN_INTEGRATION_PASS: acceleration pads and one-shot notices, physical steering warning, fair items, photographic tutorial, main night scenery, tube and driving physics.
+latest-operations-final.log: SLOPE_CAMERA_PASS: slope=-20, relativeViewPitch=-11.21
+latest-operations-final.log: SLOPE_CAMERA_PASS: slope=0, relativeViewPitch=-12.80
+latest-operations-final.log: SLOPE_CAMERA_PASS: slope=20, relativeViewPitch=-13.04
+latest-operations-final.log: UI_RESULT_SELECTION_PASS: single Next action, reversed text contrast and zero idle allocations / P1
+latest-operations-final.log: UI_RESULT_SELECTION_PASS: single Next action, reversed text contrast and zero idle allocations / P2
+latest-operations-final.log: OPERATIONS_FIX_VALIDATION_PASS
+latest-startup.log: SCREEN_STARTUP_VALIDATION_PASS: SampleScene initializes both players at Title without startup exceptions or overlapping screens.
+latest-maintenance.log: HUD_FONT_BUILD_PASS: static medium and bold, 410 characters.
+latest-maintenance.log: MAINTENANCE_PHASE_PASS: Title
+latest-maintenance.log: MAINTENANCE_PHASE_PASS: Title
+latest-maintenance.log: MAINTENANCE_TRANSITION_PASS: a selection transition stays frozen until maintenance clears.
+latest-maintenance.log: MAINTENANCE_PHASE_PASS: CarSelection
+latest-maintenance.log: MAINTENANCE_PHASE_PASS: Tutorial
+latest-maintenance.log: MAINTENANCE_PHASE_PASS: Countdown
+latest-maintenance.log: MAINTENANCE_UI_MOTION_PASS: frozen presentation clock, reveal pose, pending callback and keyboard input; exact one-shot resume.
+latest-maintenance.log: MAINTENANCE_PHASE_PASS: Game
+latest-maintenance.log: MAINTENANCE_PHASE_PASS: Goal
+latest-maintenance.log: MAINTENANCE_PHASE_PASS: Result
+latest-maintenance.log: MAINTENANCE_PLAYMODE_PASS: seven real phases, all three canvases, physics/timers/audio, disable/re-enable and a second Play session restoring persisted maintenance.
+latest-dashboard.log: MAINTENANCE_DASHBOARD_PASS: unit and isolated bridge/relay checks

@@ -1,0 +1,1 @@
+PASS: banks -90,-80,-60,0,60,80,90,120,180; distance >5m; inside clearance >1.5m; level horizon; independent obstruction retained.

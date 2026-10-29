@@ -249,7 +249,7 @@ public static class MultiplayerPlayModeValidation
                     break;
                 case 111 when EditorApplication.timeSinceStartup-stageStartTime > .3d:
                     var p1Menu=FindComponentIncludingInactive<ResultMenuAnimator>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/ResultMenu");
-                    Require(!p1Menu.transform.Find("Option1").GetComponent<PedalButtonFeedback>().IsNavigationSelected&&p1Menu.transform.Find("Option2").GetComponent<PedalButtonFeedback>().IsNavigationSelected,"Real steering must visibly choose the title action, with exactly one selected result button.");
+                    Require(p1Menu.transform.Find("Option1").GetComponent<PedalButtonFeedback>().IsNavigationSelected&&p1Menu.transform.Find("Option2")==null,"Steering must leave the single Next action selected.");
                     Require(FindComponentIncludingInactive<PedalButtonFeedback>("GameManagers/MainCanvas_P2/Result/ResultPresentation/ResultCard/ResultMenu/Option1").IsNavigationSelected,"P1 selection must not change P2's chosen result action.");
                     Capture("result-selected-title-p1.png");
                     inputs[0].CurrentState=new DriveInputState();stageStartTime=EditorApplication.timeSinceStartup;stage=112;
@@ -258,12 +258,13 @@ public static class MultiplayerPlayModeValidation
                     inputs[0].CurrentState=new DriveInputState{steering=-90};stageStartTime=EditorApplication.timeSinceStartup;stage=113;
                     break;
                 case 113 when EditorApplication.timeSinceStartup-stageStartTime > .3d:
-                    Require(FindComponentIncludingInactive<PedalButtonFeedback>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/ResultMenu/Option1").IsNavigationSelected,"Releasing and steering again must visibly return to retry before confirmation.");
-                    inputs[0].CurrentState = new DriveInputState { pedal = 1f };
+                    Require(FindComponentIncludingInactive<PedalButtonFeedback>("GameManagers/MainCanvas/Result/ResultPresentation/ResultCard/ResultMenu/Option1").IsNavigationSelected,"Steering in either direction must keep Next selected.");
+                    inputs[0].CurrentState = new DriveInputState();
+                    manager.RetryGame(); // Operator retry remains available outside the player result menu.
                     stage=6;
                     break;
                 case 6 when manager.state == Gmanager.State.Countdown && !manager.IsCourseIntroPlaying && !AnyTransitionActive():
-                    Require(soundCounts[0,(int)RaceSoundCue.Confirm]==confirmBeforeRetry+1,"Pedal retry must confirm audibly once.");
+                    Require(soundCounts[0,(int)RaceSoundCue.Confirm]==confirmBeforeRetry,"Operator retry must not simulate a player confirmation.");
                     SetPedals(0f);
                     ValidateSpawnAndCountdown();
                     stage=7;
@@ -273,12 +274,12 @@ public static class MultiplayerPlayModeValidation
                     stage=8;
                     break;
                 case 8 when manager.state == Gmanager.State.Result && !AnyTransitionActive():
-                    manager.SelectResultOption(1,1);ConfirmEnding(1);
+                    manager.SelectResultOption(1,0);ConfirmEnding(1);
                     stage=9;
                     break;
                 case 9 when !AnyTransitionActive() && FindComponentIncludingInactive<ScreenTransitionController>("GameManagers/MainCanvas_P2")?.transform.Find("Title").gameObject.activeSelf == true:
                     Require(manager.state == Gmanager.State.Result,"One player returning must preserve the other result.");
-                    manager.SelectResultOption(0,1);ConfirmEnding(0);stage=10;
+                    manager.SelectResultOption(0,0);ConfirmEnding(0);stage=10;
                     break;
                 case 10 when manager.state == Gmanager.State.Title && !AnyTransitionActive():
                     Require(FindComponentIncludingInactive<RacingMenuButton>("GameManagers/MainCanvas/Title/Player1Pedal")!=null,"Main-menu return failed.");

@@ -56,8 +56,10 @@ public class ResultUIManager
     private void BuildMenu()
     {
         var menu=RacingUITheme.Rect(card,"ResultMenu",new Vector2(.28f,.045f),new Vector2(.72f,.13f));
-        var buttons=new RectTransform[2];
-        for(int i=0;i<2;i++){int option=i;var button=NeonUI.Button(menu,"Option"+(i+1),i==0?"もう一度":"タイトルへ","",i==0?RacingIconGraphic.Icon.Retry:RacingIconGraphic.Icon.Home,new Vector2(i*.53f,0),new Vector2(i*.53f+.47f,1),i==0,()=>Gmanager.Control?.SelectResultOption(localPlayerNumber-1,option));buttons[i]=button.GetComponent<RectTransform>();button.PlayConfirmationSound=false;button.ConfigureHold(1,i==0);}
+        var button=NeonUI.Button(menu,"Option1","次へ","",RacingIconGraphic.Icon.Home,
+            Vector2.zero,Vector2.one,true,()=>Gmanager.Control?.SelectResultOption(localPlayerNumber-1,0));
+        var buttons=new[]{button.GetComponent<RectTransform>()};
+        button.PlayConfirmationSound=false;button.ConfigureHold(1,true);
         menuAnimator=menu.GetComponent<ResultMenuAnimator>()??menu.gameObject.AddComponent<ResultMenuAnimator>();menuAnimator.Configure(buttons);
         menuHint=ArcadeUI.Label(card,"MenuHint","",new Vector2(.28f,.005f),new Vector2(.72f,.04f),18,ArcadeUI.For(card).Paper,false,TextAlignmentOptions.Center);
     }

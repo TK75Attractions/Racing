@@ -254,7 +254,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     private void Update()
     {
         frameRate.RecordFrame(Time.realtimeSinceStartupAsDouble);
-        ObserveState();
+        ObserveState(includeSettings: false);
         SyncSerialSource();
         if (Time.realtimeSinceStartup >= nextSnapshotAt)
         {
@@ -264,7 +264,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             liveSnapshot = JsonUtility.ToJson(snapshot);
             nextSnapshotAt = Time.realtimeSinceStartup + .1f;
         }
-        // All Unity objects, including camera capture and commands, stay on the main thread.
+        // Unity commands stay on the main thread; network writes and frame readback do not block it.
         for (int i = 0; i < 4 && requests.TryDequeue(out HttpListenerContext context); i++)
             Handle(context);
     }
@@ -300,9 +300,10 @@ public sealed class RaceDashboardBridge : MonoBehaviour
                 Respond(context, 200, "application/json", Encoding.UTF8.GetBytes(JsonUtility.ToJson(BuildSnapshot())), origin);
             else if (context.Request.HttpMethod == "GET" && (path == "/api/player/1/frame" || path == "/api/player/2/frame"))
             {
-                byte[] frame = CapturePlayer(path.Contains("/1/") ? 0 : 1);
-                if (frame == null) Respond(context, 503, "text/plain", Encoding.UTF8.GetBytes("Camera unavailable"), origin);
-                else Respond(context, 200, "image/jpeg", frame, origin);
+                if (race == null) Respond(context, 503, "text/plain", Encoding.UTF8.GetBytes("Camera unavailable"), origin);
+                else race.RequestDashboardPlayerFrame(path.Contains("/1/") ? 0 : 1, frame =>
+                    Respond(context, frame == null ? 503 : 200, frame == null ? "text/plain" : "image/jpeg",
+                        frame ?? Encoding.UTF8.GetBytes("Camera unavailable"), origin));
             }
             else if (context.Request.HttpMethod == "POST" && path.StartsWith("/api/action/", StringComparison.Ordinal))
             {
@@ -351,6 +352,16 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     }
 
     private static void Respond(HttpListenerContext context, int status, string type, byte[] bytes, string origin)
+    {
+        // A slow/abandoned browser must never stall the Unity frame loop.
+        ThreadPool.QueueUserWorkItem(_ =>
+        {
+            try { WriteResponse(context, status, type, bytes, origin); }
+            catch (Exception error) when (error is IOException || error is HttpListenerException || error is ObjectDisposedException) { }
+        });
+    }
+
+    private static void WriteResponse(HttpListenerContext context, int status, string type, byte[] bytes, string origin)
     {
         HttpListenerResponse response = context.Response;
         response.StatusCode = status;
@@ -776,10 +787,11 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         return race != null && race.state.ToString() == expectedState && ApplyAction(action);
     }
 
-    private void ObserveState()
+    private void ObserveState(bool includeSettings = true)
     {
         string current = race != null ? race.state.ToString() : "Unknown";
         if (current != observedState) { observedState = current; stateRevision++; input?.ClearDashboardInputs(); }
+        if (!includeSettings) return;
         string settings = JsonUtility.ToJson(BuildSettings());
         if (settings != observedSettings) { observedSettings = settings; settingsRevision++; }
     }
@@ -891,11 +903,6 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             catch (Exception error) when (error is IOException || error is HttpListenerException || error is ObjectDisposedException) { }
             finally { Interlocked.Decrement(ref streamClients); try { context.Response.Close(); } catch { } }
         });
-    }
-
-    private byte[] CapturePlayer(int index)
-    {
-        return race != null ? race.CapturePlayerFrame(index) : null;
     }
 
     private void OnDestroy()

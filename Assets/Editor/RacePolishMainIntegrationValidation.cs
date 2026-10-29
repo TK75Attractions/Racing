@@ -6,9 +6,16 @@ using UnityEngine;
 /// <summary>Checks the integration of the new racing helpers with main's night UI and notices.</summary>
 public static class RacePolishMainIntegrationValidation
 {
+    public static void RunOperations()
+    {
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
+        Application.runInBackground = true;
+        OperationsFixValidation.Run();
+    }
     public static void Run()
     {
         Directory.CreateDirectory("Logs/MainIntegration");
+        MaintenanceMusicValidation.Run();
         TubeChargeLineValidation.Run();
         SteeringAndItemFairnessValidation.Run();
         TutorialGimmickCapture.Run();

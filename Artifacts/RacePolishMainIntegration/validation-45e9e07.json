@@ -1,0 +1,36 @@
+{
+  "mainParent": "45e9e072b794f8774365bd42a3ba881a6af0bb9d",
+  "featureParent": "3611bfe4803fae30e187ea1200fb53a015781a82",
+  "unity": "6000.3.9f1",
+  "editMode": {
+    "total": "182",
+    "passed": "182",
+    "failed": "0",
+    "skipped": "0",
+    "result": "Passed"
+  },
+  "checks": {
+    "latest-integration.log": [
+      "MAINTENANCE_MUSIC_VALIDATION_PASS",
+      "RACE_POLISH_MAIN_INTEGRATION_PASS"
+    ],
+    "latest-operations-final.log": [
+      "OPERATIONS_FIX_VALIDATION_PASS"
+    ],
+    "latest-startup.log": [
+      "SCREEN_STARTUP_VALIDATION_PASS"
+    ],
+    "latest-maintenance.log": [
+      "MAINTENANCE_PLAYMODE_PASS"
+    ],
+    "latest-dashboard.log": [
+      "MAINTENANCE_DASHBOARD_PASS"
+    ]
+  },
+  "preview": "10 asynchronous P1/P2 render-texture captures with stable HUD; real Game-view backbuffer path not repeated in batch",
+  "unverified": [
+    "Windows hardware",
+    "ESP32 hardware",
+    "physical audio outputs"
+  ]
+}

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>画面ごとにメニュー・練習・周回・ゴール後のBGMを独立して切り替えます。</summary>
+/// <summary>画面ごとのBGMと、ゲーム停止中も流すメンテナンス用BGMを管理します。</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(RaceAudioOutput))]
 public sealed class RaceBackgroundMusic : MonoBehaviour
@@ -17,6 +17,8 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
     private readonly AudioClip[] requestedClips = new AudioClip[2];
     private readonly float[] transitionGains = { 1f, 1f };
     private readonly bool[] switching = new bool[2];
+    private readonly AudioSource[] maintenanceSources = new AudioSource[2];
+    private readonly RaceSoundEffectsMixer[] maintenanceMixers = new RaceSoundEffectsMixer[2];
     private AudioClip menuClip, tutorialClip, finishClip, raceClip, finalLapClip;
     private AudioClip silentClip;
 
@@ -60,6 +62,12 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
     private void Tick(float dt)
     {
         if (gameManager == null) return;
+        if (gameManager.IsMaintenanceActive)
+        {
+            SetMaintenanceMusic(true);
+            return; // Keep the paused gameplay tracks and their fades at the exact same position.
+        }
+        SetMaintenanceMusic(false);
         for (int player = 0; player < sources.Length; player++)
         {
             AudioSource source = sources[player];
@@ -112,6 +120,42 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
             mixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm * RaceAudioSettings.NotificationDuck * transitionGains[player]);
         }
     }
+
+    public void SetMaintenanceMusic(bool active)
+    {
+        for (int player = 0; player < maintenanceSources.Length; player++)
+        {
+            AudioSource source = maintenanceSources[player];
+            if (!active)
+            {
+                if (source != null && source.isPlaying) source.Stop();
+                continue;
+            }
+            if (tutorialClip == null) continue;
+            if (source == null)
+            {
+                var musicObject = new GameObject($"MaintenanceMusic_P{player + 1}");
+                musicObject.transform.SetParent(transform, false);
+                source = musicObject.AddComponent<AudioSource>();
+                maintenanceSources[player] = source;
+                source.playOnAwake = false;
+                source.loop = true;
+                source.spatialBlend = 0f;
+                source.volume = 1f;
+                source.clip = tutorialClip; // 橘諸兄
+                // This source alone continues while AudioListener.pause stops the game audio.
+                source.ignoreListenerPause = true;
+                var mixer = musicObject.AddComponent<RaceSoundEffectsMixer>();
+                maintenanceMixers[player] = mixer;
+                musicObject.AddComponent<PlayerAudioCapture>().ConfigureMusic(GetComponent<RaceAudioOutput>(), player, maintenance: true);
+            }
+            maintenanceMixers[player].SetMusicGain(volume * RaceAudioSettings.Bgm);
+            if (source.isActiveAndEnabled && !source.isPlaying) source.Play();
+        }
+    }
+
+    private void OnDisable() => SetMaintenanceMusic(false);
+
     private void OnDestroy()
     {
         if (silentClip == null) return;

@@ -64,6 +64,7 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
     private float framing01, framingVelocity;
     private float previousYaw, filteredTurnRate, turnVelocity;
     private float occlusionDistance, occlusionVelocity;
+    private Vector3 surfaceUp = Vector3.up;
     private readonly RaycastHit[] occlusionHits = new RaycastHit[32];
     [SerializeField, HideInInspector] private int framingDefaultsVersion;
     private GroundCheck[] wheelGroundChecks = System.Array.Empty<GroundCheck>();
@@ -119,13 +120,13 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
 
         if (cameraTarget != null)
         {
-            Destroy(cameraTarget.gameObject);
+            if (Application.isPlaying) Destroy(cameraTarget.gameObject); else DestroyImmediate(cameraTarget.gameObject);
             cameraTarget = null;
         }
 
         if (cameraLookTarget != null)
         {
-            Destroy(cameraLookTarget.gameObject);
+            if (Application.isPlaying) Destroy(cameraLookTarget.gameObject); else DestroyImmediate(cameraLookTarget.gameObject);
             cameraLookTarget = null;
         }
     }
@@ -144,12 +145,12 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
     {
         if (cameraTarget == null)
         {
-            cameraTarget = new GameObject("RaceCameraTarget").transform;
+            cameraTarget = new GameObject("RaceCameraTarget") { hideFlags = HideFlags.DontSave }.transform;
         }
 
         if (cameraLookTarget == null)
         {
-            cameraLookTarget = new GameObject("RaceCameraLookTarget").transform;
+            cameraLookTarget = new GameObject("RaceCameraLookTarget") { hideFlags = HideFlags.DontSave }.transform;
         }
     }
 
@@ -165,6 +166,12 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
         lastCarPosition = car.position;
         Vector3 carDirection = GetCarDirection();
         bool supported = TryGetRoadNormal(out Vector3 roadNormal);
+        // Position the lens toward the drivable side of a bank/tube, while the
+        // camera rotation below continues to keep a level horizon.
+        Vector3 targetUp = supported ? Vector3.ProjectOnPlane(roadNormal, carDirection).normalized : Vector3.up;
+        if (targetUp.sqrMagnitude < .01f) targetUp = Vector3.up;
+        surfaceUp = immediately ? targetUp : Vector3.Slerp(surfaceUp, targetUp,
+            1f - Mathf.Exp(-deltaTime / .08f)).normalized;
         float targetPitch = immediately ? 0f : smoothedPitch;
         if (supported)
         {
@@ -174,7 +181,7 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
                 -maximumSlopePitch, maximumSlopePitch);
             // Follow sustained road elevation without the lag of the vibration filter.
             // Normal-direction wheel/body bumps remain filtered; near-vertical banks are excluded.
-            if (!immediately && roadNormal.y > .2f)
+            if (!immediately && roadNormal.y > .7f)
                 smoothedHeight -= Vector3.Dot(new Vector3(movement.x, 0f, movement.z), roadNormal) / roadNormal.y;
         }
         if (immediately)
@@ -192,6 +199,9 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
         }
         else
             smoothedHeight = Mathf.SmoothDamp(smoothedHeight, car.position.y, ref heightVelocity, heightSmoothTime, Mathf.Infinity, deltaTime);
+        // Climbing a near-vertical wall is not a road grade. Never let the height
+        // filter leave the camera anchor metres below a rising car.
+        smoothedHeight = Mathf.Clamp(smoothedHeight, car.position.y - .4f, car.position.y + .4f);
         Vector3 anchorPosition = new Vector3(car.position.x, smoothedHeight, car.position.z);
         float targetYaw = Mathf.Atan2(carDirection.x, carDirection.z) * Mathf.Rad2Deg;
         float speed = carBody != null ? carBody.linearVelocity.magnitude : 0f;
@@ -236,9 +246,13 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
 
         // Road pitch only: banking and airborne body rotation must not roll or whip the view.
         Quaternion cameraRotation = Quaternion.Euler(smoothedPitch, yaw, 0f);
+        Vector3 behind = cameraRotation * Vector3.forward;
+        if (Vector3.Dot(surfaceUp, Vector3.up) < .95f)
+            behind = Vector3.ProjectOnPlane(behind, surfaceUp).normalized;
+        if (behind.sqrMagnitude < .01f) behind = cameraRotation * Vector3.forward;
         Vector3 cameraPosition = anchorPosition
-            - cameraRotation * Vector3.forward * (Mathf.Max(0.01f, cameraDistance) + finishPullback * finish01)
-            + Vector3.up * (Mathf.Max(0f, cameraHeight) + highSpeedHeight * framing01);
+            - behind * (Mathf.Max(0.01f, cameraDistance) + finishPullback * finish01)
+            + surfaceUp * (Mathf.Max(0f, cameraHeight) + highSpeedHeight * framing01);
 
         // Move inward immediately; only the return to the normal distance is damped.
         Vector3 origin = GetOcclusionOrigin();
@@ -268,7 +282,7 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
             cameraRotation);
     }
 
-    private Vector3 GetOcclusionOrigin() => car.position + car.up * occlusionOriginHeight;
+    private Vector3 GetOcclusionOrigin() => car.position + surfaceUp * occlusionOriginHeight;
 
     /// <summary>Also used after speed pullback/shake, so those offsets cannot push the lens through a wall.</summary>
     public Vector3 ConstrainCameraPosition(Vector3 desiredPosition)

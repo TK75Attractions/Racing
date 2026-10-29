@@ -30,13 +30,13 @@ public static class ArcadeEndingPlayModeValidation
             var manager=Gmanager.Control;
             foreach(var transition in UnityEngine.Object.FindObjectsByType<ScreenTransitionController>(FindObjectsSortMode.None))if(transition.IsTransitioning)return;
             if(stage==0&&Time.frameCount>8){manager.DebugPreviewResult();Next();}
-            else if(stage==1){manager.SelectResultOption(1,1);Next();}
+            else if(stage==1){manager.SelectResultOption(1,0);Next();}
             else if(stage==2&&Time.frameCount-changedFrame>2)
             {
                 var p2=Root(1).GetComponent<ArcadeEndingUI>();Require(p2.IsVisible&&!Root(1).Find("Result").gameObject.activeSelf,"P2 ending replaces its result.");
                 Require(Root(0).Find("Result").gameObject.activeSelf,"P1 result remains visible.");Capture(manager,1);p2.TickInput(1,2);Require(p2.IsVisible,"A held finish pedal must not skip ending.");p2.TickInput(0,.1f);p2.TickInput(1,1);Next();
             }
-            else if(stage==3&&Root(1).Find("Title").gameObject.activeSelf){manager.SelectResultOption(0,1);Next();}
+            else if(stage==3&&Root(1).Find("Title").gameObject.activeSelf){manager.SelectResultOption(0,0);Next();}
             else if(stage==4&&Time.frameCount-changedFrame>2)
             {
                 var p1=Root(0).GetComponent<ArcadeEndingUI>();Require(p1.IsVisible,"P1 ending remains independent.");Capture(manager,0);p1.TickInput(0,.1f);p1.TickInput(1,1);Next();
