@@ -15,6 +15,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
         public RaceDirectionCameraController camera;
         public DrivingTutorialUI ui;
         public DrivingTutorialProgress lesson;
+        public readonly TutorialGimmickBriefing briefing = new TutorialGimmickBriefing();
         public float startYaw;
         public float recoveryTimer;
         public bool resetHeld;
@@ -30,7 +31,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
         get
         {
             if (players.Count != 2) return false;
-            foreach (Practice player in players) if (!player.lesson.IsFinished) return false;
+            foreach (Practice player in players) if (!player.lesson.IsFinished || !player.briefing.IsComplete) return false;
             return readyTimer >= 1f;
         }
     }
@@ -42,6 +43,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
     }
 
     public DrivingTutorialProgress GetPlayerProgress(int index) => players.Find(p => p.playerIndex == index)?.lesson;
+    public TutorialGimmickBriefing GetPlayerBriefing(int index) => players.Find(p => p.playerIndex == index)?.briefing;
     public bool HasAnyStarted => players.Count > 0;
     public bool HasStarted(int index) => players.Exists(p => p.playerIndex == index);
     public GameObject GetPlayerCar(int index) => players.Find(p => p.playerIndex == index)?.car;
@@ -139,8 +141,9 @@ public sealed class DrivingTutorialController : MonoBehaviour
                 player.body.isKinematic = true;
             }
             if (player.lesson.IsFinished) speed = 0f;
-            player.ui.Update(player.lesson, input, speed, player.input.IsConnected, DriverInputNotice.Connection(player.input));
-            complete &= player.lesson.IsFinished;
+            if (player.lesson.IsFinished) player.briefing.Tick(dt, player.input.IsConnected, input.pedal);
+            player.ui.Update(player.lesson, input, speed, player.input.IsConnected, DriverInputNotice.Connection(player.input), player.briefing);
+            complete &= player.lesson.IsFinished && player.briefing.IsComplete;
         }
         readyTimer = complete ? readyTimer + dt : 0f;
     }

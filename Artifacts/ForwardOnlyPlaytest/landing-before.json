@@ -1,0 +1,25 @@
+{
+    "passed": false,
+    "trials": [
+        {
+            "name": "recorded-missed-landing",
+            "passed": false,
+            "automaticRecoveries": 0,
+            "initialLap": 0,
+            "finalLap": 0,
+            "minGrounded": 0,
+            "secondsToRecovery": 0.8171815872192383,
+            "forwardTravel": 0.0
+        },
+        {
+            "name": "normal-airborne-jump",
+            "passed": true,
+            "automaticRecoveries": 0,
+            "initialLap": 0,
+            "finalLap": 0,
+            "minGrounded": 0,
+            "secondsToRecovery": -1.0,
+            "forwardTravel": 0.0
+        }
+    ]
+}

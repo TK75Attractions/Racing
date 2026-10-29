@@ -15,7 +15,7 @@ public static class ItemGuideUI
         Row(panel, "Shield", RacingIconGraphic.Icon.Shield, "シールド", "守る！ 相手に当たるとスピン", .64f, palette);
         Row(panel, "Rocket", RacingIconGraphic.Icon.Rocket, "ロケット", "自動でハンドル操作 ＆ 超加速", .50f, palette);
         Row(panel, "Oil", RacingIconGraphic.Icon.Droplet, "オイル", "後ろに油！ 踏むとすべるよ", .36f, palette);
-        Row(panel, "Confuse", RacingIconGraphic.Icon.Swap, "コンフューズ", "相手のハンドルを左右逆に！", .22f, palette);
+        Row(panel, "Confuse", RacingIconGraphic.Icon.Swap, "コンフューズ", "前の車のハンドルを左右逆に！", .22f, palette);
         Row(panel, "Charge", RacingIconGraphic.Icon.Bolt, "青いクリスタル", "カーブでハンドルを戻すと加速", .08f, palette);
         return panel.gameObject;
     }

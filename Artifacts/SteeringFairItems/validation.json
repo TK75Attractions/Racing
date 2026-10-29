@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-28",
+  "baseMain": "b21b790d7063b6964b7ff5f53828e121286c45b0",
+  "unity": "6000.3.9f1",
+  "core": {
+    "passed": 176,
+    "failed": 0
+  },
+  "editMode": {
+    "passed": 176,
+    "failed": 0
+  },
+  "warningCapture": {
+    "players": [
+      1,
+      2
+    ],
+    "resolutions": [
+      "1280x720",
+      "1920x1080"
+    ],
+    "background": "reference image; production warning UI",
+    "checks": [
+      "threshold both directions",
+      "hysteresis",
+      "disconnect",
+      "maintenance suppression",
+      "missing glyphs",
+      "text overflow",
+      "raycast transparency"
+    ]
+  },
+  "itemApplication": [
+    "nearest rank ahead",
+    "finished and disabled exclusions",
+    "oil confuse spin immunity for last active racer",
+    "clear affliction upon dropping to last",
+    "preserve rocket and outgoing oil"
+  ],
+  "multiplayerPlayMode": "passed",
+  "knownEditorIssue": "SearchDatabase ArgumentOutOfRangeException at startup; existing; flow validation passed",
+  "unverified": [
+    "physical ESP32 steering warning",
+    "Windows hardware"
+  ],
+  "npcTargetRegression": "passed"
+}

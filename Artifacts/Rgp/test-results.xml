@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<test-run result="Passed" total="170" passed="170" failed="0">
+<test-run result="Passed" total="182" passed="182" failed="0">
   <test-case name="AdaptiveAiPaceTests.SlowPlayersGetNearbyContestsWithoutTheOldHighSpeedFloor" result="Passed" />
   <test-case name="AdaptiveAiPaceTests.CpuCanStillPassThenOfferACounterattackAtBothHumanPaces" result="Passed" />
   <test-case name="AdaptiveAiPaceTests.StrongPlayersAndCatchingUpRetainTheFullSpeedPotential" result="Passed" />
@@ -73,6 +73,9 @@
   <test-case name="PreparationCountdownTests.EachScreenHasItsOwnTimeAndNegativeDeltaCannotAddTime" result="Passed" />
   <test-case name="RaceAchievementSelectionTests.OnlyObservedEventsCanProduceAnAchievement" result="Passed" />
   <test-case name="RaceAchievementSelectionTests.AutodrivenResultsAreLabelledAsTestsInsteadOfHumanAchievements" result="Passed" />
+  <test-case name="RaceDebuffPolicyTests.DirectedAttacksOnlyTargetCarsAhead" result="Passed" />
+  <test-case name="RaceDebuffPolicyTests.LastActiveRacerIsProtectedEvenAfterAFinishOrWithdrawal" result="Passed" />
+  <test-case name="RaceDebuffPolicyTests.TwoPlayerDuelsRetainContactItemCounterplay" result="Passed" />
   <test-case name="RaceDisplayRoutingTests.PlayerTwoUsesAConnectedSecondaryDisplay" result="Passed" />
   <test-case name="RaceDisplayRoutingTests.BroadcastNeverTakesAPlayerOutput" result="Passed" />
   <test-case name="RaceFeatureSettingsTests.TestAutodriveStartsOffWhileGameplayImprovementsStartOn" result="Passed" />
@@ -154,6 +157,9 @@
   <test-case name="SlipstreamChargeTests.OnlySustainedPursuitOfOneTargetAwardsABoost" result="Passed" />
   <test-case name="SlipstreamChargeTests.SwitchingCarsOrLeavingTheCorridorResetsProgress" result="Passed" />
   <test-case name="SlipstreamChargeTests.InvalidTimeCannotPoisonTheChargeState" result="Passed" />
+  <test-case name="SteeringOverturnWarningTests.BothDirectionsWarnAtPhysicalLimit" result="Passed" />
+  <test-case name="SteeringOverturnWarningTests.HysteresisAvoidsFlickerAndReleasesOnlyAfterReturning" result="Passed" />
+  <test-case name="SteeringOverturnWarningTests.MissingOrInvalidTelemetryClearsTheWarning" result="Passed" />
   <test-case name="SteeringTractionTests.SmallSlipIsLeftAloneAndExcessIsRecoveredSymmetrically" result="Passed" />
   <test-case name="SteeringTractionTests.GripCorrectionIsBoundedBySpeedAndTimeWithoutOvershooting" result="Passed" />
   <test-case name="SteeringTractionTests.YawFeedbackDampsRunawayRotationWithABoundedSymmetricResponse" result="Passed" />
@@ -162,6 +168,12 @@
   <test-case name="TubeLineChallengeTests.JoiningHalfwaySwitchingLaneOrReversingCannotCompleteTheLine" result="Passed" />
   <test-case name="TubeLineChallengeTests.LingeringAndTeleportingCannotAward" result="Passed" />
   <test-case name="TubeLineChallengeTests.OffAndRecoveryClearPendingButNeverEraseAnEarnedReward" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.EveryPageIsShownAndBriefingFinishesWithoutInput" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.HoldingPedalOrTappingTooEarlyCannotSkipTheReadingTime" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.APressBeforeReadTimeNeedsAnotherReleaseAndPress" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.LargeOrInvalidFramesAndDisconnectedPedalsCannotSkipPages" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.ReconnectionWhileHoldingPedalNeedsAFreshRelease" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.PlayersReadIndependently" result="Passed" />
   <test-case name="TwoPlayerRaceSessionTests.FirstFinish_StartsFortySecondWindow" result="Passed" />
   <test-case name="TwoPlayerRaceSessionTests.SecondFinish_CompletesRaceInArrivalOrder" result="Passed" />
   <test-case name="TwoPlayerRaceSessionTests.Timeout_RequiresDnfForRemainingPlayer" result="Passed" />

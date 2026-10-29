@@ -8,10 +8,13 @@ public sealed class RaceJumpGuidance : MonoBehaviour
     private Material amber, ink, gold;
     private RaceCourse course;
     private float direction;
+    private readonly List<GameObject> forwardArrows=new List<GameObject>(),reverseArrows=new List<GameObject>();
     public void SetDirection(float sign)
     {
         direction = sign < 0 ? -1 : 1;
         if (gold != null) gold.SetFloat("_Direction", direction);
+        foreach(var part in forwardArrows)part.SetActive(direction>0);
+        foreach(var part in reverseArrows)part.SetActive(direction<0);
     }
     private void Update()
     {
@@ -87,10 +90,15 @@ public sealed class RaceJumpGuidance : MonoBehaviour
                 int edge = beforeGap ? i + 1 : i;
                 Vector3 a = left[edge], b = right[edge];
                 Vector3 towardRoad = ((left[beforeGap ? i : i + 1] + right[beforeGap ? i : i + 1]) * .5f - (a + b) * .5f).normalized;
+                var ring=new GameObject("Rotating takeoff arrows");ring.transform.SetParent(host.transform,false);
+                ring.transform.SetPositionAndRotation((a+b)*.5f+towardRoad*6f+Vector3.up*1.5f,Quaternion.LookRotation(-towardRoad,Vector3.up));
+                ring.AddComponent<RotatingBoostArrows>().Configure(new Color(1f,.72f,.12f),1.05f);
+                (beforeGap?guidance.forwardArrows:guidance.reverseArrows).Add(ring);
                 Quad(backing, a, b, b + towardRoad * 1.35f, a + towardRoad * 1.35f, .025f);
                 Quad(bright, a + towardRoad * .2f, b + towardRoad * .2f, b + towardRoad * .95f, a + towardRoad * .95f, .03f);
             }
         }
+        guidance.SetDirection(sign);
         guidance.Mesh(owner, host.transform, "Dark outline", backing, guidance.ink);
         guidance.Mesh(owner, host.transform, "Amber ramp edges", bright, guidance.amber);
         guidance.Mesh(owner, host.transform, "Gold animated takeoff", gilded, guidance.gold, flowUV, approachUV);

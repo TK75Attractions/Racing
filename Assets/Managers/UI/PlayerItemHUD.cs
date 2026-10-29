@@ -133,7 +133,7 @@ public sealed class PlayerItemHUD : MonoBehaviour
                 ShowToast("オイル", "後ろに油！ 踏むとすべるよ", OilColor);
                 break;
             case RaceItemType.Confuse:
-                ShowToast("コンフューズ", "相手のハンドルが左右逆に！", ConfuseColor);
+                ShowToast("コンフューズ", "前の車のハンドルが左右逆に！", ConfuseColor);
                 break;
         }
         toastLifetime = 3.2f;

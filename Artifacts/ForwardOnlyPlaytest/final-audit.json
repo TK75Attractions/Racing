@@ -1,0 +1,214 @@
+{
+  "passed": true,
+  "failures": [],
+  "runs": [
+    {
+      "name": "forward-items-8101",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.15999995172023773,
+          "maxDemandWithoutProgress": 3.36,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 2.88,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-items-8102",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.019999992102384567,
+          "maxDemandWithoutProgress": 1.8,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-control",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-novice",
+      "termination": "human-grace-timeout",
+      "players": [
+        {
+          "label": "P1",
+          "finished": false,
+          "laps": 1,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 1.2,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-aggressive",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.039999984204769135,
+          "maxDemandWithoutProgress": 2.4,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.019999992102384567,
+          "maxDemandWithoutProgress": 1.8,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-wall-stress",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 1,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 3.7999966144561768,
+          "maxDemandWithoutProgress": 6.5,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "skill-stop-rejoin",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 5.359995365142822,
+          "maxDemandWithoutProgress": 0.5,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "skill-disconnect-rejoin",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 2.259998083114624,
+          "maxDemandWithoutProgress": 0.4,
+          "manualResets": 0
+        }
+      ]
+    }
+  ]
+}

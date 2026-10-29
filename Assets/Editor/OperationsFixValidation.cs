@@ -144,9 +144,10 @@ public static class OperationsFixValidation
             {
                 race.DebugPreviewResult();
                 rigs = (PlayerDisplayRig[])typeof(Gmanager).GetField("displayRigs", Private).GetValue(race);
-                // Fixed outputs also render P2 in the Editor when only Display 1 has a Game view.
+                // Batch mode cannot advance WaitForEndOfFrame; render both players to explicit outputs.
+                // Interactive validation keeps P1 on the real Game-view backbuffer.
                 outputs = new RenderTexture[2];
-                for (int i = 1; i < 2; i++)
+                for (int i = Application.isBatchMode ? 0 : 1; i < 2; i++)
                 {
                     outputs[i] = new RenderTexture(1280, 720, 24); outputs[i].Create();
                     foreach (var camera in new[] { rigs[i].BackCamera, rigs[i].BackImageCamera,
@@ -196,7 +197,7 @@ public static class OperationsFixValidation
                 Debug.Log("OPERATIONS_FIX_VALIDATION_PASS"); Finish();
             }
         }
-        catch (Exception error) { Debug.LogException(error); File.WriteAllText(Folder + "/failure.txt", error.ToString()); Finish(); }
+        catch (Exception error) { failure = error.ToString(); Debug.LogException(error); File.WriteAllText(Folder + "/failure.txt", failure); Finish(); }
     }
     private static void Finish()
     {
@@ -209,6 +210,8 @@ public static class OperationsFixValidation
             foreach (var target in outputs) if (target != null) UnityEngine.Object.Destroy(target);
         }
         outputs = null;
+        if (Application.isBatchMode)
+            EditorApplication.delayCall += () => EditorApplication.Exit(failure == null ? 0 : 1);
     }
     private static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
 }

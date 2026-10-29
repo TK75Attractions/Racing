@@ -13,7 +13,11 @@ public class CarResetter : MonoBehaviour
     private RaceCourse.CourseSample safeSample;
     private int safeLap;
     private bool hasSafeSample, resetHeld, manualPending;
-    private float unsafeSeconds, overturnedSeconds, stuckSeconds, wallStuckSeconds;
+    private float unsafeSeconds, overturnedSeconds, stuckSeconds, wallStuckSeconds, supportedStuckSeconds, missedLandingSeconds;
+    private Collider lastSupportCollider;
+    private float lastSupportTime = float.NegativeInfinity;
+    private Vector3 supportProgressPosition;
+    private bool trackingSupportProgress;
     private float lastWallContactTime = float.NegativeInfinity;
     private Collider lastWallCollider;
     private Vector3 lastWallNormal;
@@ -83,13 +87,22 @@ public class CarResetter : MonoBehaviour
             (rb.position.y < here.position.y - 4f && !course.IsPointInsideTube(rb.position));
         float dt = Time.fixedDeltaTime;
         unsafeSeconds = outside ? unsafeSeconds + dt : 0f;
+        // A missed landing can briefly drive underneath the ramp and rejoin before
+        // the normal off-course timeout, skipping an ordered lap gate forever.
+        // Recover below solid landing road, not during the intended airborne arc.
+        bool belowLanding = Vector3.Dot(rb.position - here.position, here.up) < -2.5f &&
+            course.HasRoadAtProgress(course.GetProgressDistance(rb.position)) &&
+            course.IsJumpAhead(rb.position, laps != null && laps.IsProgressReversed ? 1f : -1f, 60f) &&
+            !course.IsPointInsideTube(rb.position);
+        missedLandingSeconds = belowLanding ? missedLandingSeconds + dt : 0f;
         Vector3 recoveryUp = onTubeWall ? lastWallNormal : here.up;
         overturnedSeconds = Vector3.Dot(rb.rotation * Vector3.up, recoveryUp) < .2f && grounded < 2 ? overturnedSeconds + dt : 0f;
         bool pushing = inputSource != null && inputSource.IsConnected && Mathf.Abs(inputSource.CurrentState.pedal) > .4f;
         stuckSeconds = pushing && rb.linearVelocity.magnitude < .5f && grounded > 0 ? stuckSeconds + dt : 0f;
         UpdateWallStuckTimer(pushing, dt);
-        if (unsafeSeconds < 1.8f && overturnedSeconds < 2.5f && stuckSeconds < 4f && wallStuckSeconds < 4f) return;
-        RecoveryReason = outside ? "off-course" : overturnedSeconds >= 2.5f ? "overturned" : "stuck";
+        UpdateSupportedStuckTimer(pushing, grounded, dt);
+        if (missedLandingSeconds < .2f && unsafeSeconds < 1.8f && overturnedSeconds < 2.5f && stuckSeconds < 4f && wallStuckSeconds < 4f && supportedStuckSeconds < 4f) return;
+        RecoveryReason = missedLandingSeconds >= .2f ? "missed-landing" : outside ? "off-course" : overturnedSeconds >= 2.5f ? "overturned" : "stuck";
         IsRecoveryPending = true;
         if (TryResetCar(true)) AutomaticRecoveryCount++;
     }
@@ -98,6 +111,8 @@ public class CarResetter : MonoBehaviour
     private void OnCollisionStay(Collision collision) => RememberWallContact(collision);
     private void OnCollisionExit(Collision collision)
     {
+        if (collision.collider == lastSupportCollider)
+        { lastSupportCollider = null; lastSupportTime = float.NegativeInfinity; }
         if (collision.collider != lastWallCollider) return;
         lastWallCollider = null;
         lastWallContactTime = float.NegativeInfinity;
@@ -105,6 +120,10 @@ public class CarResetter : MonoBehaviour
 
     private void RememberWallContact(Collision collision)
     {
+        // A chassis can rest on scenery or another car with every tire in the air.
+        // Keep actual support contacts separate from tube/wall normals used for banking.
+        if (collision.collider != null && collision.collider.attachedRigidbody != rb)
+        { lastSupportCollider = collision.collider; lastSupportTime = Time.fixedTime; }
         for (int i = 0; i < collision.contactCount; i++)
             RememberWallContact(collision.collider, collision.GetContact(i).normal);
     }
@@ -146,17 +165,33 @@ public class CarResetter : MonoBehaviour
         wallStuckSeconds += dt;
     }
 
+    private void UpdateSupportedStuckTimer(bool pushing, int grounded, float dt)
+    {
+        bool supported = lastSupportCollider != null && lastSupportCollider.enabled &&
+            lastSupportCollider.gameObject.activeInHierarchy &&
+            (rb.IsSleeping() || Time.fixedTime - lastSupportTime <= .1f);
+        if (!pushing || grounded > 0 || !supported)
+        { trackingSupportProgress = false; supportedStuckSeconds = 0f; return; }
+        if (!trackingSupportProgress || (rb.position - supportProgressPosition).sqrMagnitude >= 4f)
+        {
+            trackingSupportProgress = true; supportProgressPosition = rb.position;
+            supportedStuckSeconds = 0f;
+        }
+        supportedStuckSeconds += dt;
+    }
+
     private void ClearRecoveryTimers()
     {
-        unsafeSeconds = overturnedSeconds = stuckSeconds = wallStuckSeconds = 0f;
-        trackingWallProgress = false;
+        unsafeSeconds = overturnedSeconds = stuckSeconds = wallStuckSeconds = supportedStuckSeconds = missedLandingSeconds = 0f;
+        trackingWallProgress = trackingSupportProgress = false;
     }
 
     private void OnDisable()
     {
         ClearRecoveryTimers();
         lastWallContactTime = float.NegativeInfinity;
-        lastWallCollider = null;
+        lastWallCollider = lastSupportCollider = null;
+        lastSupportTime = float.NegativeInfinity;
     }
 
     private void RememberSafeRoad(bool initial)
@@ -203,11 +238,12 @@ public class CarResetter : MonoBehaviour
                 occupants, rotation, ~0, QueryTriggerInteraction.Ignore);
             bool occupied = count == occupants.Length;
             for (int i=0;i<count;i++)
-                if (occupants[i].attachedRigidbody != null && occupants[i].attachedRigidbody != rb) occupied=true;
+                if (occupants[i].attachedRigidbody != rb) occupied=true;
             if (occupied) continue;
             ApplyReset(position,rotation); Physics.SyncTransforms(); laps?.NotifyManualRespawn(rb);
             RecoveryCount++; LastRecoveryTime=Time.time;
-            ClearRecoveryTimers(); lastWallContactTime=float.NegativeInfinity; lastWallCollider=null; IsRecoveryPending=false;
+            ClearRecoveryTimers(); lastWallContactTime=lastSupportTime=float.NegativeInfinity;
+            lastWallCollider=lastSupportCollider=null; IsRecoveryPending=false;
             return true;
         }
         IsRecoveryPending=true;

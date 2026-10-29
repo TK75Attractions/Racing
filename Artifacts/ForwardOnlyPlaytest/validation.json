@@ -1,0 +1,43 @@
+{
+  "unityVersion": "6000.3.9f1",
+  "playerPolicy": "forward pedal 0..1, no direction toggle or manual reset; production automatic recovery enabled",
+  "initialRaces": 4,
+  "postFixRaces": 8,
+  "postFixPlayerFinishes": 15,
+  "postFixPlayerEntries": 16,
+  "postFixPhysicsSeconds": 1615.7622680664062,
+  "postFixRuntimeErrors": 0,
+  "auditPassed": true,
+  "coreTests": {
+    "result": "Passed",
+    "total": "182",
+    "passed": "182",
+    "failed": "0"
+  },
+  "unityEditModeTests": {
+    "id": "2",
+    "testcasecount": "182",
+    "result": "Passed",
+    "total": "182",
+    "passed": "182",
+    "failed": "0",
+    "inconclusive": "0",
+    "skipped": "0",
+    "asserts": "0",
+    "engine-version": "3.5.0.0",
+    "clr-version": "4.0.30319.42000",
+    "start-time": "2026-10-28 22:10:31Z",
+    "end-time": "2026-10-28 22:10:39Z",
+    "duration": "7.6444326"
+  },
+  "recoveryScenariosPassed": true,
+  "unverified": [
+    "Windows hardware/build",
+    "ESP32 physical controls",
+    "human usability with elementary-school children"
+  ],
+  "knownEnvironmentLimits": [
+    "Editor -nographics startup crash; recorded races used normal graphics",
+    "Existing SearchDatabase startup exception outside race recording"
+  ]
+}

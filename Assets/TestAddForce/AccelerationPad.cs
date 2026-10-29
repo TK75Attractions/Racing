@@ -31,6 +31,14 @@ public sealed class AccelerationPad : MonoBehaviour
     private BoxCollider trigger;
     private Material runtimeMaterial;
     private Mesh runtimeMesh;
+    private readonly System.Collections.Generic.Dictionary<Rigidbody,System.Collections.Generic.HashSet<Collider>> contacts = new System.Collections.Generic.Dictionary<Rigidbody,System.Collections.Generic.HashSet<Collider>>();
+    public event System.Action<DebugMover> Activated;
+    private bool forwardOnly;
+    public void ConfigureTubePad(Vector3 size)
+    {
+        padSize=size;triggerMargin=1f;acceleration=10f;instantSpeedBonus=4f;boostDuration=1.25f;forwardOnly=true;Refresh();
+    }
+
 
     public Vector3 PadSize => padSize;
     public float Acceleration => acceleration;
@@ -44,6 +52,7 @@ public sealed class AccelerationPad : MonoBehaviour
 
     private void OnDisable()
     {
+        contacts.Clear();
         CleanupVisual();
     }
 
@@ -116,8 +125,32 @@ public sealed class AccelerationPad : MonoBehaviour
         if (mover == null) return;
         if (mover.GetComponent<FinishRunController>()?.IsActive == true) return;
 
-        Vector3 direction = Vector3.ProjectOnPlane(transform.forward, transform.up).normalized;
-        mover.StartAccelerationPadBoost(acceleration, boostDuration, instantSpeedBonus, direction);
+        Rigidbody body=other.attachedRigidbody;
+        if(body==null)return;
+        if(!contacts.TryGetValue(body,out var colliders))contacts[body]=colliders=new System.Collections.Generic.HashSet<Collider>();
+        if(!colliders.Add(other)||colliders.Count!=1)return;
+        TryActivate(mover);
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        var body=other.attachedRigidbody;
+        if(body==null||!contacts.TryGetValue(body,out var colliders))return;
+        colliders.Remove(other);if(colliders.Count==0)contacts.Remove(body);
+    }
+    public bool TryActivate(DebugMover mover)
+    {
+        var race=Gmanager.Control;
+        if(!isActiveAndEnabled||mover==null||!mover.isActiveAndEnabled||race==null||!race.IsDrivingEnabled||mover.IsInputSuppressed||
+            !race.CanDriveVehicle(mover.GetComponent<Rigidbody>())||mover.GetComponent<FinishRunController>()?.IsActive==true)return false;
+        if(mover.InputSource==null||!mover.InputSource.IsConnected||
+            mover.InputSource is PlayerDriveInputGate gate&&(gate.IsBlocked||gate.NeedsPedalRelease))return false;
+        var effects=mover.GetComponent<CarItemEffects>();
+        if(effects!=null&&(effects.IsRocketActive||effects.BlocksDriverInput||effects.IsRecoveryProtected))return false;
+        if(forwardOnly&&(Vector3.Dot(mover.transform.forward,transform.forward)<.5f||
+            Vector3.Dot(mover.GetComponent<Rigidbody>().linearVelocity,transform.forward)<-1f))return false;
+        Vector3 direction=Vector3.ProjectOnPlane(transform.forward,transform.up).normalized;
+        mover.StartAccelerationPadBoost(acceleration,boostDuration,instantSpeedBonus,direction);
+        Activated?.Invoke(mover);return true;
     }
 
     /// <summary>盤面の中心位置から下方向へレイを飛ばし、地面に接地させます。</summary>
@@ -158,47 +191,19 @@ public sealed class AccelerationPad : MonoBehaviour
         renderer.sharedMaterial = GetVisualMaterial();
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         renderer.receiveShadows = false;
+        var arrows=new GameObject("Rotating arrows");arrows.transform.SetParent(visual.transform,false);arrows.transform.localPosition=new Vector3(0f,1.25f,0f);
+        arrows.AddComponent<RotatingBoostArrows>().Configure(padColor);
+
     }
 
     private Mesh CreatePadMesh()
     {
-        float width = padSize.x;
-        float length = padSize.z;
-        float y = padSize.y + 0.006f;
-        var vertices = new System.Collections.Generic.List<Vector3>();
-        var triangles = new System.Collections.Generic.List<int>();
-
-        AddQuad(vertices, triangles,
-            new Vector3(-width * 0.5f, y, -length * 0.5f),
-            new Vector3(width * 0.5f, y, -length * 0.5f),
-            new Vector3(width * 0.5f, y, length * 0.5f),
-            new Vector3(-width * 0.5f, y, length * 0.5f));
-
-        // 盤面の向きを視認できる矢印を3つ配置します。
-        float arrowWidth = width * 0.48f;
-        float arrowLength = Mathf.Min(length * 0.18f, 1.3f);
-        for (int i = 0; i < 3; i++)
-        {
-            float z = Mathf.Lerp(-length * 0.3f, length * 0.28f, i / 2f);
-            float head = arrowLength * 0.42f;
-            AddQuad(vertices, triangles,
-                new Vector3(-arrowWidth * 0.5f, y + 0.002f, z - arrowLength * 0.5f),
-                new Vector3(arrowWidth * 0.5f, y + 0.002f, z - arrowLength * 0.5f),
-                new Vector3(arrowWidth * 0.5f, y + 0.002f, z + arrowLength * 0.5f - head),
-                new Vector3(-arrowWidth * 0.5f, y + 0.002f, z + arrowLength * 0.5f - head));
-            AddQuad(vertices, triangles,
-                new Vector3(-arrowWidth * 0.5f, y + 0.002f, z + arrowLength * 0.5f - head),
-                new Vector3(arrowWidth * 0.5f, y + 0.002f, z + arrowLength * 0.5f - head),
-                new Vector3(0f, y + 0.002f, z + arrowLength * 0.5f),
-                new Vector3(0f, y + 0.002f, z + arrowLength * 0.5f));
-        }
-
-        Mesh mesh = new Mesh { name = "AccelerationPadMesh", hideFlags = HideFlags.DontSave };
-        mesh.SetVertices(vertices);
-        mesh.SetTriangles(triangles, 0);
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
-        return mesh;
+        float x=padSize.x*.5f,z=padSize.z*.5f,y=padSize.y+.006f;
+        var mesh=new Mesh{name="AccelerationPadMesh",hideFlags=HideFlags.DontSave};
+        mesh.vertices=new[]{new Vector3(-x,y,-z),new Vector3(x,y,-z),new Vector3(x,y,z),new Vector3(-x,y,z)};
+        mesh.triangles=new[]{0,2,1,0,3,2};
+        mesh.uv=new[]{new Vector2(-1,-z),new Vector2(1,-z),new Vector2(1,z),new Vector2(-1,z)};
+        mesh.RecalculateNormals();mesh.RecalculateBounds();return mesh;
     }
 
     private Material GetVisualMaterial()
@@ -206,7 +211,7 @@ public sealed class AccelerationPad : MonoBehaviour
         if (visualMaterial != null) return visualMaterial;
         if (runtimeMaterial == null)
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            Shader shader = Resources.Load<Shader>("AccelerationPadFlow") ?? Shader.Find("Universal Render Pipeline/Lit");
             if (shader != null)
             {
                 runtimeMaterial = new Material(shader) { name = "AccelerationPadRuntimeMaterial", hideFlags = HideFlags.DontSave };

@@ -125,7 +125,7 @@ public class OnPlayUIManager
                 coachingNotice == "ドリフト加速！" ? DriverNoticePriority.Success : DriverNoticePriority.Guidance, now);
             Condition("landing", !string.IsNullOrEmpty(challengeNotice), challengeNotice, DriverNoticePriority.Success, now);
             Condition("tube", !string.IsNullOrEmpty(tubeNotice), tubeNotice,
-                tubeNotice == "ライン成功！チャージ増加" ? DriverNoticePriority.Success : DriverNoticePriority.Guidance, now);
+                (tubeNotice == "加速パネル！" || tubeNotice == "ライン成功！チャージ増加") ? DriverNoticePriority.Success : DriverNoticePriority.Guidance, now);
         }
         Condition("slipstream", slipstreamBoosting, "追走で加速！", DriverNoticePriority.Success, now);
         int viewedPlayer = gate != null && gate.PlayerIndex >= 0 ? gate.PlayerIndex : noticePlayer;

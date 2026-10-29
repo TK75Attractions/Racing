@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-28",
+  "unity": "6000.3.9f1",
+  "core": {
+    "passed": 182,
+    "failed": 0
+  },
+  "editMode": {
+    "passed": 182,
+    "failed": 0
+  },
+  "ui": {
+    "pages": 4,
+    "players": [
+      1,
+      2
+    ],
+    "resolutions": [
+      "1280x720",
+      "1920x1080"
+    ],
+    "actualCourseAndItemPhotographs": true,
+    "checks": [
+      "photo loading",
+      "glyph coverage",
+      "text overflow",
+      "non-blocking graphics",
+      "pickup highlight order",
+      "captions for all four random effects",
+      "timeout and independent completion"
+    ]
+  },
+  "tubePads": {
+    "count": 2,
+    "boost": "existing AccelerationPad",
+    "instantSpeedBonusMps": 4,
+    "accelerationMps2": 10,
+    "durationSeconds": 1.25,
+    "physicalStep": false,
+    "oldChargeReward": false,
+    "playMode": "passed",
+    "entrySpeedMps": 12.18405,
+    "acceleratedSpeedMps": 16.44784,
+    "checks": [
+      "multiple collider deduplication",
+      "reverse rejection",
+      "disconnect rejection",
+      "respawn rejection",
+      "live OFF/ON",
+      "flush placement"
+    ]
+  },
+  "animations": {
+    "boxFrames": 40,
+    "padFrames": 24,
+    "fps": 8,
+    "padChangedPixelsTest": "passed"
+  },
+  "tutorialPlayMode": {
+    "result": "passed",
+    "pagesPerPlayer": 4,
+    "players": 2,
+    "stoppedWhileReading": true,
+    "raceCountdownAfterBothComplete": true,
+    "peakPracticeSpeedMps": 26.078
+  },
+  "unverified": [
+    "physical ESP32 input",
+    "Windows hardware",
+    "child usability study"
+  ],
+  "knownEditorIssue": "Existing SearchDatabase startup exception"
+}

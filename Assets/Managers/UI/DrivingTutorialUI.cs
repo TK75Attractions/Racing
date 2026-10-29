@@ -7,8 +7,11 @@ public sealed class DrivingTutorialUI
     public static readonly Color Cyan=ArcadeUI.Blue.Primary, Pink=ArcadeUI.Pink.Primary;
     private readonly GameObject root;
     private readonly GameObject itemGuide;
+    private readonly TutorialGimmickGuideUI gimmickGuide;
     private readonly TMP_Text message,status,step;
     private readonly PreparationTimerUI timer;
+    private readonly GameObject preparationTimer;
+    private readonly GameObject instruments;
     private readonly UISpeed speed=new UISpeed();
     private readonly ArcadeHUDTelemetry telemetry;
     private readonly RacingSteeringIndicator steering;
@@ -21,7 +24,7 @@ public sealed class DrivingTutorialUI
     {
         player=playerIndex;ArcadeUI.Bind(canvas,player);
         var r=RacingUITheme.Rect(canvas,"DrivingTutorial",Vector2.zero,Vector2.one);root=r.gameObject;r.SetAsFirstSibling();
-        Transform hud=RacingHUDBuilder.Build(r,player,2);
+        Transform hud=RacingHUDBuilder.Build(r,player,2);instruments=hud.gameObject;
         ArcadeUI.Hide(hud,"Position","Lap","Time","LapDelta","Leaderboard","Pause");
         speed.Init(hud.Find("Speed"));telemetry=hud.GetComponent<ArcadeHUDTelemetry>();telemetry.enabled=false;
         steering=hud.Find("SteeringIndicator/Track").GetComponent<RacingSteeringIndicator>();steering.AutoBind=false;
@@ -30,6 +33,7 @@ public sealed class DrivingTutorialUI
         var tag=ArcadeUI.Panel(r,"Player",new Vector2(.77f,.89f),new Vector2(.81f,.95f),p.Primary);
         ArcadeUI.Label(tag,"Value","P"+(player+1),Vector2.zero,Vector2.one,24,p.Ink,true,TextAlignmentOptions.Center);
         timer=new PreparationTimerUI(r,new Vector2(.82f,.88f),new Vector2(.97f,.96f));
+        preparationTimer=r.Find("PreparationTimer").gameObject;
         var lesson=ArcadeUI.Panel(r,"CurrentInstruction",new Vector2(.31f,.775f),new Vector2(.69f,.975f),p.Ink);
         step=ArcadeUI.Label(lesson,"Step","01",new Vector2(.045f,.28f),new Vector2(.28f,.85f),104,p.Soft,true,TextAlignmentOptions.Center);step.fontStyle=FontStyles.Italic;
         ArcadeUI.Label(lesson,"Total","/ 03",new Vector2(.06f,.13f),new Vector2(.26f,.30f),22,p.Paper,true,TextAlignmentOptions.Center);
@@ -41,9 +45,10 @@ public sealed class DrivingTutorialUI
         message.fontSizeMin=28f;
         itemGuide = ItemGuideUI.Create(r, player);
         itemGuide.SetActive(false);
+        gimmickGuide = new TutorialGimmickGuideUI(r, player);
         stepPulse=step.gameObject.AddComponent<UIValuePulse>();lessonMotion=lesson.gameObject.AddComponent<UIRevealSequence>();lessonMotion.Configure(lesson,new[]{"Status","Message"},new Vector2(12,0),.025f,.22f);
     }
-    public void Update(DrivingTutorialProgress lesson,DriveInputState input,float metersPerSecond,bool connected,string connectionNotice=null)
+    public void Update(DrivingTutorialProgress lesson,DriveInputState input,float metersPerSecond,bool connected,string connectionNotice=null,TutorialGimmickBriefing briefing=null)
     {
         timer.Update(lesson.TimeRemaining,lesson.TimeLimitSeconds);speed.UpdateSpeedMeter(metersPerSecond*3.6f,0);
         Transform car=Gmanager.Control?.TutorialCar(player);
@@ -52,11 +57,15 @@ public sealed class DrivingTutorialUI
         telemetry.SetTelemetry(engine!=null?engine.CurrentRpm:0,mover!=null?mover.NormalizedDriftCharge:0);
         float allowed=mover!=null?mover.SteeringInputLimit/Mathf.Max(.001f,mover.SteeringInputRange):1;
         float raw=input.steering/90f;steering.SetState(raw,Mathf.Clamp(raw,-allowed,allowed),allowed);
-        itemGuide.SetActive(connected && lesson.IsFinished);
+        bool explaining = lesson.IsFinished && briefing != null && !briefing.IsComplete;
+        instruments.SetActive(!(lesson.IsFinished && briefing != null));
+        preparationTimer.SetActive(!lesson.IsFinished);
+        itemGuide.SetActive(connected && lesson.IsFinished && briefing == null);
+        gimmickGuide.Update(lesson.IsFinished ? briefing : null, connected);
         int stage=lesson.HasTimedOut?4:(int)lesson.CurrentStage;
-        string prompt=lesson.IsFinished?"もう一人の準備待ち\nそろったらレースへ":!connected?(!string.IsNullOrEmpty(connectionNotice)?connectionNotice:"接続を確認してください")+"\n係員に知らせてね":!lesson.PedalReleased?"まずペダルから\n足を離そう":stage==0?"ペダルを踏んで\n加速しよう":stage==1?"この先は右カーブ\n道にそって曲がろう":"光る箱にふれよう\n自動で発動するよ";
+        string prompt=explaining?"レースの前に\nしかけを知ろう":lesson.IsFinished?"もう一人の準備待ち\nそろったらレースへ":!connected?(!string.IsNullOrEmpty(connectionNotice)?connectionNotice:"接続を確認してください")+"\n係員に知らせてね":!lesson.PedalReleased?"まずペダルから\n足を離そう":stage==0?"ペダルを踏んで\n加速しよう":stage==1?"この先は右カーブ\n道にそって曲がろう":"光る箱にふれよう\n自動で発動するよ";
         if(shownMessage!=prompt){message.text=prompt;shownMessage=prompt;}
-        string heading=lesson.HasTimedOut?"練習時間終了":lesson.IsComplete?"アイテム獲得！ 準備完了":!connected?"接続待ち":"練習しよう";
+        string heading=explaining?"止まって読めるよ":lesson.HasTimedOut?"練習時間終了":lesson.IsComplete?"アイテム獲得！ 準備完了":!connected?"接続待ち":"練習しよう";
         if(status.text!=heading)status.text=heading;
         if(shownStage==stage)return;bool changed=shownStage>=0;shownStage=stage;
         if(changed&&Application.isPlaying){stepPulse.Play(ArcadeUI.For(player).Accent,0);lessonMotion.Play();}

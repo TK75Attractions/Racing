@@ -1,0 +1,68 @@
+fonts-final:
+HUD_FONT_BUILD_PASS: static medium and bold, 410 characters.
+
+integration:
+TUBE_ACCELERATION_VALIDATION_PASS: two real pads, flush triggers, no old lines, existing speed boost not charge, feedback, rotation direction, OFF/ON and wrong-way rejection.
+STEERING_ITEM_FAIRNESS_PASS: both players at 720p/1080p, no text overflow or missing glyphs; threshold, release, input transparency, maintenance suppression; forward targets, finished/disabled exclusions, all three afflictions and last-place recovery.
+HUD_FONT_BUILD_PASS: static medium and bold, 410 characters.
+TUTORIAL_GIMMICK_UI_PASS: all four photographic pages, both players, 720p/1080p; glyphs, overflow, input transparency; independent completion and timed-out practice still receive the briefing.
+HUD_FONT_BUILD_PASS: static medium and bold, 410 characters.
+ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, matched ExtraBold instruments, two lap segments, peripheral item notices, HUD shadows, speed colours, DNF, ending input gate, stable meshes.
+SOUND_EFFECTS_AUDIO_CORE_PASS: 19 imported WAVs, PCM settings, stereo, resampling, overlap headroom, player routing, duplicate suppression and independent mute.
+ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, matched ExtraBold instruments, two lap segments, peripheral item notices, HUD shadows, speed colours, DNF, ending input gate, stable meshes.
+SOUND_EFFECTS_VALIDATION_PASS: file-backed cues, independent player routing, native output compatibility and audio settings UI.
+NIGHT_ARCADE_INTEGRATION_PASS: arcade bindings, six notice priorities, event scheduling, authored stereo PCM, positional vehicle mixer, per-player BGM fades and result/title routing.
+UI_NUMBER_IMPACT_PASS: compression, vertical punch, bounded non-interactive geometry, exact cancel and allocation-free repeated impulses.
+UI_MOTION_FOUNDATION_PASS: finite curves, directional ranks, interruption, replay, disable reset and classification.
+UI_MOTION_METERS_PASS: acceleration/braking response, finite values, settle, boost impulse, zero idle mesh rebuilds and zero idle managed allocations.
+ORDERED_LAP_RULES_PASS: grid, repeated finish crossings, direction, two full circuits, duplicate entry.
+SKILL_GAMEPLAY_RULES_PASS
+STEERING_COMFORT_PASS response90=0.120s countersteer=0.020s centerNoise=0 movingNoiseRatio=0.250
+STEERING_COMFORT_PASS response90=0.120s countersteer=0.020s centerNoise=0 movingNoiseRatio=0.250
+HIGH_SPEED_CORNERING_PASS: 31 production-car trials, boost, trajectory, +/-60 degree banks, small corrections, center noise, airborne, blocked, disconnect, live OFF and steering/drift regressions.
+ABRUPT_STEERING_PASS: 86 real-car trials, small/full abrupt lock, reversals, boost, flat/+/-60 banks, air, oil, spin and live OFF/ON.
+BRANCH_INTEGRATION_PHYSICS_PASS
+TUBE_COURSE_VALIDATION_PASS: length=1904.2m, heading/5m=15.53°, grade=0.446, grade change/5m=0.086, retained ground=100.00 %, road folds/intersections=0.
+CIRCUIT_TUBE_PASS: {"sourceVertices":4699,"smoothVertices":99716,"portalProfiles":4,"comparedColliderVertices":44484,"portalShoulders":2,"supportedShoulderSamples":288,"maximumSeamGap":0.0,"maximumSeamTangentAngle":1.2788596153259278}
+NIGHT_ARCADE_MAIN_PASS: night scenery, peripheral notices, motion, input recovery, steering, smooth tube collision and matching night overlay.
+RACE_POLISH_MAIN_INTEGRATION_PASS: acceleration pads and one-shot notices, physical steering warning, fair items, photographic tutorial, main night scenery, tube and driving physics.
+
+startup-final:
+SCREEN_STARTUP_VALIDATION_PASS: SampleScene initializes both players at Title without startup exceptions or overlapping screens.
+
+startup-failure:
+SCREEN_STARTUP_VALIDATION_PASS: Preview gameplay/result screens are hidden even when Gmanager never initializes.
+
+maintenance:
+HUD_FONT_BUILD_PASS: static medium and bold, 410 characters.
+MAINTENANCE_PHASE_PASS: Title
+MAINTENANCE_PHASE_PASS: Title
+MAINTENANCE_TRANSITION_PASS: a selection transition stays frozen until maintenance clears.
+MAINTENANCE_PHASE_PASS: CarSelection
+MAINTENANCE_PHASE_PASS: Tutorial
+MAINTENANCE_PHASE_PASS: Countdown
+MAINTENANCE_UI_MOTION_PASS: frozen presentation clock, reveal pose, pending callback and keyboard input; exact one-shot resume.
+MAINTENANCE_PHASE_PASS: Game
+MAINTENANCE_PHASE_PASS: Goal
+MAINTENANCE_PHASE_PASS: Result
+MAINTENANCE_PLAYMODE_PASS: seven real phases, all three canvases, physics/timers/audio, disable/re-enable and a second Play session restoring persisted maintenance.
+
+tutorial:
+HUD_FONT_BUILD_PASS: static medium and bold, 410 characters.
+TUTORIAL_CONTINUITY_PASS: P1 position, heading, velocity and steering reference preserved.
+TUTORIAL_RESET_EDGE_PASS: P1 held reset and deliberate repeat.
+TUTORIAL_CONTINUITY_PASS: P2 position, heading, velocity and steering reference preserved.
+TUTORIAL_RESET_EDGE_PASS: P2 held reset and deliberate repeat.
+TUTORIAL_DISTANT_ITEMS_PASS: P1, nearest box=64.4m.
+TUTORIAL_ITEM_APPROACH_PASS: P1 distance=64.5m, approach=2.46s.
+TUTORIAL_DISTANT_ITEMS_PASS: P2, nearest box=65.4m.
+TUTORIAL_ITEM_APPROACH_PASS: P2 distance=65.4m, approach=2.50s.
+TUTORIAL_COMPLETION_CUES_PASS: one successful pickup cue per player.
+TUTORIAL_QA_PASSED: continuous stage transition, production input gates, actual accelerate/turn/item pickup, countdown. Peak speed: 28.993 m/s. Maximum vertical speed after settling: 0.000 m/s
+
+recovery:
+FORWARD_RECOVERY_PASS: Logs/MainIntegration/Recovery
+
+race:
+BALANCE_RUN_RECORDED: forward-wall-stress both-humans-finished 129.8057
+BALANCE_PLAYTEST_RECORDED: Logs/MainIntegration/Race
