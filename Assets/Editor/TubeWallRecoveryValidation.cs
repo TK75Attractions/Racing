@@ -109,7 +109,7 @@ public static class TubeWallRecoveryValidation
             laps.RegisterCar(body); laps.GetCarData(body).lapCount = 1; resetter.SetCourse(course, laps);
             MethodInfo contact = typeof(CarResetter).GetMethod("RememberWallContact", Private, null,
                 new[] { typeof(Collider), typeof(Vector3) }, null);
-            int frames = Mathf.CeilToInt(4.2f / Time.fixedDeltaTime);
+            int frames = Mathf.CeilToInt((CarResetter.AutomaticRecoveryDelay + .2f) / Time.fixedDeltaTime);
             int recovered = 0;
             foreach (float angle in new[] { -150f, -90f, -60f, -45f, 0f, 45f, 60f, 90f, 150f, 180f })
             {
@@ -120,7 +120,7 @@ public static class TubeWallRecoveryValidation
                 {
                     Call(resetter, "OnDisable"); Set(mover, "inputSuppressedUntil", float.NegativeInfinity);
                     car.transform.SetPositionAndRotation(pinned, Quaternion.AngleAxis(angle, Vector3.forward));
-                    body.position = pinned; body.rotation = car.transform.rotation; body.WakeUp();
+                    body.position = pinned; body.rotation = car.transform.rotation; body.linearVelocity = Vector3.forward * 2f; body.WakeUp();
                     input.CurrentState = new DriveInputState { pedal = 1f };
                 }
                 void Tick()
@@ -133,7 +133,7 @@ public static class TubeWallRecoveryValidation
                 Require(resetter.AutomaticRecoveryCount == recovered, $"Bank {angle}: smooth tube driving must not recover or count as overturned (reason={resetter.RecoveryReason}, position={body.position}).");
                 Prepare(); input.CurrentState = DriveInputState.Neutral;
                 for (int i = 0; i < frames; i++) Tick();
-                Require(resetter.AutomaticRecoveryCount == recovered, $"Bank {angle}: neutral input must not request recovery.");
+                Require(resetter.AutomaticRecoveryCount == recovered, $"Bank {angle}: coasting with neutral input must not request recovery.");
                 Prepare();
                 for (int i = 0; i < frames && resetter.AutomaticRecoveryCount == recovered; i++)
                 {

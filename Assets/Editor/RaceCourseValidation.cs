@@ -365,12 +365,12 @@ public static class RaceCourseValidation
             MethodInfo contact = typeof(CarResetter).GetMethod("RememberWallContact", flags, null,
                 new[] { typeof(Collider), typeof(Vector3) }, null);
             Vector3 pinned = origin + new Vector3(12f, 5f, 30f);
-            int frames = Mathf.CeilToInt(4.2f / Time.fixedDeltaTime);
+            int frames = Mathf.CeilToInt((CarResetter.AutomaticRecoveryDelay + .2f) / Time.fixedDeltaTime);
             void Prepare()
             {
                 typeof(CarResetter).GetMethod("OnDisable", flags).Invoke(resetter, null);
                 typeof(DebugMover).GetField("inputSuppressedUntil", flags).SetValue(mover, float.NegativeInfinity);
-                body.position = pinned; body.rotation = Quaternion.identity;
+                body.position = pinned; body.rotation = Quaternion.identity; body.linearVelocity = Vector3.forward * 2f;
                 body.WakeUp();
                 input.CurrentState = new DriveInputState { pedal = 1f }; input.IsConnected = true;
             }
@@ -385,7 +385,7 @@ public static class RaceCourseValidation
             Require(resetter.AutomaticRecoveryCount == 0, "Smooth wall driving must not trigger stuck recovery.");
             Prepare(); input.CurrentState = DriveInputState.Neutral;
             for (int i = 0; i < frames; i++) Step();
-            Require(resetter.AutomaticRecoveryCount == 0, "Parking against a wall without input must not recover.");
+            Require(resetter.AutomaticRecoveryCount == 0, "Coasting along a wall without pedal input must not recover.");
             Prepare(); input.IsConnected = false;
             for (int i = 0; i < frames; i++) Step();
             Require(resetter.AutomaticRecoveryCount == 0, "Disconnected input must not cause wall recovery.");

@@ -147,9 +147,9 @@ public static class VisitorPolishValidation
                 int before=resetter.AutomaticRecoveryCount;
                 var tick=typeof(CarResetter).GetMethod("FixedUpdate",Private);
                 for(int i=0;i<40;i++)tick.Invoke(resetter,null);
-                Require(resetter.IsWrongWay&&resetter.AutomaticRecoveryCount==before,"Warning must precede two-second recovery.");
-                for(int i=0;i<65;i++)tick.Invoke(resetter,null);
-                Require(resetter.AutomaticRecoveryCount==before+1,"Wrong way must recover once after two seconds.");
+                Require(resetter.IsWrongWay&&resetter.AutomaticRecoveryCount==before,"Warning must precede five-second recovery.");
+                for(int i=0;i<Mathf.CeilToInt(CarResetter.AutomaticRecoveryDelay/Time.fixedDeltaTime)-40;i++)tick.Invoke(resetter,null);
+                Require(resetter.AutomaticRecoveryCount==before+1,"Wrong way must recover once after five seconds.");
                 Require(!gate.NeedsPedalRelease&&gate.CurrentState.pedal>.9f,"Recovery must accept a continuously held pedal.");
                 Require(Vector3.Dot(body.rotation*Vector3.forward,road.forward*direction)>.9f,"Recovery must face race direction.");
                 var warning=UnityEngine.Object.FindObjectsByType<WrongWayNotice>(FindObjectsInactive.Include,FindObjectsSortMode.None);
@@ -161,7 +161,7 @@ public static class VisitorPolishValidation
             }
             else if(stage==8&&captures==3)
             {
-                File.WriteAllText(Folder+"/verification.txt","PASS: opening music throughout tutorial; fixed-car title-to-practice flow; missed pickup restores the same three lanes ahead; solid black buildings; preserved release state; forward arrows with upward faces; two-second wrong-way recovery; held pedal resumes; independent center warning; three full-HD live frame captures; removed plaza poles.\n");
+                File.WriteAllText(Folder+"/verification.txt","PASS: opening music throughout tutorial; fixed-car title-to-practice flow; missed pickup restores the same three lanes ahead; solid black buildings; preserved release state; forward arrows with upward faces; five-second wrong-way recovery; held pedal resumes; independent center warning; three full-HD live frame captures; removed plaza poles.\n");
                 Finish(null);
             }
         }

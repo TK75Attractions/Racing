@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class CarResetter : MonoBehaviour
 {
+    public const float AutomaticRecoveryDelay = 5f;
     private Vector3 initialPosition;
     private Quaternion initialRotation;
     private Rigidbody rb;
@@ -13,7 +14,7 @@ public class CarResetter : MonoBehaviour
     private RaceCourse.CourseSample safeSample;
     private int safeLap;
     private bool hasSafeSample, resetHeld, manualPending;
-    private float unsafeSeconds, overturnedSeconds, stuckSeconds, wallStuckSeconds, supportedStuckSeconds, missedLandingSeconds;
+    private float unsafeSeconds, wallStuckSeconds, supportedStuckSeconds, missedLandingSeconds;
     private Collider lastSupportCollider;
     private float lastSupportTime = float.NegativeInfinity;
     private Vector3 supportProgressPosition;
@@ -76,9 +77,11 @@ public class CarResetter : MonoBehaviour
     private void FixedUpdate()
     {
         if (rb == null || rb.isKinematic || debugMover == null || !debugMover.isActiveAndEnabled ||
-            Gmanager.Control == null || Gmanager.Control.state != Gmanager.State.Game || course == null)
+            Gmanager.Control == null || Gmanager.Control.state != Gmanager.State.Game ||
+            !Gmanager.Control.CanDriveVehicle(rb) || course == null)
         { ClearRecoveryTimers(); return; }
-        if (debugMover.IsInputSuppressed ||
+        if (debugMover.IsInputSuppressed || GetComponent<FinishRunController>()?.IsActive == true ||
+            inputSource != null && !inputSource.IsConnected ||
             inputSource is PlayerDriveInputGate gate && (gate.IsBlocked || !gate.IsConnected || gate.NeedsPedalRelease))
         { ClearRecoveryTimers(); return; }
         RememberSafeRoad(false);
@@ -90,15 +93,10 @@ public class CarResetter : MonoBehaviour
         float dt = Time.fixedDeltaTime;
         float sign = laps != null && laps.IsProgressReversed ? -1f : 1f;
         bool backwards = Vector3.Dot(rb.linearVelocity, here.forward * sign) < -2f;
-        bool stillFacingBack = WrongWaySeconds > 0f && Vector3.Dot(transform.forward, here.forward * sign) < -.35f;
-        WrongWaySeconds = grounded >= 2 && (backwards || stillFacingBack) ? WrongWaySeconds + dt : 0f;
-        if (WrongWaySeconds >= 2f)
-        {
-            RecoveryReason = "wrong-way"; IsRecoveryPending = true;
-            if (TryResetCar(true)) AutomaticRecoveryCount++;
-            return;
-        }
-        unsafeSeconds = outside ? unsafeSeconds + dt : 0f;
+        // Heading matters even without reverse velocity: sideways cars can remain
+        // inside the course bounds indefinitely. Banking does not change tube-axis forward.
+        bool badHeading = grounded >= 2 && Vector3.Dot(transform.forward, here.forward * sign) < .5f;
+        bool wrongWay = grounded >= 2 && (backwards || Vector3.Dot(transform.forward, here.forward * sign) < -.35f);
         // A missed landing can briefly drive underneath the ramp and rejoin before
         // the normal off-course timeout, skipping an ordered lap gate forever.
         // Recover below solid landing road, not during the intended airborne arc.
@@ -108,13 +106,20 @@ public class CarResetter : MonoBehaviour
             !course.IsPointInsideTube(rb.position);
         missedLandingSeconds = belowLanding ? missedLandingSeconds + dt : 0f;
         Vector3 recoveryUp = onTubeWall ? lastWallNormal : here.up;
-        overturnedSeconds = Vector3.Dot(rb.rotation * Vector3.up, recoveryUp) < .2f && grounded < 2 ? overturnedSeconds + dt : 0f;
+        bool overturned = Vector3.Dot(rb.rotation * Vector3.up, recoveryUp) < .2f && grounded < 2;
+        bool almostStopped = rb.linearVelocity.sqrMagnitude < 1f;
+        // Keep one continuous clock while any unsafe condition persists. Changing
+        // from sideways travel to a stop must not buy another five seconds.
+        unsafeSeconds = outside || badHeading || wrongWay || almostStopped || overturned ? unsafeSeconds + dt : 0f;
+        WrongWaySeconds = wrongWay ? unsafeSeconds : 0f;
         bool pushing = inputSource != null && inputSource.IsConnected && Mathf.Abs(inputSource.CurrentState.pedal) > .4f;
-        stuckSeconds = pushing && rb.linearVelocity.magnitude < .5f && grounded > 0 ? stuckSeconds + dt : 0f;
         UpdateWallStuckTimer(pushing, dt);
         UpdateSupportedStuckTimer(pushing, grounded, dt);
-        if (missedLandingSeconds < .2f && unsafeSeconds < 1.8f && overturnedSeconds < 2.5f && stuckSeconds < 4f && wallStuckSeconds < 4f && supportedStuckSeconds < 4f) return;
-        RecoveryReason = missedLandingSeconds >= .2f ? "missed-landing" : outside ? "off-course" : overturnedSeconds >= 2.5f ? "overturned" : "stuck";
+        const float tolerance = .0001f;
+        if (missedLandingSeconds < .2f && unsafeSeconds + tolerance < AutomaticRecoveryDelay &&
+            wallStuckSeconds + tolerance < AutomaticRecoveryDelay && supportedStuckSeconds + tolerance < AutomaticRecoveryDelay) return;
+        RecoveryReason = missedLandingSeconds >= .2f ? "missed-landing" : outside ? "off-course" :
+            overturned ? "overturned" : wrongWay ? "wrong-way" : badHeading ? "bad-heading" : "stuck";
         IsRecoveryPending = true;
         if (TryResetCar(true)) AutomaticRecoveryCount++;
     }
@@ -194,7 +199,7 @@ public class CarResetter : MonoBehaviour
 
     private void ClearRecoveryTimers()
     {
-        unsafeSeconds = overturnedSeconds = stuckSeconds = wallStuckSeconds = supportedStuckSeconds = missedLandingSeconds = 0f;
+        unsafeSeconds = wallStuckSeconds = supportedStuckSeconds = missedLandingSeconds = 0f;
         trackingWallProgress = trackingSupportProgress = false;
         WrongWaySeconds = 0f;
     }
