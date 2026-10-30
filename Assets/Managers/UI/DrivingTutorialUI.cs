@@ -31,6 +31,8 @@ public sealed class DrivingTutorialUI
         steering=hud.Find("SteeringIndicator/Track").GetComponent<RacingSteeringIndicator>();steering.AutoBind=false;
         ArcadeUI.Logo(r,new Vector2(.03f,.84f),new Vector2(.27f,.97f));
         var p=ArcadeUI.For(player);
+        var mode=ArcadeUI.Panel(r,"TutorialMode",new Vector2(.03f,.78f),new Vector2(.27f,.83f),p.Primary);
+        TutorialText.Label(mode,"Label","チュートリアル",new Vector2(.04f,.05f),new Vector2(.96f,.95f),30,p.Ink,true,TextAlignmentOptions.Center);
         var tag=ArcadeUI.Panel(r,"Player",new Vector2(.77f,.89f),new Vector2(.81f,.95f),p.Primary);
         TutorialText.Label(tag,"Value","P"+(player+1),Vector2.zero,Vector2.one,24,p.Ink,true,TextAlignmentOptions.Center);
         timer=new PreparationTimerUI(r,new Vector2(.82f,.88f),new Vector2(.97f,.96f),tutorial:true);

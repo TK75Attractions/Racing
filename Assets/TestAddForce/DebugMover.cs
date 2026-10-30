@@ -953,6 +953,25 @@ public class DebugMover : MonoBehaviour
         return normal.sqrMagnitude > .0001f ? normal.normalized : Vector3.up;
     }
 
+    // A small, bounded speed reward: reducing drag gives +8% equilibrium speed,
+    // without repeatedly multiplying velocity or adding to the existing boost budget.
+    private float TubeWallSpeedMultiplier()
+    {
+        if (rb == null || IsInputSuppressed || inputSource == null || !inputSource.IsConnected ||
+            inputSource.CurrentState.pedal <= 0f ||
+            inputSource is PlayerDriveInputGate gate && (gate.IsBlocked || gate.NeedsPedalRelease) ||
+            itemEffects != null && (itemEffects.IsRocketActive || itemEffects.BlocksDriverInput || itemEffects.IsOiled || itemEffects.IsConfused) ||
+            Vector3.Dot(rb.linearVelocity, transform.forward) < 2f) return 1f;
+        int wallWheels = 0;
+        foreach (TireForce tire in tires)
+        {
+            GroundCheck ground = tire.GetComponent<GroundCheck>();
+            if (ground.CheckNow() && TubeDriveSurface.Contains(ground.GroundHit.collider) &&
+                Vector3.Dot(ground.GroundHit.normal, Vector3.up) < .866f) wallWheels++;
+        }
+        return wallWheels >= 2 ? 1.08f : 1f;
+    }
+
     private void ApplyVelocityResistance()
     {
         Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, GetDrivingUp());
@@ -964,7 +983,7 @@ public class DebugMover : MonoBehaviour
             break;
         }
         // In flight there is no tire propulsion to balance road resistance; retain takeoff momentum.
-        float resistanceMultiplier = grounded ? 1f : Mathf.Clamp01(airborneResistanceMultiplier);
+        float resistanceMultiplier = grounded ? 1f / TubeWallSpeedMultiplier() : Mathf.Clamp01(airborneResistanceMultiplier);
         Vector3 resistance = -planarVelocity * velocityResistance * resistanceMultiplier;
         if (grounded && enableDriftDynamics)
         {
