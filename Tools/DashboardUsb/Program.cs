@@ -14,6 +14,7 @@ using(var probe=new HttpClient(new SocketsHttpHandler{UseProxy=false}){Timeout=T
 }
 var setup=UsbGateway.Builder(IPAddress.Loopback,8767);
 string? usbUrl=null, lastError=null;
+var iphone=new IPhoneUsbHost();
 setup.Run(async context=>
 {
     context.Response.Headers.CacheControl="no-store";
@@ -28,18 +29,19 @@ setup.Run(async context=>
         (context.Request.Headers.Origin.Count>0&&context.Request.Headers.Origin!="http://"+host))
     {context.Response.StatusCode=403;return;}
     if(context.Request.Path=="/api/usb")
-    {await context.Response.WriteAsJsonAsync(new{app="racing-usb-dashboard",connected=usbUrl!=null,url=usbUrl,error=lastError});return;}
+    {await context.Response.WriteAsJsonAsync(new{app="racing-usb-dashboard",connected=iphone.Status.connected||usbUrl!=null,url=usbUrl,error=lastError,iphone=iphone.Status});return;}
     if(context.Request.Path!="/"){context.Response.StatusCode=404;return;}
     context.Response.ContentType="text/html; charset=utf-8";
     await context.Response.WriteAsync(UsbSetup.Page);
 });
 await setup.StartAsync();
 Console.WriteLine("USB管理画面の準備: http://127.0.0.1:8767/");
-Console.WriteLine("iPhone/iPadはインターネット共有をオンにし、USB接続と「信頼」を確認してください。RACEの再起動は不要です。");
-var monitor=Watch(setup.Lifetime.ApplicationStopping);
+Console.WriteLine("iPhoneのRacing USBアプリで接続できます。インターネット共有は不要です。RACEの再起動も不要です。");
+var monitor=iphone.Run(setup.Lifetime.ApplicationStopping);
+var tethering=args.Contains("--tethering")?Watch(setup.Lifetime.ApplicationStopping):Task.CompletedTask;
 OpenSetup();
 await setup.WaitForShutdownAsync();
-try{await monitor;}catch(OperationCanceledException){}
+try{await Task.WhenAll(monitor,tethering);}catch(OperationCanceledException){}
 
 void OpenSetup()
 {

@@ -16,8 +16,8 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
   let dirty = false, busy = false, alive = false, gap = false;
   let lastFrames = 0, rtt = null;
   const $ = id => document.getElementById(id);
-  $('transport-status').textContent = info.usb ? 'USB直通 / WebSocket' : info.remote ? 'Tailscale / WebSocket' : 'ローカル / WebSocket';
-  if (!info.remote && !info.usb && info.remoteUrl) {
+  $('transport-status').textContent = (info.usb || globalThis.racingUsbNative === true) ? 'USB直通 / WebSocket' : info.remote ? 'Tailscale / WebSocket' : 'ローカル / WebSocket';
+  if (!info.remote && !info.usb && globalThis.racingUsbNative !== true && info.remoteUrl) {
     $('share-dashboard').hidden = false;
     $('share-url').value = info.remoteUrl;
     $('share-copy').addEventListener('click', async () => {
