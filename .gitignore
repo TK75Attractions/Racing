@@ -135,3 +135,11 @@ InitTestScene*.unity*
 !/Tests~/OperatorUpdate/HostTests.csproj
 /Tests~/OperatorUpdate/bin/
 /Tests~/OperatorUpdate/obj/
+
+# USB dashboard helper and isolated gateway tests.
+!/Tools/DashboardUsb/DashboardUsb.csproj
+/Tools/DashboardUsb/bin/
+/Tools/DashboardUsb/obj/
+!/Tests~/DashboardUsb/UsbTests.csproj
+/Tests~/DashboardUsb/bin/
+/Tests~/DashboardUsb/obj/
