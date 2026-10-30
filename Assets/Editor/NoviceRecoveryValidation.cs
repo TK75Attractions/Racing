@@ -58,6 +58,37 @@ public static class NoviceRecoveryValidation
             Record("light-pedal-jam-recovers-at-three-seconds",lightBoundary&&resetter.AutomaticRecoveryCount==before+1,before);
             Prepare(pedal:.04f);before=resetter.AutomaticRecoveryCount;Tick(frames*2);
             Record("pedal-deadzone-does-not-teleport",resetter.AutomaticRecoveryCount==before,before);
+            foreach(float speed in new[]{0f,.5f,CarResetter.StuckRecoverySpeedMps})
+            {
+                Prepare(pedal:1,speed:speed);before=resetter.AutomaticRecoveryCount;Tick(frames/2);
+                input.CurrentState=DriveInputState.Neutral;Tick(frames-frames/2-1);
+                bool notEarly=resetter.AutomaticRecoveryCount==before;Tick(1);
+                Record("released-pedal-retains-low-speed-countdown-"+speed,notEarly&&resetter.AutomaticRecoveryCount==before+1,before);
+            }
+            Prepare(pedal:1);before=resetter.AutomaticRecoveryCount;Tick(frames/2);
+            input.CurrentState=DriveInputState.Neutral;body.linearVelocity=sample.forward*(CarResetter.StuckRecoverySpeedMps+.01f);Tick(1);
+            bool cleared=resetter.AutomaticRecoveryElapsed==0;body.linearVelocity=Vector3.zero;Tick(frames*2);
+            Record("released-pedal-motion-clears-and-neutral-does-not-restart",cleared&&resetter.AutomaticRecoveryCount==before,before);
+            foreach(string contact in new[]{"wall","support"})
+            {
+                Prepare(pedal:1,speed:CarResetter.StuckRecoverySpeedMps);before=resetter.AutomaticRecoveryCount;
+                var obstacle=new GameObject("Recovery contact",typeof(BoxCollider));obstacle.transform.position=sample.position+Vector3.up*100;
+                Set(resetter,contact=="wall"?"lastWallCollider":"lastSupportCollider",obstacle.GetComponent<Collider>());
+                Set(resetter,contact=="wall"?"lastWallContactTime":"lastSupportTime",Time.fixedTime);
+                if(contact=="support")foreach(var tire in car.GetComponentsInChildren<TireForce>())Set(tire,"isGrounded",false);
+                Tick(frames/2);input.CurrentState=DriveInputState.Neutral;
+                body.position+=sample.forward*2.1f;car.transform.position=body.position;Physics.SyncTransforms();Tick(frames-frames/2-1);
+                float contactTime=(float)typeof(CarResetter).GetField(contact=="wall"?"wallStuckSeconds":"supportedStuckSeconds",Private).GetValue(resetter);
+                bool retained=contactTime>CarResetter.AutomaticRecoveryDelay-.05f&&resetter.AutomaticRecoveryCount==before;Tick(1);
+                Record("released-pedal-retains-"+contact+"-countdown",retained&&resetter.AutomaticRecoveryCount==before+1,before);
+                Object.DestroyImmediate(obstacle);
+            }
+            Prepare(pedal:1);before=resetter.AutomaticRecoveryCount;
+            var occupied=new GameObject("Blocked recovery after release",typeof(BoxCollider));occupied.transform.position=sample.position+Vector3.up*3;occupied.GetComponent<BoxCollider>().size=new Vector3(50,8,20);Physics.SyncTransforms();
+            Tick(frames+5);input.CurrentState=DriveInputState.Neutral;Tick(1);
+            bool waiting=resetter.IsRecoveryPending&&resetter.AutomaticRecoveryCount==before;
+            Object.DestroyImmediate(occupied);Physics.SyncTransforms();Tick(1);
+            Record("released-pedal-keeps-occupied-recovery-until-space-clears",waiting&&resetter.AutomaticRecoveryCount==before+1,before);
             foreach(string escape in new[]{"healthy-motion","disconnection","blocked-input"})
             {
                 Prepare(pedal:1);before=resetter.AutomaticRecoveryCount;
@@ -103,6 +134,12 @@ public static class NoviceRecoveryValidation
         }
         if(!report.passed)throw new InvalidOperationException("NOVICE_RECOVERY_FAIL: "+JsonUtility.ToJson(report));
         Debug.Log("NOVICE_RECOVERY_PASS: neutral/coasting, three-second demand, occupied recovery cancellation, disconnection/blocking, held reset and fresh press.");
+    }
+    public static void RunWithPractice()
+    {
+        Run();
+        typeof(LapPracticeTubeValidation).GetMethod("ValidatePracticeRecovery",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,null);
+        Debug.Log("LOW_SPEED_RELEASE_RECOVERY_PASS: race and practice countdown continuity, threshold cancellation, contact recovery and neutral-stop guards.");
     }
     private static void Call(object target,string method)=>target.GetType().GetMethod(method,Private).Invoke(target,null);
     private static void Set(object target,string field,object value)=>target.GetType().GetField(field,Private).SetValue(target,value);

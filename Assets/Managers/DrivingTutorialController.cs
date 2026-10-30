@@ -176,10 +176,12 @@ public sealed class DrivingTutorialController : MonoBehaviour
         player.headingSeconds=badHeading?player.headingSeconds+dt:0f;
         player.recoveryTimer=overturned?player.recoveryTimer+dt:0f;
         bool pushing=Mathf.Abs(player.driveGate.CurrentState.pedal)>CarResetter.RecoveryPedalThreshold;
-        if(!pushing){player.trackingProgress=false;player.stuckSeconds=0f;}
+        bool almostStopped=player.body.linearVelocity.sqrMagnitude<=CarResetter.StuckRecoverySpeedMps*CarResetter.StuckRecoverySpeedMps;
+        bool shouldTrack=pushing||player.trackingProgress&&almostStopped;
+        if(!shouldTrack){player.trackingProgress=false;player.stuckSeconds=0f;}
         else
         {
-            if(!player.trackingProgress||(player.body.position-player.progressPosition).sqrMagnitude>=4f)
+            if(!player.trackingProgress||!almostStopped&&(player.body.position-player.progressPosition).sqrMagnitude>=4f)
             {player.trackingProgress=true;player.progressPosition=player.body.position;player.stuckSeconds=0f;}
             player.stuckSeconds+=dt;
         }

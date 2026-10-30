@@ -5,6 +5,7 @@ public class CarResetter : MonoBehaviour
     public const float AutomaticRecoveryDelay = 3f;
     public const float BadHeadingDegrees = 80f;
     public const float RecoveryPedalThreshold = .05f;
+    public const float StuckRecoverySpeedMps = 1f;
     private Vector3 initialPosition;
     private Quaternion initialRotation;
     private Rigidbody rb;
@@ -15,7 +16,7 @@ public class CarResetter : MonoBehaviour
     private TireForce[] tires;
     private RaceCourse.CourseSample safeSample;
     private int safeLap;
-    private bool hasSafeSample, resetHeld, manualPending, automaticPending;
+    private bool hasSafeSample, resetHeld, manualPending, automaticPending, trackingLowSpeedStuck;
     private float badHeadingSeconds, unsafeSeconds, wallStuckSeconds, supportedStuckSeconds, missedLandingSeconds;
     private Collider lastSupportCollider;
     private float lastSupportTime = float.NegativeInfinity;
@@ -119,17 +120,18 @@ public class CarResetter : MonoBehaviour
         missedLandingSeconds = belowLanding ? missedLandingSeconds + dt : 0f;
         Vector3 recoveryUp = onTubeWall ? lastWallNormal : here.up;
         bool overturned = Vector3.Dot(rb.rotation * Vector3.up, recoveryUp) < .2f && grounded < 2;
-        bool almostStopped = rb.linearVelocity.sqrMagnitude < 1f;
+        bool almostStopped = rb.linearVelocity.sqrMagnitude <= StuckRecoverySpeedMps * StuckRecoverySpeedMps;
         bool pushing = inputSource != null && inputSource.IsConnected && Mathf.Abs(inputSource.CurrentState.pedal) > RecoveryPedalThreshold;
         // Heading requires three uninterrupted seconds of actual misalignment.
         // Returning below 80 degrees clears it even if another recovery condition starts.
         badHeadingSeconds = badHeading ? badHeadingSeconds + dt : 0f;
         WrongWaySeconds = wrongWay ? WrongWaySeconds + dt : 0f;
-        // A learner may deliberately coast or stop. Lack of speed is only a jam
-        // when the driver is asking for propulsion; off-course/heading checks remain independent.
-        unsafeSeconds = outside || almostStopped && pushing || overturned ? unsafeSeconds + dt : 0f;
-        UpdateWallStuckTimer(pushing, dt);
-        UpdateSupportedStuckTimer(pushing, grounded, dt);
+        // Demand starts a jam; releasing the pedal does not erase it while still slow.
+        // A neutral stop that never entered recovery remains deliberate.
+        trackingLowSpeedStuck = almostStopped && (pushing || trackingLowSpeedStuck);
+        unsafeSeconds = outside || trackingLowSpeedStuck || overturned ? unsafeSeconds + dt : 0f;
+        UpdateWallStuckTimer(pushing || almostStopped && trackingWallProgress, dt);
+        UpdateSupportedStuckTimer(pushing || almostStopped && trackingSupportProgress, grounded, dt);
         RecoveryWarningReason = outside ? "off-course" : overturned ? "overturned" :
             wrongWay ? "wrong-way" : badHeading ? "bad-heading" : "stuck";
         const float tolerance = .0001f;
@@ -183,18 +185,19 @@ public class CarResetter : MonoBehaviour
         lastWallCollider.gameObject.activeInHierarchy &&
         (rb.IsSleeping() || Time.fixedTime - lastWallContactTime <= .1f);
 
-    private void UpdateWallStuckTimer(bool pushing, float dt)
+    private void UpdateWallStuckTimer(bool shouldTrack, float dt)
     {
         // 壁に乗ってタイヤの接地判定が切れても、入力があるのに同じ場所へ
         // 留まる状態を検出する。速度が出ている小刻みな往復や回転も対象にする。
         // スリープ中は OnCollisionStay が来ないが、接触終了までは壁に挟まったまま。
-        if (!pushing || !HasWallContact)
+        if (!shouldTrack || !HasWallContact)
         {
             trackingWallProgress = false;
             wallStuckSeconds = 0f;
             return;
         }
-        if (!trackingWallProgress || (rb.position - wallProgressPosition).sqrMagnitude >= 4f)
+        if (!trackingWallProgress || (rb.linearVelocity.sqrMagnitude > StuckRecoverySpeedMps * StuckRecoverySpeedMps &&
+            (rb.position - wallProgressPosition).sqrMagnitude >= 4f))
         {
             trackingWallProgress = true;
             wallProgressPosition = rb.position;
@@ -203,14 +206,15 @@ public class CarResetter : MonoBehaviour
         wallStuckSeconds += dt;
     }
 
-    private void UpdateSupportedStuckTimer(bool pushing, int grounded, float dt)
+    private void UpdateSupportedStuckTimer(bool shouldTrack, int grounded, float dt)
     {
         bool supported = lastSupportCollider != null && lastSupportCollider.enabled &&
             lastSupportCollider.gameObject.activeInHierarchy &&
             (rb.IsSleeping() || Time.fixedTime - lastSupportTime <= .1f);
-        if (!pushing || grounded > 0 || !supported)
+        if (!shouldTrack || grounded > 0 || !supported)
         { trackingSupportProgress = false; supportedStuckSeconds = 0f; return; }
-        if (!trackingSupportProgress || (rb.position - supportProgressPosition).sqrMagnitude >= 4f)
+        if (!trackingSupportProgress || (rb.linearVelocity.sqrMagnitude > StuckRecoverySpeedMps * StuckRecoverySpeedMps &&
+            (rb.position - supportProgressPosition).sqrMagnitude >= 4f))
         {
             trackingSupportProgress = true; supportProgressPosition = rb.position;
             supportedStuckSeconds = 0f;
@@ -222,7 +226,7 @@ public class CarResetter : MonoBehaviour
     {
         CancelAutomaticRecovery();
         badHeadingSeconds = unsafeSeconds = wallStuckSeconds = supportedStuckSeconds = missedLandingSeconds = 0f;
-        trackingWallProgress = trackingSupportProgress = false;
+        trackingLowSpeedStuck = trackingWallProgress = trackingSupportProgress = false;
         WrongWaySeconds = 0f;
         RecoveryWarningReason = null;
     }

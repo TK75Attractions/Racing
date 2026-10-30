@@ -144,7 +144,18 @@ public static class LapPracticeTubeValidation
             Prepare(pedal:0);Require(!Tick(10),"An idle learner must not be repeatedly respawned.");
             Prepare(pedal:.1f);Require(!Tick(2.98f)&&Tick(.02f),"A lightly pressed pedal must also recover a genuinely stuck learner.");
             Prepare(pedal:.04f);Require(!Tick(10),"Pedal deadzone contact is not a request to move.");
-            Prepare(pedal:1);for(int i=0;i<50;i++){body.position+=Vector3.forward*.4f;Require(!Tick(.1f),"Moving along the road is not a jam.");}
+            foreach(float speed in new[]{0f,.5f,CarResetter.StuckRecoverySpeedMps})
+            {
+                Prepare(pedal:1);body.linearVelocity=Vector3.forward*speed;Require(!Tick(1.5f),"The jam starts without early recovery.");
+                sources[0].CurrentState=DriveInputState.Neutral;body.position+=Vector3.forward*2.1f;
+                Require(!Tick(1.48f)&&Tick(.02f),"Releasing the pedal at or below the speed threshold retains the full practice countdown, even after slow progress.");
+            }
+            Prepare(pedal:1);Tick(1.5f);sources[0].CurrentState=DriveInputState.Neutral;body.linearVelocity=Vector3.forward*(CarResetter.StuckRecoverySpeedMps+.01f);
+            Require(!Tick(.02f),"Coasting above the threshold clears practice recovery.");body.linearVelocity=Vector3.zero;
+            Require(!Tick(10),"A cleared jam must not restart on a neutral stop.");
+            Prepare(pedal:1);Tick(1.5f);gate.SetBlocked(true);Require(!Tick(10),"Blocked practice cancels a low-speed countdown.");
+            gate.Reset();sources[0].CurrentState=DriveInputState.Neutral;Require(!Tick(10),"Unblocking does not restore an obsolete countdown.");
+            Prepare(pedal:1);body.linearVelocity=Vector3.forward*4;for(int i=0;i<50;i++){body.position+=Vector3.forward*.4f;Require(!Tick(.1f),"Moving along the road is not a jam.");}
             Prepare(x:30,pedal:1);Tick(2.5f);sources[0].IsConnected=false;Require(!Tick(3),"Disconnected practice never accumulates recovery time.");sources[0].IsConnected=true;gate.Reset();Require(!Tick(2.98f)&&Tick(.02f),"Reconnection starts a fresh interval.");
             Prepare(x:30,pedal:1);Set(mover,"inputSuppressedUntil",float.PositiveInfinity);Require(!Tick(4),"Respawn suppression prevents repeated recovery.");
         }
