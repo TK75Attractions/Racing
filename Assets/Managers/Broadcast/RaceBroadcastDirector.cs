@@ -29,7 +29,8 @@ public sealed class RaceBroadcastDirector : MonoBehaviour
     private int archive,clip,focus;
     private float cursor,focusRemaining;
     private bool recordingWasGame,showWindow,replaying;
-    private float nextStandings;
+    private float nextStandings, nextWindowAttempt;
+    private bool retryWindow;
     private string cachedStandings="";
     private string folder;
     private int broadcastDisplay;
@@ -85,10 +86,12 @@ public sealed class RaceBroadcastDirector : MonoBehaviour
     private void RefreshWindow()
     {
         bool wanted=manager.IsMaintenanceActive||Feature(RaceFeature.BroadcastScreen);
-        if(wanted==showWindow)return;showWindow=wanted;
+        if(wanted==showWindow && (!retryWindow || Time.unscaledTime<nextWindowAttempt))return;
+        showWindow=wanted;retryWindow=false;
         presenter.enabled=wanted;
         if(!wanted){output.enabled=false;return;}
-        if(RacePlayerWindows.UsesNativeWindow){output.enabled=true;if(!output.ConfigureBroadcast(presenter))output.enabled=false;}
+        if(RacePlayerWindows.UsesNativeWindow){output.enabled=true;if(!output.ConfigureBroadcast(presenter))
+            { output.enabled=false;retryWindow=true;nextWindowAttempt=Time.unscaledTime+1f; }}
         else if(!Application.isEditor&&Display.displays.Length>broadcastDisplay)
         {Display.displays[broadcastDisplay].Activate();output.enabled=true;output.Configure(new[]{presenter},broadcastDisplay,presenter);}
         else if(!Application.isEditor)Debug.LogWarning("The broadcast feed is available, but a floating broadcast window requires the macOS Metal plugin.");

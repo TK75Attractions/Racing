@@ -206,19 +206,15 @@ extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_ExternalFullscreen() { return 
 
 static void PlaceBroadcastWindow(NSWindow* window, NSScreen* screen)
 {
-    window.styleMask=NSWindowStyleMaskBorderless|NSWindowStyleMaskResizable;
+    // Use the same full-content, borderless window placement as P1/P2, without a macOS fullscreen Space.
+    FillScreen(window,screen.frame);
     window.title=@"RACING — BROADCAST";
-    window.titleVisibility=NSWindowTitleHidden;
-    window.titlebarAppearsTransparent=YES;
     window.movableByWindowBackground=YES;
-    // Keep a manually moved broadcast above the two cabinet player windows,
-    // while allowing Cmd-Tab to reveal other desktop applications normally.
     window.level=NSMainMenuWindowLevel+2;
+    // The operator can still switch to another app on this PC.
     window.hidesOnDeactivate=YES;
-    window.collectionBehavior=NSWindowCollectionBehaviorFullScreenNone;
     window.contentMinSize=NSMakeSize(480,270);
-    // Fill once at startup. Subsequent movement/resizing is entirely under the user's control.
-    [window setFrame:screen.frame display:NO];
+    // Apply only when opening: later user movement/resizing remains untouched.
 }
 extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_OpenBroadcast()
 {
@@ -226,11 +222,15 @@ extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_OpenBroadcast()
     __block int success=0;
     OnMain(^{
         if (broadcastWindow) { broadcastClosed=false; [broadcastWindow orderFront:nil]; [(RaceBroadcastWindow*)broadcastWindow updateOutputSize]; success=1; return; }
-        NSScreen* target=nil;
-        for (NSScreen* screen in NSScreen.screens)
-            if (CGDisplayIsBuiltin([screen.deviceDescription[@"NSScreenNumber"] unsignedIntValue])) { target=screen; break; }
-        if (!target) target=NSScreen.mainScreen;
-        if (!target) return;
+        NSArray<NSScreen*>* screens=NSScreen.screens;
+        std::vector<racing::DisplayArea> displays;
+        for(NSScreen* screen in screens) {
+            CGDirectDisplayID id=[screen.deviceDescription[@"NSScreenNumber"] unsignedIntValue];NSRect r=screen.frame;
+            displays.push_back({id,(bool)CGDisplayIsBuiltin(id),CGDisplayMirrorsDisplay(id)!=kCGNullDirectDisplay,r.origin.x,r.origin.y,r.size.width,r.size.height});
+        }
+        int targetIndex=racing::BroadcastTarget(displays,CGMainDisplayID());
+        if(targetIndex<0)return;
+        NSScreen* target=screens[targetIndex];
         RaceBroadcastWindow* window=[[RaceBroadcastWindow alloc] initWithContentRect:target.visibleFrame
             styleMask:NSWindowStyleMaskBorderless|NSWindowStyleMaskResizable
             backing:NSBackingStoreBuffered defer:NO screen:target];

@@ -28,5 +28,11 @@ int main()
     Expect({{9,false,false,0,0,0,1080},{8,false,false,std::numeric_limits<double>::quiet_NaN(),0,1920,1080},{2,false,false,0,0,1920,1080}},0,0);
     // Equal-origin displays are deterministic even if enumeration order changes.
     Expect({{3,false,false,0,0,1920,1080},{2,false,false,0,0,1920,1080}},2,3);
+    assert(racing::BroadcastTarget({},1)==-1);
+    assert(racing::BroadcastTarget({{3,false,false,0,0,1920,1080},{1,true,false,-1440,0,1440,900},{2,false,false,-3360,0,1920,1080}},3)==1);
+    assert(racing::BroadcastTarget({{2,false,false,-1920,0,1920,1080},{3,false,false,0,0,1920,1080}},3)==1);
+    assert(racing::BroadcastTarget({{1,true,true,0,0,1440,900},{3,false,false,0,0,1920,1080}},3)==1);
+    assert(racing::BroadcastTarget({{3,false,false,0,0,1920,1080}},99)==0);
+    std::cout<<"BROADCAST_DISPLAY_SELECTION_PASS: built-in before player/main order, desktop main fallback, mirrored and absent panels.\n";
     std::cout<<"EXTERNAL_DISPLAY_SELECTION_PASS: 12 configurations; built-in/main ordering, lid closed, portrait, negative coordinates, mirroring, duplicates, invalid geometry.\n";
 }
