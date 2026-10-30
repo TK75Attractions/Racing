@@ -368,6 +368,7 @@ public sealed class CarItemEffects : MonoBehaviour
 
     private void StartRocket()
     {
+        PlayRocketSound();
         rocketTimeRemaining = rocketDuration;
         protectRocketJump = true;
         rocketExitGraceRemaining = 0f;
@@ -377,6 +378,21 @@ public sealed class CarItemEffects : MonoBehaviour
         spinTimeRemaining = 0f;
         oilTimeRemaining = 0f;
         if (body != null) body.maxAngularVelocity = originalMaxAngularVelocity;
+    }
+
+    private void PlayRocketSound()
+    {
+        var manager = Gmanager.Control;
+        if (manager == null) return;
+        var driver = manager.FindParticipant(body);
+        if (manager.state == Gmanager.State.Game && driver != null && !driver.IsCpu && driver.IsRacing)
+        {
+            RaceSoundEffects.PlayForPlayer(RaceSoundCue.Rocket,driver.Index);
+            return;
+        }
+        for (int player=0;player<2;player++)
+            if (manager.TutorialCar(player) == transform)
+            { RaceSoundEffects.PlayForPlayer(RaceSoundCue.Rocket,player); return; }
     }
 
     /// <summary>

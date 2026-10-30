@@ -63,6 +63,7 @@ public sealed class RaceSoundEffects : MonoBehaviour
             case RaceSoundCue.TireSkid: return .65f;
             case RaceSoundCue.DriftCharge: return .25f;
             case RaceSoundCue.Boost: return .35f;
+            case RaceSoundCue.Rocket: return .35f;
             case RaceSoundCue.Charge: return .12f;
             case RaceSoundCue.Select: return .07f;
             default: return .035f;

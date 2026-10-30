@@ -46,7 +46,7 @@ public sealed class RaceDrivingSoundEffects : MonoBehaviour
         int tier = mover.DriftChargeTier;
         if (driftNow && tier > chargeTier) Play(RaceSoundCue.DriftCharge);
         int boostNow = BoostMask;
-        if ((boostNow & ~boostMask) != 0) Play(RaceSoundCue.Boost);
+        if ((boostNow & ~boostMask & ~2) != 0) Play(RaceSoundCue.Boost);
         int lap = manager.GetParticipantLap(driver);
         if (lap > completedLaps && manager.GoalLap > 1 && lap == manager.GoalLap - 1)
             Play(RaceSoundCue.FinalLap);
@@ -71,7 +71,8 @@ public sealed class RaceDrivingSoundEffects : MonoBehaviour
     {
         Play(RaceSoundCue.ItemPickup);
         if (item == RaceItemType.Shield) Play(RaceSoundCue.Shield);
-        // Rocket/pad/slipstream onset is detected once in LateUpdate.
+        // Rocket has its own ignition cue in CarItemEffects, including practice.
+        // Pad/slipstream onset is detected once in LateUpdate.
     }
     private void OnImpact(float strength) { if (strength >= .18f) Play(RaceSoundCue.Impact); }
     private void Play(RaceSoundCue cue) { if (isActiveAndEnabled && CanHear) RaceSoundEffects.PlayForPlayer(cue, driver.Index); }
