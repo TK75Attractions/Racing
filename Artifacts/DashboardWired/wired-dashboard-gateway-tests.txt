@@ -1,7 +1,0 @@
-WIRED_TEST: explicit Ethernet selection and peer validation passed
-USB_TEST: adapter selection passed; starting isolated loopback servers
-USB_TEST: isolated upstream ready
-USB_TEST: gateway ready
-USB_TEST: HTTP policy and forwarding passed; checking WebSocket
-USB_TEST: WebSocket passed; checking peer and reconnect policies
-USB_DASHBOARD_TEST_PASS {"passed":true,"scope":"loopback-only HTTP/WebSocket gateway, fake relay; no USB-device or real Race commands","commands":31,"medianMs":0.2099,"p95Ms":0.4741,"maxMs":0.6923,"checks":"USB adapter selection, peer/Host/Origin/pairing, token rotation, static assets, HTTP command preservation, binary frames, WebSocket order, body limits, offline relay"}

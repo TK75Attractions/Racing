@@ -12,15 +12,26 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 static void Require(bool condition,string message){if(!condition)throw new Exception(message);}
 static Uri Url(WebApplication app)=>new(app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single());
 static async Task ExpectIo(Func<Task> action){try{await action();throw new Exception("Invalid frame accepted.");}catch(IOException){}}
+Require(UsbMode.Requested([])=="iphone"&&UsbMode.Requested(["--iphone"])=="iphone","Default and explicit launch must select the native USB app.");
+using(var current=JsonDocument.Parse("{\"app\":\"racing-usb-dashboard\",\"mode\":\"iphone\",\"protocol\":\"racing-usb-v2\"}"))Require(UsbMode.CanReuse(current.RootElement,"iphone"),"Current native helper is reusable.");
+foreach(string mode in new[]{"wired","tethering","iphone"})
+{
+    using var old=JsonDocument.Parse(JsonSerializer.Serialize(new{app="racing-usb-dashboard",mode}));
+    Require(!UsbMode.CanReuse(old.RootElement,"iphone"),"Removed and legacy PIN helpers cannot be reused.");
+}
+Require(!UsbSetup.Page.Contains("id=\"tether\"")&&!UsbSetup.Page.Contains("id=\"copy\""),"Native setup contains no obsolete network pairing controls.");
 var oversize=new byte[9];BinaryPrimitives.WriteInt32BigEndian(oversize,65537);oversize[4]=(byte)UsbKind.Data;
 using(var badWire=new UsbWire(new MemoryStream(oversize)))await ExpectIo(async()=>await badWire.Read(CancellationToken.None));
 using(var badWire=new UsbWire(new MemoryStream(new byte[4])))await ExpectIo(async()=>await badWire.Read(CancellationToken.None));
 var parsed=XElement.Parse("<dict><key>DeviceList</key><array><dict><key>DeviceID</key><integer>7</integer><key>Properties</key><dict><key>ConnectionType</key><string>USB</string></dict></dict><dict><key>DeviceID</key><integer>9</integer><key>Properties</key><dict><key>ConnectionType</key><string>Network</string></dict></dict></array></dict>");
 Require(UsbMux.UsbDevices(parsed).SequenceEqual(new[]{7}),"Wireless paired devices must be excluded.");
 Console.WriteLine("IPHONE_USB: framing limits and USB-only device selection passed");
-int commands=0;string? lastBody=null;
+int commands=0,updates=0;string? lastBody=null;
 byte[] image=Enumerable.Range(0,300_000).Select(i=>(byte)(i%251)).ToArray();
-await using var upstream=UsbGateway.Builder(IPAddress.Loopback,0);upstream.UseWebSockets();
+var upstreamBuilder=WebApplication.CreateBuilder(new WebApplicationOptions { Args=[] });
+upstreamBuilder.WebHost.ConfigureKestrel(options=>options.Listen(IPAddress.Loopback,0));
+upstreamBuilder.Logging.ClearProviders();
+await using var upstream=upstreamBuilder.Build();upstream.UseWebSockets();
 upstream.Run(async context=>
 {
     Require(context.Request.Host.Value=="127.0.0.1:8766"&&context.Request.Headers.Origin=="http://127.0.0.1:8766","The phone must rewrite the exact local relay origin.");
@@ -30,6 +41,11 @@ upstream.Run(async context=>
         using var socket=await context.WebSockets.AcceptWebSocketAsync();
         try{for(int i=0;i<4;i++){await socket.SendAsync(Encoding.UTF8.GetBytes("{\"sequence\":"+i+"}"),WebSocketMessageType.Text,true,context.RequestAborted);await Task.Delay(10,context.RequestAborted);}await socket.ReceiveAsync(new byte[256],context.RequestAborted);}
         catch(Exception error)when(error is WebSocketException or OperationCanceledException){}
+    }
+    else if(context.Request.Path=="/api/operator-update")
+    {
+        if(context.Request.Method=="POST"){updates++;await context.Response.WriteAsJsonAsync(new{ok=true});}
+        else await context.Response.WriteAsJsonAsync(new{available=true,canControl=true,busy=false});
     }
     else if(context.Request.Path=="/api/action/test")
     {commands++;lastBody=await new StreamReader(context.Request.Body).ReadToEndAsync();await context.Response.WriteAsJsonAsync(new{ok=true});}
@@ -75,6 +91,12 @@ try
     var paired=await Get(pair.PathAndQuery);Require(paired.StatusCode==HttpStatusCode.Found,"Native pairing issues a redirect.");
     string cookie=paired.Headers.GetValues("Set-Cookie").Single().Split(';')[0];
     Require((await Get("/",cookie)).IsSuccessStatusCode,"HTML loads over Swift local HTTP → USB protocol → C# relay forwarding.");
+    using(var offline=await Get("/api/operator-update",cookie))
+    {
+        using var status=JsonDocument.Parse(await offline.Content.ReadAsStringAsync());
+        Require(status.RootElement.GetProperty("available").GetBoolean(),"Offline updater status is reachable through native USB without a game stream.");
+    }
+    Require((await Get("/api/operator-update",cookie,origin,body:"{\"id\":\"offline-usb-update\"}")).IsSuccessStatusCode&&updates==1,"Offline update POST reaches the relay through the native USB tunnel.");
     Require((await Get("/api/action/test",cookie,"https://untrusted.test",body:"{}")).StatusCode==HttpStatusCode.Forbidden&&commands==0,"Cross-site controls cannot enter the tunnel.");
     Require((await Get("/api/status",cookie,host:"bad.test")).StatusCode==HttpStatusCode.Forbidden,"Phone Host guard is enforced.");
     Require((await Get("/api/action/test",cookie,origin,body:new string('x',8192))).StatusCode==HttpStatusCode.RequestEntityTooLarge&&commands==0,"Oversized phone requests are rejected before opening a relay stream.");

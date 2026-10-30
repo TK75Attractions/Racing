@@ -7,13 +7,13 @@ internal static class UsbSetup
 <main><small>RACING CONTROL / USB</small><h1>USBで管理画面を開く</h1>
 <p>iPhone / iPadの専用アプリから、USBケーブルだけで操作します。接続コード・インターネット共有は不要です。</p>
 <ol><li>初回だけ、端末に最新版のRacing USBアプリをインストールする。</li><li>Macでレースゲームを起動する。</li><li>端末のアプリを開き、USBでつなぐ。初回は表示された「信頼」を確認する。</li></ol>
-<section><strong id="status" role="status">USB接続を確認中…</strong><p id="detail"></p><div id="tether" hidden><label for="url">テザリング用URL</label><input id="url" readonly><button id="copy" disabled>URLをコピー</button></div><div id="feedback" role="status"></div></section>
+<section><strong id="status" role="status">USB接続を確認中…</strong><p id="detail"></p></section>
 <p>通常のDashboard中継は起動したまま使います。ケーブルを抜くとアプリの操作は止まります。つなぎ直すとUSB経由で再接続します。</p>
 <p>アプリの初回インストールにはXcodeの署名設定と、iPhone側の確認が必要です。インストール後の管理画面・状態・映像・操作はUSBだけで通信します。</p>
 <script>
 const $=id=>document.getElementById(id);let busy=false;
-async function update(){if(busy)return;busy=true;try{const response=await fetch('/api/usb',{cache:'no-store',signal:AbortSignal.timeout(3000)});if(!response.ok)throw Error();const info=await response.json();$('status').textContent=info.connected?'USB直通で接続中':'USB接続を待っています';$('tether').hidden=!info.url;$('status').className=info.connected?'ok':'';$('detail').textContent=info.error||info.iphone?.state||'Racing USBアプリとケーブルを確認してください。';$('url').value=info.url||'';$('copy').disabled=!info.connected;}catch{$('status').textContent='USB補助アプリに接続できません';$('detail').textContent='Macでレースゲームを起動するか、Start iPhone USB Dashboardを開いてください。';$('url').value='';$('copy').disabled=true;}finally{busy=false;}}
-$('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('url').value);$('feedback').textContent='コピーしました。接続した端末のブラウザーに貼り付けてください。';}catch{$('url').select();$('feedback').textContent='URLを選択しました。コピーしてください。';}};update();setInterval(update,2000);
+async function update(){if(busy)return;busy=true;try{const response=await fetch('/api/usb',{cache:'no-store',signal:AbortSignal.timeout(3000)});if(!response.ok)throw Error();const info=await response.json();$('status').textContent=info.connected?'USB直通で接続中':'USB接続を待っています';$('status').className=info.connected?'ok':'';$('detail').textContent=info.error||info.iphone?.state||'Racing USBアプリとケーブルを確認してください。';}catch{$('status').textContent='USB補助アプリに接続できません';$('detail').textContent='Macでレースゲームを起動するか、Start iPhone USB Dashboardを開いてください。';}finally{busy=false;}}
+update();setInterval(update,2000);
 </script></main></html>
 """;
 }

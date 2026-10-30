@@ -140,9 +140,6 @@ InitTestScene*.unity*
 !/Tools/DashboardUsb/DashboardUsb.csproj
 /Tools/DashboardUsb/bin/
 /Tools/DashboardUsb/obj/
-!/Tests~/DashboardUsb/UsbTests.csproj
-/Tests~/DashboardUsb/bin/
-/Tests~/DashboardUsb/obj/
 /Tools/DashboardIPhone/**/xcuserdata/
 /Tools/DashboardIPhone/**/project.xcworkspace/xcuserdata/
 !/Tests~/DashboardIPhone/NativeTests.csproj

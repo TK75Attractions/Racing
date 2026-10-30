@@ -1,9 +1,0 @@
-{
-  "passed": true,
-  "scope": "loopback-only HTTP/WebSocket gateway, fake relay; no USB-device or real Race commands",
-  "commands": 31,
-  "medianMs": 0.2099,
-  "p95Ms": 0.4741,
-  "maxMs": 0.6923,
-  "checks": "USB adapter selection, peer/Host/Origin/pairing, token rotation, static assets, HTTP command preservation, binary frames, WebSocket order, body limits, offline relay"
-}
