@@ -135,3 +135,18 @@ InitTestScene*.unity*
 !/Tests~/OperatorUpdate/HostTests.csproj
 /Tests~/OperatorUpdate/bin/
 /Tests~/OperatorUpdate/obj/
+
+# USB dashboard helper and isolated gateway tests.
+!/Tools/DashboardUsb/DashboardUsb.csproj
+/Tools/DashboardUsb/bin/
+/Tools/DashboardUsb/obj/
+/Tools/DashboardIPhone/**/xcuserdata/
+/Tools/DashboardIPhone/**/project.xcworkspace/xcuserdata/
+!/Tests~/DashboardIPhone/NativeTests.csproj
+/Tests~/DashboardIPhone/bin/
+/Tests~/DashboardIPhone/obj/
+/Assets/StreamingAssets/DashboardHelpers.zip*
+
+# Personal iOS signing and recoverable local worktree snapshots.
+/Tools/DashboardIPhone/Signing.local.xcconfig
+/Artifacts/WorktreeBackups/

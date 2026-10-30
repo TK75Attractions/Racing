@@ -128,3 +128,7 @@ PlaywrightとChromeを利用できる環境では`RACING_BROWSER_TEST=1 sh Tools
 Serial LabをビルドしたmacOSでは`RACING_PTY_TEST=1 sh Tools/DashboardRelay/test.sh`で実PTY→WebSocketの連続入力も検査できる。100Hz設定で15秒間測定し、独立ペダル値・CMD/ACK履歴・TEL非蓄積と同一PC内の受信時刻からの遅延を`pty-websocket.json`へ保存する。
 
 起動自動化の検査には、`quickstart.test.cjs`（テスト用Tailscale CLIで設定・保護・停止を検査）と、Unityの`RaceDashboardLauncherValidation.Run`（実際のビルド・起動・重複抑止・停止）を利用する。本番Tailscaleのログインや公開設定は検査では変更しない。
+
+## USBで操作したい場合
+
+無線が混雑する場合は[USB接続の手順](DashboardUsb.md)を利用してください。iPhone / iPadの専用USBアプリで、インターネット共有やゲームの再起動なしで同じ管理画面を使います。

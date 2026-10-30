@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../DashboardRelay/DashboardAssets.cs" Link="DashboardAssets.cs" />
+    <Content Include="../../Assets/StreamingAssets/Dashboard/*" Exclude="../../Assets/StreamingAssets/Dashboard/*.meta" Link="Dashboard/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

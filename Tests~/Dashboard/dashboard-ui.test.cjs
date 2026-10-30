@@ -780,3 +780,10 @@ test('Offline button posts to the independent endpoint and renders the real fail
   assert.deepEqual(JSON.parse(sent[0][1].body),{id:'offline-update'});
   assert.equal(ui.elements.get('settings-status').textContent,'Git認証に失敗しました。');
 });
+
+// Private HTTP origins used by USB tethering do not expose crypto.randomUUID.
+test('USB HTTP origins generate secure v4 command IDs without randomUUID',()=>{
+  const ui=fixture();ui.context.crypto={getRandomValues:require('node:crypto').webcrypto.getRandomValues.bind(require('node:crypto').webcrypto)};
+  const ids=new Set(Array.from({length:200},()=>ui.context.newRequestId()));
+  assert.equal(ids.size,200);for(const id of ids)assert.match(id,/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
+});

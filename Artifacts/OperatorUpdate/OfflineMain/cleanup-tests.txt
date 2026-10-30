@@ -1,0 +1,17 @@
+test_build_failure_does_not_launch (__main__.UpdateTest.test_build_failure_does_not_launch) ... ok
+test_built_source_is_fetched_main_and_then_cleaned (__main__.UpdateTest.test_built_source_is_fetched_main_and_then_cleaned) ... ok
+test_check_does_not_switch_or_build (__main__.UpdateTest.test_check_does_not_switch_or_build) ... ok
+test_cleanup_removes_owned_leftovers_after_git_unregisters_worktree (__main__.UpdateTest.test_cleanup_removes_owned_leftovers_after_git_unregisters_worktree) ... ok
+test_dirty_repo_builds_without_touching_work (__main__.UpdateTest.test_dirty_repo_builds_without_touching_work) ... ok
+test_full_pipeline_fast_forwards_and_restores_plugin (__main__.UpdateTest.test_full_pipeline_fast_forwards_and_restores_plugin) ... ok
+test_insufficient_space_keeps_game_open (__main__.UpdateTest.test_insufficient_space_keeps_game_open) ... ok
+test_local_main_ahead_does_not_block_or_get_reset (__main__.UpdateTest.test_local_main_ahead_does_not_block_or_get_reset) ... ok
+test_lock_rejects_second_update_without_removing_first_lock (__main__.UpdateTest.test_lock_rejects_second_update_without_removing_first_lock) ... ok
+test_missing_unity_keeps_game_open (__main__.UpdateTest.test_missing_unity_keeps_game_open) ... ok
+test_network_failure_keeps_game_open (__main__.UpdateTest.test_network_failure_keeps_game_open) ... ok
+test_offline_defaults_resolve_unity_and_do_not_wait_for_pid_zero (__main__.UpdateTest.test_offline_defaults_resolve_unity_and_do_not_wait_for_pid_zero) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 24.039s
+
+OK

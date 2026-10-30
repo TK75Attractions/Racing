@@ -1,0 +1,4 @@
+// Copy to Signing.local.xcconfig and enter your Apple development Team ID.
+DEVELOPMENT_TEAM = YOUR_TEAM_ID
+// Optional if your team needs a different application identifier:
+// PRODUCT_BUNDLE_IDENTIFIER = your.organization.racing.usb

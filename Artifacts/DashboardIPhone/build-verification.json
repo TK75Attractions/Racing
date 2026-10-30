@@ -1,0 +1,36 @@
+{
+  "unsignedDeviceCompilation": {
+    "passed": true,
+    "target": "arm64-apple-ios16.0",
+    "sdk": "iPhoneOS 26.5",
+    "signed": false,
+    "installed": false
+  },
+  "standardXcodeBuild": {
+    "passed": false,
+    "limitation": "Xcode destination resolution reports missing iOS 26.5 components; direct compilation using the installed SDK succeeds"
+  },
+  "relatedNodeTests": {
+    "passed": 61,
+    "failed": 0
+  },
+  "macUsbHelper": {
+    "buildPassed": true,
+    "warnings": 0,
+    "errors": 0,
+    "physicalUsbIPhoneRecognized": true
+  },
+  "actualIPhoneValidation": {
+    "complete": false,
+    "remaining": [
+      "Apple development signing",
+      "User enables Developer Mode and restarts iPhone",
+      "Install application and validate UI/latency over physical USB"
+    ]
+  },
+  "runningRace": {
+    "restarted": false,
+    "commandsSent": false,
+    "settingsChanged": false
+  }
+}

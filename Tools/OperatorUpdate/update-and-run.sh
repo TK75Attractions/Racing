@@ -18,7 +18,19 @@ status() { message=$1; printf '%s\n' "$message" > "$request/status.tmp"; mv "$re
 fail() { status "$1"; exit 1; }
 cleanup() {
     code=$?
-    if [ "$checkout_created" = true ]; then git -C "$repo" worktree remove --force "$source_dir" || true; fi
+    if [ "$checkout_created" = true ]; then
+        cd "$repo"
+        if ! git -C "$repo" worktree remove --force "$source_dir"; then
+            # Unity helpers or Finder can leave files after Git unregisters the checkout.
+            # This directory was created by this request; never prune other worktrees.
+            for cleanup_attempt in 1 2 3; do
+                if rm -rf -- "$source_dir"; then break; fi
+                sleep 1
+            done
+            git -C "$repo" worktree remove --force "$source_dir" 2>/dev/null || true
+            if [ -d "$source_dir" ]; then echo "一時フォルダーが残っています: $source_dir"; fi
+        fi
+    fi
     if [ "$code" -ne 0 ]; then printf '%s\n' "$message" > "$request/status.txt"; touch "$request/failed"; fi
     if [ "$locked" = true ]; then rm -f "$lock/owner.pid" "$lock/request.txt"; rmdir "$lock"; fi
 }
