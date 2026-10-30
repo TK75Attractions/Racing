@@ -1,3 +1,4 @@
-Preparation: 57.95 seconds without player input, including intro and countdown.
-Normal race: automatic timeout at 181.50 simulation seconds, both humans DNF.
-Results: both screens automatically switched to exit guidance after 15.07 real seconds, no pedal input.
+Preparation: 58.66 seconds without player input, including intro and countdown.
+Normal race: automatic timeout at 181.28 simulation seconds, both humans DNF.
+Results: both screens automatically switched to exit guidance after 15.03 real seconds, no pedal input.
+Exit guidance: both screens automatically returned to title after five seconds, without input.
