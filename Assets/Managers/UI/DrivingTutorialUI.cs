@@ -6,6 +6,7 @@ public sealed class DrivingTutorialUI
 {
     public static readonly Color Cyan=ArcadeUI.Blue.Primary, Pink=ArcadeUI.Pink.Primary;
     private readonly GameObject root;
+    private readonly ArcadeNoticeRail recoveryNotice;
     private readonly GameObject itemGuide;
     private readonly TutorialGimmickGuideUI gimmickGuide;
     private readonly TMP_Text message,status,step;
@@ -24,6 +25,7 @@ public sealed class DrivingTutorialUI
     public DrivingTutorialUI(Transform canvas,int playerIndex)
     {
         player=playerIndex;ArcadeUI.Bind(canvas,player);
+        recoveryNotice=ArcadeNoticeRail.Get(canvas);
         var r=RacingUITheme.Rect(canvas,"DrivingTutorial",Vector2.zero,Vector2.one);root=r.gameObject;r.SetAsFirstSibling();
         Transform hud=RacingHUDBuilder.Build(r,player,2);instruments=hud.gameObject;
         ArcadeUI.Hide(hud,"Position","Lap","Time","LapTimes","Leaderboard","Pause");
@@ -82,5 +84,6 @@ public sealed class DrivingTutorialUI
             bar.color=i<(int)lesson.CurrentStage?palette.Primary:i==stage?palette.Paper:new Color(palette.Soft.r,palette.Soft.g,palette.Soft.b,.3f);
         }
     }
-    public void Dispose(){if(root!=null){root.SetActive(false);if(Application.isPlaying)Object.Destroy(root);else Object.DestroyImmediate(root);}}
+    public void SetRecoveryNotice(string text)=>recoveryNotice.Set(ArcadeNoticeRail.SafetyInstruction,text);
+    public void Dispose(){recoveryNotice.Set(ArcadeNoticeRail.SafetyInstruction,"");if(root!=null){root.SetActive(false);if(Application.isPlaying)Object.Destroy(root);else Object.DestroyImmediate(root);}}
 }

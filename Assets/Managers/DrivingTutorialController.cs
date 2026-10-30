@@ -17,7 +17,11 @@ public sealed class DrivingTutorialController : MonoBehaviour
         public DrivingTutorialProgress lesson;
         public readonly TutorialGimmickBriefing briefing = new TutorialGimmickBriefing();
         public float startYaw;
-        public float recoveryTimer;
+        public float recoveryTimer, offCourseSeconds, headingSeconds, stuckSeconds, recoveryNoticeSeconds;
+        public Vector3 progressPosition;
+        public bool trackingProgress;
+        public int recoveryCount;
+        public TireForce[] tires;
         public bool resetHeld;
         public float itemProgress;
         public float missedItemSeconds;
@@ -76,6 +80,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
         else paint.SetPlayerIndex(i);
         player.body = player.car.GetComponent<Rigidbody>();
         player.mover = player.car.GetComponent<DebugMover>();
+        player.tires = player.car.GetComponentsInChildren<TireForce>();
         player.input = input.GetPlayerInputSource(i);
         player.driveGate = new PlayerDriveInputGate(player.input);
         player.driveGate.SetBlocked(true);
@@ -111,13 +116,11 @@ public sealed class DrivingTutorialController : MonoBehaviour
                 player.driveGate.SetBlocked(false);
             Vector3 local = player.body.position - player.world.transform.position;
             float speed = Vector3.ProjectOnPlane(player.body.linearVelocity, Vector3.up).magnitude;
-            bool escaped = local.y < -2f || Mathf.Abs(local.x - 38f) > 95f || Mathf.Abs(local.z) > 92f;
-            bool overturned = Vector3.Dot(player.car.transform.up, Vector3.up) < .3f;
-            player.recoveryTimer = overturned ? player.recoveryTimer + dt : 0f;
             float progress = DrivingTutorialRoad.NearestProgress(local);
+            bool automaticRecovery = UpdateRecovery(player,local,progress,dt);
             bool missedItem = player.lesson.CurrentStage == DrivingTutorialProgress.Stage.CollectItem && player.pickups.Count > 0 && progress > player.itemProgress + 5f;
-            player.missedItemSeconds = missedItem ? player.missedItemSeconds + dt : 0f;
-            if (!player.lesson.IsFinished && (escaped || player.recoveryTimer > 1.5f || resetPressed || player.missedItemSeconds >= .5f))
+            player.missedItemSeconds = missedItem && player.input.IsConnected ? player.missedItemSeconds + dt : 0f;
+            if (!player.lesson.IsFinished && (automaticRecovery || resetPressed || player.missedItemSeconds >= .5f))
             {
                 Recover(player);
                 speed = 0f;
@@ -153,6 +156,47 @@ public sealed class DrivingTutorialController : MonoBehaviour
         readyTimer = complete ? readyTimer + dt : 0f;
     }
 
+    private static bool UpdateRecovery(Practice player,Vector3 local,float progress,float deltaTime)
+    {
+        float dt=Mathf.Max(0f,deltaTime);
+        player.recoveryNoticeSeconds=Mathf.Max(0f,player.recoveryNoticeSeconds-dt);
+        bool available=!player.lesson.IsFinished&&player.input.IsConnected&&!player.driveGate.IsBlocked&&
+            !player.driveGate.NeedsPedalRelease&&!player.mover.IsInputSuppressed;
+        if(!available)
+        {
+            ClearRecoveryTimers(player);player.ui.SetRecoveryNotice("");return false;
+        }
+        DrivingTutorialRoad.Sample(progress,out var point,out var forward);
+        bool outside=Vector3.ProjectOnPlane(local-point,Vector3.up).sqrMagnitude>
+            Mathf.Pow(DrivingTutorialRoad.Width*.5f+1f,2)||local.y < -2f;
+        int grounded=0;foreach(var tire in player.tires)if(tire.IsGrounded)grounded++;
+        bool badHeading=grounded>=2&&Vector3.Angle(Vector3.ProjectOnPlane(player.body.rotation*Vector3.forward,Vector3.up),forward)+.0001f>=CarResetter.BadHeadingDegrees;
+        bool overturned=Vector3.Dot(player.body.rotation*Vector3.up,Vector3.up)<.3f;
+        player.offCourseSeconds=outside?player.offCourseSeconds+dt:0f;
+        player.headingSeconds=badHeading?player.headingSeconds+dt:0f;
+        player.recoveryTimer=overturned?player.recoveryTimer+dt:0f;
+        bool pushing=Mathf.Abs(player.driveGate.CurrentState.pedal)>.4f;
+        if(!pushing){player.trackingProgress=false;player.stuckSeconds=0f;}
+        else
+        {
+            if(!player.trackingProgress||(player.body.position-player.progressPosition).sqrMagnitude>=4f)
+            {player.trackingProgress=true;player.progressPosition=player.body.position;player.stuckSeconds=0f;}
+            player.stuckSeconds+=dt;
+        }
+        float elapsed=Mathf.Max(player.offCourseSeconds,player.headingSeconds,player.recoveryTimer,player.stuckSeconds);
+        string reason=outside?"コースアウト":overturned?"車がたおれています":badHeading?"向きを戻してね":"つまり";
+        player.ui.SetRecoveryNotice(player.recoveryNoticeSeconds>0f?"コースへ復帰しました":elapsed>=.6f?
+            reason+" / "+Mathf.Max(1,Mathf.CeilToInt(CarResetter.AutomaticRecoveryDelay-elapsed))+"秒でコースに戻ります":"");
+        // A fallen car needs immediate rescue rather than another three seconds of falling.
+        bool escaped=local.y < -8f||Mathf.Abs(local.x-38f)>95f||Mathf.Abs(local.z)>92f;
+        return escaped||elapsed+.0001f>=CarResetter.AutomaticRecoveryDelay;
+    }
+    private static void ClearRecoveryTimers(Practice player)
+    {
+        player.recoveryTimer=player.offCourseSeconds=player.headingSeconds=player.stuckSeconds=0f;
+        player.trackingProgress=false;
+    }
+
     public bool RecoverPlayer(int index)
     {
         Practice player = players.Find(p => p.playerIndex == index);
@@ -171,7 +215,9 @@ public sealed class DrivingTutorialController : MonoBehaviour
         player.body.linearVelocity = Vector3.zero;
         player.body.angularVelocity = Vector3.zero;
         player.startYaw = 0f;
-        player.recoveryTimer = player.missedItemSeconds = 0f;
+        ClearRecoveryTimers(player);player.missedItemSeconds=0f;
+        player.recoveryCount++;player.recoveryNoticeSeconds=1.2f;
+        player.ui.SetRecoveryNotice("コースへ復帰しました");
         player.lesson.ResetCurrentAttempt();
         player.mover.SuppressInputAfterRespawn();
         if (collecting) PlaceItems(player, player.itemProgress);
