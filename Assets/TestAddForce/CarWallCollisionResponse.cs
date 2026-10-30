@@ -208,7 +208,8 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
         Vector3 offset = Vector3.ProjectOnPlane(sample.position-body.position,Vector3.up);
         Vector3 right = Vector3.ProjectOnPlane(sample.right,Vector3.up).normalized;
         float side = Vector3.Dot(offset,right);
-        if (Mathf.Abs(side) < .5f) return;
+        if (Mathf.Abs(side) < .5f || Mathf.Abs(side) > sample.width*.5f+6f ||
+            Mathf.Abs(body.position.y-sample.position.y) > 3f) return;
         Vector3 toward = right * Mathf.Sign(side);
         // A pillar can lie between the car and center. Slide along its face instead
         // of forcing the car through it, and keep a small clearance from that face.

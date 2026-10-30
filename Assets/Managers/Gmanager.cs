@@ -1858,9 +1858,10 @@ public class Gmanager : MonoBehaviour
         for (int i = 0; i < PlayerCount; i++)
         {
             var player = players[i];
-            if (player == null || player.returnedToTitle || screenTransitions[i]?.IsTransitioning == true ||
-                player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>()?.IsVisible == true ||
-                resultUIManagers[i]?.IsVisible != true) continue;
+            if (player == null || player.returnedToTitle || screenTransitions[i]?.IsTransitioning == true) continue;
+            var ending = player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>();
+            if (ending?.IsVisible == true) { ending.TickTime(dt); continue; }
+            if (resultUIManagers[i]?.IsVisible != true) continue;
             player.resultDisplayElapsed += Mathf.Max(0f, dt);
             resultUIManagers[i]?.SetCountdown(Mathf.Max(0f, ResultDisplaySeconds - player.resultDisplayElapsed));
             if (player.resultDisplayElapsed >= ResultDisplaySeconds) ShowExitPrompt(i);

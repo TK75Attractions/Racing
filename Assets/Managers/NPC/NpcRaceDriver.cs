@@ -236,7 +236,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
             float candidate = Mathf.Clamp(humanSide + away * 4.2f,-safeLane,safeLane);
             if (PassingLaneClear(candidate,here))
                 desiredLane = away > 0f ? Mathf.Max(desiredLane,candidate) : Mathf.Min(desiredLane,candidate);
-            else desiredLane = lane;
+            else desiredLane = Mathf.Clamp(ownSide,-safeLane,safeLane);
             if (separation < 3.8f && ahead > -7f && ahead < 10f)
             {
                 float humanSpeed = Mathf.Max(0f,Vector3.Dot(human.Body.linearVelocity,here.forward*manager.CourseProgressSign));

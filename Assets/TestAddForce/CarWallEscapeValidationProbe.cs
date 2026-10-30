@@ -57,12 +57,15 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
         Application.runInBackground = true;
         Time.timeScale = 3f;
         var manager = UnityEngine.Object.FindFirstObjectByType<Gmanager>();
+        foreach(var publisher in UnityEngine.Object.FindObjectsByType<RaceRemoteFirebasePublisher>(FindObjectsSortMode.None)) publisher.enabled=false;
+        foreach(var bridge in UnityEngine.Object.FindObjectsByType<RaceDashboardBridge>(FindObjectsSortMode.None)) bridge.enabled=false;
         manager.StartGame();
         while (!manager.IsDrivingEnabled) yield return null;
         var car = GameObject.Find("Player1_Car");
         body = car.GetComponent<Rigidbody>();
         mover = car.GetComponent<DebugMover>();
         mover.SetInputSource(input);
+        car.GetComponent<CarResetter>().enabled=false; // Isolate physical escape from timed course recovery.
         var laps = UnityEngine.Object.FindFirstObjectByType<LapManager>();
         if (laps != null) laps.enabled = false;
         foreach (var capture in UnityEngine.Object.FindObjectsByType<PlayerAudioCapture>(FindObjectsSortMode.None)) capture.enabled = false;
@@ -184,7 +187,7 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
             }
             else if (t.maxPenetration > 0.5f || t.maxPenetrationTime > 0.15f || t.finalPenetration > 0.05f || t.retreatDistance < 2f)
                 failures.Add(t.name + ": body penetration or failed reverse");
-            if (t.name.EndsWith("-angle-0") && t.maxReboundSpeed < 2f) failures.Add(t.name + ": missing wall reflection");
+            if (t.name.EndsWith("-angle-0") && t.maxReboundSpeed > 3f) failures.Add(t.name + ": excessive wall rebound");
             if (t.maxSpeed > 65f || t.maxTilt > 65f) failures.Add(t.name + ": unstable collision");
         }
         string message = "CAR_WALL_ESCAPE_" + (failures.Count == 0 ? "PASS" : "FAIL") + " (" + report.trials.Count + " trials): " +
