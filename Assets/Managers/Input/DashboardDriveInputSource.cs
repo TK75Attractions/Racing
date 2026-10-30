@@ -44,8 +44,8 @@ public sealed class DashboardDriveInputSource : IDriveInputSource, IDriveSteerin
         if (entering) { remoteState = DriveInputState.Neutral; return; }
         DashboardInputButtons buttons = lease.Sample(now);
         remoteState = new DriveInputState {
-            pedal = (buttons & DashboardInputButtons.Accelerate) != 0 ? 1f : (buttons & DashboardInputButtons.Brake) != 0 ? -1f : 0f,
-            steering = (buttons & DashboardInputButtons.Right) != 0 ? 10f : (buttons & DashboardInputButtons.Left) != 0 ? -10f : 0f,
+            pedal = ((buttons & DashboardInputButtons.Accelerate) != 0 ? 1f : 0f) - ((buttons & DashboardInputButtons.Brake) != 0 ? 1f : 0f),
+            steering = ((buttons & DashboardInputButtons.Right) != 0 ? 10f : 0f) - ((buttons & DashboardInputButtons.Left) != 0 ? 10f : 0f),
             resetPressed = (buttons & DashboardInputButtons.Reset) != 0, readyPressed = (buttons & DashboardInputButtons.Ready) != 0
         };
     }
