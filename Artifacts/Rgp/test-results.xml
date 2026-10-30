@@ -182,7 +182,7 @@
   <test-case name="TubeSteeringAssistTests.NeutralHandleCorrectsBothHeadingDirections" result="Passed" />
   <test-case name="TubeSteeringAssistTests.StrongHandleInputRetainsDriverControlAndCorrectionIsBounded" result="Passed" />
   <test-case name="TubeSteeringAssistTests.YawIsDampedAndInvalidInputDoesNotSteer" result="Passed" />
-  <test-case name="TutorialGimmickBriefingTests.EveryPageIsShownAndBriefingFinishesWithoutInput" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.SingleOverviewFinishesAfterEightSecondsWithoutInput" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.HoldingPedalOrTappingTooEarlyCannotSkipTheReadingTime" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.APressBeforeReadTimeNeedsAnotherReleaseAndPress" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.InvalidFramesAreIgnoredAndLargeFramesRespectTheRealDeadline" result="Passed" />

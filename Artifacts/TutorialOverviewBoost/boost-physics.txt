@@ -1,0 +1,3 @@
+PASS: real production pad trigger, wheel deduplication and input/recovery guards.
+PASS: four grounded tires, full pedal, 50 m/s entry, same ordinary forces and drag; speeds after 3.12 seconds: baseline=50, previous boost=53.42986, new boost=82.2691 m/s.
+PASS: immediate new speed=60.48 m/s; active at 2.8s, expired by 3.12s.

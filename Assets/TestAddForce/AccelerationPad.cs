@@ -36,7 +36,7 @@ public sealed class AccelerationPad : MonoBehaviour
     private bool forwardOnly;
     public void ConfigureTubePad(Vector3 size)
     {
-        padSize=size;triggerMargin=1f;acceleration=10f;instantSpeedBonus=4f;boostDuration=1.25f;forwardOnly=true;Refresh();
+        padSize=size;triggerMargin=1f;acceleration=24f;instantSpeedBonus=10f;boostDuration=3f;forwardOnly=true;Refresh();
     }
 
 
