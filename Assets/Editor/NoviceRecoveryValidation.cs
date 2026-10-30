@@ -83,6 +83,12 @@ public static class NoviceRecoveryValidation
             bool once=resetter.RecoveryCount==manualBefore+1;
             input.CurrentState=DriveInputState.Neutral;Call(resetter,"Update");input.CurrentState=new DriveInputState{resetPressed=true};Set(mover,"inputSuppressedUntil",float.NegativeInfinity);Call(resetter,"Update");
             Record("held-reset-is-one-press-and-fresh-press-works",once&&resetter.RecoveryCount==manualBefore+2,resetter.AutomaticRecoveryCount);
+            var canvas=new GameObject("Recovery warning canvas",typeof(RectTransform),typeof(Canvas));canvas.transform.SetParent(root.transform);
+            var ui=new OnPlayUIManager();ui.Init(canvas.transform,course,0);
+            Prepare(pedal:1,heading:90,speed:10);Tick(frames/3);ui.UpdateDriverNotice(gate,resetter,true,jumpAhead:true);
+            bool warned=ui.DriverNotice.Contains("向きを戻してね")&&ui.DriverNotice.Contains("復帰まで");
+            Prepare(pedal:1,speed:10);Tick(1);ui.UpdateDriverNotice(gate,resetter,true);
+            Record("sideways-countdown-preempts-hints-and-clears-immediately",warned&&!ui.DriverNotice.Contains("復帰まで"),resetter.AutomaticRecoveryCount);
             report.passed=report.checks.TrueForAll(c=>c.passed);
         }
         finally

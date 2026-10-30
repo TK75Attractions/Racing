@@ -34,6 +34,9 @@ public class CarResetter : MonoBehaviour
     public bool IsRecoveryPending { get; private set; }
     public string RecoveryReason { get; private set; }
     public float LastRecoveryTime { get; private set; } = -100f;
+    public float AutomaticRecoveryElapsed => Mathf.Max(Mathf.Max(unsafeSeconds,badHeadingSeconds),
+        Mathf.Max(WrongWaySeconds,Mathf.Max(wallStuckSeconds,supportedStuckSeconds)));
+    public string RecoveryWarningReason { get; private set; }
 
     public void SetCourse(RaceCourse raceCourse, LapManager lapManager)
     {
@@ -126,6 +129,8 @@ public class CarResetter : MonoBehaviour
         unsafeSeconds = outside || almostStopped && pushing || overturned ? unsafeSeconds + dt : 0f;
         UpdateWallStuckTimer(pushing, dt);
         UpdateSupportedStuckTimer(pushing, grounded, dt);
+        RecoveryWarningReason = outside ? "off-course" : overturned ? "overturned" :
+            wrongWay ? "wrong-way" : badHeading ? "bad-heading" : "stuck";
         const float tolerance = .0001f;
         if (missedLandingSeconds < .2f && unsafeSeconds + tolerance < AutomaticRecoveryDelay &&
             badHeadingSeconds + tolerance < AutomaticRecoveryDelay && WrongWaySeconds + tolerance < AutomaticRecoveryDelay &&
@@ -218,6 +223,7 @@ public class CarResetter : MonoBehaviour
         badHeadingSeconds = unsafeSeconds = wallStuckSeconds = supportedStuckSeconds = missedLandingSeconds = 0f;
         trackingWallProgress = trackingSupportProgress = false;
         WrongWaySeconds = 0f;
+        RecoveryWarningReason = null;
     }
 
     private void CancelAutomaticRecovery()
