@@ -1,0 +1,2 @@
+IPHONE_USB_UNSIGNED_BUILD_PASS: $WORKSPACE/Temp/DashboardIPhoneUnsigned.app
+This app still needs development signing and device setup before installation.
