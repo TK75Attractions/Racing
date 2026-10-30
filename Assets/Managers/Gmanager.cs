@@ -636,14 +636,8 @@ public class Gmanager : MonoBehaviour
         if (Features != null && !Features.Settings.RulesLocked)
         { Features.Settings.BeginPreparation(); ApplyFeatureRules(); }
         preparationClock.Start();
-        // One group shares a deadline; the second screen cannot wait indefinitely at title.
-        for (int i = 0; i < PlayerCount; i++)
-        {
-            if (players[i].preparationState != State.Title || screenTransitions[i]?.IsTransitioning == true) continue;
-            int index = i;
-            soundEffects?.Play(RaceSoundCue.Ready, index);
-            TransitionPlayer(index, State.Tutorial, () => BeginPlayerTutorial(index));
-        }
+        soundEffects?.Play(RaceSoundCue.Ready, playerIndex);
+        TransitionPlayer(playerIndex, State.Tutorial, () => BeginPlayerTutorial(playerIndex));
     }
 
     // Title input and the operator both start practice directly, using the fixed player car.
@@ -668,9 +662,14 @@ public class Gmanager : MonoBehaviour
         if (state != State.Tutorial || !CanUseDashboardControls || finishingPreparation || drivingTutorial == null) return false;
         for (int i = 0; i < PlayerCount; i++)
             if (players[i].preparationState != State.Tutorial) return false;
+        FinishPreparation();
+        return true;
+    }
+
+    private void FinishPreparation()
+    {
         finishingPreparation = true;
         TransitionTo(State.Countdown, FinishTutorialWhenScreenCovered, CompleteGameStart);
-        return true;
     }
 
     private void TransitionPlayer(int index, State target, Action covered)
@@ -1117,7 +1116,8 @@ public class Gmanager : MonoBehaviour
         if (!preparationClock.IsRunning) return;
         preparationClock.Tick(dt);
         if (state == State.Tutorial && preparationClock.MustLeavePractice && !finishingPreparation && !IsScreenTransitioning())
-            AdvanceDashboardToCountdown();
+            // Unstarted screens skip practice at the shared deadline; never auto-start their tutorial.
+            FinishPreparation();
         if (state == State.Countdown && preparationClock.MustFinishIntro)
         {
             courseIntro?.Stop();
@@ -1517,13 +1517,19 @@ public class Gmanager : MonoBehaviour
             ? 1 - displayPlayerIndex : displayPlayerIndex;
     }
 
+    public bool DidPlayerFinish(int playerIndex) => playerIndex >= 0 && playerIndex < players.Length &&
+        players[playerIndex]?.result?.didFinish == true;
+
+    public bool IsPlayerStillRacing(int playerIndex) => playerIndex >= 0 && playerIndex < players.Length &&
+        state == State.Game && players[playerIndex] != null && players[playerIndex].result == null && !players[playerIndex].withdrewFromRace;
+
     public State GetPlayerAudioState(int playerIndex)
     {
         if (playerIndex < 0 || playerIndex >= players.Length) return state;
         PlayerRuntime player = players[playerIndex];
         if (IsPreparing) return GetPlayerPreparationState(playerIndex);
         if (state == State.Result && player?.returnedToTitle == true) return State.Title;
-        // A finisher keeps the celebration music while the other player is still racing.
+        // Music owns the one-shot finish sequence before following the opponent or results.
         if (state == State.Game && player?.result?.didFinish == true) return State.Goal;
         return state;
     }
@@ -1856,6 +1862,7 @@ public class Gmanager : MonoBehaviour
                 player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>()?.IsVisible == true ||
                 resultUIManagers[i]?.IsVisible != true) continue;
             player.resultDisplayElapsed += Mathf.Max(0f, dt);
+            resultUIManagers[i]?.SetCountdown(Mathf.Max(0f, ResultDisplaySeconds - player.resultDisplayElapsed));
             if (player.resultDisplayElapsed >= ResultDisplaySeconds) ShowExitPrompt(i);
         }
     }

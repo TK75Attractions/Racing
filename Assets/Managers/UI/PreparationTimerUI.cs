@@ -7,10 +7,11 @@ public sealed class PreparationTimerUI
     private readonly Color normal;
     private readonly UIValuePulse pulse;
     private int shownSeconds=-1;
-    public PreparationTimerUI(Transform parent,Vector2 min,Vector2 max,bool tutorial=false)
+    public string Text => value.text;
+    public PreparationTimerUI(Transform parent,Vector2 min,Vector2 max,bool tutorial=false,string name="PreparationTimer")
     {
         var p=ArcadeUI.For(parent);normal=p.Paper;
-        var panel=ArcadeUI.Panel(parent,"PreparationTimer",min,max,p.Ink);
+        var panel=ArcadeUI.Panel(parent,name,min,max,p.Ink);
         ArcadeUI.Label(panel,"Caption",tutorial?"のこり":"残り時間",new Vector2(.07f,.10f),new Vector2(.40f,.90f),20,p.Paper);
         value=ArcadeUI.Label(panel,"Time","",new Vector2(.42f,.05f),new Vector2(.96f,.96f),55,p.Paper,true,TextAlignmentOptions.Right);
         pulse=value.gameObject.AddComponent<UIValuePulse>();
