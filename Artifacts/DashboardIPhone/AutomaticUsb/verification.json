@@ -14,7 +14,7 @@
     "minimumOS": "16.0"
   },
   "relatedNodeTests": {
-    "passed": 62,
+    "passed": 56,
     "failed": 0
   },
   "packagedPayloadComplete": true,
@@ -34,5 +34,6 @@
     "player": "passed against installed Unity 6000.3.9f1 references",
     "gameStarted": false
   },
-  "startupRelayReadiness": "wait for local HTTP before USB starts; a failed relay prevents early phone loading; Editor allows its existing launcher to finish"
+  "startupRelayReadiness": "wait for local HTTP before USB starts; a failed relay prevents early phone loading; Editor allows its existing launcher to finish",
+  "transportCleanup": "Only native iPhone/iPad USB and Tailscale remain; Ethernet, tethering and Android forwarding removed"
 }
