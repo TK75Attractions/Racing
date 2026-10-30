@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.NetworkInformation;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -9,6 +10,14 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 
 static void Require(bool condition,string message){if(!condition)throw new Exception(message);}
 static Uri Url(WebApplication app)=>new(app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single());
+Require(WiredNetwork.IsEthernet("en5",NetworkInterfaceType.Ethernet)&&!WiredNetwork.IsEthernet("en0",NetworkInterfaceType.Wireless80211)&&!WiredNetwork.IsEthernet("bridge0",NetworkInterfaceType.Ethernet),"Wired selection must exclude Wi-Fi and bridges.");
+Require(WiredNetwork.MacEthernetDevices("Hardware Port: Ethernet Adapter\nDevice: en3\n\nHardware Port: USB 10/100/1000 LAN\nDevice: en4\n\nHardware Port: Wi-Fi\nDevice: en0\n\nHardware Port: USB TO DP HDMI\nDevice: en11\n\nHardware Port: Thunderbolt Bridge\nDevice: bridge0\n").SetEquals(new[]{"en3","en4"}),"macOS Wi-Fi, display and bridge ports cannot become wired candidates even when the driver reports Ethernet type.");
+var wiredAddresses=new[]{new WiredAddress("en5","192.168.77.1","255.255.255.0")};
+Require(WiredNetwork.Resolve(wiredAddresses,"en5","192.168.77.1","192.168.77.2").Peer.Equals(IPAddress.Parse("192.168.77.2")),"An explicitly configured direct Ethernet peer is accepted without a gateway.");
+foreach(var selection in new[]{("en0","192.168.77.1","192.168.77.2"),("en5","192.168.1.1","192.168.77.2"),("en5","192.168.77.1","192.168.77.1"),("en5","192.168.77.1","192.168.78.2"),("en5","192.168.77.1","192.168.77.0"),("en5","192.168.77.1","192.168.77.255"),("en5","192.168.77.1","8.8.8.8"),("en5","192.168.77.1","::1")})
+{bool denied=false;try{WiredNetwork.Resolve(wiredAddresses,selection.Item1,selection.Item2,selection.Item3);}catch(ArgumentException){denied=true;}Require(denied,"Unconfigured adapters, local/public/foreign/broadcast addresses must not be exposed.");}
+Require(!WiredNetwork.Host(IPAddress.Parse("192.168.77.2"),IPAddress.Parse("255.0.255.0")),"Noncontiguous subnet masks are rejected.");
+Console.WriteLine("WIRED_TEST: explicit Ethernet selection and peer validation passed");
 var devices=UsbNetwork.AppleUsbDevices("Hardware Port: USB TO DP HDMI\nDevice: en11\n\nHardware Port: iPhone USB\nDevice: en5\n\nHardware Port: Wi-Fi\nDevice: en0\n\nHardware Port: iPad USB\nDevice: en7\n");
 Require(devices.SetEquals(new[]{"en5","en7"}),"Only named mobile USB network devices may be chosen.");
 Require(!UsbNetwork.IsMobileUsb("en11","USB TO DP HDMI",devices)&&!UsbNetwork.IsMobileUsb("en0","Wi-Fi",devices),"USB displays and Wi-Fi are never exposed.");
@@ -92,6 +101,16 @@ using(var reconnected=new UsbGateway(new("replugged",IPAddress.Loopback,IPAddres
     Require((await client.SendAsync(stale)).StatusCode==HttpStatusCode.Forbidden,"USB replug rotates pairing and rejects old cookies.");await next.StopAsync();
 }
 var timings=new List<double>();for(int i=0;i<30;i++){var watch=Stopwatch.StartNew();var response=await Request("/api/action/test",cookie,origin,body:command);Require(response.IsSuccessStatusCode,"Repeated commands reach the isolated stub.");timings.Add(watch.Elapsed.TotalMilliseconds);}timings.Sort();
+using(var wiredGateway=new UsbGateway(new("wired-test",IPAddress.Loopback,IPAddress.Loopback),target,wired:true))
+{
+    await using var wiredServer=wiredGateway.Build(0);await wiredServer.StartAsync();Uri wiredUrl=Url(wiredServer);
+    var pairing=await client.GetAsync(new Uri(wiredUrl,wiredGateway.PairPath));
+    string wiredCookie=pairing.Headers.GetValues("Set-Cookie").Single().Split(';')[0];
+    using var wiredRequest=new HttpRequestMessage(HttpMethod.Get,new Uri(wiredUrl,"/api/connection"));wiredRequest.Headers.Add("Cookie",wiredCookie);
+    using var response=await client.SendAsync(wiredRequest);using var json=JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+    Require(json.RootElement.GetProperty("wired").GetBoolean()&&json.RootElement.GetProperty("transport").GetString()=="ethernet-websocket"&&json.RootElement.GetProperty("canControl").GetBoolean(),"Safari Ethernet transport is identified and control policy is preserved.");
+    await wiredServer.StopAsync();
+}
 await stub.StopAsync();Require((await Request("/api/status",cookie)).StatusCode==HttpStatusCode.ServiceUnavailable,"A stopped relay returns unavailable instead of pretending to control a race.");
 await server.StopAsync();
 var report=new{passed=true,scope="loopback-only HTTP/WebSocket gateway, fake relay; no USB-device or real Race commands",commands,medianMs=timings[15],p95Ms=timings[28],maxMs=timings[^1],
