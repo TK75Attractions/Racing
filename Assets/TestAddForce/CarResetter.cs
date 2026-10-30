@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class CarResetter : MonoBehaviour
 {
-    public const float AutomaticRecoveryDelay = 5f;
+    public const float AutomaticRecoveryDelay = 3f;
+    public const float BadHeadingDegrees = 80f;
     private Vector3 initialPosition;
     private Quaternion initialRotation;
     private Rigidbody rb;
@@ -14,7 +15,7 @@ public class CarResetter : MonoBehaviour
     private RaceCourse.CourseSample safeSample;
     private int safeLap;
     private bool hasSafeSample, resetHeld, manualPending;
-    private float unsafeSeconds, wallStuckSeconds, supportedStuckSeconds, missedLandingSeconds;
+    private float badHeadingSeconds, unsafeSeconds, wallStuckSeconds, supportedStuckSeconds, missedLandingSeconds;
     private Collider lastSupportCollider;
     private float lastSupportTime = float.NegativeInfinity;
     private Vector3 supportProgressPosition;
@@ -95,7 +96,9 @@ public class CarResetter : MonoBehaviour
         bool backwards = Vector3.Dot(rb.linearVelocity, here.forward * sign) < -2f;
         // Heading matters even without reverse velocity: sideways cars can remain
         // inside the course bounds indefinitely. Banking does not change tube-axis forward.
-        bool badHeading = grounded >= 2 && Vector3.Dot(transform.forward, here.forward * sign) < .5f;
+        float headingAngle = Vector3.Angle(Vector3.ProjectOnPlane(transform.forward, here.up),
+            Vector3.ProjectOnPlane(here.forward * sign, here.up));
+        bool badHeading = grounded >= 2 && headingAngle + .0001f >= BadHeadingDegrees;
         bool wrongWay = grounded >= 2 && (backwards || Vector3.Dot(transform.forward, here.forward * sign) < -.35f);
         // A missed landing can briefly drive underneath the ramp and rejoin before
         // the normal off-course timeout, skipping an ordered lap gate forever.
@@ -108,18 +111,21 @@ public class CarResetter : MonoBehaviour
         Vector3 recoveryUp = onTubeWall ? lastWallNormal : here.up;
         bool overturned = Vector3.Dot(rb.rotation * Vector3.up, recoveryUp) < .2f && grounded < 2;
         bool almostStopped = rb.linearVelocity.sqrMagnitude < 1f;
-        // Keep one continuous clock while any unsafe condition persists. Changing
-        // from sideways travel to a stop must not buy another five seconds.
-        unsafeSeconds = outside || badHeading || wrongWay || almostStopped || overturned ? unsafeSeconds + dt : 0f;
-        WrongWaySeconds = wrongWay ? unsafeSeconds : 0f;
+        // Heading requires three uninterrupted seconds of actual misalignment.
+        // Returning below 80 degrees clears it even if another recovery condition starts.
+        badHeadingSeconds = badHeading ? badHeadingSeconds + dt : 0f;
+        WrongWaySeconds = wrongWay ? WrongWaySeconds + dt : 0f;
+        unsafeSeconds = outside || almostStopped || overturned ? unsafeSeconds + dt : 0f;
         bool pushing = inputSource != null && inputSource.IsConnected && Mathf.Abs(inputSource.CurrentState.pedal) > .4f;
         UpdateWallStuckTimer(pushing, dt);
         UpdateSupportedStuckTimer(pushing, grounded, dt);
         const float tolerance = .0001f;
         if (missedLandingSeconds < .2f && unsafeSeconds + tolerance < AutomaticRecoveryDelay &&
+            badHeadingSeconds + tolerance < AutomaticRecoveryDelay && WrongWaySeconds + tolerance < AutomaticRecoveryDelay &&
             wallStuckSeconds + tolerance < AutomaticRecoveryDelay && supportedStuckSeconds + tolerance < AutomaticRecoveryDelay) return;
         RecoveryReason = missedLandingSeconds >= .2f ? "missed-landing" : outside ? "off-course" :
-            overturned ? "overturned" : wrongWay ? "wrong-way" : badHeading ? "bad-heading" : "stuck";
+            overturned ? "overturned" : WrongWaySeconds + tolerance >= AutomaticRecoveryDelay ? "wrong-way" :
+            badHeadingSeconds + tolerance >= AutomaticRecoveryDelay ? "bad-heading" : "stuck";
         IsRecoveryPending = true;
         if (TryResetCar(true)) AutomaticRecoveryCount++;
     }
@@ -199,7 +205,7 @@ public class CarResetter : MonoBehaviour
 
     private void ClearRecoveryTimers()
     {
-        unsafeSeconds = wallStuckSeconds = supportedStuckSeconds = missedLandingSeconds = 0f;
+        badHeadingSeconds = unsafeSeconds = wallStuckSeconds = supportedStuckSeconds = missedLandingSeconds = 0f;
         trackingWallProgress = trackingSupportProgress = false;
         WrongWaySeconds = 0f;
     }

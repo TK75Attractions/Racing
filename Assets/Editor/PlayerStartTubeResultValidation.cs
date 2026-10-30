@@ -30,7 +30,7 @@ public static class PlayerStartTubeResultValidation
         try
         {
             ValidateIndependentStart();ValidateTube();ValidateResults();
-            File.WriteAllText(Folder+"/verification.txt","PASS: each title input starts only that player's practice; repeated start does not duplicate practice; second start preserves the shared deadline.\nPASS: explicit tutorial label persists during driving, briefing and waiting for both palettes; fitted glyphs and 1080p captures.\nPASS: five-second recovery for sideways, reverse, backward rolling, nearly stopped without pedal and outside-course cars; continuous unsafe clock; healthy driving cancels clock; disconnect guard; tube wall driving preserved.\nPASS: wall contact reduces drag for +8% equilibrium speed, floor/coasting/disconnect/air receive none.\nPASS: production tube steering on the floor, banked sides and ceiling; driver input, live OFF, disconnect and airborne guards.\nPASS: both result palettes show 15, ceil(7.2)=8 and 0 seconds; new results reset to 15; nonoverlapping timer/Next/daily ranking; fitted glyphs; production UI renders; actual manager clock shows 1 at 14 seconds and hides results at 15.\n");
+            File.WriteAllText(Folder+"/verification.txt","PASS: each title input starts only that player's practice; repeated start does not duplicate practice; second start preserves the shared deadline.\nPASS: explicit tutorial label persists during driving, briefing and waiting for both palettes; fitted glyphs and 1080p captures.\nPASS: three-second recovery for sideways, reverse, backward rolling, nearly stopped without pedal and outside-course cars; continuous heading clock; healthy driving cancels clock; disconnect guard; tube wall driving preserved.\nPASS: wall contact reduces drag for +8% equilibrium speed, floor/coasting/disconnect/air receive none.\nPASS: production tube steering on the floor, banked sides and ceiling; driver input, live OFF, disconnect and airborne guards.\nPASS: both result palettes show 15, ceil(7.2)=8 and 0 seconds; new results reset to 15; nonoverlapping timer/Next/daily ranking; fitted glyphs; production UI renders; actual manager clock shows 1 at 14 seconds and hides results at 15.\n");
             Debug.Log("PLAYER_START_TUBE_RESULT_VALIDATION_PASS");
         }
         catch(Exception error){File.WriteAllText(Folder+"/failure.txt",error.ToString());Debug.LogException(error);throw;}
@@ -147,20 +147,30 @@ public static class PlayerStartTubeResultValidation
         void Tick(int count){for(int i=0;i<count;i++)Call(resetter,"FixedUpdate");}
         int frames=Mathf.CeilToInt((CarResetter.AutomaticRecoveryDelay-.0001f)/Time.fixedDeltaTime);
         int before=resetter.AutomaticRecoveryCount;
-        foreach(float heading in new[]{90f,180f,0f})
+        foreach(float heading in new[]{80f,-80f,90f,180f,0f})
         {
             Prepare(heading,heading==0?Vector3.forward*.4f:Quaternion.Euler(0,heading,0)*Vector3.forward*10);
-            Tick(frames-1);Require(resetter.AutomaticRecoveryCount==before,"No recovery before five seconds at heading "+heading+" frames="+frames+" dt="+Time.fixedDeltaTime+" reason="+resetter.RecoveryReason);
-            Tick(1);before++;Require(resetter.AutomaticRecoveryCount==before,"Five seconds must recover sideways, reverse or nearly stopped cars without pedal input.");
+            Tick(frames-1);Require(resetter.AutomaticRecoveryCount==before,"No recovery before three seconds at heading "+heading+" frames="+frames+" dt="+Time.fixedDeltaTime+" reason="+resetter.RecoveryReason);
+            Tick(1);before++;Require(resetter.AutomaticRecoveryCount==before,"Three seconds must recover sideways, reverse or nearly stopped cars without pedal input.");
             Require(Vector3.Dot(body.rotation*Vector3.forward,Vector3.forward)>.99f&&course.IsPointInsideDrivingArea(body.position),"Recovery must face forward inside the course.");
         }
         Prepare(0,-Vector3.forward*5);Tick(frames);before++;Require(resetter.AutomaticRecoveryCount==before,"Backward rolling must recover even when the car faces forward.");
         Prepare(0,Vector3.forward*10);body.position=start+Vector3.right*25;car.transform.position=body.position;Physics.SyncTransforms();Tick(frames-1);
-        Require(resetter.AutomaticRecoveryCount==before,"Outside-course recovery must wait five seconds.");Tick(1);before++;Require(resetter.AutomaticRecoveryCount==before,"Outside-course cars recover after five seconds.");
+        Require(resetter.AutomaticRecoveryCount==before,"Outside-course recovery must wait three seconds.");Tick(1);before++;Require(resetter.AutomaticRecoveryCount==before,"Outside-course cars recover after three seconds.");
         Prepare(90,Vector3.right*10);Tick(frames/2);body.rotation=Quaternion.identity;car.transform.rotation=body.rotation;body.linearVelocity=Vector3.zero;Tick(frames-frames/2);
-        before++;Require(resetter.AutomaticRecoveryCount==before,"Switching unsafe reasons must not restart the shared clock.");
+        Require(resetter.AutomaticRecoveryCount==before,"A corrected heading must not carry time into a new stop.");
+        Tick(frames/2);before++;Require(resetter.AutomaticRecoveryCount==before,"The new stopped condition gets its own three seconds.");
+        foreach(float heading in new[]{79f,-79f})
+        {
+            Prepare(heading,Quaternion.Euler(0,heading,0)*Vector3.forward*10);Tick(frames*2);
+            Require(resetter.AutomaticRecoveryCount==before,"Moving below 80 degrees must not recover.");
+        }
+        Prepare(80,Vector3.forward*10);Tick(frames-1);body.rotation=Quaternion.Euler(0,79f,0);car.transform.rotation=body.rotation;Tick(1);
+        body.rotation=Quaternion.Euler(0,80f,0);car.transform.rotation=body.rotation;Tick(frames-1);
+        Require(resetter.AutomaticRecoveryCount==before,"Dipping below 80 degrees resets the heading clock.");Tick(1);before++;
+        Require(resetter.AutomaticRecoveryCount==before,"A fresh continuous 80-degree interval recovers at three seconds.");
         Prepare(90,Vector3.right*10);Tick(frames-1);body.rotation=Quaternion.identity;car.transform.rotation=body.rotation;body.linearVelocity=Vector3.forward*10;Tick(frames*2);
-        Require(resetter.AutomaticRecoveryCount==before,"Resuming healthy forward travel cancels recovery.");body.linearVelocity=Vector3.zero;Tick(frames-1);Require(resetter.AutomaticRecoveryCount==before,"A new stop must get a fresh five seconds.");Tick(1);before++;Require(resetter.AutomaticRecoveryCount==before,"Fresh stopped clock must expire.");
+        Require(resetter.AutomaticRecoveryCount==before,"Resuming healthy forward travel cancels recovery.");body.linearVelocity=Vector3.zero;Tick(frames-1);Require(resetter.AutomaticRecoveryCount==before,"A new stop must get a fresh three seconds.");Tick(1);before++;Require(resetter.AutomaticRecoveryCount==before,"Fresh stopped clock must expire.");
         Prepare(0,Vector3.zero,false);Tick(frames*2);Require(resetter.AutomaticRecoveryCount==before,"Disconnected controllers must not accumulate recovery time.");input.IsConnected=true;
         Prepare(0,Vector3.forward*20);Vector3 up=Vector3.left;body.position=origin+new Vector3(11.65f,12,50);body.rotation=Quaternion.LookRotation(Vector3.forward,up);car.transform.SetPositionAndRotation(body.position,body.rotation);Physics.SyncTransforms();Tick(frames*2);
         Require(resetter.AutomaticRecoveryCount==before,"Healthy tube wall driving must not count as a bad heading or overturn.");
