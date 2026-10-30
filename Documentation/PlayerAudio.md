@@ -6,11 +6,12 @@
 
 - 通常走行・カウントダウン: `Assets/Resources/Audio/BGM/racegame_v3.mp3`
 - 最終周: `Assets/Resources/Audio/BGM/racegame_v3_final lap.mp3`
-- ホーム（タイトル）〜車選択: `Assets/Resources/Audio/BGM/Race_Opening_v2.mp3`
-- チュートリアル: 既存の `Assets/Resources/Audio/BGM/TachibanaMoroe.mp3`（橘諸兄）
-- ゴール後・ウイニングラン・リザルト: `Assets/Resources/Audio/BGM/finish_v2.mp3`
+- タイトル・チュートリアル: `Assets/Resources/Audio/BGM/Race_Opening_v3.mp3`
+- メンテナンス: `Assets/Resources/Audio/BGM/TachibanaMoroe.mp3`（橘諸兄）
+- ゴール直後（各プレイヤー1回のみ）: `Assets/Resources/Audio/BGM/finishv4.mp3`
+- 結果: `Assets/Resources/Audio/BGM/result_v3.mp3`
 
-完了周回数が `Goal Lap - 1` になると、そのプレイヤーのBGMだけをFinal Lap曲の先頭から再生します。1周レースではスタートからFinal Lap曲です。ゴール時に本人の曲だけをfinish曲の先頭へ切り替え、その後の観戦・リザルトでも継続します。未完走で観戦に入った場合は観戦対象の周回曲に合わせます。タイトルへ戻った画面はopening曲へ戻し、もう一方のリザルト曲は維持します。準備中も各画面の進行に合わせ、片方が車選択、もう片方がチュートリアルならそれぞれの曲を再生します。各曲はループ再生します。エンジン音は各画面の実際のカメラ座標から車両までの距離と左右方向で音量・ステレオ定位を計算します。近くの相手車も聞こえ、80m以上離れると聞こえなくなります。
+完了周回数が `Goal Lap - 1` になると、そのプレイヤーのBGMだけをFinal Lap曲の先頭から再生します。1周レースではスタートからFinal Lap曲です。ゴール時に本人のfinish曲を先頭から1回だけ再生します。再生終了後、相手が走行中なら相手の通常／最終周曲と同じ再生位置に合流します。両者の走行が終わっていれば結果曲へ進み、結果画面へ入る時点ですでに結果曲が流れている場合は再スタートしません。finish曲の途中で結果画面へ進んだ場合も、その1回を終えてから結果曲へ切り替えます。未完走で観戦に入った場合は観戦対象の周回曲に合わせます。タイトルへ戻った画面はopening曲へ戻し、もう一方のリザルト曲は維持します。準備中は片方がタイトル、もう片方がチュートリアルでも同じオープニング曲の再生位置を共有します。finish曲以外はループ再生します。エンジン音は各画面の実際のカメラ座標から車両までの距離と左右方向で音量・ステレオ定位を計算します。近くの相手車も聞こえ、80m以上離れると聞こえなくなります。
 
 エンジンは6速ATに連動する4気筒合成音です。トンネルでは車両ごとの反響も独立出力へ送ります。仕様・試聴サンプル・検証方法は [EngineAudio.md](EngineAudio.md) を参照してください。
 
@@ -73,4 +74,4 @@ macOS (Intel/Apple Silicon) とWindows x64用のプラグインを `Assets/Plugi
 - オフライン音声ミキサーテスト: `clang++ -std=c++17 -O2 Native~/RaceAudio/test-mixer.cpp -framework CoreFoundation -framework CoreAudio -framework AudioToolbox -lpthread -o /tmp/race-audio-test && /tmp/race-audio-test`
 - Unity動作検証: `Racing > Validate Player Audio` または `-batchmode -executeMethod PlayerAudioValidation.Run -quit`。
 
-実機ではP1だけ最終周に進めたときにP2の曲が変わらないこと、P2の最終周、ゴール直後から観戦・リザルトまでfinish曲が続くこと、各自のタイトル復帰、リトライで通常曲へ戻ること、機器の切断・再検出、音量変更と両機器の左右定位を確認してください。
+実機ではP1だけ最終周に進めたときにP2の曲が変わらないこと、P2の最終周、finish曲が1回で終わり、その後は相手の走行曲または結果曲へ進むこと、各自のタイトル復帰、リトライで通常曲へ戻ること、機器の切断・再検出、音量変更と両機器の左右定位を確認してください。

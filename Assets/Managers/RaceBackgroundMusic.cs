@@ -27,6 +27,7 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
     private readonly Dictionary<AudioClip, double> clipEpochs = new Dictionary<AudioClip, double>();
     private readonly List<AudioClip> expiredClips = new List<AudioClip>();
     private readonly double[] playbackStarts = new double[2];
+    private readonly FinishMusicSequence[] finishSequences = { new FinishMusicSequence(), new FinishMusicSequence() };
 
     private void Awake()
     {
@@ -93,19 +94,28 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
             {
                 case Gmanager.State.Title:
                 case Gmanager.State.CarSelection:
+                    finishSequences[player].Reset();
                     desired = menuClip;
                     break;
                 case Gmanager.State.Tutorial:
+                    finishSequences[player].Reset();
                     desired = menuClip;
                     break;
-                case Gmanager.State.Goal:
-                    desired = finishClip;
-                    break;
-                case Gmanager.State.Result:
-                    desired = resultClip;
+                case Gmanager.State.Countdown:
+                    finishSequences[player].Reset();
+                    desired = gameManager.IsPlayerOnFinalLap(viewedPlayer) ? finalLapClip : raceClip;
                     break;
                 default:
-                    desired = gameManager.IsPlayerOnFinalLap(viewedPlayer) ? finalLapClip : raceClip;
+                    bool finished=gameManager.DidPlayerFinish(player);
+                    var track=finishSequences[player].Select(finished,gameManager.IsPlayerStillRacing(1-player),
+                        phase==Gmanager.State.Goal || phase==Gmanager.State.Result,AudioSettings.dspTime);
+                    if(track==FinishMusicSequence.Track.Finish) desired=finishClip;
+                    else if(track==FinishMusicSequence.Track.Results) desired=resultClip;
+                    else
+                    {
+                        int racer=finished ? 1-player : viewedPlayer;
+                        desired=gameManager.IsPlayerOnFinalLap(racer) ? finalLapClip : raceClip;
+                    }
                     break;
             }
             desired = desired ?? silentClip;
@@ -117,7 +127,13 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
             else if (requestedClips[player] != desired)
             {
                 requestedClips[player] = desired;
-                switching[player] = true;
+                if (source.clip == finishClip && finishSequences[player].HasStarted && AudioSettings.dspTime >= finishSequences[player].EndsAt)
+                {
+                    // A completed one-shot has no tail to fade out. Join the opponent/result transport now.
+                    StartOnTransport(player,desired,startAt);
+                    switching[player]=false;
+                }
+                else switching[player] = true;
             }
 
             if (switching[player])
@@ -140,6 +156,15 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
         AudioSource source = sources[player];
         source.Stop();
         source.clip = clip;
+        source.loop=clip!=finishClip;
+        if (clip==finishClip)
+        {
+            source.timeSamples=0;
+            finishSequences[player].Begin(startAt,(double)clip.samples/clip.frequency);
+            playbackStarts[player]=startAt;
+            if(source.isActiveAndEnabled) source.PlayScheduled(startAt);
+            return;
+        }
         if (!clipEpochs.TryGetValue(clip, out double epoch))
         {
             epoch = startAt;
