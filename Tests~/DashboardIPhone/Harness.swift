@@ -11,7 +11,7 @@ import Foundation
         actual.onFrame = { frame in proxy.receive(frame) }
         actual.onState = { active, _ in proxy.setConnected(active) }
         proxy.onReady = { url in print("USB_TEST_URL \(url.absoluteString)"); fflush(stdout) }
-        try proxy.start(); try actual.start(code: "87654321", port: 0)
+        try proxy.start(); try actual.start(port: 0)
         RunLoop.main.run()
     }
 }

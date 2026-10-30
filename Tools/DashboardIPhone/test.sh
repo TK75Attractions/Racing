@@ -9,3 +9,4 @@ xcrun swiftc -swift-version 5 -module-cache-path Temp/UsbNativeModuleCache \
   'Tests~/DashboardIPhone/Harness.swift' -o Temp/iphone-usb-harness
 cd "$iphone_test_root/Tests~/DashboardIPhone"
 DOTNET_CLI_TELEMETRY_OPTOUT=1 dotnet run --project NativeTests.csproj
+sh "$iphone_test_root/Tools/DashboardIPhone/test-startup.sh"

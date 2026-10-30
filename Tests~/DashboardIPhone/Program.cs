@@ -40,26 +40,28 @@ upstream.Run(async context=>
 await upstream.StartAsync();int targetPort=Url(upstream).Port;
 var process=new Process{StartInfo=new ProcessStartInfo(Path.GetFullPath("../../Temp/iphone-usb-harness")){UseShellExecute=false,RedirectStandardOutput=true,RedirectStandardError=true}};
 var portReady=new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
-var urlReady=new TaskCompletionSource<Uri>(TaskCreationOptions.RunContinuationsAsynchronously);
-var childErrors=new StringBuilder();process.OutputDataReceived+=(_,e)=>{if(e.Data?.StartsWith("USB_TEST_PORT ")==true)portReady.TrySetResult(int.Parse(e.Data[14..]));if(e.Data?.StartsWith("USB_TEST_URL ")==true)urlReady.TrySetResult(new Uri(e.Data[13..]));};
+var pairings=System.Threading.Channels.Channel.CreateUnbounded<Uri>();
+var childErrors=new StringBuilder();process.OutputDataReceived+=(_,e)=>{if(e.Data?.StartsWith("USB_TEST_PORT ")==true)portReady.TrySetResult(int.Parse(e.Data[14..]));if(e.Data?.StartsWith("USB_TEST_URL ")==true)pairings.Writer.TryWrite(new Uri(e.Data[13..]));};
 process.ErrorDataReceived+=(_,e)=>{if(e.Data!=null)childErrors.AppendLine(e.Data);};
-using var stop=new CancellationTokenSource();Task tunnel=Task.CompletedTask;FakeMux? fake=null;
+using var stop=new CancellationTokenSource();using var reconnectStop=new CancellationTokenSource();Task tunnel=Task.CompletedTask;FakeMux? fake=null;
 try
 {
     process.Start();process.BeginOutputReadLine();process.BeginErrorReadLine();int port=await portReady.Task.WaitAsync(TimeSpan.FromSeconds(10));
-    // Real Swift listener with a wrong code, before any forwarding is allowed.
-    using(var wrong=new TcpClient())
+    // Legacy PIN clients cannot silently open the new automatic transport.
+    using(var legacy=new MemoryStream())
     {
-        await wrong.ConnectAsync(IPAddress.Loopback,port);
-        bool active=false;await new UsbTunnel(targetPort,"00000000",value=>active|=value).Run(wrong.GetStream(),stop.Token);
-        Require(!active,"Wrong pairing code cannot open any relay connection.");
+        byte[] hello=JsonSerializer.SerializeToUtf8Bytes(new{protocol="racing-usb-v1",code="87654321"});
+        byte[] header=new byte[9];BinaryPrimitives.WriteInt32BigEndian(header,hello.Length);header[4]=(byte)UsbKind.Hello;
+        legacy.Write(header);legacy.Write(hello);legacy.Position=0;
+        bool active=false;await new UsbTunnel(targetPort,value=>active|=value).Run(legacy,stop.Token);
+        byte[] response=legacy.ToArray();using var json=JsonDocument.Parse(response.AsMemory(9+hello.Length+9));
+        Require(!active&&!json.RootElement.GetProperty("accepted").GetBoolean(),"Legacy PIN handshakes must require an app update before forwarding.");
     }
-    await Task.Delay(50);
     fake=new FakeMux(port);var mux=new UsbMux(fake.Path);
     Require((await mux.List(stop.Token)).SequenceEqual(new[]{7}),"Actual plist request/reply must reject Wi-Fi devices.");
     Stream link=await mux.Connect(7,30220,stop.Token);
-    bool connected=false;tunnel=new UsbTunnel(targetPort,"87654321",value=>connected=value).Run(link,stop.Token);
-    Uri pair=await urlReady.Task.WaitAsync(TimeSpan.FromSeconds(10));Require(connected,"Native handshake must accept the correct code.");
+    bool connected=false;tunnel=new UsbTunnel(targetPort,value=>connected=value).Run(link,stop.Token);
+    Uri pair=await pairings.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));Require(connected,"Physical USB app connects without a PIN.");
     using var client=new HttpClient(new SocketsHttpHandler{UseProxy=false,UseCookies=false,AllowAutoRedirect=false}){Timeout=TimeSpan.FromSeconds(6)};
     Uri baseUrl=new(pair.GetLeftPart(UriPartial.Authority));string origin=baseUrl.GetLeftPart(UriPartial.Authority);
     async Task<HttpResponseMessage> Get(string path,string? cookie=null,string? suppliedOrigin=null,string? body=null,string? host=null)
@@ -90,14 +92,21 @@ try
     Require(parallel.All(response=>response.IsSuccessStatusCode),"Independent HTTP channels can operate concurrently.");
     stop.Cancel();try{await tunnel;}catch(Exception error)when(error is IOException or OperationCanceledException or SocketException){}
     await Task.Delay(150);try{await Get("/api/status",cookie);throw new Exception("Disconnected USB still accepted traffic.");}catch(HttpRequestException){}
+    Stream replacement=await mux.Connect(7,30220,reconnectStop.Token);
+    tunnel=new UsbTunnel(targetPort,value=>connected=value).Run(replacement,reconnectStop.Token);
+    Uri nextPair=await pairings.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+    Require(connected&&nextPair!=pair,"Replug reconnects automatically and creates a new local WebView session.");
+    Require((await Get("/api/status",cookie)).StatusCode==HttpStatusCode.Forbidden,"The previous phone cookie cannot control a reconnected session.");
+    var nextPaired=await Get(nextPair.PathAndQuery);string nextCookie=nextPaired.Headers.GetValues("Set-Cookie").Single().Split(';')[0];
+    Require((await Get("/",nextCookie)).IsSuccessStatusCode,"Reconnected USB serves the dashboard without any PIN or connect command.");
     var report=new{passed=true,scope="production Swift proxy and C# tunnel over fake USB daemon; isolated fake relay, no real Race operations",commands,
-        checks="USB-only plist discovery/connect and byte order; wrong code; native cookie/Host/Origin/body guards; HTML, guarded HTTP controls, 300KB binary image, live WebSocket + concurrent controls, USB disconnect"};
+        checks="USB-only plist discovery/connect and byte order; automatic no-PIN handshake and legacy rejection; native cookie/Host/Origin/body guards; HTML, guarded HTTP controls, 300KB binary image, live WebSocket + concurrent controls, USB disconnect/reconnect and cookie rotation"};
     Directory.CreateDirectory("../../Artifacts/DashboardIPhone");await File.WriteAllTextAsync("../../Artifacts/DashboardIPhone/verification.json",JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));
     Console.WriteLine("IPHONE_USB_NATIVE_TEST_PASS "+JsonSerializer.Serialize(report));
 }
 finally
 {
-    stop.Cancel();if(!process.HasExited){process.Kill();await process.WaitForExitAsync();}fake?.Dispose();
+    stop.Cancel();reconnectStop.Cancel();if(!process.HasExited){process.Kill();await process.WaitForExitAsync();}fake?.Dispose();
     try{await tunnel;}catch(Exception error)when(error is IOException or OperationCanceledException or SocketException){}
     await upstream.StopAsync();if(childErrors.Length>0)Console.WriteLine(childErrors.ToString());
 }

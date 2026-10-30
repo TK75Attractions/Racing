@@ -1,0 +1,37 @@
+{
+  "protocol": "racing-usb-v2",
+  "pinRequired": false,
+  "nativeIntegration": "passed; production Swift/C# over fake USB, concurrent HTTP/WebSocket/image, unplug/reconnect and rotated local cookie",
+  "startupHarness": "passed; source and packaged paths, reuse; no real process/game launch",
+  "helperBuild": "passed, 0 warnings/errors",
+  "xcodeDeviceBuild": {
+    "unsigned": "passed",
+    "signed": "passed using existing local signing; no provisioning-update permission",
+    "deviceFamilies": [
+      1,
+      2
+    ],
+    "minimumOS": "16.0"
+  },
+  "relatedNodeTests": {
+    "passed": 62,
+    "failed": 0
+  },
+  "packagedPayloadComplete": true,
+  "iPhone12Installation": "succeeded",
+  "iPhone12Launch": "user unlocked/opened updated app; automatic USB connection succeeded",
+  "iPadPhysicalVerification": "not performed; no iPad connected",
+  "gameBuildAndLaunch": "not performed; new automatic startup requires next player build",
+  "raceOperationsSent": false,
+  "normalRelayRestarted": false,
+  "physicalUsbConnection": {
+    "connected": true,
+    "protocol": "racing-usb-v2",
+    "authentication": "trusted-usb"
+  },
+  "unityApiCompilation": {
+    "editor": "passed against installed Unity 6000.3.9f1 references",
+    "player": "passed against installed Unity 6000.3.9f1 references",
+    "gameStarted": false
+  }
+}

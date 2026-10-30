@@ -1,0 +1,3 @@
+IPHONE_USB: framing limits and USB-only device selection passed
+IPHONE_USB_NATIVE_TEST_PASS {"passed":true,"scope":"production Swift proxy and C# tunnel over fake USB daemon; isolated fake relay, no real Race operations","commands":10,"checks":"USB-only plist discovery/connect and byte order; automatic no-PIN handshake and legacy rejection; native cookie/Host/Origin/body guards; HTML, guarded HTTP controls, 300KB binary image, live WebSocket \u002B concurrent controls, USB disconnect/reconnect and cookie rotation"}
+USB_STARTUP_TEST_PASS: source/packaged launch, reuse, local-only relay, no real processes or Race operations
