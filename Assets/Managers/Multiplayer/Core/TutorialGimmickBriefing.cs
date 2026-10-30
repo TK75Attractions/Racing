@@ -3,9 +3,9 @@ using System;
 /// <summary>A short, stationary course briefing. A held pedal never skips a page.</summary>
 public sealed class TutorialGimmickBriefing
 {
-    public const int PageCount = 2;
-    public const float PageSeconds = 4f;
-    public const float MinimumReadSeconds = 2f;
+    public const int PageCount = 1;
+    public const float PageSeconds = 8f;
+    public const float MinimumReadSeconds = 4f;
     public int Page { get; private set; }
     public float Elapsed { get; private set; }
     public bool IsComplete => Page >= PageCount;
