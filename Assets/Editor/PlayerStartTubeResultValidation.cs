@@ -20,7 +20,7 @@ public static class PlayerStartTubeResultValidation
         public int PlayerIndex {get;set;}
         public string DeviceId=>"PLAYER_FLOW_VALIDATION";
         public bool IsConnected {get;set;}=true;
-        public DriveInputState CurrentState=>DriveInputState.Neutral;
+        public DriveInputState CurrentState {get;set;}=DriveInputState.Neutral;
         public void UpdateInput(float dt){}public void Dispose(){}
     }
     [MenuItem("Racing/Validation/Player Start, Tube Assist and Result Timer")]
@@ -30,7 +30,7 @@ public static class PlayerStartTubeResultValidation
         try
         {
             ValidateIndependentStart();ValidateTube();ValidateResults();
-            File.WriteAllText(Folder+"/verification.txt","PASS: each title input starts only that player's practice; repeated start does not duplicate practice; second start preserves the shared deadline.\nPASS: production tube steering on the floor, banked sides and ceiling; driver input, live OFF, disconnect and airborne guards.\nPASS: both result palettes show 15, ceil(7.2)=8 and 0 seconds; new results reset to 15; nonoverlapping timer/Next/daily ranking; fitted glyphs; production UI renders; actual manager clock shows 1 at 14 seconds and hides results at 15.\n");
+            File.WriteAllText(Folder+"/verification.txt","PASS: each title input starts only that player's practice; repeated start does not duplicate practice; second start preserves the shared deadline.\nPASS: explicit tutorial label persists during driving, briefing and waiting for both palettes; fitted glyphs and 1080p captures.\nPASS: five-second recovery for sideways, reverse, backward rolling, nearly stopped without pedal and outside-course cars; continuous unsafe clock; healthy driving cancels clock; disconnect guard; tube wall driving preserved.\nPASS: wall contact reduces drag for +8% equilibrium speed, floor/coasting/disconnect/air receive none.\nPASS: production tube steering on the floor, banked sides and ceiling; driver input, live OFF, disconnect and airborne guards.\nPASS: both result palettes show 15, ceil(7.2)=8 and 0 seconds; new results reset to 15; nonoverlapping timer/Next/daily ranking; fitted glyphs; production UI renders; actual manager clock shows 1 at 14 seconds and hides results at 15.\n");
             Debug.Log("PLAYER_START_TUBE_RESULT_VALIDATION_PASS");
         }
         catch(Exception error){File.WriteAllText(Folder+"/failure.txt",error.ToString());Debug.LogException(error);throw;}
@@ -61,6 +61,9 @@ public static class PlayerStartTubeResultValidation
             var tutorial=race.GetComponent<DrivingTutorialController>();
             Require(race.GetPlayerPreparationState(0)==Gmanager.State.Tutorial && race.GetPlayerPreparationState(1)==Gmanager.State.Title,"P1 start must leave P2 at title.");
             Require(tutorial.HasStarted(0)&&!tutorial.HasStarted(1),"Only P1 practice may exist.");
+            var label=rigs[0].CanvasRoot.transform.Find("DrivingTutorial/TutorialMode/Label").GetComponent<TMP_Text>();
+            Canvas.ForceUpdateCanvases();label.ForceMeshUpdate();
+            Require(label.text=="チュートリアル"&&label.gameObject.activeSelf&&label.transform.parent.gameObject.activeSelf,"Practice must explicitly display a fitted tutorial label.");
             var first=tutorial.GetPlayerCar(0);race.ConfirmTitleStart(0);Require(tutorial.GetPlayerCar(0)==first,"Repeated start must not duplicate practice.");
             ((PreRaceCountdown)Get(race,"preparationClock")).Tick(10);
             race.ConfirmTitleStart(1);
@@ -101,7 +104,7 @@ public static class PlayerStartTubeResultValidation
                 var wheel=Child(car.transform,"Wheel"+i);wheel.transform.localPosition=new Vector3(i%2==0?-.35f:.35f,0,i<2?.7f:-.7f);
                 wheel.AddComponent<SphereCollider>().radius=.35f;var tire=wheel.AddComponent<TireForce>();Call(wheel.GetComponent<GroundCheck>(),"Awake");Call(tire,"Awake");
             }
-            var mover=car.AddComponent<DebugMover>();Call(mover,"Awake");var input=new Input();mover.SetInputSource(input);
+            var mover=car.AddComponent<DebugMover>();Call(mover,"Awake");var input=new Input{CurrentState=new DriveInputState{pedal=1}};mover.SetInputSource(input);
             var entry=new RaceParticipant{Index=0,Car=car,Body=body};var assist=car.AddComponent<CourseSteeringAssist>();assist.Configure(race,entry);
             foreach(float bank in new[]{0f,45f,-45f,90f,-90f,180f})
             {
@@ -109,6 +112,12 @@ public static class PlayerStartTubeResultValidation
                 Vector3 position=origin+new Vector3(0,12,50)-up*11.65f;
                 Quaternion rotation=Quaternion.AngleAxis(10,up)*Quaternion.LookRotation(Vector3.forward,up);
                 car.transform.SetPositionAndRotation(position,rotation);body.position=position;body.rotation=rotation;body.linearVelocity=rotation*Vector3.forward*20;body.angularVelocity=Vector3.zero;Physics.SyncTransforms();
+                float wallMultiplier=(float)typeof(DebugMover).GetMethod("TubeWallSpeedMultiplier",Private).Invoke(mover,null);
+                Require(Mathf.Abs(wallMultiplier-(bank==0?1:1.08f))<.0001f,"Only banked tube contact earns +8% equilibrium speed at bank "+bank);
+                Call(mover,"ApplyVelocityResistance");float expectedDrag=Vector3.ProjectOnPlane(body.linearVelocity,up).magnitude*.6f/wallMultiplier;
+                Require(Mathf.Abs((float)Get(mover,"resistanceForce")-expectedDrag)<.01f,"Actual drag must apply the bounded wall reward.");
+                input.CurrentState=DriveInputState.Neutral;Require((float)typeof(DebugMover).GetMethod("TubeWallSpeedMultiplier",Private).Invoke(mover,null)==1,"Coasting receives no wall reward.");input.CurrentState=new DriveInputState{pedal=1};
+                input.IsConnected=false;Require((float)typeof(DebugMover).GetMethod("TubeWallSpeedMultiplier",Private).Invoke(mover,null)==1,"Disconnected input receives no wall reward.");input.IsConnected=true;
                 Require(course.IsPointInsideTube(position),"Tube fixture must be inside at bank "+bank);
                 assist.Clear();float corrected=0;
                 for(int i=0;i<20;i++)corrected=assist.Assist(0,30,up,.02f);
@@ -117,10 +126,44 @@ public static class PlayerStartTubeResultValidation
                 Require(corrected>15,"Strong handle input must retain control.");
                 features.SetValidationFeature(RaceFeature.SteeringAssist,false);Require(assist.Assist(5,30,up,.02f)==5,"Live OFF disables tube aid.");features.SetValidationFeature(RaceFeature.SteeringAssist,true);
                 input.IsConnected=false;Require(assist.Assist(5,30,up,.02f)==5,"Disconnected input receives no aid.");input.IsConnected=true;
-                body.position=position+up*3;car.transform.position=body.position;Physics.SyncTransforms();Require(assist.Assist(5,30,up,.02f)==5,"Airborne tube cars receive no aid.");
+                body.position=position+up*3;car.transform.position=body.position;Physics.SyncTransforms();Require(assist.Assist(5,30,up,.02f)==5,"Airborne tube cars receive no aid.");Require((float)typeof(DebugMover).GetMethod("TubeWallSpeedMultiplier",Private).Invoke(mover,null)==1,"Airborne cars receive no wall speed reward.");
             }
+            ValidateRecovery(car,body,mover,input,course,origin);
         }
         finally{Object.DestroyImmediate(root);Object.DestroyImmediate(mesh);Gmanager.Control=previous;}
+    }
+    private static void ValidateRecovery(GameObject car,Rigidbody body,DebugMover mover,Input input,RaceCourse course,Vector3 origin)
+    {
+        var resetter=car.AddComponent<CarResetter>();Call(resetter,"Awake");resetter.SetInputSource(input);
+        Vector3 start=origin+new Vector3(0,.35f,50);
+        void Prepare(float heading,Vector3 velocity,bool connected=true)
+        {
+            Call(resetter,"OnDisable");Set(mover,"inputSuppressedUntil",float.NegativeInfinity);
+            body.position=start;body.rotation=Quaternion.Euler(0,heading,0);car.transform.SetPositionAndRotation(start,body.rotation);
+            body.linearVelocity=velocity;body.angularVelocity=Vector3.zero;input.IsConnected=connected;input.CurrentState=DriveInputState.Neutral;
+            foreach(var tire in car.GetComponentsInChildren<TireForce>())Set(tire,"isGrounded",true);
+            Physics.SyncTransforms();resetter.SetCourse(course,null);
+        }
+        void Tick(int count){for(int i=0;i<count;i++)Call(resetter,"FixedUpdate");}
+        int frames=Mathf.CeilToInt((CarResetter.AutomaticRecoveryDelay-.0001f)/Time.fixedDeltaTime);
+        int before=resetter.AutomaticRecoveryCount;
+        foreach(float heading in new[]{90f,180f,0f})
+        {
+            Prepare(heading,heading==0?Vector3.forward*.4f:Quaternion.Euler(0,heading,0)*Vector3.forward*10);
+            Tick(frames-1);Require(resetter.AutomaticRecoveryCount==before,"No recovery before five seconds at heading "+heading+" frames="+frames+" dt="+Time.fixedDeltaTime+" reason="+resetter.RecoveryReason);
+            Tick(1);before++;Require(resetter.AutomaticRecoveryCount==before,"Five seconds must recover sideways, reverse or nearly stopped cars without pedal input.");
+            Require(Vector3.Dot(body.rotation*Vector3.forward,Vector3.forward)>.99f&&course.IsPointInsideDrivingArea(body.position),"Recovery must face forward inside the course.");
+        }
+        Prepare(0,-Vector3.forward*5);Tick(frames);before++;Require(resetter.AutomaticRecoveryCount==before,"Backward rolling must recover even when the car faces forward.");
+        Prepare(0,Vector3.forward*10);body.position=start+Vector3.right*25;car.transform.position=body.position;Physics.SyncTransforms();Tick(frames-1);
+        Require(resetter.AutomaticRecoveryCount==before,"Outside-course recovery must wait five seconds.");Tick(1);before++;Require(resetter.AutomaticRecoveryCount==before,"Outside-course cars recover after five seconds.");
+        Prepare(90,Vector3.right*10);Tick(frames/2);body.rotation=Quaternion.identity;car.transform.rotation=body.rotation;body.linearVelocity=Vector3.zero;Tick(frames-frames/2);
+        before++;Require(resetter.AutomaticRecoveryCount==before,"Switching unsafe reasons must not restart the shared clock.");
+        Prepare(90,Vector3.right*10);Tick(frames-1);body.rotation=Quaternion.identity;car.transform.rotation=body.rotation;body.linearVelocity=Vector3.forward*10;Tick(frames*2);
+        Require(resetter.AutomaticRecoveryCount==before,"Resuming healthy forward travel cancels recovery.");body.linearVelocity=Vector3.zero;Tick(frames-1);Require(resetter.AutomaticRecoveryCount==before,"A new stop must get a fresh five seconds.");Tick(1);before++;Require(resetter.AutomaticRecoveryCount==before,"Fresh stopped clock must expire.");
+        Prepare(0,Vector3.zero,false);Tick(frames*2);Require(resetter.AutomaticRecoveryCount==before,"Disconnected controllers must not accumulate recovery time.");input.IsConnected=true;
+        Prepare(0,Vector3.forward*20);Vector3 up=Vector3.left;body.position=origin+new Vector3(11.65f,12,50);body.rotation=Quaternion.LookRotation(Vector3.forward,up);car.transform.SetPositionAndRotation(body.position,body.rotation);Physics.SyncTransforms();Tick(frames*2);
+        Require(resetter.AutomaticRecoveryCount==before,"Healthy tube wall driving must not count as a bad heading or overturn.");
     }
     private static void ValidateResults()
     {
@@ -137,6 +180,20 @@ public static class PlayerStartTubeResultValidation
                 {
                     var canvas=host.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceCamera;canvas.worldCamera=camera;canvas.planeDistance=1;
                     var scaler=host.GetComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;scaler.referenceResolution=new Vector2(1920,1080);
+                    var tutorialUi=new DrivingTutorialUI(host.transform,player);
+                    var lesson=new DrivingTutorialProgress();
+                    for(int page=0;page<3;page++)
+                    {
+                        TutorialGimmickBriefing briefing=null;
+                        if(page>0){lesson.Tick(40,true,0,0,0,0);briefing=new TutorialGimmickBriefing();if(page==2)briefing.Tick(10,true,0);}
+                        tutorialUi.Update(lesson,DriveInputState.Neutral,0,true,briefing:briefing);
+                        foreach(var reveal in host.GetComponentsInChildren<UIRevealSequence>())reveal.Cancel();
+                        var badge=host.transform.Find("DrivingTutorial/TutorialMode");var text=badge.Find("Label").GetComponent<TMP_Text>();
+                        Canvas.ForceUpdateCanvases();text.ForceMeshUpdate();Require(badge.gameObject.activeInHierarchy&&text.text=="チュートリアル"&&!text.isTextOverflowing,"Tutorial badge must persist during driving, briefing and waiting.");
+                        foreach(var child in host.GetComponentsInChildren<Transform>(true))child.gameObject.layer=30;
+                        if(page<2)Capture(camera,output,"tutorial-p"+(player+1)+(page==1?"-briefing":"")+".jpg");
+                    }
+                    tutorialUi.Dispose();
                     var resultRoot=RacingUITheme.Rect(host.transform,"Result",Vector2.zero,Vector2.one);
                     var record=new RaceResultRecord{playerNumber=player+1,didFinish=true,finishPosition=1,totalRaceTime=92.461f};
                     var ui=new ResultUIManager();ui.Init(resultRoot,player+1);ui.ShowResults(record);
@@ -147,8 +204,7 @@ public static class PlayerStartTubeResultValidation
                     foreach(string path in new[]{"ResultMenu","DailyRanking"}){var other=RectTransformUtility.CalculateRelativeRectTransformBounds(host.transform,card.Find(path));Require(!(bounds.min.x<other.max.x&&other.min.x<bounds.max.x&&bounds.min.y<other.max.y&&other.min.y<bounds.max.y),"Timer must not overlap "+path);}
                     foreach(var text in card.Find("ResultCountdown").GetComponentsInChildren<TMP_Text>()){text.ForceMeshUpdate();Require(!text.isTextOverflowing&&text.font.HasCharacters(text.text),"Timer text fits with complete glyphs.");}
                     foreach(var child in host.GetComponentsInChildren<Transform>(true))child.gameObject.layer=30;
-                    Canvas.ForceUpdateCanvases();camera.Render();var previous=RenderTexture.active;var pixels=new Texture2D(1920,1080,TextureFormat.RGB24,false);
-                    try{RenderTexture.active=output;pixels.ReadPixels(new Rect(0,0,1920,1080),0,0);pixels.Apply();File.WriteAllBytes(Folder+"/result-p"+(player+1)+".jpg",pixels.EncodeToJPG(90));}finally{RenderTexture.active=previous;Object.DestroyImmediate(pixels);}
+                    Capture(camera,output,"result-p"+(player+1)+".jpg");
                     var managerRoot=Child(host.transform,"Inactive timer manager");managerRoot.SetActive(false);var manager=managerRoot.AddComponent<Gmanager>();manager.state=Gmanager.State.Result;
                     var runtimes=(Array)Get(manager,"players");var runtime=Activator.CreateInstance(runtimes.GetType().GetElementType(),true);
                     var cameraRoot=Child(managerRoot.transform,"Camera");var raceCamera=Child(cameraRoot.transform,"Race").AddComponent<CinemachineCamera>();
@@ -162,6 +218,12 @@ public static class PlayerStartTubeResultValidation
             }
         }
         finally{GraphicsSettings.defaultRenderPipeline=oldPipeline;QualitySettings.renderPipeline=oldQuality;camera.targetTexture=null;Object.DestroyImmediate(camera.gameObject);Object.DestroyImmediate(output);}
+    }
+    private static void Capture(Camera camera,RenderTexture output,string name)
+    {
+        Canvas.ForceUpdateCanvases();camera.Render();var previous=RenderTexture.active;var pixels=new Texture2D(1920,1080,TextureFormat.RGB24,false);
+        try{RenderTexture.active=output;pixels.ReadPixels(new Rect(0,0,1920,1080),0,0);pixels.Apply();File.WriteAllBytes(Folder+"/"+name,pixels.EncodeToJPG(90));}
+        finally{RenderTexture.active=previous;Object.DestroyImmediate(pixels);}
     }
     private static GameObject Child(Transform parent,string name,params Type[] components){var child=new GameObject(name,components);child.transform.SetParent(parent,false);return child;}
     private static object Get(object target,string field)=>target.GetType().GetField(field,Private|BindingFlags.Public).GetValue(target);

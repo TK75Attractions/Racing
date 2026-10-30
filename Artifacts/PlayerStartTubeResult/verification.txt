@@ -1,7 +1,8 @@
 PASS: each title input starts only that player's practice; repeated start does not duplicate practice; second start preserves the shared deadline.
+PASS: explicit tutorial label persists during driving, briefing and waiting for both palettes; fitted glyphs and 1080p captures.
+PASS: five-second recovery for sideways, reverse, backward rolling, nearly stopped without pedal and outside-course cars; continuous unsafe clock; healthy driving cancels clock; disconnect guard; tube wall driving preserved.
+PASS: wall contact reduces drag for +8% equilibrium speed, floor/coasting/disconnect/air receive none.
 PASS: production tube steering on the floor, banked sides and ceiling; driver input, live OFF, disconnect and airborne guards.
 PASS: both result palettes show 15, ceil(7.2)=8 and 0 seconds; new results reset to 15; nonoverlapping timer/Next/daily ranking; fitted glyphs; production UI renders; actual manager clock shows 1 at 14 seconds and hides results at 15.
-PASS: PlayerAudioValidation executed in Unity: one-shot finish, opponent transport and continuous results.
-PASS: shared core tests 196/196. Unity-generated compiler options: Core/runtime/Editor all compile.
-PASS: hidden AppKit windows and display routing tests; universal arm64/x86_64 plugin build with unchanged native exports.
-PENDING: replacement finish music attachment. Existing finishv4 retained. No running RACE restart, input, or configuration changes.
+PASS: existing RaceCourseValidation and TubeWallRecoveryValidation in Unity edit mode: ten banks including ceiling, wall jitter/sleep, true overturn, safe lanes, lap preservation and occupied-road retries.
+PASS: Core/runtime/Editor scripts compile; production UI captured at 1920x1080. No game build, launch, updater, or running RACE interaction.
