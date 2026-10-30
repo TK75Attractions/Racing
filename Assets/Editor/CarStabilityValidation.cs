@@ -14,10 +14,14 @@ public static class CarStabilityValidation
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
             throw new InvalidOperationException("Stop Play Mode before starting validation.");
-        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().path != "Assets/Scenes/SampleScene.unity")
-            EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
+        EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
+        var input = UnityEngine.Object.FindFirstObjectByType<InputManager>();
+        input.isDebugMode = true; input.isP1SerialP2KeyboardDebugMode = false;
+        foreach (var bridge in UnityEngine.Object.FindObjectsByType<RaceDashboardBridge>(FindObjectsSortMode.None)) bridge.enabled = false;
+        foreach (var publisher in UnityEngine.Object.FindObjectsByType<RaceRemoteFirebasePublisher>(FindObjectsSortMode.None)) publisher.enabled = false;
         started = EditorApplication.timeSinceStartup;
         SessionState.SetBool(SessionKey, true);
+        Debug.Log("CAR_STABILITY_START: production scene opened, awaiting Play Mode.");
         EditorApplication.update -= Tick;
         EditorApplication.update += Tick;
         EditorApplication.isPlaying = true;
@@ -61,6 +65,7 @@ public static class CarStabilityValidation
         if (!EditorApplication.isPlaying ||
             UnityEngine.Object.FindFirstObjectByType<Gmanager>() == null ||
             UnityEngine.Object.FindFirstObjectByType<CarStabilityValidationProbe>() != null) return;
+        Debug.Log("CAR_STABILITY_PROBE_START");
         new GameObject("Car stability validation").AddComponent<CarStabilityValidationProbe>();
     }
 

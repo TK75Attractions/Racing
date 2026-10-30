@@ -49,7 +49,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         public string p1Profile, p2Profile;
         public int seed, goalLaps, npcCount;
         public bool itemsEnabled, resetAssistance, completed, raceEnded;
-        public float p1TargetSpeed, p2TargetSpeed, seconds, physicsSeconds, startGlobalTime, firstHumanFinish, humanFinishGap, humanSeparationSeconds, cpuNearRearHumanSeconds, grantedHumanGrace;
+        public float maximumSeconds, p1TargetSpeed, p2TargetSpeed, seconds, physicsSeconds, startGlobalTime, firstHumanFinish, humanFinishGap, humanSeparationSeconds, cpuNearRearHumanSeconds, grantedHumanGrace;
         public string termination;
         public List<CarRecord> cars = new List<CarRecord>();
     }
@@ -57,7 +57,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     {
         public string startedUtc, unityVersion, revision;
         public float courseLength, fixedDeltaTime, timeScale, observationWindowSeconds;
-        public string methodology = "Actual SampleScene, scene lap count recorded per run, production 360-second limit and 40-to-180-second human grace. Human substitutes use course geometry and pedal/steering input. Items disabled only in named control runs. No forced results, checkpoints, vehicle pose or velocity. Reset-assisted run uses the normal reset input after 4 seconds stuck/off-course. Seed fixes Unity random sequence, not physics determinism; CPU contest phase depends on global Time.time, so equal seeds do not isolate reset assistance. CSV time uses accumulated fixed physics steps; seconds/finishTime use official game clocks. Environment contacts include road landings, not just walls. No judgment of human usability, real input latency or audio.";
+        public string methodology = "Actual SampleScene, scene lap count recorded per run, production race deadline recorded per run and adaptive human grace. Human substitutes use course geometry and pedal/steering input. Items disabled only in named control runs. No forced results, checkpoints, vehicle pose or velocity. Reset-assisted run uses the normal reset input after 4 seconds stuck/off-course. Seed fixes Unity random sequence, not physics determinism; CPU contest phase depends on global Time.time, so equal seeds do not isolate reset assistance. CSV time uses accumulated fixed physics steps; seconds/finishTime use official game clocks. Environment contacts include road landings, not just walls. No judgment of human usability, real input latency or audio.";
         public bool completed;
         public string error;
         public List<RunRecord> runs = new List<RunRecord>();
@@ -162,6 +162,14 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                     SkillPlan("forward-wall-stress",8106,50,48,true,"human","human"),
                     SkillPlan("skill-stop-rejoin",8107,24,16,false,"intermediate","cautious"),
                     SkillPlan("skill-disconnect-rejoin",8108,22,22,true,"intermediate","intermediate") };
+                if(Environment.GetEnvironmentVariable("RACING_NOVICE_STRESS")=="1")
+                    plans=new List<RunRecord>(plans){
+                        SkillPlan("forward-full-lock",9011,50,48,true,"human","human"),
+                        SkillPlan("forward-flick-stress",9012,50,48,true,"human","human"),
+                        SkillPlan("forward-pedal-chatter",9013,50,48,true,"human","human"),
+                        SkillPlan("forward-full-lock-control",9031,50,48,false,"human","human"),
+                        SkillPlan("forward-flick-control",9032,50,48,false,"human","human"),
+                        SkillPlan("forward-pedal-chatter-control",9033,50,48,false,"human","human")}.ToArray();
                 foreach (RunRecord plan in plans) plan.resetAssistance = false;
             }
             suite.methodology = "Actual SampleScene and production cars/CPUs/items. Human profiles decide every 0.18/0.22 seconds, slew the physical wheel at up to 360 degrees/second and pedal at 3/second, observe forward traffic, and use the fast road-speed planner with small steering noise. Course-following input agents also approximate novice, cautious, intermediate, expert and aggressive control using distinct speed, reaction intervals, steering noise and jump anticipation; they are not human usability subjects. Includes a 12-second stop, 5-second input disconnection and operator result action. Drivers use InputManager and production input gates; never force vehicle pose, velocity, laps or outcomes. An agent responds to the public pedal-release notice after 0.35 seconds with 0.3 seconds of neutral input. Novice/cautious agents respond to a visible jump notice after 0.35 seconds by targeting 24m/s; understanding that cue is an assumed response, not a human-study result. Preparation is bypassed. Random seeds do not guarantee deterministic physics. Official and physics clocks are recorded separately.";
@@ -203,6 +211,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         foreach (RaceItemPickup pickup in pickups) if (pickup != null) pickup.gameObject.SetActive(plan.itemsEnabled);
         UnityEngine.Random.InitState(plan.seed);
         run = plan; run.goalLaps = laps.GoalLap;
+        run.maximumSeconds=(float)typeof(Gmanager).GetProperty("RaceMaximumSeconds",Private).GetValue(manager);
         suite.runs.Add(run);
         string folder = Path.Combine(output, run.name); Directory.CreateDirectory(folder);
         if (Environment.GetEnvironmentVariable("RACING_BALANCE_VIDEO") == "1")
@@ -252,7 +261,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
         Debug.Log("BALANCE_RUN_STARTED: " + run.name);
         Save();
         bool capturedDisconnect=false, capturedRelease=false, capturedDriving=false;
-        while (manager.state == Gmanager.State.Game && manager.time < 365 &&
+        while (manager.state == Gmanager.State.Game && manager.time < run.maximumSeconds+5 &&
             (suite.observationWindowSeconds <= 0 || run.physicsSeconds < suite.observationWindowSeconds))
         {
             if (run.name == "skill-operator-stop" && run.physicsSeconds >= 20f) manager.ShowResult();
@@ -288,7 +297,7 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
             Event(entry.Index, entry.Result == null ? "still-racing" : record.finished ? "finished" : "dnf", "position=" + record.position + ";laps=" + record.laps);
         }
         run.termination = !run.completed ? "agent-safety-timeout" : !run.raceEnded ? "observation-window-ended" :
-            run.name=="skill-operator-stop" ? "operator-stop" : finishedHumans == 2 ? "both-humans-finished" : run.seconds >= 359 ? "360-second-limit" : "human-grace-timeout";
+            run.name=="skill-operator-stop" ? "operator-stop" : finishedHumans == 2 ? "both-humans-finished" : run.seconds >= run.maximumSeconds-.05f ? "race-time-limit" : "human-grace-timeout";
         if (finishedHumans == 2) run.humanFinishGap = Mathf.Abs(run.cars[0].finishTime - run.cars[1].finishTime);
         trace.Dispose(); events.Dispose(); trace = events = null;
         File.WriteAllText(Path.Combine(folder, "summary.json"), JsonUtility.ToJson(run, true)); Save();
@@ -428,6 +437,11 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
                 if (inputs[entry.Index].IsConnected != connected) Event(entry.Index, connected ? "input-reconnected" : "input-disconnected", "");
                 inputs[entry.Index].IsConnected = connected;
                 DriveInputState requestedInput = Drive(entry, grounded, speed, raw, reset);
+                if(run.name.StartsWith("forward-pedal-chatter")&&entry.Index==1&&now>=20f&&now<26f)
+                {
+                    if(assistStressStarted<0){assistStressStarted=now;Event(entry.Index,"novice-input-stress","six seconds of rapid pedal release/press; no pose or velocity writes");}
+                    requestedInput.pedal=(int)((now-20f)/.1f)%2==0?1f:0f;
+                }
                 if (forwardOnly) { requestedInput.pedal = Mathf.Max(0f, requestedInput.pedal); requestedInput.resetPressed = false; }
                 inputs[entry.Index].CurrentState = requestedInput;
                 if(skillSuite && record.mover.InputSource is PlayerDriveInputGate gate && connected)
@@ -464,16 +478,24 @@ public sealed class BalancePlaytestAgent : MonoBehaviour
     {
         float sign = manager.CourseProgressSign;
         string fastProfile = entry.Index == 0 ? run.p1Profile : run.p2Profile;
-        if (run.name == "forward-wall-stress" && entry.Index == 0 && run.physicsSeconds > 15f)
+        bool steeringStress=run.name=="forward-wall-stress"||run.name.StartsWith("forward-full-lock")||run.name.StartsWith("forward-flick-");
+        if (steeringStress && entry.Index == 0 && run.physicsSeconds > 15f)
         {
             manager.course.TryGetSampleAtProgress(raw, out var stressRoad);
             manager.course.TryGetSampleAtProgress(raw + sign * 50f, out var stressFar);
-            if (assistStressStarted < 0f && grounded >= 2 && speed > 8f && stressRoad.width >= 16f &&
+            if (assistStressStarted < 0f && !entry.Effects.IsRocketActive && !entry.Effects.BlocksDriverInput &&
+                !run.cars[entry.Index].mover.IsInputSuppressed && grounded >= 2 && speed > 8f && stressRoad.width >= 16f &&
                 Vector3.Angle(stressRoad.forward, stressFar.forward) < 10f && !manager.course.IsPointInsideTube(entry.Body.position) &&
                 !manager.course.IsJumpAhead(entry.Body.position, sign, 80f))
-            { assistStressStarted = run.physicsSeconds; Event(entry.Index, "forward-steering-mistake", "full steering for 1.6 seconds; no reverse or reset"); }
-            if (assistStressStarted >= 0f && run.physicsSeconds - assistStressStarted < 1.6f)
-                return new DriveInputState { pedal = 1f, steering = 30f };
+            {
+                assistStressStarted = run.physicsSeconds;
+                Event(entry.Index,run.name=="forward-wall-stress"?"forward-steering-mistake":"novice-input-stress",
+                    run.name.StartsWith("forward-full-lock")?"full steering held eight seconds":run.name.StartsWith("forward-flick-")?"full-lock reversals every 0.1 seconds for 2.4 seconds":"full steering for 1.6 seconds; no reverse or reset");
+            }
+            float stressAge=run.physicsSeconds-assistStressStarted;
+            float stressDuration=run.name.StartsWith("forward-full-lock")?8f:run.name.StartsWith("forward-flick-")?2.4f:1.6f;
+            if (assistStressStarted >= 0f && stressAge < stressDuration)
+                return new DriveInputState { pedal = 1f, steering = run.name.StartsWith("forward-flick-")&&(int)(stressAge/.1f)%2!=0?-30f:30f };
         }
         if (fastProfile == "human")
         {

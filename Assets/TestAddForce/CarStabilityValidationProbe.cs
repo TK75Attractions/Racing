@@ -131,6 +131,7 @@ public sealed class CarStabilityValidationProbe : MonoBehaviour
             End();
         }
 
+        manager.enabled=false; // Fixture trials do not advance the visitor race deadline.
         // 専用路面ではコース外リスポーンを停止し、姿勢復元がワープで置き換わらないようにします。
         var lapManager = UnityEngine.Object.FindFirstObjectByType<LapManager>();
         if (lapManager != null) lapManager.enabled = false;
