@@ -72,7 +72,7 @@ public static class NpcRaceValidation
             if (target != entries[3].Effects) throw new InvalidOperationException("Finished CPU remained an item target");
             entries[3].Result = new RaceResultRecord { didFinish = false }; entries[0].Progress = 400;
             manager.TryGetItemContext(entries[0].Body, out position, out target);
-            if (target != entries[1].Effects) throw new InvalidOperationException("Remaining human ahead was not an item target");
+            if (target != null) throw new InvalidOperationException("Human players must never be a confuse target");
             entries[0].Position = 1; entries[1].Position = 2;
             manager.TryGetItemContext(entries[0].Body, out position, out target);
             if (target != null) throw new InvalidOperationException("Leader must not target a chasing human");

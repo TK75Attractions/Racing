@@ -8,7 +8,7 @@ public sealed class TutorialItemPickupFlow : MonoBehaviour
     private readonly Image[] borders=new Image[3];
     private readonly RectTransform[] arrows=new RectTransform[2];
     private readonly Texture2D[] effects=new Texture2D[4];
-    private readonly string[] titles={"シールド！","ロケットで{加速|かそく}！","オイル！","ハンドルが{逆|ぎゃく}！"};
+    private readonly string[] titles={"シールド！","ロケットで{加速|かそく}！","オイル！","{前|まえ}のCPUをじゃま！"};
     private RawImage result,contact;
     private Texture2D pickupBefore,pickupAfter;
     private int shownItem=-1;

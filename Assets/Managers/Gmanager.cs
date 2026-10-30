@@ -2039,7 +2039,7 @@ public class Gmanager : MonoBehaviour
 
     /// <summary>
     /// アイテム抽選用に、指定車両の現在順位と、妨害対象になる相手車両の効果を返します。
-    /// 自分より前に妨害可能な走行中の車がいない場合、opponentEffects は null です。
+    /// 自分より前に妨害可能な走行中のCPUがいない場合、opponentEffects は null です。
     /// </summary>
     /// <summary>
     /// コース中心線の進行距離が増える向きにレースが進むなら 1、逆なら -1 です。
@@ -2058,7 +2058,7 @@ public class Gmanager : MonoBehaviour
         int nearestPosition = 0;
         foreach (RaceParticipant candidate in participants)
         {
-            if (candidate == participant || !candidate.IsRacing || candidate.Effects == null || !candidate.Effects.isActiveAndEnabled) continue;
+            if (candidate == participant || !candidate.IsCpu || !candidate.IsRacing || candidate.Effects == null || !candidate.Effects.isActiveAndEnabled) continue;
             // Rank includes lap progress and tie handling; never fall back to attacking a car behind.
             if (!RaceDebuffPolicy.CanTarget(racePosition, candidate.Position, participants.Count, lastRacingPosition)) continue;
             if (candidate.Position > nearestPosition)

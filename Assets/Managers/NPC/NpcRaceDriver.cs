@@ -164,6 +164,8 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
             }
         }
         float safeLane = Mathf.Min(3f, Mathf.Max(0, here.width * .5f - 3.5f));
+        bool clearingHuman = ApplyHumanClearance(here, safeLane,
+            grounded >= 2 && !jumpAhead && Time.time >= landingLaneUntil, ref requested);
         lane = Mathf.MoveTowards(lane, Mathf.Clamp(desiredLane, -safeLane, safeLane), dt * 1.2f);
         course.TryGetSampleAtProgress(raw + sign * Mathf.Clamp(5f + speed * .4f, 8f, 17f), out RaceCourse.CourseSample target);
         Vector3 aim = target.position + target.right * Mathf.Clamp(lane, -Mathf.Max(0,target.width*.5f-2.5f), Mathf.Max(0,target.width*.5f-2.5f)) - body.position;
@@ -196,7 +198,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
             }
         }
         if (Time.time < yieldUntil) requested = Mathf.Min(requested, improved ? Mathf.Max(10f, partnerSpeed - 1f) : 8f);
-        targetSpeed = Mathf.MoveTowards(targetSpeed, requested, dt * (fastPace ? (requested < targetSpeed ? 30f : 12f) : accelerationSlew));
+        targetSpeed = Mathf.MoveTowards(targetSpeed, requested, dt * (clearingHuman ? 18f : fastPace ? (requested < targetSpeed ? 30f : 12f) : accelerationSlew));
         float signedSpeed = Vector3.Dot(body.linearVelocity, transform.forward);
         float pedal = improved || fastPace ? CpuRacePace.Pedal(targetSpeed, signedSpeed, mover.CruisePedalForSpeed(targetSpeed)) : Mathf.Clamp((targetSpeed - signedSpeed) * .12f, -1f, 1f);
         bool stranded = !course.IsPointInsideCourse(body.position) || Mathf.Abs(body.position.y-here.position.y)>6f || Vector3.Dot(transform.up,Vector3.up)<.3f;
@@ -214,6 +216,37 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
             { safeRawProgress = raw; safeRaceProgress = progress; safeState = laps.CaptureNpcRecovery(body); hasSafeState = true; }
         }
     }
+    // Local physical clearance overrides adaptive pace, so matching a human's speed
+    // cannot keep the CPU pressed against their side. Never brake away launch momentum.
+    private bool ApplyHumanClearance(RaceCourse.CourseSample here, float safeLane, bool canManeuver, ref float requested)
+    {
+        if (!canManeuver) return false;
+        bool yielding = false;
+        float ownSide = Vector3.Dot(body.position - here.position, here.right);
+        foreach (RaceParticipant human in manager.Participants)
+        {
+            if (human.IsCpu || !human.IsRacing || human == entry) continue;
+            Vector3 delta = human.Body.position - body.position;
+            float ahead = Vector3.Dot(delta, here.forward * manager.CourseProgressSign);
+            if (ahead < -10f || ahead > 18f || Mathf.Abs(Vector3.Dot(delta,here.up)) > 3f) continue;
+            float humanSide = Vector3.Dot(human.Body.position - here.position,here.right);
+            float separation = Mathf.Abs(ownSide - humanSide);
+            // Keep the CPU on its current side of the human; never cross their path.
+            float away = ownSide >= humanSide ? 1f : -1f;
+            float candidate = Mathf.Clamp(humanSide + away * 4.2f,-safeLane,safeLane);
+            if (PassingLaneClear(candidate,here))
+                desiredLane = away > 0f ? Mathf.Max(desiredLane,candidate) : Mathf.Min(desiredLane,candidate);
+            else desiredLane = lane;
+            if (separation < 3.8f && ahead > -7f && ahead < 10f)
+            {
+                float humanSpeed = Mathf.Max(0f,Vector3.Dot(human.Body.linearVelocity,here.forward*manager.CourseProgressSign));
+                requested = Mathf.Min(requested,Mathf.Max(0f,humanSpeed-3f));
+                yielding = true;
+            }
+        }
+        return yielding;
+    }
+
     private bool PassingLaneClear(float candidate, RaceCourse.CourseSample here)
     {
         if (course.IsJumpAhead(body.position, manager.CourseProgressSign, 45f)) return false;
@@ -259,9 +292,11 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         // Slewing the requested speed from zero here consumes the entire jump run-up.
         targetSpeed=Mathf.Min(cruiseSpeed,24f); reverseUntil=Time.time; stuck=unrecoveredSeconds=0; RecoveryBlockedReason=""; RecoveryCount++;
     }
-    private void OnCollisionEnter(Collision collision)
+    private void OnCollisionEnter(Collision collision) => YieldToHumanContact(collision);
+    private void OnCollisionStay(Collision collision) => YieldToHumanContact(collision);
+    private void YieldToHumanContact(Collision collision)
     {
-        if (collision.rigidbody == null || manager == null) return;
+        if (collision.rigidbody == null || manager == null || course == null) return;
         RaceParticipant other = manager.FindParticipant(collision.rigidbody);
         if (other != null && !other.IsCpu)
         {
@@ -272,7 +307,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
                     desiredLane = Vector3.Dot(other.Body.position - sample.position, sample.right) >= 0f ? -3f : 3f;
                 else desiredLane = Vector3.Dot(other.Body.position - body.position, transform.right) >= 0 ? -3f : 3f;
             }
-            yieldUntil = Time.time + (RaceFeatureController.Enabled(RaceFeature.CpuRacing) ? .65f : 3f);
+            yieldUntil = Time.time + (RaceFeatureController.Enabled(RaceFeature.CpuRacing) ? 1.5f : 3f);
 
         }
     }

@@ -53,6 +53,12 @@ public static class SteeringAndItemFairnessValidation
                 Require(manager.TryGetItemContext(entries[i].Body, out int rank, out var target) && rank == i+1, "Item context rank");
                 Require(target == (i == 0 ? null : entries[i-1].Effects), "Only the nearest ranked car ahead may be selected");
             }
+            entries[2].IsCpu=false;
+            manager.TryGetItemContext(entries[3].Body,out _,out var cpuTarget);
+            Require(cpuTarget==entries[1].Effects,"Skip a closer human and choose the nearest CPU ahead.");
+            entries[3].Effects.UseItem(RaceItemType.Confuse,entries[2].Effects);
+            Require(!entries[2].Effects.IsConfused,"Even a stale explicit human target must be rejected.");
+            entries[2].IsCpu=true;
             var last = entries[3].Effects;
             Require(!last.ApplyOil(entries[0].Effects), "Last-place oil protection");
             Require(!last.ApplyConfuse(entries[0].Effects), "Last-place confuse protection");

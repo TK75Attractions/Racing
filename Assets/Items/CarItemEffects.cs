@@ -253,7 +253,8 @@ public sealed class CarItemEffects : MonoBehaviour
                 oilDropTimeRemaining = oilDropDelay;
                 break;
             case RaceItemType.Confuse:
-                if (opponent != null && opponent != this) opponent.ApplyConfuse(this);
+                if (opponent != null && opponent != this &&
+                    Gmanager.Control?.FindParticipant(opponent.body)?.IsCpu != false) opponent.ApplyConfuse(this);
                 break;
             default:
                 return;
