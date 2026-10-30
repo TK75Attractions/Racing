@@ -31,13 +31,13 @@ public sealed class DrivingTutorialUI
         steering=hud.Find("SteeringIndicator/Track").GetComponent<RacingSteeringIndicator>();steering.AutoBind=false;
         ArcadeUI.Logo(r,new Vector2(.03f,.84f),new Vector2(.27f,.97f));
         var p=ArcadeUI.For(player);
-        var mode=ArcadeUI.Panel(r,"TutorialMode",new Vector2(.03f,.78f),new Vector2(.27f,.83f),p.Primary);
-        TutorialText.Label(mode,"Label","チュートリアル",new Vector2(.04f,.05f),new Vector2(.96f,.95f),30,p.Ink,true,TextAlignmentOptions.Center);
+        var mode=ArcadeUI.Panel(r,"TutorialMode",new Vector2(.29f,.90f),new Vector2(.71f,.985f),p.Primary);
+        TutorialText.Label(mode,"Label","チュートリアル/練習",new Vector2(.025f,.05f),new Vector2(.975f,.95f),52,p.Ink,true,TextAlignmentOptions.Center);
         var tag=ArcadeUI.Panel(r,"Player",new Vector2(.77f,.89f),new Vector2(.81f,.95f),p.Primary);
         TutorialText.Label(tag,"Value","P"+(player+1),Vector2.zero,Vector2.one,24,p.Ink,true,TextAlignmentOptions.Center);
         timer=new PreparationTimerUI(r,new Vector2(.82f,.88f),new Vector2(.97f,.96f),tutorial:true);
         preparationTimer=r.Find("PreparationTimer").gameObject;
-        var lesson=ArcadeUI.Panel(r,"CurrentInstruction",new Vector2(.31f,.775f),new Vector2(.69f,.975f),p.Ink);
+        var lesson=ArcadeUI.Panel(r,"CurrentInstruction",new Vector2(.31f,.68f),new Vector2(.69f,.88f),p.Ink);
         currentInstruction=lesson.gameObject;
         step=TutorialText.Label(lesson,"Step","01",new Vector2(.045f,.28f),new Vector2(.28f,.85f),104,p.Soft,true,TextAlignmentOptions.Center);step.fontStyle=FontStyles.Italic;
         TutorialText.Label(lesson,"Total","/ 03",new Vector2(.06f,.13f),new Vector2(.26f,.30f),22,p.Paper,true,TextAlignmentOptions.Center);

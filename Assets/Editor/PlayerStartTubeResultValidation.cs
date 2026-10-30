@@ -63,7 +63,7 @@ public static class PlayerStartTubeResultValidation
             Require(tutorial.HasStarted(0)&&!tutorial.HasStarted(1),"Only P1 practice may exist.");
             var label=rigs[0].CanvasRoot.transform.Find("DrivingTutorial/TutorialMode/Label").GetComponent<TMP_Text>();
             Canvas.ForceUpdateCanvases();label.ForceMeshUpdate();
-            Require(label.text=="チュートリアル"&&label.gameObject.activeSelf&&label.transform.parent.gameObject.activeSelf,"Practice must explicitly display a fitted tutorial label.");
+            Require(label.text=="チュートリアル/練習"&&label.gameObject.activeSelf&&label.transform.parent.gameObject.activeSelf,"Practice must explicitly display a fitted tutorial label.");
             var first=tutorial.GetPlayerCar(0);race.ConfirmTitleStart(0);Require(tutorial.GetPlayerCar(0)==first,"Repeated start must not duplicate practice.");
             ((PreRaceCountdown)Get(race,"preparationClock")).Tick(10);
             race.ConfirmTitleStart(1);
@@ -189,7 +189,7 @@ public static class PlayerStartTubeResultValidation
                         tutorialUi.Update(lesson,DriveInputState.Neutral,0,true,briefing:briefing);
                         foreach(var reveal in host.GetComponentsInChildren<UIRevealSequence>())reveal.Cancel();
                         var badge=host.transform.Find("DrivingTutorial/TutorialMode");var text=badge.Find("Label").GetComponent<TMP_Text>();
-                        Canvas.ForceUpdateCanvases();text.ForceMeshUpdate();Require(badge.gameObject.activeInHierarchy&&text.text=="チュートリアル"&&!text.isTextOverflowing,"Tutorial badge must persist during driving, briefing and waiting.");
+                        Canvas.ForceUpdateCanvases();text.ForceMeshUpdate();Require(badge.gameObject.activeInHierarchy&&text.text=="チュートリアル/練習"&&!text.isTextOverflowing,"Tutorial badge must persist during driving, briefing and waiting.");
                         foreach(var child in host.GetComponentsInChildren<Transform>(true))child.gameObject.layer=30;
                         if(page<2)Capture(camera,output,"tutorial-p"+(player+1)+(page==1?"-briefing":"")+".jpg");
                     }

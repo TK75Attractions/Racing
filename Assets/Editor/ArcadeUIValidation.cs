@@ -58,11 +58,12 @@ public static class ArcadeUIValidation
                 var ui=new ResultUIManager();ui.Init(result,player+1);var session=Session();ui.ShowResults(session);
                 var card=result.Find("ResultPresentation/ResultCard");Require(card.Find("Classification").gameObject.activeSelf,"Classification must be initially visible.");
                 Require(card.Find("RankingDisclosure")==null&&card.Find("DailyRanking/DailyRow0")==null,"Daily rank must not expand a full ranking.");
-                Require(Text(card,"DailyRanking/OwnRank").StartsWith("本日")&&Text(card,"DailyRanking/OwnRank").EndsWith("位！"),"Each player sees only their own daily place.");
+                Require(Text(card,"DailyRanking/OwnRank").StartsWith("本日")&&Text(card,"DailyRanking/OwnRank").EndsWith("人中"),"Each player sees only their own daily place.");
                 session.GetPlayerResult(player).didFinish=false;ui.ShowResults(session);Require(Text(card,"Finish/Rank")=="DNF"&&Text(card,"Finish/Time")=="未完走","DNF must not award a finish place/time.");
                 var practice=new DrivingTutorialUI(root.transform,player);var lesson=new DrivingTutorialProgress();practice.Update(lesson,new DriveInputState{steering=-24,pedal=.65f},6,true);
                 var tutorial=root.transform.Find("DrivingTutorial/ModernHUD");Require(tutorial.GetComponentsInChildren<ArcadeDialGraphic>(true).Length==2,"Practice must reuse both race dials.");Require(!tutorial.Find("Position").gameObject.activeSelf&&!tutorial.Find("Time").gameObject.activeSelf,"Practice must omit race rank/timer.");Require(tutorial.Find("SteeringIndicator/Track").GetComponent<RacingSteeringIndicator>().enabled,"Practice steering must remain visible.");practice.Dispose();
                 bool completed=false;var ending=ArcadeEndingUI.Get(root.transform);ending.Show(()=>completed=true);ending.TickInput(1,2);Require(!completed,"Finishing with a held pedal must not skip thanks.");ending.TickInput(0,.1f);ending.TickInput(1,1);Require(completed&&!ending.IsVisible,"Ending must accept a deliberate pedal confirmation.");
+                completed=false;ending.Show(()=>completed=true);ending.TickInput(1,4.99f);Require(!completed,"Thanks must remain visible until five seconds.");ending.TickInput(1,.01f);Require(completed&&!ending.IsVisible,"Thanks auto-returns despite a held pedal.");
                 int dirty=0;var dial=hud.Find("Tachometer/Gauge").GetComponent<ArcadeDialGraphic>();dial.RegisterDirtyVerticesCallback(()=>dirty++);for(int i=0;i<120;i++)telemetry.SetTelemetry(6200,.72f);Require(dirty==0,"Unchanged telemetry must not rebuild meshes.");
             }
             finally{UnityEngine.Object.DestroyImmediate(root);}

@@ -39,7 +39,7 @@ public static class ArcadeEndingPlayModeValidation
             else if(stage==3&&Root(1).Find("Title").gameObject.activeSelf){manager.SelectResultOption(0,0);Next();}
             else if(stage==4&&Time.frameCount-changedFrame>2)
             {
-                var p1=Root(0).GetComponent<ArcadeEndingUI>();Require(p1.IsVisible,"P1 ending remains independent.");Capture(manager,0);p1.TickInput(0,.1f);p1.TickInput(1,1);Next();
+                var p1=Root(0).GetComponent<ArcadeEndingUI>();Require(p1.IsVisible,"P1 ending remains independent.");Capture(manager,0);p1.TickInput(1,4.8f);Require(p1.IsVisible,"No early automatic return.");p1.TickInput(1,.2f);Require(!p1.IsVisible,"Five seconds automatically returns to title without pedal release.");Next();
             }
             else if(stage==5&&manager.state==Gmanager.State.Title){Debug.Log("ARCADE_ENDING_PLAYMODE_PASS: real rendered P1/P2 endings, held-pedal safety, independent title returns.");Finish(0);}
         }

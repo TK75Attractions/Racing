@@ -551,7 +551,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     private void BuildTitlePedalPanel(Transform title, int playerIndex, Vector2 anchorMin, Vector2 anchorMax, Color accent)
     {
-        RacingMenuButton start = NeonUI.Button(title, $"Player{playerIndex + 1}Pedal", "はじめる", "START",
+        RacingMenuButton start = NeonUI.Button(title, $"Player{playerIndex + 1}Pedal", "練習へ進む", "PRACTICE",
             RacingIconGraphic.Icon.Flag, anchorMin, anchorMax, true, () => Gmanager.Control?.ConfirmTitleStart(playerIndex));
         PedalButtonFeedback feedback = start.GetComponent<PedalButtonFeedback>() ?? start.gameObject.AddComponent<PedalButtonFeedback>();
         feedback.Configure(NeonUI.Pink);
@@ -585,7 +585,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
             string connection = input != null ? DriverInputNotice.Connection(input.GetPlayerInputSource(playerIndex)) : "";
             string prompt = connection.Length > 0 ? connection + "\n係員に知らせてね" : !armed
                 ? "ペダルを離して準備してください"
-                : ready ? "準備完了  /  相手の準備を待っています" : "長押しで車の選択へ / ペダルを踏み込む";
+                : ready ? "準備完了  /  相手の準備を待っています" : "長押しで練習へ進む / ペダルを踏み込む";
             if (titlePrompt.text != prompt) titlePrompt.text = prompt;
         }
     }
