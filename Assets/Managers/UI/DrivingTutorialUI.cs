@@ -26,7 +26,7 @@ public sealed class DrivingTutorialUI
         player=playerIndex;ArcadeUI.Bind(canvas,player);
         var r=RacingUITheme.Rect(canvas,"DrivingTutorial",Vector2.zero,Vector2.one);root=r.gameObject;r.SetAsFirstSibling();
         Transform hud=RacingHUDBuilder.Build(r,player,2);instruments=hud.gameObject;
-        ArcadeUI.Hide(hud,"Position","Lap","Time","LapDelta","Leaderboard","Pause");
+        ArcadeUI.Hide(hud,"Position","Lap","Time","LapTimes","Leaderboard","Pause");
         speed.Init(hud.Find("Speed"));telemetry=hud.GetComponent<ArcadeHUDTelemetry>();telemetry.enabled=false;
         steering=hud.Find("SteeringIndicator/Track").GetComponent<RacingSteeringIndicator>();steering.AutoBind=false;
         ArcadeUI.Logo(r,new Vector2(.03f,.84f),new Vector2(.27f,.97f));

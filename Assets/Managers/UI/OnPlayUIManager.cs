@@ -22,8 +22,6 @@ public class OnPlayUIManager
     private ArcadeNoticeRail quiet;
     private ArcadeHUDTelemetry telemetry;
     private WrongWayNotice wrongWayNotice;
-    private readonly LapComparison lapComparison=new LapComparison();
-    private int comparedPlayer=-1;
 
     public UIPosition Position => position;
     public UILap Lap => lap;
@@ -187,12 +185,8 @@ public class OnPlayUIManager
         }
     }
 
-    public void SetLapDelta(float? seconds)=>telemetry?.SetLapDelta(seconds);
-    public void UpdateLapComparison(int completedLaps,float fraction,float lapSeconds,float completedSeconds,int viewedPlayer=-1)
-    {
-        if(comparedPlayer!=viewedPlayer){lapComparison.Reset();comparedPlayer=viewedPlayer;}
-        SetLapDelta(lapComparison.Sample(completedLaps,fraction,lapSeconds,completedSeconds));
-    }
+    public void UpdateLapTimes(int completedLaps,float firstLapSeconds,float secondLapSeconds)
+        =>telemetry?.SetLapTimes(completedLaps,firstLapSeconds,secondLapSeconds);
 
     public void SetMiniMapCars(Transform playerOneCar, Transform playerTwoCar)
     {

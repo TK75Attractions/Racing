@@ -11,6 +11,7 @@ public class LapManager : MonoBehaviour
         public string carName;
         public int lapCount;
         public float currentLapTime = 0f;
+        public float firstLapTime, secondLapTime;
         public float bestLapTime = float.MaxValue;
         public float totalRaceTime = 0f;
         /// <summary>現在の周回を含む、コース上の連続的な進捗距離です。</summary>
@@ -165,6 +166,7 @@ public class LapManager : MonoBehaviour
         CarTimeData data = GetOrCreateCarData(rb);
         data.lapCount = 0;
         data.currentLapTime = 0f;
+        data.firstLapTime = data.secondLapTime = 0f;
         data.totalRaceTime = 0f;
         data.bestLapTime = float.MaxValue;
         data.isFinished = false;
@@ -232,6 +234,8 @@ public class LapManager : MonoBehaviour
         }
 
         float completedLapTime = data.currentLapTime;
+        if(data.lapCount==1)data.firstLapTime=completedLapTime;
+        if(data.lapCount==2)data.secondLapTime=completedLapTime;
         data.totalRaceTime += completedLapTime;
 
         Debug.Log($"{data.carName} : Lap {data.lapCount} | Time: {data.currentLapTime:F2}s | Best: {data.bestLapTime:F2}s");

@@ -38,9 +38,12 @@ public static class RacingHUDBuilder
         var pauseButton=pause.GetComponent<Button>()??pause.gameObject.AddComponent<Button>();pauseButton.targetGraphic=pauseFace;pauseButton.transition=Selectable.Transition.None;pauseButton.onClick.RemoveAllListeners();pauseButton.onClick.AddListener(()=>Gmanager.Control?.OpenInterruptionMenu(playerIndex));
         RacingUITheme.Rule(pause,"LeftBar",new Vector2(.32f,.28f),new Vector2(.43f,.72f),p.Ink);RacingUITheme.Rule(pause,"RightBar",new Vector2(.57f,.28f),new Vector2(.68f,.72f),p.Ink);
         RacingUITheme.Rule(pause,"Accent",Vector2.zero,new Vector2(1,.07f),p.Primary);
-        var delta=ArcadeUI.Panel(root,"LapDelta",new Vector2(.825f,.76f),new Vector2(.92f,.82f),p.Ink);
-        Text(delta,"Heading","前周比",.08f,.1f,.53f,.9f,19,p.Paper);
-        Text(delta,"Value","—",.53f,.05f,.94f,.95f,31,p.Secondary,true);
+        var lapTimes=ArcadeUI.Panel(root,"LapTimes",new Vector2(.718f,.704f),new Vector2(.92f,.825f),p.Ink);
+        Text(lapTimes,"Lap1Label","LAP1",.04f,.52f,.30f,.97f,25,p.Paper,true);
+        Text(lapTimes,"Lap1Time","00:00.00",.32f,.52f,.96f,.97f,33,p.Secondary,true);
+        Text(lapTimes,"Lap2Label","LAP2",.04f,.03f,.30f,.48f,25,p.Paper,true);
+        Text(lapTimes,"Lap2Time","00:00.00",.32f,.03f,.96f,.48f,33,p.Paper,true);
+        lapTimes.gameObject.SetActive(false);
         var board=RacingUITheme.Rect(root,"Leaderboard",new Vector2(.025f,.55f),new Vector2(.178f,.77f));
         (board.GetComponent<RacingLeaderboardUI>()??board.gameObject.AddComponent<RacingLeaderboardUI>()).Configure(playerIndex);
         BuildDial(root,"Speed",false,new Vector2(.015f,.035f),new Vector2(.29f,.50f),p);
@@ -55,7 +58,7 @@ public static class RacingHUDBuilder
         (track.GetComponent<RacingSteeringIndicator>()??track.gameObject.AddComponent<RacingSteeringIndicator>()).Configure(playerIndex,caption);
         var telemetry=root.GetComponent<ArcadeHUDTelemetry>()??root.gameObject.AddComponent<ArcadeHUDTelemetry>();telemetry.Configure(playerIndex);
         IsolateCanvas(root.Find("Speed") as RectTransform);IsolateCanvas(root.Find("Tachometer") as RectTransform);IsolateCanvas(steering);IsolateCanvas(time);
-        foreach(string name in new[]{"Position","Lap","Time","Pause","LapDelta","SteeringIndicator","Position/Badge","Tachometer/Boost"})ArcadeUI.HUDShadow(root.Find(name));
+        foreach(string name in new[]{"Position","Lap","Time","Pause","LapTimes","SteeringIndicator","Position/Badge","Tachometer/Boost"})ArcadeUI.HUDShadow(root.Find(name));
         return root;
     }
     private static void BuildDial(Transform root,string name,bool tach,Vector2 min,Vector2 max,ArcadeUI.Palette p)

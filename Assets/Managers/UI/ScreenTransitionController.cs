@@ -632,7 +632,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
         {
             onPlayRoot.transform.Find("ModernHUD")?.gameObject.SetActive(true);
             onPlayRoot.transform.Find("MiniMap")?.gameObject.SetActive(false);
-            onPlayRoot.transform.Find("ModernHUD/LapDelta")?.gameObject.SetActive(!showCountdown);
+            var hud=onPlayRoot.transform.Find("ModernHUD");
+            hud?.Find("LapTimes")?.gameObject.SetActive(!showCountdown&&hud.GetComponent<ArcadeHUDTelemetry>().HasLapTimes);
             onPlayRoot.transform.Find("ModernHUD/Leaderboard")?.gameObject.SetActive(!showCountdown);
             onPlayRoot.transform.Find("CountdownCourse")?.gameObject.SetActive(false);
             onPlayRoot.transform.Find("CountdownLap")?.gameObject.SetActive(false);
