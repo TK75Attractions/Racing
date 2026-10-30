@@ -10,10 +10,12 @@
 
 1. Macで `Tools/DashboardIPhone/Open iPhone Project.command` を開きます。
 2. Xcodeの **Settings → Accounts** で、自分のApple Accountを追加します。
-3. 左端の青いRacingUsbプロジェクト → 中央の **TARGETS → RacingUsb → Signing & Capabilities → Team** で自分のチームを選びます。Automatically manage signingはオンにします。Bundle Identifierの使用制限が出た場合は、自分のチームで使える識別名に変更します。
+3. `Tools/DashboardIPhone/Signing.local.xcconfig.example` を同じ場所の `Signing.local.xcconfig` にコピーし、`DEVELOPMENT_TEAM` に自分のTeam IDを設定します。左端の青いRacingUsbプロジェクト → 中央の **TARGETS → RacingUsb → Signing & Capabilities → Team** で反映を確認します。Automatically manage signingはオンにします。Bundle Identifierの使用制限が出た場合は、ローカル設定に `PRODUCT_BUNDLE_IDENTIFIER` を追加して自分のチームで使える識別名にします。
 4. iPhoneをUSBで接続し、表示されたらこのMacを「信頼」します。
 5. 接続したiPhoneをXcodeの実行先に選びます。iPhoneの **設定 → プライバシーとセキュリティ → デベロッパモード** を、端末に表示される説明を確認して有効にします。この操作は**iPhoneの再起動**を伴います。MacのRACEは再起動しません。
 6. XcodeでRunを押し、Racing USBアプリをiPhoneへインストールします。署名元の確認を求められた場合は、iPhone側で自分の署名を確認します。
+
+`Signing.local.xcconfig` はGit対象外です。既にこのファイルがある場合は、その設定を保持します。共有プロジェクトへ個人のTeam IDを書き込む必要はありません。
 
 アカウントへのサインイン、証明書・プロファイルの作成、開発者モードの許可は、利用者自身が確認して行います。自動で資格情報を作成・変更するスクリプトは用意していません。Xcodeから追加のiOSコンポーネントを求められた場合は、XcodeのSettings → Componentsで必要なものを確認します。
 
