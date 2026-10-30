@@ -10,6 +10,14 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 
 static void Require(bool condition,string message){if(!condition)throw new Exception(message);}
 static Uri Url(WebApplication app)=>new(app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single());
+Require(UsbMode.Requested([])=="wired"&&UsbMode.Requested(["--iphone","--no-browser"])=="iphone"&&UsbMode.Requested(["--tethering"])=="tethering","Each launch option must select its own connection mode.");
+bool invalidModes=false;try{UsbMode.Requested(["--iphone","--tethering"]);}catch(ArgumentException){invalidModes=true;}Require(invalidModes,"Conflicting modes cannot silently select another setup page.");
+foreach(string current in new[]{"wired","iphone","tethering","usb","unknown"})
+{
+    using var modeInfo=JsonDocument.Parse(JsonSerializer.Serialize(new{app="racing-usb-dashboard",mode=current}));
+    foreach(string requested in new[]{"wired","iphone","tethering"})Require(UsbMode.CanReuse(modeInfo.RootElement,requested)==(current==requested),"A duplicate launch may reuse only the explicitly requested mode; legacy/unknown helpers must not hide missing iPhone codes.");
+}
+Console.WriteLine("USB_MODE_TEST: same-mode reuse and conflicting-mode rejection passed");
 Require(WiredNetwork.IsEthernet("en5",NetworkInterfaceType.Ethernet)&&!WiredNetwork.IsEthernet("en0",NetworkInterfaceType.Wireless80211)&&!WiredNetwork.IsEthernet("bridge0",NetworkInterfaceType.Ethernet),"Wired selection must exclude Wi-Fi and bridges.");
 Require(WiredNetwork.MacEthernetDevices("Hardware Port: Ethernet Adapter\nDevice: en3\n\nHardware Port: USB 10/100/1000 LAN\nDevice: en4\n\nHardware Port: Wi-Fi\nDevice: en0\n\nHardware Port: USB TO DP HDMI\nDevice: en11\n\nHardware Port: Thunderbolt Bridge\nDevice: bridge0\n").SetEquals(new[]{"en3","en4"}),"macOS Wi-Fi, display and bridge ports cannot become wired candidates even when the driver reports Ethernet type.");
 var wiredAddresses=new[]{new WiredAddress("en5","192.168.77.1","255.255.255.0")};

@@ -20,7 +20,7 @@ SafariとLANアダプターを使う場合は[アプリ不要の有線接続](Da
 ## 毎回の接続
 
 1. Macで通常のDashboard中継とRACEを起動しておきます。
-2. `sh "Tools/DashboardUsb/Start USB Dashboard.command" --iphone` で起動します。Macの準備画面は `http://127.0.0.1:8767/` です。他の接続方式の補助アプリが起動中なら、補助アプリだけを終了してから起動します。
+2. `Tools/DashboardUsb/Start iPhone USB Dashboard.command` を開きます。従来どおり `sh "Tools/DashboardUsb/Start USB Dashboard.command" --iphone` でも起動できます。Macの準備画面は `http://127.0.0.1:8767/` です。他の接続方式の補助アプリが起動中なら、その補助アプリのターミナルで **Ctrl+C** を押し、起動し直します。RACEと通常のDashboard中継は終了しません。
 3. iPhoneをデータ通信対応のUSBケーブルでMacにつなぎ、**Racing USBアプリ**を開きます。Safariは使いません。
 4. Macの準備画面に表示された8けたのコードをiPhoneへ入力し、「USBで接続」を押します。
 5. 既存の管理画面が表示され、通信方式が **USB直通 / WebSocket** になったら利用できます。
@@ -33,6 +33,7 @@ Mac側の補助アプリを再起動するとコードが変わります。iPhon
 
 - iPhoneが見つからない: データ対応ケーブル、端末のロック解除、このMacの信頼を確認します。
 - コード入力画面のまま: Macの補助アプリが起動しているか、新しい8けたコードか、アプリが前面にあるか確認します。
+- Macの準備画面に8けたコードが出ず「Safariから有線で操作」と表示される: 有線LAN用の補助アプリが起動しています。その補助アプリだけをCtrl+Cで終了して、`Start iPhone USB Dashboard.command` を開き直し、ブラウザーを再読み込みします。コードはMacのブラウザーに表示され、ターミナルには表示しません。
 - USB接続後に管理画面を開けない: 通常のDashboard中継が8766番で起動しているか確認します。RACEの再起動は不要です。
 - アプリをインストールできない: XcodeのTeam、署名・プロファイル、必要なiOSコンポーネント、iPhoneのデベロッパモードを確認します。
 
