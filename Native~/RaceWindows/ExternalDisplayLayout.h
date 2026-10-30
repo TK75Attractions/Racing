@@ -12,6 +12,19 @@ struct DisplayArea {
     bool builtIn, mirrored;
     double x, y, width, height; // AppKit points, never Retina backing pixels.
 };
+// The operator display is the built-in panel, independent of which player window is key.
+inline int BroadcastTarget(const std::vector<DisplayArea>& displays, uint32_t mainId)
+{
+    int main=-1, first=-1;
+    for(int i=0;i<(int)displays.size();++i) {
+        const auto& d=displays[i];
+        if(!d.id || d.mirrored || d.width<=0 || d.height<=0 || !std::isfinite(d.x) || !std::isfinite(d.y) || !std::isfinite(d.width) || !std::isfinite(d.height))continue;
+        if(d.builtIn)return i;
+        if(d.id==mainId)main=i;
+        if(first<0)first=i;
+    }
+    return main>=0?main:first;
+}
 inline std::array<int, 2> ExternalPair(const std::vector<DisplayArea>& displays)
 {
     std::vector<int> external;

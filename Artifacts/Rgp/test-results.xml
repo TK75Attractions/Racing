@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<test-run result="Passed" total="182" passed="182" failed="0">
+<test-run result="Passed" total="196" passed="196" failed="0">
   <test-case name="AdaptiveAiPaceTests.SlowPlayersGetNearbyContestsWithoutTheOldHighSpeedFloor" result="Passed" />
   <test-case name="AdaptiveAiPaceTests.CpuCanStillPassThenOfferACounterattackAtBothHumanPaces" result="Passed" />
   <test-case name="AdaptiveAiPaceTests.StrongPlayersAndCatchingUpRetainTheFullSpeedPotential" result="Passed" />
@@ -48,6 +48,9 @@
   <test-case name="EdgeSteeringAssistTests.AnUnintendedDepartureFacesTheRoad" result="Passed" />
   <test-case name="EdgeSteeringAssistTests.AStationaryEdgeAndInvalidGeometryDoNotSteer" result="Passed" />
   <test-case name="EdgeSteeringAssistTests.DeliberateWallEntryPreservesEitherSidesHandleAtAnySpeedLimit" result="Passed" />
+  <test-case name="FinishMusicSequenceTests.FullCuePlaysOnceThenFollowsTheUnfinishedOpponent" result="Passed" />
+  <test-case name="FinishMusicSequenceTests.ResultsCanOpenWithoutCuttingOrRestartingTheCue" result="Passed" />
+  <test-case name="FinishMusicSequenceTests.TwoFinishesStartIndependentlyAndANewRaceResetsTheSequence" result="Passed" />
   <test-case name="FrameRateCounterTests.CountsIntervalsAndUpdatesFromSixtyToThirtyFps" result="Passed" />
   <test-case name="FrameRateCounterTests.IncludesStallsInTheMeasuredTime" result="Passed" />
   <test-case name="FrameRateCounterTests.ReenableAndClockResetDiscardTheOldSample" result="Passed" />
@@ -68,6 +71,14 @@
   <test-case name="LapTraversalTests.ReverseCircuitAndInvalidValuesDoNotArm" result="Passed" />
   <test-case name="LapTraversalTests.FastFinishSweepCountsOnlyAnArmedForwardCircuit" result="Passed" />
   <test-case name="LapTraversalTests.InvalidExcursionCannotBridgeAnUnvisitedGate" result="Passed" />
+  <test-case name="OutputAudioDelayTests.ZeroDelayPreservesStereoAndInput" result="Passed" />
+  <test-case name="OutputAudioDelayTests.DelayCountsFramesAcrossBlockBoundaries" result="Passed" />
+  <test-case name="OutputAudioDelayTests.MonoIsCopiedToBothChannels" result="Passed" />
+  <test-case name="OutputAudioDelayTests.ResetDoesNotLeakGameplayIntoMaintenance" result="Passed" />
+  <test-case name="OutputAudioDelayTests.OutputsRemainIndependent" result="Passed" />
+  <test-case name="PreRaceCountdownTests.TitleIdleAndRepeatedStartDoNotConsumeOrExtendTheDeadline" result="Passed" />
+  <test-case name="PreRaceCountdownTests.SharedDeadlineReservesCountdownAndToleratesStalledFrames" result="Passed" />
+  <test-case name="PreRaceCountdownTests.InvalidFramesCannotBreakThePreparationDeadline" result="Passed" />
   <test-case name="PreparationCountdownTests.ExpiryOccursOnceAtTheBoundaryAndNeverGoesNegative" result="Passed" />
   <test-case name="PreparationCountdownTests.StoppingPreservesTimeAndDoesNotExpire" result="Passed" />
   <test-case name="PreparationCountdownTests.EachScreenHasItsOwnTimeAndNegativeDeltaCannotAddTime" result="Passed" />
@@ -80,9 +91,9 @@
   <test-case name="RaceDisplayRoutingTests.BroadcastNeverTakesAPlayerOutput" result="Passed" />
   <test-case name="RaceFeatureSettingsTests.TestAutodriveStartsOffWhileGameplayImprovementsStartOn" result="Passed" />
   <test-case name="RaceFeatureSettingsTests.FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked" result="Passed" />
-  <test-case name="RaceFeatureSettingsTests.AQueuedPresetCannotChangeTheCurrentRace" result="Passed" />
-  <test-case name="RaceFeatureSettingsTests.AnExplicitQueuedPresetSurvivesNextGroupWhileUnqueuedExperienceResets" result="Passed" />
-  <test-case name="RaceFeatureSettingsTests.ExperienceRulesAndCustomStandardRulesDoNotMutateEachOther" result="Passed" />
+  <test-case name="RaceFeatureSettingsTests.RemovedPresetCannotChangeRulesOrEnableGentleItems" result="Passed" />
+  <test-case name="RaceFeatureSettingsTests.NormalRulesCapTheRaceAtThreeMinutesEvenWithLegacySceneSettings" result="Passed" />
+  <test-case name="RaceFeatureSettingsTests.IndependentGentleItemAssistanceSurvivesPreparation" result="Passed" />
   <test-case name="RaceFeatureSettingsTests.DebugCatalogContainsExactlyTheSixConfigurableFeaturesAndRejectsStandardIds" result="Passed" />
   <test-case name="RaceHighlightTimelineTests.PassingMomentsKeepTheirLeadInAndRejectDuplicateJitter" result="Passed" />
   <test-case name="RaceHighlightTimelineTests.StrongEventsWinOverlappingWindowsAndEndWithinTheRace" result="Passed" />
@@ -168,10 +179,13 @@
   <test-case name="TubeLineChallengeTests.JoiningHalfwaySwitchingLaneOrReversingCannotCompleteTheLine" result="Passed" />
   <test-case name="TubeLineChallengeTests.LingeringAndTeleportingCannotAward" result="Passed" />
   <test-case name="TubeLineChallengeTests.OffAndRecoveryClearPendingButNeverEraseAnEarnedReward" result="Passed" />
+  <test-case name="TubeSteeringAssistTests.NeutralHandleCorrectsBothHeadingDirections" result="Passed" />
+  <test-case name="TubeSteeringAssistTests.StrongHandleInputRetainsDriverControlAndCorrectionIsBounded" result="Passed" />
+  <test-case name="TubeSteeringAssistTests.YawIsDampedAndInvalidInputDoesNotSteer" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.EveryPageIsShownAndBriefingFinishesWithoutInput" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.HoldingPedalOrTappingTooEarlyCannotSkipTheReadingTime" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.APressBeforeReadTimeNeedsAnotherReleaseAndPress" result="Passed" />
-  <test-case name="TutorialGimmickBriefingTests.LargeOrInvalidFramesAndDisconnectedPedalsCannotSkipPages" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.InvalidFramesAreIgnoredAndLargeFramesRespectTheRealDeadline" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.ReconnectionWhileHoldingPedalNeedsAFreshRelease" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.PlayersReadIndependently" result="Passed" />
   <test-case name="TwoPlayerRaceSessionTests.FirstFinish_StartsFortySecondWindow" result="Passed" />

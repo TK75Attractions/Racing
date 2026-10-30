@@ -1,0 +1,7 @@
+PASS: each title input starts only that player's practice; repeated start does not duplicate practice; second start preserves the shared deadline.
+PASS: production tube steering on the floor, banked sides and ceiling; driver input, live OFF, disconnect and airborne guards.
+PASS: both result palettes show 15, ceil(7.2)=8 and 0 seconds; new results reset to 15; nonoverlapping timer/Next/daily ranking; fitted glyphs; production UI renders; actual manager clock shows 1 at 14 seconds and hides results at 15.
+PASS: PlayerAudioValidation executed in Unity: one-shot finish, opponent transport and continuous results.
+PASS: shared core tests 196/196. Unity-generated compiler options: Core/runtime/Editor all compile.
+PASS: hidden AppKit windows and display routing tests; universal arm64/x86_64 plugin build with unchanged native exports.
+PENDING: replacement finish music attachment. Existing finishv4 retained. No running RACE restart, input, or configuration changes.

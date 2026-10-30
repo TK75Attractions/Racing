@@ -90,17 +90,27 @@ public static class PlayerAudioValidation
                 "The goal celebration must start finish music only for the finisher.");
             Set(players.GetValue(0), "isSpectating", true);
             AdvanceMusic(music);
-            Require(manager.GetAudioViewedPlayer(0) == 1 && sources[0].clip.name == "finishv4",
-                "A finisher must retain finish music while spectating the other player.");
+            Require(manager.GetAudioViewedPlayer(0) == 1 && sources[0].clip.name == "finishv4" && !sources[0].loop,
+                "The full finish cue plays once, including while spectating.");
+            FinishMusicSequence[] sequences=(FinishMusicSequence[])Get(music,"finishSequences");
+            // Simulate the DSP boundary after that one shot has finished, without playing real devices.
+            sequences[0].Reset();sequences[0].Begin(-100,1);
+            AdvanceMusic(music);
+            Require(sources[0].clip==sources[1].clip && sources[0].loop,
+                "After the cue, the spectator follows the opponent's race transport.");
             Set(players.GetValue(0), "result", new RaceResultRecord { didFinish = false });
             AdvanceMusic(music);
             Require(sources[0].clip == sources[1].clip, "A DNF spectator still follows the watched player's race music.");
             manager.state = Gmanager.State.Goal;
             AdvanceMusic(music);
-            Require(sources.All(s => s.clip.name == "finishv4"), "The shared goal scene must use finish music.");
+            Require(sources.All(s => s.clip.name == "result_v3"), "DNF screens go directly to result music.");
+            AudioClip resultTrack=sources[0].clip;
+            var epochs=(System.Collections.Generic.Dictionary<AudioClip,double>)Get(music,"clipEpochs");
+            double resultEpoch=epochs[resultTrack];
             manager.state = Gmanager.State.Result;
             AdvanceMusic(music);
-            Require(sources.All(s => s.clip.name == "result_v3"), "Results must use the dedicated result track.");
+            Require(sources.All(s => s.clip.name == "result_v3") && epochs[resultTrack]==resultEpoch,
+                "Entering results continues the existing result transport without restarting.");
             Set(players.GetValue(0), "returnedToTitle", true);
             AdvanceMusic(music);
             Require(sources[0].clip.name == "Race_Opening_v3" && sources[1].clip.name == "result_v3",
@@ -158,7 +168,7 @@ public static class PlayerAudioValidation
                 outputType.GetMethod("ra_shutdown", nativeFlags).Invoke(null, null);
                 Require(count >= 0, "Unity must load the native plugin and enumerate real audio endpoints.");
             }
-            Debug.Log("PlayerAudioValidation PASSED: opening/selection, independent tutorials and final laps, finish/spectator/results, individual title return, retry, single lap, stereo viewpoint, unchanged-rate device notification and no default-output leakage.");
+            Debug.Log("PlayerAudioValidation PASSED: opening/selection, independent tutorials and final laps, one-shot finish/opponent transport/continuous result music, individual title return, retry, single lap, stereo viewpoint, unchanged-rate device notification and no default-output leakage.");
         }
         finally
         {

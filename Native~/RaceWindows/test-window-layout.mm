@@ -65,6 +65,9 @@ int main()
         assert(NSEqualRects([broadcast constrainFrameRect:NSScreen.mainScreen.frame toScreen:NSScreen.mainScreen],NSScreen.mainScreen.frame));
         assert(NSEqualSizes(broadcast.contentView.bounds.size,NSScreen.mainScreen.frame.size));
         assert(broadcast.movableByWindowBackground && !broadcast.canBecomeKeyWindow);
+        assert(broadcast.collectionBehavior & NSWindowCollectionBehaviorCanJoinAllSpaces);
+        assert(broadcast.collectionBehavior & NSWindowCollectionBehaviorFullScreenAuxiliary);
+        assert(!(broadcast.styleMask & NSWindowStyleMaskTitled));
         assert(broadcast.level>NSMainMenuWindowLevel && broadcast.hidesOnDeactivate);
         assert(FindUnityWindow()==primary);
         NSRect moved=NSMakeRect(initial.origin.x+25,initial.origin.y+35,800,450);

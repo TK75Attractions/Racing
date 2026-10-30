@@ -14,6 +14,8 @@ public class ResultUIManager
     private TMP_Text localRank,localTime,menuHint;
     private ResultMenuAnimator menuAnimator;
     private DailyRankingPanel dailyRankingPanel;
+    private PreparationTimerUI countdown;
+    public string CountdownText => countdown?.Text;
     public bool IsVisible => card != null && card.gameObject.activeInHierarchy;
     public string AchievementText=>FormatHighlight(currentSessionResult?.GetPlayerResult(localPlayerNumber-1));
     public RaceResultRecord CurrentResult=>currentResult;
@@ -49,6 +51,8 @@ public class ResultUIManager
         }
         dailyRankingPanel=new DailyRankingPanel(card);
         BuildMenu();
+        countdown=new PreparationTimerUI(card,new Vector2(.75f,.045f),new Vector2(.97f,.13f),true,"ResultCountdown");
+        SetCountdown(Gmanager.ResultDisplaySeconds);
         (card.GetComponent<ResultReplayPanel>()??card.gameObject.AddComponent<ResultReplayPanel>()).Build(localPlayerNumber);
         var reveal=card.GetComponent<UIRevealSequence>();if(reveal==null)reveal=card.gameObject.AddComponent<UIRevealSequence>();
         reveal.Configure(card,new[]{"Header","Finish","Finish/Rank","Finish/Time","Classification/ResultRow1","Classification/ResultRow2","Classification/ResultRow3","Classification/ResultRow4","DailyRanking","ResultMenu","MenuHint"},
@@ -82,8 +86,9 @@ public class ResultUIManager
         card.Find("Header/Course").GetComponent<TMP_Text>().text="つくこまサーキット / "+laps+"周";
         localRank.text=local==null?"—":local.didFinish?local.finishPosition+"<size=32%>位</size>":"DNF";
         localTime.text=local==null?"—":local.didFinish?FormatTime(local.totalRaceTime):"未完走";
-        RefreshDailyRanking();SetMenuState(0,0);SetPedalConfirmationReady(false);
+        RefreshDailyRanking();SetMenuState(0,0);SetPedalConfirmationReady(false);SetCountdown(Gmanager.ResultDisplaySeconds);
     }
+    public void SetCountdown(float remainingSeconds)=>countdown?.Update(remainingSeconds,Gmanager.ResultDisplaySeconds);
     public void RefreshHighlight() { }
     public void RefreshDailyRanking()=>dailyRankingPanel?.Refresh(currentSessionResult?.dailyRanking,currentSessionResult?.GetPlayerResult(localPlayerNumber-1),localPlayerNumber);
     public void SetMenuState(int index,float amount)=>menuAnimator?.SetState(index,amount);
