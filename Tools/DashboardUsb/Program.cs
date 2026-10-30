@@ -39,7 +39,7 @@ setup.Run(async context=>
     {context.Response.StatusCode=403;return;}
     if(wiredMode&&(context.Request.Path.StartsWithSegments("/api/wired")||context.Request.Path=="/api/usb")){await wired.Handle(context);return;}
     if(context.Request.Path=="/api/usb")
-    {await context.Response.WriteAsJsonAsync(new{app="racing-usb-dashboard",mode=requestedMode,connected=iphone.Status.connected||usbUrl!=null,url=usbUrl,error=lastError,iphone=iphone.Status});return;}
+    {await context.Response.WriteAsJsonAsync(new{app="racing-usb-dashboard",mode=requestedMode,protocol=UsbTunnel.Protocol,connected=iphone.Status.connected||usbUrl!=null,url=usbUrl,error=lastError,iphone=iphone.Status});return;}
     if(context.Request.Path!="/"){context.Response.StatusCode=404;return;}
     context.Response.ContentType="text/html; charset=utf-8";
     await context.Response.WriteAsync(wiredMode?WiredSetup.Page:UsbSetup.Page);
