@@ -1,6 +1,6 @@
 # iPhone / iPadからUSBだけで管理する
 
-SafariとLANアダプターを使う場合は[アプリ不要の有線接続](DashboardWired.md)を使ってください。この文書は通常のUSBケーブルと専用アプリを使う追加方式の説明です。
+通常のUSBケーブルと専用アプリを使います。無線経由の管理には[Tailscale](DashboardStartup.md)を使用します。
 
 **インターネット共有・Wi-Fi・Tailscale・接続コードは不要です。** 専用アプリ「Racing USB」とMacを、USBケーブルで直接つなぎます。iOS / iPadOS 16以降が対象で、iPadはWi-Fiモデルでも使えます。LightningとUSB-Cどちらもデータ通信対応ケーブルで接続できます。iPad実機での確認は未実施です。
 
@@ -45,7 +45,6 @@ Mac版ビルド前に.NET 10 SDKで管理中継とUSB補助アプリを発行し
 
 - iPhoneが見つからない: データ対応ケーブル、端末のロック解除、このMacの信頼を確認します。
 - コード欄がある: 端末アプリまたはMac補助アプリが旧版です。端末側はXcodeでRunし直し、Mac側は補助アプリだけを終了して最新版を起動してください。
-- 「Safariから有線で操作」と表示される: 有線LAN用の補助アプリです。その補助アプリだけをCtrl+Cで終了し、`Start iPhone USB Dashboard.command` を開き直してブラウザーを再読み込みします。
 - USB接続後に管理画面を開けない: 通常のDashboard中継が8766番で起動しているか確認します。RACEの再起動は不要です。
 - アプリをインストールできない: XcodeのTeam、署名・プロファイル、必要なiOSコンポーネント、iPhoneのデベロッパモードを確認します。
 
