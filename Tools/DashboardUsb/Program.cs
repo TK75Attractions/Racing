@@ -15,6 +15,8 @@ using(var probe=new HttpClient(new SocketsHttpHandler{UseProxy=false}){Timeout=T
 var setup=UsbGateway.Builder(IPAddress.Loopback,8767);
 string? usbUrl=null, lastError=null;
 var iphone=new IPhoneUsbHost();
+bool wiredMode=!args.Contains("--iphone")&&!args.Contains("--tethering");
+await using var wired=new WiredHost();
 setup.Run(async context=>
 {
     context.Response.Headers.CacheControl="no-store";
@@ -25,19 +27,21 @@ setup.Run(async context=>
     if(context.Connection.RemoteIpAddress is not IPAddress peer || !IPAddress.IsLoopback(peer) ||
         (host!="127.0.0.1:8767"&&host!="localhost:8767") ||
         context.Request.Headers.ContainsKey("X-Forwarded-For") || context.Request.Headers.ContainsKey("Tailscale-User-Login") ||
-        context.Request.Method!="GET" ||
+        (context.Request.Method!="GET"&&!(wiredMode&&context.Request.Method=="POST"&&context.Request.Path.StartsWithSegments("/api/wired"))) ||
+        (context.Request.Method=="POST"&&context.Request.Headers.Origin!="http://"+host) ||
         (context.Request.Headers.Origin.Count>0&&context.Request.Headers.Origin!="http://"+host))
     {context.Response.StatusCode=403;return;}
+    if(wiredMode&&(context.Request.Path.StartsWithSegments("/api/wired")||context.Request.Path=="/api/usb")){await wired.Handle(context);return;}
     if(context.Request.Path=="/api/usb")
-    {await context.Response.WriteAsJsonAsync(new{app="racing-usb-dashboard",connected=iphone.Status.connected||usbUrl!=null,url=usbUrl,error=lastError,iphone=iphone.Status});return;}
+    {await context.Response.WriteAsJsonAsync(new{app="racing-usb-dashboard",mode=wiredMode?"wired":"usb",connected=iphone.Status.connected||usbUrl!=null,url=usbUrl,error=lastError,iphone=iphone.Status});return;}
     if(context.Request.Path!="/"){context.Response.StatusCode=404;return;}
     context.Response.ContentType="text/html; charset=utf-8";
-    await context.Response.WriteAsync(UsbSetup.Page);
+    await context.Response.WriteAsync(wiredMode?WiredSetup.Page:UsbSetup.Page);
 });
 await setup.StartAsync();
 Console.WriteLine("USB管理画面の準備: http://127.0.0.1:8767/");
-Console.WriteLine("iPhoneのRacing USBアプリで接続できます。インターネット共有は不要です。RACEの再起動も不要です。");
-var monitor=iphone.Run(setup.Lifetime.ApplicationStopping);
+Console.WriteLine(wiredMode?"Safari用の有線LAN接続を準備します。アプリのインストール・インターネット共有は不要です。":"選択したUSB接続方式で起動しました。RACEの再起動は不要です。");
+var monitor=wiredMode?wired.Monitor(setup.Lifetime.ApplicationStopping):args.Contains("--iphone")?iphone.Run(setup.Lifetime.ApplicationStopping):Task.CompletedTask;
 var tethering=args.Contains("--tethering")?Watch(setup.Lifetime.ApplicationStopping):Task.CompletedTask;
 OpenSetup();
 await setup.WaitForShutdownAsync();

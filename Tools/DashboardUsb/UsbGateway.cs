@@ -11,11 +11,12 @@ internal sealed class UsbGateway : IDisposable
     private readonly UsbLink link;
     private readonly string token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
     private readonly HttpClient client;
+    private readonly bool wired;
     internal string PairPath => "/pair?token=" + token;
-    public UsbGateway(UsbLink link, Uri upstream)
+    public UsbGateway(UsbLink link, Uri upstream, bool wired=false)
     {
         if (!upstream.IsLoopback || upstream.Scheme != "http" || upstream.AbsolutePath != "/") throw new ArgumentException("USBの転送先はローカルの管理中継だけです。");
-        this.link=link;this.upstream=upstream;
+        this.link=link;this.upstream=upstream;this.wired=wired;
         client=new HttpClient(new SocketsHttpHandler { UseProxy=false, MaxConnectionsPerServer=16 }) { BaseAddress=upstream, Timeout=Timeout.InfiniteTimeSpan };
     }
     internal static WebApplication Builder(IPAddress address, int port)
@@ -60,7 +61,7 @@ internal sealed class UsbGateway : IDisposable
         if (!SecretEquals(context.Request.Cookies[Cookie],token))
         {
             context.Response.StatusCode=403;context.Response.ContentType="text/html; charset=utf-8";
-            await context.Response.WriteAsync("<!doctype html><html lang=ja><meta name=viewport content='width=device-width,initial-scale=1'><h1>USB接続の確認が必要です</h1><p>ゲームPCのUSB管理画面に表示されたURLから開いてください。</p>");return;
+            await context.Response.WriteAsync("<!doctype html><html lang=ja><meta name=viewport content='width=device-width,initial-scale=1'><h1>有線接続の確認が必要です</h1><p>ゲームPCの準備画面に表示された接続用URLから開いてください。</p>");return;
         }
         if (DashboardAssets.IsAsset(path) && !mutation) {await DashboardAssets.Serve(context,path);return;}
         bool websocket=path=="/api/events" && context.WebSockets.IsWebSocketRequest;
@@ -87,7 +88,7 @@ internal sealed class UsbGateway : IDisposable
             {
                 using var document=await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellation.Token),cancellationToken:cancellation.Token);
                 var info=JsonSerializer.Deserialize<Dictionary<string,JsonElement>>(document.RootElement.GetRawText())!;
-                info["usb"]=JsonSerializer.SerializeToElement(true);info["transport"]=JsonSerializer.SerializeToElement("usb-websocket");
+                info[wired?"wired":"usb"]=JsonSerializer.SerializeToElement(true);info["transport"]=JsonSerializer.SerializeToElement(wired?"ethernet-websocket":"usb-websocket");
                 await context.Response.WriteAsJsonAsync(info,cancellation.Token);
             }
             else await response.Content.CopyToAsync(context.Response.Body,cancellation.Token);
