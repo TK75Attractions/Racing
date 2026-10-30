@@ -1,0 +1,3 @@
+// Shared default; optional signing choices for this Mac follow below.
+PRODUCT_BUNDLE_IDENTIFIER = jp.tk75attractions.racing.usb
+#include? "Signing.local.xcconfig"
