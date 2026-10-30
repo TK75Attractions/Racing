@@ -47,7 +47,7 @@ public sealed class ArcadeHUDTelemetry : MonoBehaviour
     }
     private static void SetLapTime(TMP_Text text,float seconds,ref int shown)
     {
-        int value=Mathf.FloorToInt(Mathf.Max(0f,seconds)*100f+.0001f);
+        int value=Mathf.FloorToInt(Mathf.Max(0f,seconds)*1000f)/10;
         if(value==shown)return;shown=value;
         text.SetText("{0:00}:{1:00}.{2:00}",value/6000,value/100%60,value%100);
     }

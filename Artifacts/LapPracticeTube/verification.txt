@@ -1,0 +1,7 @@
+PASS: LAP1/LAP2 recorded by real lap completion, live second lap, finished-time preservation, retry and spectator source changes; first lap hidden; both rendered HUD palettes.
+PASS: practice stuck/off-course/80-degree heading at continuous three seconds, timer reset on motion/re-entry, idle/disconnected/suppressed guards; completed lessons and preparation deadline preserved; independent P1/P2.
+PASS: wall speed reward and ordinary resistance on floor, 45/90-degree banks and ceiling; coasting, disconnection and airborne guards; existing arcade UI and race recovery checks.
+PASS: core regression, 196 passed / 0 failed.
+PASS: real Play Mode wheel/mesh collisions in four fixtures, including release/disconnect/departure guards; details in physics.json.
+NOTE: physics fixtures constrain all motion except forward translation to isolate traction; manual cabinet and authored-course driving have not been performed.
+NOTE: original FBX LOD generation and QualitySettings restored after verification.

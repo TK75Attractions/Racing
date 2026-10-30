@@ -38,7 +38,7 @@ public static class RacingHUDBuilder
         var pauseButton=pause.GetComponent<Button>()??pause.gameObject.AddComponent<Button>();pauseButton.targetGraphic=pauseFace;pauseButton.transition=Selectable.Transition.None;pauseButton.onClick.RemoveAllListeners();pauseButton.onClick.AddListener(()=>Gmanager.Control?.OpenInterruptionMenu(playerIndex));
         RacingUITheme.Rule(pause,"LeftBar",new Vector2(.32f,.28f),new Vector2(.43f,.72f),p.Ink);RacingUITheme.Rule(pause,"RightBar",new Vector2(.57f,.28f),new Vector2(.68f,.72f),p.Ink);
         RacingUITheme.Rule(pause,"Accent",Vector2.zero,new Vector2(1,.07f),p.Primary);
-        var lapTimes=ArcadeUI.Panel(root,"LapTimes",new Vector2(.718f,.704f),new Vector2(.92f,.825f),p.Ink);
+        var lapTimes=ArcadeUI.Panel(root,"LapTimes",new Vector2(.718f,.748f),new Vector2(.92f,.825f),p.Ink);
         Text(lapTimes,"Lap1Label","LAP1",.04f,.52f,.30f,.97f,25,p.Paper,true);
         Text(lapTimes,"Lap1Time","00:00.00",.32f,.52f,.96f,.97f,33,p.Secondary,true);
         Text(lapTimes,"Lap2Label","LAP2",.04f,.03f,.30f,.48f,25,p.Paper,true);

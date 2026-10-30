@@ -187,7 +187,7 @@ public static class MiniMapValidation
             Transform liveHUD = RacingHUDBuilder.Build(onPlay.transform, 0, 3);
             {
                 Bounds mapBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(onPlayRect, mapRoot.Find("MapFrame") as RectTransform);
-                foreach (string hudName in new[] { "Position", "Lap", "Time", "Speed", "Tachometer", "SteeringIndicator", "LapDelta", "Leaderboard" })
+                foreach (string hudName in new[] { "Position", "Lap", "Time", "Speed", "Tachometer", "SteeringIndicator", "LapTimes", "Leaderboard" })
                 {
                     Transform hud = liveHUD.Find(hudName);
                     if (hud == null) continue;

@@ -1,0 +1,45 @@
+{
+    "passed": true,
+    "trials": [
+        {
+            "name": "left-wall-only",
+            "passed": true,
+            "idleTravel": 3.632158041000366e-8,
+            "forwardTravel": 10.189697265625,
+            "forwardSpeed": 14.94551944732666,
+            "maximumWallForce": 17.399999618530275,
+            "physicalWallWheels": 2,
+            "rayGroundedWheels": 0
+        },
+        {
+            "name": "right-wall-only",
+            "passed": true,
+            "idleTravel": 3.4924596548080447e-8,
+            "forwardTravel": 10.189697265625,
+            "forwardSpeed": 14.94551944732666,
+            "maximumWallForce": 17.399999618530275,
+            "physicalWallWheels": 2,
+            "rayGroundedWheels": 0
+        },
+        {
+            "name": "left-road-seam",
+            "passed": true,
+            "idleTravel": 3.4924596548080447e-8,
+            "forwardTravel": 18.973920822143556,
+            "forwardSpeed": 27.82958984375,
+            "maximumWallForce": 17.399999618530275,
+            "physicalWallWheels": 2,
+            "rayGroundedWheels": 2
+        },
+        {
+            "name": "right-road-seam",
+            "passed": true,
+            "idleTravel": 3.4924596548080447e-8,
+            "forwardTravel": 18.973920822143556,
+            "forwardSpeed": 27.82958984375,
+            "maximumWallForce": 17.399999618530275,
+            "physicalWallWheels": 2,
+            "rayGroundedWheels": 2
+        }
+    ]
+}

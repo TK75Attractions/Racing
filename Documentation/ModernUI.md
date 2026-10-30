@@ -20,7 +20,7 @@
 
 `codex/night-ennichi-arcade-ui` は `codex/arcade-sport-ui` (`6eb6360`) と `raymee/night-ennichi-visuals` (`c0d6158`) を統合します。実画面と評価は [NightArcadeIntegration.md](NightArcadeIntegration.md) を参照。
 
-- 速度・回転数・順位・前周比は新UIの構成を使用します。旧ミニマップ・旧タイトル背景・旧結果カードは構築しません。
+- 速度・回転数・順位・LAP1/LAP2は新UIの構成を使用します。旧ミニマップ・旧タイトル背景・旧結果カードは構築しません。
 - `DriverNoticeQueue` のイベント消費・優先度・最短表示時間は夜景ブランチから維持しました。通常の案内・成功・道路警告はタイム下の `ArcadeNoticeRail` へ表示します。道路警告はアイテム効果・接近通知より優先し、接続断・復帰待ち・ペダル解放待ちは中央に表示します。
 - 自動運転・操舵補助・操舵減速の動作中表示はメーターの上へ小さくまとめます。レースを抜けると通知キュー・各イベント・レールを消去します。
 - タイトル・結果は `MenuSceneryDirector` の実景と新UIを使用します。夜の照明・空・提灯・道路・車両演出を保ち、昼用の追加環境光を夜へ重ねません。
