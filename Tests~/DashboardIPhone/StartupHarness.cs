@@ -41,6 +41,7 @@ internal static class StartupHarness
         string root = Path.Combine(Path.GetTempPath(), "racing startup " + Guid.NewGuid().ToString("N"));
         var calls = new List<string>();
         Action<string, string, bool> record = (directory, arguments, wait) => calls.Add((wait ? "build:" : "start:") + arguments);
+        Action<string> ready = url => calls.Add("ready:" + url);
         try
         {
             foreach (string project in new[] { "DashboardUsb", "DashboardRelay" })
@@ -48,19 +49,23 @@ internal static class StartupHarness
                 string directory = Path.Combine(root, "Tools", project); Directory.CreateDirectory(directory);
                 File.WriteAllText(Path.Combine(directory, project + ".csproj"), "fake project, never executed");
             }
-            RaceUsbAutoStart.StartHelpers(root, "missing.zip", root, "/fake/dotnet", _ => true, record);
+            RaceUsbAutoStart.StartHelpers(root, "missing.zip", root, "/fake/dotnet", _ => true, record, ready);
             Require(calls.Count == 0, "Existing services must never be rebuilt or restarted.");
-            RaceUsbAutoStart.StartHelpers(root, "missing.zip", root, "/fake/dotnet", url => url.Contains(":8766/"), record);
-            Require(calls.Count == 2 && calls[0].Contains("build DashboardUsb.csproj") && calls[1].Contains("--iphone --no-browser"), "Only the missing USB helper starts when relay already exists.");
+            RaceUsbAutoStart.StartHelpers(root, "missing.zip", root, "/fake/dotnet", url => url.Contains(":8766/"), record, ready);
+            Require(calls.Count == 3 && calls[0].Contains("build DashboardUsb.csproj") && calls[1].StartsWith("ready:") && calls[2].Contains("--iphone --no-browser"), "Only the missing USB helper starts after relay readiness is confirmed.");
             calls.Clear();
-            RaceUsbAutoStart.StartHelpers(root, "missing.zip", root, "/fake/dotnet", _ => false, record);
-            Require(calls.Count == 4 && calls[2].Contains("--local-startup") && calls[3].Contains("--iphone"), "Fresh source launch builds helpers and starts the local-only relay before USB.");
+            RaceUsbAutoStart.StartHelpers(root, "missing.zip", root, "/fake/dotnet", _ => false, record, ready);
+            Require(calls.Count == 5 && calls[2].Contains("--local-startup") && calls[3].StartsWith("ready:") && calls[4].Contains("--iphone"), "Fresh source launch waits for the local-only relay before USB.");
             string pack = Path.Combine(root, "payload");
             foreach (string entry in new[] { "Usb/DashboardUsb.dll", "Relay/DashboardRelay.dll" })
             { string path = Path.Combine(pack, entry); Directory.CreateDirectory(Path.GetDirectoryName(path)); File.WriteAllText(path, "fake payload"); }
             string archive = Path.Combine(root, "DashboardHelpers.zip"); ZipFile.CreateFromDirectory(pack, archive);
-            calls.Clear(); RaceUsbAutoStart.StartHelpers("missing source", archive, root, "/fake/dotnet", _ => false, record);
-            Require(calls.Count == 2 && calls.TrueForAll(value => value.StartsWith("start:")), "A packaged player needs the runtime only and never invokes the SDK.");
+            calls.Clear(); RaceUsbAutoStart.StartHelpers("missing source", archive, root, "/fake/dotnet", _ => false, record, ready);
+            Require(calls.Count == 3 && calls[0].StartsWith("start:") && calls[1].StartsWith("ready:") && calls[2].StartsWith("start:"), "A packaged player waits for HTTP readiness and never invokes the SDK.");
+            calls.Clear(); bool failed = false;
+            try { RaceUsbAutoStart.StartHelpers("missing source", archive, root, "/fake/dotnet", _ => false, record, _ => { throw new IOException("fake relay not ready"); }); }
+            catch (IOException) { failed = true; }
+            Require(failed && calls.Count == 1 && !calls[0].Contains("--iphone"), "A relay startup failure must not launch a phone UI against an unavailable HTTP server.");
             string extracted = RaceUsbAutoStart.Extract(archive, root);
             Require(File.Exists(Path.Combine(extracted, "Usb/DashboardUsb.dll")) && RaceUsbAutoStart.Extract(archive, root) == extracted, "Packaged helpers extract completely and reuse a content-specific cache.");
             new RaceUsbPlayerPackaging().OnPreprocessBuild(new UnityEditor.Build.Reporting.BuildReport { summary = new UnityEditor.Build.Reporting.BuildSummary { platform = UnityEditor.BuildTarget.StandaloneWindows64 } });

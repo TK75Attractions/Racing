@@ -41,7 +41,7 @@ public static class RaceUsbAutoStart
                 Directory.CreateDirectory(cache);
                 string log = Path.Combine(cache, "startup.log");
                 StartHelpers(source, archive, cache, FindDotnet(), url => editorRelay && url.Contains(":8766/") || Probe(url),
-                    (working, arguments, wait) => Run(working, arguments, wait, log));
+                    (working, arguments, wait) => Run(working, arguments, wait, log), url => WaitForService(url, editorRelay ? 120 : 10));
             }
             catch (Exception error)
             {
@@ -54,7 +54,7 @@ public static class RaceUsbAutoStart
 
     // Injecting probe/process execution lets tests verify game startup without starting a game or helper.
     internal static void StartHelpers(string source, string archive, string cache, string dotnet,
-        Func<string, bool> running, Action<string, string, bool> run)
+        Func<string, bool> running, Action<string, string, bool> run, Action<string> ready)
     {
         bool relay = running("http://127.0.0.1:8766/api/connection");
         bool usb = running("http://127.0.0.1:8767/api/usb");
@@ -81,6 +81,8 @@ public static class RaceUsbAutoStart
             relayDirectory = Path.Combine(relayDirectory, "bin", "Debug", "net10.0");
         }
         if (!relay) run(relayDirectory, Quote(dotnet) + " " + Quote(Path.Combine(relayDirectory, "DashboardRelay.dll")) + " --no-browser --local-startup", false);
+        // Starting the process is not enough: the phone must not load before HTTP is listening.
+        if (!usb) ready("http://127.0.0.1:8766/api/connection");
         if (!usb) run(usbDirectory, Quote(dotnet) + " " + Quote(Path.Combine(usbDirectory, "DashboardUsb.dll")) + " --iphone --no-browser", false);
     }
 
@@ -118,6 +120,15 @@ public static class RaceUsbAutoStart
             }
         }
         catch (WebException) { return false; }
+    }
+    private static void WaitForService(string url, double seconds)
+    {
+        var deadline = Stopwatch.StartNew();
+        while (!Probe(url))
+        {
+            if (deadline.Elapsed.TotalSeconds >= seconds) throw new IOException("管理中継の起動を確認できません。startup.logを確認してください。");
+            Thread.Sleep(100);
+        }
     }
     private static string Quote(string value) { return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""; }
     private static void Run(string working, string command, bool wait, string log)
