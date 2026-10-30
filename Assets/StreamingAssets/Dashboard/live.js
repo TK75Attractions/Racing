@@ -5,7 +5,7 @@ export function mergeHistory(previous, incoming, maximum = 500) {
   return [...byId.values()].sort((a, b) => a.id - b.id).slice(-maximum);
 }
 
-export async function startLive({ render, setConnection, renderTelemetry, refreshFrames, apiFetch }) {
+export async function startLive({ render, setConnection, renderTelemetry, refreshFrames, apiFetch, requestId = () => crypto.randomUUID() }) {
   const infoResponse = await apiFetch('/api/connection', { signal: AbortSignal.timeout(4000) });
   if (!infoResponse.ok) throw new Error('Relay unavailable');
   const info = await infoResponse.json();
@@ -16,8 +16,8 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
   let dirty = false, busy = false, alive = false, gap = false;
   let lastFrames = 0, rtt = null;
   const $ = id => document.getElementById(id);
-  $('transport-status').textContent = info.remote ? 'Tailscale / WebSocket' : 'ローカル / WebSocket';
-  if (!info.remote && info.remoteUrl) {
+  $('transport-status').textContent = info.usb ? 'USB直通 / WebSocket' : info.remote ? 'Tailscale / WebSocket' : 'ローカル / WebSocket';
+  if (!info.remote && !info.usb && info.remoteUrl) {
     $('share-dashboard').hidden = false;
     $('share-url').value = info.remoteUrl;
     $('share-copy').addEventListener('click', async () => {
@@ -65,9 +65,9 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
       session = packet.sessionId; serialSession = packet.serialSession;
       cursor = packet.cursor;
       rawCursor = packet.rawCursor ?? rawCursor;
-      rawHistory = mergeHistory(rawHistory, packet.rawLines || []);
+      if (packet.rawLines?.length) rawHistory = mergeHistory(rawHistory, packet.rawLines);
       rawGap ||= packet.rawGap;
-      history = mergeHistory(history, packet.lines);
+      if (packet.lines.length) history = mergeHistory(history, packet.lines);
       alerts = packet.alerts || [];
       if (packet.snapshot) { snapshot = packet.snapshot; lastStateAt = Date.now(); }
       if (packet.telemetry) telemetry = packet.telemetry;
@@ -101,7 +101,7 @@ export async function startLive({ render, setConnection, renderTelemetry, refres
     async command(action, payload = {}) {
       if (!alive || !snapshot || busy || !info.canControl || Date.now() - lastStateAt > 3000) return;
       busy = true; dirty = true; draw();
-      const request = { ...payload, id: crypto.randomUUID(), targetSession: snapshot.sessionId,
+      const request = { ...payload, id: requestId(), targetSession: snapshot.sessionId,
         expectedState: snapshot.state, stateRevision: snapshot.stateRevision, observedAt: snapshot.serverTime };
       if (action !== 'serial') $('control-note').textContent = 'Unity に操作を送信中…';
       let outcome;

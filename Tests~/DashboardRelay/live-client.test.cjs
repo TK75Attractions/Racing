@@ -41,3 +41,24 @@ test('silent connection disables the screen immediately without waiting for a cl
     assert.match(sockets[1].url,/wss:/);assert.match(sockets[1].url,/after=7/);
   }finally{Date.now=dateNow;for(const name of names){if(original[name]===undefined)delete globalThis[name];else globalThis[name]=original[name];}}
 });
+
+test('USB live connection uses the provided HTTP-compatible command ID and preserves guard fields',async()=>{
+ const {startLive}=await load();
+ const names=['document','location','WebSocket','setInterval','setTimeout','clearTimeout'];
+ const original=Object.fromEntries(names.map(name=>[name,globalThis[name]]));
+ const elements=new Map(),sockets=[],calls=[];let ids=0;
+ try{
+  globalThis.document={getElementById:id=>{if(!elements.has(id))elements.set(id,{textContent:''});return elements.get(id);}};
+  globalThis.location={href:'http://172.20.10.2:8767/',protocol:'http:'};
+  globalThis.WebSocket=class{constructor(url){this.url=String(url);sockets.push(this);}close(){}};
+  globalThis.setInterval=()=>1;globalThis.setTimeout=()=>1;globalThis.clearTimeout=()=>{};
+  const apiFetch=async(path,options)=>{calls.push({path,options});return{ok:true,json:async()=>path==='/api/connection'?{canControl:true,remote:false,usb:true,remoteUrl:'https://race.test.ts.net/'}:{ok:true}};};
+  const live=await startLive({apiFetch,render(){},setConnection(){},renderTelemetry(){},refreshFrames(){},requestId:()=>{ids++;return'usb-secure-id';}});
+  const snapshot={sessionId:'usb-test',state:'Title',stateRevision:7,serverTime:1234,serial:{}};
+  sockets[0].onmessage({data:JSON.stringify({sessionId:'usb-test',serialSession:'usb-device',cursor:1,lines:[],snapshot})});
+  await live.command('start');assert.equal(ids,1);
+  const command=JSON.parse(calls.find(call=>call.path==='/api/action/start').options.body);
+  assert.deepEqual(command,{id:'usb-secure-id',targetSession:'usb-test',expectedState:'Title',stateRevision:7,observedAt:1234});
+  assert.equal(elements.get('transport-status').textContent,'USB直通 / WebSocket');assert.match(sockets[0].url,/^ws:\/\/172\.20\.10\.2:8767/);
+ }finally{for(const name of names){if(original[name]===undefined)delete globalThis[name];else globalThis[name]=original[name];}}
+});
