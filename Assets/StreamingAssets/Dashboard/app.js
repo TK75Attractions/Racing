@@ -1,5 +1,14 @@
 const localMode = location.origin !== 'https://tk75attractions.github.io';
 const API = '';
+// USB tethering uses a private HTTP address; randomUUID requires a secure context.
+// getRandomValues remains available there, so command IDs retain cryptographic randomness.
+function newRequestId() {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64; bytes[8] = (bytes[8] & 63) | 128;
+  const hex = [...bytes].map(value => value.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
 let liveController = null;
 let latestSnapshot = null;
 let logSignature = '';
@@ -795,7 +804,7 @@ async function openHardwareDiagnosis(key){
       if(generation!==diagnosticGeneration)return;
       const snapshot=latestSnapshot;
       if(snapshot?.sessionId!==session||snapshot?.hardware?.generation!==hardwareGeneration)throw new Error('接続セッションが変わりました');
-      const request={id:crypto.randomUUID(),targetSession:session,expectedState:snapshot.state,stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime,command,args:[]};
+      const request={id:newRequestId(),targetSession:session,expectedState:snapshot.state,stateRevision:snapshot.stateRevision,observedAt:snapshot.serverTime,command,args:[]};
       const response=await apiFetch('/api/action/serial',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request),signal:AbortSignal.timeout(3000)});
       const outcome=await response.json();if(!outcome.ok)throw new Error('装置が照会を受け付けませんでした（'+outcome.reason+'）');
       const end=Date.now()+5000;let done=false;
@@ -972,7 +981,7 @@ async function submitSerialCommand(event) {
   try {
     if (liveController) outcome = await liveController.command('serial', payload);
     else {
-      const body = {...payload,id:crypto.randomUUID(),targetSession:latestSnapshot.sessionId,expectedState:latestSnapshot.state,
+      const body = {...payload,id:newRequestId(),targetSession:latestSnapshot.sessionId,expectedState:latestSnapshot.state,
         stateRevision:latestSnapshot.stateRevision,observedAt:latestSnapshot.serverTime};
       const response = await apiFetch('/api/action/serial', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
       outcome = await response.json();
@@ -1110,7 +1119,7 @@ async function pollOperatorUpdate() {
 async function submitOperatorUpdate(control) {
   if (control.disabled || operatorBusy || !operatorStatus?.canControl || !operatorStatus.available) return;
   operatorBusy = true; renderOperatorUpdate();
-  const id = crypto.randomUUID();
+  const id = newRequestId();
   try {
     const response = await apiFetch('/api/operator-update', { method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({id}), signal:AbortSignal.timeout(12000) });
@@ -1206,7 +1215,7 @@ async function submitSetting(control) {
   try {
     if (liveController) result = await liveController.command('settings', payload);
     else {
-      const request = { ...payload, id: crypto.randomUUID(), targetSession: latestSnapshot.sessionId,
+      const request = { ...payload, id: newRequestId(), targetSession: latestSnapshot.sessionId,
         expectedState: latestSnapshot.state, stateRevision: latestSnapshot.stateRevision, observedAt: latestSnapshot.serverTime };
       try {
         const response = await apiFetch('/api/action/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1285,7 +1294,7 @@ async function performInputRequest(player, command, buttons) {
   const local = remotePlayers[player];
   const snapshot = command === 'release' ? local.anchor : latestSnapshot;
   if (!snapshot?.sessionId) return;
-  const request = { id:crypto.randomUUID(), targetSession:snapshot.sessionId, expectedState:snapshot.state,
+  const request = { id:newRequestId(), targetSession:snapshot.sessionId, expectedState:snapshot.state,
     stateRevision:snapshot.stateRevision, observedAt:snapshot.serverTime, command,
     args:[String(player), inputControllerId, String(++local.sequence), ...buttons] };
   const response = await apiFetch('/api/action/input', { method:'POST', headers:{'Content-Type':'application/json'},
@@ -1322,7 +1331,7 @@ async function pumpRemoteInput(player) {
 
 function beginRemoteInput(player) {
   if (!latestInputAllowed || $('keyboard-take-' + player).disabled) return;
-  inputControllerId ||= crypto.randomUUID();
+  inputControllerId ||= newRequestId();
   const local = remotePlayers[player];
   local.active = true; local.epoch++; local.started = false; local.generation = null; local.pointers.clear(); local.anchor = {...latestSnapshot};
   $('keyboard-status-' + player).dataset.error = '';
@@ -1359,7 +1368,7 @@ async function sendKeyboardMenu(command, player) {
   if (!latestInputAllowed) return;
   if (command !== 'recover') stopAllRemoteInputs();
   const snapshot = latestSnapshot;
-  const request = { id:crypto.randomUUID(), targetSession:snapshot.sessionId, expectedState:snapshot.state,
+  const request = { id:newRequestId(), targetSession:snapshot.sessionId, expectedState:snapshot.state,
     stateRevision:snapshot.stateRevision, observedAt:snapshot.serverTime, command, args:player == null ? [] : [String(player)] };
   let result;
   try {
@@ -1381,7 +1390,7 @@ document.querySelectorAll('[data-action]').forEach((button) => {
     button.disabled = true;
     $('control-note').textContent = 'Unity に操作を送信中…';
     try {
-      const request = { id: crypto.randomUUID(), targetSession: latestSnapshot.sessionId, expectedState: latestSnapshot.state, stateRevision: latestSnapshot.stateRevision, observedAt: latestSnapshot.serverTime };
+      const request = { id: newRequestId(), targetSession: latestSnapshot.sessionId, expectedState: latestSnapshot.state, stateRevision: latestSnapshot.stateRevision, observedAt: latestSnapshot.serverTime };
       const response = await apiFetch('/api/action/' + button.dataset.action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request) });
       if (!response.ok) throw new Error('操作を受け付けられませんでした');
       await poll();
@@ -1444,7 +1453,7 @@ if (localMode) {
       event.preventDefault(); void submitSetting($('operator-update'));
     }
   });
-  import('./live.js').then(({ startLive }) => startLive({ render, setConnection, renderTelemetry, refreshFrames, apiFetch }))
+  import('./live.js').then(({ startLive }) => startLive({ render, setConnection, renderTelemetry, refreshFrames, apiFetch, requestId: newRequestId }))
     .then(controller => { liveController = controller; })
     .catch(() => {
       if (location.origin === 'http://127.0.0.1:8765') { poll(); setInterval(poll, 1000); }

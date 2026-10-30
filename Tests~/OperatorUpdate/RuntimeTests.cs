@@ -16,17 +16,22 @@ public static class RuntimeTests
             var race=new Gmanager {state=Gmanager.State.Game};var updater=new RaceOperatorUpdate();updater.Configure(race);
             Check(updater.Available,"Update is available during a race");
             Check(updater.Request()&&race.IsMaintenanceActive,"Request pauses a running race");
-            for(int i=0;i<100&&UnityEditor.EditorApplication.isPlaying;i++){Thread.Sleep(10);updater.Poll();}
+            WaitUntil(()=>!UnityEditor.EditorApplication.isPlaying,updater.Poll);
             Check(!UnityEditor.EditorApplication.isPlaying,"Editor Play stops after preflight without closing the Editor");
             foreach(string folder in Directory.GetDirectories(Path.Combine(root,"Logs","OperatorUpdate")))Check(File.ReadAllText(Path.Combine(folder,"parent.txt"))=="0","Editor updater never waits for the Editor process to exit");
-            for(int i=0;i<100&&updater.Busy;i++){Thread.Sleep(10);updater.Poll();}
+            WaitUntil(()=>!updater.Busy,updater.Poll);
             var edit=new RaceOperatorUpdate();edit.Configure(null);
             Check(edit.Available&&edit.Request(),"Edit-mode update works without an open race scene");
-            for(int i=0;i<100&&edit.Busy;i++){Thread.Sleep(10);edit.Poll();}
+            WaitUntil(()=>!edit.Busy,edit.Poll);
             Check(!edit.Busy,"Worker completion clears busy state");
         }
         finally {Directory.Delete(root,true);}
         Console.WriteLine("OPERATOR_RUNTIME_TESTS_PASS");
+    }
+    private static void WaitUntil(Func<bool> complete,Action poll)
+    {
+        var deadline=System.Diagnostics.Stopwatch.StartNew();
+        while(!complete()&&deadline.Elapsed<TimeSpan.FromSeconds(10)){Thread.Sleep(10);poll();}
     }
     private static void Check(bool value,string label){if(!value)throw new Exception(label);Console.WriteLine("PASS "+label);}
 }
