@@ -6,7 +6,7 @@
 
 標準は、Safariで使う[有線LAN接続](DashboardWired.md)です。対応LANアダプターとLANケーブルでiPhoneとMacをつなぎます。iPhoneアプリ・Xcode・開発者モード・インターネット共有は不要です。通常の `Start USB Dashboard.command` または `Start Wired Dashboard.command` で準備画面を開きます。
 
-通常のUSBケーブル1本で使う[専用iPhoneアプリ方式](DashboardIPhone.md)は、`--iphone` を明示した場合にだけ起動します。アプリの署名・インストールとiPhoneの許可が必要です。
+通常のUSBケーブル1本で使う[専用iPhone / iPadアプリ方式](DashboardIPhone.md)は、対応版のゲーム起動時に自動起動します。手動なら `Start iPhone USB Dashboard.command` または `--iphone` を指定します。初回の署名・インストールと端末の許可は必要ですが、接続コードは不要です。
 
 従来のUSBテザリングを使う場合だけ、コマンドへ `--tethering` を付けます。この追加方式にはインターネット共有対応端末が必要です。専用アプリによる接続ではインターネット共有をオンにしません。
 
