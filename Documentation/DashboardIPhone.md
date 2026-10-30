@@ -1,5 +1,7 @@
 # iPhoneからUSBだけで管理する
 
+SafariとLANアダプターを使う場合は[アプリ不要の有線接続](DashboardWired.md)を使ってください。この文書は通常のUSBケーブルと専用アプリを使う追加方式の説明です。
+
 **インターネット共有・Wi-Fi・Tailscaleは不要です。** iPhoneの専用アプリ「Racing USB」とMacの補助アプリを、USBケーブルで直接つなぎます。管理画面の内容・操作・状態・映像はUSBの通信路を通ります。RACEと通常のDashboard中継はそのまま使います。
 
 ## 初回だけ必要な設定
@@ -18,7 +20,7 @@
 ## 毎回の接続
 
 1. Macで通常のDashboard中継とRACEを起動しておきます。
-2. `Tools/DashboardUsb/Start USB Dashboard.command` を開きます。Macの準備画面は `http://127.0.0.1:8767/` です。
+2. `sh "Tools/DashboardUsb/Start USB Dashboard.command" --iphone` で起動します。Macの準備画面は `http://127.0.0.1:8767/` です。他の接続方式の補助アプリが起動中なら、補助アプリだけを終了してから起動します。
 3. iPhoneをデータ通信対応のUSBケーブルでMacにつなぎ、**Racing USBアプリ**を開きます。Safariは使いません。
 4. Macの準備画面に表示された8けたのコードをiPhoneへ入力し、「USBで接続」を押します。
 5. 既存の管理画面が表示され、通信方式が **USB直通 / WebSocket** になったら利用できます。

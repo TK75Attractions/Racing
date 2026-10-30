@@ -4,7 +4,9 @@
 
 ## iPhone: インターネット共有なしで使う
 
-専用アプリを使う[USBだけのiPhone接続手順](DashboardIPhone.md)を参照してください。初回はアプリの署名・インストールとiPhoneの許可が必要ですが、運用中の画面・映像・状態・操作はUSBだけで通信します。通常の `Start USB Dashboard.command` はこの方式で起動します。
+標準は、Safariで使う[有線LAN接続](DashboardWired.md)です。対応LANアダプターとLANケーブルでiPhoneとMacをつなぎます。iPhoneアプリ・Xcode・開発者モード・インターネット共有は不要です。通常の `Start USB Dashboard.command` または `Start Wired Dashboard.command` で準備画面を開きます。
+
+通常のUSBケーブル1本で使う[専用iPhoneアプリ方式](DashboardIPhone.md)は、`--iphone` を明示した場合にだけ起動します。アプリの署名・インストールとiPhoneの許可が必要です。
 
 従来のUSBテザリングを使う場合だけ、コマンドへ `--tethering` を付けます。この追加方式にはインターネット共有対応端末が必要です。専用アプリによる接続ではインターネット共有をオンにしません。
 
