@@ -1,8 +1,6 @@
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
 
@@ -30,9 +28,9 @@ internal sealed class UsbWire(Stream stream):IDisposable
 }
 
 // The iPhone initiates logical streams. Every stream can reach only the existing local relay.
-internal sealed class UsbTunnel(int relayPort,string pairingCode,Action<bool> connected)
+internal sealed class UsbTunnel(int relayPort,Action<bool> connected)
 {
-    public const string Protocol="racing-usb-v1";
+    public const string Protocol="racing-usb-v2";
     private sealed class Pipe:IDisposable
     {
         internal readonly TcpClient Socket=new();
@@ -51,10 +49,12 @@ internal sealed class UsbTunnel(int relayPort,string pairingCode,Action<bool> co
             if(hello.Kind!=UsbKind.Hello||hello.Channel!=0||hello.Data.Length>512)throw new IOException("USB handshake required.");
             using var document=JsonDocument.Parse(hello.Data);
             var root=document.RootElement;
-            string supplied=root.ValueKind==JsonValueKind.Object&&root.TryGetProperty("code",out var value)&&value.ValueKind==JsonValueKind.String?value.GetString()??"":"";
-            bool accepted=root.ValueKind==JsonValueKind.Object&&root.TryGetProperty("protocol",out var name)&&name.ValueKind==JsonValueKind.String&&name.GetString()==Protocol&&supplied.Length==pairingCode.Length&&
-                CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(supplied),Encoding.UTF8.GetBytes(pairingCode));
-            await wire.Send(UsbKind.Hello,0,JsonSerializer.SerializeToUtf8Bytes(new{protocol=Protocol,accepted}),stop.Token);
+            // Production callers obtain this stream only from a physical USB device via usbmuxd.
+            // Physical USB selection and the loopback-only app listener replace the manual PIN.
+            // OS accessory permissions remain unchanged; no network-paired device is selected.
+            bool accepted=root.ValueKind==JsonValueKind.Object&&root.TryGetProperty("protocol",out var name)&&name.ValueKind==JsonValueKind.String&&name.GetString()==Protocol&&
+                root.TryGetProperty("authentication",out var auth)&&auth.ValueKind==JsonValueKind.String&&auth.GetString()=="trusted-usb";
+            await wire.Send(UsbKind.Hello,0,JsonSerializer.SerializeToUtf8Bytes(new{protocol=Protocol,accepted,requiresUpdate=!accepted}),stop.Token);
             if(!accepted)return;
             connected(true);heartbeat=Heartbeat();
             while(!stop.IsCancellationRequested)

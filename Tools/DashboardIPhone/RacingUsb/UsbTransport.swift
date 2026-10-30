@@ -5,7 +5,7 @@ import Network
 enum UsbKind: UInt8 { case hello = 1, open = 2, data = 3, close = 4, ping = 5 }
 struct UsbFrame { let kind: UsbKind; let channel: UInt32; let data: Data }
 enum UsbProtocol {
-    static let name = "racing-usb-v1"
+    static let name = "racing-usb-v2"
     static func encode(_ kind: UsbKind, _ channel: UInt32, _ payload: Data = Data()) -> Data {
         var size = UInt32(payload.count).bigEndian, id = channel.bigEndian
         var bytes = withUnsafeBytes(of: &size) { Data($0) }; bytes.append(kind.rawValue)
@@ -38,12 +38,11 @@ final class UsbTransport {
     var onPort: ((UInt16) -> Void)?
     private var listener: NWListener?
     private var connection: NWConnection?
-    private var buffer = Data(), code = ""
+    private var buffer = Data()
     private var ready = false, pendingBytes = 0
     private var lastReceived = Date(), heartbeat: DispatchSourceTimer?
     init(queue: DispatchQueue) { self.queue = queue }
-    func start(code: String, port: UInt16 = 30220) throws {
-        self.code = code
+    func start(port: UInt16 = 30220) throws {
         let listener = try NWListener(using: UsbProtocol.tcp(), on: NWEndpoint.Port(rawValue: port)!)
         self.listener = listener
         listener.newConnectionHandler = { [weak self] incoming in self?.accept(incoming) }
@@ -60,7 +59,7 @@ final class UsbTransport {
             guard let self = self, let incoming = incoming, self.connection === incoming else { return }
             switch state {
             case .ready:
-                let hello: [String: Any] = ["protocol": UsbProtocol.name, "code": self.code]
+                let hello: [String: Any] = ["protocol": UsbProtocol.name, "authentication": "trusted-usb"]
                 self.send(.hello, 0, try! JSONSerialization.data(withJSONObject: hello)); self.receive(incoming)
                 let timer = DispatchSource.makeTimerSource(queue: self.queue)
                 timer.schedule(deadline: .now() + 1, repeating: 1)
@@ -87,7 +86,7 @@ final class UsbTransport {
                             guard frame.kind == .hello, frame.channel == 0,
                                 let hello = try JSONSerialization.jsonObject(with: frame.data) as? [String: Any],
                                 hello["protocol"] as? String == UsbProtocol.name else { throw UsbFailure.protocolError }
-                            guard hello["accepted"] as? Bool == true else { self.disconnect("接続コードを確認し、もう一度「接続」を押してください。"); return }
+                            guard hello["accepted"] as? Bool == true else { self.disconnect("MacのUSB補助アプリと端末のアプリを最新版へ更新してください。"); return }
                             self.ready = true; self.onState?(true, "USB直通で接続中")
                         } else if frame.kind == .ping && frame.channel == 0 && frame.data.isEmpty {
                             self.send(.ping, 0)
