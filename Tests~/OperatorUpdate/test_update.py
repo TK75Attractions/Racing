@@ -51,6 +51,21 @@ class UpdateTest(unittest.TestCase):
   self.git('remote','set-url','origin',str(self.root/'missing.git'));self.assertNotEqual(self.run_update(),0);self.assertFalse((self.logs/'ready').exists())
  def test_build_failure_does_not_launch(self):
   self.unity.write_text('#!/bin/sh\nexit 7\n');self.assertNotEqual(self.run_update(),0);self.assertFalse((self.root/'launched').exists());self.assertTrue((self.logs/'failed').exists());self.assertEqual(self.git('status','--porcelain'),'')
+ def test_cleanup_removes_owned_leftovers_after_git_unregisters_worktree(self):
+  real_git=subprocess.check_output(['which','git'],text=True).strip()
+  wrapper=self.bin/'git'
+  wrapper.write_text('#!/bin/bash\nif [[ "$*" == *" worktree remove --force "* ]] && [ ! -f "'+str(self.root/'cleanup-injected')+'" ]; then\n "'+real_git+'" "$@"\n target="${@: -1}"\n mkdir -p "$target/Library"\n echo late > "$target/Library/late-file"\n touch "'+str(self.root/'cleanup-injected')+'"\n exit 1\nfi\nexec "'+real_git+'" "$@"\n')
+  wrapper.chmod(0o755)
+  real_rm=subprocess.check_output(['which','rm'],text=True).strip()
+  remover=self.bin/'rm'
+  remover.write_text('#!/bin/bash\nif [[ "$*" == *"/Builds/OperatorSource/"* ]] && [ ! -f "'+str(self.root/'remove-retry')+'" ]; then\n touch "'+str(self.root/'remove-retry')+'"\n exit 1\nfi\nexec "'+real_rm+'" "$@"\n')
+  remover.chmod(0o755)
+  self.assertEqual(self.run_update(),0,(self.logs/'update.log').read_text())
+  self.assertTrue((self.root/'remove-retry').exists())
+  self.assertTrue((self.logs/'succeeded').exists())
+  self.assertEqual(list((self.repo/'Builds/OperatorSource').iterdir()),[])
+  self.assertFalse((self.repo/'Logs/OperatorUpdate.lock').exists())
+  self.assertEqual(len(self.git('worktree','list','--porcelain').split('worktree ')),2)
  def test_check_does_not_switch_or_build(self):
   self.git('switch','-c','feature');self.assertEqual(self.run_update(check=True),0);self.assertEqual(self.git('branch','--show-current'),'feature');self.assertFalse((self.logs/'ready').exists())
  def test_offline_defaults_resolve_unity_and_do_not_wait_for_pid_zero(self):
