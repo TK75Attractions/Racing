@@ -39,18 +39,23 @@ public static class DrivingFeelValidation
             Rigidbody body = car.AddComponent<Rigidbody>();
             body.useGravity = false;
             var controller = rig.AddComponent<RaceDirectionCameraController>();
-            // This check measures the vibration filter independently of scene obstacles.
-            typeof(RaceDirectionCameraController).GetField("avoidOcclusion", PrivateInstance).SetValue(controller, false);
+            // Isolate the camera from authored scenery, and exercise the production
+            // occlusion path as well as the explicit OFF path.
+            Vector3 origin=new Vector3(-20000,10000,-20000);
+            foreach(bool occlusion in new[]{false,true})
+            {
+            car.transform.position=origin;
+            typeof(RaceDirectionCameraController).GetField("avoidOcclusion", PrivateInstance).SetValue(controller, occlusion);
             controller.SetCar(car.transform);
             Require(body.interpolation == RigidbodyInterpolation.Interpolate, "Followed car must interpolate between physics frames.");
             var tick = typeof(RaceDirectionCameraController).GetMethod("UpdateCameraTarget", PrivateInstance);
             float maxHeightDeviation = 0f;
             for (int frame = 0; frame < 180; frame++)
             {
-                car.transform.position = new Vector3(frame * .25f, frame % 2 == 0 ? .12f : -.12f, 0f);
+                car.transform.position = origin+new Vector3(frame * .25f, frame % 2 == 0 ? .12f : -.12f, 0f);
                 car.transform.rotation = Quaternion.Euler(frame % 2 == 0 ? 8f : -8f, 0f, 5f);
                 tick.Invoke(controller, new object[] { false, 1f / 60f });
-                maxHeightDeviation = Mathf.Max(maxHeightDeviation, Mathf.Abs(controller.LookTarget.position.y));
+                maxHeightDeviation = Mathf.Max(maxHeightDeviation, Mathf.Abs(controller.LookTarget.position.y-origin.y));
                 Require(Mathf.Abs(controller.LookTarget.position.x - car.transform.position.x) < .001f,
                     "Horizontal following must not lag behind the moving car.");
                 Require(Vector3.Dot(controller.CameraTarget.up, Vector3.up) > .9999f,
@@ -59,11 +64,12 @@ public static class DrivingFeelValidation
                     "Follow and aim must share the same filtered height.");
             }
             Require(maxHeightDeviation < .03f, $"Camera must attenuate rapid vertical jitter: {maxHeightDeviation:F4}m.");
-            car.transform.position = new Vector3(100f, 12f, 100f);
+            car.transform.position = origin+new Vector3(100f, 12f, 100f);
             tick.Invoke(controller, new object[] { false, 1f / 60f });
             Require(Vector3.Distance(controller.LookTarget.position, car.transform.position + Vector3.forward * 3f) < .001f,
                 "Respawn must snap the camera to its new height.");
-            Debug.Log($"CAMERA_STABILITY_PASS: rawJitter=0.12m filteredJitter={maxHeightDeviation:F4}m");
+            Debug.Log($"CAMERA_STABILITY_PASS: occlusion={occlusion} rawJitter=0.12m filteredJitter={maxHeightDeviation:F4}m");
+            }
         }
         finally
         {
