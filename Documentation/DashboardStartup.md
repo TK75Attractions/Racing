@@ -40,4 +40,4 @@ Unity Editorを開くと、ブラウザーとは独立した運用監視も自�
 
 ## USBで操作したい場合
 
-無線が混雑する場合は[USB接続の手順](DashboardUsb.md)を利用してください。対応するiPhone/iPadのUSBテザリング、またはAndroidのUSBポート転送で、ゲームを再起動せず同じ管理画面を使います。
+無線が混雑する場合は[USB接続の手順](DashboardUsb.md)を利用してください。iPhoneの専用USBアプリ、またはAndroidのUSBポート転送で、インターネット共有やゲームの再起動なしで同じ管理画面を使います。
