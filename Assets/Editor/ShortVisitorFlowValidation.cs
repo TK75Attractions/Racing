@@ -54,7 +54,8 @@ public static class ShortVisitorFlowValidation
             {
                 if (manager.state == Gmanager.State.Tutorial)
                 {
-                    Require(manager.GetPlayerPreparationState(1) == Gmanager.State.Tutorial, "P2 must join the shared group start.");
+                    Require(manager.GetPlayerPreparationState(1) == Gmanager.State.Title, "P2 must stay at title until their own start input.");
+                    Require(!manager.GetComponent<DrivingTutorialController>().HasStarted(1), "P1 start must not spawn P2 practice.");
                     var controller = manager.GetComponent<DrivingTutorialController>();
                     var guide = controller.GetPlayerBriefing(0);
                     if (controller.GetPlayerProgress(0)?.IsFinished == true && guide != null && !guide.IsComplete && guide.Page != page)
@@ -82,6 +83,8 @@ public static class ShortVisitorFlowValidation
                 var results = rigs[0].CanvasRoot.transform.Find("Result");
                 if (!results.gameObject.activeInHierarchy) return;
                 resultBegan = EditorApplication.timeSinceStartup;
+                var ui=(ResultUIManager[])typeof(Gmanager).GetField("resultUIManagers",Private).GetValue(manager);
+                Require(ui[0].CountdownText=="00:15","Result countdown must start at 15 seconds.");
                 Capture(manager, 0, "result.jpg"); stage = 4;
             }
             else if (stage == 4)
