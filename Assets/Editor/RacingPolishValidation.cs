@@ -92,6 +92,7 @@ public static class RacingPolishValidation
     public static IEnumerator ValidatePlayModeControls()
     {
         yield return ValidateResetKeys();
+        yield return NoviceInputValidation.ValidateKeyboard();
         ValidateDeviceMenu();
         Debug.Log("CONTROLS_PLAYMODE_PASS: reset keys and dropdown popups/blockers on the owning display.");
     }

@@ -4,19 +4,20 @@ using UnityEngine;
 /// <summary>Reads the viewed vehicle, including spectating, without synthesizing rpm from speed.</summary>
 public sealed class ArcadeHUDTelemetry : MonoBehaviour
 {
-    private static readonly Color Slower=ArcadeUI.Hex("ff876e");
-    private int player,shownRpm=-1,shownBoost=-1,shownDelta=int.MinValue;
+    private int player,shownRpm=-1,shownBoost=-1,shownLap1=-1,shownLap2=-1;
     private Transform viewedCar;
     private CarSoundController engine;
     private DebugMover mover;
     private CarItemEffects effects;
     private bool wasBoosting;
     private ArcadeDialGraphic tach;
-    private TMP_Text rpm,boost,delta;
+    private TMP_Text rpm,boost,lap1,lap2;
+    private GameObject lapTimes;
+    public bool HasLapTimes {get;private set;}
     public void Configure(int index)
     {
         player=index;tach=transform.Find("Tachometer/Gauge").GetComponent<ArcadeDialGraphic>();
-        rpm=transform.Find("Tachometer/Txt").GetComponent<TMP_Text>();boost=transform.Find("Tachometer/Boost/Value").GetComponent<TMP_Text>();delta=transform.Find("LapDelta/Value").GetComponent<TMP_Text>();
+        rpm=transform.Find("Tachometer/Txt").GetComponent<TMP_Text>();boost=transform.Find("Tachometer/Boost/Value").GetComponent<TMP_Text>();lap1=transform.Find("LapTimes/Lap1Time").GetComponent<TMP_Text>();lap2=transform.Find("LapTimes/Lap2Time").GetComponent<TMP_Text>();lapTimes=lap1.transform.parent.gameObject;
     }
     private void LateUpdate()
     {
@@ -36,10 +37,18 @@ public sealed class ArcadeHUDTelemetry : MonoBehaviour
         int next=Mathf.RoundToInt(revolutions/100);if(next!=shownRpm){rpm.SetText("{0:0}.{1:0}",next/10,next%10);shownRpm=next;}
         next=Mathf.RoundToInt(Mathf.Clamp01(charge)*100);if(next!=shownBoost){boost.SetText("BOOST  {0}%",next);shownBoost=next;}
     }
-    public void SetLapDelta(float? seconds)
+    public void SetLapTimes(int completedLaps,float firstLapSeconds,float secondLapSeconds)
     {
-        int next=seconds.HasValue?Mathf.RoundToInt(seconds.Value*100):int.MinValue;if(next==shownDelta)return;shownDelta=next;
-        if(next==int.MinValue)delta.text="—";else delta.SetText(next<0?"−{0:0}.{1:00}":"+{0:0}.{1:00}",Mathf.Abs(next)/100,Mathf.Abs(next)%100);
-        delta.color=next<=0?ArcadeUI.For(transform).Secondary:Slower;
+        HasLapTimes=completedLaps>=1;
+        lapTimes.SetActive(HasLapTimes);
+        if(!HasLapTimes)return;
+        SetLapTime(lap1,firstLapSeconds,ref shownLap1);
+        SetLapTime(lap2,secondLapSeconds,ref shownLap2);
+    }
+    private static void SetLapTime(TMP_Text text,float seconds,ref int shown)
+    {
+        int value=Mathf.FloorToInt(Mathf.Max(0f,seconds)*1000f)/10;
+        if(value==shown)return;shown=value;
+        text.SetText("{0:00}:{1:00}.{2:00}",value/6000,value/100%60,value%100);
     }
 }

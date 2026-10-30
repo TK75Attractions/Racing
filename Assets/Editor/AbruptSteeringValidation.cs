@@ -47,7 +47,7 @@ public static class AbruptSteeringValidation
             var race=root.AddComponent<Gmanager>(); Gmanager.Control=race; race.state=Gmanager.State.Game;
             features=root.AddComponent<RaceFeatureController>(); features.Configure(race); Set(race,"<Features>k__BackingField",features);
             foreach(float bank in new[]{0f,-60f,60f})
-            foreach(float speed in new[]{20f,40f,60f})
+            foreach(float speed in new[]{20f,40f,60f,85f})
             foreach(float handle in new[]{-6f,6f,-30f,30f})
             {
                 Drive(bank,speed,handle,"step",false);
@@ -56,7 +56,7 @@ public static class AbruptSteeringValidation
                 Require(stable.maxYaw<2f&&stable.maxTilt<12f&&stable.maxNormalSpeed<.8f,"Keep yaw, banked contact and normal motion stable: "+stable.name);
                 Require(stable.travelTurn*Mathf.Sign(handle)>12f,"The trajectory must actually turn towards the wheel: "+stable.name);
             }
-            foreach(float speed in new[]{20f,40f,60f})foreach(string pattern in new[]{"flick","fishhook"})
+            foreach(float speed in new[]{20f,40f,60f,85f})foreach(string pattern in new[]{"flick","fishhook"})
             {
                 Drive(0,speed,30,pattern,false);
                 Trial stable=Drive(0,speed,30,pattern,true);

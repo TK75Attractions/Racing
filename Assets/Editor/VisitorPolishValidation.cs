@@ -147,9 +147,9 @@ public static class VisitorPolishValidation
                 int before=resetter.AutomaticRecoveryCount;
                 var tick=typeof(CarResetter).GetMethod("FixedUpdate",Private);
                 for(int i=0;i<40;i++)tick.Invoke(resetter,null);
-                Require(resetter.IsWrongWay&&resetter.AutomaticRecoveryCount==before,"Warning must precede five-second recovery.");
+                Require(resetter.IsWrongWay&&resetter.AutomaticRecoveryCount==before,"Warning must precede three-second recovery.");
                 for(int i=0;i<Mathf.CeilToInt(CarResetter.AutomaticRecoveryDelay/Time.fixedDeltaTime)-40;i++)tick.Invoke(resetter,null);
-                Require(resetter.AutomaticRecoveryCount==before+1,"Wrong way must recover once after five seconds.");
+                Require(resetter.AutomaticRecoveryCount==before+1,"Wrong way must recover once after three seconds.");
                 Require(!gate.NeedsPedalRelease&&gate.CurrentState.pedal>.9f,"Recovery must accept a continuously held pedal.");
                 Require(Vector3.Dot(body.rotation*Vector3.forward,road.forward*direction)>.9f,"Recovery must face race direction.");
                 var warning=UnityEngine.Object.FindObjectsByType<WrongWayNotice>(FindObjectsInactive.Include,FindObjectsSortMode.None);

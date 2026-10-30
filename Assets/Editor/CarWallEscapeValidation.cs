@@ -15,6 +15,8 @@ public static class CarWallEscapeValidation
             throw new InvalidOperationException("Stop Play Mode before starting validation.");
         if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().path != "Assets/Scenes/SampleScene.unity")
             EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
+        var input=UnityEngine.Object.FindFirstObjectByType<InputManager>();
+        input.isDebugMode=true;input.isP1SerialP2KeyboardDebugMode=false;
         started = EditorApplication.timeSinceStartup;
         SessionState.SetBool(SessionKey, true);
         EditorApplication.update -= Tick;

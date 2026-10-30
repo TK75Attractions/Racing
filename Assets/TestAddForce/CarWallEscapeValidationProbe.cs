@@ -26,6 +26,7 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
         public float finalPenetration;
         public float maxPenetrationTime;
         public float retreatDistance;
+        public float escapeDistance;
         public float maxSpeed;
         public float maxReboundSpeed;
         public float maxTilt;
@@ -44,7 +45,8 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
     private Vector3 direction;
     private StreamWriter trace;
     private string folder;
-    private bool recording;
+    private bool recording, trackingEscape;
+    private Vector3 escapeStart;
     private float elapsed;
     private float penetrationRun;
 
@@ -57,12 +59,19 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
         Application.runInBackground = true;
         Time.timeScale = 3f;
         var manager = UnityEngine.Object.FindFirstObjectByType<Gmanager>();
-        manager.StartGame();
-        while (!manager.IsDrivingEnabled) yield return null;
-        var car = GameObject.Find("Player1_Car");
+        foreach(var publisher in UnityEngine.Object.FindObjectsByType<RaceRemoteFirebasePublisher>(FindObjectsSortMode.None)) publisher.enabled=false;
+        foreach(var bridge in UnityEngine.Object.FindObjectsByType<RaceDashboardBridge>(FindObjectsSortMode.None)) bridge.enabled=false;
+        // Enter the actual race directly; IsDrivingEnabled is also true in practice.
+        var flags=BindingFlags.Instance|BindingFlags.NonPublic;
+        foreach(string method in new[]{"StartGameWhenScreenCovered","CompleteGameStart","StartRaceAfterCountdown"})
+            typeof(Gmanager).GetMethod(method,flags).Invoke(manager,null);
+        manager.GetComponent<CourseIntroDirector>()?.Stop();
+        manager.enabled=false; // Keep the race timeout separate from the physical fixtures.
+        var car = manager.GetPlayerCarTransform(0).gameObject;
         body = car.GetComponent<Rigidbody>();
         mover = car.GetComponent<DebugMover>();
         mover.SetInputSource(input);
+        car.GetComponent<CarResetter>().enabled=false; // Isolate physical escape from timed course recovery.
         var laps = UnityEngine.Object.FindFirstObjectByType<LapManager>();
         if (laps != null) laps.enabled = false;
         foreach (var capture in UnityEngine.Object.FindObjectsByType<PlayerAudioCapture>(FindObjectsSortMode.None)) capture.enabled = false;
@@ -94,6 +103,7 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
             Begin((mesh ? "mesh" : "box") + "-" + speed + "-angle-" + angle);
             yield return new WaitForSeconds(1.8f);
             Vector3 contactPosition = body.position;
+            BeginEscape(contactPosition);
             input.CurrentState = new DriveInputState { pedal = -1f };
             yield return new WaitForSeconds(2f);
             End(contactPosition);
@@ -112,6 +122,7 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
             input.CurrentState = new DriveInputState { pedal = -1f };
             Begin("straddled-wall-reverse-" + height);
             Vector3 embeddedStart = body.position;
+            BeginEscape(embeddedStart);
             yield return new WaitForSeconds(3f);
             End(embeddedStart);
             Destroy(splitWall.gameObject);
@@ -127,6 +138,7 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
         Begin("post-between-wheels");
         yield return new WaitForSeconds(2f);
         var postContact = body.position;
+        BeginEscape(postContact);
         input.CurrentState = new DriveInputState { pedal = -1f };
         yield return new WaitForSeconds(2f);
         End(postContact);
@@ -143,6 +155,7 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
         Begin("two-wall-corner");
         yield return new WaitForSeconds(2f);
         var cornerContact = body.position;
+        BeginEscape(cornerContact);
         // 衝突で車体が回った場合も、角の外へ向かう入力を選びます。壁越しの走行は求めません。
         float escapePedal = Vector3.Dot(body.rotation * Vector3.forward, direction) >= 0f ? -1f : 1f;
         input.CurrentState = new DriveInputState { pedal = escapePedal };
@@ -168,6 +181,7 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
             Begin(plane + "-bottom-" + speed);
             yield return new WaitForSeconds(1.8f);
             var wallContact = body.position;
+            BeginEscape(wallContact);
             input.CurrentState = new DriveInputState { pedal = -1f };
             yield return new WaitForSeconds(2f);
             End(wallContact);
@@ -180,11 +194,11 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
         {
             if (t.name.StartsWith("straddled-wall-reverse-"))
             {
-                if (t.finalPenetration > 0.05f || Mathf.Abs(t.retreatDistance) < 2f || t.finalPosition.y < 50.3f) failures.Add(t.name + ": trapped between axles");
+                if (t.finalPenetration > 0.05f || t.escapeDistance < 2f || t.finalPosition.y < 50.3f) failures.Add(t.name + ": trapped between axles");
             }
-            else if (t.maxPenetration > 0.5f || t.maxPenetrationTime > 0.15f || t.finalPenetration > 0.05f || t.retreatDistance < 2f)
-                failures.Add(t.name + ": body penetration or failed reverse");
-            if (t.name.EndsWith("-angle-0") && t.maxReboundSpeed < 2f) failures.Add(t.name + ": missing wall reflection");
+            else if (t.maxPenetration > 0.5f || t.maxPenetrationTime > 0.15f || t.finalPenetration > 0.05f || t.escapeDistance < 2f)
+                failures.Add(t.name + ": body penetration or failed escape");
+            if (t.name.EndsWith("-angle-0") && t.maxReboundSpeed > 3f) failures.Add(t.name + ": excessive wall rebound");
             if (t.maxSpeed > 65f || t.maxTilt > 65f) failures.Add(t.name + ": unstable collision");
         }
         string message = "CAR_WALL_ESCAPE_" + (failures.Count == 0 ? "PASS" : "FAIL") + " (" + report.trials.Count + " trials): " +
@@ -213,6 +227,7 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
 
     private void Begin(string name)
     {
+        trackingEscape=false;
         trial = new Trial { name = name };
         report.trials.Add(trial);
         startingPosition = body.position;
@@ -220,10 +235,17 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
         penetrationRun = 0f;
         recording = true;
     }
+    private void BeginEscape(Vector3 position)
+    {
+        escapeStart=position;trackingEscape=true;
+    }
     private void End(Vector3 reverseStart)
     {
         Sample();
         trial.retreatDistance = Vector3.Dot(reverseStart - body.position, direction);
+        // Glancing impacts may rotate the car to drive along the wall. Preserve the
+        // original-axis diagnostic, but verify free horizontal travel in the actual pose.
+        trial.escapeDistance = Mathf.Max(trial.escapeDistance,Vector3.ProjectOnPlane(reverseStart-body.position,Vector3.up).magnitude);
         recording = false;
         trace.Flush();
     }
@@ -237,6 +259,7 @@ public sealed class CarWallEscapeValidationProbe : MonoBehaviour
                 penetration = Mathf.Max(penetration, distance);
         penetrationRun = penetration > 0.05f ? penetrationRun + Time.fixedDeltaTime : 0f;
         trial.maxPenetrationTime = Mathf.Max(trial.maxPenetrationTime, penetrationRun);
+        if(trackingEscape)trial.escapeDistance=Mathf.Max(trial.escapeDistance,Vector3.ProjectOnPlane(escapeStart-body.position,Vector3.up).magnitude);
         trial.maxPenetration = Mathf.Max(trial.maxPenetration, penetration);
         trial.finalPenetration = penetration;
         trial.maxForwardTravel = Mathf.Max(trial.maxForwardTravel, Vector3.Dot(body.position - startingPosition, direction));

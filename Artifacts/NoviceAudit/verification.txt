@@ -1,0 +1,44 @@
+Unity 6000.3.9f1 / macOS / verified 2026-10-31 JST
+Full production races: 8 before + 14 after = 22.
+After: 28 human entries, 22 finishes, 6 justified slow-profile race-deadline DNFs; 0 runtime errors; both CSV audits passed.
+Input-only races: no pose/velocity/lap/result writes, reverse, manual resets or production player autodrive. Production item Rocket control and automatic recovery remain enabled.
+Core logic: 196 passed, 0 failed.
+Physical ESP32/cabinet controls, Windows build and first-time human usability were not evaluated.
+
+HUD_FONT_BUILD_PASS: static medium and bold, 400 characters.
+NOVICE_RECOVERY_PASS: neutral/coasting, three-second demand, occupied recovery cancellation, disconnection/blocking, held reset and fresh press.
+ABRUPT_STEERING_PASS: 114 real-car trials, small/full abrupt lock, reversals, boost, flat/+/-60 banks, air, oil, spin and live OFF/ON.
+AUTHORED_TUBE_CONTAINMENT_PASS: 342 side/ceiling positions.
+WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.
+WALL_STUCK_RECOVERY_PASS: smooth driving, neutral/disconnected input, stale contacts, ungrounded jitter, sleeping contacts, safe road/lap preservation, reverse input, occupied-road retry.
+ORDERED_LAP_RULES_PASS: grid, repeated finish crossings, direction, two full circuits, duplicate entry.
+RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+TUBE_WALL_RECOVERY_PASS: 10 banks including ceiling, smooth/neutral/jitter/sleep states, reverse input, safe road and laps, true overturn, tube interior/exterior, portals and disabled surfaces.
+TUBE_BANK_PASS: bank=0, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=-90, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=-80, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=-60, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=60, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=80, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=90, finalSpeed=28.127, driftSpeed=20.000
+SLOPE_CAMERA_PASS: slope=-20, relativeViewPitch=-11.21
+SLOPE_CAMERA_PASS: slope=0, relativeViewPitch=-12.80
+SLOPE_CAMERA_PASS: slope=20, relativeViewPitch=-13.04
+CAMERA_STABILITY_PASS: occlusion=False rawJitter=0.12m filteredJitter=0.0029m
+CAMERA_STABILITY_PASS: occlusion=True rawJitter=0.12m filteredJitter=0.0029m
+STEERING_COMFORT_PASS response90=0.120s countersteer=0.020s centerNoise=0 movingNoiseRatio=0.250
+SLOPE_TUBE_DRIVING_VALIDATION_PASS
+HUD_FONT_BUILD_PASS: static medium and bold, 400 characters.
+PLAYER_START_TUBE_RESULT_VALIDATION_PASS
+ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, matched ExtraBold instruments, two lap segments, peripheral item notices, HUD shadows, speed colours, DNF, ending input gate, stable meshes.
+LAP_PRACTICE_TUBE_EDITMODE_PASS
+STEERING_ITEM_FAIRNESS_PASS: both players at 720p/1080p, no text overflow or missing glyphs; threshold, release, input transparency, maintenance suppression; forward targets, finished/disabled exclusions, all three afflictions and last-place recovery.
+NOVICE_AUDIT_CHECKS_PASS: recovery, 85 m/s abrupt steering, tube/floor containment, practice, items, CPU clearance, lap timing and UI.
+NOVICE_DASHBOARD_INPUT_PASS: conflicting buttons neutral, single directions retained, release clears movement.
+RESET_KEYS_PLAYMODE_PASS: independent Space/Slash resets through serial inputs, blocked while paused.
+NOVICE_KEYBOARD_INPUT_PASS: real P1/P2 opposing/single/released key samples.
+CONTROLS_PLAYMODE_PASS: reset keys and dropdown popups/blockers on the owning display.
+CAR_STABILITY_PLAYMODE_PASS (58 trials):  report=Logs/NoviceAudit/Stability
+FORWARD_RECOVERY_PASS: Logs/NoviceAudit/PhysicsRecovery
+SHORT_FLOW_PREPARATION_PASS: 58.66 seconds, P2 did not press start.
+SHORT_VISITOR_FLOW_VALIDATION_PASS

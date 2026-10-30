@@ -1,0 +1,216 @@
+{
+  "passed": false,
+  "failures": [
+    "skill-stop-rejoin/P2: intentional pedal release triggered an unwanted recovery"
+  ],
+  "runs": [
+    {
+      "name": "forward-items-8101",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.19999994337558746,
+          "maxDemandWithoutProgress": 2.0,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-items-8102",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-control",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.13999995589256287,
+          "maxDemandWithoutProgress": 1.0,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-novice",
+      "termination": "human-grace-timeout",
+      "players": [
+        {
+          "label": "P1",
+          "finished": false,
+          "laps": 1,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.6,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-aggressive",
+      "termination": "human-grace-timeout",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 1,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.3199998736381531,
+          "maxDemandWithoutProgress": 1.7,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": false,
+          "laps": 1,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-wall-stress",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.72,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.019999992102384567,
+          "maxDemandWithoutProgress": 0.8,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "skill-stop-rejoin",
+      "termination": "human-grace-timeout",
+      "players": [
+        {
+          "label": "P1",
+          "finished": false,
+          "laps": 1,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": false,
+          "laps": 1,
+          "automaticRecoveries": 2,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 6.799993991851807,
+          "maxDemandWithoutProgress": 0.7,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "skill-disconnect-rejoin",
+      "termination": "human-grace-timeout",
+      "players": [
+        {
+          "label": "P1",
+          "finished": false,
+          "laps": 1,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.36,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": false,
+          "laps": 1,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 4.619996070861816,
+          "maxDemandWithoutProgress": 0.4,
+          "manualResets": 0
+        }
+      ]
+    }
+  ]
+}

@@ -131,5 +131,12 @@
     "rms_dbfs": -25.83,
     "dc": 7.2e-05,
     "stereo_difference_rms": 0.017662
+  },
+  "Rocket": {
+    "seconds": 3.2,
+    "peak_dbfs": -9.12,
+    "rms_dbfs": -18.77,
+    "dc": 9.6e-06,
+    "stereo_difference_rms": 0.042114
   }
 }

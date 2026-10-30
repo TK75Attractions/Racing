@@ -224,6 +224,7 @@ public class DebugMover : MonoBehaviour
     private float steeringAngleLimit = 30f;
 
     public IDriveInputSource InputSource => inputSource;
+    public float TubeWallDriveForce {get;private set;}
     /// <summary>実際に走行へ反映しているペダル入力（-1:ブレーキ 〜 1:アクセル）。</summary>
     public float PedalInput => appliedPedalInput;
     public float SpeedMetersPerSecond => speedMetersPerSecond;
@@ -323,6 +324,7 @@ public class DebugMover : MonoBehaviour
 
     private void ApplyDriving()
     {
+        TubeWallDriveForce=0f;
         // Observe the gate even with stale held input; reconnecting never reuses a held pedal.
         _ = inputSource.CurrentState;
         if (!inputSource.IsConnected || (inputSource is PlayerDriveInputGate gate && gate.NeedsPedalRelease))
@@ -389,6 +391,7 @@ public class DebugMover : MonoBehaviour
         }
 
         ApplyTireForces();
+        ApplyTubeWallTraction();
         ApplyDriftSpinProtection(Time.fixedDeltaTime);
         ApplyVelocityResistance();
         ApplyCorneringBrake();
@@ -800,6 +803,7 @@ public class DebugMover : MonoBehaviour
 
     private void ClearUserInput()
     {
+        TubeWallDriveForce=0f;
         courseSteeringAssist?.Clear();
         rawPedalInput = 0f;
         appliedPedalInput = 0f;
@@ -950,26 +954,70 @@ public class DebugMover : MonoBehaviour
             GroundCheck ground = tire.GetComponent<GroundCheck>();
             if (ground.CheckNow()) normal += ground.GroundHit.normal;
         }
+        if(normal.sqrMagnitude<=.0001f)
+            foreach(TireForce tire in tires)if(tire.TryGetTubeWallContact(out var wall))normal+=wall;
         return normal.sqrMagnitude > .0001f ? normal.normalized : Vector3.up;
     }
 
-    // A small, bounded speed reward: reducing drag gives +8% equilibrium speed,
-    // without repeatedly multiplying velocity or adding to the existing boost budget.
+    // One shared traction path covers ordinary wall riding and wheels wedged at
+    // the road/wall seam. The extra force replaces the former drag reduction.
+    private bool CanUseTubeTraction()
+    {
+        return rb!=null&&!rb.isKinematic&&enableFrontDriveForce&&!IsInputSuppressed&&
+            inputSource!=null&&inputSource.IsConnected&&inputSource.CurrentState.pedal>0f&&
+            !(inputSource is PlayerDriveInputGate gate&&(gate.IsBlocked||gate.NeedsPedalRelease))&&
+            !(itemEffects!=null&&(itemEffects.IsRocketActive||itemEffects.BlocksDriverInput||itemEffects.IsOiled||itemEffects.IsConfused));
+    }
     private float TubeWallSpeedMultiplier()
     {
-        if (rb == null || IsInputSuppressed || inputSource == null || !inputSource.IsConnected ||
-            inputSource.CurrentState.pedal <= 0f ||
-            inputSource is PlayerDriveInputGate gate && (gate.IsBlocked || gate.NeedsPedalRelease) ||
-            itemEffects != null && (itemEffects.IsRocketActive || itemEffects.BlocksDriverInput || itemEffects.IsOiled || itemEffects.IsConfused) ||
-            Vector3.Dot(rb.linearVelocity, transform.forward) < 2f) return 1f;
-        int wallWheels = 0;
-        foreach (TireForce tire in tires)
+        if(!CanUseTubeTraction())return 1f;
+        int wallWheels=0;foreach(TireForce tire in tires)if(tire.TryGetTubeWallContact(out _))wallWheels++;
+        return 1f+.04f*Mathf.Min(wallWheels,2);
+    }
+    private void ApplyTubeWallTraction()
+    {
+        if(!CanUseTubeTraction())return;
+        float pedal=Mathf.Clamp01(inputSource.CurrentState.pedal);
+        Vector3 axis=transform.forward;
+        var race=Gmanager.Control;
+        if(race?.course!=null&&race.course.TryGetNearestRoadSample(rb.position,out var sample)&&
+            Vector3.Distance(sample.position,rb.position)<40f)
         {
-            GroundCheck ground = tire.GetComponent<GroundCheck>();
-            if (ground.CheckNow() && TubeDriveSurface.Contains(ground.GroundHit.collider) &&
-                Vector3.Dot(ground.GroundHit.normal, Vector3.up) < .866f) wallWheels++;
+            axis=sample.forward*race.CourseProgressSign;
+            if(Vector3.Dot(transform.forward,axis)<.35f)return;
         }
-        return wallWheels >= 2 ? 1.08f : 1f;
+        int count=0;Vector3 forward=Vector3.zero,replacement=Vector3.zero;
+        foreach(TireForce tire in tires)
+        {
+            if(!tire.TryGetTubeWallContact(out var normal))continue;
+            Vector3 direction=Vector3.ProjectOnPlane(axis,normal).normalized;
+            if(direction.sqrMagnitude<.5f)continue;
+            forward+=direction;count++;
+            // A front wheel touching the side physically still has traction when its
+            // ordinary ground ray misses; restore only that missing front-wheel drive.
+            if(tire.IsFrontWheel&&!tire.IsGrounded)replacement+=direction*driveForcePerFrontWheel*pedal;
+        }
+        if(count==0||forward.sqrMagnitude<.001f)return;
+        Vector3 force=replacement+forward.normalized*(driveForcePerFrontWheel*.08f*Mathf.Min(count,2)*pedal);
+        TubeWallDriveForce=force.magnitude;
+        rb.AddForce(force,ForceMode.Force); // At the center of mass: no artificial roll/yaw impulse.
+    }
+    private void OnCollisionEnter(Collision collision)=>RememberTubeContacts(collision);
+    private void OnCollisionStay(Collision collision)=>RememberTubeContacts(collision);
+    private void OnCollisionExit(Collision collision)
+    {
+        foreach(var tire in tires)tire.ClearTubeContact(collision.collider);
+    }
+    private void RememberTubeContacts(Collision collision)
+    {
+        if(!TubeDriveSurface.Contains(collision.collider))return;
+        for(int i=0;i<collision.contactCount;i++)
+        {
+            var contact=collision.GetContact(i);
+            var wheel=contact.thisCollider.GetComponent<TireForce>();
+            if(wheel!=null&&contact.thisCollider.attachedRigidbody==rb)
+                wheel.RememberTubeContact(contact.otherCollider,contact.normal,contact.point);
+        }
     }
 
     private void ApplyVelocityResistance()
@@ -978,12 +1026,12 @@ public class DebugMover : MonoBehaviour
         bool grounded = false;
         foreach (TireForce tire in tires)
         {
-            if (!tire.GetComponent<GroundCheck>().CheckNow()) continue;
+            if (!tire.GetComponent<GroundCheck>().CheckNow()&&!tire.TryGetTubeWallContact(out _)) continue;
             grounded = true;
             break;
         }
         // In flight there is no tire propulsion to balance road resistance; retain takeoff momentum.
-        float resistanceMultiplier = grounded ? 1f / TubeWallSpeedMultiplier() : Mathf.Clamp01(airborneResistanceMultiplier);
+        float resistanceMultiplier = grounded ? 1f : Mathf.Clamp01(airborneResistanceMultiplier);
         Vector3 resistance = -planarVelocity * velocityResistance * resistanceMultiplier;
         if (grounded && enableDriftDynamics)
         {

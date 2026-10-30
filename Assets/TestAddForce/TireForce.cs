@@ -19,6 +19,10 @@ public class TireForce : MonoBehaviour
     [SerializeField, Min(0.1f)] private float maximumVisibleWheelSpeed = 36f;
 
     private Rigidbody carRb;
+    private SphereCollider contactWheel;
+    private Collider tubeContact;
+    private Vector3 tubeNormal, tubePoint;
+    private float tubeContactTime=float.NegativeInfinity;
     private GroundCheck groundCheck;
     private Quaternion initialLocalRotation;
     private readonly List<Transform> wheelVisuals = new List<Transform>();
@@ -36,6 +40,7 @@ public class TireForce : MonoBehaviour
     private void Awake()
     {
         groundCheck = GetComponent<GroundCheck>();
+        contactWheel = GetComponent<SphereCollider>();
         initialLocalRotation = transform.localRotation;
         foreach (Transform child in transform)
         {
@@ -47,6 +52,33 @@ public class TireForce : MonoBehaviour
             wheelVisualBasePositions.Add(child.localPosition);
             wheelVisualBaseRotations.Add(child.localRotation);
         }
+    }
+
+    public void RememberTubeContact(Collider surface,Vector3 normal,Vector3 point)
+    {
+        if(!TubeDriveSurface.Contains(surface)||normal.y>=.866f)return;
+        tubeContact=surface;tubeNormal=normal.normalized;tubePoint=point;tubeContactTime=Time.fixedTime;
+    }
+    public void ClearTubeContact(Collider surface)
+    {
+        if(tubeContact==surface){tubeContact=null;tubeContactTime=float.NegativeInfinity;}
+    }
+    public bool TryGetTubeWallContact(out Vector3 normal)
+    {
+        normal=Vector3.zero;
+        if(groundCheck!=null&&groundCheck.CheckNow()&&TubeDriveSurface.Contains(groundCheck.GroundHit.collider)&&groundCheck.GroundHit.normal.y<.866f)
+        {normal=groundCheck.GroundHit.normal;return true;}
+        if(contactWheel==null||!contactWheel.enabled||contactWheel.isTrigger||carRb==null||
+            tubeContact==null||!tubeContact.enabled||tubeContact.isTrigger||!TubeDriveSurface.Contains(tubeContact)||
+            !tubeContact.gameObject.activeInHierarchy||
+            !carRb.IsSleeping()&&Time.fixedTime-tubeContactTime>Time.fixedDeltaTime*1.5f)return false;
+        Vector3 scale=contactWheel.transform.lossyScale;
+        float radius=contactWheel.radius*Mathf.Max(Mathf.Abs(scale.x),Mathf.Abs(scale.y),Mathf.Abs(scale.z));
+        float separation=Vector3.Dot(contactWheel.transform.TransformPoint(contactWheel.center)-tubePoint,tubeNormal);
+        // Real side contact can support propulsion even when the down ray sees only the road.
+        // Reject old contacts immediately on departure or teleport, including an airborne jump.
+        if(separation>radius+.08f||separation < -radius||Vector3.Dot(carRb.linearVelocity,tubeNormal)>1f)return false;
+        normal=tubeNormal;return true;
     }
 
     public void Init(Rigidbody rb)

@@ -1718,8 +1718,9 @@ public class Gmanager : MonoBehaviour
                 mover != null ? mover.AccelerationPadBoostTimeRemaining : 0f,
                 mover != null ? mover.AccelerationPadBoostDuration : 0f, ownerPosition, playerIndex == 0 ? progressGap : -progressGap);
             ui.UpdateParticipants(participants);
-            if(lapData!=null&&course!=null&&course.TotalLength>0)
-                ui.UpdateLapComparison(lapData.lapCount,Mathf.Repeat(lapData.raceProgressDistance,course.TotalLength)/course.TotalLength,lapData.currentLapTime,lapData.totalRaceTime,viewedPlayerIndex);
+            if(lapData!=null)
+                ui.UpdateLapTimes(lapData.lapCount,lapData.firstLapTime,
+                    lapData.lapCount>=2?lapData.secondLapTime:lapData.currentLapTime);
             ui.UpdateDriverNotice(player.inputGate, player.car.GetComponent<CarResetter>(),
                 state == State.Game && player.result == null && !player.withdrewFromRace,
                 course != null && course.IsJumpAhead(player.rigidbody.position,CourseProgressSign),
@@ -1858,9 +1859,10 @@ public class Gmanager : MonoBehaviour
         for (int i = 0; i < PlayerCount; i++)
         {
             var player = players[i];
-            if (player == null || player.returnedToTitle || screenTransitions[i]?.IsTransitioning == true ||
-                player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>()?.IsVisible == true ||
-                resultUIManagers[i]?.IsVisible != true) continue;
+            if (player == null || player.returnedToTitle || screenTransitions[i]?.IsTransitioning == true) continue;
+            var ending = player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>();
+            if (ending?.IsVisible == true) { ending.TickTime(dt); continue; }
+            if (resultUIManagers[i]?.IsVisible != true) continue;
             player.resultDisplayElapsed += Mathf.Max(0f, dt);
             resultUIManagers[i]?.SetCountdown(Mathf.Max(0f, ResultDisplaySeconds - player.resultDisplayElapsed));
             if (player.resultDisplayElapsed >= ResultDisplaySeconds) ShowExitPrompt(i);
@@ -2039,7 +2041,7 @@ public class Gmanager : MonoBehaviour
 
     /// <summary>
     /// アイテム抽選用に、指定車両の現在順位と、妨害対象になる相手車両の効果を返します。
-    /// 自分より前に妨害可能な走行中の車がいない場合、opponentEffects は null です。
+    /// 自分より前に妨害可能な走行中のCPUがいない場合、opponentEffects は null です。
     /// </summary>
     /// <summary>
     /// コース中心線の進行距離が増える向きにレースが進むなら 1、逆なら -1 です。
@@ -2058,7 +2060,7 @@ public class Gmanager : MonoBehaviour
         int nearestPosition = 0;
         foreach (RaceParticipant candidate in participants)
         {
-            if (candidate == participant || !candidate.IsRacing || candidate.Effects == null || !candidate.Effects.isActiveAndEnabled) continue;
+            if (candidate == participant || !candidate.IsCpu || !candidate.IsRacing || candidate.Effects == null || !candidate.Effects.isActiveAndEnabled) continue;
             // Rank includes lap progress and tie handling; never fall back to attacking a car behind.
             if (!RaceDebuffPolicy.CanTarget(racePosition, candidate.Position, participants.Count, lastRacingPosition)) continue;
             if (candidate.Position > nearestPosition)

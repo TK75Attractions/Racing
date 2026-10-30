@@ -1,0 +1,84 @@
+{
+  "passed": true,
+  "failures": [],
+  "runs": [
+    {
+      "name": "forward-full-lock-control",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 4.2,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.48,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-flick-control",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.48,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.1799999475479126,
+          "maxDemandWithoutProgress": 0.96,
+          "manualResets": 0
+        }
+      ]
+    },
+    {
+      "name": "forward-pedal-chatter-control",
+      "termination": "both-humans-finished",
+      "players": [
+        {
+          "label": "P1",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 0,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 0.0,
+          "maxDemandWithoutProgress": 0.48,
+          "manualResets": 0
+        },
+        {
+          "label": "P2",
+          "finished": true,
+          "laps": 2,
+          "automaticRecoveries": 1,
+          "missedLapWraps": 0,
+          "maxSpeedStall": 2.979997396469116,
+          "maxDemandWithoutProgress": 4.44,
+          "manualResets": 0
+        }
+      ]
+    }
+  ]
+}

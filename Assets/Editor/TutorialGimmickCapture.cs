@@ -23,7 +23,7 @@ public static class TutorialGimmickCapture
             RacingHUDFontBuilder.Build();
             ValidateCompletionGate();
             foreach(int player in new[]{0,1})foreach(int width in new[]{1280,1920})for(int page=0;page<TutorialGimmickBriefing.PageCount;page++)Capture(player,width,page);
-            Debug.Log("TUTORIAL_GIMMICK_UI_PASS: both essential photographic pages, both players, 720p/1080p; glyphs, overflow, input transparency; independent completion and timed-out practice still receive the briefing.");
+            Debug.Log("TUTORIAL_GIMMICK_UI_PASS: four simultaneous photographic hints in one overview, both players, 720p/1080p; glyphs, overflow, input transparency; independent completion and timed-out practice still receive the briefing.");
         }
         finally { for(int i=0;i<settings.Length;i++)File.WriteAllBytes(settings[i],previous[i]); }
     }
@@ -80,10 +80,12 @@ public static class TutorialGimmickCapture
             target=new RenderTexture(width,width*9/16,24);target.Create();camera.targetTexture=target;camera.Render();Canvas.ForceUpdateCanvases();
             var guide=host.transform.Find("DrivingTutorial/GimmickGuide");
             Require(guide.gameObject.activeInHierarchy,"Production tutorial must display the briefing");
+            Require(guide.Find("Page0").childCount==4,"All four hints must be visible together.");
+            for(int i=0;i<4;i++)Require(guide.Find("Page0/Card"+i).gameObject.activeInHierarchy,"Hidden hint "+i);
             Require(!host.transform.Find("DrivingTutorial/ItemGuide").gameObject.activeSelf,"Old waiting guide must not cover the new pages");
             foreach(var text in guide.GetComponentsInChildren<TMP_Text>())
             {
-                text.ForceMeshUpdate();Require(!text.isTextOverflowing,"Overflow: "+width+" / "+page+" / "+text.text);
+                text.ForceMeshUpdate();Require(!text.isTextOverflowing,"Overflow: "+width+" / "+page+" / "+text.transform.parent.name+"/"+text.name+" / "+text.text);
                 Require(text.font.HasCharacters(text.text),"Missing glyphs: "+text.text);
             }
             foreach(var graphic in guide.GetComponentsInChildren<Graphic>())
@@ -105,7 +107,7 @@ public static class TutorialGimmickCapture
             try { RenderTexture.active=target;image=new Texture2D(width,width*9/16,TextureFormat.RGB24,false);image.ReadPixels(new Rect(0,0,width,width*9/16),0,0);image.Apply(); }
             finally { RenderTexture.active=active; }
             string directory="Artifacts/TutorialGimmicks/Preview";Directory.CreateDirectory(directory);
-            // Keep four full-size review images; all eight combinations are validated.
+            // Keep both full-size review images; all four player/size combinations are validated.
 
             if(width==1920)File.WriteAllBytes($"{directory}/page-{page+1}-p{player+1}.png",image.EncodeToPNG());
         }

@@ -1,0 +1,10 @@
+TUTORIAL_CONTINUITY_PASS: P1 position, heading, velocity and steering reference preserved.
+TUTORIAL_RESET_EDGE_PASS: P1 held reset and deliberate repeat.
+TUTORIAL_CONTINUITY_PASS: P2 position, heading, velocity and steering reference preserved.
+TUTORIAL_RESET_EDGE_PASS: P2 held reset and deliberate repeat.
+TUTORIAL_DISTANT_ITEMS_PASS: P1, nearest box=61.4m.
+TUTORIAL_ITEM_APPROACH_PASS: P1 distance=61.5m, approach=2.48s.
+TUTORIAL_DISTANT_ITEMS_PASS: P2, nearest box=61.4m.
+TUTORIAL_ITEM_APPROACH_PASS: P2 distance=61.5m, approach=2.48s.
+TUTORIAL_COMPLETION_CUES_PASS: one successful pickup cue per player.
+TUTORIAL_QA_PASSED: continuous stage transition, production input gates, actual accelerate/turn/item pickup, countdown. Peak speed: 25.969 m/s. Maximum vertical speed after settling: 0.000 m/s

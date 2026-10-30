@@ -5,7 +5,7 @@ using UnityEngine;
 public enum RaceSoundCue
 {
     Select, Press, Confirm, Cancel, Ready, Countdown, Go, Finish, Results,
-    TireSkid, DriftCharge, DriftBoost, Boost, Landing, Charge, ItemPickup, Shield, Impact, FinalLap
+    TireSkid, DriftCharge, DriftBoost, Boost, Landing, Charge, ItemPickup, Shield, Impact, FinalLap, Rocket
 }
 
 /// <summary>Decoded, interleaved PCM, shared by all players without Unity access on the audio thread.</summary>

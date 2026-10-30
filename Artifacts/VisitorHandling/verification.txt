@@ -1,0 +1,16 @@
+Unity 6000.3.9f1 / 2026-10-30 (Asia/Tokyo)
+Core regression: 196 passed, 0 failed.
+HUD_FONT_BUILD_PASS: static medium and bold, 401 characters.
+SOUND_EFFECTS_AUDIO_CORE_PASS: 20 imported WAVs, PCM settings, stereo, resampling, overlap headroom, player routing, duplicate suppression and independent mute.
+ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, matched ExtraBold instruments, two lap segments, peripheral item notices, HUD shadows, speed colours, DNF, ending input gate, stable meshes.
+STEERING_ITEM_FAIRNESS_PASS: both players at 720p/1080p, no text overflow or missing glyphs; threshold, release, input transparency, maintenance suppression; forward targets, finished/disabled exclusions, all three afflictions and last-place recovery.
+PLAYER_START_TUBE_RESULT_VALIDATION_PASS
+VISITOR_HANDLING_VALIDATION_PASS: CPU clearance, CPU-only confuse, bounded wall rebound and center assistance, dedicated rocket sound, UI labels, auto-return, 80-degree/three-second recovery.
+WALL_GEOMETRY_CHECKS_PASS
+CAR_WALL_ESCAPE_PASS (16 trials):
+ARCADE_ENDING_PLAYMODE_PASS: real rendered P1/P2 endings, held-pedal safety, independent title returns.
+The ending test waited for real unscaled display time; it did not inject a five-second tick.
+Physics fixtures: actual Play Mode car; course respawn disabled to isolate collisions; horizontal escape travel measured over the full attempt.
+Model LOD generation was temporarily disabled during verification. Original FBX importer and QualitySettings files were restored afterward.
+Known Unity Editor SearchDatabase indexing exception occurred at Play Mode startup; both Play Mode validations completed successfully.
+Physical steering hardware and speaker audition have not been tested.

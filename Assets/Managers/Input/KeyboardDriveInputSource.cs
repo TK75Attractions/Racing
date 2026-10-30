@@ -40,10 +40,8 @@ public sealed class KeyboardDriveInputSource : IDriveInputSource, IDriveInputSta
 
         CurrentState = new DriveInputState
         {
-            pedal = accelerate ? 1f : brake ? -1f : 0f,
-            steering = steerRight
-                ? KeyboardSteeringValue
-                : steerLeft ? -KeyboardSteeringValue : 0f,
+            pedal = (accelerate ? 1f : 0f) - (brake ? 1f : 0f),
+            steering = (steerRight ? KeyboardSteeringValue : 0f) - (steerLeft ? KeyboardSteeringValue : 0f),
             resetPressed = IsResetPressed(PlayerIndex),
             readyPressed = usePlayerOneLayout
                 ? keyboard.enterKey.wasPressedThisFrame

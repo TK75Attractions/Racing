@@ -48,7 +48,7 @@ public static class DrivingTutorialValidation
         {
             RacingHUDFontBuilder.Build();
             var font=UnityEditor.AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>("Assets/Resources/UI/HUD/Tutorial ExtraBold.asset");
-            Require(font.HasCharacters("光る箱にふれよう自動で発動するよ獲得"),"The item lesson must have all static Japanese glyphs.");
+            Require(font.HasCharacters("光ひかる箱はこにふれようボタンはいらないよ"),"The visible item lesson and course overview must have all static Japanese glyphs.");
         }
         InputManager input = UnityEngine.Object.FindFirstObjectByType<InputManager>();
         input.isDebugMode = true; input.isP1SerialP2KeyboardDebugMode = false;

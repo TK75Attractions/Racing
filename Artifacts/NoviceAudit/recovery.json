@@ -1,0 +1,65 @@
+{
+    "passed": true,
+    "checks": [
+        {
+            "name": "neutral-stop-does-not-teleport",
+            "passed": true,
+            "recoveries": 0
+        },
+        {
+            "name": "slow-coast-does-not-teleport",
+            "passed": true,
+            "recoveries": 0
+        },
+        {
+            "name": "held-pedal-jam-recovers-at-three-seconds",
+            "passed": true,
+            "recoveries": 1
+        },
+        {
+            "name": "light-pedal-jam-recovers-at-three-seconds",
+            "passed": true,
+            "recoveries": 1
+        },
+        {
+            "name": "pedal-deadzone-does-not-teleport",
+            "passed": true,
+            "recoveries": 0
+        },
+        {
+            "name": "pending-cancels-on-healthy-motion",
+            "passed": true,
+            "recoveries": 0
+        },
+        {
+            "name": "pending-cancels-on-disconnection",
+            "passed": true,
+            "recoveries": 0
+        },
+        {
+            "name": "pending-cancels-on-blocked-input",
+            "passed": true,
+            "recoveries": 0
+        },
+        {
+            "name": "manual-pending-cancels-on-disconnect",
+            "passed": true,
+            "recoveries": 0
+        },
+        {
+            "name": "manual-pending-cancels-on-blocked-input",
+            "passed": true,
+            "recoveries": 0
+        },
+        {
+            "name": "held-reset-is-one-press-and-fresh-press-works",
+            "passed": true,
+            "recoveries": 0
+        },
+        {
+            "name": "sideways-countdown-preempts-hints-and-clears-immediately",
+            "passed": true,
+            "recoveries": 0
+        }
+    ]
+}

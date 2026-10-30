@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>壁へ向かう速度だけを反射し、滑走と持続する侵入からの復帰を保ちます。</summary>
+/// <summary>壁の反発を抑え、接地中は短時間だけ道路中央への滑走を助けます。</summary>
 [DefaultExecutionOrder(100)]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody))]
@@ -13,6 +13,18 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
     [Header("Stuck Recovery")]
     [SerializeField, Min(0f)] private float stuckRecoveryDelay = 0.15f;
     [SerializeField, Min(0f)] private float maximumRecoverySpeed = 10f;
+    [Header("Gentle Road Return")]
+    [SerializeField, Range(0f, .2f)] private float wallRestitution = .06f;
+    [SerializeField, Min(0f)] private float maximumReboundSpeed = 1.2f;
+    [SerializeField, Min(0f)] private float centerAssistSeconds = .8f;
+    [SerializeField, Min(0f)] private float centerAssistAcceleration = 5.5f;
+    [SerializeField, Min(0f)] private float centerAssistSpeed = 2.5f;
+    private float centerAssistUntil;
+    private Vector3 assistWallNormal;
+    private RaceCourse course;
+    private TireForce[] tires;
+    private DebugMover mover;
+    private CarItemEffects items;
     private Rigidbody body;
     private BoxCollider chassis;
     private readonly Collider[] overlapBuffer = new Collider[32];
@@ -25,6 +37,9 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
     private void Awake()
     {
         body = GetComponent<Rigidbody>();
+        mover = GetComponent<DebugMover>();
+        items = GetComponent<CarItemEffects>();
+        tires = GetComponentsInChildren<TireForce>();
         StaticWallColliderVolume.EnsureForScene(gameObject.scene);
         chassis = GetComponent<BoxCollider>();
     }
@@ -32,6 +47,7 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
     private void FixedUpdate()
     {
         RestoreDepenetrationLimit();
+        ApplyCenterAssist();
         // 通常の衝突は物理エンジンに任せ、低速で侵入が残るときだけ補助します。
         if (body.isKinematic || chassis == null || !chassis.enabled || chassis.isTrigger ||
             body.linearVelocity.sqrMagnitude > 4f)
@@ -102,6 +118,7 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
         RestoreDepenetrationLimit();
         recoveryActive = false;
         penetrationTime = 0f;
+        centerAssistUntil = 0f;
     }
 
     private bool TryGetHorizontalBoxEscape(BoxCollider obstacle, out Vector3 direction, out float distance)
@@ -144,25 +161,65 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
             return;
         }
 
-        // 壁へ向かう速度成分だけを反射します。横滑り・落下速度は維持します。
-        // 既に外へ離れている場合、別のタイヤから同じ衝突通知が来ても反発を重ねません。
+        // Preserve the tangential/vertical motion; never mirror a high-speed impact.
+        // Clamp the normal component, rather than adding an impulse per wheel contact.
         wallNormal = Vector3.ProjectOnPlane(wallNormal, Vector3.up).normalized;
         float incomingSpeed = Mathf.Abs(Vector3.Dot(collision.relativeVelocity, wallNormal));
         if (incomingSpeed >= 1.2f)
             RaceSoundEffects.PlayVehicleCue(incomingSpeed >= 8f ? RaceVehicleAudioCue.HeavyImpact : RaceVehicleAudioCue.LightImpact,
                 collision.GetContact(0).point,Mathf.Clamp01(incomingSpeed/18f));
-        float outwardSpeed = Vector3.Dot(body.linearVelocity, wallNormal);
-        if (outwardSpeed < incomingSpeed)
-            body.linearVelocity += wallNormal * (incomingSpeed - outwardSpeed);
+        ResolveWallVelocity(wallNormal, incomingSpeed);
+        BeginCenterAssist(wallNormal);
     }
 
     private void OnCollisionStay(Collision collision)
     {
-        if (Time.unscaledTime<nextScrapeAudioTime || !TryGetWallNormal(collision,out _) || collision.contactCount==0) return;
+        if (!TryGetWallNormal(collision,out Vector3 normal)) return;
+        BeginCenterAssist(Vector3.ProjectOnPlane(normal,Vector3.up).normalized);
+        if (Time.unscaledTime<nextScrapeAudioTime || collision.contactCount==0) return;
         float scrapeSpeed=Vector3.ProjectOnPlane(collision.relativeVelocity,collision.GetContact(0).normal).magnitude;
         if (scrapeSpeed<3f) return;
         nextScrapeAudioTime=Time.unscaledTime+.24f;
         RaceSoundEffects.PlayVehicleCue(RaceVehicleAudioCue.Scrape,collision.GetContact(0).point,Mathf.Clamp01(scrapeSpeed/16f));
+    }
+
+    private void ResolveWallVelocity(Vector3 normal, float incomingSpeed)
+    {
+        float outward = Vector3.Dot(body.linearVelocity,normal);
+        float rebound = Mathf.Min(maximumReboundSpeed,Mathf.Max(0f,incomingSpeed)*wallRestitution);
+        body.linearVelocity += normal*(Mathf.Clamp(outward,0f,rebound)-outward);
+    }
+
+    private void BeginCenterAssist(Vector3 normal)
+    {
+        assistWallNormal = normal;
+        centerAssistUntil = Time.time + centerAssistSeconds;
+    }
+
+    private void ApplyCenterAssist()
+    {
+        if (body.isKinematic || Time.time >= centerAssistUntil || mover == null || !mover.isActiveAndEnabled ||
+            mover.IsInputSuppressed || items != null && items.IsRocketActive) return;
+        int grounded = 0;
+        foreach (var tire in tires) if (tire.IsGrounded) grounded++;
+        if (grounded < 2) return; // Never redirect a jump or tube-wall flight.
+        if (course == null) course = Gmanager.Control?.course;
+        if (course == null || !course.TryGetNearestRoadSample(body.position,out var sample)) return;
+        Vector3 offset = Vector3.ProjectOnPlane(sample.position-body.position,Vector3.up);
+        Vector3 right = Vector3.ProjectOnPlane(sample.right,Vector3.up).normalized;
+        float side = Vector3.Dot(offset,right);
+        if (Mathf.Abs(side) < .5f || Mathf.Abs(side) > sample.width*.5f+6f ||
+            Mathf.Abs(body.position.y-sample.position.y) > 3f) return;
+        Vector3 toward = right * Mathf.Sign(side);
+        // A pillar can lie between the car and center. Slide along its face instead
+        // of forcing the car through it, and keep a small clearance from that face.
+        float intoWall = Vector3.Dot(toward,assistWallNormal);
+        if (intoWall < 0f) toward -= assistWallNormal * intoWall;
+        if (toward.sqrMagnitude < .01f) return;
+        toward = (toward.normalized + assistWallNormal*.2f).normalized;
+        float speed = Vector3.Dot(body.linearVelocity,toward);
+        float change = Mathf.Min(centerAssistAcceleration*Time.fixedDeltaTime,Mathf.Max(0f,centerAssistSpeed-speed));
+        body.linearVelocity += toward*change;
     }
 
     private bool TryGetWallNormal(Collision collision, out Vector3 wallNormal)

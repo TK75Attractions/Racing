@@ -28,6 +28,7 @@ public static class TubeChargeLineValidation
             Require(course.transform.Find("Optional tube charge lines")==null,"Retired line visuals must not exist");
             foreach(var pad in layout.Pads)
             {
+                Require(pad.Acceleration==24f&&pad.InstantSpeedBonus==10f&&pad.BoostDuration==3f,"Tube pads must supply a strong three-second boost.");
                 var collider=pad.GetComponent<BoxCollider>();Require(collider.isTrigger,"Pads must not introduce a physical step");
                 Require(pad.GetComponentsInChildren<Collider>().Length==1,"Arrow effects must be nonphysical");
                 Require(course.IsPointInsideTube(pad.transform.position+Vector3.up),"Pad must lie inside the tube");
@@ -48,7 +49,7 @@ public static class TubeChargeLineValidation
             features.SetValidationFeature(RaceFeature.TubeChargeLines,false);Require(!layout.VisualsVisible&&!first.TryActivate(mover)&&controller.Notice.Length==0,"OFF hides and disables the pads");
             features.SetValidationFeature(RaceFeature.TubeChargeLines,true);Require(layout.VisualsVisible,"ON restores the pads");
             car.transform.rotation=Quaternion.LookRotation(-first.transform.forward,first.transform.up);body.rotation=car.transform.rotation;Physics.SyncTransforms();Require(!first.TryActivate(mover),"Wrong-way travel cannot collect the tube boost");
-            Debug.Log("TUBE_ACCELERATION_VALIDATION_PASS: two real pads, flush triggers, no old lines, existing speed boost not charge, feedback, forward arrow travel, OFF/ON and wrong-way rejection.");
+            Debug.Log("TUBE_ACCELERATION_VALIDATION_PASS: two real pads, 24 m/s2 for three seconds with a 10 m/s kick; flush triggers, no old lines, feedback, forward arrow travel, OFF/ON and wrong-way rejection.");
         }
         finally{Gmanager.Control=previous;Object.DestroyImmediate(root);if(layout!=null){var pads=course.transform.Find("Tube acceleration pads");if(pads!=null)Object.DestroyImmediate(pads.gameObject);Object.DestroyImmediate(layout);}}
     }

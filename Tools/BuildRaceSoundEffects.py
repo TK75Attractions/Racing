@@ -156,6 +156,18 @@ def compose():
         final.note(hz, i * .11, .35, .28, (-1) ** i * .25)
     final.note(329.63, .33, .17, .38)
     bank['FinalLap'] = final.finish(.3, .4)
+    # Rocket: an ignition thump, a low turbine roar and a broad stereo exhaust.
+    # The three-second body follows the autopilot duration rather than a short boost ping.
+    rocket = Cue(3.2).hit(gain=.8)
+    t = timeline(3.0)
+    burn = np.minimum(t / .07, 1) * np.minimum((3.0 - t) / .4, 1)
+    phase = 2 * np.pi * (72 * t + 20 * t ** 2)
+    rocket.add((np.sin(phase) + .35 * np.sin(phase * 2.01)) * burn, gain=.36)
+    rocket.add(noise(3.0, 90, 1800) * burn, gain=.24, pan=-.3)
+    rocket.add(noise(3.0, 130, 2400) * burn, gain=.24, pan=.3)
+    rocket.add(sweep(1.2, 130, 1400, .65), gain=.23)
+    rocket.air(1.0, at=2.0, gain=.14)
+    bank['Rocket'] = rocket.finish(.35, .24)
     return bank
 
 

@@ -63,7 +63,7 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
     private Rigidbody carBody;
     private float framing01, framingVelocity;
     private float previousYaw, filteredTurnRate, turnVelocity;
-    private float occlusionDistance, occlusionVelocity;
+    private float occlusionFraction, occlusionVelocity;
     private Vector3 surfaceUp = Vector3.up;
     private readonly RaycastHit[] occlusionHits = new RaycastHit[32];
     [SerializeField, HideInInspector] private int framingDefaultsVersion;
@@ -113,7 +113,7 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
         car = null;
         carBody = null;
         framing01 = framingVelocity = filteredTurnRate = turnVelocity = 0f;
-        occlusionDistance = occlusionVelocity = 0f;
+        occlusionFraction = occlusionVelocity = 0f;
         yawVelocity = 0f;
         pitchVelocity = smoothedPitch = 0f;
         wheelGroundChecks = System.Array.Empty<GroundCheck>();
@@ -259,15 +259,19 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
         Vector3 desiredOffset = cameraPosition - origin;
         float desiredDistance = desiredOffset.magnitude;
         float safeDistance = Vector3.Distance(origin, ConstrainCameraPosition(cameraPosition));
-        if (immediately || safeDistance < occlusionDistance)
+        // Damp the fraction of the camera arm, not its absolute length. Otherwise
+        // wheel vibration changes the raw cast origin and reintroduces height jitter
+        // even when there is no obstruction and the height filter has removed it.
+        float safeFraction=desiredDistance>.001f?Mathf.Clamp01(safeDistance/desiredDistance):1f;
+        if (immediately || !avoidOcclusion || safeFraction < occlusionFraction)
         {
-            occlusionDistance = safeDistance;
+            occlusionFraction = safeFraction;
             occlusionVelocity = 0f;
         }
         else
-            occlusionDistance = Mathf.SmoothDamp(occlusionDistance, safeDistance, ref occlusionVelocity,
+            occlusionFraction = Mathf.SmoothDamp(occlusionFraction, safeFraction, ref occlusionVelocity,
                 occlusionReturnTime, Mathf.Infinity, deltaTime);
-        cameraPosition = origin + desiredOffset.normalized * Mathf.Min(desiredDistance, occlusionDistance);
+        cameraPosition = origin + desiredOffset * Mathf.Clamp01(Mathf.Min(safeFraction, occlusionFraction));
 
         cameraTarget.SetPositionAndRotation(cameraPosition, cameraRotation);
 

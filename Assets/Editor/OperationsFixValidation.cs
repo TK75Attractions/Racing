@@ -112,10 +112,21 @@ public static class OperationsFixValidation
                     Vector3 constrained = camera.ConstrainCameraPosition(camera.CameraTarget.position);
                     Require(Vector3.Distance(constrained, car.transform.position) < offset.magnitude - .5f,
                         "Independent obstacle must still occlude the camera.");
+                    typeof(RaceDirectionCameraController).GetMethod("UpdateCameraTarget",Private).Invoke(camera,new object[]{false,.02f});
+                    Require(Vector3.Distance(camera.CameraTarget.position,car.transform.position)<offset.magnitude-.5f,
+                        "A real camera update must retract immediately behind an obstacle.");
                 }
                 finally { UnityEngine.Object.DestroyImmediate(obstacle); }
+                Physics.SyncTransforms();float previousDistance=0;
+                for(int frame=0;frame<60;frame++)
+                {
+                    typeof(RaceDirectionCameraController).GetMethod("UpdateCameraTarget",Private).Invoke(camera,new object[]{false,.02f});
+                    float distance=Vector3.Distance(camera.CameraTarget.position,car.transform.position);
+                    Require(distance+.001f>=previousDistance&&distance<=offset.magnitude+.001f,"Camera return must be monotonic and bounded.");previousDistance=distance;
+                }
+                Require(Mathf.Abs(previousDistance-offset.magnitude)<.03f,"A cleared obstruction must restore the normal camera distance.");
             }
-            File.WriteAllText(Folder + "/wall-camera.txt", "PASS: banks -90,-80,-60,0,60,80,90,120,180; distance >5m; inside clearance >1.5m; level horizon; independent obstruction retained.\n");
+            File.WriteAllText(Folder + "/wall-camera.txt", "PASS: banks -90,-80,-60,0,60,80,90,120,180; distance >5m; inside clearance >1.5m; level horizon; independent obstruction, immediate retraction and smooth bounded return.\n");
         }
         finally { UnityEngine.Object.DestroyImmediate(car); UnityEngine.Object.DestroyImmediate(surface); UnityEngine.Object.DestroyImmediate(rig); }
     }

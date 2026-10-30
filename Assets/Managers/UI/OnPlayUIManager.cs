@@ -22,8 +22,6 @@ public class OnPlayUIManager
     private ArcadeNoticeRail quiet;
     private ArcadeHUDTelemetry telemetry;
     private WrongWayNotice wrongWayNotice;
-    private readonly LapComparison lapComparison=new LapComparison();
-    private int comparedPlayer=-1;
 
     public UIPosition Position => position;
     public UILap Lap => lap;
@@ -105,6 +103,17 @@ public class OnPlayUIManager
         }
         Condition("connection", gate != null && !gate.IsConnected, DriverInputNotice.Connection(gate?.Source), DriverNoticePriority.Critical, now);
         Condition("recovery", resetter != null && resetter.IsRecoveryPending, "コース復帰待ち", DriverNoticePriority.Critical, now);
+        bool recoveryCountdown=resetter!=null&&!resetter.IsRecoveryPending&&!resetter.IsWrongWay&&
+            resetter.AutomaticRecoveryElapsed>=.6f&&gate?.IsConnected!=false&&gate?.NeedsPedalRelease!=true;
+        if(recoveryCountdown)
+        {
+            string cause=resetter.RecoveryWarningReason=="bad-heading"?"向きを戻してね":
+                resetter.RecoveryWarningReason=="off-course"?"コースアウト":
+                resetter.RecoveryWarningReason=="overturned"?"たおれています":"つまり";
+            int seconds=Mathf.Max(1,Mathf.CeilToInt(CarResetter.AutomaticRecoveryDelay-resetter.AutomaticRecoveryElapsed-.0001f));
+            Condition("recoveryCountdown",true,cause+" / 復帰まで"+seconds+"秒",DriverNoticePriority.Danger,now);
+        }
+        else notices.Cancel("recoveryCountdown"); // A corrected situation must clear the countdown immediately.
         Condition("pedal", gate != null && gate.IsConnected && gate.NeedsPedalRelease, DriverInputNotice.Release(gate?.Source), DriverNoticePriority.Critical, now);
         Condition("pedalMode", !string.IsNullOrEmpty(DriverInputNotice.Pedal(gate?.Source)), DriverInputNotice.Pedal(gate?.Source), DriverNoticePriority.Guidance, now);
         Condition("returned", resetter != null && UnityEngine.Time.time - resetter.LastRecoveryTime < 1.5f, "コースへ復帰しました", DriverNoticePriority.Guidance, now);
@@ -187,12 +196,8 @@ public class OnPlayUIManager
         }
     }
 
-    public void SetLapDelta(float? seconds)=>telemetry?.SetLapDelta(seconds);
-    public void UpdateLapComparison(int completedLaps,float fraction,float lapSeconds,float completedSeconds,int viewedPlayer=-1)
-    {
-        if(comparedPlayer!=viewedPlayer){lapComparison.Reset();comparedPlayer=viewedPlayer;}
-        SetLapDelta(lapComparison.Sample(completedLaps,fraction,lapSeconds,completedSeconds));
-    }
+    public void UpdateLapTimes(int completedLaps,float firstLapSeconds,float secondLapSeconds)
+        =>telemetry?.SetLapTimes(completedLaps,firstLapSeconds,secondLapSeconds);
 
     public void SetMiniMapCars(Transform playerOneCar, Transform playerTwoCar)
     {

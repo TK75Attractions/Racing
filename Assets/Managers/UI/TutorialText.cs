@@ -48,7 +48,8 @@ public sealed class TutorialText : MonoBehaviour
             if(reading.first+reading.length>info.characterCount)continue;
             var first=info.characterInfo[reading.first];var last=info.characterInfo[reading.first+reading.length-1];float size=Mathf.Min(target.fontSize,first.pointSize)*.4f;
             reading.label.fontSize=size;
-            reading.label.rectTransform.sizeDelta=new Vector2(Mathf.Max(last.topRight.x-first.bottomLeft.x,size*reading.label.text.Length),size*1.35f);
+            // Leave room for SDF glyph overhang and pixel rounding at scaled output sizes.
+            reading.label.rectTransform.sizeDelta=new Vector2(Mathf.Max(last.topRight.x-first.bottomLeft.x,size*reading.label.text.Length)+2f,size*1.6f+2f);
             reading.label.rectTransform.anchoredPosition=new Vector2((first.bottomLeft.x+last.topRight.x)*.5f,Mathf.Max(first.topLeft.y,last.topLeft.y)+size*.12f);
         }
     }

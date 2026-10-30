@@ -22,7 +22,7 @@ public sealed class DailyRankingPanel
         ownRank.text=view?.available==false?"本日の順位を確認できません":view?.saved==false?"記録を保存できません":
             view?.recording==false||local?.dailyRankingExcluded==true||local?.achievements?.usedAutodrive==true?"テスト走行 / 記録対象外":
             local?.didFinish==false?"未完走 / 記録なし":
-            own!=null?$"本日{own.rank}位！":
+            own!=null?$"本日{own.rank}位！/{view.rows.Count}人中":
             !string.IsNullOrEmpty(local?.dailyRankingDay)&&local.dailyRankingDay!=view?.day?"前日の記録":"本日の記録なし";
     }
 }

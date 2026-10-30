@@ -53,6 +53,12 @@ public static class SteeringAndItemFairnessValidation
                 Require(manager.TryGetItemContext(entries[i].Body, out int rank, out var target) && rank == i+1, "Item context rank");
                 Require(target == (i == 0 ? null : entries[i-1].Effects), "Only the nearest ranked car ahead may be selected");
             }
+            entries[2].IsCpu=false;
+            manager.TryGetItemContext(entries[3].Body,out _,out var cpuTarget);
+            Require(cpuTarget==entries[1].Effects,"Skip a closer human and choose the nearest CPU ahead.");
+            entries[3].Effects.UseItem(RaceItemType.Confuse,entries[2].Effects);
+            Require(!entries[2].Effects.IsConfused,"Even a stale explicit human target must be rejected.");
+            entries[2].IsCpu=true;
             var last = entries[3].Effects;
             Require(!last.ApplyOil(entries[0].Effects), "Last-place oil protection");
             Require(!last.ApplyConfuse(entries[0].Effects), "Last-place confuse protection");
@@ -106,7 +112,11 @@ public static class SteeringAndItemFairnessValidation
             warning.Present(124f,false); Require(!warning.IsWarningVisible,"Release");
             warning.Present(150f,true); Require(!warning.IsWarningVisible,"Maintenance must take priority");
             warning.Present(150f,false); warning.Present(null,false); Require(!warning.IsWarningVisible,"Stale/disconnected telemetry");
-            warning.Present(150f,false);
+            warning.Present(player==0?150f:-150f,false);
+            var wheel=host.GetComponentInChildren<SteeringReturnGraphic>();
+            Require(wheel.ReturnDirection==(player==0?1:-1),"Return arrow must oppose the physical wheel angle.");
+            wheel.SetAnimation(wheel.ReturnDirection,0);float initial=wheel.WheelDegrees;
+            wheel.SetAnimation(wheel.ReturnDirection,.8f);Require(Mathf.Abs(wheel.WheelDegrees)<Mathf.Abs(initial),"Wheel must animate toward neutral.");
             target=new RenderTexture(width,width*9/16,24); camera.targetTexture=target; target.Create();
             camera.Render();
             Canvas.ForceUpdateCanvases();

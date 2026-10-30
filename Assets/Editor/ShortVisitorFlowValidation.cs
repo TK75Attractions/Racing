@@ -21,6 +21,8 @@ public static class ShortVisitorFlowValidation
     public static void Run()
     {
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
+        var input=Object.FindFirstObjectByType<InputManager>();input.isDebugMode=true;input.isP1SerialP2KeyboardDebugMode=false;
+        foreach(var bridge in Object.FindObjectsByType<RaceDashboardBridge>(FindObjectsSortMode.None))bridge.enabled=false;
         Directory.CreateDirectory(Folder); File.Delete(Folder + "/failure.txt");
         SessionState.SetBool(Key, true); stage = captures = 0; page = -1; failure = null;
         began = EditorApplication.timeSinceStartup; EditorApplication.isPlaying = true;
@@ -66,7 +68,7 @@ public static class ShortVisitorFlowValidation
                 if (manager.state != Gmanager.State.Game) return;
                 double seconds = EditorApplication.timeSinceStartup - started;
                 Require(seconds <= 60.5, "Preparation exceeded 60 seconds: " + seconds);
-                Require(page == 1 && captures >= 2, "Both concise pages must have been presented.");
+                Require(page == TutorialGimmickBriefing.PageCount-1 && captures >= TutorialGimmickBriefing.PageCount, "The four-hint overview must have been presented.");
                 Require(manager.GoalLap == 2, "The sole normal race must retain two laps.");
                 Debug.Log("SHORT_FLOW_PREPARATION_PASS: " + seconds.ToString("F2") + " seconds, P2 did not press start.");
                 File.WriteAllText(Folder + "/verification.txt", "Preparation: " + seconds.ToString("F2") + " seconds without player input, including intro and countdown.\n");
@@ -109,7 +111,16 @@ public static class ShortVisitorFlowValidation
             {
                 Capture(manager, 0, "exit-p1.jpg"); Capture(manager, 1, "exit-p2.jpg"); stage = 6;
             }
-            else if (stage == 6 && captures == 5) Finish(null);
+            else if (stage == 6 && manager.state == Gmanager.State.Title && !manager.IsTransitioning())
+            {
+                Require(captures == TutorialGimmickBriefing.PageCount+3,"Capture the overview, results and both endings.");
+                Require(EditorApplication.timeSinceStartup-resultBegan>=4.8,"Thanks screen must remain visible for five seconds.");
+                for(int i=0;i<2;i++) Require(manager.GetPlayerPreparationState(i)==Gmanager.State.Title &&
+                    rigs[i].CanvasRoot.GetComponent<ArcadeEndingUI>()?.IsVisible!=true,"Both players must leave the ending and return to title.");
+                File.AppendAllText(Folder+"/verification.txt","Exit guidance: both screens automatically returned to title after five seconds, without input.\n");
+                Capture(manager,0,"title-p1.jpg"); Capture(manager,1,"title-p2.jpg"); stage=7;
+            }
+            else if(stage==7 && captures==TutorialGimmickBriefing.PageCount+5) Finish(null);
         }
         catch (Exception error) { Finish(error.ToString()); }
     }

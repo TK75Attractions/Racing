@@ -1,0 +1,38 @@
+Unity 6000.3.9f1 / macOS / 2026-10-31 JST
+Integrated visitor improvements and origin/main 1db4a06760bc84781c2c75ce2ef839fe7ac3cb15.
+
+PASS before and after main integration: NoviceRecoveryValidation.RunWithPractice (exit 0), production race recovery, all 19 controlled state cases, including release at 0/0.5/1 m/s, speed recovery, wall/support counts, occupied reset, neutral guards and UI warning.
+PASS before and after main integration: production practice recovery at pedal release and the speed boundary, slow movement, speed recovery, blocking, independent players and lesson progress.
+PASS after main integration: NoviceAuditValidation.RunChecks (exit 0), including the same practice fixture, 114 real-car abrupt steering trials, authored tube containment at 342 points, wall/support recovery, slopes, cameras, lap timing, both-player UI and CPU/item fairness.
+
+Scope: isolated Unity controlled Edit Mode/PhysX fixtures; no real RACE commands or physical pedal interaction. School-model render LOD generation was disabled only during fixture execution and restored after validation. Derived UI captures and QualitySettings were restored; original visitor audit artifacts remain unchanged.
+
+HUD_FONT_BUILD_PASS: static medium and bold, 400 characters.
+NOVICE_RECOVERY_PASS: neutral/coasting, three-second demand, occupied recovery cancellation, disconnection/blocking, held reset and fresh press.
+ABRUPT_STEERING_PASS: 114 real-car trials, small/full abrupt lock, reversals, boost, flat/+/-60 banks, air, oil, spin and live OFF/ON.
+AUTHORED_TUBE_CONTAINMENT_PASS: 342 side/ceiling positions.
+WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.
+WALL_STUCK_RECOVERY_PASS: smooth driving, neutral/disconnected input, stale contacts, ungrounded jitter, sleeping contacts, safe road/lap preservation, reverse input, occupied-road retry.
+ORDERED_LAP_RULES_PASS: grid, repeated finish crossings, direction, two full circuits, duplicate entry.
+RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+TUBE_WALL_RECOVERY_PASS: 10 banks including ceiling, smooth/neutral/jitter/sleep states, reverse input, safe road and laps, true overturn, tube interior/exterior, portals and disabled surfaces.
+TUBE_BANK_PASS: bank=0, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=-90, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=-80, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=-60, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=60, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=80, finalSpeed=28.127, driftSpeed=20.000
+TUBE_BANK_PASS: bank=90, finalSpeed=28.127, driftSpeed=20.000
+SLOPE_CAMERA_PASS: slope=-20, relativeViewPitch=-11.21
+SLOPE_CAMERA_PASS: slope=0, relativeViewPitch=-12.80
+SLOPE_CAMERA_PASS: slope=20, relativeViewPitch=-13.04
+CAMERA_STABILITY_PASS: occlusion=False rawJitter=0.12m filteredJitter=0.0029m
+CAMERA_STABILITY_PASS: occlusion=True rawJitter=0.12m filteredJitter=0.0029m
+STEERING_COMFORT_PASS response90=0.120s countersteer=0.020s centerNoise=0 movingNoiseRatio=0.250
+SLOPE_TUBE_DRIVING_VALIDATION_PASS
+HUD_FONT_BUILD_PASS: static medium and bold, 400 characters.
+PLAYER_START_TUBE_RESULT_VALIDATION_PASS
+ARCADE_UI_VALIDATION_PASS: both palettes, live instruments, shared practice/countdown, notice priority, daily place summary, matched ExtraBold instruments, two lap segments, peripheral item notices, HUD shadows, speed colours, DNF, ending input gate, stable meshes.
+LAP_PRACTICE_TUBE_EDITMODE_PASS
+STEERING_ITEM_FAIRNESS_PASS: both players at 720p/1080p, no text overflow or missing glyphs; threshold, release, input transparency, maintenance suppression; forward targets, finished/disabled exclusions, all three afflictions and last-place recovery.
+NOVICE_AUDIT_CHECKS_PASS: recovery, 85 m/s abrupt steering, tube/floor containment, practice, items, CPU clearance, lap timing and UI.

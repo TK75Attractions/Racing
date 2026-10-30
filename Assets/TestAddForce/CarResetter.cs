@@ -2,7 +2,10 @@ using UnityEngine;
 
 public class CarResetter : MonoBehaviour
 {
-    public const float AutomaticRecoveryDelay = 5f;
+    public const float AutomaticRecoveryDelay = 3f;
+    public const float BadHeadingDegrees = 80f;
+    public const float RecoveryPedalThreshold = .05f;
+    public const float StuckRecoverySpeedMps = 1f;
     private Vector3 initialPosition;
     private Quaternion initialRotation;
     private Rigidbody rb;
@@ -13,8 +16,8 @@ public class CarResetter : MonoBehaviour
     private TireForce[] tires;
     private RaceCourse.CourseSample safeSample;
     private int safeLap;
-    private bool hasSafeSample, resetHeld, manualPending;
-    private float unsafeSeconds, wallStuckSeconds, supportedStuckSeconds, missedLandingSeconds;
+    private bool hasSafeSample, resetHeld, manualPending, automaticPending, trackingLowSpeedStuck;
+    private float badHeadingSeconds, unsafeSeconds, wallStuckSeconds, supportedStuckSeconds, missedLandingSeconds;
     private Collider lastSupportCollider;
     private float lastSupportTime = float.NegativeInfinity;
     private Vector3 supportProgressPosition;
@@ -33,6 +36,9 @@ public class CarResetter : MonoBehaviour
     public bool IsRecoveryPending { get; private set; }
     public string RecoveryReason { get; private set; }
     public float LastRecoveryTime { get; private set; } = -100f;
+    public float AutomaticRecoveryElapsed => Mathf.Max(Mathf.Max(unsafeSeconds,badHeadingSeconds),
+        Mathf.Max(WrongWaySeconds,Mathf.Max(wallStuckSeconds,supportedStuckSeconds)));
+    public string RecoveryWarningReason { get; private set; }
 
     public void SetCourse(RaceCourse raceCourse, LapManager lapManager)
     {
@@ -70,6 +76,11 @@ public class CarResetter : MonoBehaviour
         bool pressed = inputSource != null && inputSource.CurrentState.resetPressed;
         if (pressed && !resetHeld) manualPending = true;
         resetHeld = inputSource is PlayerDriveInputGate gate ? gate.ResetButtonHeld : pressed;
+        if (inputSource != null && (!inputSource.IsConnected || inputSource is PlayerDriveInputGate blockedGate && blockedGate.IsBlocked))
+        {
+            manualPending = false; IsRecoveryPending = false;
+            ClearRecoveryTimers(); return;
+        }
         if (debugMover != null && debugMover.IsInputSuppressed) return;
         if (manualPending && TryResetCar()) manualPending = false;
     }
@@ -85,7 +96,7 @@ public class CarResetter : MonoBehaviour
             inputSource is PlayerDriveInputGate gate && (gate.IsBlocked || !gate.IsConnected || gate.NeedsPedalRelease))
         { ClearRecoveryTimers(); return; }
         RememberSafeRoad(false);
-        if (!course.TryGetNearestRoadSample(rb.position, out RaceCourse.CourseSample here)) return;
+        if (!course.TryGetNearestRoadSample(rb.position, out RaceCourse.CourseSample here)) { ClearRecoveryTimers(); return; }
         int grounded = 0; foreach (TireForce tire in tires) if (tire.IsGrounded) grounded++;
         bool onTubeWall = HasWallContact && TubeDriveSurface.Contains(lastWallCollider);
         bool outside = !course.IsPointInsideDrivingArea(rb.position) ||
@@ -95,7 +106,9 @@ public class CarResetter : MonoBehaviour
         bool backwards = Vector3.Dot(rb.linearVelocity, here.forward * sign) < -2f;
         // Heading matters even without reverse velocity: sideways cars can remain
         // inside the course bounds indefinitely. Banking does not change tube-axis forward.
-        bool badHeading = grounded >= 2 && Vector3.Dot(transform.forward, here.forward * sign) < .5f;
+        float headingAngle = Vector3.Angle(Vector3.ProjectOnPlane(transform.forward, here.up),
+            Vector3.ProjectOnPlane(here.forward * sign, here.up));
+        bool badHeading = grounded >= 2 && headingAngle + .0001f >= BadHeadingDegrees;
         bool wrongWay = grounded >= 2 && (backwards || Vector3.Dot(transform.forward, here.forward * sign) < -.35f);
         // A missed landing can briefly drive underneath the ramp and rejoin before
         // the normal off-course timeout, skipping an ordered lap gate forever.
@@ -107,20 +120,30 @@ public class CarResetter : MonoBehaviour
         missedLandingSeconds = belowLanding ? missedLandingSeconds + dt : 0f;
         Vector3 recoveryUp = onTubeWall ? lastWallNormal : here.up;
         bool overturned = Vector3.Dot(rb.rotation * Vector3.up, recoveryUp) < .2f && grounded < 2;
-        bool almostStopped = rb.linearVelocity.sqrMagnitude < 1f;
-        // Keep one continuous clock while any unsafe condition persists. Changing
-        // from sideways travel to a stop must not buy another five seconds.
-        unsafeSeconds = outside || badHeading || wrongWay || almostStopped || overturned ? unsafeSeconds + dt : 0f;
-        WrongWaySeconds = wrongWay ? unsafeSeconds : 0f;
-        bool pushing = inputSource != null && inputSource.IsConnected && Mathf.Abs(inputSource.CurrentState.pedal) > .4f;
-        UpdateWallStuckTimer(pushing, dt);
-        UpdateSupportedStuckTimer(pushing, grounded, dt);
+        bool almostStopped = rb.linearVelocity.sqrMagnitude <= StuckRecoverySpeedMps * StuckRecoverySpeedMps;
+        bool pushing = inputSource != null && inputSource.IsConnected && Mathf.Abs(inputSource.CurrentState.pedal) > RecoveryPedalThreshold;
+        // Heading requires three uninterrupted seconds of actual misalignment.
+        // Returning below 80 degrees clears it even if another recovery condition starts.
+        badHeadingSeconds = badHeading ? badHeadingSeconds + dt : 0f;
+        WrongWaySeconds = wrongWay ? WrongWaySeconds + dt : 0f;
+        // Demand starts a jam; releasing the pedal does not erase it while still slow.
+        // A neutral stop that never entered recovery remains deliberate.
+        trackingLowSpeedStuck = almostStopped && (pushing || trackingLowSpeedStuck);
+        unsafeSeconds = outside || trackingLowSpeedStuck || overturned ? unsafeSeconds + dt : 0f;
+        UpdateWallStuckTimer(pushing || almostStopped && trackingWallProgress, dt);
+        UpdateSupportedStuckTimer(pushing || almostStopped && trackingSupportProgress, grounded, dt);
+        RecoveryWarningReason = outside ? "off-course" : overturned ? "overturned" :
+            wrongWay ? "wrong-way" : badHeading ? "bad-heading" : "stuck";
         const float tolerance = .0001f;
         if (missedLandingSeconds < .2f && unsafeSeconds + tolerance < AutomaticRecoveryDelay &&
-            wallStuckSeconds + tolerance < AutomaticRecoveryDelay && supportedStuckSeconds + tolerance < AutomaticRecoveryDelay) return;
+            badHeadingSeconds + tolerance < AutomaticRecoveryDelay && WrongWaySeconds + tolerance < AutomaticRecoveryDelay &&
+            wallStuckSeconds + tolerance < AutomaticRecoveryDelay && supportedStuckSeconds + tolerance < AutomaticRecoveryDelay)
+        { CancelAutomaticRecovery(); return; }
         RecoveryReason = missedLandingSeconds >= .2f ? "missed-landing" : outside ? "off-course" :
-            overturned ? "overturned" : wrongWay ? "wrong-way" : badHeading ? "bad-heading" : "stuck";
+            overturned ? "overturned" : WrongWaySeconds + tolerance >= AutomaticRecoveryDelay ? "wrong-way" :
+            badHeadingSeconds + tolerance >= AutomaticRecoveryDelay ? "bad-heading" : "stuck";
         IsRecoveryPending = true;
+        automaticPending = true;
         if (TryResetCar(true)) AutomaticRecoveryCount++;
     }
 
@@ -162,18 +185,19 @@ public class CarResetter : MonoBehaviour
         lastWallCollider.gameObject.activeInHierarchy &&
         (rb.IsSleeping() || Time.fixedTime - lastWallContactTime <= .1f);
 
-    private void UpdateWallStuckTimer(bool pushing, float dt)
+    private void UpdateWallStuckTimer(bool shouldTrack, float dt)
     {
         // 壁に乗ってタイヤの接地判定が切れても、入力があるのに同じ場所へ
         // 留まる状態を検出する。速度が出ている小刻みな往復や回転も対象にする。
         // スリープ中は OnCollisionStay が来ないが、接触終了までは壁に挟まったまま。
-        if (!pushing || !HasWallContact)
+        if (!shouldTrack || !HasWallContact)
         {
             trackingWallProgress = false;
             wallStuckSeconds = 0f;
             return;
         }
-        if (!trackingWallProgress || (rb.position - wallProgressPosition).sqrMagnitude >= 4f)
+        if (!trackingWallProgress || (rb.linearVelocity.sqrMagnitude > StuckRecoverySpeedMps * StuckRecoverySpeedMps &&
+            (rb.position - wallProgressPosition).sqrMagnitude >= 4f))
         {
             trackingWallProgress = true;
             wallProgressPosition = rb.position;
@@ -182,14 +206,15 @@ public class CarResetter : MonoBehaviour
         wallStuckSeconds += dt;
     }
 
-    private void UpdateSupportedStuckTimer(bool pushing, int grounded, float dt)
+    private void UpdateSupportedStuckTimer(bool shouldTrack, int grounded, float dt)
     {
         bool supported = lastSupportCollider != null && lastSupportCollider.enabled &&
             lastSupportCollider.gameObject.activeInHierarchy &&
             (rb.IsSleeping() || Time.fixedTime - lastSupportTime <= .1f);
-        if (!pushing || grounded > 0 || !supported)
+        if (!shouldTrack || grounded > 0 || !supported)
         { trackingSupportProgress = false; supportedStuckSeconds = 0f; return; }
-        if (!trackingSupportProgress || (rb.position - supportProgressPosition).sqrMagnitude >= 4f)
+        if (!trackingSupportProgress || (rb.linearVelocity.sqrMagnitude > StuckRecoverySpeedMps * StuckRecoverySpeedMps &&
+            (rb.position - supportProgressPosition).sqrMagnitude >= 4f))
         {
             trackingSupportProgress = true; supportProgressPosition = rb.position;
             supportedStuckSeconds = 0f;
@@ -199,9 +224,17 @@ public class CarResetter : MonoBehaviour
 
     private void ClearRecoveryTimers()
     {
-        unsafeSeconds = wallStuckSeconds = supportedStuckSeconds = missedLandingSeconds = 0f;
-        trackingWallProgress = trackingSupportProgress = false;
+        CancelAutomaticRecovery();
+        badHeadingSeconds = unsafeSeconds = wallStuckSeconds = supportedStuckSeconds = missedLandingSeconds = 0f;
+        trackingLowSpeedStuck = trackingWallProgress = trackingSupportProgress = false;
         WrongWaySeconds = 0f;
+        RecoveryWarningReason = null;
+    }
+
+    private void CancelAutomaticRecovery()
+    {
+        if (automaticPending && !manualPending) { IsRecoveryPending = false; RecoveryReason = null; }
+        automaticPending = false;
     }
 
     private void OnDisable()
@@ -260,6 +293,7 @@ public class CarResetter : MonoBehaviour
             if (occupied) continue;
             ApplyReset(position,rotation); Physics.SyncTransforms(); laps?.NotifyManualRespawn(rb);
             RecoveryCount++; LastRecoveryTime=Time.time;
+            automaticPending=false;
             ClearRecoveryTimers(); lastWallContactTime=lastSupportTime=float.NegativeInfinity;
             lastWallCollider=lastSupportCollider=null; IsRecoveryPending=false;
             return true;
