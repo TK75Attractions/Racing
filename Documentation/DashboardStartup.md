@@ -37,3 +37,7 @@ FinderでRacingフォルダー内の **Tools > DashboardRelay > Start Dashboard.
 ## エラーをDiscordなどへ通知する
 
 Unity Editorを開くと、ブラウザーとは独立した運用監視も自動起動します。Webhook設定後は、Play中にエラーが5秒継続すると通知します。継続する機器異常・入力の途絶・エラーの増加をWebhookで通知します。設定と常駐手順は[運用エラーのWebhook通知](RaceMonitor.md)を参照してください。
+
+## USBで操作したい場合
+
+無線が混雑する場合は[USB接続の手順](DashboardUsb.md)を利用してください。対応するiPhone/iPadのUSBテザリング、またはAndroidのUSBポート転送で、ゲームを再起動せず同じ管理画面を使います。
