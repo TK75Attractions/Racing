@@ -24,3 +24,5 @@ CPUは近くの人間と同じ速度で車体を押し合わないよう、現�
 ## 再検証
 
 `VisitorHandlingValidation.Run` は本番のCPU判断・衝突応答・音声経路、UI回帰、両プレイヤーの警告描画、80°と3秒の境界・中断を検証する。`ArcadeEndingPlayModeValidation.Run` で実シーンの個別タイトル復帰、`CarWallEscapeValidation.RunFullBatch` で実際の物理衝突・侵入・脱出を確認できる。コアの既存196テストは `sh Tools/Validate-Rgp.sh` で実行できる。
+
+2026-10-30の確認結果は `Artifacts/VisitorHandling/verification.txt`、物理16条件の数値は `Artifacts/VisitorHandling/wall-physics.json`。上記の一括検証とコア196件、実時間の5秒自動帰還、物理16条件を通過。通常衝突の最大侵入は約0.309m、5cm超の侵入継続は最大0.04秒、正面衝突の最大後方速度は約0.086m/s。意図的に深く壁をまたぐ2条件も脱出に成功。検証中だけ校舎FBXのLOD生成を停止し、元の設定へ復元済み。実機ハンドル・実スピーカーでの確認は未実施。

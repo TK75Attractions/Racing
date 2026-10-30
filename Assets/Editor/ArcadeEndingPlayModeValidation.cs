@@ -13,6 +13,7 @@ public static class ArcadeEndingPlayModeValidation
     private const string Key="Racing.ArcadeEndingValidation";
     private static int stage,changedFrame;
     private static double started;
+    private static float automaticReturnBegan,remaining;
     static ArcadeEndingPlayModeValidation(){EditorApplication.update+=Tick;}
     public static void Run()
     {
@@ -39,9 +40,12 @@ public static class ArcadeEndingPlayModeValidation
             else if(stage==3&&Root(1).Find("Title").gameObject.activeSelf){manager.SelectResultOption(0,0);Next();}
             else if(stage==4&&Time.frameCount-changedFrame>2)
             {
-                var p1=Root(0).GetComponent<ArcadeEndingUI>();Require(p1.IsVisible,"P1 ending remains independent.");Capture(manager,0);p1.TickTime(5f);Require(!p1.IsVisible,"Five seconds automatically returns to title without pedal release.");Next();
+                var p1=Root(0).GetComponent<ArcadeEndingUI>();Require(p1.IsVisible,"P1 ending remains independent.");Capture(manager,0);
+                automaticReturnBegan=Time.unscaledTime;
+                remaining=ArcadeEndingUI.AutoReturnSeconds-(float)typeof(ArcadeEndingUI).GetField("visibleSeconds",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(p1);
+                Next();
             }
-            else if(stage==5&&manager.state==Gmanager.State.Title){Debug.Log("ARCADE_ENDING_PLAYMODE_PASS: real rendered P1/P2 endings, held-pedal safety, independent title returns.");Finish(0);}
+            else if(stage==5&&manager.state==Gmanager.State.Title){Require(Time.unscaledTime-automaticReturnBegan>=remaining-.1f,"Automatic return must wait for five seconds of actual display time.");Debug.Log("ARCADE_ENDING_PLAYMODE_PASS: real rendered P1/P2 endings, held-pedal safety, independent title returns.");Finish(0);}
         }
         catch(Exception error){Debug.LogException(error);Finish(1);}
     }
