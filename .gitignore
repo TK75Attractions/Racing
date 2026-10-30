@@ -148,3 +148,4 @@ InitTestScene*.unity*
 !/Tests~/DashboardIPhone/NativeTests.csproj
 /Tests~/DashboardIPhone/bin/
 /Tests~/DashboardIPhone/obj/
+/Assets/StreamingAssets/DashboardHelpers.zip*

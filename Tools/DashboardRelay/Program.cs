@@ -12,7 +12,8 @@ if (args.Contains("--install-service") || args.Contains("--uninstall-service"))
 }
 
 bool serviceMode = args.Contains("--service");
-bool automatic = args.Contains("--auto") || serviceMode;
+bool localStartup = args.Contains("--local-startup");
+bool automatic = args.Contains("--auto") || serviceMode || localStartup;
 bool openBrowser = automatic && !args.Contains("--no-browser");
 bool managed = args.Contains("--managed");
 using var managedStop = new CancellationTokenSource();
@@ -33,7 +34,7 @@ if (automatic)
         }
     }
     catch (Exception error) when (error is HttpRequestException or TaskCanceledException or JsonException) { }
-    if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RACING_DASHBOARD_ORIGIN")))
+    if (!localStartup && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RACING_DASHBOARD_ORIGIN")))
     {
         try
         {
@@ -54,7 +55,7 @@ if (serviceMode && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RACI
     await Task.Delay(5000);
     return;
 }
-args = args.Where(arg => arg != "--auto" && arg != "--no-browser" && arg != "--managed" && arg != "--service").ToArray();
+args = args.Where(arg => arg != "--auto" && arg != "--no-browser" && arg != "--managed" && arg != "--service" && arg != "--local-startup").ToArray();
 
 // Only Serve may expose this loopback service. Do not bind to 0.0.0.0.
 var builder = WebApplication.CreateBuilder(args);
