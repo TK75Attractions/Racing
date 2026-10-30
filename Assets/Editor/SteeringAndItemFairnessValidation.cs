@@ -106,7 +106,11 @@ public static class SteeringAndItemFairnessValidation
             warning.Present(124f,false); Require(!warning.IsWarningVisible,"Release");
             warning.Present(150f,true); Require(!warning.IsWarningVisible,"Maintenance must take priority");
             warning.Present(150f,false); warning.Present(null,false); Require(!warning.IsWarningVisible,"Stale/disconnected telemetry");
-            warning.Present(150f,false);
+            warning.Present(player==0?150f:-150f,false);
+            var wheel=host.GetComponentInChildren<SteeringReturnGraphic>();
+            Require(wheel.ReturnDirection==(player==0?1:-1),"Return arrow must oppose the physical wheel angle.");
+            wheel.SetAnimation(wheel.ReturnDirection,0);float initial=wheel.WheelDegrees;
+            wheel.SetAnimation(wheel.ReturnDirection,.8f);Require(Mathf.Abs(wheel.WheelDegrees)<Mathf.Abs(initial),"Wheel must animate toward neutral.");
             target=new RenderTexture(width,width*9/16,24); camera.targetTexture=target; target.Create();
             camera.Render();
             Canvas.ForceUpdateCanvases();

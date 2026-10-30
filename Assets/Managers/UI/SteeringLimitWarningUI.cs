@@ -9,6 +9,10 @@ public sealed class SteeringLimitWarningUI : MonoBehaviour
     private int player;
     private RectTransform root;
     private CanvasGroup group;
+    private TMPro.TMP_Text instruction;
+    private SteeringReturnGraphic returnWheel;
+    private float animationBegan;
+    private int returnDirection;
     public bool IsWarningVisible => group != null && group.alpha > 0f;
 
     public void Configure(Gmanager race, int index)
@@ -18,14 +22,16 @@ public sealed class SteeringLimitWarningUI : MonoBehaviour
         group = root.gameObject.AddComponent<CanvasGroup>();
         group.alpha = 0f; group.interactable = false; group.blocksRaycasts = false;
         var wash = root.gameObject.AddComponent<Image>();
-        wash.color = new Color(.85f, 0f, .025f, .12f);
-        var edge = RacingUITheme.Rect(root, "Red edges", Vector2.zero, Vector2.one).gameObject.AddComponent<RivalWarningGraphic>();
-        edge.color = new Color(1f, .03f, .06f, .85f);
-        var banner = RacingUITheme.Rect(root, "Warning banner", new Vector2(.22f,.80f), new Vector2(.78f,.94f));
-        banner.gameObject.AddComponent<Image>().color = new Color(.36f,.015f,.025f,.96f);
-        ArcadeUI.Label(banner, "Instruction", "ハンドルをゆっくり戻してね", new Vector2(.03f,.40f), new Vector2(.97f,.94f), 42f, Color.white,
+        wash.color = new Color(1f, .78f, 0f, .06f);
+        var edge = RacingUITheme.Rect(root, "Yellow edges", Vector2.zero, Vector2.one).gameObject.AddComponent<RivalWarningGraphic>();
+        edge.color = new Color(1f, .82f, .04f, .92f);
+        var banner = RacingUITheme.Rect(root, "Warning banner", new Vector2(.22f,.25f), new Vector2(.78f,.75f));
+        banner.gameObject.AddComponent<Image>().color = new Color(.09f,.075f,.01f,.93f);
+        instruction = ArcadeUI.Label(banner, "Instruction", "左にゆっくり戻してね", new Vector2(.03f,.79f), new Vector2(.97f,.97f), 52f, new Color(1f,.88f,.18f),
             alignment: TMPro.TextAlignmentOptions.Center);
-        ArcadeUI.Label(banner, "Limit", "左右135°まで", new Vector2(.03f,.05f), new Vector2(.97f,.42f), 27f, Color.white,
+        returnWheel = RacingUITheme.Rect(banner, "Return wheel animation", new Vector2(.25f,.23f), new Vector2(.75f,.79f)).gameObject.AddComponent<SteeringReturnGraphic>();
+        returnWheel.color = new Color(1f,.88f,.18f);
+        ArcadeUI.Label(banner, "Limit", "ハンドルをまっすぐに", new Vector2(.03f,.04f), new Vector2(.97f,.21f), 35f, Color.white,
             alignment: TMPro.TextAlignmentOptions.Center);
         foreach (Graphic graphic in root.GetComponentsInChildren<Graphic>()) graphic.raycastTarget = false;
     }
@@ -42,7 +48,15 @@ public sealed class SteeringLimitWarningUI : MonoBehaviour
     {
         bool visible = warning.Update(suppressed ? null : degrees);
         if (group == null) return;
+        int direction = visible && degrees.Value > 0f ? 1 : -1;
+        if (visible)
+        {
+            if (!IsWarningVisible || direction != returnDirection) animationBegan = Time.unscaledTime;
+            returnDirection = direction;
+            instruction.text = direction > 0 ? "左にゆっくり戻してね" : "右にゆっくり戻してね";
+            returnWheel.SetAnimation(direction, Time.unscaledTime - animationBegan);
+            root.SetAsLastSibling();
+        }
         group.alpha = visible ? 1f : 0f;
-        if (visible) root.SetAsLastSibling();
     }
 }
