@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-10-31 JST",
+  "unityEditorPlayRequired": false,
+  "startedFrom": "existing dashboard settings update button while Unity and player were absent",
+  "fetchedCommit": "479ed318f52116729fedb101ec88b5d5401d48ab",
+  "unityBatchBuild": "passed",
+  "updateBuildLaunchMarker": true,
+  "standaloneProcess": "Race.app/Contents/MacOS/Race confirmed as listener on 127.0.0.1:8765",
+  "standaloneState": "Title",
+  "players": 2,
+  "tailscaleState": "Title",
+  "nativeUsbOfflineUpdateApi": "production Swift and C# tunnel verified against isolated fake relay, GET and POST; physical USB connection previously verified; no new phone interaction requested",
+  "normalRelayRestarted": false,
+  "otherRunningRaceStopped": false,
+  "validationNotes": [
+    "During the first build, another Unity validation started; only our updater launcher was temporarily paused until its port was free.",
+    "Initial asset import was slow; identical image/audio assets were replaced by APFS clones after byte verification to reduce temporary disk use.",
+    "Git left ignored files after unregistering its worktree; cleanup fallback and a regression case were added."
+  ],
+  "ownedTemporaryDirectoryRemoved": true,
+  "cleanupRegressionTests": {
+    "passed": 12,
+    "failed": 0,
+    "includes": "late file after git unregister and transient removal failure"
+  }
+}
