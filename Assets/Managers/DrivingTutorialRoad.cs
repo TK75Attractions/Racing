@@ -16,6 +16,7 @@ public sealed class DrivingTutorialRoad : MonoBehaviour
         float length = 70f + 30f * Mathf.PI * .5f + 80f;
         int count = Mathf.CeilToInt(length / .65f);
         var left = new List<Vector3>(); var right = new List<Vector3>();
+        var asphaltLeft = new List<Vector3>(); var asphaltRight = new List<Vector3>();
         var outsideLeft = new List<Vector3>(); var outsideRight = new List<Vector3>();
         for (int i = 0; i <= count; i++)
         {
@@ -23,12 +24,15 @@ public sealed class DrivingTutorialRoad : MonoBehaviour
             Vector3 side = Vector3.Cross(Vector3.up, tangent);
             left.Add(center - side * Width * .5f + Vector3.up * .006f);
             right.Add(center + side * Width * .5f + Vector3.up * .006f);
+            // Hide the visual seam beneath the rail; the single flat floor remains the contact surface.
+            asphaltLeft.Add(center - side * (Width * .5f + .08f) + Vector3.up * .006f);
+            asphaltRight.Add(center + side * (Width * .5f + .08f) + Vector3.up * .006f);
             outsideLeft.Add(center - side * (Width * .5f + .4f));
             outsideRight.Add(center + side * (Width * .5f + .4f));
         }
-        owner.Ribbon("Asphalt", left, right, asphalt);
-        owner.Barrier("Cyan barrier", left, outsideLeft, cyan);
-        owner.Barrier("Pink barrier", right, outsideRight, pink);
+        owner.Ribbon("Asphalt", asphaltLeft, asphaltRight, asphalt);
+        owner.Barrier("Cyan barrier", left, outsideLeft, cyan, true);
+        owner.Barrier("Pink barrier", right, outsideRight, pink, false);
         for (float distance = 0f; distance < length - 4f; distance += 8f)
         {
             var dashLeft = new List<Vector3>(); var dashRight = new List<Vector3>();
@@ -91,7 +95,7 @@ public sealed class DrivingTutorialRoad : MonoBehaviour
         CreateMesh(name, vertices, uv, triangles, material, false);
     }
 
-    private void Barrier(string name, List<Vector3> inner, List<Vector3> outer, Material material)
+    private void Barrier(string name, List<Vector3> inner, List<Vector3> outer, Material material, bool reverseWinding)
     {
         // Closed vertical ribbon with continuous seams. Only the walls have mesh colliders.
         var vertices = new Vector3[inner.Count * 4]; var uv = new Vector2[vertices.Length];
@@ -109,6 +113,13 @@ public sealed class DrivingTutorialRoad : MonoBehaviour
             AddFace(triangles, v + 1, v + 3, v + 7, v + 5);
             AddFace(triangles, v + 2, v + 6, v + 7, v + 3);
         }
+        AddFace(triangles,0,2,3,1);
+        int end=vertices.Length-4;
+        AddFace(triangles,end,end+1,end+3,end+2);
+        // Mirroring the rail to the left reverses its surface orientation. Both rails
+        // must show (and collide on) their road-facing side and upward-facing top.
+        if(reverseWinding)
+            for(int i=0;i<triangles.Count;i+=3){int swap=triangles[i+1];triangles[i+1]=triangles[i+2];triangles[i+2]=swap;}
         CreateMesh(name, vertices, uv, triangles.ToArray(), material, true);
     }
 
@@ -126,5 +137,5 @@ public sealed class DrivingTutorialRoad : MonoBehaviour
         part.GetComponent<MeshRenderer>().sharedMaterial = material;
         if (solid) part.AddComponent<MeshCollider>().sharedMesh = mesh;
     }
-    private void OnDestroy() { foreach (Mesh mesh in meshes) if (mesh != null) Destroy(mesh); }
+    private void OnDestroy() { foreach (Mesh mesh in meshes) if (mesh != null) { if(Application.isPlaying)Destroy(mesh);else DestroyImmediate(mesh); } }
 }

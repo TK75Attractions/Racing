@@ -1,0 +1,1 @@
+PASS: 778 sampled rail edges on straights, turn and exit; inward collision normals, visible upward tops, flush floor, 8cm asphalt overlap; one floor collider.
