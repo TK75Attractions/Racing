@@ -175,7 +175,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
         player.offCourseSeconds=outside?player.offCourseSeconds+dt:0f;
         player.headingSeconds=badHeading?player.headingSeconds+dt:0f;
         player.recoveryTimer=overturned?player.recoveryTimer+dt:0f;
-        bool pushing=Mathf.Abs(player.driveGate.CurrentState.pedal)>.4f;
+        bool pushing=Mathf.Abs(player.driveGate.CurrentState.pedal)>CarResetter.RecoveryPedalThreshold;
         if(!pushing){player.trackingProgress=false;player.stuckSeconds=0f;}
         else
         {

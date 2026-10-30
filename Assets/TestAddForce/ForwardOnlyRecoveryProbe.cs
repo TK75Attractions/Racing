@@ -66,10 +66,12 @@ public sealed class ForwardOnlyRecoveryProbe : MonoBehaviour
         if (!found) throw new InvalidOperationException("No flat fixture road");
         if (Environment.GetEnvironmentVariable("RACING_RECOVERY_LANDING_ONLY") != "1")
         {
-        foreach (string kind in new[] { "static-high-center", "dynamic-high-center", "neutral-high-center", "disconnected-high-center" })
+        foreach (string kind in new[] { "static-high-center", "dynamic-high-center", "neutral-high-center", "disconnected-high-center", "static-low-pedal-high-center" })
             yield return HighCenter(kind);
         yield return StaticOccupancy();
         yield return NormalRoad();
+        yield return DeliberateStop();
+        yield return LightPedalRoad();
         }
         yield return MissedLanding();
         yield return AirborneJump();
@@ -105,7 +107,7 @@ public sealed class ForwardOnlyRecoveryProbe : MonoBehaviour
         int before = resetter.AutomaticRecoveryCount;
         var trial = new Trial { name = name, initialLap = laps.GetCarData(body).lapCount, minGrounded = 4 };
         report.trials.Add(trial);
-        input.CurrentState = new DriveInputState { pedal = name.StartsWith("neutral") ? 0f : 1f };
+        input.CurrentState = new DriveInputState { pedal = name.StartsWith("neutral") ? 0f : name.Contains("low-pedal") ? .1f : 1f };
         input.IsConnected = !name.StartsWith("disconnected");
         float began = Time.time; bool captured = false;
         while (Time.time - began < 7f && resetter.AutomaticRecoveryCount == before)
@@ -146,6 +148,22 @@ public sealed class ForwardOnlyRecoveryProbe : MonoBehaviour
         float travel = Vector3.Dot(body.position - start, anchor.forward * race.CourseProgressSign);
         report.trials.Add(new Trial { name = "normal-forward-driving", passed = travel > 10 && resetter.AutomaticRecoveryCount == before,
             automaticRecoveries = resetter.AutomaticRecoveryCount - before, forwardTravel = travel });
+    }
+    private IEnumerator DeliberateStop()
+    {
+        yield return Prepare();int before=resetter.AutomaticRecoveryCount;Vector3 start=body.position;
+        input.CurrentState=DriveInputState.Neutral;yield return new WaitForSeconds(10f);
+        float travel=Vector3.Distance(body.position,start);
+        report.trials.Add(new Trial{name="deliberate-neutral-stop",passed=resetter.AutomaticRecoveryCount==before&&travel<.5f,
+            automaticRecoveries=resetter.AutomaticRecoveryCount-before,forwardTravel=travel});
+    }
+    private IEnumerator LightPedalRoad()
+    {
+        yield return Prepare();int before=resetter.AutomaticRecoveryCount;Vector3 start=body.position;
+        input.CurrentState=new DriveInputState{pedal=.1f};yield return new WaitForSeconds(4f);
+        float travel=Vector3.Dot(body.position-start,anchor.forward*race.CourseProgressSign);
+        report.trials.Add(new Trial{name="normal-light-pedal",passed=resetter.AutomaticRecoveryCount==before&&travel>2f,
+            automaticRecoveries=resetter.AutomaticRecoveryCount-before,forwardTravel=travel});
     }
     private IEnumerator MissedLanding()
     {

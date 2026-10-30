@@ -17,6 +17,16 @@
             "recoveries": 1
         },
         {
+            "name": "light-pedal-jam-recovers-at-three-seconds",
+            "passed": true,
+            "recoveries": 1
+        },
+        {
+            "name": "pedal-deadzone-does-not-teleport",
+            "passed": true,
+            "recoveries": 0
+        },
+        {
             "name": "pending-cancels-on-healthy-motion",
             "passed": true,
             "recoveries": 0

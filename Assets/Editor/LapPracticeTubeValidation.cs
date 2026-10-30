@@ -142,6 +142,8 @@ public static class LapPracticeTubeValidation
             Prepare(x:30);Tick(2.5f);body.position=origin+new Vector3(0,1.3f,-48);Require(!Tick(1),"Re-entering the road cancels off-course time.");
             Prepare(angle:80);Require(!Tick(2.98f)&&Tick(.02f),"Practice uses the race's continuous 80-degree/three-second heading rule.");
             Prepare(pedal:0);Require(!Tick(10),"An idle learner must not be repeatedly respawned.");
+            Prepare(pedal:.1f);Require(!Tick(2.98f)&&Tick(.02f),"A lightly pressed pedal must also recover a genuinely stuck learner.");
+            Prepare(pedal:.04f);Require(!Tick(10),"Pedal deadzone contact is not a request to move.");
             Prepare(pedal:1);for(int i=0;i<50;i++){body.position+=Vector3.forward*.4f;Require(!Tick(.1f),"Moving along the road is not a jam.");}
             Prepare(x:30,pedal:1);Tick(2.5f);sources[0].IsConnected=false;Require(!Tick(3),"Disconnected practice never accumulates recovery time.");sources[0].IsConnected=true;gate.Reset();Require(!Tick(2.98f)&&Tick(.02f),"Reconnection starts a fresh interval.");
             Prepare(x:30,pedal:1);Set(mover,"inputSuppressedUntil",float.PositiveInfinity);Require(!Tick(4),"Respawn suppression prevents repeated recovery.");

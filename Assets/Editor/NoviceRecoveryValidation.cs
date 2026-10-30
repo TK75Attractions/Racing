@@ -54,6 +54,10 @@ public static class NoviceRecoveryValidation
             Prepare(pedal:1);before=resetter.AutomaticRecoveryCount;Tick(frames-1);
             bool boundary=resetter.AutomaticRecoveryCount==before;Tick(1);
             Record("held-pedal-jam-recovers-at-three-seconds",boundary&&resetter.AutomaticRecoveryCount==before+1,before);
+            Prepare(pedal:.1f);before=resetter.AutomaticRecoveryCount;Tick(frames-1);bool lightBoundary=resetter.AutomaticRecoveryCount==before;Tick(1);
+            Record("light-pedal-jam-recovers-at-three-seconds",lightBoundary&&resetter.AutomaticRecoveryCount==before+1,before);
+            Prepare(pedal:.04f);before=resetter.AutomaticRecoveryCount;Tick(frames*2);
+            Record("pedal-deadzone-does-not-teleport",resetter.AutomaticRecoveryCount==before,before);
             foreach(string escape in new[]{"healthy-motion","disconnection","blocked-input"})
             {
                 Prepare(pedal:1);before=resetter.AutomaticRecoveryCount;

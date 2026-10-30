@@ -4,6 +4,7 @@ public class CarResetter : MonoBehaviour
 {
     public const float AutomaticRecoveryDelay = 3f;
     public const float BadHeadingDegrees = 80f;
+    public const float RecoveryPedalThreshold = .05f;
     private Vector3 initialPosition;
     private Quaternion initialRotation;
     private Rigidbody rb;
@@ -119,7 +120,7 @@ public class CarResetter : MonoBehaviour
         Vector3 recoveryUp = onTubeWall ? lastWallNormal : here.up;
         bool overturned = Vector3.Dot(rb.rotation * Vector3.up, recoveryUp) < .2f && grounded < 2;
         bool almostStopped = rb.linearVelocity.sqrMagnitude < 1f;
-        bool pushing = inputSource != null && inputSource.IsConnected && Mathf.Abs(inputSource.CurrentState.pedal) > .4f;
+        bool pushing = inputSource != null && inputSource.IsConnected && Mathf.Abs(inputSource.CurrentState.pedal) > RecoveryPedalThreshold;
         // Heading requires three uninterrupted seconds of actual misalignment.
         // Returning below 80 degrees clears it even if another recovery condition starts.
         badHeadingSeconds = badHeading ? badHeadingSeconds + dt : 0f;
