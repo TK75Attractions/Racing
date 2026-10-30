@@ -2,20 +2,26 @@ using System.Net;
 using System.Text.Json;
 
 // This helper owns only port 8767. It never starts/stops Unity, Race, Tailscale or the normal relay.
+string requestedMode;
+try{requestedMode=UsbMode.Requested(args);}
+catch(ArgumentException error){Console.Error.WriteLine(error.Message);Environment.ExitCode=2;return;}
 using(var probe=new HttpClient(new SocketsHttpHandler{UseProxy=false}){Timeout=TimeSpan.FromMilliseconds(750)})
 {
     try
     {
         using var info=JsonDocument.Parse(await probe.GetStringAsync("http://127.0.0.1:8767/api/usb"));
-        if(info.RootElement.TryGetProperty("app",out var name)&&name.GetString()=="racing-usb-dashboard")
-        {Console.WriteLine("USB補助アプリは起動済みです: http://127.0.0.1:8767/");OpenSetup();return;}
+        if(info.RootElement.TryGetProperty("app",out var name)&&name.ValueKind==JsonValueKind.String&&name.GetString()=="racing-usb-dashboard")
+        {
+            if(!UsbMode.CanReuse(info.RootElement,requestedMode)){Console.Error.WriteLine(UsbMode.Conflict(info.RootElement,requestedMode));Environment.ExitCode=2;return;}
+            Console.WriteLine("同じ接続方式の補助アプリは起動済みです: http://127.0.0.1:8767/");OpenSetup();return;
+        }
     }
     catch(Exception error)when(error is HttpRequestException or TaskCanceledException or JsonException){}
 }
 var setup=UsbGateway.Builder(IPAddress.Loopback,8767);
 string? usbUrl=null, lastError=null;
 var iphone=new IPhoneUsbHost();
-bool wiredMode=!args.Contains("--iphone")&&!args.Contains("--tethering");
+bool wiredMode=requestedMode=="wired";
 await using var wired=new WiredHost();
 setup.Run(async context=>
 {
@@ -33,7 +39,7 @@ setup.Run(async context=>
     {context.Response.StatusCode=403;return;}
     if(wiredMode&&(context.Request.Path.StartsWithSegments("/api/wired")||context.Request.Path=="/api/usb")){await wired.Handle(context);return;}
     if(context.Request.Path=="/api/usb")
-    {await context.Response.WriteAsJsonAsync(new{app="racing-usb-dashboard",mode=wiredMode?"wired":"usb",connected=iphone.Status.connected||usbUrl!=null,url=usbUrl,error=lastError,iphone=iphone.Status});return;}
+    {await context.Response.WriteAsJsonAsync(new{app="racing-usb-dashboard",mode=requestedMode,connected=iphone.Status.connected||usbUrl!=null,url=usbUrl,error=lastError,iphone=iphone.Status});return;}
     if(context.Request.Path!="/"){context.Response.StatusCode=404;return;}
     context.Response.ContentType="text/html; charset=utf-8";
     await context.Response.WriteAsync(wiredMode?WiredSetup.Page:UsbSetup.Page);
