@@ -820,3 +820,40 @@ test('Home and race progress reflect independent results and waiting without cha
   ui.render({...base,playerProgress:[{number:1,state:'Game',step:'Spectating'},{number:2,state:'Game',step:'Driving'}]});
   assert.match(ui.elements.get('home-player-detail-1').textContent,/相手のゴールを待っています/);
 });
+
+test('Build progress survives Unity disconnect and generic settings rendering without becoming a version error',()=>{
+  const ui=fixture();
+  vm.runInContext("operatorStatus={available:false,busy:true,canControl:true,canCancel:true,phase:'building',requestId:'job-1',message:'Unityでビルドしています。'};renderOperatorUpdate();",ui.context);
+  ui.context.setConnection(false);
+  assert.equal(ui.elements.get('operator-update-status').textContent,'Unityでビルドしています。');
+  assert.equal(ui.elements.get('settings-status').textContent,'Unityでビルドしています。');
+  assert.doesNotMatch(ui.elements.get('settings-feature-count').textContent,/取得できません/);
+  assert.equal(ui.elements.get('operator-cancel').hidden,false);
+  assert.equal(ui.elements.get('operator-cancel').disabled,false);
+});
+test('Cancellation requires an operator, an active cancellable build, and the exact request anchor',async()=>{
+  const ui=fixture(),sent=[];ui.context.AbortSignal=AbortSignal;ui.context.crypto={randomUUID:()=> 'cancel-command'};
+  ui.context.captureCancel=(route,options)=>sent.push([route,options]);
+  vm.runInContext("operatorStatus={available:false,busy:true,canControl:true,canCancel:true,phase:'building',requestId:'job-1'};operatorPolling=true;renderOperatorUpdate();apiFetch=async(route,options)=>{captureCancel(route,options);return {json:async()=>({ok:true,message:'キャンセルを受け付けました。'})};};",ui.context);
+  await ui.context.cancelOperatorUpdate();
+  assert.equal(sent[0][0],'/api/operator-update');
+  assert.deepEqual(JSON.parse(sent[0][1].body),{id:'cancel-command',command:'cancel',requestId:'job-1'});
+  assert.equal(ui.elements.get('operator-cancel').disabled,true);
+  assert.match(ui.elements.get('operator-cancel').textContent,/キャンセル処理中/);
+  await ui.context.cancelOperatorUpdate();assert.equal(sent.length,1);
+  for(const field of ['canControl','canCancel']) {
+    vm.runInContext("operatorStatus={busy:true,canControl:true,canCancel:true,requestId:'job-2'};operatorStatus['"+field+"']=false;renderOperatorUpdate();",ui.context);
+    assert.equal(ui.elements.get('operator-cancel').disabled,true);
+    await ui.context.cancelOperatorUpdate();assert.equal(sent.length,1);
+  }
+});
+test('Cancellation completion and real build failure remain visible after disconnected snapshots',()=>{
+  const ui=fixture();
+  for(const [phase,message] of [['cancelled','更新をキャンセルしました。'],['failed','Unityビルドに失敗しました。build.logを確認してください。']]) {
+    vm.runInContext('operatorStatus='+JSON.stringify({available:true,busy:false,canControl:true,canCancel:false,phase,message})+';',ui.context);
+    ui.context.setConnection(false);
+    assert.equal(ui.elements.get('settings-status').textContent,message);
+    assert.equal(ui.elements.get('operator-cancel').hidden,true);
+    assert.equal(ui.elements.get('operator-update').disabled,false);
+  }
+});

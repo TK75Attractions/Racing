@@ -1077,7 +1077,7 @@ function renderFeatureSettings(settings) {
   for (const feature of features) featureElements.get(feature.id).checked = !!feature.enabled;
   $('settings-feature-count').textContent = features.length ?
     `${features.filter(feature => feature.enabled).length} / ${features.length} 項目がON` :
-    'F8設定を取得できません。Unity の接続・バージョンを確認してください。';
+    operatorStatus?.busy ? 'ゲーム設定は更新後に再取得します。ビルドは継続中です。' : 'F8設定を取得できません。Unity の接続・バージョンを確認してください。';
   $('settings-rules').textContent = settings?.featuresAvailable ?
     `通常レース / ${latestSnapshot?.goalLap ?? '—'}周 / 制限時間180秒` : '';
   $('settings-rule-help').textContent = settings?.featuresAvailable ?
@@ -1106,6 +1106,13 @@ function renderOperatorUpdate() {
   $('operator-update-status').textContent = operatorStatus.message || '更新状況を確認しています。';
   $('operator-update-log').textContent = operatorStatus.logFolder ? 'ログ: ' + operatorStatus.logFolder : '';
   $('operator-update').disabled = operatorBusy || !operatorStatus.canControl || !operatorStatus.available || operatorStatus.busy;
+  const cancel = $('operator-cancel');
+  cancel.hidden = !operatorStatus.busy;
+  cancel.disabled = operatorBusy || !operatorStatus.canControl || !operatorStatus.canCancel;
+  cancel.textContent = operatorStatus.phase === 'cancelling' ? 'キャンセル処理中…' : operatorStatus.canCancel ? 'ビルドをキャンセル' : !operatorStatus.phase ? '更新サービスの更新が必要です' : '切り替え中はキャンセルできません';
+  if (!settingsBusy && (operatorStatus.busy || ['failed', 'cancelled'].includes(operatorStatus.phase)))
+    $('settings-status').textContent = operatorStatus.message;
+
 }
 async function pollOperatorUpdate() {
   if (!localMode || operatorPolling) return;
@@ -1126,12 +1133,34 @@ async function submitOperatorUpdate(control) {
     const response = await apiFetch('/api/operator-update', { method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({id}), signal:AbortSignal.timeout(12000) });
     const result = await response.json();
-    operatorStatus = {...operatorStatus, message:result.message, logFolder:result.logFolder, available:false};
+    operatorStatus = {...operatorStatus, message:result.message, logFolder:result.logFolder, requestId:result.requestId, available:false, busy:!!result.ok, phase:result.ok?'fetching':'failed'};
     renderOperatorUpdate();
     $('settings-status').textContent = result.message;
   } catch {
     $('settings-status').textContent = '更新開始を確認できません。進行状況とログを確認してください。';
   } finally { operatorBusy = false; control.blur(); await pollOperatorUpdate(); }
+}
+
+async function cancelOperatorUpdate() {
+  if (operatorBusy || !operatorStatus?.canControl || !operatorStatus.canCancel || !operatorStatus.requestId) return;
+  const requestId = operatorStatus.requestId;
+  operatorBusy = true; renderOperatorUpdate();
+  try {
+    const response = await apiFetch('/api/operator-update', { method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:newRequestId(),command:'cancel',requestId}), signal:AbortSignal.timeout(12000) });
+    const result = await response.json();
+    if (operatorStatus?.requestId !== requestId) return;
+    operatorStatus = {...operatorStatus,message:result.message,canCancel:false,phase:result.ok?'cancelling':operatorStatus.phase};
+    renderOperatorUpdate();
+    $('settings-status').textContent = result.message;
+  } catch {
+    $('settings-status').textContent = 'キャンセルの結果を確認できません。最新の進行状況を確認してください。';
+  } finally { operatorBusy = false; await pollOperatorUpdate(); }
+}
+function unavailableSettingsMessage() {
+  if (operatorStatus?.busy || ['failed','cancelled'].includes(operatorStatus?.phase)) return operatorStatus.message;
+  if (operatorStatus?.phase === 'completed') return '新しいRaceの接続を待っています。更新結果とログは「ゲームの更新」で確認できます。';
+  return '設定を取得できません。Unity の接続・バージョンを確認してください。';
 }
 
 function renderSettings(settings, canControl) {
@@ -1188,7 +1217,7 @@ function renderSettings(settings, canControl) {
     $('settings-output-' + player + '-status').textContent = settings?.outputStatus?.[player] ?? '未接続';
   }
   if (!settingsBusy && (!settings || !canControl || !localMode))
-    $('settings-status').textContent = !settings ? '設定を取得できません。Unity の接続・バージョンを確認してください。' :
+    $('settings-status').textContent = !settings ? unavailableSettingsMessage() :
       !localMode ? 'この設定はローカルまたはTailscaleの管理画面で操作できます。' : '状態更新待ち、または閲覧専用のため変更できません。';
   else if (!settingsBusy && /取得できません|閲覧専用|接続を待|管理画面で操作/.test($('settings-status').textContent))
     $('settings-status').textContent = '変更はゲームへ即時反映されます。';
@@ -1469,6 +1498,8 @@ if (localMode) {
   import('./remote.js').then(({ startRemote }) => startRemote({ render, setConnection }))
     .catch(() => { $('remote-status').textContent = '遠隔監視の読み込みに失敗しました。ページを再読み込みしてください。'; });
 }
+
+$('operator-cancel').addEventListener('click', () => void cancelOperatorUpdate());
 
 document.querySelectorAll('[data-setting]').forEach(control => {
   control.addEventListener(control.tagName === 'BUTTON' ? 'click' : 'change', () => void submitSetting(control));
