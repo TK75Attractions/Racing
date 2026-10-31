@@ -51,6 +51,18 @@ public sealed class RaceFeatureSettingsTests
         Assert.IsFalse(settings.IsEnabled(RaceFeature.PlayerOneAutodrive));
         Assert.IsFalse(settings.IsEnabled(RaceFeature.PlayerTwoAutodrive));
     }
+    [Test] public void ReturningToTitleRestoresBothManualPlayersForTheNextVisitors()
+    {
+        var settings = new RaceFeatureSettings();
+        settings.SetFeature(RaceFeature.PlayerOneAutodrive | RaceFeature.PlayerTwoAutodrive, true);
+        settings.SetFeature(RaceFeature.ExperienceItems, true);
+        settings.BeginPreparation();
+        settings.ResetForNextGroup();
+        Assert.IsFalse(settings.IsEnabled(RaceFeature.PlayerOneAutodrive));
+        Assert.IsFalse(settings.IsEnabled(RaceFeature.PlayerTwoAutodrive));
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.ExperienceItems));
+        Assert.IsFalse(settings.RulesLocked);
+    }
     [Test] public void RemovedPresetCannotChangeRulesOrEnableGentleItems()
     {
         var settings = new RaceFeatureSettings();

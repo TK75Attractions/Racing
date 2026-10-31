@@ -82,6 +82,8 @@ public sealed class RaceFeatureSettings
     }
     public void ResetForNextGroup()
     {
+        // A completed demo must not leave the next visitors' controls in automatic mode.
+        SetFeature(RaceFeature.PlayerOneAutodrive | RaceFeature.PlayerTwoAutodrive, false);
         if (!HasQueuedPreset) SelectedPreset = RacePreset.Standard;
         UnlockAtTitle();
     }
