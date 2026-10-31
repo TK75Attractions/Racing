@@ -46,6 +46,7 @@ const frameUrls = [null, null];
 
 const dashboardPages = {
   home: ['ホーム', '機器の接続・要確認事項・プレイヤーの復帰と入力を、ひと目で。', 'HOME'],
+  statistics: ['プレイ集計', '本日のプレイ人数とランキング、日別の人数を確認。', 'PLAY STATISTICS'],
   race: ['レース運営', '進行の操作、プレイヤー映像、順位をまとめて確認。', 'RACE OPERATIONS'],
   devices: ['機器・入力', '接続状態と、ハンドル・ペダルの反応を確認。', 'DEVICES & INPUT'],
   settings: ['ゲーム設定', '音量・出力先・レースルールを調整。', 'GAME SETTINGS'],
@@ -85,6 +86,7 @@ function showDashboardPage(page, focus = false) {
   if (changed) frameGeneration++;
   if (focus) $('page-title').focus({preventScroll:true});
   if (changed && page === 'race' && localMode) void refreshFrames();
+  if (page === 'statistics') void pollStatistics();
 }
 
 function renderHome(snapshot) {
@@ -1109,6 +1111,73 @@ function renderMaintenance(settings) {
   $('maintenance-stop').hidden = !active;
 }
 
+let statisticsData = null, statisticsPolling = false, statisticsSequence = 0;
+const statisticsLimits = new Map();
+function statisticsCount(value) { return Number.isFinite(value) && value >= 0 ? Math.floor(value).toLocaleString('ja-JP') : '—'; }
+function statisticsTime(value) {
+  if (!Number.isFinite(value) || value <= 0) return '—';
+  const ms = Math.floor(value);
+  return `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}.${String(ms % 1000).padStart(3, '0')}`;
+}
+function statisticsCell(value, tag = 'td') { const cell = document.createElement(tag); cell.textContent = value; return cell; }
+function renderStatistics(data, message = '') {
+  statisticsData = data;
+  $('statistics-today-plays').textContent = statisticsCount(data?.todayPlays);
+  $('statistics-today-ranked').textContent = statisticsCount(data?.todayRanked);
+  $('statistics-day').textContent = data?.day ? data.day + ' · 端末の現地日付' : '日付を確認できません';
+  $('statistics-status').textContent = message || (data ? '保存済みのプレイ記録を表示しています。10秒ごとに更新します。' : '集計データを取得できません。常駐Dashboardへの接続を確認してください。');
+  const warnings = Array.isArray(data?.warnings) ? data.warnings : [];
+  $('statistics-warnings').hidden = !warnings.length;
+  $('statistics-warnings').replaceChildren(...warnings.map(value => statisticsCell(value, 'li')));
+  const boards = Array.isArray(data?.boards) ? data.boards : [];
+  const sections = boards.map(board => {
+    const section = document.createElement('section'); section.className = 'statistics-board';
+    const heading = document.createElement('h3'); heading.textContent = board.label || '保存済みコース'; section.append(heading);
+    if (!board.goalLaps) section.append(statisticsCell('過去の記録のため、周回数などの条件名は保存されていません。', 'p'));
+    const rows = Array.isArray(board.rows) ? board.rows : [];
+    if (!rows.length) { section.append(statisticsCell('この条件の完走記録はまだありません。', 'p')); return section; }
+    section.append(statisticsCell('本日のベスト ' + statisticsTime(rows[0].milliseconds), 'p'));
+    const wrap = document.createElement('div'); wrap.className = 'table-wrap';
+    const table = document.createElement('table'); const head = document.createElement('thead');
+    const header = document.createElement('tr'); ['順位', 'プレイヤー', '総タイム', '完走時刻'].forEach(label => header.append(statisticsCell(label, 'th')));
+    head.append(header); const body = document.createElement('tbody');
+    const limit = statisticsLimits.get(board.id) || 20;
+    rows.slice(0, limit).forEach(entry => {
+      const row = document.createElement('tr');
+      row.append(statisticsCell(statisticsCount(entry.rank) + '位'), statisticsCell(`第${statisticsCount(entry.playNumber)}レース P${entry.playerNumber}`), statisticsCell(statisticsTime(entry.milliseconds)), statisticsCell(entry.finishedAt || '—'));
+      body.append(row);
+    });
+    table.append(head, body); wrap.append(table); section.append(wrap);
+    if (rows.length > limit) { const more = document.createElement('button'); more.type = 'button'; more.dataset.statisticsMore = board.id; more.textContent = `さらに20件表示（全${rows.length}件）`; section.append(more); }
+    return section;
+  });
+  $('statistics-rankings').replaceChildren(...(sections.length ? sections : [statisticsCell(data ? '本日のランキング記録はまだありません。' : 'ランキングを取得できません。', 'p')]));
+  const period = $('statistics-period').value || '30';
+  const cutoff = data?.day && period !== 'all' ? Date.parse(data.day + 'T00:00:00Z') - (Number(period) - 1) * 86400000 : -Infinity;
+  const days = (Array.isArray(data?.days) ? data.days : []).filter(day => Date.parse(day.day + 'T00:00:00Z') >= cutoff);
+  const maximum = Math.max(1, ...days.map(day => Number.isFinite(day.plays) ? day.plays : 0));
+  $('statistics-days').replaceChildren(...days.map(day => {
+    const row = document.createElement('tr');
+    const barCell = document.createElement('td'); const meter = document.createElement('meter'); meter.min = 0; meter.max = maximum; meter.value = day.plays; meter.setAttribute('aria-label', day.day + ': ' + statisticsCount(day.plays) + '人'); barCell.append(meter);
+    row.append(statisticsCell(day.day), statisticsCell(statisticsCount(day.plays) + '人'), barCell, statisticsCell(day.legacyFinishes > 0 ? `開始記録 ${statisticsCount(day.starts)}人 ＋ 過去の完走 ${statisticsCount(day.legacyFinishes)}人` : day.starts > 0 ? 'プレイ開始の記録' : '記録なし')); return row;
+  }));
+  $('statistics-history-note').textContent = data ? `${days.length}日分の保存済み履歴を表示しています。履歴のない日は人数を推定していません。` : '履歴を取得できません。';
+}
+function showMoreStatistics(board) { statisticsLimits.set(board, (statisticsLimits.get(board) || 20) + 20); renderStatistics(statisticsData); }
+async function pollStatistics() {
+  if (statisticsPolling) return;
+  if (!localMode) { renderStatistics(null, 'プレイ集計は運営用の常駐Dashboardから確認してください。'); return; }
+  const sequence = ++statisticsSequence; statisticsPolling = true; $('statistics-refresh').disabled = true;
+  try {
+    const response = await apiFetch('/api/statistics', { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) throw new Error('statistics');
+    const data = await response.json();
+    if (sequence === statisticsSequence) renderStatistics(data);
+  } catch {
+    renderStatistics(statisticsData, statisticsData ? '集計の更新に失敗しました。最後に取得できた記録を表示しています。' : '集計を取得できません。常駐Dashboardを更新して接続を確認してください。');
+  } finally { statisticsPolling = false; $('statistics-refresh').disabled = false; }
+}
+
 function renderOperatorUpdate() {
   if (!operatorStatus || !localMode) return;
   $('operator-update-status').textContent = operatorStatus.message || '更新状況を確認しています。';
@@ -1534,6 +1603,11 @@ if (localMode) {
   import('./remote.js').then(({ startRemote }) => startRemote({ render, setConnection }))
     .catch(() => { $('remote-status').textContent = '遠隔監視の読み込みに失敗しました。ページを再読み込みしてください。'; });
 }
+
+$('statistics-refresh').addEventListener('click', () => void pollStatistics());
+$('statistics-period').addEventListener('change', () => renderStatistics(statisticsData));
+$('statistics-rankings').addEventListener('click', event => { if (event.target.dataset.statisticsMore) showMoreStatistics(event.target.dataset.statisticsMore); });
+setInterval(() => { if (activePage === 'statistics') void pollStatistics(); }, 10000);
 
 $('operator-cancel').addEventListener('click', () => void cancelOperatorUpdate());
 

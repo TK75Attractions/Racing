@@ -955,3 +955,52 @@ test('An old helper without build telemetry has no misleading progress or stale 
   vm.runInContext("operatorStatus={busy:true,phase:'building'};renderOperatorUpdate();",ui.context);
   assert.equal(ui.elements.get('operator-build-progress').hidden,true);
 });
+
+test('Statistics is a separate dashboard route and renders counts without a live race',()=>{
+  const ui=fixture();assert.equal(ui.context.dashboardRoute('#statistics'),'statistics');
+  const data={day:'2026-11-01',todayPlays:4,todayRanked:3,warnings:[],boards:[{id:'course',label:'通常・2周・正走',rows:[{rank:1,playNumber:1,playerNumber:1,milliseconds:82001,finishedAt:'10:00'},{rank:1,playNumber:1,playerNumber:2,milliseconds:82001,finishedAt:'10:00'}]}],days:[{day:'2026-11-01',plays:4,starts:4,legacyFinishes:0},{day:'2026-10-31',plays:2,starts:0,legacyFinishes:2}]};
+  ui.context.renderStatistics(data);
+  assert.equal(ui.elements.get('statistics-today-plays').textContent,'4');
+  assert.equal(ui.elements.get('statistics-today-ranked').textContent,'3');
+  assert.match(ui.elements.get('statistics-rankings').textContent,/1位.*第1レース P1.*1:22.001.*1位.*第1レース P2/);
+  assert.equal(ui.elements.get('statistics-days').children.length,2);
+  assert.match(ui.elements.get('statistics-days').textContent,/過去の完走 2人/);
+  const meter=ui.elements.get('statistics-days').children[0].children[2].children[0];
+  assert.equal(meter.value,4);assert.equal(meter.max,4);
+  ui.context.setConnection(false);
+  assert.equal(ui.elements.get('statistics-today-plays').textContent,'4','Unity disconnect cannot erase persisted statistics');
+});
+
+test('Statistics handles empty days, warnings and the selected history period',()=>{
+  const ui=fixture();
+  const data={day:'2026-11-01',todayPlays:0,todayRanked:0,boards:[],warnings:['過去の記録を読み込めません'],days:[{day:'2026-11-01',plays:0,starts:0,legacyFinishes:0},{day:'2026-01-01',plays:9,starts:0,legacyFinishes:9}]};
+  ui.context.renderStatistics(data);
+  assert.match(ui.elements.get('statistics-rankings').textContent,/本日のランキング記録はまだありません/);
+  assert.equal(ui.elements.get('statistics-warnings').hidden,false);
+  assert.equal(ui.elements.get('statistics-days').children.length,1);
+  ui.elements.get('statistics-period').value='all';ui.context.renderStatistics(data);
+  assert.equal(ui.elements.get('statistics-days').children.length,2);
+  ui.context.renderStatistics(null);assert.equal(ui.elements.get('statistics-today-plays').textContent,'—');
+});
+
+test('Statistics ranking pagination preserves safe text and reveals additional records',()=>{
+  const ui=fixture();
+  const rows=Array.from({length:25},(_,i)=>({rank:i+1,playNumber:i+1,playerNumber:1,milliseconds:80000+i,finishedAt:'12:00'}));
+  const data={day:'2026-11-01',todayPlays:25,todayRanked:25,days:[],warnings:[],boards:[{id:'c',label:'<img src=x onerror=alert(1)>',rows}]};
+  ui.context.renderStatistics(data);
+  assert.match(ui.elements.get('statistics-rankings').textContent,/さらに20件表示/);
+  assert.ok(!ui.elements.get('statistics-rankings').textContent.includes('第25レース'));
+  ui.context.showMoreStatistics('c');
+  assert.match(ui.elements.get('statistics-rankings').textContent,/第25レース/);
+  assert.equal(ui.elements.get('statistics-rankings').children[0].children[0].textContent,'<img src=x onerror=alert(1)>');
+});
+
+test('A failed statistics refresh retains previous figures and labels them as stale',async()=>{
+  const ui=fixture();ui.context.AbortSignal=AbortSignal;
+  ui.context.renderStatistics({day:'2026-11-01',todayPlays:8,todayRanked:6,days:[],boards:[],warnings:[]});
+  vm.runInContext("apiFetch=async()=>{throw new Error('offline')}",ui.context);
+  await ui.context.pollStatistics();
+  assert.equal(ui.elements.get('statistics-today-plays').textContent,'8');
+  assert.match(ui.elements.get('statistics-status').textContent,/最後に取得できた記録/);
+  assert.equal(ui.elements.get('statistics-refresh').disabled,false);
+});
