@@ -1,0 +1,8 @@
+2026-11-01 / macOS / Unity 6000.3.9f1
+Main Library copy: 20.179 seconds (APFS clone + SHA-256/byte checks).
+MAIN_CACHE_REUSE_PASS: production 102 MB FBX loaded from the copied main-project Library; meshFilters=550
+Heavy school FBX reimport log count: 0
+Unity startup + validator + shutdown log lifetime: approximately 33.2 seconds.
+No standalone player build/run was performed.
+Updater integration: 29 cases passed.
+Dashboard UI: 74 tests passed.
