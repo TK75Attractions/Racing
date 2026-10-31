@@ -1,0 +1,44 @@
+2026-10-31 / updater control verification
+Build succeeded.
+PASS Unity closed: updater remains available
+PASS Viewer cannot enable update
+PASS Starts without Unity
+PASS Relay never waits for or delegates ownership to the running game
+PASS macOS update worker runs outside the relay's launchd process group
+PASS Duplicate ID returns the original result
+PASS Retry does not spawn another updater
+PASS Progress survives worker completion
+PASS Running build reports progress and cancellation independently of Unity
+PASS The existing Race is neither paused nor closed during the build
+PASS A stale cancel cannot affect a different build
+PASS Only the verified completed build releases the current game using a fresh anchor
+PASS Handoff keeps game-session guards
+PASS Online retry is idempotent
+PASS A committed launch cannot be cancelled
+PASS Cancellation is accepted for the exact active request
+PASS Cancelled jobs release busy state and retain their real result
+PASS Cancellation never triggers game shutdown or launch handoff
+PASS Repeated cancellation is idempotent
+PASS A failed Editor release reports its cause and never terminates the Editor
+PASS Relay restart adopts the external build without stopping it
+PASS Restarted relay completes the late handoff even with the browser closed
+OPERATOR_HOST_TESTS_PASS
+PASS Update is available during a race
+PASS Request pauses a running race
+PASS A build longer than 120 seconds keeps the worker and Editor Play alive
+PASS Editor Play stops only after the successful build, without closing the Editor
+PASS Updater-owned maintenance is cleared before the new game starts
+PASS Editor updater never waits for the Editor process to exit
+PASS Edit-mode update works without an open race scene
+PASS Worker completion clears busy state
+PASS Handoff rejects unverified jobs and path traversal
+PASS A completed stale job cannot shut down a newer game
+PASS Only the active, launch-committed job may release Editor Play
+PASS Graceful handoff releases Play without closing the Editor
+OPERATOR_RUNTIME_TESTS_PASS
+Ran 17 tests in 29.241s
+OK
+Ran 2 tests in 4.584s
+OK
+Dashboard all suites: 72 passed, 0 failed, 1 optional diagnosis-browser test skipped.
+Windows PowerShell and a real Unity Player build were not executed. Existing live Race/Editor/update processes were left running.
