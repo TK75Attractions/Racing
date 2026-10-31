@@ -154,6 +154,54 @@ class UpdateTest(unittest.TestCase):
   self.assertEqual((self.logs/'cache.txt').read_text().strip(),'reused')
   self.assertEqual((original_library/'user-editor').read_text(),'untouched')
   self.assertTrue(cache.exists())
+ def main_cache(self,version='6000.3.9f1'):
+  settings=self.repo/'ProjectSettings';settings.mkdir(exist_ok=True)
+  (settings/'ProjectVersion.txt').write_text('m_EditorVersion: '+version+'\n')
+  self.git('add','ProjectSettings');self.git('commit','-m','Unity version');self.git('push')
+  library=self.repo/'Library';library.mkdir()
+  (library/'EditorInstance.json').write_text('{"version":"'+version+'","process_id":12345}')
+  (library/'ArtifactDB').write_text('imported artifact database')
+  (library/'SourceAssetDB').write_text('imported source database')
+  (library/'Artifacts').mkdir();(library/'Artifacts'/'heavy-fbx').write_text('imported school model')
+  for name in ['ilpp.pid','ArtifactDB-lock','SourceAssetDB-lock','ShaderCache.db','ShaderCache.db-wal']:(library/name).write_text('live Editor data')
+  return library
+ def test_first_build_seeds_from_main_library_without_changing_the_working_editor(self):
+  library=self.main_cache();before={str(p.relative_to(library)):p.read_bytes() for p in library.rglob('*') if p.is_file()}
+  self.unity.write_text('#!/bin/sh\ntest -f Library/Artifacts/heavy-fbx || exit 21\ntest ! -f Library/ilpp.pid || exit 22\ntest ! -f Library/ArtifactDB-lock || exit 23\ntest ! -f Library/ShaderCache.db || exit 24\necho updated-by-build > Library/ArtifactDB\n'+self.build_output)
+  self.git('switch','-c','working-feature');(self.repo/'uncommitted.txt').write_text('keep')
+  self.assertEqual(self.run_update(),0,(self.logs/'update.log').read_text())
+  self.assertEqual((self.logs/'cache.txt').read_text().strip(),'seeded')
+  self.assertEqual(before,{str(p.relative_to(library)):p.read_bytes() for p in library.rglob('*') if p.is_file()})
+  self.assertEqual(self.git('branch','--show-current'),'working-feature');self.assertEqual((self.repo/'uncommitted.txt').read_text(),'keep')
+  self.assertEqual((self.repo/'Builds/OperatorCache/macOS-6000.3.9f1/Library/ArtifactDB').read_text().strip(),'updated-by-build')
+  self.logs=self.root/'next request';self.assertEqual(self.run_update(),0)
+  self.assertEqual((self.logs/'cache.txt').read_text().strip(),'reused','Dedicated cache takes precedence over main seeding')
+ def test_main_library_from_a_different_unity_version_is_not_seeded(self):
+  library=self.main_cache();(library/'EditorInstance.json').write_text('{"version":"6000.2.0f1"}')
+  self.assertEqual(self.run_update(),0)
+  self.assertEqual((self.logs/'cache.txt').read_text().strip(),'cold')
+ def test_invalid_main_editor_metadata_falls_back_without_failing_the_build(self):
+  library=self.main_cache();(library/'EditorInstance.json').write_text('broken json')
+  self.assertEqual(self.run_update(),0);self.assertEqual((self.logs/'cache.txt').read_text().strip(),'cold')
+ def test_link_in_main_library_is_not_shared_with_a_build(self):
+  library=self.main_cache();external=self.root/'external';external.mkdir();(external/'keep').write_text('keep')
+  (library/'linked').symlink_to(external,target_is_directory=True)
+  self.assertEqual(self.run_update(),0);self.assertEqual((self.logs/'cache.txt').read_text().strip(),'cold')
+  self.assertEqual((external/'keep').read_text(),'keep')
+ def test_editor_database_change_during_copy_discards_the_seed(self):
+  library=self.main_cache();real_cp=subprocess.check_output(['which','cp'],text=True).strip()
+  copier=self.bin/'cp';copier.write_text('#!/bin/sh\n"'+real_cp+'" "$@" || exit $?\necho changed-during-copy >> "'+str(library/'ArtifactDB')+'"\n');copier.chmod(0o755)
+  self.unity.write_text('#!/bin/sh\ntest ! -e Library/Artifacts/heavy-fbx || exit 25\n'+self.build_output)
+  self.assertEqual(self.run_update(),0,(self.logs/'update.log').read_text());self.assertEqual((self.logs/'cache.txt').read_text().strip(),'cold')
+  self.assertIn('コピー中にメインプロジェクトが更新された',(self.logs/'update.log').read_text())
+ def test_cancellation_during_seed_stops_copy_without_saving_partial_cache(self):
+  library=self.main_cache();copier=self.bin/'cp'
+  copier.write_text('#!/bin/bash\nmkdir -p "$3";echo partial > "$3/ArtifactDB"\necho started > "'+str(self.root/'copy-started')+'"\nwhile true; do sleep .1; done\n');copier.chmod(0o755)
+  update=self.start_update();self.wait_file(self.root/'copy-started');(self.logs/'decision').write_text('cancel\n')
+  self.assertEqual(update.wait(timeout=12),130)
+  self.assertEqual((library/'ArtifactDB').read_text(),'imported artifact database')
+  self.assertFalse((self.repo/'Builds/OperatorCache/macOS-6000.3.9f1/Library').exists())
+  self.assertEqual(list((self.repo/'Builds/OperatorSource').iterdir()),[])
  def test_cancelled_import_keeps_cache_for_the_next_build(self):
   self.unity.write_text('#!/bin/bash\nmkdir -p Library;echo partial > Library/probe\necho importing > "'+str(self.root/'cache-started')+'"\nwhile true; do sleep .1; done\n')
   update=self.start_update();self.wait_file(self.root/'cache-started')

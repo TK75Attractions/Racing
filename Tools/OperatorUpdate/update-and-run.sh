@@ -72,6 +72,68 @@ stop_existing_players() {
         if race_running "$process"; then kill -KILL "$process" 2>/dev/null || fail '既存のRaceを終了できません。'; fi
     done
 }
+# Hash the two import databases as well as the settings that identify this cache.
+# A changing working Editor must never produce a partially copied import database.
+main_cache_signature() {
+    /usr/bin/perl -MDigest::SHA -e '
+        my $root = shift;
+        for my $name (qw(Library/ArtifactDB Library/SourceAssetDB ProjectSettings/ProjectVersion.txt),
+            "Library/EditorInstance.json", "Packages/manifest.json", "Packages/packages-lock.json") {
+            my $path = "$root/$name";
+            if (!-f $path) { print "$name:missing\n"; next; }
+            open my $file, "<", $path or exit 1;
+            binmode $file;
+            print "$name:", Digest::SHA->new(256)->addfile($file)->hexdigest, "\n";
+        }
+    ' "$repo"
+}
+seed_main_cache() {
+    local version=$1 library="$source_dir/Library" main_version='' imported_version='' before='' after=''
+    if [ -f "$repo/ProjectSettings/ProjectVersion.txt" ]; then
+        main_version=$(sed -n 's/^m_EditorVersion: //p' "$repo/ProjectSettings/ProjectVersion.txt" | tr -d '\r')
+    fi
+    if [ -f "$repo/Library/EditorInstance.json" ]; then
+        imported_version=$(/usr/bin/perl -MJSON::PP -e 'local $/; eval { my $data=decode_json(<>); print $data->{version} // ""; };' < "$repo/Library/EditorInstance.json")
+    fi
+    if [ "$version" = unknown ] || [ "$main_version" != "$version" ] || [ "$imported_version" != "$version" ]; then
+        echo 'メインプロジェクトのインポート済みUnityバージョンを確認できないため、専用の初回読み込みを行います。'
+        return 1
+    fi
+    if [ -L "$repo/Library" ] || [ ! -f "$repo/Library/ArtifactDB" ] || [ ! -f "$repo/Library/SourceAssetDB" ] ||
+        [ ! -d "$repo/Library/Artifacts" ] || [ -n "$(find "$repo/Library" -type l -print -quit)" ]; then
+        echo 'メインプロジェクトに独立コピー可能なインポートキャッシュがありません。'
+        return 1
+    fi
+    before=$(main_cache_signature) || return 1
+    status 'メインプロジェクトの読み込み済みキャッシュをコピーしています。' cache
+    # APFS clones share storage until either copy is written, never mutable files.
+    if ! run cp -cpR "$repo/Library" "$library"; then
+        rm -rf -- "$library"
+        status '通常コピーでメインプロジェクトのキャッシュを準備しています。' cache
+        if ! run cp -pR "$repo/Library" "$library"; then
+            rm -rf -- "$library"
+            echo 'キャッシュをコピーできなかったため、専用の初回読み込みへ切り替えます。'
+            return 1
+        fi
+    fi
+    after=$(main_cache_signature) || after=''
+    # Check both the source and copy. Also reject links introduced during the copy.
+    if [ "$before" != "$after" ] || [ -n "$(find "$library" -type l -print -quit)" ] ||
+        ! cmp -s "$repo/Library/ArtifactDB" "$library/ArtifactDB" ||
+        ! cmp -s "$repo/Library/SourceAssetDB" "$library/SourceAssetDB"; then
+        rm -rf -- "$library"
+        echo 'コピー中にメインプロジェクトが更新されたため、不完全なキャッシュを破棄して専用の初回読み込みへ切り替えます。'
+        return 1
+    fi
+    # In particular, ilpp.pid would let the new Editor address the old Editor's
+    # postprocessor. Locks, search indices and live SQLite files are not cache inputs.
+    rm -f -- "$library/ilpp.pid" "$library/EditorInstance.json" "$library/ArtifactDB-lock" "$library/SourceAssetDB-lock" \
+        "$library/ShaderCache.db" "$library/ShaderCache.db-wal" "$library/ShaderCache.db-shm"
+    rm -rf -- "$library/Search" "$library/TempArtifacts"
+    printf 'seeded\n' > "$request/cache.txt"
+    status 'メインプロジェクトのインポート・ビルドキャッシュを独立コピーして再利用します。変更されたアセットはUnityが再判定します。' cache
+    return 0
+}
 prepare_cache() {
     local version=unknown
     if [ -f "$source_dir/ProjectSettings/ProjectVersion.txt" ]; then
@@ -93,6 +155,8 @@ prepare_cache() {
         status '前回のUnityビルドキャッシュを再利用しています。' cache
         mv "$cache_dir/Library" "$source_dir/Library"
         printf 'reused\n' > "$request/cache.txt"
+    elif seed_main_cache "$version"; then
+        : # Keep the copied cache in this job, then retain it as the dedicated cache.
     else
         status '初回のUnityビルドを準備しています。アセットの読み込みには時間がかかります。' cache
         printf 'cold\n' > "$request/cache.txt"
