@@ -242,7 +242,7 @@ function updateFlow(state) {
 function updateActions(snapshot, canControl) {
   let available = 0;
   for (const button of document.querySelectorAll('[data-action]')) {
-    if (button.dataset.action === 'start') button.textContent = snapshot?.settings?.activePreset === 'Quick' ? '▶ レースを始める（練習なし）' : '▶ 練習を始める';
+    if (button.dataset.action === 'start') button.textContent = ['Quick', 'NoTutorial'].includes(snapshot?.settings?.activePreset) ? '▶ レースを始める（練習なし）' : '▶ 練習を始める';
     const applicable = actionAvailable(button.dataset.action, snapshot);
     button.hidden = !applicable;
     button.disabled = !canControl || !applicable;
@@ -1078,16 +1078,20 @@ function renderFeatureSettings(settings) {
     $('settings-features').replaceChildren(...rows);
   }
   for (const feature of features) featureElements.get(feature.id).checked = !!feature.enabled;
+  $('settings-high-speed-unavailable').hidden = !settings?.featuresAvailable || features.some(feature => feature.id === 'HighSpeedDrive');
   $('settings-feature-count').textContent = features.length ?
     `${features.filter(feature => feature.enabled).length} / ${features.length} 項目がON` :
     operatorStatus?.busy ? 'ゲーム設定は更新後に再取得します。ビルドは継続中です。' : 'F8設定を取得できません。Unity の接続・バージョンを確認してください。';
   $('settings-rules').textContent = settings?.featuresAvailable ?
-    `${settings.activePreset === 'Quick' ? 'クイックレース（練習なし）' : '通常レース（練習あり）'} / ${latestSnapshot?.goalLap ?? '—'}周 / 制限時間180秒` : '';
+    `${settings.activePreset === 'Quick' ? 'クイックレース（練習なし）' : settings.activePreset === 'NoTutorial' ? '通常2周（練習なし）' : '通常レース（練習あり）'} / ${latestSnapshot?.goalLap ?? '—'}周 / 制限時間180秒` : '';
   $('settings-rule-help').textContent = settings?.featuresAvailable ?
     settings.activePreset === 'Quick' ? '両プレイヤーの開始操作後、練習とコース紹介を省略してレースを開始します。結果は15秒で退出案内へ進みます。' :
+    settings.activePreset === 'NoTutorial' ? '両プレイヤーの開始操作後、練習を省略して2周レースへ進みます。コース紹介は通常どおりです。' :
     '練習開始からレース開始まで最大60秒。結果は15秒後に退出案内へ切り替わります。' : '';
-  const modes = { Standard: '通常（練習あり・2周）', Quick: 'クイック（練習なし・1周）' };
+  const modes = { Standard: '通常（練習あり・2周）', Quick: 'クイック（練習なし・1周）', NoTutorial: 'チュートリアルなし（2周）' };
   const mode = $('settings-raceMode');
+  const supportedModes = Array.isArray(settings?.raceModes) ? settings.raceModes : ['Standard', 'Quick'];
+  for (const option of Array.from(mode.options || [])) option.disabled = !supportedModes.includes(option.value);
   if (document.activeElement !== mode) mode.value = settings?.selectedPreset ?? 'Standard';
   $('settings-race-mode-status').textContent = !settings?.raceModeAvailable ? 'ゲームの種類の選択には対応したRaceアプリへ更新してください。' :
     settings.hasQueuedPreset ? `現在: ${modes[settings.activePreset]}。次の試合から ${modes[settings.selectedPreset]} に切り替わります。` :

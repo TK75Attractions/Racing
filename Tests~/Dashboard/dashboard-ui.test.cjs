@@ -1004,3 +1004,38 @@ test('A failed statistics refresh retains previous figures and labels them as st
   assert.match(ui.elements.get('statistics-status').textContent,/最後に取得できた記録/);
   assert.equal(ui.elements.get('statistics-refresh').disabled,false);
 });
+
+
+test('No-tutorial mode preserves two laps and disables itself for an older Race',async()=>{
+  const ui=fixture(),mode=ui.elements.get('settings-raceMode'),sent=[];
+  mode.options=['Standard','Quick','NoTutorial'].map(value=>({value}));
+  ui.render({...base,state:'Title',settings:{...f8Settings,raceModeAvailable:true,raceModes:['Standard','Quick','NoTutorial'],activePreset:'NoTutorial',selectedPreset:'NoTutorial'}});
+  assert.equal(mode.options[2].disabled,false);
+  assert.match(ui.elements.get('settings-rules').textContent,/練習なし.*2周/);
+  assert.match(ui.elements.get('settings-rule-help').textContent,/コース紹介は通常どおり/);
+  assert.match(ui.buttons.find(button=>button.dataset.action==='start').textContent,/レースを始める/);
+  ui.context.captureMode=(action,payload)=>sent.push({action,...JSON.parse(JSON.stringify(payload))});
+  vm.runInContext("liveController={command:async(action,payload)=>{captureMode(action,payload);return {ok:true};}}",ui.context);
+  mode.blur=()=>{};await ui.context.submitSetting(mode);
+  assert.equal(sent[0].args[0],'NoTutorial');
+  ui.render({...base,settings:{...f8Settings,raceModeAvailable:true}});
+  assert.equal(mode.options[2].disabled,true);
+  assert.equal(mode.options[0].disabled,false);
+});
+
+test('High-speed checkbox submits independently of the selected race mode and respects control permissions',async()=>{
+  const ui=fixture(),sent=[];
+  const snapshot={...base,settingsRevision:8,settings:{...f8Settings,activePreset:'NoTutorial',selectedPreset:'NoTutorial',features:[{id:'HighSpeedDrive',label:'高速化（ペダル加速UP・最高約300km/h）',enabled:false}]}};
+  ui.render(snapshot);
+  const checkbox=ui.elements.get('settings-features').children[0].children[0];
+  assert.equal(checkbox.type,'checkbox');assert.equal(checkbox.checked,false);assert.equal(checkbox.disabled,false);
+  assert.equal(ui.elements.get('settings-high-speed-unavailable').hidden,true);
+  ui.context.captureSpeed=(action,payload)=>sent.push({action,...JSON.parse(JSON.stringify(payload))});
+  vm.runInContext("liveController={command:async(action,payload)=>{captureSpeed(action,payload);return {ok:true};}}",ui.context);
+  checkbox.checked=true;checkbox.blur=()=>{};await ui.context.submitSetting(checkbox);
+  assert.deepEqual(sent,[{action:'settings',command:'feature',args:['HighSpeedDrive','true'],settingsRevision:8}]);
+  assert.equal(ui.elements.get('settings-raceMode').value,'NoTutorial');
+  ui.render({...snapshot,settings:{...snapshot.settings,features:[{...snapshot.settings.features[0],enabled:true}]}},{canControl:false});
+  assert.equal(checkbox.checked,true);assert.equal(checkbox.disabled,true);
+  ui.render({...base,settings:f8Settings});assert.equal(ui.elements.get('settings-high-speed-unavailable').hidden,false);
+});

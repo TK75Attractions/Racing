@@ -84,4 +84,16 @@ class BridgeUpdateTest(unittest.TestCase):
   self.assertTrue(snapshot['settings']['hasQueuedPreset'])
   for args in [['Unknown'],['1'],[],['Quick','extra']]:
    self.assertFalse(self.request('/api/action/settings',self.command(snapshot,'raceMode',args))['ok'])
+ def test_no_tutorial_mode_and_high_speed_checkbox_are_independent(self):
+  snapshot=self.request('/api/status')
+  self.assertIn('NoTutorial',snapshot['settings']['raceModes'])
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'raceMode',['NoTutorial']))['ok'])
+  snapshot=self.request('/api/status')
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'feature',['HighSpeedDrive','true']))['ok'])
+  snapshot=self.request('/api/status')
+  self.assertEqual(snapshot['settings']['activePreset'],'NoTutorial')
+  self.assertTrue(next(f for f in snapshot['settings']['features'] if f['id']=='HighSpeedDrive')['enabled'])
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'raceMode',['Quick']))['ok'])
+  snapshot=self.request('/api/status')
+  self.assertTrue(next(f for f in snapshot['settings']['features'] if f['id']=='HighSpeedDrive')['enabled'])
 if __name__=='__main__':unittest.main(verbosity=2)

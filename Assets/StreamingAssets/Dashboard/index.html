@@ -123,14 +123,14 @@
             </fieldset>
 
 
-            <fieldset><legend>ゲームの種類</legend><label for="settings-raceMode">次に遊ぶゲーム</label><select id="settings-raceMode" data-setting="raceMode" disabled><option value="Standard">通常（チュートリアルあり・2周）</option><option value="Quick">クイック（チュートリアルなし・1周）</option></select><p id="settings-race-mode-status" class="control-note">ゲーム設定の接続を待っています。</p></fieldset>
+            <fieldset><legend>ゲームの種類</legend><label for="settings-raceMode">次に遊ぶゲーム</label><select id="settings-raceMode" data-setting="raceMode" disabled><option value="Standard">通常（チュートリアルあり・2周）</option><option value="Quick">クイック（チュートリアルなし・1周）</option><option value="NoTutorial">チュートリアルなし（2周）</option></select><p id="settings-race-mode-status" class="control-note">ゲーム設定の接続を待っています。</p></fieldset>
             <fieldset class="f8-settings"><legend>ゲーム機能</legend>
               <p id="settings-feature-count" class="control-note">ゲーム機能の設定を待っています。</p>
               <div class="feature-toolbar">
                 <div><p id="settings-rules" role="status"></p><p id="settings-rule-help" class="control-note"></p></div>
               </div>
-              <div id="settings-features" class="feature-grid" aria-label="F8の機能スイッチ"></div>
-              <div class="feature-actions"><button id="settings-all-off" type="button" data-setting="allFeaturesOff" disabled>7項目をすべてOFF</button><button id="settings-test-race" type="button" data-setting="testRace" disabled>P1手動・P2自動のテストレースを開始</button><button id="settings-auto-race" type="button" data-setting="testRace" data-setting-arg="both" disabled>P1自動 vs P2自動のレースを開始</button></div>
+              <div id="settings-features" class="feature-grid" aria-label="F8の機能スイッチ"></div><label id="settings-high-speed-unavailable" class="setting-check" hidden><input type="checkbox" disabled>高速化（最高約300km/h・Race本体の更新が必要です）</label><p class="control-note">高速化はゲームの種類と独立したスイッチです。レースのペダル加速を強め、平坦な直線で最高約300km/hを目指します。走行中の切り替えも可能ですが、その試合の未確定タイムはランキング対象外になります。練習の加速は通常のままです。</p>
+              <div class="feature-actions"><button id="settings-all-off" type="button" data-setting="allFeaturesOff" disabled>追加機能をすべてOFF</button><button id="settings-test-race" type="button" data-setting="testRace" disabled>P1手動・P2自動のテストレースを開始</button><button id="settings-auto-race" type="button" data-setting="testRace" data-setting-arg="both" disabled>P1自動 vs P2自動のレースを開始</button></div>
               <p class="control-note">機能スイッチは両プレイヤーに即時反映され、F8パネルと同期します。テストレースはタイトル・結果画面で使用でき、練習を省略します。設定はアプリ終了時にリセットされます。</p>
             </fieldset>
             <details class="advanced-settings"><summary>開発・テスト設定<span>入力の切替・一定ペダル・デバッグ表示</span></summary><div class="settings-grid"><fieldset><legend>入力デバッグ</legend>
