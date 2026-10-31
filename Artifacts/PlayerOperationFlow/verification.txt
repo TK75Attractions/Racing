@@ -1,0 +1,8 @@
+2026-10-31 / Unity 6000.3.9f1 / isolated project copy
+PASS: Core regression: 200 tests passed, 0 failed.
+PASS: Dashboard regression: 69 tests passed, 0 failed; 1 optional diagnosis-browser test skipped.
+PASS: DAILY_RANKING_VALIDATION_PASS: persistence, calendar rollover, exclusions, backup/error paths and P1/P2 result UI.
+PASS: PLAYER_OPERATION_FLOW_PASS: practice offsets; independent auto OFF, original source handover and reconnect; P1/P2 first finish; timed and Next-driven waiting; close finish clocks; DNF; retry overlay cancellation; rendered result and spectator views.
+PASS: Dashboard home inspected in a browser using synthetic physical-input telemetry; individual recovery buttons and independent accelerator/brake meters visible.
+Evidence: p1-first-result.png (synthetic daily top-fifth rank); waiting-for-p2.png (P2 remains racing after P1 results end).
+Limitations: Physical ESP32/pedals were not attached for the test. The optional diagnosis-browser suite was not enabled. Unity's existing SearchDatabase indexing exception and host audio-device initialization warnings occurred; no C# compilation errors or operation-flow failures in the verified run.
