@@ -1,0 +1,8 @@
+2026-11-01 / macOS / Unity 6000.3.9f1
+OPERATOR_EXIT_PLAYMODE_PASS: P1 thanks then local maintenance; P2 results/thanks continue; both sheets precede release; cancellation/title/manual-maintenance preservation.
+Storage: 10 assertions passed.
+Updater integration: 29 passed.
+Bridge API: 6 passed.
+Dashboard UI: 75 passed.
+Host/runtime tests passed, including legacy persistence cleanup and one-sided wait cancellation.
+Production helper: DASHBOARD_SERVICE_UPDATE_PASS.

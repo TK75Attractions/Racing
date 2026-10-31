@@ -1,0 +1,20 @@
+{
+  "deleted": [
+    "Builds/Operator/20261030-233216-144f8e4b10934cb2977076b0cf85cf28",
+    "Builds/Operator/20261031-171010-a3831bd0f7474b6eb2c14ce6bf876f82",
+    "Builds/Operator/ArcadeMiniMap",
+    "Builds/Operator/20261101-072545-94ec2090c3de40c99a06dc94229dc342",
+    "Builds/Operator/20261031-081131-d6f27da0c93a45f1b2ebfe6ce6c8a192",
+    "Builds/Operator/Verified",
+    "Builds/Operator/ShortVisitorFlow",
+    "Builds/Operator/VisitorPolish",
+    "Builds/Operator/20261031-181735-b499a1ad974f4c5eba62f95af332b385",
+    "Builds/OperatorSource/20261031-081131-d6f27da0c93a45f1b2ebfe6ce6c8a192"
+  ],
+  "kept": [
+    "Builds/Operator/20261101-080236-f76ce92ed4254a5f8eddf506f7f1c9a1",
+    "Builds/Operator/20261029-181308-17474",
+    "Builds/Operator/20261101-081523-24d2b9a5768940c19d53d22cb9517f68"
+  ],
+  "finalWarnings": []
+}
