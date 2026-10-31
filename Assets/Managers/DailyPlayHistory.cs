@@ -12,11 +12,11 @@ public sealed class DailyPlayHistory
     private readonly HashSet<int> recorded = new HashSet<int>();
     private string raceId, boardKey, preset;
     private int laps;
-    private bool reversed, enabled;
+    private bool reversed, enabled, highSpeed;
     public DailyPlayHistory(string directory, Func<DateTime> clock = null)
     { this.directory = directory; now = clock ?? (() => DateTime.Now); }
-    public void BeginRace(string id, string board, int goalLaps, bool reverse, RacePreset mode, bool recording)
-    { raceId=id; boardKey=board; laps=goalLaps; reversed=reverse; preset=mode.ToString(); enabled=recording; recorded.Clear(); }
+    public void BeginRace(string id, string board, int goalLaps, bool reverse, RacePreset mode, bool recording, bool accelerated = false)
+    { raceId=id; boardKey=board; laps=goalLaps; reversed=reverse; preset=mode.ToString(); enabled=recording; highSpeed=accelerated; recorded.Clear(); }
     public bool RecordPlayerStarted(int player)
     {
         if (!enabled || player<1 || player>2 || recorded.Contains(player)) return false;
@@ -28,7 +28,7 @@ public sealed class DailyPlayHistory
             catch(Exception error) when(error is IOException || error is UnauthorizedAccessException || error is ArgumentException)
             { book=Read(path+".bak",day); }
             bool added=book.Record(new DailyPlayEntry { raceId=raceId,boardKey=boardKey,playerNumber=player,goalLaps=laps,
-                reversed=reversed,preset=preset,startedAt=time.ToString("HH:mm:ss",System.Globalization.CultureInfo.InvariantCulture) });
+                reversed=reversed,highSpeed=highSpeed,preset=preset,startedAt=time.ToString("HH:mm:ss",System.Globalization.CultureInfo.InvariantCulture) });
             if (added)
             {
                 Directory.CreateDirectory(directory);

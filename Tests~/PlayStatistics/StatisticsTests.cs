@@ -4,7 +4,7 @@ var root=Path.Combine(Path.GetTempPath(),"racing-stats-"+Guid.NewGuid().ToString
 var clock=new DateTime(2026,11,1,12,0,0);
 void Book(string day,bool starts,params object[] entries){string dir=starts?Path.Combine(root,"Plays"):root;Directory.CreateDirectory(dir);File.WriteAllText(Path.Combine(dir,day+".json"),JsonSerializer.Serialize(new{version=1,day,entries}));}
 object Rank(string id,int player,int ms,string board="standard",int play=1)=>new{raceId=id,boardKey=board,playerNumber=player,milliseconds=ms,playNumber=play,finishedAt="12:00"};
-object Start(string id,int player,string board="standard",int laps=2,string preset="Standard")=>new{raceId=id,boardKey=board,playerNumber=player,goalLaps=laps,preset,reversed=false,startedAt="12:00:00"};
+object Start(string id,int player,string board="standard",int laps=2,string preset="Standard",bool accelerated=false)=>new{raceId=id,boardKey=board,playerNumber=player,goalLaps=laps,preset,highSpeed=accelerated,reversed=false,startedAt="12:00:00"};
 try{
  var stats=new PlayStatistics(root);var empty=stats.Read(clock);
  Check(empty.todayPlays==0&&empty.boards.Length==0&&empty.days.Length==1,"Empty history shows zero with an empty ranking");
@@ -24,5 +24,9 @@ try{
  Check(result.warnings.Length>0&&result.todayPlays==2,"Unreadable rankings still retain known starts and show a warning");
  Book("2026-10-30",false,new{raceId="invalid",boardKey="standard",playerNumber="not-a-number",milliseconds=1,playNumber=1});
  Check(stats.Read(clock).warnings.Any(w=>w.Contains("2026-10-30")),"Wrong JSON types do not crash the statistics endpoint");
+ Book("2026-11-01",true,Start("fast",1,"fast",2,"NoTutorial",true),Start("normal",1,"normal",2,"NoTutorial",false));
+ Book("2026-11-01",false,Rank("fast",1,40000,"fast"),Rank("normal",1,80000,"normal"));
+ var tuned=stats.Read(clock);
+ Check(tuned.boards.Length==2&&tuned.boards.Single(b=>b.highSpeed).label.Contains("練習なし")&&tuned.boards.Single(b=>b.highSpeed).label.Contains("高速化"),"High-speed and no-tutorial board metadata remains separate from normal driving");
  Console.WriteLine("PLAY_STATISTICS_TESTS_PASS");
 }finally{Directory.Delete(root,true);}

@@ -132,6 +132,7 @@ public class Gmanager : MonoBehaviour
     private RaceSessionResult latestSessionResult;
     private DailyRaceRanking dailyRanking;
     private DailyPlayHistory dailyPlays;
+    private bool raceStartedWithHighSpeed;
     private RaceLightningDirector raceLightning;
     private DrivingTutorialController drivingTutorial;
     private RaceSoundEffects soundEffects;
@@ -315,6 +316,7 @@ public class Gmanager : MonoBehaviour
         standardGoalLaps = lapManager != null ? lapManager.GoalLap : LapManager.DefaultGoalLaps;
         Features = GetComponent<RaceFeatureController>() ?? gameObject.AddComponent<RaceFeatureController>();
         Features.Configure(this);
+        Features.FeaturesChanged += TrackSpeedOptionChange;
         ApplyFeatureRules();
         EnsureSpeedScenery();
         var campusAtmosphere = GetComponent<CampusAtmosphereController>();
@@ -924,16 +926,6 @@ public class Gmanager : MonoBehaviour
         raceSession = new RaceParticipantSession(PlayerCount, Mathf.Clamp(npcCount, 0, 2), RaceGraceSeconds, RaceMaximumSeconds,
             RacingStandalonePerformanceProbe.AutorunEnabled);
         raceSession.Start();
-        if (dailyRanking == null) dailyRanking = new DailyRaceRanking(System.IO.Path.Combine(Application.persistentDataPath, "DailyRankings"));
-        bool allowDailyRecording = !Application.isBatchMode;
-#if UNITY_EDITOR
-        allowDailyRecording &= FindFirstObjectByType<BalancePlaytestAgent>() == null;
-#endif
-        dailyRanking.BeginRace(DailyRaceRanking.BoardKey(course, GoalLap, CourseProgressSign, Features.Settings.ActivePreset),
-            GoalLap, CourseProgressSign < 0, false, allowDailyRecording && !BothPlayersAutodrive);
-        if (dailyPlays == null) dailyPlays = new DailyPlayHistory(System.IO.Path.Combine(Application.persistentDataPath, "DailyRankings", "Plays"));
-        dailyPlays.BeginRace(dailyRanking.RaceId, DailyRaceRanking.BoardKey(course, GoalLap, CourseProgressSign, Features.Settings.ActivePreset),
-            GoalLap, CourseProgressSign < 0, Features.Settings.ActivePreset, allowDailyRecording);
         countdownTimeRemaining = Mathf.Max(0f, raceCountdownSeconds);
         lastCountdownSound = -1;
         goMessageTimeRemaining = 0f;
@@ -1180,6 +1172,27 @@ public class Gmanager : MonoBehaviour
         foreach (ScreenTransitionController transition in screenTransitions) transition?.ShowCountdown(displayedSeconds);
     }
 
+    private void BeginRaceHistory()
+    {
+        raceStartedWithHighSpeed = Features.Settings.IsEnabled(RaceFeature.HighSpeedDrive);
+        if (dailyRanking == null) dailyRanking = new DailyRaceRanking(System.IO.Path.Combine(Application.persistentDataPath, "DailyRankings"));
+        bool allowDailyRecording = !Application.isBatchMode;
+#if UNITY_EDITOR
+        allowDailyRecording &= FindFirstObjectByType<BalancePlaytestAgent>() == null;
+#endif
+        dailyRanking.BeginRace(DailyRaceRanking.BoardKey(course, GoalLap, CourseProgressSign, Features.Settings.ActivePreset, raceStartedWithHighSpeed),
+            GoalLap, CourseProgressSign < 0, false, allowDailyRecording && !BothPlayersAutodrive);
+        if (dailyPlays == null) dailyPlays = new DailyPlayHistory(System.IO.Path.Combine(Application.persistentDataPath, "DailyRankings", "Plays"));
+        dailyPlays.BeginRace(dailyRanking.RaceId, DailyRaceRanking.BoardKey(course, GoalLap, CourseProgressSign, Features.Settings.ActivePreset, raceStartedWithHighSpeed),
+            GoalLap, CourseProgressSign < 0, Features.Settings.ActivePreset, allowDailyRecording, raceStartedWithHighSpeed);
+    }
+
+    private void TrackSpeedOptionChange()
+    {
+        if (state != State.Game || dailyRanking == null || Features.Settings.IsEnabled(RaceFeature.HighSpeedDrive) == raceStartedWithHighSpeed) return;
+        for (int player = 1; player <= PlayerCount; player++) dailyRanking.ExcludePlayer(player);
+    }
+
     private void RecordHumanPlays()
     {
         if (dailyPlays == null) return;
@@ -1202,6 +1215,7 @@ public class Gmanager : MonoBehaviour
         countdownTimeRemaining = 0f;
         goMessageTimeRemaining = Mathf.Max(0f, goMessageSeconds);
         state = State.Game;
+        BeginRaceHistory();
         preparationClock.Stop();
         soundEffects?.PlayForAll(RaceSoundCue.Go);
         lapManager?.ResumeRace();

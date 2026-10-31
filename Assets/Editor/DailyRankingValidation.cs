@@ -67,6 +67,7 @@ public static class DailyRankingValidation
         string key=DailyRaceRanking.BoardKey(null,2,1,RacePreset.Standard);
         Require(key==DailyRaceRanking.BoardKey(null,2,1,RacePreset.Standard) && key!=DailyRaceRanking.BoardKey(null,1,1,RacePreset.Standard) &&
             key!=DailyRaceRanking.BoardKey(null,2,-1,RacePreset.Standard) && key!=DailyRaceRanking.BoardKey(null,2,1,(RacePreset)1),"Separate rule boards deterministically.");
+        Require(key==DailyRaceRanking.BoardKey(null,2,1,RacePreset.Standard,false) && key!=DailyRaceRanking.BoardKey(null,2,1,RacePreset.Standard,true),"High-speed rankings must be separate while normal board keys remain unchanged.");
     }
     private static void Capture(string output)
     {

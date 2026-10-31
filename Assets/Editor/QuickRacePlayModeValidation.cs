@@ -71,7 +71,23 @@ public static class QuickRacePlayModeValidation
             else if (stage == 5 && race.GetComponent<DrivingTutorialController>()?.HasStarted(0) == true)
             {
                 Require(race.state == Gmanager.State.Tutorial && race.GoalLap == 2, "Normal mode still starts independent practice and uses two laps.");
-                Debug.Log("QUICK_RACE_PLAYMODE_PASS: independent title readiness; no tutorial or introduction; one-lap finishes for both players; frozen current rules; next-group normal practice restored.");
+                Call(race,"ResetGameWhenScreenCovered");
+                race.Features.SelectPreset(RacePreset.NoTutorial);
+                race.Features.SetValidationFeature(RaceFeature.CourseIntro,false);
+                race.ConfirmTitleStart(0);race.ConfirmTitleStart(1);stage++;
+            }
+            else if (stage == 6 && race.state == Gmanager.State.Game)
+            {
+                Require(race.GoalLap==2 && race.Features.Settings.ActivePreset==RacePreset.NoTutorial,"No-tutorial mode keeps the normal two-lap race.");
+                Require(race.GetComponent<DrivingTutorialController>()?.HasAnyStarted!=true,"No-tutorial mode must not create practice cars.");
+                var ranking=(DailyRaceRanking)typeof(Gmanager).GetField("dailyRanking",Private).GetValue(race);
+                var excluded=(System.Collections.Generic.HashSet<int>)typeof(DailyRaceRanking).GetField("excludedPlayers",Private).GetValue(ranking);
+                Require(!excluded.Contains(1) && !excluded.Contains(2),"Fresh normal-speed race starts eligible.");
+                race.Features.SetFeature(RaceFeature.HighSpeedDrive,true);
+                Require(excluded.Contains(1) && excluded.Contains(2),"Changing live speed excludes unfinished times on both seats.");
+                race.Features.SetFeature(RaceFeature.HighSpeedDrive,false);
+                Require(excluded.Contains(1) && excluded.Contains(2),"Switching back cannot restore mixed-condition eligibility.");
+                Debug.Log("QUICK_RACE_PLAYMODE_PASS: quick one-lap race; queued normal practice; independent no-tutorial two-lap start.");
                 Finish(0);
             }
         }

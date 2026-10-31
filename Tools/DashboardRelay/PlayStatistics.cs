@@ -6,9 +6,9 @@ internal sealed class PlayStatistics
 {
     internal sealed record Day(string day,int plays,int starts,int legacyFinishes,int rankedFinishes);
     internal sealed record Row(int rank,int playNumber,int playerNumber,int milliseconds,string finishedAt);
-    internal sealed record Board(string id,string label,int goalLaps,bool reversed,string preset,Row[] rows);
+    internal sealed record Board(string id,string label,int goalLaps,bool reversed,string preset,bool highSpeed,Row[] rows);
     internal sealed record Snapshot(string day,string timezone,int todayPlays,int todayRanked,Day[] days,Board[] boards,string[] warnings);
-    private sealed record Entry(string day,string raceId,int player,string board,int milliseconds,int play,string time,int laps,bool reversed,string preset)
+    private sealed record Entry(string day,string raceId,int player,string board,int milliseconds,int play,string time,int laps,bool reversed,string preset,bool highSpeed)
     { public string Key=>raceId+":"+player; }
     private readonly string directory;
     public PlayStatistics(string directory) => this.directory=directory;
@@ -40,11 +40,11 @@ internal sealed class PlayStatistics
         var boards=keys.Select((key,index)=> {
             metadata.TryGetValue(key,out var meta);
             string label=meta==null ? keys.Length==1?"保存済みコース":"保存済みコース "+(index+1) :
-                (meta.preset=="Quick"?"クイック":"通常")+"・"+meta.laps+"周・"+(meta.reversed?"逆走":"正走");
+                (meta.preset=="Quick"?"クイック":meta.preset=="NoTutorial"?"練習なし":"通常")+"・"+meta.laps+"周・"+(meta.reversed?"逆走":"正走")+(meta.highSpeed?"・高速化":"");
             var ordered=uniqueRanks.Where(e=>e.day==today && e.board==key).OrderBy(e=>e.milliseconds).ThenBy(e=>e.play).ThenBy(e=>e.player).ThenBy(e=>e.raceId,StringComparer.Ordinal).ToArray();
             int previous=-1,rank=0;
             var rows=ordered.Select((entry,i)=>{if(previous!=entry.milliseconds)rank=i+1;previous=entry.milliseconds;return new Row(rank,entry.play,entry.player,entry.milliseconds,entry.time);}).ToArray();
-            return new Board(key,label,meta?.laps??0,meta?.reversed??false,meta?.preset??"",rows);
+            return new Board(key,label,meta?.laps??0,meta?.reversed??false,meta?.preset??"",meta?.highSpeed??false,rows);
         }).ToArray();
         var current=days.First(day=>day.day==today);
         return new(today,TimeZoneInfo.Local.Id,current.plays,current.rankedFinishes,days,boards,warnings.ToArray());
@@ -86,7 +86,7 @@ internal sealed class PlayStatistics
             string race=Text(entry,"raceId"),board=Text(entry,"boardKey");int player=Int(entry,"playerNumber"),ms=Int(entry,"milliseconds"),play=Int(entry,"playNumber"),laps=Int(entry,"goalLaps");
             if(race.Length==0 || board.Length==0 || player<1 || player>2 || (starts?laps<1:ms<1||ms>=86400000||play<1))throw new InvalidDataException("Invalid entry.");
             result.Add(new(day,race,player,board,ms,play,Text(entry,starts?"startedAt":"finishedAt"),laps,
-                entry.TryGetProperty("reversed",out var reverse)&&reverse.ValueKind==JsonValueKind.True,Text(entry,"preset")));
+                entry.TryGetProperty("reversed",out var reverse)&&reverse.ValueKind==JsonValueKind.True,Text(entry,"preset"),entry.TryGetProperty("highSpeed",out var accelerated)&&accelerated.ValueKind==JsonValueKind.True));
         }
         return result.ToArray();
     }

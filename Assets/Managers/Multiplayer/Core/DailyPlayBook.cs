@@ -6,7 +6,7 @@ public sealed class DailyPlayEntry
 {
     public string raceId, boardKey, startedAt, preset;
     public int playerNumber, goalLaps;
-    public bool reversed;
+    public bool reversed, highSpeed;
 }
 
 /// <summary>One entry per human seat per race, including races that do not finish.</summary>
