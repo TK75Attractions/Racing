@@ -78,7 +78,24 @@ internal static class OperatorBuildStorage
                     using var process=Process.Start(start)!;
                     var stdout=process.StandardOutput.ReadToEndAsync();var stderr=process.StandardError.ReadToEndAsync();
                     await process.WaitForExitAsync();await stdout;string error=await stderr;
-                    if(process.ExitCode!=0 && Directory.Exists(path)) {warnings.Add(path+": "+error.Trim());continue;}
+                    if(process.ExitCode!=0 && Directory.Exists(path))
+                    {
+                        // A previous cleanup may have unregistered Git before it failed
+                        // to remove Unity's generated Library. Prove that before deletion.
+                        var listStart=new ProcessStartInfo("git"){WorkingDirectory=project,UseShellExecute=false,RedirectStandardOutput=true,RedirectStandardError=true};
+                        foreach(string arg in new[]{"worktree","list","--porcelain","-z"})listStart.ArgumentList.Add(arg);
+                        using var list=Process.Start(listStart)!;
+                        var listing=list.StandardOutput.ReadToEndAsync();var listError=list.StandardError.ReadToEndAsync();
+                        await list.WaitForExitAsync();string registered=await listing;await listError;
+                        bool stillRegistered=registered.Split('\0').Where(line=>line.StartsWith("worktree "))
+                            .Any(line=>string.Equals(Path.GetFullPath(line[9..]),Path.GetFullPath(path),OperatingSystem.IsWindows()?StringComparison.OrdinalIgnoreCase:StringComparison.Ordinal));
+                        if(list.ExitCode!=0 || stillRegistered || (editor??LiveEditor)(path)) {warnings.Add(path+": "+error.Trim());continue;}
+                        for(int attempt=0;Directory.Exists(path);attempt++)
+                        {
+                            try {Directory.Delete(path,true);}
+                            catch(IOException) when(attempt<2) {await Task.Delay(200);}
+                        }
+                    }
                     deleted.Add(path);
                 }
                 catch(Exception error) when(error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception) {warnings.Add(path+": "+error.Message);}

@@ -32,6 +32,10 @@ try
     foreach(string path in new[]{source,busy}){await Git("worktree","add","--detach",path);string log=Path.Combine(root,"Logs","OperatorUpdate",Path.GetFileName(path));Directory.CreateDirectory(log);File.WriteAllText(Path.Combine(log,"succeeded"),"");}
     report=await OperatorBuildStorage.Prune(root,()=>[],path=>path==busy);
     Check(!Directory.Exists(source)&&Directory.Exists(busy),"Remove finished worktrees, keep projects open in an Editor");
+    string orphan=Path.Combine(root,"Builds","OperatorSource","20260110-100000-orphan");Directory.CreateDirectory(orphan);File.WriteAllText(Path.Combine(orphan,"generated-library"),"cache");
+    string orphanLog=Path.Combine(root,"Logs","OperatorUpdate",Path.GetFileName(orphan));Directory.CreateDirectory(orphanLog);File.WriteAllText(Path.Combine(orphanLog,"succeeded"),"");
+    await OperatorBuildStorage.Prune(root,()=>[],path=>path==busy);
+    Check(!Directory.Exists(orphan)&&Directory.Exists(busy),"Remove generated leftovers only after Git proves they are unregistered");
     Check(Directory.Exists(Path.Combine(root,"Logs","OperatorUpdate",Path.GetFileName(latest))),"Retain diagnostic logs after cleanup");
 }
 finally {Directory.Delete(root,true);}
