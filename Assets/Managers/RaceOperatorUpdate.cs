@@ -22,7 +22,7 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
 #if UNITY_EDITOR
             if (!UnityEditor.EditorApplication.isPlaying) return true;
 #endif
-            return race != null && (race.IsMaintenanceActive || race.state == Gmanager.State.Title || race.state == Gmanager.State.Result);
+            return race != null && (race.state == Gmanager.State.Title || race.state == Gmanager.State.Result);
         }
     }
 
@@ -34,12 +34,6 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
         if (Busy) return false;
         if (FindProject() == null) { Status = "更新元プロジェクトが見つかりません。RACING_PROJECT_PATHを設定してください。"; return false; }
         if (!File.Exists(FindUnity())) { Status = "Unity Editorが見つかりません。RACING_UNITY_PATHを設定してください。"; return false; }
-        if (!CanLeaveRace)
-        {
-            if (race == null || !race.SetMaintenance(true))
-            { Status = "メンテナンスに切り替えられないため更新を開始できません。"; return false; }
-            ownsMaintenance = true;
-        }
         try
         {
             string project = FindProject();
@@ -88,8 +82,18 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
             worker.Dispose(); worker = null;
             return;
         }
+        if (File.Exists(Path.Combine(requestFolder, "built")) && !File.Exists(Path.Combine(requestFolder, "launch.allowed")) && CanLeaveRace)
+        {
+            if (race != null && !race.IsMaintenanceActive)
+            {
+                if (!race.SetMaintenance(true)) return;
+                ownsMaintenance = true;
+            }
+            File.WriteAllText(Path.Combine(requestFolder, "launch.allowed"), "safe");
+        }
         if (File.Exists(Path.Combine(requestFolder, "ready")))
         {
+            if (!CanLeaveRace) return;
             // The launcher publishes ready only after a successful build and the
             // atomic launch decision. A cancelled/failed build never closes this game.
             File.WriteAllText(Path.Combine(requestFolder, "released"), "runtime");
@@ -114,7 +118,7 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
 
     public bool PrepareForLaunch(string requestId)
     {
-        if (string.IsNullOrEmpty(requestId) || requestId.Length > 80) return false;
+        if (!CanLeaveRace || string.IsNullOrEmpty(requestId) || requestId.Length > 80) return false;
         foreach (char character in requestId)
             if (!(character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z' ||
                 character >= '0' && character <= '9' || character == '-' || character == '_')) return false;

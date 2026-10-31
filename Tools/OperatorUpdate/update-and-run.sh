@@ -141,6 +141,16 @@ status 'Unityでビルドしています。完了まで既存のRaceは終了し
 run "$unity" -batchmode -quit -projectPath "$source_dir" -executeMethod OperatorPlayerBuild.Build -logFile "$request/build.log" || fail 'Unityビルドに失敗しました。build.logを確認してください。'
 test -x "$RACING_OPERATOR_BUILD/Contents/MacOS/Race" || fail 'ビルドの出力がありません。build.logを確認してください。'
 check_cancel
+if [ -f "$request/handoff.wait" ]; then
+    status 'ビルドが完了しました。現在の試合終了を待っています。待機中もキャンセルできます。' waiting-race
+    touch "$request/built"
+    while [ ! -f "$request/launch.allowed" ]; do
+        check_cancel
+        if [ -f "$request/handoff.failed" ]; then fail "$(cat "$request/handoff.failed")"; fi
+        sleep .1
+    done
+fi
+check_cancel
 # Cancellation and replacement compete for one atomic decision. Once replacement wins,
 # the UI no longer offers cancellation and no late cancel can interrupt app handoff.
 if ! (set -o noclobber; printf 'launch\n' > "$request/decision") 2>/dev/null; then

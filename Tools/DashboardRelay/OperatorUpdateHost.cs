@@ -10,7 +10,9 @@ internal sealed class OperatorUpdateHost : IDisposable
     private readonly Dictionary<string, object> results = new();
     private Process? worker;
     private string? requestFolder;
-    public OperatorUpdateHost(HttpClient client) => unity = client;
+    private readonly Func<bool> playerRunning;
+    public OperatorUpdateHost(HttpClient client, Func<bool>? playerRunning = null)
+    { unity = client; this.playerRunning = playerRunning ?? (() => Process.GetProcessesByName("Race").Any()); }
 
     public static string? FindProject()
     {
@@ -77,16 +79,36 @@ internal sealed class OperatorUpdateHost : IDisposable
         _ = Task.Run(async () => {
             try
             {
+                // Runtime-triggered jobs have their own in-game poller. Do not race it
+                // to close the same bridge; adopt only if its game has already exited.
+                bool runtimeOwner=File.ReadAllText(Path.Combine(folder,"handoff.wait")).Trim()=="runtime";
+                if (runtimeOwner)
+                    while (!Finished(folder))
+                    {
+                        if (File.Exists(Path.Combine(folder,"released"))) return;
+                        if (await Game() == null && !playerRunning()) break;
+                        await Task.Delay(200,token);
+                    }
                 bool seenLock=false;
                 string? project=FindProject();
-                while (!File.Exists(Path.Combine(folder,"ready")))
+                while (!File.Exists(Path.Combine(folder,"built")) && !File.Exists(Path.Combine(folder,"ready")))
                 {
-                    if (new[]{"failed","cancelled","succeeded"}.Any(name=>File.Exists(Path.Combine(folder,name)))) return;
+                    if (Finished(folder)) return;
                     bool locked=project != null && Directory.Exists(Path.Combine(project,"Logs","OperatorUpdate.lock"));
                     if (seenLock && !locked) return;
                     seenLock |= locked;
                     await Task.Delay(200,token);
                 }
+                // Keep cancellation open until the current match ends. Reserving the safe
+                // title/result screen prevents a new match racing the launch decision.
+                while (!Finished(folder) && !File.Exists(Path.Combine(folder,"launch.allowed")))
+                {
+                    var current=await Game();
+                    if (current == null ? !playerRunning() : await ReserveFinishedMatch(folder,current))
+                        await File.WriteAllTextAsync(Path.Combine(folder,"launch.allowed"),"safe",token);
+                    else await Task.Delay(200,token);
+                }
+                while (!Finished(folder) && !File.Exists(Path.Combine(folder,"ready"))) await Task.Delay(100,token);
                 if (new[]{"failed","cancelled","succeeded"}.Any(name=>File.Exists(Path.Combine(folder,name)))) return;
                 if (File.Exists(Path.Combine(folder,"released")) ||
                     File.ReadAllText(Path.Combine(folder,"decision")).Trim() != "launch") return;
@@ -98,15 +120,50 @@ internal sealed class OperatorUpdateHost : IDisposable
                     JsonNode? answer=null;
                     try { answer=await SendSetting(game,Guid.NewGuid().ToString("N"),"releaseForUpdate",Path.GetFileName(folder)); }
                     catch (Exception error) when(error is HttpRequestException or OperationCanceledException or IOException) { }
-                    if (game["isEditor"]?.GetValue<bool>() == true && answer?["ok"]?.GetValue<bool>() == false)
-                        throw new IOException("Unity EditorのPlayを停止できません。Playを停止してから再実行してください。");
+                    if (answer?["ok"]?.GetValue<bool>() != true &&
+                        (game["isEditor"]?.GetValue<bool>() == true || !await ReserveFinishedMatch(folder,game)))
+                        throw new IOException(game["isEditor"]?.GetValue<bool>() == true ? "Unity EditorのPlayを停止できません。試合終了後にPlayを停止してから再実行してください。" : "試合終了後の機器解放を確認できません。既存のRaceは終了していません。");
                 }
                 await File.WriteAllTextAsync(Path.Combine(folder,"released"),"ready",token);
             }
             catch(OperationCanceledException) when(token.IsCancellationRequested) { }
             catch(Exception) when(token.IsCancellationRequested) { }
             catch(Exception error) { try { await File.WriteAllTextAsync(Path.Combine(folder,"handoff.failed"),"起動の引き継ぎに失敗しました："+error.Message); } catch(IOException) { } }
+            finally
+            {
+                if (!token.IsCancellationRequested && !File.Exists(Path.Combine(folder,"succeeded")) &&
+                    (Finished(folder) || File.Exists(Path.Combine(folder,"handoff.failed")))) await RestoreReservedMatch(folder);
+            }
         });
+    }
+    private static bool Finished(string folder) => new[]{"failed","cancelled","succeeded"}.Any(name=>File.Exists(Path.Combine(folder,name)));
+    private async Task<bool> ReserveFinishedMatch(string folder, JsonObject game)
+    {
+        string? state=game["state"]?.GetValue<string>();
+        if (state != "Title" && state != "Result") return false;
+        if (game["settings"]?["maintenanceActive"]?.GetValue<bool>() == true) return true;
+        if (game["settings"]?["maintenanceAvailable"]?.GetValue<bool>() != true) return false;
+        try
+        {
+            var answer=await SendSetting(game,Guid.NewGuid().ToString("N"),"maintenance","true");
+            if (answer?["ok"]?.GetValue<bool>() != true) return false; // Includes a match starting after the snapshot.
+            await File.WriteAllTextAsync(Path.Combine(folder,"maintenance.owner"),game["sessionId"]!.GetValue<string>());
+            return true;
+        }
+        catch (Exception error) when(error is HttpRequestException or OperationCanceledException or IOException) { return false; }
+    }
+    private async Task RestoreReservedMatch(string folder)
+    {
+        try
+        {
+            string owner=Path.Combine(folder,"maintenance.owner");
+            if (!File.Exists(owner)) return;
+            var game=await Game();
+            if (game?["sessionId"]?.GetValue<string>() == await File.ReadAllTextAsync(owner) &&
+                game?["settings"]?["maintenanceActive"]?.GetValue<bool>() == true)
+                await SendSetting(game!,Guid.NewGuid().ToString("N"),"maintenance","false");
+        }
+        catch (Exception error) when(error is HttpRequestException or OperationCanceledException or IOException) { }
     }
     public async Task<object> Status(bool canControl)
     {
@@ -124,7 +181,7 @@ internal sealed class OperatorUpdateHost : IDisposable
             return new { available=canControl && project != null && !busy,busy,canControl,canCancel,
                 requestId=requestFolder != null ? Path.GetFileName(requestFolder) : null,phase,
                 logFolder=requestFolder,message=decision=="cancel" && busy ? "更新をキャンセルしています。既存のRaceは終了しません。" : hasProgress ? Progress :
-                    project != null ? "最新mainを別フォルダーでビルドし、成功後に既存のRaceを入れ替えます。" : "更新元プロジェクトが見つかりません。RACING_PROJECT_PATHを設定してください。" };
+                    project != null ? "最新mainを別フォルダーでビルドし、成功後、試合終了を待って既存のRaceを入れ替えます。" : "更新元プロジェクトが見つかりません。RACING_PROJECT_PATHを設定してください。" };
         }
         finally { gate.Release(); }
     }

@@ -84,6 +84,16 @@ try {
     Run-Command $Unity @('-batchmode','-quit','-projectPath',$sourceDir,'-executeMethod','OperatorPlayerBuild.Build','-logFile',(Join-Path $Request 'build.log'))
     if (!(Test-Path -LiteralPath $env:RACING_OPERATOR_BUILD -PathType Leaf)) { throw 'Unityビルドの出力がありません。build.logを確認してください。' }
     Check-Cancel
+    if (Test-Path -LiteralPath (Join-Path $Request 'handoff.wait')) {
+        Set-UpdateStatus 'ビルドが完了しました。現在の試合終了を待っています。待機中もキャンセルできます。' 'waiting-race'
+        New-Item -ItemType File -Path (Join-Path $Request 'built') | Out-Null
+        while (!(Test-Path -LiteralPath (Join-Path $Request 'launch.allowed'))) {
+            Check-Cancel
+            if (Test-Path -LiteralPath (Join-Path $Request 'handoff.failed')) { throw (Get-Content -LiteralPath (Join-Path $Request 'handoff.failed') -Raw) }
+            Start-Sleep -Milliseconds 100
+        }
+    }
+    Check-Cancel
     try {
         $decision = [IO.File]::Open((Join-Path $Request 'decision'),[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::Read)
         $writer = [IO.StreamWriter]::new($decision)
