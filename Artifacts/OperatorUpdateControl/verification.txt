@@ -42,3 +42,7 @@ Ran 2 tests in 4.584s
 OK
 Dashboard all suites: 72 passed, 0 failed, 1 optional diagnosis-browser test skipped.
 Windows PowerShell and a real Unity Player build were not executed. Existing live Race/Editor/update processes were left running.
+DASHBOARD_SERVICE_UPDATE_PASS: installed route, operator policy, and notification subscriptions preserved.
+LIVE_OPERATOR_API_PASS: available=true; busy=false; phase=idle; canCancel/requestId fields present.
+LIVE_DASHBOARD_ASSETS_PASS: cancel control and handler served.
+LIVE_GAME_CONNECTION_PASS: previously successful main build relaunched; game reports Title with settings available.
