@@ -1,0 +1,85 @@
+racing-progress-tests.log
+PASS Unity closed: updater remains available
+PASS Viewer cannot enable update
+PASS Build logs are restricted to operators
+PASS Starts without Unity
+PASS Relay never waits for or delegates ownership to the running game
+PASS macOS update worker runs outside the relay's launchd process group
+PASS Duplicate ID returns the original result
+PASS Retry does not spawn another updater
+PASS Progress survives worker completion
+PASS Running build reports progress and cancellation independently of Unity
+PASS The existing Race is neither paused nor closed during the build
+PASS A stale cancel cannot affect a different build
+PASS A completed build cannot interrupt a playing match
+PASS Match-end waiting stays cancellable
+PASS Goal celebration also waits for the whole match to reach results
+PASS Only the verified completed build releases the current game using a fresh anchor
+PASS Handoff keeps game-session guards
+PASS Online retry is idempotent
+PASS A committed launch cannot be cancelled
+PASS Cancellation is accepted for the exact active request
+PASS Cancelled jobs release busy state and retain their real result
+PASS Cancellation never triggers game shutdown or launch handoff
+PASS Repeated cancellation is idempotent
+PASS The operator can cancel after build success while the race continues
+PASS Cancelling match wait leaves the original game running normally
+PASS A disconnected API is not proof that a running Race has finished
+PASS A match starting after the status snapshot refuses the stale reservation
+PASS Safe results are reserved before committing launch
+PASS Cancellation can win before the launch decision
+PASS Cancellation releases only updater-owned maintenance without closing the app
+PASS A failed Editor release reports its cause and never terminates the Editor
+PASS Relay restart adopts the external build without stopping it
+PASS Restarted relay also waits for the current match
+PASS Restarted relay completes the late handoff even with the browser closed
+PASS Relay does not compete with a live runtime-owned updater even at results
+PASS Runtime release cannot trigger a second bridge shutdown
+PASS Relay can adopt a runtime-owned job after that game has exited
+PASS A restarted helper retains the last completed build logs
+PASS Log telemetry identifies the active asset and real completed stages
+PASS A quiet log is reported without claiming the process has failed
+PASS Large logs have bounded tails and command-line credentials are redacted
+PASS Cancellation never presents a completed build bar
+PASS Only successful completion fills the progress bar
+PASS Missing logs are handled before the first request
+OPERATOR_HOST_TESTS_PASS
+PASS Update is available during a race
+PASS Request leaves the current match playing
+PASS A build longer than 120 seconds keeps the worker and Editor Play alive
+PASS Successful build still waits for the current match
+PASS Editor Play stops only after the successful build, without closing the Editor
+PASS Updater-owned maintenance is cleared before the new game starts
+PASS Editor updater never waits for the Editor process to exit
+PASS Edit-mode update works without an open race scene
+PASS Worker completion clears busy state
+PASS Handoff rejects unverified jobs and path traversal
+PASS A completed stale job cannot shut down a newer game
+PASS Even a verified launch cannot interrupt a match
+PASS Only the active, launch-committed job may release Editor Play
+PASS Graceful handoff releases Play without closing the Editor
+OPERATOR_RUNTIME_TESTS_PASS
+Ran 22 tests in 36.381s
+OK
+Ran 4 tests in 5.051s
+OK
+racing-cache-workflow-final.log
+Ran 23 tests in 38.550s
+OK
+
+Final dashboard:
+ℹ tests 81
+ℹ suites 0
+ℹ pass 80
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 291.684291
+
+Real Unity cache probe:
+[{"run": "cold-fixed", "exit": 0, "elapsed": 12.78, "imports": 24, "cache": "cold", "probePassed": true}, {"run": "warm-fixed", "exit": 0, "elapsed": 4.94, "imports": 1, "cache": "reused", "probePassed": true}]
+
+Deployment: DASHBOARD_SERVICE_UPDATE_PASS
+Live API: available=true, busy=false, phase=cancelled, progress=3/6, logLines=86
+Live HTML/JavaScript: LIVE_BUILD_PROGRESS_UI_PASS

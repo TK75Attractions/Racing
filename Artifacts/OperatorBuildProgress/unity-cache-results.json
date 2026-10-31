@@ -1,0 +1,18 @@
+[
+  {
+    "run": "cold-fixed",
+    "exit": 0,
+    "elapsed": 12.78,
+    "imports": 24,
+    "cache": "cold",
+    "probePassed": true
+  },
+  {
+    "run": "warm-fixed",
+    "exit": 0,
+    "elapsed": 4.94,
+    "imports": 1,
+    "cache": "reused",
+    "probePassed": true
+  }
+]
