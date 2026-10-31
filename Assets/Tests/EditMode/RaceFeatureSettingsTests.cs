@@ -122,13 +122,26 @@ public sealed class RaceFeatureSettingsTests
         settings.SelectPreset(RacePreset.Standard);Assert.IsFalse(settings.HasQueuedPreset);
         settings.ResetForNextGroup();Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
     }
+    [Test] public void NoTutorialKeepsTwoLapsAndTheNormalCourseIntroduction()
+    {
+        var rules=new RaceRuleSet(RacePreset.NoTutorial,2,180,40,180);
+        Assert.IsTrue(rules.SkipTutorial);Assert.IsFalse(rules.SkipCourseIntro);Assert.AreEqual(2,rules.GoalLaps);
+        var settings=new RaceFeatureSettings();settings.SelectPreset(RacePreset.NoTutorial);settings.BeginPreparation();
+        Assert.AreEqual(RacePreset.NoTutorial,settings.ActivePreset);
+        Assert.IsFalse(settings.IsEnabled(RaceFeature.HighSpeedDrive));
+        settings.SetFeature(RaceFeature.HighSpeedDrive,true);
+        Assert.AreEqual(RacePreset.NoTutorial,settings.ActivePreset);
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.HighSpeedDrive));
+        settings.SelectPreset(RacePreset.Quick);Assert.IsTrue(settings.HasQueuedPreset);
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.HighSpeedDrive));
+    }
     private static void settingsStandardCannotBeDisabled()
     {
         var settings=new RaceFeatureSettings();settings.SetFeature(RaceFeature.All,false);
         Assert.IsTrue(settings.IsEnabled(RaceFeatureSettings.StandardFeatures));
         foreach(string id in new[]{"Slipstream","BroadcastScreen","RaceReplays","SteeringStability"})Assert.IsFalse(RaceDebugFeatureCatalog.TryFind(id,out _));
     }
-    [Test] public void DebugCatalogContainsExactlyTheSevenConfigurableFeaturesAndRejectsStandardIds()
+    [Test] public void DebugCatalogContainsExactlyTheEightConfigurableFeaturesAndRejectsStandardIds()
     {
         var found = new System.Collections.Generic.HashSet<RaceFeature>();
         foreach (RaceDebugFeatureCatalog.Entry entry in RaceDebugFeatureCatalog.Entries)
@@ -141,7 +154,7 @@ public sealed class RaceFeatureSettingsTests
         foreach (RaceFeature feature in System.Enum.GetValues(typeof(RaceFeature)))
             if (feature != RaceFeature.None && feature != RaceFeature.All)
                 Assert.AreEqual((RaceFeatureSettings.Configurable & feature) != 0, found.Contains(feature));
-        Assert.AreEqual(7, found.Count);
+        Assert.AreEqual(8, found.Count);
         settingsStandardCannotBeDisabled();
         foreach (string id in new[] { "All", "None", "1", "DriftCoaching, HitProtection", "driftcoaching", "FutureFeature", null })
             Assert.IsFalse(RaceDebugFeatureCatalog.TryFind(id, out _));

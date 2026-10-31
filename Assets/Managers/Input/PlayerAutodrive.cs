@@ -43,7 +43,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
             gate.IsBlocked || gate.NeedsPedalRelease || mover.IsInputSuppressed)
         { CurrentState = DriveInputState.Neutral; bot.Clear(); return; }
         int contacts = 0; foreach (GroundCheck wheel in wheels) if (wheel.CheckNow()) contacts++;
-        float cruise = RaceSpeedPlanner.Enabled ? RaceSpeedPlanner.Cruise : 24f;
+        float cruise = RaceSpeedPlanner.Enabled ? RaceSpeedPlanner.CurrentCruise : 24f;
         float cap = cruise;
         var partner=manager.GetParticipant(1 - own.Index);
         if (RaceHumanPace.Enabled && RaceHumanPace.ManualRacer(partner))

@@ -296,6 +296,11 @@ public class DebugMover : MonoBehaviour
         driftChargePerSecond = vehicleDefaults[5] * drift;
     }
 
+    public bool HighSpeedDriveActive => RaceFeatureController.Enabled(RaceFeature.HighSpeedDrive) && Gmanager.Control != null &&
+        (Gmanager.Control.state == Gmanager.State.Game || Gmanager.Control.state == Gmanager.State.Goal || Gmanager.Control.state == Gmanager.State.Result);
+    public float EffectiveDriveForce => HighSpeedDriveTuning.Motor(driveForcePerFrontWheel, appliedPedalInput, HighSpeedDriveActive);
+    public float EffectiveResistance => HighSpeedDriveTuning.Resistance(velocityResistance, driveForcePerFrontWheel, HighSpeedDriveActive);
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -476,7 +481,7 @@ public class DebugMover : MonoBehaviour
     public float CruisePedalForSpeed(float targetSpeed)
     {
         int driven = 0; foreach (TireForce tire in tires) if (tire.IsFrontWheel) driven++;
-        return Mathf.Clamp01(Mathf.Max(0f, targetSpeed) * velocityResistance / Mathf.Max(.01f, driveForcePerFrontWheel * driven));
+        return Mathf.Clamp01(Mathf.Max(0f, targetSpeed) * EffectiveResistance / Mathf.Max(.01f, HighSpeedDriveTuning.Motor(driveForcePerFrontWheel, 1f, HighSpeedDriveActive) * driven));
     }
 
     public bool AddDriftCharge(float normalizedAmount)
@@ -935,7 +940,7 @@ public class DebugMover : MonoBehaviour
                 up,
                 tireSteeringAngle,
                 appliedPedalInput,
-                driveForcePerFrontWheel,
+                EffectiveDriveForce,
                 corneringStiffness * gripMultiplier,
                 maxLateralForcePerTire * gripMultiplier,
                 enableLateralTireForces,
@@ -995,10 +1000,10 @@ public class DebugMover : MonoBehaviour
             forward+=direction;count++;
             // A front wheel touching the side physically still has traction when its
             // ordinary ground ray misses; restore only that missing front-wheel drive.
-            if(tire.IsFrontWheel&&!tire.IsGrounded)replacement+=direction*driveForcePerFrontWheel*pedal;
+            if(tire.IsFrontWheel&&!tire.IsGrounded)replacement+=direction*HighSpeedDriveTuning.Motor(driveForcePerFrontWheel,pedal,HighSpeedDriveActive)*pedal;
         }
         if(count==0||forward.sqrMagnitude<.001f)return;
-        Vector3 force=replacement+forward.normalized*(driveForcePerFrontWheel*.08f*Mathf.Min(count,2)*pedal);
+        Vector3 force=replacement+forward.normalized*(HighSpeedDriveTuning.Motor(driveForcePerFrontWheel,pedal,HighSpeedDriveActive)*.08f*Mathf.Min(count,2)*pedal);
         TubeWallDriveForce=force.magnitude;
         rb.AddForce(force,ForceMode.Force); // At the center of mass: no artificial roll/yaw impulse.
     }
@@ -1032,7 +1037,7 @@ public class DebugMover : MonoBehaviour
         }
         // In flight there is no tire propulsion to balance road resistance; retain takeoff momentum.
         float resistanceMultiplier = grounded ? 1f : Mathf.Clamp01(airborneResistanceMultiplier);
-        Vector3 resistance = -planarVelocity * velocityResistance * resistanceMultiplier;
+        Vector3 resistance = -planarVelocity * EffectiveResistance * resistanceMultiplier;
         if (grounded && enableDriftDynamics)
         {
             resistance *= Mathf.Lerp(1f, Mathf.Max(1f, driftResistanceMultiplier), driftGripBlend);

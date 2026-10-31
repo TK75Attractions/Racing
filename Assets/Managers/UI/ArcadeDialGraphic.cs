@@ -12,7 +12,8 @@ public class ArcadeDialGraphic : MaskableGraphic
     private float targetReading,targetBoost,boostFlash;
     private bool hasReading,hasBoost;
     public bool IsAnimating=>Reading!=targetReading||Boost!=targetBoost||boostFlash>0;
-    private float Maximum=>Tachometer?9000:240;
+    public float SpeedScaleMaximum { get; set; } = 240f;
+    private float Maximum=>Tachometer?9000:SpeedScaleMaximum;
     private float Clean(float value)=>float.IsNaN(value)||float.IsInfinity(value)?0:Mathf.Clamp(value,0,Maximum);
     public float Reading { get; private set; }
     public Color NeedleColor=>Tachometer?ArcadeUI.For(transform).Paper:SpeedColor(Reading,ArcadeUI.For(transform));

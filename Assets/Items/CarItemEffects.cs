@@ -406,7 +406,7 @@ public sealed class CarItemEffects : MonoBehaviour
         float dt = Mathf.Max(0f, deltaTime);
         float safeSpeed = GetRocketJumpSpeedLimit();
         rocketCurrentSpeed = Mathf.Min(safeSpeed,
-            Mathf.MoveTowards(rocketCurrentSpeed, rocketTopSpeed, rocketAcceleration * dt));
+            Mathf.MoveTowards(rocketCurrentSpeed, mover?.HighSpeedDriveActive == true ? Mathf.Max(rocketTopSpeed, HighSpeedDriveTuning.TargetMetersPerSecond * 1.1f) : rocketTopSpeed, rocketAcceleration * dt));
 
         Vector3 currentForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
         if (currentForward.sqrMagnitude < 0.0001f) currentForward = Vector3.forward;

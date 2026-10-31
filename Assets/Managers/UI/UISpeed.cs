@@ -28,7 +28,7 @@ public class UISpeed
     private const float NeedleAccel = 80f;
     private const float MaxNeedleAngle = 103f;
     private const float friction = 160;
-    private const float MaxSpeed = 180f;
+    private float MaxSpeed => RaceFeatureController.Enabled(RaceFeature.HighSpeedDrive) ? 360f : 180f;
 
     public void Init(Transform parent)
     {

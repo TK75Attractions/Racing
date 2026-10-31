@@ -14,6 +14,7 @@ public static class RaceDebugFeatureCatalog
     }
 
     public static IReadOnlyList<Entry> Entries { get; } = Array.AsReadOnly(new[] {
+        new Entry(RaceFeature.HighSpeedDrive, "High speed drive (stronger pedal / about 300 km/h)", "高速化（ペダル加速UP・最高約300km/h）"),
         new Entry(RaceFeature.ExperienceItems, "Gentle items (shield / rocket only)", "やさしいアイテム（シールド・ロケットのみ）"),
         new Entry(RaceFeature.SteeringAssist, "Course edge steering assist", "コース端のステアリング補助"),
         new Entry(RaceFeature.FastAiPace, "Fast AI pace (2 laps / 120s target)", "速いCPUペース（2周・120秒目標）"),
