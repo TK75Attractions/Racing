@@ -156,6 +156,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public string updateStatus;
         public bool raceModeAvailable, featuresAvailable, rulesLocked, hasQueuedPreset, canStartTestRace, bothPlayersAutodrive;
         public string activePreset, selectedPreset;
+        public string[] raceModes;
         public FeatureSnapshot[] features;
     }
 
@@ -424,6 +425,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             maintenanceAvailable = race?.MaintenanceAvailable ?? false, maintenanceActive = race?.IsMaintenanceActive ?? false,
             raceModeAvailable = features != null, featuresAvailable = features != null, features = BuildFeatures(features), bothPlayersAutodrive = race?.BothPlayersAutodrive ?? false,
             activePreset = features?.ActivePreset.ToString() ?? "", selectedPreset = features?.SelectedPreset.ToString() ?? "",
+            raceModes = new[]{"Standard", "Quick", "NoTutorial"},
             rulesLocked = features?.RulesLocked ?? false, hasQueuedPreset = features?.HasQueuedPreset ?? false,
             canStartTestRace = features != null && race.CanUseDashboardControls &&
                 (race.state == Gmanager.State.Title || race.state == Gmanager.State.Result),
@@ -464,8 +466,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         if (request.command == "maintenance" && args.Length == 1 && (args[0] == "true" || args[0] == "false"))
             return race != null && race.SetMaintenance(args[0] == "true");
         if (request.command == "raceMode" && args.Length == 1 && features != null &&
-            (args[0] == "Standard" || args[0] == "Quick"))
-        { features.SelectPreset(args[0] == "Quick" ? RacePreset.Quick : RacePreset.Standard); return true; }
+            (args[0] == "Standard" || args[0] == "Quick" || args[0] == "NoTutorial"))
+        { features.SelectPreset(args[0] == "Quick" ? RacePreset.Quick : args[0] == "NoTutorial" ? RacePreset.NoTutorial : RacePreset.Standard); return true; }
         if (request.command == "feature" && args.Length == 2 && features != null &&
             RaceDebugFeatureCatalog.TryFind(args[0], out RaceFeature feature) && (args[1] == "true" || args[1] == "false"))
         { features.SetFeature(feature, args[1] == "true"); return true; }

@@ -576,7 +576,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
             return;
         }
 
-        bool quick = Gmanager.Control?.Features?.Settings.ActivePreset == RacePreset.Quick;
+        bool quick = Gmanager.Control?.Features?.Settings.ActivePreset == RacePreset.Quick || Gmanager.Control?.Features?.Settings.ActivePreset == RacePreset.NoTutorial;
         Transform button = titleButtonFeedback[playerIndex].transform;
         button.Find("Label").GetComponent<TMP_Text>().text = quick ? "レースへ進む" : "練習へ進む";
         button.Find("Caption").GetComponent<TMP_Text>().text = quick ? "RACE" : "PRACTICE";

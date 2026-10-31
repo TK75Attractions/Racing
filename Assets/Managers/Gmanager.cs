@@ -1029,7 +1029,7 @@ public class Gmanager : MonoBehaviour
         UpdateOnPlayUI();
         courseIntro = GetComponent<CourseIntroDirector>();
         if (courseIntro == null) courseIntro = gameObject.AddComponent<CourseIntroDirector>();
-        if (activeRules?.SkipTutorial != true) courseIntro.Begin(this, displayRigs);
+        if (activeRules?.SkipCourseIntro != true) courseIntro.Begin(this, displayRigs);
         Debug.Log("Two-player game start");
     }
 
