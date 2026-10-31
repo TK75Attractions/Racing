@@ -1113,6 +1113,28 @@ function renderOperatorUpdate() {
   if (!operatorStatus || !localMode) return;
   $('operator-update-status').textContent = operatorStatus.message || '更新状況を確認しています。';
   $('operator-update-log').textContent = operatorStatus.logFolder ? 'ログ: ' + operatorStatus.logFolder : '';
+  const progress = operatorStatus.progress;
+  $('operator-build-progress').hidden = !progress;
+  if (progress) {
+    const total = Number.isFinite(progress.totalSteps) && progress.totalSteps > 0 ? progress.totalSteps : 6;
+    const done = Number.isFinite(progress.completedSteps) ? Math.max(0, Math.min(total, progress.completedSteps)) : 0;
+    $('operator-progress-bar').max = total; $('operator-progress-bar').value = done;
+    $('operator-progress-label').textContent = `工程 ${done} / ${total} 完了 · ${progress.stage || '確認中'}`;
+    const cache = progress.cache === 'reused' ? '前回のキャッシュを再利用' : progress.cache === 'cold' ? '初回読み込み（次回からキャッシュを再利用）' : '';
+    $('operator-build-task').textContent = [progress.task, cache].filter(Boolean).join(' · ');
+    $('operator-build-activity').hidden = !operatorStatus.busy || operatorStatus.phase !== 'building';
+    const seconds = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+    const elapsed = seconds(progress.elapsedSeconds);
+    $('operator-build-timing').textContent = `経過 ${Math.floor(elapsed / 60)}分${elapsed % 60}秒 · ログ更新 ${seconds(progress.quietSeconds)}秒前`;
+    $('operator-build-quiet').hidden = progress.logQuiet !== true;
+    $('operator-build-quiet').textContent = progress.logQuiet ? 'しばらくログ更新がありません。長時間のコンパイル中の可能性があります。必要なら更新をキャンセルできます。' : '';
+    const log = $('operator-build-log');
+    const previousTop = log.scrollTop;
+    const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 35;
+    const lines = Array.isArray(progress.logLines) ? progress.logLines.filter(line => typeof line === 'string') : [];
+    const text = lines.length ? lines.join('\n') : 'ログの出力を待っています。';
+    if (log.textContent !== text) { log.textContent = text; log.scrollTop = atBottom ? log.scrollHeight : previousTop; }
+  }
   $('operator-update').disabled = operatorBusy || !operatorStatus.canControl || !operatorStatus.available || operatorStatus.busy;
   const cancel = $('operator-cancel');
   cancel.hidden = !operatorStatus.busy;
@@ -1141,7 +1163,7 @@ async function submitOperatorUpdate(control) {
     const response = await apiFetch('/api/operator-update', { method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({id}), signal:AbortSignal.timeout(12000) });
     const result = await response.json();
-    operatorStatus = {...operatorStatus, message:result.message, logFolder:result.logFolder, requestId:result.requestId, available:false, busy:!!result.ok, phase:result.ok?'fetching':'failed'};
+    operatorStatus = {...operatorStatus, message:result.message, logFolder:result.logFolder, requestId:result.requestId, progress:null, available:false, busy:!!result.ok, phase:result.ok?'fetching':'failed'};
     renderOperatorUpdate();
     $('settings-status').textContent = result.message;
   } catch {

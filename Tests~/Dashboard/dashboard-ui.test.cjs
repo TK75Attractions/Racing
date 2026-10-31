@@ -929,3 +929,29 @@ test('Quick mode offers a race start and shows a ready player waiting for the ot
   ui.render({...base,state:'Title',settings:{activePreset:'Standard'}});
   assert.match(ui.buttons.find(button=>button.dataset.action==='start').textContent,/練習を始める/);
 });
+
+
+test('Build progress shows completed stages, current imports and safe live log text',()=>{
+  const ui=fixture();
+  ui.context.buildProgress={completedSteps:3,totalSteps:6,stage:'アセットを読み込み',task:'Assets/Track.fbx',cache:'cold',elapsedSeconds:185,quietSeconds:2,logQuiet:false,logLines:['<img src=x onerror=alert(1)>','Start importing Assets/Track.fbx']};
+  vm.runInContext("operatorStatus={busy:true,phase:'building',canControl:true,canCancel:true,progress:buildProgress};renderOperatorUpdate();",ui.context);
+  assert.equal(ui.elements.get('operator-build-progress').hidden,false);
+  assert.equal(ui.elements.get('operator-progress-bar').value,3);
+  assert.match(ui.elements.get('operator-progress-label').textContent,/3 \/ 6.*アセット/);
+  assert.match(ui.elements.get('operator-build-task').textContent,/Track.fbx.*初回/);
+  assert.match(ui.elements.get('operator-build-timing').textContent,/3分5秒.*2秒前/);
+  assert.equal(ui.elements.get('operator-build-log').textContent,'<img src=x onerror=alert(1)>\nStart importing Assets/Track.fbx');
+  assert.equal(ui.elements.get('operator-build-activity').hidden,false);
+  vm.runInContext("operatorStatus.progress.logQuiet=true;operatorStatus.progress.quietSeconds=130;renderOperatorUpdate();",ui.context);
+  assert.equal(ui.elements.get('operator-build-quiet').hidden,false);
+  assert.match(ui.elements.get('operator-build-quiet').textContent,/長時間のコンパイル中の可能性/);
+  vm.runInContext("operatorStatus.busy=false;operatorStatus.phase='cancelled';renderOperatorUpdate();",ui.context);
+  assert.equal(ui.elements.get('operator-build-activity').hidden,true);
+  assert.equal(ui.elements.get('operator-progress-bar').value,3);
+});
+
+test('An old helper without build telemetry has no misleading progress or stale logs',()=>{
+  const ui=fixture();
+  vm.runInContext("operatorStatus={busy:true,phase:'building'};renderOperatorUpdate();",ui.context);
+  assert.equal(ui.elements.get('operator-build-progress').hidden,true);
+});
