@@ -42,6 +42,24 @@ Gitクローン、GitとGit LFS、ネット接続とGit認証、対象バージ�
 
 既に常駐Dashboardを導入済みのMacでは、`Tools/DashboardRelay`で`dotnet run -- --update-service`を一度実行して補助プログラムも更新します。既存のTailscale経路・操作権限・通知登録は保持し、更新元プロジェクトの場所を記録します。新規導入は`Install Dashboard Service.command`です。公開の閲覧画面からは更新できません。
 
+## 新しい管理画面とRaceへの反映
+
+管理画面の配信プログラムと、UnityでビルドするRace本体は別々に更新する。
+
+1. この修正を含むソースを取得する。Macのターミナルで次を実行すると、既存の接続先・操作権限・通知登録を保持して常駐管理画面を更新できる。
+
+   ```sh
+   cd /Users/kenichirowada/LocalDoc/Code/Ennichi/Racing/Tools/DashboardRelay
+   dotnet run --project DashboardRelay.csproj -- --update-service
+   ```
+
+   ビルド中の更新ジョブがある場合は、完了するか管理画面でキャンセルしてから実行する。`.NET 10 SDK` が必要。`--no-build` は古い配信ファイルを使う可能性があるため、ここでは指定しない。
+2. 管理画面を再読み込みする。インストールした管理画面アプリ（PWA）も同じページなので、再読み込み、または終了して開き直す。再インストールは不要。管理画面はページ/APIをService Workerへキャッシュしない。
+3. ペダルの決定条件やウィンドウ再配置の実処理を反映するには、Race本体を再ビルドして新しいアプリへ切り替える。管理画面の更新だけでは起動中のRaceは変わらない。
+4. **「最新mainでビルド・起動」は `origin/main` が対象。作業ブランチだけの変更は含まれない。** 修正をmainへマージ・pushした後に押すと、その版をビルドして、成功後に旧Raceを終了して起動する。常駐サービスの更新は手順1を別途実行する。
+
+main反映前にローカルの修正を使う場合は、このプロジェクトをUnityで開き、コンパイル後に `Racing > Build > Mac Player Windows` で `Builds/DisplayValidation/Race.app` を作る。ビルド成功後に既存のRaceを終了し、新しく作ったアプリを起動する。新しいRaceの接続後、「ゲーム設定 → 画面の配置」のボタンが有効になる。EditorのPlayではネイティブウィンドウを再配置しない。
+
 ## 検証
 
 `sh Tools/OperatorUpdate/test.sh`で関連する回帰検証をまとめて実行します（.NET 10 SDK・Mono・Python 3・Nodeが必要です）。

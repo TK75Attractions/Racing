@@ -1,0 +1,14 @@
+PLAYER_OPERATION_FLOW_PASS: held pedal through title/practice/results; independent auto OFF, original source handover and reconnect; P1/P2 first finish; timed and Next-driven waiting; close finish clocks; DNF; retry overlay cancellation; rendered result and spectator views.
+ARCADE_ENDING_PLAYMODE_PASS: real rendered P1/P2 endings, held-pedal confirmation, independent title returns.
+CAR_SELECTION_BEHAVIOR_PASS
+CAR_SELECTION_VALIDATION_PASS: /private/tmp/racing-held-pedal-qa/Artifacts/CarSelection
+
+Dashboard tests:
+ℹ tests 75
+ℹ suites 0
+ℹ pass 74
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 474.48225
