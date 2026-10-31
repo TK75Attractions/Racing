@@ -45,7 +45,7 @@ let frameGeneration = 0;
 const frameUrls = [null, null];
 
 const dashboardPages = {
-  home: ['ホーム', 'レースと機器の状況を、ひと目で。', 'HOME'],
+  home: ['ホーム', '機器の接続・要確認事項・プレイヤーの復帰と入力を、ひと目で。', 'HOME'],
   race: ['レース運営', '進行の操作、プレイヤー映像、順位をまとめて確認。', 'RACE OPERATIONS'],
   devices: ['機器・入力', '接続状態と、ハンドル・ペダルの反応を確認。', 'DEVICES & INPUT'],
   settings: ['ゲーム設定', '音量・出力先・レースルールを調整。', 'GAME SETTINGS'],
@@ -571,7 +571,9 @@ function isTelemetryEntry(entry) {
     /\*[0-9A-F]{4}$/.test(entry.line) && rgpCrc(entry.line.slice(1, -5)) === entry.line.slice(-4);
 }
 function renderTelemetry(entry) {
-  const target = $('latest-tel');
+  for (const id of ['latest-tel', 'home-inputs']) renderTelemetryTarget(entry, $(id));
+}
+function renderTelemetryTarget(entry, target) {
   if (!entry || !isTelemetryEntry(entry)) { target.textContent = 'ペダル・ハンドル入力を待っています。'; return; }
   const values = entry.line.slice(1, -5).split(',').slice(3, 9);
   if (values.length !== 6 || values.some((v, i) => v.trim() === '' || !Number.isFinite(Number(v)) || (i % 3 === 0 ? Math.abs(Number(v)) > 3600 : Number(v) < 0 || Number(v) > 1))) { target.textContent = '⚠ 受信した入力値が不正です。機器と接続を確認してください。'; return; }
@@ -1379,8 +1381,10 @@ async function sendKeyboardMenu(command, player) {
     try { const response = await apiFetch('/api/command/' + request.id, {signal:AbortSignal.timeout(2000)});
       if (response.ok) result = await response.json(); } catch { }
   }
-  $('keyboard-menu-status').textContent = result?.ok ? (command === 'recover' ? '車両をコースへ復帰しました。' : 'メニュー操作を実行しました。') : result ?
+  const message = result?.ok ? (command === 'recover' ? '車両をコースへ復帰しました。' : 'メニュー操作を実行しました。') : result ?
     '現在の状態では操作できません。ゲーム画面を確認してください。' : '結果を確認できません。操作は再送していません。';
+  $('keyboard-menu-status').textContent = message;
+  if (command === 'recover') $('home-recovery-status').textContent = `P${player + 1}：${message}`;
 }
 
 document.querySelectorAll('[data-action]').forEach((button) => {

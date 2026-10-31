@@ -206,3 +206,5 @@ body.remote .controls{display:grid}
 @media(max-width:760px){.maintenance-panel{align-items:stretch;flex-direction:column;gap:14px;padding:18px}.maintenance-actions button{width:100%}}
 
 #maintenance-feedback{font-weight:700;margin-top:8px}#maintenance-feedback:empty{display:none}
+
+.home-recover{width:100%;margin-top:18px;min-height:44px}.home-input-panel{margin-top:18px}.home-input-panel .telemetry-card{min-width:0}.home-input-panel #home-recovery-status:empty{display:none}.home-input-panel #home-recovery-status{margin:16px 0 0;color:#d5ec98;font-size:13px}

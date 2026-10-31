@@ -787,3 +787,27 @@ test('USB HTTP origins generate secure v4 command IDs without randomUUID',()=>{
   const ids=new Set(Array.from({length:200},()=>ui.context.newRequestId()));
   assert.equal(ids.size,200);for(const id of ids)assert.match(id,/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
 });
+
+test('Home has independent recovery controls without takeover and disables them on disconnect',()=>{
+  const ui=fixture();
+  ui.render({...base,inputControl:{available:true,players:[{number:1,canRecover:true},{number:2,canRecover:false}]}});
+  const buttons=ui.inputButtons.filter(button=>button.dataset.inputPulse==='reset');
+  assert.equal(buttons.length,4);
+  assert.equal(buttons[0].disabled,false);
+  assert.equal(buttons[1].disabled,true);
+  ui.context.setConnection(false);
+  assert.ok(buttons.every(button=>button.disabled));
+  assert.match(ui.elements.get('home-inputs').textContent,/待っています/);
+});
+test('Home mirrors verified physical wheel and both independent pedal values, marking stale input',()=>{
+  const ui=fixture();
+  const body='TEL,1,1,12,0.75,0.2,-24,0,0.6';
+  const line='@'+body+'*'+ui.context.rgpCrc(body);
+  const snapshot={...base,telemetry:{line,status:'OK'},serial:{portOpen:true,lines:[]},hardware:{sessionOpen:true,recent:true,inputFresh:true,telemetryEnabled:true}};
+  ui.render(snapshot);
+  const home=ui.elements.get('home-inputs').textContent;
+  assert.match(home,/右 12°/);assert.match(home,/左 24°/);
+  assert.match(home,/75.0%/);assert.match(home,/20.0%/);assert.match(home,/60.0%/);
+  ui.render({...snapshot,hardware:{...snapshot.hardware,inputFresh:false}});
+  assert.match(ui.elements.get('home-inputs').textContent,/現在の入力は未確認/);
+});
