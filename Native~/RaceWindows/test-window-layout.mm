@@ -48,7 +48,7 @@ static void TestIndependentReconnect(NSRect initial)
     racing::DisplayArea p2={30,false,false,1440,0,2560,1440,"p2"};
     racing::DisplayArea builtIn={10,true,false,0,0,1440,900,"operator"};
     racing::DisplayArea unrelated={40,false,false,4000,0,1920,1080,"unrelated"};
-    broadcastDisplay="operator";
+    broadcastDisplay=broadcastDefaultDisplay="operator";
     FillScreen(broadcast,DisplayFrame(builtIn));
     ApplyPlayerLayout({builtIn,p2,p1},false);
     assert(externalFullscreen && NSEqualRects(primary.frame,DisplayFrame(p1)) && NSEqualRects(secondary.frame,DisplayFrame(p2)));
@@ -100,9 +100,32 @@ static void TestIndependentReconnect(NSRect initial)
     broadcastClosed=true;
     ApplyBroadcastLayout({builtIn,p1,p2});
     assert(!broadcast.requestedVisible && broadcast.shown==1); // A user-closed window never reopens.
+    // Explicit restore fills every assigned display, including manually hidden or resized windows.
+    broadcastClosed=false; broadcastSuspension={}; broadcast.requestedVisible=YES;
+    broadcastDisplay="p1"; // The operator previously moved the broadcast to a player display.
+    [primary setFrame:moved display:NO]; [secondary setFrame:moved display:NO];
+    [broadcast setFrame:moved display:NO];
+    primary.requestedVisible=secondary.requestedVisible=NO;
+    assert(RepositionWindows({builtIn,p1,p2}));
+    assert(operatorFullscreen && primary.requestedVisible && secondary.requestedVisible && broadcast.requestedVisible);
+    assert(NSEqualRects(primary.frame,DisplayFrame(p1)) && NSEqualRects(secondary.frame,DisplayFrame(p2)));
+    assert(NSEqualRects(broadcast.frame,DisplayFrame(builtIn)) && broadcastDisplay=="operator");
+    assert(!closeRequested && !broadcastClosed && primary.focused==primaryFocus);
+    // A missing assigned monitor remains hidden, even with an unrelated monitor connected.
+    assert(RepositionWindows({builtIn,p1,unrelated}));
+    assert(secondarySuspension.disconnected && !secondary.requestedVisible && primary.requestedVisible);
+    ApplyPlayerLayout({builtIn,p1,p2},false);
+    assert(secondary.requestedVisible && NSEqualRects(secondary.frame,DisplayFrame(p2)));
+    // The operator display also keeps its default identity while unplugged.
+    assert(RepositionWindows({p1,p2}));
+    assert(broadcastSuspension.disconnected && !broadcast.requestedVisible);
+    ApplyBroadcastLayout({builtIn,p1,p2});
+    assert(broadcast.requestedVisible && NSEqualRects(broadcast.frame,DisplayFrame(builtIn)));
     // An explicit windowed override still exits automatic layout and restores desktop styles.
     ApplyPlayerLayout({builtIn,p2},true);
     assert(!externalFullscreen && !externalAssignment.Assigned());
+    operatorFullscreen=false;
+    assert(!RepositionWindows({builtIn,p1})); // No initial two-screen assignment: leave the desktop alone.
     assert(primary.styleMask & NSWindowStyleMaskTitled);
     assert(secondary.styleMask & NSWindowStyleMaskTitled);
     assert(!primary.actuallyVisible && !secondary.actuallyVisible && !broadcast.actuallyVisible);

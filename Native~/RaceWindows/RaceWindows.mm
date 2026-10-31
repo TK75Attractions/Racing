@@ -29,7 +29,8 @@ static std::atomic<bool> externalFullscreen{false};
 static __weak NSWindow* unityWindow;
 static id screenObserver;
 static racing::ExternalDisplayAssignment externalAssignment;
-static std::string broadcastDisplay;
+static std::string broadcastDisplay, broadcastDefaultDisplay;
+static bool operatorFullscreen=false;
 struct WindowSuspension {
     bool disconnected=false, wasVisible=false;
 };
@@ -238,13 +239,55 @@ static void RefreshExternalLayout()
             unityWindow=FindUnityWindow(); primaryPlacement.saved=false;
         }
         const char* forceWindowed=getenv("RACING_WINDOWED");
-        bool windowed=(forceWindowed && strcmp(forceWindowed,"1")==0) ||
-            [NSProcessInfo.processInfo.arguments containsObject:@"-racing-windowed"];
+        bool windowed=!operatorFullscreen && ((forceWindowed && strcmp(forceWindowed,"1")==0) ||
+            [NSProcessInfo.processInfo.arguments containsObject:@"-racing-windowed"]);
         ApplyPlayerLayout(displays,windowed);
     }
     ApplyBroadcastLayout(displays);
 }
 
+// Explicit operator action: restore the original physical assignments, including hidden/minimized windows.
+// Keep these assignments when a monitor is absent; a different monitor must not take over its seat.
+static bool RepositionWindows(const std::vector<racing::DisplayArea>& displays)
+{
+    if (!unityWindow) unityWindow=FindUnityWindow();
+    if (!unityWindow || !playerWindow) return false;
+    auto pair=externalAssignment.Resolve(displays);
+    if (!externalAssignment.Assigned()) return false;
+    operatorFullscreen=true; // An explicit full-screen request also overrides a diagnostic windowed launch.
+    ApplyPlayerLayout(displays,false);
+    NSWindow* windows[2]={unityWindow,playerWindow};
+    WindowSuspension* suspensions[2]={&primarySuspension,&secondarySuspension};
+    for (int i=0;i<2;++i) {
+        suspensions[i]->wasVisible=true;
+        if (pair[i]<0) continue;
+        if (windows[i].miniaturized) [windows[i] deminiaturize:nil];
+        [windows[i] orderFront:nil];
+    }
+    [(RacePlayerWindow*)playerWindow updateOutputSize];
+    if (broadcastWindow && !broadcastClosed && !broadcastDefaultDisplay.empty()) {
+        broadcastDisplay=broadcastDefaultDisplay;
+        int target=racing::FindDisplay(displays,broadcastDisplay);
+        if (target>=0) {
+            FillScreen(broadcastWindow,DisplayFrame(displays[target]));
+            broadcastSuspension={};
+            if (broadcastWindow.miniaturized) [broadcastWindow deminiaturize:nil];
+            [broadcastWindow orderFront:nil];
+            [(RaceBroadcastWindow*)broadcastWindow updateOutputSize];
+        } else {
+            SuspendWindow(broadcastWindow,broadcastSuspension);
+            broadcastVisible=false;
+        }
+        broadcastSuspension.wasVisible=true;
+    }
+    return true;
+}
+extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_Reposition()
+{
+    __block bool success=false;
+    OnMain(^{success=RepositionWindows(ConnectedDisplays());});
+    return success?1:0;
+}
 extern "C" void UNITY_INTERFACE_EXPORT RaceWindows_UpdateLayout() { OnMain(^{RefreshExternalLayout();}); }
 extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_ExternalFullscreen() { return externalFullscreen?1:0; }
 @implementation RacePlayerWindow
@@ -334,6 +377,7 @@ extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_OpenBroadcast()
         { std::lock_guard<std::mutex> lock(outputMutex); broadcastWindow=window; broadcastLayer=layer; }
         broadcastClosed=false; broadcastSuspension={};
         broadcastDisplay=DisplayIdentity([target.deviceDescription[@"NSScreenNumber"] unsignedIntValue]);
+        broadcastDefaultDisplay=broadcastDisplay;
         [window orderFront:nil]; PlaceBroadcastWindow(window,target); [window updateOutputSize];
         EnsureScreenObserver(); success=1;
     });
@@ -355,7 +399,7 @@ extern "C" void UNITY_INTERFACE_EXPORT RaceWindows_CloseBroadcast()
         NSWindow* window;
         { std::lock_guard<std::mutex> lock(outputMutex); window=broadcastWindow; broadcastWindow=nil; broadcastLayer=nil; }
         window.delegate=nil; [window close]; broadcastWidth=0; broadcastHeight=0;
-        broadcastDisplay.clear(); broadcastSuspension={}; RemoveUnusedScreenObserver();
+        broadcastDisplay.clear(); broadcastDefaultDisplay.clear(); broadcastSuspension={}; RemoveUnusedScreenObserver();
     });
 }
 
@@ -406,7 +450,7 @@ extern "C" int UNITY_INTERFACE_EXPORT RaceWindows_Open(int screenIndex, int widt
             playerWindow = window; outputLayer = layer;
         }
         closeRequested = false;
-        externalAssignment.Reset(); primarySuspension={}; secondarySuspension={};
+        externalAssignment.Reset(); operatorFullscreen=false; primarySuspension={}; secondarySuspension={};
         [window orderFront:nil];
         RefreshExternalLayout();
         EnsureScreenObserver();

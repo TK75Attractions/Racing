@@ -89,6 +89,8 @@ public class Gmanager
     public RaceFeatureController Features = new RaceFeatureController();
     public bool IsMaintenanceActive { get; private set; }
     public bool MaintenanceAvailable=>true;
+    public bool WindowRepositionAvailable=>true;
+    public bool RepositionWindows(){Harness.MenuActions++;return true;}
     public bool SetMaintenance(bool active){IsMaintenanceActive=active;((InputManager)Harness.Components[typeof(InputManager)]).ClearDashboardInputs();return true;}
     public bool CanUseDashboardControls=>!IsMaintenanceActive;
     private readonly bool[] menus={false,false};

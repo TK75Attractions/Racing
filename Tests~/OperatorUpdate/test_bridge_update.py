@@ -52,4 +52,21 @@ class BridgeUpdateTest(unittest.TestCase):
   self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'releaseForUpdate',['verified-job']))['ok'])
   wrong=self.command(snapshot,'releaseForUpdate',['verified-job']);wrong['targetSession']='other-session'
   self.assertFalse(self.request('/api/action/settings',wrong)['ok'])
+ def test_window_reposition_is_versioned_and_available_during_race_and_maintenance(self):
+  self.bridge.stdin.write('state:Game\n');self.bridge.stdin.flush()
+  for _ in range(100):
+   snapshot=self.request('/api/status')
+   if snapshot['state']=='Game':break
+   time.sleep(.01)
+  self.assertTrue(snapshot['settings']['windowRepositionAvailable'])
+  command=self.command(snapshot,'repositionWindows')
+  self.assertTrue(self.request('/api/action/settings',command)['ok'])
+  self.assertTrue(self.request('/api/action/settings',command)['ok'],'a repeated ID returns the original result')
+  self.assertFalse(self.request('/api/action/settings',self.command(snapshot,'repositionWindows',['unexpected']))['ok'])
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'maintenance',['true']))['ok'])
+  self.assertFalse(self.request('/api/action/settings',self.command(snapshot,'repositionWindows'))['ok'],'stale settings are refused')
+  snapshot=self.request('/api/status')
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'repositionWindows'))['ok'])
+  wrong=self.command(snapshot,'repositionWindows');wrong['targetSession']='other-session'
+  self.assertFalse(self.request('/api/action/settings',wrong)['ok'])
 if __name__=='__main__':unittest.main(verbosity=2)

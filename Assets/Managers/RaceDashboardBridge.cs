@@ -151,7 +151,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public bool inputAvailable, serialDebug, featurePanel, constantPaused, audioRefreshAvailable;
         public string[] deviceNames, deviceKeys, outputStatus, selectedDevices;
         public bool[] outputAvailable;
-        public bool maintenanceAvailable, maintenanceActive;
+        public bool maintenanceAvailable, maintenanceActive, windowRepositionAvailable;
         public bool updateAvailable, updateBusy;
         public string updateStatus;
         public bool featuresAvailable, rulesLocked, hasQueuedPreset, canStartTestRace, bothPlayersAutodrive;
@@ -420,6 +420,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         var updater = race != null ? race.GetComponent<RaceOperatorUpdate>() : null;
         return new SettingsSnapshot {
             updateAvailable = updater?.Available ?? false, updateBusy = updater?.Busy ?? false, updateStatus = updater?.Status ?? "更新機能がありません。",
+            windowRepositionAvailable = race?.WindowRepositionAvailable ?? false,
             maintenanceAvailable = race?.MaintenanceAvailable ?? false, maintenanceActive = race?.IsMaintenanceActive ?? false,
             featuresAvailable = features != null, features = BuildFeatures(features), bothPlayersAutodrive = race?.BothPlayersAutodrive ?? false,
             activePreset = features?.ActivePreset.ToString() ?? "", selectedPreset = features?.SelectedPreset.ToString() ?? "",
@@ -454,6 +455,12 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         }
         if (request.command == "releaseForUpdate" && args.Length == 1)
             return race != null && race.GetComponent<RaceOperatorUpdate>()?.PrepareForLaunch(args[0]) == true;
+        if (request.command == "repositionWindows" && args.Length == 0)
+        {
+            bool restored = race?.RepositionWindows() == true;
+            reason = restored ? "" : "window_layout_unavailable";
+            return restored;
+        }
         if (request.command == "maintenance" && args.Length == 1 && (args[0] == "true" || args[0] == "false"))
             return race != null && race.SetMaintenance(args[0] == "true");
         if (request.command == "feature" && args.Length == 2 && features != null &&

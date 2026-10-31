@@ -187,6 +187,14 @@ public class Gmanager : MonoBehaviour
         return IManager.GetInputState(index);
     }
 
+    public bool WindowRepositionAvailable => RacePlayerWindows.UsesNativeWindow;
+    public bool RepositionWindows()
+    {
+        if (!WindowRepositionAvailable) return false;
+        GetComponent<RaceBroadcastDirector>()?.RestoreWindow();
+        return RacePlayerWindows.Reposition();
+    }
+
     private CourseIntroDirector courseIntro;
     private MenuSceneryDirector menuScenery;
     public bool IsPreparing => state == State.Title || state == State.CarSelection || state == State.Tutorial;
