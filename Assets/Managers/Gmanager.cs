@@ -29,6 +29,7 @@ public class Gmanager : MonoBehaviour
         public float resultConfirmTimer;
         public bool resultConfirmArmed;
         public float resultDisplayElapsed;
+        public bool resultPresented, resultPresentationComplete;
         public bool returnedToTitle;
         public PlayerDriveInputGate inputGate;
         public InterruptionMenuUI interruptionMenu;
@@ -211,7 +212,9 @@ public class Gmanager : MonoBehaviour
             if (state == State.Game) step = player.withdrewFromRace ? "Withdrawn" : player.isSpectating ? "Spectating" :
                 player.result != null ? (player.result.didFinish ? "Finished" : "DNF") :
                 player.interruptionMenu?.IsOpen == true ? "Menu" : "Driving";
-            if (state == State.Result && player.returnedToTitle) { playerState = State.Title.ToString(); step = "Returned"; }
+            if (player.resultPresented) { playerState = State.Result.ToString(); step = "Results"; remaining = Mathf.Max(0f, ResultDisplaySeconds - player.resultDisplayElapsed); }
+            if (player.isSpectating) { playerState = State.Game.ToString(); step = "Spectating"; }
+            if (player.returnedToTitle) { playerState = State.Title.ToString(); step = "Returned"; }
         }
         if (phase == State.Tutorial)
         {
@@ -362,10 +365,10 @@ public class Gmanager : MonoBehaviour
                 UpdateTitleStartInput(dt);
                 UpdateTitlePedalUI();
             }
-            else if (!IsScreenTransitioning() && state == State.Result) UpdateResultReturnInput(dt);
+            else if (state == State.Game || state == State.Goal || state == State.Result) UpdateResultReturnInput(dt);
         }
 
-        if (state == State.Result) UpdateResultDisplay(Time.unscaledDeltaTime);
+        if (state == State.Game || state == State.Goal || state == State.Result) UpdateResultDisplay(Time.unscaledDeltaTime);
         UpdatePreparationDeadline(Time.unscaledDeltaTime);
 
         if ((state == State.CarSelection || state == State.Tutorial) && !finishingPreparation)
@@ -607,7 +610,7 @@ public class Gmanager : MonoBehaviour
         state = State.Result;
         Broadcast?.RestartLatestHighlights();
         resultReturnInputDelayTimer = 0f;
-        foreach (ResultUIManager manager in resultUIManagers) manager?.ShowResults(preview);
+        for (int i = 0; i < PlayerCount; i++) { players[i].resultPresented = true; resultUIManagers[i]?.ShowResults(preview); }
         foreach (ScreenTransitionController transition in screenTransitions) transition?.TryShowResultAnimated();
     }
 
@@ -1248,7 +1251,7 @@ public class Gmanager : MonoBehaviour
         if (!StartFinishRun(entry)) FreezePlayer(player, disableCollisions: true);
         if (registration == RaceFinishRegistration.RaceComplete) { CompleteRace(latestSessionResult, player); return; }
         latestResult = latestSessionResult.GetResultAtPosition(1);
-        PlayPlayerGoal(player, () => BeginSpectating(player.playerIndex));
+        PlayPlayerGoal(player, () => ShowPlayerResults(player.playerIndex));
         UpdateSecondPlaceDisplay();
     }
 
@@ -1353,17 +1356,20 @@ public class Gmanager : MonoBehaviour
         {
             player?.interruptionMenu?.Hide();
             FreezePlayer(player, disableCollisions: false);
+            if (player?.isSpectating == true && player.resultPresentationComplete)
+            {
+                player.isSpectating = false;
+                screenTransitions[player.playerIndex]?.HideSpectator();
+                ShowExitPrompt(player.playerIndex);
+            }
         }
         if (finalFinisher != null)
         {
-            // Spectators keep watching this car: show its finish on their own display too.
-            foreach (PlayerRuntime viewer in players)
-                if (viewer != null && viewer != finalFinisher && (viewer.isSpectating || viewer.result?.didFinish == true))
-                {
-                    viewer.isSpectating = false;
-                    PlayPlayerGoal(finalFinisher, null, viewer.playerIndex);
-                }
-            PlayPlayerGoal(finalFinisher, ShowResultsAfterGoal);
+            PlayPlayerGoal(finalFinisher, () =>
+            {
+                ShowPlayerResults(finalFinisher.playerIndex);
+                ShowResultsAfterGoal();
+            });
         }
         else
         {
@@ -1411,23 +1417,42 @@ public class Gmanager : MonoBehaviour
         screenTransitions[finishedPlayerIndex]?.ShowSpectator(watchedPlayerIndex);
     }
 
+    private void ShowPlayerResults(int index)
+    {
+        if (state != State.Game && state != State.Goal && state != State.Result) return;
+        PlayerRuntime player = players[index];
+        if (player == null || player.resultPresented || player.returnedToTitle) return;
+        player.resultPresented = true;
+        player.isSpectating = false;
+        player.resultDisplayElapsed = player.resultConfirmTimer = 0f;
+        player.resultConfirmArmed = false;
+        player.displayRig.RaceCamera.Follow = player.cameraController.CameraTarget;
+        player.displayRig.RaceCamera.LookAt = player.cameraController.LookTarget;
+        if (latestSessionResult != null) latestSessionResult.dailyRanking = dailyRanking?.Snapshot();
+        resultUIManagers[index]?.ShowResults(latestSessionResult);
+        soundEffects?.Play(RaceSoundCue.Results, index);
+        screenTransitions[index]?.TryShowResultAnimated();
+    }
+
     private void ShowResultsAfterGoal()
     {
-        if (state != State.Goal || IsScreenTransitioning())
-        {
-            return;
-        }
-
+        if (state != State.Goal || IsScreenTransitioning()) return;
         state = State.Result;
-        soundEffects?.PlayForAll(RaceSoundCue.Results);
         Broadcast?.RestartLatestHighlights();
-        ResetResultPlayerInputs();
         resultReturnInputDelayTimer = 0f;
         if (latestSessionResult != null) latestSessionResult.dailyRanking = dailyRanking?.Snapshot();
-        foreach (ResultUIManager manager in resultUIManagers) manager?.ShowResults(latestSessionResult);
-        foreach (ScreenTransitionController transition in screenTransitions)
+        for (int i = 0; i < PlayerCount; i++)
         {
-            transition?.TryShowResultAnimated();
+            var player = players[i];
+            if (player == null || player.returnedToTitle) continue;
+            if (player.resultPresentationComplete)
+            {
+                player.isSpectating = false;
+                screenTransitions[i]?.HideSpectator();
+                ShowExitPrompt(i);
+            }
+            else if (!player.resultPresented) ShowPlayerResults(i);
+            else resultUIManagers[i]?.RefreshStandings();
         }
         Debug.Log("Two-player game end");
     }
@@ -1529,8 +1554,10 @@ public class Gmanager : MonoBehaviour
         if (playerIndex < 0 || playerIndex >= players.Length) return state;
         PlayerRuntime player = players[playerIndex];
         if (IsPreparing) return GetPlayerPreparationState(playerIndex);
-        if (state == State.Result && player?.returnedToTitle == true) return State.Title;
-        // Music owns the one-shot finish sequence before following the opponent or results.
+        if (player?.returnedToTitle == true) return State.Title;
+        if (player?.isSpectating == true) return State.Game;
+        if (player?.resultPresented == true) return State.Result;
+        // Music owns the one-shot finish sequence before the local result.
         if (state == State.Game && player?.result?.didFinish == true) return State.Goal;
         return state;
     }
@@ -1574,6 +1601,7 @@ public class Gmanager : MonoBehaviour
     {
         if (!CanUseDashboardControls || index < 0 || index >= players.Length || players[index] == null) return false;
         PlayerRuntime player = players[index];
+        if (player.resultPresented && !player.isSpectating) return !player.returnedToTitle;
         if (state == State.Game) return player.car != null && player.result == null && !player.withdrewFromRace && !IsDashboardMenuOpen(index);
         if (state == State.Result) return !player.returnedToTitle;
         return IsPreparing && (player.preparationState == State.Title || player.preparationState == State.CarSelection || player.preparationState == State.Tutorial);
@@ -1840,10 +1868,21 @@ public class Gmanager : MonoBehaviour
 
     public void SelectResultOption(int playerIndex, int option)
     {
-        if(option != 0 || state != State.Result || IsScreenTransitioning() || playerIndex < 0 || playerIndex >= PlayerCount || players[playerIndex].returnedToTitle) return;
+        if (option != 0 || playerIndex < 0 || playerIndex >= PlayerCount ||
+            (state != State.Game && state != State.Goal && state != State.Result) ||
+            screenTransitions[playerIndex]?.IsTransitioning == true ||
+            !players[playerIndex].resultPresented || players[playerIndex].resultPresentationComplete || players[playerIndex].returnedToTitle) return;
         soundEffects?.Play(RaceSoundCue.Confirm, playerIndex);
         resultUIManagers[playerIndex]?.PlayConfirm(option);
-        ShowExitPrompt(playerIndex);
+        CompletePlayerResult(playerIndex);
+    }
+
+    private void CompletePlayerResult(int index)
+    {
+        var player = players[index];
+        player.resultPresentationComplete = true;
+        if (IsPlayerStillRacing(1 - index)) BeginSpectating(index);
+        else ShowExitPrompt(index);
     }
 
     private void ShowExitPrompt(int playerIndex)
@@ -1863,10 +1902,10 @@ public class Gmanager : MonoBehaviour
             if (player == null || player.returnedToTitle || screenTransitions[i]?.IsTransitioning == true) continue;
             var ending = player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>();
             if (ending?.IsVisible == true) { ending.TickTime(dt); continue; }
-            if (resultUIManagers[i]?.IsVisible != true) continue;
+            if (!player.resultPresented || player.resultPresentationComplete || resultUIManagers[i]?.IsVisible != true) continue;
             player.resultDisplayElapsed += Mathf.Max(0f, dt);
             resultUIManagers[i]?.SetCountdown(Mathf.Max(0f, ResultDisplaySeconds - player.resultDisplayElapsed));
-            if (player.resultDisplayElapsed >= ResultDisplaySeconds) ShowExitPrompt(i);
+            if (player.resultDisplayElapsed >= ResultDisplaySeconds) CompletePlayerResult(i);
         }
     }
 
@@ -1885,7 +1924,8 @@ public class Gmanager : MonoBehaviour
         for (int index = 0; index < PlayerCount; index++)
         {
             PlayerRuntime player = players[index];
-            if (player == null || player.returnedToTitle || screenTransitions[index]?.IsTransitioning == true) continue;
+            if (player == null || player.returnedToTitle || !player.resultPresented || player.isSpectating ||
+                screenTransitions[index]?.IsTransitioning == true) continue;
             DriveInputState input = GetMenuInput(index);
             var ending=player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>();
             if(ending!=null&&ending.IsVisible){ending.TickInput(input.pedal,dt);continue;}
@@ -1916,6 +1956,7 @@ public class Gmanager : MonoBehaviour
             player.resultConfirmTimer = 0f;
             player.resultConfirmArmed = false;
             player.resultDisplayElapsed = 0f;
+            player.resultPresented = player.resultPresentationComplete = false;
             player.returnedToTitle = false;
         }
     }
@@ -1972,7 +2013,7 @@ public class Gmanager : MonoBehaviour
             { player.titleInputArmed = false; player.titleReleaseTimer = player.readyHoldTimer = 0f; continue; }
             if (!player.titleInputArmed)
             {
-                player.titleReleaseTimer = Mathf.Abs(input.pedal) < .2f ? player.titleReleaseTimer + dt : 0f;
+                player.titleReleaseTimer = PedalRelease.IsReleased(input.pedal) ? player.titleReleaseTimer + dt : 0f;
                 if (player.titleReleaseTimer >= titlePedalReleaseSeconds) player.titleInputArmed = true;
                 continue;
             }

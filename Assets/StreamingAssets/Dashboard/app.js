@@ -96,7 +96,7 @@ function renderHome(snapshot) {
     const status = $('home-player-status-' + n);
     status.textContent = !snapshot ? '待機中' : progress ? labels[progress.state] || '状態確認中' : labels[snapshot.state] || '状態確認中';
     status.classList.toggle('active', !!snapshot && !!player?.connected);
-    const detail = progress?.step === 'Withdrawn' ? '途中棄権・相手の走行を待機' :
+    const detail = progress?.step === 'Results' ? '結果を表示中' : progress?.step === 'Spectating' ? '相手のゴールを待っています' : progress?.step === 'Withdrawn' ? '途中棄権・相手の走行を待機' :
       participant?.status === 'Finished' ? '完走' : participant?.status === 'DNF' ? '未完走' :
       progress?.step === 'Menu' ? '中断メニューを表示中' : snapshot ? details[progress?.state || snapshot.state] || '状態を確認中' : 'プレイヤーの状態を待っています';
     $('home-player-detail-' + n).textContent = [progress?.carName, detail].filter(Boolean).join(' · ');
@@ -651,7 +651,7 @@ function renderLog(lines) {
 function renderPlayerProgress(snapshot) {
   const steps = { Vehicle: '車種を選択中', Paint: 'カラーを選択中', Confirm: '決定操作を待機中', Confirmed: '選択確定・画面切替中',
     Accelerate: 'アクセルを踏んで加速', Steer: 'ハンドルを切って旋回', Stop: 'ペダルを離して停止',
-    Driving: 'レースを走行中', Menu: '中断メニューを表示中', Withdrawn: '途中棄権・相手の走行を待機', Spectating: '相手の走行を観戦中', Finished: '完走・ゴール演出中', DNF: '未完走', Returned: 'タイトルへ復帰済み・相手の復帰を待機',
+    Results: '結果を表示中', Driving: 'レースを走行中', Menu: '中断メニューを表示中', Withdrawn: '途中棄権・相手の走行を待機', Spectating: '相手の走行を観戦中', Finished: '完走・ゴール演出中', DNF: '未完走', Returned: 'タイトルへ復帰済み・相手の復帰を待機',
     Complete: '練習完了・相手の完了を待機', TimedOut: '制限時間終了・相手の完了を待機', Waiting: '練習の開始を待機' };
   const players = snapshot?.playerProgress || [1, 2].map(number => ({number}));
   $('player-progress').replaceChildren(...players.map(player => {

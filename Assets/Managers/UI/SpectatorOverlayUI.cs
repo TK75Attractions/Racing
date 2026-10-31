@@ -69,6 +69,8 @@ public sealed class SpectatorOverlayUI : MonoBehaviour
         playerAccent=plate.Find("LiveAccent").GetComponent<Image>();
         ArcadeUI.Label(plate,"Caption","かんせん",new Vector2(.08f,.62f),new Vector2(.95f,.90f),17,p.Soft,true);
         playerLabel=ArcadeUI.Label(plate,"PlayerLabel","P2 のレース",new Vector2(.08f,.15f),new Vector2(.95f,.60f),28,p.Paper);
+        var waiting=ArcadeUI.Panel(transform,"WaitingForOpponent",new Vector2(.18f,.40f),new Vector2(.82f,.60f),p.Ink);
+        ArcadeUI.Label(waiting,"Message","相手のゴールを待っています",new Vector2(.035f,.1f),new Vector2(.965f,.9f),64,p.Paper,false,TextAlignmentOptions.Center);
         var entrance=GetComponent<UIRevealSequence>();if(entrance==null)entrance=gameObject.AddComponent<UIRevealSequence>();entrance.Configure(transform,new[]{"PlayerPlate"},new Vector2(18,0),0,.24f);
     }
 }

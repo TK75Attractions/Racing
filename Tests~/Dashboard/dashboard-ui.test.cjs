@@ -811,3 +811,12 @@ test('Home mirrors verified physical wheel and both independent pedal values, ma
   ui.render({...snapshot,hardware:{...snapshot.hardware,inputFresh:false}});
   assert.match(ui.elements.get('home-inputs').textContent,/現在の入力は未確認/);
 });
+
+test('Home and race progress reflect independent results and waiting without changing the active race',()=>{
+  const ui=fixture();
+  ui.render({...base,playerProgress:[{number:1,state:'Result',step:'Results',remaining:12},{number:2,state:'Game',step:'Driving'}]});
+  assert.match(ui.elements.get('home-player-detail-1').textContent,/結果を表示中/);
+  assert.equal(ui.elements.get('home-player-status-2').textContent,'レース中');
+  ui.render({...base,playerProgress:[{number:1,state:'Game',step:'Spectating'},{number:2,state:'Game',step:'Driving'}]});
+  assert.match(ui.elements.get('home-player-detail-1').textContent,/相手のゴールを待っています/);
+});

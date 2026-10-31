@@ -107,7 +107,7 @@ public class DrivingTutorialProgressTests
     [Test]
     public void SmallRestingOffsetsReleasePracticeButAHeldOrInvalidPedalCannot()
     {
-        foreach (float rest in new[] { .06f, -.08f, .10f })
+        foreach (float rest in new[] { .06f, -.08f, .15f, .20f })
         {
             var lesson = new DrivingTutorialProgress();
             lesson.Tick(.1f, true, rest, 0f, 0f, 0f);
@@ -115,7 +115,7 @@ public class DrivingTutorialProgressTests
             lesson.Tick(.7f, true, .6f, 0f, 4f, 0f);
             Assert.AreEqual(DrivingTutorialProgress.Stage.Steer, lesson.CurrentStage);
         }
-        foreach (float held in new[] { .11f, -.11f, .7f, float.NaN, float.PositiveInfinity })
+        foreach (float held in new[] { .21f, -.21f, .7f, float.NaN, float.PositiveInfinity })
         {
             var lesson = new DrivingTutorialProgress();
             lesson.Tick(.1f, true, held, 0f, 0f, 0f);
