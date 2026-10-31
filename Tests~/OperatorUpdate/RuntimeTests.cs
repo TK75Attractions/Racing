@@ -10,7 +10,7 @@ public static class RuntimeTests
         string unity=Path.Combine(root,"Unity");File.WriteAllText(unity,"");
         Environment.SetEnvironmentVariable("RACING_PROJECT_PATH",root);Environment.SetEnvironmentVariable("RACING_UNITY_PATH",unity);
         File.WriteAllText(Path.Combine(root,"Tools","OperatorUpdate","update-and-run.sh"),
-            "mkdir -p \"$4\"\nprintf '%s' \"$3\" > \"$4/parent.txt\"\necho building > \"$4/status.txt\"\nwhile [ ! -f \"$4/finish-build\" ]; do sleep .02; done\ntouch \"$4/built\"\nwhile [ ! -f \"$4/launch.allowed\" ]; do sleep .02; done\necho launch > \"$4/decision\"\ntouch \"$4/ready\"\nwhile [ ! -f \"$4/released\" ]; do sleep .02; done\necho done > \"$4/status.txt\"\ntouch \"$4/succeeded\"\n");
+            "mkdir -p \"$4\" \"$1/Logs/OperatorUpdate.lock\"\nprintf '%s' \"$4\" > \"$1/Logs/OperatorUpdate.lock/request.txt\"\ntrap 'rm -rf \"$1/Logs/OperatorUpdate.lock\"' EXIT\nprintf '%s' \"$3\" > \"$4/parent.txt\"\necho building > \"$4/status.txt\"\nwhile [ ! -f \"$4/finish-build\" ]; do sleep .02; done\ntouch \"$4/built\"\nwhile [ ! -f \"$4/launch.allowed\" ]; do sleep .02; done\necho launch > \"$4/decision\"\ntouch \"$4/ready\"\nwhile [ ! -f \"$4/released\" ]; do sleep .02; done\necho done > \"$4/status.txt\"\ntouch \"$4/succeeded\"\n");
         try
         {
             UnityEditor.EditorApplication.isPlaying=true;
@@ -26,7 +26,9 @@ public static class RuntimeTests
             WaitUntil(()=>File.Exists(Path.Combine(request,"built")),updater.Poll);
             updater.Poll();
             Check(UnityEditor.EditorApplication.isPlaying&&!race.IsMaintenanceActive&&!File.Exists(Path.Combine(request,"launch.allowed")),"Successful build still waits for the current match");
-            race.state=Gmanager.State.Result;
+            race.state=Gmanager.State.Result;updater.Poll();
+            Check(UnityEditor.EditorApplication.isPlaying&&race.UpdateExitPending,"Results wait for both independent thank-you sequences");
+            race.UpdateExitReady=true;
             WaitUntil(()=>!UnityEditor.EditorApplication.isPlaying,updater.Poll);
             Check(!UnityEditor.EditorApplication.isPlaying,"Editor Play stops only after the successful build, without closing the Editor");
             Check(!race.IsMaintenanceActive,"Updater-owned maintenance is cleared before the new game starts");
@@ -44,9 +46,11 @@ public static class RuntimeTests
             string verified=Path.Combine(root,"Logs","OperatorUpdate","verified-ready-job");Directory.CreateDirectory(verified);
             File.WriteAllText(Path.Combine(verified,"decision"),"launch");File.WriteAllText(Path.Combine(verified,"ready"),"");
             string active=Path.Combine(root,"Logs","OperatorUpdate.lock");Directory.CreateDirectory(active);File.WriteAllText(Path.Combine(active,"request.txt"),verified);
-            edit.Configure(race);race.state=Gmanager.State.Game;
+            edit.Configure(race);race.state=Gmanager.State.Game;race.UpdateExitReady=false;
             Check(!edit.PrepareForLaunch("verified-ready-job"),"Even a verified launch cannot interrupt a match");
             race.state=Gmanager.State.Result;
+            Check(!edit.PrepareForLaunch("verified-ready-job"),"Result state alone never releases a game before thank-you screens finish");
+            race.UpdateExitReady=true;
             Check(edit.PrepareForLaunch("verified-ready-job"),"Only the active, launch-committed job may release Editor Play");
             UnityEditor.EditorApplication.delayCall?.Invoke();
             Check(!UnityEditor.EditorApplication.isPlaying,"Graceful handoff releases Play without closing the Editor");
@@ -64,7 +68,9 @@ public static class RuntimeTests
 public sealed class Gmanager
 {
     public enum State {Title,Game,Result}
-    public State state;public bool IsMaintenanceActive;
+    public State state;public bool IsMaintenanceActive,UpdateExitPending,UpdateExitReady;
+    public bool BeginUpdateExit(){UpdateExitPending=true;return true;}
+    public void CancelUpdateExit(){UpdateExitPending=UpdateExitReady=false;}
     public bool SetMaintenance(bool active){IsMaintenanceActive=active;return true;}
 }
 namespace UnityEngine

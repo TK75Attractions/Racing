@@ -152,7 +152,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public string[] deviceNames, deviceKeys, outputStatus, selectedDevices;
         public bool[] outputAvailable;
         public bool maintenanceAvailable, maintenanceActive, windowRepositionAvailable;
-        public bool updateAvailable, updateBusy;
+        public bool updateAvailable, updateBusy, updateExitAvailable, updateExitPending, updateExitReady;
+        public bool[] updateExitPlayers;
         public string updateStatus;
         public bool raceModeAvailable, featuresAvailable, rulesLocked, hasQueuedPreset, canStartTestRace, bothPlayersAutodrive;
         public string activePreset, selectedPreset;
@@ -422,12 +423,14 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         return new SettingsSnapshot {
             updateAvailable = updater?.Available ?? false, updateBusy = updater?.Busy ?? false, updateStatus = updater?.Status ?? "更新機能がありません。",
             windowRepositionAvailable = race?.WindowRepositionAvailable ?? false,
+            updateExitAvailable = race?.GetComponent<RaceOperatorUpdate>() != null, updateExitPending = race?.UpdateExitPending ?? false,
+            updateExitReady = race?.UpdateExitReady ?? false, updateExitPlayers = new[]{race?.IsPlayerWaitingForUpdate(0)??false,race?.IsPlayerWaitingForUpdate(1)??false},
             maintenanceAvailable = race?.MaintenanceAvailable ?? false, maintenanceActive = race?.IsMaintenanceActive ?? false,
             raceModeAvailable = features != null, featuresAvailable = features != null, features = BuildFeatures(features), bothPlayersAutodrive = race?.BothPlayersAutodrive ?? false,
             activePreset = features?.ActivePreset.ToString() ?? "", selectedPreset = features?.SelectedPreset.ToString() ?? "",
             raceModes = new[]{"Standard", "Quick", "NoTutorial"},
             rulesLocked = features?.RulesLocked ?? false, hasQueuedPreset = features?.HasQueuedPreset ?? false,
-            canStartTestRace = features != null && race.CanUseDashboardControls &&
+            canStartTestRace = features != null && race.CanUseDashboardControls && !race.UpdateExitPending &&
                 (race.state == Gmanager.State.Title || race.state == Gmanager.State.Result),
             outputDelayMs = new[] { RaceAudioSettings.OutputDelayMs(0), RaceAudioSettings.OutputDelayMs(1) },
             master = RaceAudioSettings.Master, bgm = RaceAudioSettings.Bgm,
@@ -455,6 +458,10 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             reason = started ? "" : updater?.Status ?? "更新機能がありません。";
             return started;
         }
+        if (request.command == "prepareUpdateExit" && args.Length == 1)
+            return race != null && race.GetComponent<RaceOperatorUpdate>()?.PrepareUpdateExit(args[0]) == true;
+        if (request.command == "cancelUpdateExit" && args.Length == 1)
+            return race != null && race.GetComponent<RaceOperatorUpdate>()?.CancelUpdateExit(args[0]) == true;
         if (request.command == "releaseForUpdate" && args.Length == 1)
             return race != null && race.GetComponent<RaceOperatorUpdate>()?.PrepareForLaunch(args[0]) == true;
         if (request.command == "repositionWindows" && args.Length == 0)
@@ -803,8 +810,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             case "tutorial": return race.AdvanceDashboardToTutorial();
             case "countdown": return race.AdvanceDashboardToCountdown();
             case "result": if (race.state != Gmanager.State.Game) return false; race.ShowResult(); return true;
-            case "retry": if (race.state != Gmanager.State.Result) return false; race.RetryGame(); return true;
-            case "title": if (race.state != Gmanager.State.Result) return false; race.ResetGame(); return true;
+            case "retry": if (race.UpdateExitPending) return false; if (race.state != Gmanager.State.Result) return false; race.RetryGame(); return true;
+            case "title": if (race.UpdateExitPending) return false; if (race.state != Gmanager.State.Result) return false; race.ResetGame(); return true;
             default: return false;
         }
     }
@@ -845,7 +852,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         ObserveState();
         long age = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - request.observedAt;
         bool update = action == "settings" && (request.command == "updateAndRun" && (request.args == null || request.args.Length == 0) ||
-            request.command == "releaseForUpdate" && request.args?.Length == 1);
+            (request.command == "releaseForUpdate" || request.command == "prepareUpdateExit" || request.command == "cancelUpdateExit") && request.args?.Length == 1);
         bool accepted = request.targetSession == liveSession && age >= -1000 && age <= 15000 && race != null &&
             (update || request.stateRevision == stateRevision && race.state.ToString() == request.expectedState);
         // Clearing this controller's own input is safe even after a transition or stale snapshot.

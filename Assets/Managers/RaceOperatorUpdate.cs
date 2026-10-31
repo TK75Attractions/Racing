@@ -10,7 +10,7 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
 {
     private Process worker;
     private string requestFolder;
-    private bool ownsMaintenance;
+    private string exitRequestId;
     private Gmanager race;
     public bool Busy => worker != null;
     public string Status { get; private set; } = "最新mainを別フォルダーでビルド・起動します。Ctrl/Cmd + Alt + U";
@@ -22,7 +22,7 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
 #if UNITY_EDITOR
             if (!UnityEditor.EditorApplication.isPlaying) return true;
 #endif
-            return race != null && (race.state == Gmanager.State.Title || race.state == Gmanager.State.Result);
+            return race != null && race.UpdateExitReady;
         }
     }
 
@@ -82,14 +82,15 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
             worker.Dispose(); worker = null;
             return;
         }
-        if (File.Exists(Path.Combine(requestFolder, "built")) && !File.Exists(Path.Combine(requestFolder, "launch.allowed")) && CanLeaveRace)
+        if (File.Exists(Path.Combine(requestFolder,"built")) && !File.Exists(Path.Combine(requestFolder,"launch.allowed")))
         {
-            if (race != null && !race.IsMaintenanceActive)
-            {
-                if (!race.SetMaintenance(true)) return;
-                ownsMaintenance = true;
-            }
-            File.WriteAllText(Path.Combine(requestFolder, "launch.allowed"), "safe");
+#if UNITY_EDITOR
+            if (!UnityEditor.EditorApplication.isPlaying)
+                File.WriteAllText(Path.Combine(requestFolder,"launch.allowed"),"edit-mode");
+            else
+#endif
+            if(PrepareUpdateExit(Path.GetFileName(requestFolder)) && CanLeaveRace)
+                File.WriteAllText(Path.Combine(requestFolder,"launch.allowed"),"safe");
         }
         if (File.Exists(Path.Combine(requestFolder, "ready")))
         {
@@ -97,7 +98,6 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
             // The launcher publishes ready only after a successful build and the
             // atomic launch decision. A cancelled/failed build never closes this game.
             File.WriteAllText(Path.Combine(requestFolder, "released"), "runtime");
-            RestoreMaintenance();
 #if UNITY_EDITOR
             // Leave scenes open, but release the running game's devices before launching the new player.
             if (UnityEditor.EditorApplication.isPlaying) UnityEditor.EditorApplication.isPlaying = false;
@@ -112,24 +112,45 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
 
     private void RestoreMaintenance()
     {
-        if (ownsMaintenance) race?.SetMaintenance(false);
-        ownsMaintenance = false;
+        if(exitRequestId!=null)race?.CancelUpdateExit();
+        exitRequestId=null;
+    }
+    private string VerifiedFolder(string requestId)
+    {
+        if(string.IsNullOrEmpty(requestId) || requestId.Length>80)return null;
+        foreach(char c in requestId)
+            if(!(c>='a'&&c<='z'||c>='A'&&c<='Z'||c>='0'&&c<='9'||c=='-'||c=='_'))return null;
+        string project=FindProject();if(project==null)return null;
+        string folder=Path.Combine(project,"Logs","OperatorUpdate",requestId);
+        string active=Path.Combine(project,"Logs","OperatorUpdate.lock","request.txt");
+        if(!File.Exists(active)||Path.GetFullPath(File.ReadAllText(active).Trim().TrimStart('\uFEFF'))!=Path.GetFullPath(folder)||
+            File.Exists(Path.Combine(folder,"failed"))||File.Exists(Path.Combine(folder,"cancelled"))||File.Exists(Path.Combine(folder,"succeeded")))return null;
+        if(File.Exists(Path.Combine(folder,"decision"))&&File.ReadAllText(Path.Combine(folder,"decision")).Trim()!="launch")return null;
+        return folder;
+    }
+    public bool PrepareUpdateExit(string requestId)
+    {
+        string folder=VerifiedFolder(requestId);
+        if(folder==null || !File.Exists(Path.Combine(folder,"built")) || race==null || exitRequestId!=null&&exitRequestId!=requestId)return false;
+        if(!race.BeginUpdateExit())return false;
+        exitRequestId=requestId;return true;
+    }
+    public bool CancelUpdateExit(string requestId)
+    {
+        if(string.IsNullOrEmpty(requestId)||exitRequestId!=requestId)return false;
+        string project=FindProject();if(project==null)return false;
+        string folder=Path.Combine(project,"Logs","OperatorUpdate",requestId);
+        if(File.Exists(Path.Combine(folder,"decision")) && File.ReadAllText(Path.Combine(folder,"decision")).Trim()=="launch" &&
+            !File.Exists(Path.Combine(folder,"handoff.failed")) && !File.Exists(Path.Combine(folder,"failed")))return false;
+        RestoreMaintenance();return true;
     }
 
     public bool PrepareForLaunch(string requestId)
     {
-        if (!CanLeaveRace || string.IsNullOrEmpty(requestId) || requestId.Length > 80) return false;
-        foreach (char character in requestId)
-            if (!(character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z' ||
-                character >= '0' && character <= '9' || character == '-' || character == '_')) return false;
-        string project = FindProject();
-        if (project == null) return false;
-        string folder = Path.Combine(project, "Logs", "OperatorUpdate", requestId);
-        string active = Path.Combine(project, "Logs", "OperatorUpdate.lock", "request.txt");
-        if (!File.Exists(active) || Path.GetFullPath(File.ReadAllText(active).Trim().TrimStart('\uFEFF')) != Path.GetFullPath(folder) ||
-            File.Exists(Path.Combine(folder, "failed")) || File.Exists(Path.Combine(folder, "cancelled")) || File.Exists(Path.Combine(folder, "succeeded")) ||
-            !File.Exists(Path.Combine(folder, "ready")) || !File.Exists(Path.Combine(folder, "decision")) ||
-            File.ReadAllText(Path.Combine(folder, "decision")).Trim() != "launch") return false;
+        if(!CanLeaveRace)return false;
+        string folder=VerifiedFolder(requestId);
+        if(folder==null || !File.Exists(Path.Combine(folder,"ready")) || !File.Exists(Path.Combine(folder,"decision")) ||
+            File.ReadAllText(Path.Combine(folder,"decision")).Trim()!="launch")return false;
 #if UNITY_EDITOR
         // Acknowledge the guarded request before Play closes its HTTP bridge.
         UnityEditor.EditorApplication.delayCall += () => UnityEditor.EditorApplication.isPlaying = false;

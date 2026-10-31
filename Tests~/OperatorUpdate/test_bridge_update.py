@@ -52,6 +52,14 @@ class BridgeUpdateTest(unittest.TestCase):
   self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'releaseForUpdate',['verified-job']))['ok'])
   wrong=self.command(snapshot,'releaseForUpdate',['verified-job']);wrong['targetSession']='other-session'
   self.assertFalse(self.request('/api/action/settings',wrong)['ok'])
+ def test_update_exit_commands_keep_session_and_verified_job_guards(self):
+  snapshot=self.request('/api/status')
+  self.assertTrue(snapshot['settings']['updateExitAvailable'])
+  for command in ['prepareUpdateExit','cancelUpdateExit']:
+   self.assertFalse(self.request('/api/action/settings',self.command(snapshot,command,['unverified']))['ok'])
+   self.assertTrue(self.request('/api/action/settings',self.command(snapshot,command,['verified-job']))['ok'])
+   wrong=self.command(snapshot,command,['verified-job']);wrong['targetSession']='other-session'
+   self.assertFalse(self.request('/api/action/settings',wrong)['ok'])
  def test_window_reposition_is_versioned_and_available_during_race_and_maintenance(self):
   self.bridge.stdin.write('state:Game\n');self.bridge.stdin.flush()
   for _ in range(100):

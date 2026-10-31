@@ -29,7 +29,7 @@ public class Gmanager : MonoBehaviour
         public float resultConfirmTimer;
         public float resultDisplayElapsed;
         public bool resultPresented, resultPresentationComplete;
-        public bool returnedToTitle;
+        public bool returnedToTitle, exitPresentationComplete;
         public PlayerDriveInputGate inputGate;
         public InterruptionMenuUI interruptionMenu;
         public bool withdrewFromRace;
@@ -149,6 +149,48 @@ public class Gmanager : MonoBehaviour
     public RaceMaintenanceController Maintenance { get; private set; }
     public bool IsMaintenanceActive => Maintenance != null && Maintenance.IsActive;
     public bool MaintenanceAvailable => Maintenance != null;
+    public bool UpdateExitPending { get; private set; }
+    private readonly bool[] updateExitHeld = new bool[PlayerCount];
+    private readonly bool[] updateExitGateBlocked = new bool[PlayerCount];
+    private int updateExitHeldFrame = -1;
+    public bool UpdateExitReady => UpdateExitPending && updateExitHeld[0] && updateExitHeld[1] &&
+        Time.frameCount > updateExitHeldFrame && !IsScreenTransitioning();
+    public bool IsPlayerWaitingForUpdate(int index) => index>=0 && index<PlayerCount && updateExitHeld[index];
+    public bool BeginUpdateExit()
+    {
+        if(Maintenance==null)return false;
+        UpdateExitPending=true;TickUpdateExit();return true;
+    }
+    private void TickUpdateExit()
+    {
+        if(!UpdateExitPending)return;
+        bool idle=state==State.Title && Features?.Settings.RulesLocked!=true;
+        for(int i=0;i<PlayerCount;i++)
+            if(!updateExitHeld[i] && players[i]!=null && (idle || players[i].returnedToTitle) && screenTransitions[i]?.IsTransitioning!=true)
+                HoldPlayerForUpdate(i);
+    }
+    private void HoldPlayerForUpdate(int index)
+    {
+        if(updateExitHeld[index])return;
+        updateExitHeld[index]=true;
+        var gate=players[index]?.inputGate;
+        if(gate!=null){updateExitGateBlocked[index]=gate.IsBlocked;gate.SetBlocked(true);}
+        Maintenance?.SetUpdateHold(index,true);
+        if(updateExitHeld[0]&&updateExitHeld[1])updateExitHeldFrame=Time.frameCount;
+    }
+    public void CancelUpdateExit()
+    {
+        if(!UpdateExitPending)return;
+        UpdateExitPending=false;
+        for(int i=0;i<PlayerCount;i++)
+        {
+            Maintenance?.SetUpdateHold(i,false);
+            if(updateExitHeld[i] && !IsMaintenanceActive)players[i]?.inputGate?.SetBlocked(updateExitGateBlocked[i]);
+            updateExitHeld[i]=false;
+        }
+        updateExitHeldFrame=-1;
+        if(state==State.Result && players[0]?.returnedToTitle==true && players[1]?.returnedToTitle==true)ResetGameWhenScreenCovered();
+    }
     private readonly Dictionary<PlayerDriveInputGate, bool> maintenanceGateBlocks = new Dictionary<PlayerDriveInputGate, bool>();
     public bool SetMaintenance(bool enabled)
     {
@@ -354,6 +396,7 @@ public class Gmanager : MonoBehaviour
     public void Update()
     {
         float dt = Time.deltaTime;
+        TickUpdateExit();
         if (IsMaintenanceActive && IManager == null) return;
         if (IManager != null)
         {
@@ -636,7 +679,7 @@ public class Gmanager : MonoBehaviour
 
     public void ConfirmTitleStart(int playerIndex)
     {
-        if (IsMaintenanceActive || !IsPreparing || playerIndex < 0 || playerIndex >= PlayerCount) return;
+        if (IsMaintenanceActive || IsPlayerWaitingForUpdate(playerIndex) || !IsPreparing || playerIndex < 0 || playerIndex >= PlayerCount) return;
         PlayerRuntime player = players[playerIndex];
         if (player.isReady || player.preparationState != State.Title || screenTransitions[playerIndex]?.IsTransitioning == true) return;
         if (Features != null && !Features.Settings.RulesLocked)
@@ -743,7 +786,7 @@ public class Gmanager : MonoBehaviour
 
     public void ResetGame()
     {
-        if (IsMaintenanceActive) return;
+        if (IsMaintenanceActive || UpdateExitPending) return;
         if (state != State.Result || IsScreenTransitioning()) return;
         ScreenTransitionController primary = screenTransitions[0];
         for (int index = 1; index < screenTransitions.Length; index++)
@@ -766,7 +809,7 @@ public class Gmanager : MonoBehaviour
 
     public void RetryGame()
     {
-        if (IsMaintenanceActive) return;
+        if (IsMaintenanceActive || UpdateExitPending) return;
         if (state != State.Result || IsScreenTransitioning()) return;
         ScreenTransitionController primary = screenTransitions[0];
         for (int index = 1; index < screenTransitions.Length; index++)
@@ -898,7 +941,7 @@ public class Gmanager : MonoBehaviour
 
     public void StartAutodriveTestRace(bool bothPlayers = false)
     {
-        if (IsMaintenanceActive) return;
+        if (IsMaintenanceActive || UpdateExitPending) return;
         if ((state != State.Title && state != State.Result) || IsScreenTransitioning()) return;
         ClearCurrentRaceObjects();
         Features.SetFeature(RaceFeature.PlayerOneAutodrive, bothPlayers);
@@ -1933,7 +1976,7 @@ public class Gmanager : MonoBehaviour
         var ending=ArcadeEndingUI.Get(players[playerIndex].displayRig.CanvasRoot.transform);
         if(ending.IsVisible)return;
         players[playerIndex].titleCamera.Priority=20;players[playerIndex].displayRig.RaceCamera.Priority=10;
-        ending.Show(()=>ReturnPlayerToTitle(playerIndex));
+        ending.Show(()=>{players[playerIndex].exitPresentationComplete=true;ReturnPlayerToTitle(playerIndex);});
     }
 
     private void UpdateResultDisplay(float dt)
@@ -1990,13 +2033,14 @@ public class Gmanager : MonoBehaviour
             player.resultConfirmTimer = 0f;
             player.resultDisplayElapsed = 0f;
             player.resultPresented = player.resultPresentationComplete = false;
-            player.returnedToTitle = false;
+            player.returnedToTitle = player.exitPresentationComplete = false;
         }
     }
 
     private void ReturnPlayerToTitle(int index)
     {
         PlayerRuntime player = players[index];
+        if(UpdateExitPending && !player.exitPresentationComplete)return;
         Action covered = () =>
         {
             player.returnedToTitle = true;
@@ -2008,6 +2052,7 @@ public class Gmanager : MonoBehaviour
         };
         Action completed = () =>
         {
+            if(UpdateExitPending){HoldPlayerForUpdate(index);return;}
             foreach (PlayerRuntime participant in players)
                 if (participant == null || !participant.returnedToTitle) return;
             // 両者が戻るまでは結果データともう一方の画面を保持します。
@@ -2040,7 +2085,7 @@ public class Gmanager : MonoBehaviour
         for (int index = 0; index < PlayerCount; index++)
         {
             PlayerRuntime player = players[index];
-            if (player.isReady || player.preparationState != State.Title || screenTransitions[index]?.IsTransitioning == true) continue;
+            if (IsPlayerWaitingForUpdate(index) || player.isReady || player.preparationState != State.Title || screenTransitions[index]?.IsTransitioning == true) continue;
             DriveInputState input = GetMenuInput(index);
             if (!IManager.IsPlayerConnected(index))
             { player.titleInputArmed = false; player.readyHoldTimer = 0f; continue; }

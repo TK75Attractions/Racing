@@ -74,6 +74,8 @@ public class InputManager
     public void Bind() { if(SharedSerialInputSource!=null) SharedSerialInputSource.LineProcessed+=(status,line)=>SerialLineProcessed?.Invoke(status,line); }
 }
 public sealed class RaceOperatorUpdate {
+    public bool PrepareUpdateExit(string id)=>id=="verified-job";
+    public bool CancelUpdateExit(string id)=>id=="verified-job";
     public bool PrepareForLaunch(string requestId) => requestId == "verified-job";
     public bool Available => true;
     public bool Busy => false;
@@ -81,7 +83,8 @@ public sealed class RaceOperatorUpdate {
     public bool Request() => true;
 }
 public class Gmanager
-{
+{ public bool UpdateExitPending,UpdateExitReady;public bool IsPlayerWaitingForUpdate(int index)=>false;
+
     public T GetComponent<T>() where T : class => Harness.Components[typeof(T)] as T;
     public bool BothPlayersAutodrive { get; private set; }
     public enum State { Title, CarSelection, Tutorial, Countdown, Game, Result }

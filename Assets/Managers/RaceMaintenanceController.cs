@@ -9,6 +9,8 @@ public sealed class RaceMaintenanceController : MonoBehaviour
     private readonly List<GameObject> screens = new List<GameObject>();
     private readonly List<Canvas> outputCanvases = new List<Canvas>();
     private readonly List<float> previousDistance = new List<float>();
+    private readonly List<bool> screenVisible = new List<bool>();
+    private readonly bool[] updateHolds = new bool[2];
     private Gmanager manager;
     private float previousTimeScale;
     private double pauseBegan, pausedSeconds;
@@ -36,6 +38,7 @@ public sealed class RaceMaintenanceController : MonoBehaviour
             screens.Add(RaceMaintenanceScreen.Create(broadcast.PresentationCanvas, 0));
             outputCanvases.Add(broadcast.PresentationCanvas);
         }
+        foreach(var canvas in outputCanvases) {previousDistance.Add(canvas.planeDistance);screenVisible.Add(false);}
         configured = true;
         SetActive(PlayerPrefs.GetInt(PreferenceKey, 0) == 1, persist: false);
     }
@@ -49,23 +52,11 @@ public sealed class RaceMaintenanceController : MonoBehaviour
             pauseBegan = Time.realtimeSinceStartupAsDouble;
             previousTimeScale = Time.timeScale; previousAudioPause = AudioListener.pause; ownsPause = true;
             Time.timeScale = 0; AudioListener.pause = true; RaceAudioSettings.MaintenanceMuted = true;
-            previousDistance.Clear();
-            foreach (var canvas in outputCanvases)
-            {
-                previousDistance.Add(canvas.planeDistance);
-                // Put the opaque service sheet just inside the UI camera's near plane,
-                // ahead of retained world depth, without changing URP's read-only clearDepth.
-                if (canvas.worldCamera != null) canvas.planeDistance = canvas.worldCamera.nearClipPlane + .01f;
-            }
             manager.GetComponent<RaceBackgroundMusic>()?.SetMaintenanceMusic(true);
         }
         else RestorePause();
         manager.SetMaintenanceInputBlocked(active);
-        foreach (var screen in screens) if (screen != null)
-        {
-            if (active) screen.transform.SetAsLastSibling();
-            screen.SetActive(active);
-        }
+        RefreshScreens();
         if (persist) { PlayerPrefs.SetInt(PreferenceKey, active ? 1 : 0); PlayerPrefs.Save(); }
     }
 
@@ -76,15 +67,38 @@ public sealed class RaceMaintenanceController : MonoBehaviour
         pausedSeconds += Time.realtimeSinceStartupAsDouble - pauseBegan;
         Time.timeScale = previousTimeScale; AudioListener.pause = previousAudioPause;
         RaceAudioSettings.MaintenanceMuted = false;
-        for (int i=0;i<outputCanvases.Count;i++) if (outputCanvases[i] != null) outputCanvases[i].planeDistance = previousDistance[i];
         ownsPause = false;
     }
-    private void LateUpdate()
+    public void SetUpdateHold(int player,bool active)
     {
-        // A screen transition may reorder its fade panel. Keep one service layer last,
-        // inside the owner's canvas rather than introducing another camera-facing canvas.
-        if (IsActive) foreach (var screen in screens) if (screen != null) screen.transform.SetAsLastSibling();
+        if(player<0 || player>=updateHolds.Length)return;
+        updateHolds[player]=active;RefreshScreens();
     }
+    private void RefreshScreens()
+    {
+        if(!configured)return;
+        for(int i=0;i<screens.Count;i++)
+        {
+            bool visible=IsActive || (i<2?updateHolds[i]:updateHolds[0]&&updateHolds[1]);
+            var canvas=outputCanvases[i];
+            if(visible!=screenVisible[i] && canvas!=null)
+            {
+                if(visible)
+                {
+                    previousDistance[i]=canvas.planeDistance;
+                    if(canvas.worldCamera!=null)canvas.planeDistance=canvas.worldCamera.nearClipPlane+.01f;
+                }
+                else canvas.planeDistance=previousDistance[i];
+            }
+            screenVisible[i]=visible;
+            if(screens[i]!=null)
+            {
+                screens[i].SetActive(visible);
+                if(visible)screens[i].transform.SetAsLastSibling();
+            }
+        }
+    }
+    private void LateUpdate() => RefreshScreens();
     private void OnDisable()
     {
         resumeAfterDisable = IsActive;
@@ -96,7 +110,7 @@ public sealed class RaceMaintenanceController : MonoBehaviour
     }
     private void OnDestroy()
     {
-        RestorePause();
+        RestorePause();IsActive=false;updateHolds[0]=updateHolds[1]=false;RefreshScreens();
         foreach (var screen in screens) if (screen != null) Destroy(screen);
     }
 }
