@@ -175,6 +175,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     [Serializable] private sealed class DashboardSnapshot
     {
         public string sessionId;
+        public bool isEditor;
         public long stateRevision, serverTime, settingsRevision;
         public SettingsSnapshot settings;
         public InputControlSnapshot inputControl;
@@ -451,6 +452,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             reason = started ? "" : updater?.Status ?? "更新機能がありません。";
             return started;
         }
+        if (request.command == "releaseForUpdate" && args.Length == 1)
+            return race != null && race.GetComponent<RaceOperatorUpdate>()?.PrepareForLaunch(args[0]) == true;
         if (request.command == "maintenance" && args.Length == 1 && (args[0] == "true" || args[0] == "false"))
             return race != null && race.SetMaintenance(args[0] == "true");
         if (request.command == "feature" && args.Length == 2 && features != null &&
@@ -582,7 +585,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         ParticipantSnapshot[] participants = BuildParticipants();
         return new DashboardSnapshot
         {
-            sessionId = liveSession, stateRevision = stateRevision, serverTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            sessionId = liveSession, isEditor = Application.isEditor, stateRevision = stateRevision, serverTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             settingsRevision = settingsRevision, settings = BuildSettings(), inputControl = BuildInputControl(),
             telemetry = latestTelemetry,
             rawLines = Array.ConvertAll((serial?.Monitor ?? liveJournal).LatestRaw(), entry => new RawEntry
@@ -829,7 +832,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         }
         ObserveState();
         long age = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - request.observedAt;
-        bool update = action == "settings" && request.command == "updateAndRun" && (request.args == null || request.args.Length == 0);
+        bool update = action == "settings" && (request.command == "updateAndRun" && (request.args == null || request.args.Length == 0) ||
+            request.command == "releaseForUpdate" && request.args?.Length == 1);
         bool accepted = request.targetSession == liveSession && age >= -1000 && age <= 15000 && race != null &&
             (update || request.stateRevision == stateRevision && race.state.ToString() == request.expectedState);
         // Clearing this controller's own input is safe even after a transition or stale snapshot.
@@ -851,7 +855,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             {
                 reason = "settings_changed";
                 // Updating does not overwrite settings; unrelated device/status changes must not reject it.
-                accepted = (request.command == "updateAndRun" || request.settingsRevision == settingsRevision) && ApplySettings(request, out reason);
+                accepted = (update || request.settingsRevision == settingsRevision) && ApplySettings(request, out reason);
             }
             else accepted = TryApplyRemoteAction(action, request.expectedState);
         }

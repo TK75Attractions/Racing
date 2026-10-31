@@ -10,7 +10,7 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
 {
     private Process worker;
     private string requestFolder;
-    private double requestedAt;
+    private bool ownsMaintenance;
     private Gmanager race;
     public bool Busy => worker != null;
     public string Status { get; private set; } = "最新mainを別フォルダーでビルド・起動します。Ctrl/Cmd + Alt + U";
@@ -34,8 +34,12 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
         if (Busy) return false;
         if (FindProject() == null) { Status = "更新元プロジェクトが見つかりません。RACING_PROJECT_PATHを設定してください。"; return false; }
         if (!File.Exists(FindUnity())) { Status = "Unity Editorが見つかりません。RACING_UNITY_PATHを設定してください。"; return false; }
-        if (!CanLeaveRace && (race == null || !race.SetMaintenance(true)))
-        { Status = "メンテナンスに切り替えられないため更新を開始できません。"; return false; }
+        if (!CanLeaveRace)
+        {
+            if (race == null || !race.SetMaintenance(true))
+            { Status = "メンテナンスに切り替えられないため更新を開始できません。"; return false; }
+            ownsMaintenance = true;
+        }
         try
         {
             string project = FindProject();
@@ -43,6 +47,7 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
             string name = windows ? "update-and-run.ps1" : "update-and-run.sh";
             requestFolder = Path.Combine(project, "Logs", "OperatorUpdate", DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(requestFolder);
+            File.WriteAllText(Path.Combine(requestFolder, "handoff.wait"), "runtime");
             string runner = Path.Combine(requestFolder, name);
             File.Copy(Path.Combine(project, "Tools", "OperatorUpdate", name), runner);
             int parentPid = Process.GetCurrentProcess().Id;
@@ -50,16 +55,17 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
             parentPid = 0; // Leave the working Editor and unsaved scenes open.
 #endif
             string args = Quote(runner) + " " + Quote(project) + " " + Quote(FindUnity()) + " " + parentPid + " " + Quote(requestFolder);
+            bool detached = !windows && File.Exists("/usr/bin/perl");
+            if (detached) args = "-MPOSIX -e " + Quote("POSIX::setsid() >= 0 or die $!; exec '/bin/bash', @ARGV or die $!;") + " " + args;
             worker = Process.Start(new ProcessStartInfo {
-                FileName = windows ? "powershell.exe" : "/bin/bash",
+                FileName = windows ? "powershell.exe" : detached ? "/usr/bin/perl" : "/bin/bash",
                 Arguments = windows ? "-NoProfile -ExecutionPolicy Bypass -File " + args : args,
                 WorkingDirectory = project, UseShellExecute = false, CreateNoWindow = true
-            });
-            requestedAt = Time.realtimeSinceStartupAsDouble;
+            }) ?? throw new IOException("更新プログラムを起動できませんでした。");
             Status = "更新を開始しました。ログ: " + requestFolder;
             return true;
         }
-        catch (Exception error) { worker = null; Status = "更新開始に失敗: " + error.Message; return false; }
+        catch (Exception error) { worker = null; RestoreMaintenance(); Status = "更新開始に失敗: " + error.Message; return false; }
     }
 
     private void Update()
@@ -78,12 +84,16 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
         if (File.Exists(Path.Combine(requestFolder, "failed")) || worker.HasExited)
         {
             Status = (File.Exists(Path.Combine(requestFolder, "status.txt")) ? File.ReadAllText(Path.Combine(requestFolder, "status.txt")).Trim() : "更新を停止しました。") + " ログ: " + requestFolder;
+            if (!File.Exists(Path.Combine(requestFolder, "succeeded"))) RestoreMaintenance();
             worker.Dispose(); worker = null;
             return;
         }
         if (File.Exists(Path.Combine(requestFolder, "ready")))
         {
-            // A built player exits after preflight; an Editor retains unsaved work.
+            // The launcher publishes ready only after a successful build and the
+            // atomic launch decision. A cancelled/failed build never closes this game.
+            File.WriteAllText(Path.Combine(requestFolder, "released"), "runtime");
+            RestoreMaintenance();
 #if UNITY_EDITOR
             // Leave scenes open, but release the running game's devices before launching the new player.
             if (UnityEditor.EditorApplication.isPlaying) UnityEditor.EditorApplication.isPlaying = false;
@@ -92,11 +102,37 @@ public sealed class RaceOperatorUpdate : MonoBehaviour
             Application.Quit();
 #endif
         }
-        else if (Time.realtimeSinceStartupAsDouble - requestedAt > 120)
-        {
-            worker.Kill(); worker.Dispose(); worker = null;
-            Status = "更新前チェックがタイムアウトしました。ログ: " + requestFolder;
-        }
+        else if (File.Exists(Path.Combine(requestFolder, "status.txt")))
+            Status = File.ReadAllText(Path.Combine(requestFolder, "status.txt")).Trim() + " ログ: " + requestFolder;
+    }
+
+    private void RestoreMaintenance()
+    {
+        if (ownsMaintenance) race?.SetMaintenance(false);
+        ownsMaintenance = false;
+    }
+
+    public bool PrepareForLaunch(string requestId)
+    {
+        if (string.IsNullOrEmpty(requestId) || requestId.Length > 80) return false;
+        foreach (char character in requestId)
+            if (!(character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z' ||
+                character >= '0' && character <= '9' || character == '-' || character == '_')) return false;
+        string project = FindProject();
+        if (project == null) return false;
+        string folder = Path.Combine(project, "Logs", "OperatorUpdate", requestId);
+        string active = Path.Combine(project, "Logs", "OperatorUpdate.lock", "request.txt");
+        if (!File.Exists(active) || Path.GetFullPath(File.ReadAllText(active).Trim().TrimStart('\uFEFF')) != Path.GetFullPath(folder) ||
+            File.Exists(Path.Combine(folder, "failed")) || File.Exists(Path.Combine(folder, "cancelled")) || File.Exists(Path.Combine(folder, "succeeded")) ||
+            !File.Exists(Path.Combine(folder, "ready")) || !File.Exists(Path.Combine(folder, "decision")) ||
+            File.ReadAllText(Path.Combine(folder, "decision")).Trim() != "launch") return false;
+#if UNITY_EDITOR
+        // Acknowledge the guarded request before Play closes its HTTP bridge.
+        UnityEditor.EditorApplication.delayCall += () => UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+        return true;
     }
 
     private static string FindProject()

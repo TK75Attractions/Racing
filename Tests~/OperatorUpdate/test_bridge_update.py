@@ -46,4 +46,10 @@ class BridgeUpdateTest(unittest.TestCase):
   self.assertFalse(self.request('/api/action/settings',wrong)['ok'])
   expired=self.command(old,'updateAndRun');expired['observedAt']-=20000
   self.assertFalse(self.request('/api/action/settings',expired)['ok'])
+ def test_launch_handoff_requires_a_verified_request_and_current_session(self):
+  snapshot=self.request('/api/status')
+  self.assertFalse(self.request('/api/action/settings',self.command(snapshot,'releaseForUpdate',['unverified']))['ok'])
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'releaseForUpdate',['verified-job']))['ok'])
+  wrong=self.command(snapshot,'releaseForUpdate',['verified-job']);wrong['targetSession']='other-session'
+  self.assertFalse(self.request('/api/action/settings',wrong)['ok'])
 if __name__=='__main__':unittest.main(verbosity=2)

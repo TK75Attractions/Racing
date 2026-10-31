@@ -145,7 +145,13 @@ app.Run(async context =>
                 using var body = await JsonDocument.ParseAsync(context.Request.Body,cancellationToken:context.RequestAborted);
                 string id = HardwareAlertMonitor.Text(body.RootElement,"id");
                 if (id.Length == 0 || id.Length > 80) { context.Response.StatusCode=400; return; }
-                await context.Response.WriteAsJsonAsync(await operatorUpdate.Start(id));
+                string updateCommand=HardwareAlertMonitor.Text(body.RootElement,"command");
+                string requestId=HardwareAlertMonitor.Text(body.RootElement,"requestId");
+                if(updateCommand=="cancel" && requestId.Length>0 && requestId.Length<=80)
+                    await context.Response.WriteAsJsonAsync(await operatorUpdate.Cancel(requestId));
+                else if(updateCommand.Length==0 || updateCommand=="start")
+                    await context.Response.WriteAsJsonAsync(await operatorUpdate.Start(id));
+                else context.Response.StatusCode=400;
             }
             catch (Exception error) when (error is JsonException or BadHttpRequestException)
             { context.Response.StatusCode=400; }
