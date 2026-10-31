@@ -131,6 +131,7 @@ public class Gmanager : MonoBehaviour
     private RaceResultRecord latestResult;
     private RaceSessionResult latestSessionResult;
     private DailyRaceRanking dailyRanking;
+    private DailyPlayHistory dailyPlays;
     private RaceLightningDirector raceLightning;
     private DrivingTutorialController drivingTutorial;
     private RaceSoundEffects soundEffects;
@@ -367,6 +368,7 @@ public class Gmanager : MonoBehaviour
             else if (state == State.Game || state == State.Goal || state == State.Result) UpdateResultReturnInput(dt);
         }
 
+        if (state == State.Game) RecordHumanPlays();
         if (state == State.Game || state == State.Goal || state == State.Result) UpdateResultDisplay(Time.unscaledDeltaTime);
         UpdatePreparationDeadline(Time.unscaledDeltaTime);
 
@@ -929,6 +931,9 @@ public class Gmanager : MonoBehaviour
 #endif
         dailyRanking.BeginRace(DailyRaceRanking.BoardKey(course, GoalLap, CourseProgressSign, Features.Settings.ActivePreset),
             GoalLap, CourseProgressSign < 0, false, allowDailyRecording && !BothPlayersAutodrive);
+        if (dailyPlays == null) dailyPlays = new DailyPlayHistory(System.IO.Path.Combine(Application.persistentDataPath, "DailyRankings", "Plays"));
+        dailyPlays.BeginRace(dailyRanking.RaceId, DailyRaceRanking.BoardKey(course, GoalLap, CourseProgressSign, Features.Settings.ActivePreset),
+            GoalLap, CourseProgressSign < 0, Features.Settings.ActivePreset, allowDailyRecording);
         countdownTimeRemaining = Mathf.Max(0f, raceCountdownSeconds);
         lastCountdownSound = -1;
         goMessageTimeRemaining = 0f;
@@ -1175,6 +1180,18 @@ public class Gmanager : MonoBehaviour
         foreach (ScreenTransitionController transition in screenTransitions) transition?.ShowCountdown(displayedSeconds);
     }
 
+    private void RecordHumanPlays()
+    {
+        if (dailyPlays == null) return;
+        foreach (var entry in participants)
+        {
+            if (entry.IsCpu || !entry.IsRacing) continue;
+            RaceFeature automatic = entry.Index == 0 ? RaceFeature.PlayerOneAutodrive : RaceFeature.PlayerTwoAutodrive;
+            if (Features.Settings.IsEnabled(automatic) || entry.Index == 0 && IManager?.SteeringTestMode == P1SteeringTestMode.ConstantPedal) continue;
+            dailyPlays.RecordPlayerStarted(entry.Index + 1);
+        }
+    }
+
     private void StartRaceAfterCountdown()
     {
         if (state != State.Countdown)
@@ -1188,6 +1205,7 @@ public class Gmanager : MonoBehaviour
         preparationClock.Stop();
         soundEffects?.PlayForAll(RaceSoundCue.Go);
         lapManager?.ResumeRace();
+        RecordHumanPlays();
         foreach (RaceParticipant entry in participants) entry.Driver?.SetDriving(true);
         foreach (ScreenTransitionController transition in screenTransitions) transition?.ShowGo();
     }

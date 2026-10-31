@@ -19,6 +19,7 @@ public sealed class DailyRaceRanking
     private readonly Dictionary<string, LoadedDay> days = new Dictionary<string, LoadedDay>();
     private readonly HashSet<int> excludedPlayers = new HashSet<int>();
     private string boardKey, raceId;
+    public string RaceId => raceId;
     private int goalLaps;
     private bool reversed, experience, recording;
     public DailyRaceRanking(string directory, Func<DateTime> clock = null)

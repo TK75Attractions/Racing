@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<test-run result="Passed" total="203" passed="203" failed="0">
+<test-run result="Passed" total="206" passed="206" failed="0">
   <test-case name="AdaptiveAiPaceTests.SlowPlayersGetNearbyContestsWithoutTheOldHighSpeedFloor" result="Passed" />
   <test-case name="AdaptiveAiPaceTests.CpuCanStillPassThenOfferACounterattackAtBothHumanPaces" result="Passed" />
   <test-case name="AdaptiveAiPaceTests.StrongPlayersAndCatchingUpRetainTheFullSpeedPotential" result="Passed" />
@@ -17,6 +17,9 @@
   <test-case name="CpuRacePaceTests.TheCounterattackWindowGivesRoomWithoutStoppingInFrontOfThePlayer" result="Passed" />
   <test-case name="CpuRacePaceTests.ACpuStillCatchingUpDoesNotEnterTheYieldWindowTooEarly" result="Passed" />
   <test-case name="CpuRacePaceTests.AStrandedPlayerDoesNotMakeCpuParkAndCatchupIsBounded" result="Passed" />
+  <test-case name="DailyPlayBookTests.CountsBothSeatsOnceAndAReplayAsANewPlay" result="Passed" />
+  <test-case name="DailyPlayBookTests.AStartDoesNotRequireAFinishRecord" result="Passed" />
+  <test-case name="DailyPlayBookTests.InvalidSeatsAndMissingIdentifiersCannotEnterTheCount" result="Passed" />
   <test-case name="DailyRankingTests.FastestAttemptWinsAndBothPlayersOfARaceShareItsNumber" result="Passed" />
   <test-case name="DailyRankingTests.DuplicateFinishIsIdempotentButAnotherPlayOfTheSameSeatIsANewAttempt" result="Passed" />
   <test-case name="DailyRankingTests.EqualDisplayedMillisecondsShareCompetitionRank" result="Passed" />
