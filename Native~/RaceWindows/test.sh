@@ -7,5 +7,5 @@ layout_headers="${UNITY_PLUGIN_HEADERS:-/Applications/Unity/Hub/Editor/6000.3.9f
 clang++ -std=c++17 -Wall -Wextra -Werror test-layout.cpp -o "$layout_temp/selection"
 "$layout_temp/selection"
 clang++ -std=c++17 -O2 -fobjc-arc -I "$layout_headers" test-window-layout.mm \
-  -framework AppKit -framework Metal -framework QuartzCore -framework CoreGraphics -o "$layout_temp/windows"
+  -framework AppKit -framework Metal -framework QuartzCore -framework CoreGraphics -framework ColorSync -o "$layout_temp/windows"
 "$layout_temp/windows"
