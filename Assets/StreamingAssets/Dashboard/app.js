@@ -1177,6 +1177,7 @@ function renderSettings(settings, canControl) {
     if (['feature', 'allFeaturesOff'].includes(command)) available = !!settings?.featuresAvailable;
     if (command === 'updateAndRun') available = settings?.updateAvailable === true && settings?.updateBusy !== true;
     if (command === 'maintenance') available = settings?.maintenanceAvailable === true;
+    if (command === 'repositionWindows') available = settings?.windowRepositionAvailable === true;
     if (command === 'testRace') available = !!settings?.canStartTestRace;
     if (command === 'outputDelay') available = Array.isArray(settings?.outputDelayMs);
     if (command === 'device') available = !!settings?.outputAvailable?.[Number(control.dataset.settingArg)];
@@ -1184,6 +1185,9 @@ function renderSettings(settings, canControl) {
     control.disabled = !enabled || !available;
   });
   renderOperatorUpdate();
+  $('settings-reposition-note').textContent = settings?.windowRepositionAvailable === true ?
+    'P1・P2を割り当て済みの外部ディスプレイ、観戦画面を起動時のディスプレイへ戻し、全画面で表示します。未接続の画面は再接続時に復帰します。' :
+    '再配置には対応したMac版Raceアプリ（Metal）を起動してください。初回配置には独立した外部ディスプレイ2台が必要です。';
   if (settingsBusy) return;
   for (const name of ['master', 'bgm', 'engine', 'effects', 'constantPedal']) {
     const control = $('settings-' + name);
@@ -1233,7 +1237,7 @@ async function submitSetting(control) {
   else if (command === 'outputDelay') args = [control.dataset.settingArg, String(Number(control.value))];
   else if (command === 'device') args = [control.dataset.settingArg, control.value];
   else if (command === 'testRace') args = control.dataset.settingArg === 'both' ? ['both'] : [];
-  else if (['refreshDevices', 'allFeaturesOff', 'updateAndRun'].includes(command)) args = [];
+  else if (['refreshDevices', 'allFeaturesOff', 'updateAndRun', 'repositionWindows'].includes(command)) args = [];
   else if (command === 'constantPedal') args = [String(Number(control.value) / 100)];
   else args = [control.type === 'checkbox' ? String(control.checked) : control.value];
   const requestedSession = latestSnapshot.sessionId;
@@ -1267,7 +1271,8 @@ async function submitSetting(control) {
     // Release focused controls so the acknowledged Unity values can replace drafts.
     control.blur();
     renderSettings(connected ? latestSnapshot?.settings : null, connected && latestCanControl);
-    $('settings-status').textContent = result?.ok ? (command === 'maintenance' ? (args[0] === 'true' ? '全ゲーム画面をメンテナンス表示にしました。' : 'メンテナンスを解除しました。') : command === 'testRace' ? 'テストレースを開始しました。' : '設定を反映しました。') : result ?
+    $('settings-status').textContent = result?.ok ? (command === 'maintenance' ? (args[0] === 'true' ? '全ゲーム画面をメンテナンス表示にしました。' : 'メンテナンスを解除しました。') : command === 'testRace' ? 'テストレースを開始しました。' : command === 'repositionWindows' ? 'ウィンドウを既定のディスプレイへ全画面で再配置しました。未接続の画面は再接続時に復帰します。' : '設定を反映しました。') : result ?
+      result.reason === 'window_layout_unavailable' ? '再配置できませんでした。外部ディスプレイ2台の接続とRaceアプリのバージョンを確認してください。' :
       result.reason === 'audio_unavailable' ? '出力機器を開けませんでした。接続を確認して再検出してください。' :
       command === 'updateAndRun' && result.reason && !['state_changed','settings_changed'].includes(result.reason) ? result.reason :
       command === 'updateAndRun' ? result.settings?.updateStatus ?? 'ゲーム状態が変わりました。タイトル・結果・メンテナンス画面で実行してください。' :

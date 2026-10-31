@@ -857,3 +857,31 @@ test('Cancellation completion and real build failure remain visible after discon
     assert.equal(ui.elements.get('operator-update').disabled,false);
   }
 });
+
+
+test('Window reposition requires supported Unity and operator permissions',()=>{
+  const ui=fixture();
+  for(const settings of [undefined,{}, {windowRepositionAvailable:false}]) {
+    ui.render({...base,settings},{canControl:true});
+    assert.equal(ui.elements.get('settings-reposition').disabled,true);
+    assert.match(ui.elements.get('settings-reposition-note').textContent,/Mac版Race/);
+  }
+  ui.render({...base,settings:{windowRepositionAvailable:true}},{canControl:true});
+  assert.equal(ui.elements.get('settings-reposition').disabled,false);
+  assert.match(ui.elements.get('settings-reposition-note').textContent,/再接続/);
+  ui.render({...base,settings:{windowRepositionAvailable:true}},{canControl:false});
+  assert.equal(ui.elements.get('settings-reposition').disabled,true);
+  ui.context.setConnection(false);
+  assert.equal(ui.elements.get('settings-reposition').disabled,true);
+});
+
+test('Window reposition submits a versioned command without arguments and reports failure',async()=>{
+  const ui=fixture(),sent=[];
+  ui.context.recordReposition=(action,payload)=>sent.push({action,...JSON.parse(JSON.stringify(payload))});
+  vm.runInContext("liveController={command:async(action,payload)=>{recordReposition(action,payload);return {ok:false,reason:'window_layout_unavailable'};}}",ui.context);
+  ui.render({...base,sessionId:'s',settingsRevision:3,settings:{windowRepositionAvailable:true}});
+  const control=ui.elements.get('settings-reposition');control.blur=()=>{};
+  await ui.context.submitSetting(control);
+  assert.deepEqual(sent,[{action:'settings',command:'repositionWindows',args:[],settingsRevision:3}]);
+  assert.match(ui.elements.get('settings-status').textContent,/外部ディスプレイ2台/);
+});
