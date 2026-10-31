@@ -35,7 +35,7 @@ public sealed class ArcadeEndingUI : MonoBehaviour
     public void TickInput(float pedal,float dt)
     {
         if(!IsVisible)return;
-        if(Mathf.Abs(pedal)<=.05f)armed=true;
+        if(PedalRelease.IsReleased(pedal))armed=true;
         held=armed&&pedal>=.8f?held+Mathf.Max(0,dt):0;feedback.SetState(true,Mathf.Clamp01(held/.65f),ArcadeUI.For(transform).Primary);
         if(held>=.65f)Finish();
     }

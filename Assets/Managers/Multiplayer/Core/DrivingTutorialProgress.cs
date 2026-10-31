@@ -32,7 +32,7 @@ public sealed class DrivingTutorialProgress
             return;
         }
         float dt = Math.Max(0f, deltaTime);
-        if (Math.Abs(pedal) <= 0.05f) PedalReleased = true;
+        if (PedalRelease.IsReleased(pedal)) PedalReleased = true;
         bool satisfied;
         switch (CurrentStage)
         {

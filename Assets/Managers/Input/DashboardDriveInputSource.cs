@@ -33,7 +33,7 @@ public sealed class DashboardDriveInputSource : IDriveInputSource, IDriveSteerin
         bool active = lease.IsActive(now);
         bool entering = active && (!wasRemote || sampledGeneration != lease.Generation);
         if (entering) localReleasedDuringRemote = false;
-        bool localReleased = source.IsConnected && Math.Abs(source.CurrentState.pedal) <= .05f;
+        bool localReleased = source.IsConnected && PedalRelease.IsReleased(source.CurrentState.pedal);
         // Observe the real device even while menus/cars are not consuming input. A release
         // made while the operator owns the controls must also count toward the handover.
         if (active && localReleased) localReleasedDuringRemote = true;
@@ -52,7 +52,7 @@ public sealed class DashboardDriveInputSource : IDriveInputSource, IDriveSteerin
     public void PedalReleaseObserved()
     {
         // A suppressed held pedal is synthetic neutral, not a physical release.
-        if (!wasRemote && source.IsConnected && Math.Abs(source.CurrentState.pedal) <= .05f)
+        if (!wasRemote && source.IsConnected && PedalRelease.IsReleased(source.CurrentState.pedal))
             (source as IDrivePedalReleaseObserver)?.PedalReleaseObserved();
     }
     public void Dispose() { } // InputManager owns the real devices.

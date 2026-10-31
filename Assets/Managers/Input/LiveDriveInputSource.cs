@@ -17,7 +17,7 @@ public sealed class LiveDriveInputSource : IDriveInputSource, IDriveSteeringCali
             if (!IsConnected) return DriveInputState.Neutral;
             DriveInputState state = source.CurrentState;
             if (!needsPedalRelease) return state;
-            if (Math.Abs(state.pedal) <= .05f) needsPedalRelease = false;
+            if (PedalRelease.IsReleased(state.pedal)) needsPedalRelease = false;
             return DriveInputState.Neutral;
         }
     }

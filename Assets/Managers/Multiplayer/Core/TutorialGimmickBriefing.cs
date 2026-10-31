@@ -20,7 +20,7 @@ public sealed class TutorialGimmickBriefing
         bool valid = connected && !float.IsNaN(pedal) && !float.IsInfinity(pedal);
         if (!valid) released = false; // Reconnection needs a new, observed release.
         bool down = valid && pedal >= .25f;
-        if (valid && Math.Abs(pedal) <= .05f) released = true;
+        if (valid && PedalRelease.IsReleased(pedal)) released = true;
         bool advance = CanAdvance && released && down && !pedalDown;
         pedalDown = down;
         if (!advance && Elapsed < PageSeconds) return;

@@ -191,7 +191,7 @@ public class Gmanager : MonoBehaviour
     {
         DriveInputState input = IManager.GetInputState(index);
         if (!maintenanceMenuRelease[index]) return input;
-        if (Mathf.Abs(input.pedal) <= .05f) maintenanceMenuRelease[index] = false;
+        if (PedalRelease.IsReleased(input.pedal)) maintenanceMenuRelease[index] = false;
         return DriveInputState.Neutral;
     }
 
@@ -1892,7 +1892,7 @@ public class Gmanager : MonoBehaviour
             // Finishing with the pedal down must never advance the results automatically.
             if (!player.resultConfirmArmed)
             {
-                player.resultConfirmArmed = Mathf.Abs(input.pedal) <= 0.05f;
+                player.resultConfirmArmed = PedalRelease.IsReleased(input.pedal);
                 player.resultConfirmTimer = 0f;
                 resultUIManagers[index]?.SetMenuState(player.resultSelection, 0f);
                 resultUIManagers[index]?.SetPedalConfirmationReady(player.resultConfirmArmed);

@@ -112,8 +112,14 @@ public sealed class DrivingTutorialController : MonoBehaviour
             bool resetPressed = player.input.IsConnected && input.resetPressed && !player.resetHeld;
             player.resetHeld = player.input.IsConnected && input.resetPressed;
             // The pedal held to confirm a car must be released before it can accelerate the practice car.
-            if (player.driveGate.IsBlocked && player.input.IsConnected && Mathf.Abs(input.pedal) <= .05f)
+            bool connected = player.input.IsConnected;
+            if (player.driveGate.IsBlocked && connected && PedalRelease.IsReleased(input.pedal))
+            {
                 player.driveGate.SetBlocked(false);
+                // Practice must acknowledge the same release as the car gate, including
+                // a pending constant-pedal resume. Raw status polling cannot do this.
+                (player.input as IDrivePedalReleaseObserver)?.PedalReleaseObserved();
+            }
             Vector3 local = player.body.position - player.world.transform.position;
             float speed = Vector3.ProjectOnPlane(player.body.linearVelocity, Vector3.up).magnitude;
             float progress = DrivingTutorialRoad.NearestProgress(local);
@@ -125,7 +131,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
                 Recover(player);
                 speed = 0f;
             }
-            player.lesson.Tick(dt, player.input.IsConnected, input.pedal, input.steering, speed,
+            player.lesson.Tick(dt, connected, input.pedal, input.steering, speed,
                 Mathf.DeltaAngle(player.startYaw, player.car.transform.eulerAngles.y));
             // Pickup contact can complete a lesson between ticks. Remember the last announced
             // stage so that the final success cue is emitted once, just like the driving steps.

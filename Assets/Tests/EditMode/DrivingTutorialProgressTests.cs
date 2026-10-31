@@ -104,6 +104,28 @@ public class DrivingTutorialProgressTests
         Assert.That(lesson.CurrentStage, Is.EqualTo(DrivingTutorialProgress.Stage.CollectItem));
     }
 
+    [Test]
+    public void SmallRestingOffsetsReleasePracticeButAHeldOrInvalidPedalCannot()
+    {
+        foreach (float rest in new[] { .06f, -.08f, .10f })
+        {
+            var lesson = new DrivingTutorialProgress();
+            lesson.Tick(.1f, true, rest, 0f, 0f, 0f);
+            Assert.IsTrue(lesson.PedalReleased);
+            lesson.Tick(.7f, true, .6f, 0f, 4f, 0f);
+            Assert.AreEqual(DrivingTutorialProgress.Stage.Steer, lesson.CurrentStage);
+        }
+        foreach (float held in new[] { .11f, -.11f, .7f, float.NaN, float.PositiveInfinity })
+        {
+            var lesson = new DrivingTutorialProgress();
+            lesson.Tick(.1f, true, held, 0f, 0f, 0f);
+            Assert.IsFalse(lesson.PedalReleased);
+        }
+        var disconnected = new DrivingTutorialProgress();
+        disconnected.Tick(.1f, false, 0f, 0f, 0f, 0f);
+        Assert.IsFalse(disconnected.PedalReleased);
+    }
+
     private static DrivingTutorialProgress Accelerated()
     {
         var lesson = new DrivingTutorialProgress();
