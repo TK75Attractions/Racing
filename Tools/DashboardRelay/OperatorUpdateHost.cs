@@ -75,6 +75,24 @@ internal sealed class OperatorUpdateHost : IDisposable
                 .OrderByDescending(folder=>Directory.GetCreationTimeUtc(folder)).FirstOrDefault();
         if(requestFolder != null && File.Exists(Path.Combine(requestFolder,"handoff.wait"))) EnsureHandoff(requestFolder);
     }
+    private string? cleanedRequest;
+    private void ScheduleCleanup(string? project)
+    {
+        if(project==null || requestFolder==null || cleanedRequest==requestFolder)return;
+        string folder=requestFolder;cleanedRequest=folder;
+        _=Task.Run(async()=>{
+            try
+            {
+                string active=Path.Combine(project,"Logs","OperatorUpdate.lock","request.txt");
+                while(!Finished(folder) || File.Exists(active)&&File.ReadAllText(active).Trim()==folder)
+                    await Task.Delay(500,lifetime.Token);
+                var report=await OperatorBuildStorage.Prune(project);
+                Console.WriteLine("OPERATOR_STORAGE: "+JsonSerializer.Serialize(report));
+            }
+            catch(OperationCanceledException) when(lifetime.IsCancellationRequested) { }
+            catch(Exception error) {Console.WriteLine("OPERATOR_STORAGE: "+error.Message);}
+        });
+    }
     private bool IsBusy(string? project) => Busy || project != null && Directory.Exists(Path.Combine(project,"Logs","OperatorUpdate.lock"));
     private void EnsureHandoff(string folder)
     {
@@ -105,7 +123,7 @@ internal sealed class OperatorUpdateHost : IDisposable
                     await Task.Delay(200,token);
                 }
                 // Keep cancellation open until the current match ends. Reserving the safe
-                // title/result screen prevents a new match racing the launch decision.
+                // per-player maintenance screens prevents a new match racing the launch decision.
                 while (!Finished(folder) && !File.Exists(Path.Combine(folder,"launch.allowed")))
                 {
                     var current=await Game();
@@ -122,11 +140,21 @@ internal sealed class OperatorUpdateHost : IDisposable
                 {
                     // New players/editors can release devices gracefully. Older Race players
                     // are stopped by the launcher's narrowly matched process fallback.
+                    bool clearedLegacyPause=false;
+                    string owner=Path.Combine(folder,"maintenance.owner");
+                    if(game["settings"]?["updateExitAvailable"]?.GetValue<bool>()!=true && File.Exists(owner) &&
+                        await File.ReadAllTextAsync(owner)==game["sessionId"]?.GetValue<string>())
+                    {
+                        var resumed=await SendSetting(game,Guid.NewGuid().ToString("N"),"maintenance","false");
+                        if(resumed?["ok"]?.GetValue<bool>()!=true)throw new IOException("更新用メンテナンス設定を解除できません。既存のRaceは終了していません。");
+                        game=await Game() ?? throw new IOException("機器解放前のRaceを確認できません。");
+                        clearedLegacyPause=true;
+                    }
                     JsonNode? answer=null;
                     try { answer=await SendSetting(game,Guid.NewGuid().ToString("N"),"releaseForUpdate",Path.GetFileName(folder)); }
                     catch (Exception error) when(error is HttpRequestException or OperationCanceledException or IOException) { }
                     if (answer?["ok"]?.GetValue<bool>() != true &&
-                        (game["isEditor"]?.GetValue<bool>() == true || !await ReserveFinishedMatch(folder,game)))
+                        (clearedLegacyPause || game["isEditor"]?.GetValue<bool>() == true || game["settings"]?["updateExitAvailable"]?.GetValue<bool>() == true || !await ReserveFinishedMatch(folder,game)))
                         throw new IOException(game["isEditor"]?.GetValue<bool>() == true ? "Unity EditorのPlayを停止できません。試合終了後にPlayを停止してから再実行してください。" : "試合終了後の機器解放を確認できません。既存のRaceは終了していません。");
                 }
                 await File.WriteAllTextAsync(Path.Combine(folder,"released"),"ready",token);
@@ -144,23 +172,39 @@ internal sealed class OperatorUpdateHost : IDisposable
     private static bool Finished(string folder) => new[]{"failed","cancelled","succeeded"}.Any(name=>File.Exists(Path.Combine(folder,name)));
     private async Task<bool> ReserveFinishedMatch(string folder, JsonObject game)
     {
-        string? state=game["state"]?.GetValue<string>();
-        if (state != "Title" && state != "Result") return false;
-        if (game["settings"]?["maintenanceActive"]?.GetValue<bool>() == true) return true;
-        if (game["settings"]?["maintenanceAvailable"]?.GetValue<bool>() != true) return false;
         try
         {
-            var answer=await SendSetting(game,Guid.NewGuid().ToString("N"),"maintenance","true");
-            if (answer?["ok"]?.GetValue<bool>() != true) return false; // Includes a match starting after the snapshot.
+            if(game["settings"]?["updateExitAvailable"]?.GetValue<bool>()==true)
+            {
+                if(game["settings"]?["updateExitPending"]?.GetValue<bool>()==true && game["settings"]?["updateExitReady"]?.GetValue<bool>()==true)return true;
+                var answer=await SendSetting(game,Guid.NewGuid().ToString("N"),"prepareUpdateExit",Path.GetFileName(folder));
+                if(answer?["ok"]?.GetValue<bool>()==true)
+                    await File.WriteAllTextAsync(Path.Combine(folder,"exit.owner"),game["sessionId"]!.GetValue<string>());
+                return false; // Obtain a fresh snapshot after both screens actually enter maintenance.
+            }
+            // Older players return to Title only after both thank-you sequences.
+            // Never cover Result, Goal, or an already-started preparation with maintenance.
+            if(game["state"]?.GetValue<string>()!="Title" || game["settings"]?["rulesLocked"]?.GetValue<bool>()==true)return false;
+            if(game["settings"]?["maintenanceActive"]?.GetValue<bool>()==true)return true;
+            if(game["settings"]?["maintenanceAvailable"]?.GetValue<bool>()!=true)return false;
+            var reserved=await SendSetting(game,Guid.NewGuid().ToString("N"),"maintenance","true");
+            if(reserved?["ok"]?.GetValue<bool>()!=true)return false;
             await File.WriteAllTextAsync(Path.Combine(folder,"maintenance.owner"),game["sessionId"]!.GetValue<string>());
             return true;
         }
-        catch (Exception error) when(error is HttpRequestException or OperationCanceledException or IOException) { return false; }
+        catch(Exception error) when(error is HttpRequestException or OperationCanceledException or IOException) {return false;}
     }
     private async Task RestoreReservedMatch(string folder)
     {
         try
         {
+            string exitOwner=Path.Combine(folder,"exit.owner");
+            if(File.Exists(exitOwner))
+            {
+                var live=await Game();
+                if(live?["sessionId"]?.GetValue<string>()==await File.ReadAllTextAsync(exitOwner))
+                    await SendSetting(live!,Guid.NewGuid().ToString("N"),"cancelUpdateExit",Path.GetFileName(folder));
+            }
             string owner=Path.Combine(folder,"maintenance.owner");
             if (!File.Exists(owner)) return;
             var game=await Game();
@@ -175,7 +219,7 @@ internal sealed class OperatorUpdateHost : IDisposable
         await gate.WaitAsync();
         try
         {
-            string? project=FindProject(); ObserveRequest(project);
+            string? project=FindProject(); ObserveRequest(project); ScheduleCleanup(project);
             bool busy=IsBusy(project);
             string phase=Read("phase.txt");
             if(phase.Length==0) phase=Read("cancelled").Length>0 ? "cancelled" : busy ? "building" : "idle";
@@ -203,6 +247,7 @@ internal sealed class OperatorUpdateHost : IDisposable
             {
                 // The always-on relay owns the build even if an old Race is running.
                 // Never hand long builds to an old player's 120-second preflight timer.
+                await OperatorBuildStorage.Prune(project);
                 requestFolder=Path.Combine(project,"Logs","OperatorUpdate",DateTime.Now.ToString("yyyyMMdd-HHmmss")+"-"+Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(requestFolder);
                 bool windows=OperatingSystem.IsWindows();
@@ -217,7 +262,7 @@ internal sealed class OperatorUpdateHost : IDisposable
                 if(windows) foreach(var arg in new[]{"-NoProfile","-ExecutionPolicy","Bypass","-File"}) start.ArgumentList.Add(arg);
                 foreach(var arg in new[]{runner,project,Environment.GetEnvironmentVariable("RACING_UNITY_PATH")??"","0",requestFolder}) start.ArgumentList.Add(arg);
                 worker?.Dispose(); worker=Process.Start(start) ?? throw new IOException("更新プログラムを起動できませんでした。");
-                EnsureHandoff(requestFolder);
+                EnsureHandoff(requestFolder);ScheduleCleanup(project);
                 result=new { ok=true,message="ビルドを開始しました。既存のRaceは完了までそのまま使用できます。",logFolder=requestFolder,requestId=Path.GetFileName(requestFolder) };
             }
             if(results.Count>=256) results.Remove(results.Keys.First());
@@ -234,7 +279,7 @@ internal sealed class OperatorUpdateHost : IDisposable
         await gate.WaitAsync();
         try
         {
-            string? project=FindProject(); ObserveRequest(project);
+            string? project=FindProject(); ObserveRequest(project); ScheduleCleanup(project);
             if(requestFolder==null || Path.GetFileName(requestFolder)!=requestId)
                 return new {ok=false,message="更新要求が変わりました。最新の進行状況を確認してください。"};
             if(Read("decision")=="cancel") return new {ok=true,message="キャンセルを受け付けました。停止処理を待っています。"};

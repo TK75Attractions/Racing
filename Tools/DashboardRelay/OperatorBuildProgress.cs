@@ -18,7 +18,7 @@ internal static class OperatorBuildProgress
         if(phase is "failed" or "cancelled" or "cancelling")
             done=File.Exists(Path.Combine(folder,"ready"))?5:File.Exists(Path.Combine(folder,"built"))?4:build.Bytes>0?3:0;
         string stage=phase switch { "fetching"=>"mainを取得", "preparing"=>"ビルド元を準備", "native"=>"音声プラグインをビルド",
-            "cache"=>"Unityキャッシュを準備", "building"=>"Unityを起動・読み込み", "waiting-race"=>"試合終了待ち",
+            "cache"=>"Unityキャッシュを準備", "building"=>"Unityを起動・読み込み", "waiting-race"=>"退出・メンテナンス待ち",
             "switching"=>"旧Raceを終了", "launching"=>"新しいRaceを起動", "completed"=>"完了", "failed"=>"失敗",
             "cancelled"=>"キャンセル済み", "cancelling"=>"キャンセル処理中",_=>"待機中" };
         string task="";

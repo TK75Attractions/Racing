@@ -1047,3 +1047,13 @@ test('Build progress distinguishes a main-project cache copy from a dedicated wa
   assert.match(ui.elements.get('operator-build-task').textContent,/メインプロジェクトのキャッシュを再利用/);
   assert.doesNotMatch(ui.elements.get('operator-build-task').textContent,/初回読み込み/);
 });
+
+
+test('A pending update prevents retry and title shortcuts while result presentations finish',()=>{
+  const ui=fixture();
+  ui.render({...base,state:'Result',settings:{updateExitPending:true}});
+  assert.equal(ui.context.actionAvailable('retry',{state:'Result',settings:{updateExitPending:true}}),false);
+  assert.equal(ui.context.actionAvailable('title',{state:'Result',settings:{updateExitPending:true}}),false);
+  ui.render({...base,state:'Result',settings:{updateExitPending:false}});
+  assert.equal(ui.context.actionAvailable('retry',{state:'Result',settings:{updateExitPending:false}}),true);
+});

@@ -84,10 +84,13 @@ try
     Check(status["phase"]!.GetValue<string>()=="waiting-race"&&status["canCancel"]!.GetValue<bool>(),"Match-end waiting stays cancellable");
     handler.State="Goal";await Task.Delay(300);
     Check(handler.Posts==0&&!File.Exists(Path.Combine(folder,"launch.allowed")),"Goal celebration also waits for the whole match to reach results");
+    handler.State="Result";await Task.Delay(250);
+    Check(!File.Exists(Path.Combine(folder,"launch.allowed")),"Legacy players finish results and thanks before the title reservation");
     handler.InRace=false;
     await Until(()=>File.Exists(Path.Combine(folder,"succeeded")) && !Directory.Exists(Path.Combine(root,"Logs","OperatorUpdate.lock")));
     Check(handler.Posts==1&&handler.Last?["command"]?.GetValue<string>()=="releaseForUpdate"&&handler.Last?["settingsRevision"]?.GetValue<int>()==9,
         "Only the verified completed build releases the current game using a fresh anchor");
+    Check(!handler.ReleasedWithMaintenance,"Legacy updater-owned pause is cleared before graceful release so the next app starts normally");
     Check(handler.Last?["targetSession"]?.GetValue<string>()=="fresh-session","Handoff keeps game-session guards");
     await host.Start("online-build");Check(handler.Posts==1,"Online retry is idempotent");
     Check(!Node(await host.Cancel(Path.GetFileName(folder)))["ok"]!.GetValue<bool>(),"A committed launch cannot be cancelled");
@@ -186,6 +189,20 @@ try
     var last=Node(await restartedAfterCompletion.Status(true));
     Check(last["logFolder"]!=null,"A restarted helper retains the last completed build logs");restartedAfterCompletion.Dispose();
 
+    handler.NewFlow=true;handler.Online=true;handler.InRace=true;handler.ExitPending=handler.ExitReady=false;
+    result=Node(await host.Start("new-exit-cancel"));folder=result["logFolder"]!.GetValue<string>();
+    await Until(()=>handler.ExitPending);
+    Check(!handler.Maintenance&&!File.Exists(Path.Combine(folder,"launch.allowed")),"New updater requests exit after build without pausing the match");
+    handler.State="Result";handler.HeldPlayers=1;await Task.Delay(300);
+    Check(!File.Exists(Path.Combine(folder,"launch.allowed")),"One player's maintenance screen cannot release the other player's thanks");
+    Check(Node(await host.Cancel(Path.GetFileName(folder)))["ok"]!.GetValue<bool>(),"One-sided maintenance wait remains cancellable");
+    await Until(()=>!handler.ExitPending && File.Exists(Path.Combine(folder,"cancelled")) && !Directory.Exists(Path.Combine(root,"Logs","OperatorUpdate.lock")));
+    Check(handler.Online&&!handler.Maintenance,"Cancelling restores held screens and keeps the current game online");
+    result=Node(await host.Start("new-exit-ready"));folder=result["logFolder"]!.GetValue<string>();
+    await Until(()=>handler.ExitPending);handler.HeldPlayers=3;handler.ExitReady=true;
+    await Until(()=>File.Exists(Path.Combine(folder,"succeeded")) && !Directory.Exists(Path.Combine(root,"Logs","OperatorUpdate.lock")));
+    Check(handler.Last?["command"]?.GetValue<string>()=="releaseForUpdate","Both maintenance screens allow the verified handoff");
+
     string telemetry=Path.Combine(root,"telemetry");Directory.CreateDirectory(telemetry);
     var now=DateTime.UtcNow;
     string buildLog=Path.Combine(telemetry,"build.log"),updateLog=Path.Combine(telemetry,"update.log");
@@ -206,25 +223,33 @@ finally { Environment.SetEnvironmentVariable("RACING_FAKE_WAIT",null);Environmen
 Console.WriteLine("OPERATOR_HOST_TESTS_PASS");
 sealed class GameHandler : HttpMessageHandler
 {
-    public bool Online,Reject,Editor,Maintenance,RaceOnMaintenance;public int Posts;public JsonNode? Last;
+    public bool Online,Reject,Editor,Maintenance,RaceOnMaintenance,NewFlow,ExitPending,ExitReady;public int HeldPlayers;public bool ReleasedWithMaintenance;public int Posts;public JsonNode? Last;
     public string State="Title";
-    public bool InRace {get=>State!="Title"&&State!="Result";set=>State=value?"Game":"Result";}
+    public bool InRace {get=>State!="Title"&&State!="Result";set=>State=value?"Game":"Title";}
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken token)
     {
         if(!Online)throw new HttpRequestException("Unity is closed");
         if(request.Method==HttpMethod.Get)return new HttpResponseMessage(HttpStatusCode.OK){Content=new StringContent(JsonSerializer.Serialize(new {
             sessionId="fresh-session",state=State,isEditor=Editor,stateRevision=2,serverTime=1000,settingsRevision=9,
-            settings=new{maintenanceAvailable=true,maintenanceActive=Maintenance,updateAvailable=true,updateBusy=false,updateStatus="Ready"}}))};
+            settings=new{updateExitAvailable=NewFlow,updateExitPending=ExitPending,updateExitReady=ExitReady,updateExitPlayers=new[]{(HeldPlayers&1)!=0,(HeldPlayers&2)!=0},maintenanceAvailable=true,maintenanceActive=Maintenance,updateAvailable=true,updateBusy=false,updateStatus="Ready"}}))};
         var body=JsonNode.Parse(await request.Content!.ReadAsStringAsync(token));
+        if(body?["command"]?.GetValue<string>()=="prepareUpdateExit")
+        {
+            ExitPending=true;return new HttpResponseMessage(HttpStatusCode.OK){Content=new StringContent("{\"ok\":true}")};
+        }
+        if(body?["command"]?.GetValue<string>()=="cancelUpdateExit")
+        {
+            ExitPending=ExitReady=false;HeldPlayers=0;return new HttpResponseMessage(HttpStatusCode.OK){Content=new StringContent("{\"ok\":true}")};
+        }
         if(body?["command"]?.GetValue<string>()=="maintenance")
         {
             if(RaceOnMaintenance){RaceOnMaintenance=false;InRace=true;return new HttpResponseMessage(HttpStatusCode.Conflict){Content=new StringContent("{\"ok\":false,\"reason\":\"state_changed\"}")};}
             Maintenance=body["args"]![0]!.GetValue<string>()=="true";
             return new HttpResponseMessage(HttpStatusCode.OK){Content=new StringContent("{\"ok\":true}")};
         }
-        Posts++;Last=body;
+        Posts++;Last=body;ReleasedWithMaintenance=Maintenance;
         if(request.Headers.GetValues("Origin").Single()!="http://127.0.0.1:8765")throw new Exception("Wrong Unity origin");
-        if(!Reject) { Online=false;Maintenance=false; }
+        if(!Reject) { Online=false;Maintenance=false;ExitPending=ExitReady=false; }
         return new HttpResponseMessage(Reject?HttpStatusCode.Conflict:HttpStatusCode.OK){Content=new StringContent(Reject?
             "{\"ok\":false,\"reason\":\"release_failed\"}":"{\"ok\":true}")};
     }

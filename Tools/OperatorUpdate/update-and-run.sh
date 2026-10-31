@@ -247,7 +247,7 @@ run "$unity" -batchmode -quit -projectPath "$source_dir" -executeMethod Operator
 test -x "$RACING_OPERATOR_BUILD/Contents/MacOS/Race" || fail 'ビルドの出力がありません。build.logを確認してください。'
 check_cancel
 if [ -f "$request/handoff.wait" ]; then
-    status 'ビルドが完了しました。現在の試合終了を待っています。待機中もキャンセルできます。' waiting-race
+    status 'ビルドが完了しました。両プレイヤーの退出案内とメンテナンス画面への移行を待っています。待機中もキャンセルできます。' waiting-race
     touch "$request/built"
     while [ ! -f "$request/launch.allowed" ]; do
         check_cancel

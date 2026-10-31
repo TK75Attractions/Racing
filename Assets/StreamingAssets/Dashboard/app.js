@@ -28,6 +28,7 @@ const labels = { Title: 'タイトル', CarSelection: '車選択', Tutorial: '�
 const details = { Title: '開始操作を待っています', CarSelection: '参加者が車を選んでいます', Tutorial: '参加者が操作を練習しています', Countdown: 'スタートまでまもなく', Game: 'レース進行中', Goal: '完走処理中', Result: '次のレースを選択できます' };
 const actions = { start: 'Title', tutorial: 'CarSelection', countdown: 'Tutorial', result: 'Game', retry: 'Result', title: 'Result' };
 function actionAvailable(action, snapshot) {
+  if (snapshot?.settings?.updateExitPending && ['retry','title'].includes(action)) return false;
   if (snapshot?.settings?.maintenanceActive) return false;
   const preparing = snapshot?.playerProgress || [];
   if (action === 'tutorial' && snapshot?.state === 'Tutorial')

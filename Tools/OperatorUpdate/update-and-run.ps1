@@ -122,7 +122,7 @@ try {
     if (!(Test-Path -LiteralPath $env:RACING_OPERATOR_BUILD -PathType Leaf)) { throw 'Unityビルドの出力がありません。build.logを確認してください。' }
     Check-Cancel
     if (Test-Path -LiteralPath (Join-Path $Request 'handoff.wait')) {
-        Set-UpdateStatus 'ビルドが完了しました。現在の試合終了を待っています。待機中もキャンセルできます。' 'waiting-race'
+        Set-UpdateStatus 'ビルドが完了しました。両プレイヤーの退出案内とメンテナンス画面への移行を待っています。待機中もキャンセルできます。' 'waiting-race'
         New-Item -ItemType File -Path (Join-Path $Request 'built') | Out-Null
         while (!(Test-Path -LiteralPath (Join-Path $Request 'launch.allowed'))) {
             Check-Cancel
