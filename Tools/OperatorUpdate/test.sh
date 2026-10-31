@@ -3,6 +3,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 cd "$root/Tools/DashboardRelay"
 dotnet build DashboardRelay.csproj --nologo -v:q
+dotnet run --project "$root/Tests~/OperatorStorage/StorageTests.csproj"
 dotnet run --project "$root/Tests~/OperatorUpdate/HostTests.csproj"
 cd "$root"
 mkdir -p Temp/OperatorUpdate

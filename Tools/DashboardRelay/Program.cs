@@ -3,6 +3,12 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 
+if (args.Contains("--prune-operator-builds"))
+{
+    string project=OperatorUpdateHost.FindProject() ?? throw new IOException("更新元プロジェクトが見つかりません。");
+    Console.WriteLine(JsonSerializer.Serialize(await OperatorBuildStorage.Prune(project),new JsonSerializerOptions{WriteIndented=true}));return;
+}
+
 if (args.Contains("--update-service")) { await MacDashboardService.UpdateInstalled(); return; }
 
 if (args.Contains("--install-service") || args.Contains("--uninstall-service"))

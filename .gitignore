@@ -155,3 +155,6 @@ InitTestScene*.unity*
 !/Tests~/PlayStatistics/StatisticsTests.csproj
 /Tests~/PlayStatistics/bin/
 /Tests~/PlayStatistics/obj/
+
+/Tests~/OperatorStorage/bin/
+/Tests~/OperatorStorage/obj/
