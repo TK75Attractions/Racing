@@ -1,0 +1,13 @@
+[{
+    "fast": false,
+    "speedAtTwoSeconds": 126.17709350585938,
+    "finalKmh": 179.99888610839845,
+    "offFirstStepKmh": 0.0,
+    "offAfterThreeSecondsKmh": 0.0
+},{
+    "fast": true,
+    "speedAtTwoSeconds": 229.66189575195313,
+    "finalKmh": 299.9990539550781,
+    "offFirstStepKmh": 298.5590515136719,
+    "offAfterThreeSecondsKmh": 199.6209259033203
+}]

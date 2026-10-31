@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<test-run result="Passed" total="206" passed="206" failed="0">
+<test-run result="Passed" total="211" passed="211" failed="0">
   <test-case name="AdaptiveAiPaceTests.SlowPlayersGetNearbyContestsWithoutTheOldHighSpeedFloor" result="Passed" />
   <test-case name="AdaptiveAiPaceTests.CpuCanStillPassThenOfferACounterattackAtBothHumanPaces" result="Passed" />
   <test-case name="AdaptiveAiPaceTests.StrongPlayersAndCatchingUpRetainTheFullSpeedPotential" result="Passed" />
@@ -60,6 +60,10 @@
   <test-case name="FrameRateCounterTests.IncludesStallsInTheMeasuredTime" result="Passed" />
   <test-case name="FrameRateCounterTests.ReenableAndClockResetDiscardTheOldSample" result="Passed" />
   <test-case name="FrameRateCounterTests.RetainsPrecisionAfterLongRunningSessions" result="Passed" />
+  <test-case name="HighSpeedDriveTuningTests.FullPedalHasStrongerAccelerationAndAThreeHundredKmhEquilibrium" result="Passed" />
+  <test-case name="HighSpeedDriveTuningTests.OffDoesNotAlterDefaultsOrAccumulateMultipliers" result="Passed" />
+  <test-case name="HighSpeedDriveTuningTests.ReverseAndBrakingDoNotReceiveDoubleMotorForce" result="Passed" />
+  <test-case name="HighSpeedDriveTuningTests.FasterVehicleGradesCannotRaiseTheFlatRoadEquilibriumBeyondThreeHundred" result="Passed" />
   <test-case name="HitProtectionWindowTests.HitsCannotExtendAnEffectOrTheFollowingProtection" result="Passed" />
   <test-case name="HitProtectionWindowTests.LongEffectsAndTimeStepsHaveBoundedProtection" result="Passed" />
   <test-case name="HitProtectionWindowTests.DisablingAndInvalidValuesNeverLeaveHiddenImmunity" result="Passed" />
@@ -104,7 +108,8 @@
   <test-case name="RaceFeatureSettingsTests.QuickModeSkipsPracticeAndFinishesAfterOneLap" result="Passed" />
   <test-case name="RaceFeatureSettingsTests.RaceModeChangesAreQueuedUntilTheNextGroupAndStaySelected" result="Passed" />
   <test-case name="RaceFeatureSettingsTests.SelectingCurrentModeCancelsAQueuedChange" result="Passed" />
-  <test-case name="RaceFeatureSettingsTests.DebugCatalogContainsExactlyTheSevenConfigurableFeaturesAndRejectsStandardIds" result="Passed" />
+  <test-case name="RaceFeatureSettingsTests.NoTutorialKeepsTwoLapsAndTheNormalCourseIntroduction" result="Passed" />
+  <test-case name="RaceFeatureSettingsTests.DebugCatalogContainsExactlyTheEightConfigurableFeaturesAndRejectsStandardIds" result="Passed" />
   <test-case name="RaceHighlightTimelineTests.PassingMomentsKeepTheirLeadInAndRejectDuplicateJitter" result="Passed" />
   <test-case name="RaceHighlightTimelineTests.StrongEventsWinOverlappingWindowsAndEndWithinTheRace" result="Passed" />
   <test-case name="RaceHighlightTimelineTests.QuietRacesHaveAFactualFallbackAndCandidateMemoryIsBounded" result="Passed" />
