@@ -5,6 +5,7 @@ public sealed class RaceFeatureSettingsTests
     [Test] public void TestAutodriveStartsOffWhileGameplayImprovementsStartOn()
     {
         var settings = new RaceFeatureSettings();
+        Assert.IsFalse(settings.IsEnabled(RaceFeature.PlayerOneAutodrive));
         Assert.IsFalse(settings.IsEnabled(RaceFeature.PlayerTwoAutodrive));
         Assert.IsTrue(settings.IsEnabled(RaceFeature.CpuRacing));
         Assert.IsTrue(settings.IsEnabled(RaceFeature.ResultHighlights));
@@ -33,6 +34,22 @@ public sealed class RaceFeatureSettingsTests
         Assert.AreEqual(RaceFeatureSettings.StandardFeatures, settings.Enabled);
         settings.SetFeature(RaceFeature.DriftCoaching, true);
         Assert.AreEqual(RaceFeatureSettings.StandardFeatures, settings.Enabled);
+    }
+    [Test] public void EitherAutodriveCanBeDisabledDuringABothAutoRace()
+    {
+        var settings = new RaceFeatureSettings();
+        settings.SetFeature(RaceFeature.PlayerOneAutodrive | RaceFeature.PlayerTwoAutodrive, true);
+        settings.BeginPreparation();
+        settings.SetFeature(RaceFeature.PlayerOneAutodrive, false);
+        Assert.IsFalse(settings.IsEnabled(RaceFeature.PlayerOneAutodrive));
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.PlayerTwoAutodrive));
+        settings.SetFeature(RaceFeature.PlayerOneAutodrive, true);
+        settings.SetFeature(RaceFeature.PlayerTwoAutodrive, false);
+        Assert.IsTrue(settings.IsEnabled(RaceFeature.PlayerOneAutodrive));
+        Assert.IsFalse(settings.IsEnabled(RaceFeature.PlayerTwoAutodrive));
+        settings.SetFeature(RaceFeature.All, false);
+        Assert.IsFalse(settings.IsEnabled(RaceFeature.PlayerOneAutodrive));
+        Assert.IsFalse(settings.IsEnabled(RaceFeature.PlayerTwoAutodrive));
     }
     [Test] public void RemovedPresetCannotChangeRulesOrEnableGentleItems()
     {
@@ -68,7 +85,7 @@ public sealed class RaceFeatureSettingsTests
         Assert.IsTrue(settings.IsEnabled(RaceFeatureSettings.StandardFeatures));
         foreach(string id in new[]{"Slipstream","BroadcastScreen","RaceReplays","SteeringStability"})Assert.IsFalse(RaceDebugFeatureCatalog.TryFind(id,out _));
     }
-    [Test] public void DebugCatalogContainsExactlyTheSixConfigurableFeaturesAndRejectsStandardIds()
+    [Test] public void DebugCatalogContainsExactlyTheSevenConfigurableFeaturesAndRejectsStandardIds()
     {
         var found = new System.Collections.Generic.HashSet<RaceFeature>();
         foreach (RaceDebugFeatureCatalog.Entry entry in RaceDebugFeatureCatalog.Entries)
@@ -81,7 +98,7 @@ public sealed class RaceFeatureSettingsTests
         foreach (RaceFeature feature in System.Enum.GetValues(typeof(RaceFeature)))
             if (feature != RaceFeature.None && feature != RaceFeature.All)
                 Assert.AreEqual((RaceFeatureSettings.Configurable & feature) != 0, found.Contains(feature));
-        Assert.AreEqual(6, found.Count);
+        Assert.AreEqual(7, found.Count);
         settingsStandardCannotBeDisabled();
         foreach (string id in new[] { "All", "None", "1", "DriftCoaching, HitProtection", "driftcoaching", "FutureFeature", null })
             Assert.IsFalse(RaceDebugFeatureCatalog.TryFind(id, out _));

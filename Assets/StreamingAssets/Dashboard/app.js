@@ -331,7 +331,7 @@ function renderParticipants(snapshot) {
       row.append(td); return td;
     };
     cell(`${entry.position} / ${count}`);
-    const auto=snapshot.settings?.bothPlayersAutodrive || entry.number===2&&snapshot.settings?.features?.some(feature=>feature.id==='PlayerTwoAutodrive'&&feature.enabled);
+    const auto=snapshot.settings?.features?.some(feature=>feature.id===(entry.number===1?'PlayerOneAutodrive':'PlayerTwoAutodrive')&&feature.enabled);
     cell(driverLabel(entry.number), entry.isCpu ? 'CPU' : auto ? '自動運転' : '人間');
     const status = cell(drivingLabels[entry.status] || '状態不明', entry.contactGrace ? '接触保護中' : null);
     if (entry.status === 'Finished') status.className = 'participant-finished';

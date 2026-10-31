@@ -875,14 +875,15 @@ public class Gmanager : MonoBehaviour
         StartGameWhenScreenCovered();
     }
 
-    public bool BothPlayersAutodrive { get; private set; }
+    public bool BothPlayersAutodrive => Features?.Settings.IsEnabled(RaceFeature.PlayerOneAutodrive | RaceFeature.PlayerTwoAutodrive) == true;
 
     public void StartAutodriveTestRace(bool bothPlayers = false)
     {
         if (IsMaintenanceActive) return;
         if ((state != State.Title && state != State.Result) || IsScreenTransitioning()) return;
-        if (!bothPlayers) Features.SetFeature(RaceFeature.PlayerTwoAutodrive, true);
-        ClearCurrentRaceObjects(); BothPlayersAutodrive = bothPlayers;
+        ClearCurrentRaceObjects();
+        Features.SetFeature(RaceFeature.PlayerOneAutodrive, bothPlayers);
+        Features.SetFeature(RaceFeature.PlayerTwoAutodrive, true);
         Features.Settings.BeginPreparation(); ApplyFeatureRules();
         StartGameWhenScreenCovered(); CompleteGameStart();
         foreach (ScreenTransitionController transition in screenTransitions) transition?.ApplyStateImmediate(State.Countdown);
@@ -1444,7 +1445,6 @@ public class Gmanager : MonoBehaviour
 
     private void ClearCurrentRaceObjects()
     {
-        BothPlayersAutodrive = false;
         preparationClock.Reset();
         courseIntro?.Stop();
         drivingTutorial?.End();
