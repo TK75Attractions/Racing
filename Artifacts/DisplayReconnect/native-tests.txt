@@ -1,0 +1,7 @@
+DISPLAY_RECONNECT_ASSIGNMENT_PASS: stable UUIDs; independent/repeated loss, both absent, unrelated replacement, enumeration/coordinate/ID changes, mirroring, invalid and ambiguous screens.
+BROADCAST_DISPLAY_SELECTION_PASS: built-in before player/main order, desktop main fallback, mirrored and absent panels.
+EXTERNAL_DISPLAY_SELECTION_PASS: 12 configurations; built-in/main ordering, lid closed, portrait, negative coordinates, mirroring, duplicates, invalid geometry.
+DISPLAY_RECONNECT_WINDOWS_PASS: production AppKit layout; independent P1/P2/broadcast hide/restore, OS rehome, new IDs/sizes, repeated/both loss, no surviving-window resize/focus, preserved manual/closed windows. No test windows shown.
+EXTERNAL_WINDOW_LAYOUT_PASS: production AppKit helpers; full content frames, portrait/negative coordinates, focus eligibility, idempotent sizing and original-window restoration. Windows remained hidden.
+DISPLAY_PLUGIN_BUILD_PASS: Universal macOS dylib contains x86_64 and arm64; ColorSync is an OS framework dependency.
+DISPLAY_PLUGIN_LOAD_PASS: rebuilt dylib loads with ColorSync; Unity/P1/P2/broadcast API exports preserved; unopened output remains neutral.
