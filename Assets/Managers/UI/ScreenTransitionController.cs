@@ -399,6 +399,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     private void SetScreenVisibility(Gmanager.State state)
     {
+        // Screen changes also cancel the thank-you callback from the previous session.
+        GetComponent<ArcadeEndingUI>()?.HideImmediate();
         if (titleRoot != null)
         {
             titleRoot.SetActive(state == Gmanager.State.Title);

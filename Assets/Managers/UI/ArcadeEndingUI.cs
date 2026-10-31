@@ -45,5 +45,12 @@ public sealed class ArcadeEndingUI : MonoBehaviour
         visibleSeconds+=Mathf.Max(0f,dt);
         if(visibleSeconds>=AutoReturnSeconds)Finish();
     }
+    public void HideImmediate()
+    {
+        completed = null;
+        armed = false;
+        held = visibleSeconds = 0f;
+        if (root != null) root.SetActive(false);
+    }
     private void Finish(){if(!IsVisible)return;root.SetActive(false);var done=completed;completed=null;done?.Invoke();}
 }

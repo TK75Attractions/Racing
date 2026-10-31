@@ -1453,6 +1453,7 @@ public class Gmanager : MonoBehaviour
         foreach (PlayerRuntime player in players)
         {
             if (player == null) continue;
+            player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>()?.HideImmediate();
             lapManager?.UnregisterCar(player.rigidbody);
             if (player.car != null) Destroy(player.car);
             player.cameraController?.ClearCar();
