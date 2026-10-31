@@ -107,7 +107,7 @@ public sealed class RaceBackgroundMusic : MonoBehaviour
                     break;
                 default:
                     bool finished=gameManager.DidPlayerFinish(player);
-                    var track=finishSequences[player].Select(finished,gameManager.IsPlayerStillRacing(1-player),
+                    var track=finishSequences[player].Select(finished,phase!=Gmanager.State.Result && gameManager.IsPlayerStillRacing(1-player),
                         phase==Gmanager.State.Goal || phase==Gmanager.State.Result,AudioSettings.dspTime);
                     if(track==FinishMusicSequence.Track.Finish) desired=finishClip;
                     else if(track==FinishMusicSequence.Track.Results) desired=resultClip;

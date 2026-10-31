@@ -141,7 +141,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         bool fastPace = RaceSpeedPlanner.Enabled;
         if (RaceHumanPace.Enabled)
         {
-            float ceiling=fastPace?RaceSpeedPlanner.Cruise:cruiseSpeed+maximumCatchup;
+            float ceiling=fastPace?RaceSpeedPlanner.CurrentCruise:cruiseSpeed+maximumCatchup;
             float wanted=opponent!=null?CpuRacePace.FastRequest(partnerSpeed,gap,manager.time,entry.Index,ceiling):ceiling;
             paceCruise=Mathf.MoveTowards(paceCruise,wanted,dt*(wanted<paceCruise?4f:6f));
             requested=fastPace?RaceSpeedPlanner.Limit(course,raw,sign,paceCruise):Mathf.Min(paceCruise,bendLimit);

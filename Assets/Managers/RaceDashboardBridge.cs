@@ -151,11 +151,12 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         public bool inputAvailable, serialDebug, featurePanel, constantPaused, audioRefreshAvailable;
         public string[] deviceNames, deviceKeys, outputStatus, selectedDevices;
         public bool[] outputAvailable;
-        public bool maintenanceAvailable, maintenanceActive;
+        public bool maintenanceAvailable, maintenanceActive, windowRepositionAvailable;
         public bool updateAvailable, updateBusy;
         public string updateStatus;
-        public bool featuresAvailable, rulesLocked, hasQueuedPreset, canStartTestRace, bothPlayersAutodrive;
+        public bool raceModeAvailable, featuresAvailable, rulesLocked, hasQueuedPreset, canStartTestRace, bothPlayersAutodrive;
         public string activePreset, selectedPreset;
+        public string[] raceModes;
         public FeatureSnapshot[] features;
     }
 
@@ -175,6 +176,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
     [Serializable] private sealed class DashboardSnapshot
     {
         public string sessionId;
+        public bool isEditor;
         public long stateRevision, serverTime, settingsRevision;
         public SettingsSnapshot settings;
         public InputControlSnapshot inputControl;
@@ -419,9 +421,11 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         var updater = race != null ? race.GetComponent<RaceOperatorUpdate>() : null;
         return new SettingsSnapshot {
             updateAvailable = updater?.Available ?? false, updateBusy = updater?.Busy ?? false, updateStatus = updater?.Status ?? "更新機能がありません。",
+            windowRepositionAvailable = race?.WindowRepositionAvailable ?? false,
             maintenanceAvailable = race?.MaintenanceAvailable ?? false, maintenanceActive = race?.IsMaintenanceActive ?? false,
-            featuresAvailable = features != null, features = BuildFeatures(features), bothPlayersAutodrive = race?.BothPlayersAutodrive ?? false,
+            raceModeAvailable = features != null, featuresAvailable = features != null, features = BuildFeatures(features), bothPlayersAutodrive = race?.BothPlayersAutodrive ?? false,
             activePreset = features?.ActivePreset.ToString() ?? "", selectedPreset = features?.SelectedPreset.ToString() ?? "",
+            raceModes = new[]{"Standard", "Quick", "NoTutorial"},
             rulesLocked = features?.RulesLocked ?? false, hasQueuedPreset = features?.HasQueuedPreset ?? false,
             canStartTestRace = features != null && race.CanUseDashboardControls &&
                 (race.state == Gmanager.State.Title || race.state == Gmanager.State.Result),
@@ -451,8 +455,19 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             reason = started ? "" : updater?.Status ?? "更新機能がありません。";
             return started;
         }
+        if (request.command == "releaseForUpdate" && args.Length == 1)
+            return race != null && race.GetComponent<RaceOperatorUpdate>()?.PrepareForLaunch(args[0]) == true;
+        if (request.command == "repositionWindows" && args.Length == 0)
+        {
+            bool restored = race?.RepositionWindows() == true;
+            reason = restored ? "" : "window_layout_unavailable";
+            return restored;
+        }
         if (request.command == "maintenance" && args.Length == 1 && (args[0] == "true" || args[0] == "false"))
             return race != null && race.SetMaintenance(args[0] == "true");
+        if (request.command == "raceMode" && args.Length == 1 && features != null &&
+            (args[0] == "Standard" || args[0] == "Quick" || args[0] == "NoTutorial"))
+        { features.SelectPreset(args[0] == "Quick" ? RacePreset.Quick : args[0] == "NoTutorial" ? RacePreset.NoTutorial : RacePreset.Standard); return true; }
         if (request.command == "feature" && args.Length == 2 && features != null &&
             RaceDebugFeatureCatalog.TryFind(args[0], out RaceFeature feature) && (args[1] == "true" || args[1] == "false"))
         { features.SetFeature(feature, args[1] == "true"); return true; }
@@ -582,7 +597,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         ParticipantSnapshot[] participants = BuildParticipants();
         return new DashboardSnapshot
         {
-            sessionId = liveSession, stateRevision = stateRevision, serverTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            sessionId = liveSession, isEditor = Application.isEditor, stateRevision = stateRevision, serverTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             settingsRevision = settingsRevision, settings = BuildSettings(), inputControl = BuildInputControl(),
             telemetry = latestTelemetry,
             rawLines = Array.ConvertAll((serial?.Monitor ?? liveJournal).LatestRaw(), entry => new RawEntry
@@ -829,7 +844,8 @@ public sealed class RaceDashboardBridge : MonoBehaviour
         }
         ObserveState();
         long age = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - request.observedAt;
-        bool update = action == "settings" && request.command == "updateAndRun" && (request.args == null || request.args.Length == 0);
+        bool update = action == "settings" && (request.command == "updateAndRun" && (request.args == null || request.args.Length == 0) ||
+            request.command == "releaseForUpdate" && request.args?.Length == 1);
         bool accepted = request.targetSession == liveSession && age >= -1000 && age <= 15000 && race != null &&
             (update || request.stateRevision == stateRevision && race.state.ToString() == request.expectedState);
         // Clearing this controller's own input is safe even after a transition or stale snapshot.
@@ -851,7 +867,7 @@ public sealed class RaceDashboardBridge : MonoBehaviour
             {
                 reason = "settings_changed";
                 // Updating does not overwrite settings; unrelated device/status changes must not reject it.
-                accepted = (request.command == "updateAndRun" || request.settingsRevision == settingsRevision) && ApplySettings(request, out reason);
+                accepted = (update || request.settingsRevision == settingsRevision) && ApplySettings(request, out reason);
             }
             else accepted = TryApplyRemoteAction(action, request.expectedState);
         }

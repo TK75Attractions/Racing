@@ -38,7 +38,7 @@ public class ResultUIManager
         ArcadeUI.Label(finish,"TimeLabel","タイム",new Vector2(.50f,.65f),new Vector2(.94f,.87f),21,p.Ink);
         localTime=ArcadeUI.Label(finish,"Time","—",new Vector2(.38f,.18f),new Vector2(.94f,.65f),66,p.Ink,true,TextAlignmentOptions.Right);
         RacingUITheme.Rule(finish,"Underline",Vector2.zero,new Vector2(1,.03f),p.Primary);
-        var table=ArcadeUI.Panel(card,"Classification",new Vector2(.625f,.27f),new Vector2(.97f,.61f),p.Ink);
+        var table=ArcadeUI.Panel(card,"Classification",new Vector2(.625f,.34f),new Vector2(.97f,.61f),p.Ink);
         ArcadeUI.Label(table,"Header","順位     ドライバー",new Vector2(.06f,.87f),new Vector2(.65f,.98f),20,p.Paper);
         ArcadeUI.Label(table,"Time","タイム",new Vector2(.70f,.87f),new Vector2(.96f,.98f),20,p.Paper,false,TextAlignmentOptions.Right);
         for(int i=0;i<4;i++)
@@ -72,7 +72,12 @@ public class ResultUIManager
     public void ShowResults(RaceResultRecord record){var session=new RaceSessionResult();if(record!=null)session.SetPlayerResult(Mathf.Clamp(record.playerNumber-1,0,1),record);ShowResults(session);}
     public void ShowResults(RaceSessionResult session)
     {
-        currentSessionResult=session;currentResult=session?.GetResultAtPosition(1);var p=ArcadeUI.For(localPlayerNumber-1);
+        currentSessionResult=session;currentResult=session?.GetResultAtPosition(1);
+        RefreshStandings();SetMenuState(0,0);menuHint.text="";SetCountdown(Gmanager.ResultDisplaySeconds);
+    }
+    public void RefreshStandings()
+    {
+        var session=currentSessionResult;var p=ArcadeUI.For(localPlayerNumber-1);
         for(int i=0;i<4;i++)
         {
             var record=session?.GetResultAtPosition(i+1);bool own=record!=null&&!record.isCpu&&record.playerNumber==localPlayerNumber;
@@ -86,13 +91,12 @@ public class ResultUIManager
         card.Find("Header/Course").GetComponent<TMP_Text>().text="つくこまサーキット / "+laps+"周";
         localRank.text=local==null?"—":local.didFinish?local.finishPosition+"<size=32%>位</size>":"DNF";
         localTime.text=local==null?"—":local.didFinish?FormatTime(local.totalRaceTime):"未完走";
-        RefreshDailyRanking();SetMenuState(0,0);SetPedalConfirmationReady(false);SetCountdown(Gmanager.ResultDisplaySeconds);
+        RefreshDailyRanking();
     }
     public void SetCountdown(float remainingSeconds)=>countdown?.Update(remainingSeconds,Gmanager.ResultDisplaySeconds);
     public void RefreshHighlight() { }
     public void RefreshDailyRanking()=>dailyRankingPanel?.Refresh(currentSessionResult?.dailyRanking,currentSessionResult?.GetPlayerResult(localPlayerNumber-1),localPlayerNumber);
     public void SetMenuState(int index,float amount)=>menuAnimator?.SetState(index,amount);
-    public void SetPedalConfirmationReady(bool ready){menuHint.text=ready?"":"まずペダルから足を離してください";}
     public void PlayConfirm(int index)=>menuAnimator?.PlayConfirm(index);
     public void HideResults(){currentResult=null;currentSessionResult=null;SetMenuState(0,0);}
     private static string FormatTime(float seconds){int ms=DailyRankingBook.Milliseconds(seconds);return $"{ms/60000}:{ms/1000%60:00}.{ms%1000:000}";}

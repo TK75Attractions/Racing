@@ -19,6 +19,7 @@ public sealed class DailyRaceRanking
     private readonly Dictionary<string, LoadedDay> days = new Dictionary<string, LoadedDay>();
     private readonly HashSet<int> excludedPlayers = new HashSet<int>();
     private string boardKey, raceId;
+    public string RaceId => raceId;
     private int goalLaps;
     private bool reversed, experience, recording;
     public DailyRaceRanking(string directory, Func<DateTime> clock = null)
@@ -108,7 +109,7 @@ public sealed class DailyRaceRanking
     }
 
     // Same course geometry / lap count / direction / preset only. Increment rules-v1 after incompatible physics changes.
-    public static string BoardKey(RaceCourse course, int laps, float sign, RacePreset preset)
+    public static string BoardKey(RaceCourse course, int laps, float sign, RacePreset preset, bool highSpeed = false)
     {
         var data = new StringBuilder("rules-v1|").Append(laps).Append('|').Append(sign < 0).Append('|').Append((int)preset);
         if (course != null)
@@ -121,6 +122,7 @@ public sealed class DailyRaceRanking
                     data.Append('|').Append(value.ToString("F3", CultureInfo.InvariantCulture));
             }
         }
+        if (highSpeed) data.Append("|high-speed-drive-v1");
         using (var sha = SHA256.Create())
             return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(data.ToString()))).Replace("-", "").ToLowerInvariant();
     }

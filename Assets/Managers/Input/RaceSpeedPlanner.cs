@@ -4,6 +4,7 @@ using UnityEngine;
 public static class RaceSpeedPlanner
 {
     public const float Cruise = 50f;
+    public static float CurrentCruise => RaceFeatureController.Enabled(RaceFeature.HighSpeedDrive) ? HighSpeedDriveTuning.TargetMetersPerSecond : Cruise;
     public const float JumpSpeed = 32f;
     public static bool Enabled => RaceFeatureController.Enabled(RaceFeature.FastAiPace);
 
@@ -31,6 +32,6 @@ public static class RaceSpeedPlanner
     public static float CpuCruise(float partnerSpeed, float gap, float time, int index)
     {
         return RaceFeatureController.Enabled(RaceFeature.CpuRacing)
-            ? CpuRacePace.LegacyFastRequest(partnerSpeed, gap, time, index, Cruise) : Cruise;
+            ? CpuRacePace.LegacyFastRequest(partnerSpeed, gap, time, index, CurrentCruise) : CurrentCruise;
     }
 }

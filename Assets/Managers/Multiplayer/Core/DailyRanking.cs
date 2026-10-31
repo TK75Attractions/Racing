@@ -61,6 +61,10 @@ public sealed class DailyRankingView
     public int goalLaps;
     public bool reversed, experience, available = true, saved = true, recording = true;
     public readonly List<DailyRankingRow> rows = new List<DailyRankingRow>();
+    public int BestMilliseconds => rows.Count > 0 ? rows[0].entry.milliseconds : 0;
+    // Round small groups up to one place; equal times share their competition rank.
+    public bool IsTopTwentyPercent(DailyRankingRow row) => row != null && rows.Count > 0 &&
+        row.rank > 0 && row.rank <= Math.Max(1, (int)Math.Ceiling(rows.Count * .2));
     public DailyRankingRow FindPlayer(int player) => rows.Find(row => row.entry.raceId == raceId && row.entry.playerNumber == player);
 
     public static DailyRankingView Build(DailyRankingBook book, string boardKey, string raceId)

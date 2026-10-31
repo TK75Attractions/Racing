@@ -8,6 +8,9 @@ internal static class MacDashboardService
     public static async Task UpdateInstalled()
     {
         if (!OperatingSystem.IsMacOS()) throw new PlatformNotSupportedException();
+        string? activeProject=OperatorUpdateHost.FindProject();
+        if(activeProject!=null && Directory.Exists(Path.Combine(activeProject,"Logs","OperatorUpdate.lock")))
+            throw new IOException("ゲームの更新が実行中です。ビルドが完了またはキャンセルされてから常駐Dashboardを更新してください。実行中のビルドは停止していません。");
         string library=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),"Library");
         string service=Path.Combine(library,"Application Support","RacingDashboard");
         string plist=Path.Combine(library,"LaunchAgents",Label+".plist");

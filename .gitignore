@@ -150,3 +150,8 @@ InitTestScene*.unity*
 # Personal iOS signing and recoverable local worktree snapshots.
 /Tools/DashboardIPhone/Signing.local.xcconfig
 /Artifacts/WorktreeBackups/
+
+# Read-only play statistics regression harness.
+!/Tests~/PlayStatistics/StatisticsTests.csproj
+/Tests~/PlayStatistics/bin/
+/Tests~/PlayStatistics/obj/

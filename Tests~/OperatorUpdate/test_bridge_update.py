@@ -46,4 +46,54 @@ class BridgeUpdateTest(unittest.TestCase):
   self.assertFalse(self.request('/api/action/settings',wrong)['ok'])
   expired=self.command(old,'updateAndRun');expired['observedAt']-=20000
   self.assertFalse(self.request('/api/action/settings',expired)['ok'])
+ def test_launch_handoff_requires_a_verified_request_and_current_session(self):
+  snapshot=self.request('/api/status')
+  self.assertFalse(self.request('/api/action/settings',self.command(snapshot,'releaseForUpdate',['unverified']))['ok'])
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'releaseForUpdate',['verified-job']))['ok'])
+  wrong=self.command(snapshot,'releaseForUpdate',['verified-job']);wrong['targetSession']='other-session'
+  self.assertFalse(self.request('/api/action/settings',wrong)['ok'])
+ def test_window_reposition_is_versioned_and_available_during_race_and_maintenance(self):
+  self.bridge.stdin.write('state:Game\n');self.bridge.stdin.flush()
+  for _ in range(100):
+   snapshot=self.request('/api/status')
+   if snapshot['state']=='Game':break
+   time.sleep(.01)
+  self.assertTrue(snapshot['settings']['windowRepositionAvailable'])
+  command=self.command(snapshot,'repositionWindows')
+  self.assertTrue(self.request('/api/action/settings',command)['ok'])
+  self.assertTrue(self.request('/api/action/settings',command)['ok'],'a repeated ID returns the original result')
+  self.assertFalse(self.request('/api/action/settings',self.command(snapshot,'repositionWindows',['unexpected']))['ok'])
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'maintenance',['true']))['ok'])
+  self.assertFalse(self.request('/api/action/settings',self.command(snapshot,'repositionWindows'))['ok'],'stale settings are refused')
+  snapshot=self.request('/api/status')
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'repositionWindows'))['ok'])
+  wrong=self.command(snapshot,'repositionWindows');wrong['targetSession']='other-session'
+  self.assertFalse(self.request('/api/action/settings',wrong)['ok'])
+ def test_quick_mode_selection_is_validated_and_queued_while_rules_are_locked(self):
+  snapshot=self.request('/api/status')
+  self.assertTrue(snapshot['settings']['raceModeAvailable'])
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'raceMode',['Quick']))['ok'])
+  snapshot=self.request('/api/status')
+  self.assertEqual(snapshot['settings']['activePreset'],'Quick')
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'testRace'))['ok'])
+  snapshot=self.request('/api/status')
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'raceMode',['Standard']))['ok'])
+  snapshot=self.request('/api/status')
+  self.assertEqual(snapshot['settings']['activePreset'],'Quick')
+  self.assertEqual(snapshot['settings']['selectedPreset'],'Standard')
+  self.assertTrue(snapshot['settings']['hasQueuedPreset'])
+  for args in [['Unknown'],['1'],[],['Quick','extra']]:
+   self.assertFalse(self.request('/api/action/settings',self.command(snapshot,'raceMode',args))['ok'])
+ def test_no_tutorial_mode_and_high_speed_checkbox_are_independent(self):
+  snapshot=self.request('/api/status')
+  self.assertIn('NoTutorial',snapshot['settings']['raceModes'])
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'raceMode',['NoTutorial']))['ok'])
+  snapshot=self.request('/api/status')
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'feature',['HighSpeedDrive','true']))['ok'])
+  snapshot=self.request('/api/status')
+  self.assertEqual(snapshot['settings']['activePreset'],'NoTutorial')
+  self.assertTrue(next(f for f in snapshot['settings']['features'] if f['id']=='HighSpeedDrive')['enabled'])
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'raceMode',['Quick']))['ok'])
+  snapshot=self.request('/api/status')
+  self.assertTrue(next(f for f in snapshot['settings']['features'] if f['id']=='HighSpeedDrive')['enabled'])
 if __name__=='__main__':unittest.main(verbosity=2)

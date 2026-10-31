@@ -96,6 +96,13 @@ public sealed class RaceBroadcastDirector : MonoBehaviour
         {Display.displays[broadcastDisplay].Activate();output.enabled=true;output.Configure(new[]{presenter},broadcastDisplay,presenter);}
         else if(!Application.isEditor)Debug.LogWarning("The broadcast feed is available, but a floating broadcast window requires the macOS Metal plugin.");
     }
+    public void RestoreWindow()
+    {
+        // A user-closed broadcast is normally left closed. The explicit restore action reopens it.
+        if (presenter == null || output == null) return;
+        retryWindow=true; nextWindowAttempt=0f;
+        RefreshWindow();
+    }
     private void LateUpdate()
     {
         if(manager==null)return;

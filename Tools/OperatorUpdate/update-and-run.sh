@@ -13,11 +13,170 @@ lock="$repo/Logs/OperatorUpdate.lock"
 source_dir=''
 checkout_created=false
 locked=false
+child_pid=''
+cache_dir=''
+cache_attached=false
+cancelled=false
 message='更新に失敗しました。update.log と build.log を確認してください。'
-status() { message=$1; printf '%s\n' "$message" > "$request/status.tmp"; mv "$request/status.tmp" "$request/status.txt"; echo "$message"; }
-fail() { status "$1"; exit 1; }
+status() { message=$1; if [ -n "${2:-}" ]; then printf '%s\n' "$2" > "$request/phase.tmp"; mv "$request/phase.tmp" "$request/phase.txt"; fi; printf '%s\n' "$message" > "$request/status.tmp"; mv "$request/status.tmp" "$request/status.txt"; echo "$message"; }
+fail() { status "$1" failed; exit 1; }
+cancel_job() { cancelled=true; status '更新をキャンセルしています。既存のRaceは終了しません。' cancelling; exit 130; }
+check_cancel() { if [ -f "$request/decision" ] && [ "$(cat "$request/decision")" != launch ]; then cancel_job; fi; }
+process_tree() {
+    local process=$1 child
+    for child in $(pgrep -P "$process" 2>/dev/null || true); do process_tree "$child"; done
+    printf '%s\n' "$process"
+}
+stop_child() {
+    if [ -z "$child_pid" ]; then return; fi
+    local owned process
+    owned=$(process_tree "$child_pid")
+    for process in $owned; do kill -TERM "$process" 2>/dev/null || true; done
+    for ((stop_attempt=0;stop_attempt<50;stop_attempt++)); do
+        if ! kill -0 "$child_pid" 2>/dev/null; then break; fi
+        sleep .1
+    done
+    for process in $owned; do kill -KILL "$process" 2>/dev/null || true; done
+    wait "$child_pid" 2>/dev/null || true
+    child_pid=''
+}
+run() {
+    check_cancel
+    "$@" & child_pid=$!
+    while kill -0 "$child_pid" 2>/dev/null; do check_cancel; sleep .2; done
+    local result=0
+    wait "$child_pid" || result=$?
+    child_pid=''
+    check_cancel
+    return "$result"
+}
+race_running() {
+    local state
+    state=$(ps -p "$1" -o stat= 2>/dev/null) || return 1
+    [[ "$state" != *Z* ]]
+}
+stop_existing_players() {
+    local process command candidates
+    candidates="$parent_pid $(pgrep -u "$(id -u)" -f '/Contents/MacOS/[R]ace([[:space:]]|$)' 2>/dev/null || true)"
+    for process in $candidates; do
+        [[ "$process" =~ ^[0-9]+$ ]] && [ "$process" -gt 0 ] || continue
+        command=$(ps -p "$process" -o command= 2>/dev/null) || continue
+        # Stop game players, never the working Unity Editor or another application's process.
+        case "$command" in *.app/Contents/MacOS/Race|*.app/Contents/MacOS/Race\ *) ;; *) continue;; esac
+        race_running "$process" || continue
+        kill -TERM "$process" 2>/dev/null || fail '既存のRaceを終了できません。アプリの状態を確認してください。'
+        for ((stop_attempt=0;stop_attempt<100;stop_attempt++)); do
+            race_running "$process" || break
+            sleep .1
+        done
+        if race_running "$process"; then kill -KILL "$process" 2>/dev/null || fail '既存のRaceを終了できません。'; fi
+    done
+}
+# Hash the two import databases as well as the settings that identify this cache.
+# A changing working Editor must never produce a partially copied import database.
+main_cache_signature() {
+    /usr/bin/perl -MDigest::SHA -e '
+        my $root = shift;
+        for my $name (qw(Library/ArtifactDB Library/SourceAssetDB ProjectSettings/ProjectVersion.txt),
+            "Library/EditorInstance.json", "Packages/manifest.json", "Packages/packages-lock.json") {
+            my $path = "$root/$name";
+            if (!-f $path) { print "$name:missing\n"; next; }
+            open my $file, "<", $path or exit 1;
+            binmode $file;
+            print "$name:", Digest::SHA->new(256)->addfile($file)->hexdigest, "\n";
+        }
+    ' "$repo"
+}
+seed_main_cache() {
+    local version=$1 library="$source_dir/Library" main_version='' imported_version='' before='' after=''
+    if [ -f "$repo/ProjectSettings/ProjectVersion.txt" ]; then
+        main_version=$(sed -n 's/^m_EditorVersion: //p' "$repo/ProjectSettings/ProjectVersion.txt" | tr -d '\r')
+    fi
+    if [ -f "$repo/Library/EditorInstance.json" ]; then
+        imported_version=$(/usr/bin/perl -MJSON::PP -e 'local $/; eval { my $data=decode_json(<>); print $data->{version} // ""; };' < "$repo/Library/EditorInstance.json")
+    fi
+    if [ "$version" = unknown ] || [ "$main_version" != "$version" ] || [ "$imported_version" != "$version" ]; then
+        echo 'メインプロジェクトのインポート済みUnityバージョンを確認できないため、専用の初回読み込みを行います。'
+        return 1
+    fi
+    if [ -L "$repo/Library" ] || [ ! -f "$repo/Library/ArtifactDB" ] || [ ! -f "$repo/Library/SourceAssetDB" ] ||
+        [ ! -d "$repo/Library/Artifacts" ] || [ -n "$(find "$repo/Library" -type l -print -quit)" ]; then
+        echo 'メインプロジェクトに独立コピー可能なインポートキャッシュがありません。'
+        return 1
+    fi
+    before=$(main_cache_signature) || return 1
+    status 'メインプロジェクトの読み込み済みキャッシュをコピーしています。' cache
+    # APFS clones share storage until either copy is written, never mutable files.
+    if ! run cp -cpR "$repo/Library" "$library"; then
+        rm -rf -- "$library"
+        status '通常コピーでメインプロジェクトのキャッシュを準備しています。' cache
+        if ! run cp -pR "$repo/Library" "$library"; then
+            rm -rf -- "$library"
+            echo 'キャッシュをコピーできなかったため、専用の初回読み込みへ切り替えます。'
+            return 1
+        fi
+    fi
+    after=$(main_cache_signature) || after=''
+    # Check both the source and copy. Also reject links introduced during the copy.
+    if [ "$before" != "$after" ] || [ -n "$(find "$library" -type l -print -quit)" ] ||
+        ! cmp -s "$repo/Library/ArtifactDB" "$library/ArtifactDB" ||
+        ! cmp -s "$repo/Library/SourceAssetDB" "$library/SourceAssetDB"; then
+        rm -rf -- "$library"
+        echo 'コピー中にメインプロジェクトが更新されたため、不完全なキャッシュを破棄して専用の初回読み込みへ切り替えます。'
+        return 1
+    fi
+    # In particular, ilpp.pid would let the new Editor address the old Editor's
+    # postprocessor. Locks, search indices and live SQLite files are not cache inputs.
+    rm -f -- "$library/ilpp.pid" "$library/EditorInstance.json" "$library/ArtifactDB-lock" "$library/SourceAssetDB-lock" \
+        "$library/ShaderCache.db" "$library/ShaderCache.db-wal" "$library/ShaderCache.db-shm"
+    rm -rf -- "$library/Search" "$library/TempArtifacts"
+    printf 'seeded\n' > "$request/cache.txt"
+    status 'メインプロジェクトのインポート・ビルドキャッシュを独立コピーして再利用します。変更されたアセットはUnityが再判定します。' cache
+    return 0
+}
+prepare_cache() {
+    local version=unknown
+    if [ -f "$source_dir/ProjectSettings/ProjectVersion.txt" ]; then
+        version=$(sed -n 's/^m_EditorVersion: //p' "$source_dir/ProjectSettings/ProjectVersion.txt" | tr -d '\r')
+    fi
+    [[ "$version" =~ ^[A-Za-z0-9._-]+$ ]] || fail 'Unityのバージョンを判別できません。'
+    cache_dir="$repo/Builds/OperatorCache/macOS-$version"
+    if [ -L "$repo/Builds/OperatorCache" ] || [ -L "$cache_dir" ] || [ -L "$cache_dir/Library" ]; then
+        fail 'ビルドキャッシュにリンク先は使用できません。専用の保存先を確認してください。'
+    fi
+    if [ -e "$cache_dir" ]; then
+        [ -f "$cache_dir/owner.txt" ] && [ "$(cat "$cache_dir/owner.txt")" = "$repo" ] || fail 'ビルドキャッシュの所有元を確認できません。Builds/OperatorCacheを確認してください。'
+    else
+        mkdir -p "$cache_dir"
+        printf '%s\n' "$repo" > "$cache_dir/owner.txt"
+    fi
+    test ! -e "$source_dir/Library" || fail '更新用フォルダーに予期しないLibraryがあります。'
+    if [ -d "$cache_dir/Library" ]; then
+        status '前回のUnityビルドキャッシュを再利用しています。' cache
+        mv "$cache_dir/Library" "$source_dir/Library"
+        printf 'reused\n' > "$request/cache.txt"
+    elif seed_main_cache "$version"; then
+        : # Keep the copied cache in this job, then retain it as the dedicated cache.
+    else
+        status '初回のUnityビルドを準備しています。アセットの読み込みには時間がかかります。' cache
+        printf 'cold\n' > "$request/cache.txt"
+    fi
+    cache_attached=true
+}
+save_cache() {
+    if [ "$cache_attached" != true ] || [ ! -d "$source_dir/Library" ]; then return; fi
+    if [ -e "$cache_dir/Library" ]; then
+        echo 'キャッシュの保存先が使用中のため、今回のキャッシュは保存しません。'
+    elif mv "$source_dir/Library" "$cache_dir/Library"; then
+        echo 'Unityビルドキャッシュを保存しました。次回は読み込み済みのデータを再利用します。'
+    else
+        echo 'Unityビルドキャッシュを保存できませんでした。次回は再作成します。'
+    fi
+}
 cleanup() {
     code=$?
+    stop_child
+    save_cache
     if [ "$checkout_created" = true ]; then
         cd "$repo"
         if ! git -C "$repo" worktree remove --force "$source_dir"; then
@@ -31,10 +190,17 @@ cleanup() {
             if [ -d "$source_dir" ]; then echo "一時フォルダーが残っています: $source_dir"; fi
         fi
     fi
-    if [ "$code" -ne 0 ]; then printf '%s\n' "$message" > "$request/status.txt"; touch "$request/failed"; fi
+    if [ "$cancelled" = true ]; then
+        status '更新をキャンセルしました。既存のRaceはそのまま使用できます。' cancelled
+        touch "$request/cancelled"
+    elif [ "$code" -ne 0 ]; then
+        printf '%s\n' "$message" > "$request/status.txt"; touch "$request/failed"
+    fi
     if [ "$locked" = true ]; then rm -f "$lock/owner.pid" "$lock/request.txt"; rmdir "$lock"; fi
 }
 trap cleanup EXIT
+trap cancel_job INT TERM
+printf '2\n' > "$request/control-version"
 cd "$repo"
 if [ -z "$unity" ]; then
     unity=${RACING_UNITY_PATH:-}
@@ -52,8 +218,8 @@ fi
 locked=true
 printf '%s\n' "$$" > "$lock/owner.pid"
 printf '%s\n' "$request" > "$lock/request.txt"
-status '最新mainを取得しています。作業中の変更は保持します。'
-git fetch origin main:refs/remotes/origin/main || fail 'mainを取得できません。ネット接続とGit認証を確認してください。'
+status '最新mainを取得しています。既存のRaceはビルド完了まで使用できます。' fetching
+run git fetch origin main:refs/remotes/origin/main || fail 'mainを取得できません。ネット接続とGit認証を確認してください。'
 commit=$(git rev-parse --verify refs/remotes/origin/main)
 printf '%s\n' "$commit" > "$request/commit.txt"
 # Catch a known build blocker before asking a running player to quit.
@@ -64,28 +230,61 @@ if [ "$free_kb" -lt "$required_kb" ]; then
     fail "ビルド用の空き容量が不足しています。目安 $((required_kb / 1024)) MB以上、現在 $((free_kb / 1024)) MB。空きを増やして再実行してください。"
 fi
 if [ "${5:-}" = '--check' ]; then status 'OPERATOR_UPDATE_PREFLIGHT_PASS'; exit 0; fi
-touch "$request/ready"
-if [ "$parent_pid" -gt 0 ]; then
-    for ((i=0; i<120; i++)); do
-        if ! kill -0 "$parent_pid" 2>/dev/null; then break; fi
-        sleep 1
-    done
-    if kill -0 "$parent_pid" 2>/dev/null; then fail 'Unityの終了を待機中にタイムアウトしました。'; fi
-fi
 source_dir="$repo/Builds/OperatorSource/$(basename "$request")"
 mkdir -p "$(dirname "$source_dir")"
-status '取得したmainを別フォルダーで準備しています。'
-git worktree add --detach "$source_dir" "$commit" || fail '更新用フォルダーを準備できません。ディスク容量とGit LFSを確認してください。'
+status '取得したmainを別フォルダーで準備しています。' preparing
+test ! -e "$source_dir" || fail '更新用フォルダーが既に存在します。別の要求で再実行してください。'
 checkout_created=true
+run git worktree add --detach "$source_dir" "$commit" || fail '更新用フォルダーを準備できません。ディスク容量とGit LFSを確認してください。'
 cd "$source_dir"
-status '音声プラグインをビルドしています。'
-sh Native~/RaceAudio/build-macos.sh || fail '音声プラグインのビルドに失敗しました。update.logを確認してください。'
+status '音声プラグインをビルドしています。' native
+run sh Native~/RaceAudio/build-macos.sh || fail '音声プラグインのビルドに失敗しました。update.logを確認してください。'
 export RACING_PROJECT_PATH="$repo"
 export RACING_OPERATOR_BUILD="$repo/Builds/Operator/$(basename "$request")/Race.app"
-status 'Unityでビルドしています。Unityを手動で起動する必要はありません。'
-"$unity" -batchmode -quit -projectPath "$source_dir" -executeMethod OperatorPlayerBuild.Build -logFile "$request/build.log" || fail 'Unityビルドに失敗しました。build.logを確認してください。'
-test -d "$RACING_OPERATOR_BUILD" || fail 'ビルドの出力がありません。build.logを確認してください。'
-open "$RACING_OPERATOR_BUILD" || fail 'ビルド済みアプリを起動できません。Builds/Operatorを確認してください。'
-status '更新したゲームを起動しました。'
+prepare_cache
+status 'Unityでビルドしています。完了まで既存のRaceは終了しません。' building
+run "$unity" -batchmode -quit -projectPath "$source_dir" -executeMethod OperatorPlayerBuild.Build -logFile "$request/build.log" || fail 'Unityビルドに失敗しました。build.logを確認してください。'
+test -x "$RACING_OPERATOR_BUILD/Contents/MacOS/Race" || fail 'ビルドの出力がありません。build.logを確認してください。'
+check_cancel
+if [ -f "$request/handoff.wait" ]; then
+    status 'ビルドが完了しました。現在の試合終了を待っています。待機中もキャンセルできます。' waiting-race
+    touch "$request/built"
+    while [ ! -f "$request/launch.allowed" ]; do
+        check_cancel
+        if [ -f "$request/handoff.failed" ]; then fail "$(cat "$request/handoff.failed")"; fi
+        sleep .1
+    done
+fi
+check_cancel
+# Cancellation and replacement compete for one atomic decision. Once replacement wins,
+# the UI no longer offers cancellation and no late cancel can interrupt app handoff.
+if ! (set -o noclobber; printf 'launch\n' > "$request/decision") 2>/dev/null; then
+    check_cancel
+    fail '起動への切り替えを確定できません。更新の進行状況を確認してください。'
+fi
+status 'ビルドが完了しました。既存のRaceを終了して新しいアプリへ切り替えます。' switching
+touch "$request/ready"
+if [ -f "$request/handoff.wait" ]; then
+    for ((handoff_attempt=0;handoff_attempt<300;handoff_attempt++)); do
+        if [ -f "$request/handoff.failed" ]; then fail "$(cat "$request/handoff.failed")"; fi
+        [ ! -f "$request/released" ] || break
+        sleep .1
+    done
+    test -f "$request/released" || fail '起動の引き継ぎを確認できません。管理画面の常駐プログラムを確認してください。'
+fi
+stop_existing_players
+# An Editor must release Play-mode devices, but must never be terminated as a process.
+if [ -f "$request/handoff.wait" ]; then
+    for ((release_attempt=0;release_attempt<100;release_attempt++)); do
+        if ! curl --silent --fail --max-time 1 http://127.0.0.1:8765/api/status >/dev/null; then break; fi
+        sleep .1
+    done
+    if curl --silent --fail --max-time 1 http://127.0.0.1:8765/api/status >/dev/null; then
+        fail 'UnityのPlayが機器を使用しています。EditorのPlayを停止してから再実行してください。ビルド済みアプリは保存されています。'
+    fi
+fi
+status 'ビルド済みのRaceを起動しています。' launching
+open -n "$RACING_OPERATOR_BUILD" || fail 'ビルド済みアプリを起動できません。Builds/Operatorを確認してください。'
+status '更新したゲームを起動しました。' completed
 echo 'OPERATOR_UPDATE_BUILD_RUN_PASS'
 touch "$request/succeeded"

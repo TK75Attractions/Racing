@@ -113,7 +113,6 @@ public static class VisitorPolishValidation
                 Require(DrivingTutorialRoad.NearestProgress(body.position-world.transform.position)<item-15,"Missed pickup must recover before the same box. item="+item+" car="+DrivingTutorialRoad.NearestProgress(body.position-world.transform.position));
                 Require(Mathf.Abs((float)Get(practice,"itemProgress")-item)<.01f,"Recovery must keep the missed box in front.");
                 Require(((IList)Get(practice,"pickups")).Count==3,"Recovery must restore all pickup lanes.");
-                Require(lesson.PedalReleased,"Recovery must not ask for the initial release again.");
                 Require(world.transform.Find("CityBlock0").GetComponent<Collider>().enabled,"Black tutorial buildings need solid colliders.");
                 ConfigureOutputs(manager);stage=2;since=EditorApplication.timeSinceStartup;
             }

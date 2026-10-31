@@ -1,6 +1,6 @@
 using System;
 
-public enum RacePreset { Standard }
+public enum RacePreset { Standard, Quick, NoTutorial }
 
 [Flags]
 public enum RaceFeature
@@ -32,14 +32,16 @@ public enum RaceFeature
     MenuScenery = 8388608,
     BroadcastScreen = 16777216,
     RaceReplays = 33554432,
-    All = ExperienceItems | DriftCoaching | HitProtection | Slipstream | SteeringAssist | LandingFeedback | LandingBoost | TubeChargeLines | PlayerTwoAutodrive | CpuRacing | ResultHighlights | HighSpeedCornering | FastAiPace | FinishRun | FinishApproachGrace | ClearSpeedPresentation | CourseIntro | CampusAtmosphere | RivalProximity | ItemHitFeedback | SteeringStability | DailyRanking | AdaptiveAiPace | MenuScenery | BroadcastScreen | RaceReplays
+    PlayerOneAutodrive = 67108864,
+    HighSpeedDrive = 134217728,
+    All = HighSpeedDrive | PlayerOneAutodrive | ExperienceItems | DriftCoaching | HitProtection | Slipstream | SteeringAssist | LandingFeedback | LandingBoost | TubeChargeLines | PlayerTwoAutodrive | CpuRacing | ResultHighlights | HighSpeedCornering | FastAiPace | FinishRun | FinishApproachGrace | ClearSpeedPresentation | CourseIntro | CampusAtmosphere | RivalProximity | ItemHitFeedback | SteeringStability | DailyRanking | AdaptiveAiPace | MenuScenery | BroadcastScreen | RaceReplays
 }
 
 /// <summary>Session-local feature switches. Structural rules are frozen for a race.</summary>
 public sealed class RaceFeatureSettings
 {
     public const RaceFeature Configurable = RaceFeature.ExperienceItems | RaceFeature.SteeringAssist | RaceFeature.FastAiPace |
-        RaceFeature.PlayerTwoAutodrive | RaceFeature.CampusAtmosphere | RaceFeature.AdaptiveAiPace;
+        RaceFeature.HighSpeedDrive | RaceFeature.PlayerOneAutodrive | RaceFeature.PlayerTwoAutodrive | RaceFeature.CampusAtmosphere | RaceFeature.AdaptiveAiPace;
     public const RaceFeature StandardFeatures = RaceFeature.All & ~Configurable;
     private bool validationOverrides;
     public RaceFeature Enabled { get; private set; } = RaceFeature.DriftCoaching | RaceFeature.HitProtection | RaceFeature.Slipstream | RaceFeature.SteeringAssist | RaceFeature.LandingFeedback | RaceFeature.LandingBoost | RaceFeature.TubeChargeLines | RaceFeature.CpuRacing | RaceFeature.ResultHighlights | RaceFeature.HighSpeedCornering | RaceFeature.FastAiPace | RaceFeature.FinishRun | RaceFeature.FinishApproachGrace | RaceFeature.ClearSpeedPresentation | RaceFeature.CourseIntro | RaceFeature.CampusAtmosphere | RaceFeature.RivalProximity | RaceFeature.ItemHitFeedback | RaceFeature.SteeringStability | RaceFeature.DailyRanking | RaceFeature.AdaptiveAiPace | RaceFeature.MenuScenery | RaceFeature.BroadcastScreen | RaceFeature.RaceReplays;
@@ -63,10 +65,10 @@ public sealed class RaceFeatureSettings
     }
     public void SelectPreset(RacePreset preset)
     {
-        if (preset != RacePreset.Standard) return;
-        SelectedPreset = RacePreset.Standard;
+        if (preset != RacePreset.Standard && preset != RacePreset.Quick && preset != RacePreset.NoTutorial) return;
+        SelectedPreset = preset;
         if (!RulesLocked) ApplyPreset();
-        else HasQueuedPreset = true;
+        else HasQueuedPreset = SelectedPreset != ActivePreset;
     }
     public void BeginPreparation()
     {
@@ -81,14 +83,15 @@ public sealed class RaceFeatureSettings
     }
     public void ResetForNextGroup()
     {
-        if (!HasQueuedPreset) SelectedPreset = RacePreset.Standard;
+        // A completed demo must not leave the next visitors' controls in automatic mode.
+        SetFeature(RaceFeature.PlayerOneAutodrive | RaceFeature.PlayerTwoAutodrive, false);
         UnlockAtTitle();
     }
     private void ApplyPreset()
     {
         ActivePreset = SelectedPreset;
         HasQueuedPreset = false;
-        // The sole race mode does not override independent item assistance settings.
+        // Race modes do not override independent item assistance settings.
     }
 }
 
@@ -96,11 +99,13 @@ public sealed class RaceRuleSet
 {
     public readonly RacePreset Preset;
     public readonly int GoalLaps;
+    public bool SkipTutorial => Preset == RacePreset.Quick || Preset == RacePreset.NoTutorial;
+    public bool SkipCourseIntro => Preset == RacePreset.Quick;
     public readonly float MaximumSeconds, GraceSeconds, MaximumGraceSeconds;
     public RaceRuleSet(RacePreset preset, int standardLaps, float standardMaximum, float grace, float maximumGrace)
     {
-        Preset = RacePreset.Standard;
-        GoalLaps = Math.Max(1, standardLaps);
+        Preset = preset == RacePreset.Quick || preset == RacePreset.NoTutorial ? preset : RacePreset.Standard;
+        GoalLaps = Preset == RacePreset.Quick ? 1 : Math.Max(1, standardLaps);
         MaximumSeconds = Math.Min(180f, Math.Max(1f, standardMaximum));
         GraceSeconds = Math.Max(0f, grace);
         MaximumGraceSeconds = Math.Max(GraceSeconds, maximumGrace);

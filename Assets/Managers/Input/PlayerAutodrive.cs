@@ -30,7 +30,7 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
     public void ApplySwitch()
     {
         if (own?.Result != null) return;
-        bool next = own != null && (RacingStandalonePerformanceProbe.AutorunEnabled || manager.BothPlayersAutodrive || own.Index == 1 && RaceFeatureController.Enabled(RaceFeature.PlayerTwoAutodrive));
+        bool next = own != null && (RacingStandalonePerformanceProbe.AutorunEnabled || RaceFeatureController.Enabled(own.Index == 0 ? RaceFeature.PlayerOneAutodrive : RaceFeature.PlayerTwoAutodrive));
         if (next == IsActive || gate == null) return;
         CurrentState = DriveInputState.Neutral; bot.Clear();
         paceCruise=18f;
@@ -43,12 +43,12 @@ public sealed class PlayerAutodrive : MonoBehaviour, IDriveInputSource
             gate.IsBlocked || gate.NeedsPedalRelease || mover.IsInputSuppressed)
         { CurrentState = DriveInputState.Neutral; bot.Clear(); return; }
         int contacts = 0; foreach (GroundCheck wheel in wheels) if (wheel.CheckNow()) contacts++;
-        float cruise = RaceSpeedPlanner.Enabled ? RaceSpeedPlanner.Cruise : 24f;
+        float cruise = RaceSpeedPlanner.Enabled ? RaceSpeedPlanner.CurrentCruise : 24f;
         float cap = cruise;
-        var partner=manager.GetParticipant(0);
+        var partner=manager.GetParticipant(1 - own.Index);
         if (RaceHumanPace.Enabled && RaceHumanPace.ManualRacer(partner))
         {
-            float wanted=CpuRacePace.CompanionRequest(humanPace.Pace(0),partner.Progress-own.Progress,cruise);
+            float wanted=CpuRacePace.CompanionRequest(humanPace.Pace(partner.Index),partner.Progress-own.Progress,cruise);
             paceCruise=Mathf.MoveTowards(paceCruise,wanted,Time.fixedDeltaTime*(wanted<paceCruise?4f:6f));
             cap=paceCruise;
             if(manager.course.IsJumpAhead(own.Body.position,manager.CourseProgressSign,60f))cap=Mathf.Max(cap,24f);

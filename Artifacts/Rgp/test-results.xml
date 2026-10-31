@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<test-run result="Passed" total="196" passed="196" failed="0">
+<test-run result="Passed" total="211" passed="211" failed="0">
   <test-case name="AdaptiveAiPaceTests.SlowPlayersGetNearbyContestsWithoutTheOldHighSpeedFloor" result="Passed" />
   <test-case name="AdaptiveAiPaceTests.CpuCanStillPassThenOfferACounterattackAtBothHumanPaces" result="Passed" />
   <test-case name="AdaptiveAiPaceTests.StrongPlayersAndCatchingUpRetainTheFullSpeedPotential" result="Passed" />
@@ -17,6 +17,9 @@
   <test-case name="CpuRacePaceTests.TheCounterattackWindowGivesRoomWithoutStoppingInFrontOfThePlayer" result="Passed" />
   <test-case name="CpuRacePaceTests.ACpuStillCatchingUpDoesNotEnterTheYieldWindowTooEarly" result="Passed" />
   <test-case name="CpuRacePaceTests.AStrandedPlayerDoesNotMakeCpuParkAndCatchupIsBounded" result="Passed" />
+  <test-case name="DailyPlayBookTests.CountsBothSeatsOnceAndAReplayAsANewPlay" result="Passed" />
+  <test-case name="DailyPlayBookTests.AStartDoesNotRequireAFinishRecord" result="Passed" />
+  <test-case name="DailyPlayBookTests.InvalidSeatsAndMissingIdentifiersCannotEnterTheCount" result="Passed" />
   <test-case name="DailyRankingTests.FastestAttemptWinsAndBothPlayersOfARaceShareItsNumber" result="Passed" />
   <test-case name="DailyRankingTests.DuplicateFinishIsIdempotentButAnotherPlayOfTheSameSeatIsANewAttempt" result="Passed" />
   <test-case name="DailyRankingTests.EqualDisplayedMillisecondsShareCompetitionRank" result="Passed" />
@@ -24,6 +27,7 @@
   <test-case name="DailyRankingTests.CpuDnfAutodriveAndDebugRunsCannotEnterTheBoard" result="Passed" />
   <test-case name="DailyRankingTests.InvalidTimesAndParticipantsAreRejected" result="Passed" />
   <test-case name="DailyRankingTests.OwnRankIsAvailableBeyondTheTopFive" result="Passed" />
+  <test-case name="DailyRankingTests.DailyBestAndTopFifthUseTheMatchingBoardAndIncludeTiedRanks" result="Passed" />
   <test-case name="DashboardInputLeaseTests.IndependentLeasesExpireAndDelayedPressCannotUndoRelease" result="Passed" />
   <test-case name="DashboardInputLeaseTests.OwnershipAndReacquisitionNeverReuseOldHeldInput" result="Passed" />
   <test-case name="DashboardInputLeaseTests.PulsesAreOneSampleAndHeartbeatDoesNotRepeatThem" result="Passed" />
@@ -37,12 +41,13 @@
   <test-case name="DriverNoticeQueueTests.DuplicateEventsAreConsumedOnceAndClearResetsTheRace" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.TimeoutEndsPracticeEvenWhenDisconnectedWithoutCompletingLessons" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.EarlyCompletionStopsTimerAndRecoveryDoesNotResetDeadline" result="Passed" />
-  <test-case name="DrivingTutorialProgressTests.TitlePedalHoldCannotFinishAcceleration" result="Passed" />
+  <test-case name="DrivingTutorialProgressTests.HeldPedalStartsPracticeButStationaryCarCannotFinishAcceleration" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.SteeringRequiresRealHeadingChangeWhileMoving" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.ItemRequiresContactAfterSteeringAndWhileConnected" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.TimedOutPracticeCannotCollectAnItem" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.PlayersProgressIndependentlyAndCompletionIsStable" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.RecoveryKeepsCompletedLessonsButClearsPartialHold" result="Passed" />
+  <test-case name="DrivingTutorialProgressTests.HeldPedalCanAccelerateImmediatelyButInvalidOrDisconnectedInputCannot" result="Passed" />
   <test-case name="EdgeSteeringAssistTests.CentreAndInwardMotionReceiveNoCorrection" result="Passed" />
   <test-case name="EdgeSteeringAssistTests.PredictedDepartureIsSymmetricAndBounded" result="Passed" />
   <test-case name="EdgeSteeringAssistTests.AnUnintendedDepartureFacesTheRoad" result="Passed" />
@@ -55,6 +60,10 @@
   <test-case name="FrameRateCounterTests.IncludesStallsInTheMeasuredTime" result="Passed" />
   <test-case name="FrameRateCounterTests.ReenableAndClockResetDiscardTheOldSample" result="Passed" />
   <test-case name="FrameRateCounterTests.RetainsPrecisionAfterLongRunningSessions" result="Passed" />
+  <test-case name="HighSpeedDriveTuningTests.FullPedalHasStrongerAccelerationAndAThreeHundredKmhEquilibrium" result="Passed" />
+  <test-case name="HighSpeedDriveTuningTests.OffDoesNotAlterDefaultsOrAccumulateMultipliers" result="Passed" />
+  <test-case name="HighSpeedDriveTuningTests.ReverseAndBrakingDoNotReceiveDoubleMotorForce" result="Passed" />
+  <test-case name="HighSpeedDriveTuningTests.FasterVehicleGradesCannotRaiseTheFlatRoadEquilibriumBeyondThreeHundred" result="Passed" />
   <test-case name="HitProtectionWindowTests.HitsCannotExtendAnEffectOrTheFollowingProtection" result="Passed" />
   <test-case name="HitProtectionWindowTests.LongEffectsAndTimeStepsHaveBoundedProtection" result="Passed" />
   <test-case name="HitProtectionWindowTests.DisablingAndInvalidValuesNeverLeaveHiddenImmunity" result="Passed" />
@@ -91,10 +100,16 @@
   <test-case name="RaceDisplayRoutingTests.BroadcastNeverTakesAPlayerOutput" result="Passed" />
   <test-case name="RaceFeatureSettingsTests.TestAutodriveStartsOffWhileGameplayImprovementsStartOn" result="Passed" />
   <test-case name="RaceFeatureSettingsTests.FeatureChangesAreImmediateAndIndependentWhileRulesAreLocked" result="Passed" />
+  <test-case name="RaceFeatureSettingsTests.EitherAutodriveCanBeDisabledDuringABothAutoRace" result="Passed" />
+  <test-case name="RaceFeatureSettingsTests.ReturningToTitleRestoresBothManualPlayersForTheNextVisitors" result="Passed" />
   <test-case name="RaceFeatureSettingsTests.RemovedPresetCannotChangeRulesOrEnableGentleItems" result="Passed" />
   <test-case name="RaceFeatureSettingsTests.NormalRulesCapTheRaceAtThreeMinutesEvenWithLegacySceneSettings" result="Passed" />
   <test-case name="RaceFeatureSettingsTests.IndependentGentleItemAssistanceSurvivesPreparation" result="Passed" />
-  <test-case name="RaceFeatureSettingsTests.DebugCatalogContainsExactlyTheSixConfigurableFeaturesAndRejectsStandardIds" result="Passed" />
+  <test-case name="RaceFeatureSettingsTests.QuickModeSkipsPracticeAndFinishesAfterOneLap" result="Passed" />
+  <test-case name="RaceFeatureSettingsTests.RaceModeChangesAreQueuedUntilTheNextGroupAndStaySelected" result="Passed" />
+  <test-case name="RaceFeatureSettingsTests.SelectingCurrentModeCancelsAQueuedChange" result="Passed" />
+  <test-case name="RaceFeatureSettingsTests.NoTutorialKeepsTwoLapsAndTheNormalCourseIntroduction" result="Passed" />
+  <test-case name="RaceFeatureSettingsTests.DebugCatalogContainsExactlyTheEightConfigurableFeaturesAndRejectsStandardIds" result="Passed" />
   <test-case name="RaceHighlightTimelineTests.PassingMomentsKeepTheirLeadInAndRejectDuplicateJitter" result="Passed" />
   <test-case name="RaceHighlightTimelineTests.StrongEventsWinOverlappingWindowsAndEndWithinTheRace" result="Passed" />
   <test-case name="RaceHighlightTimelineTests.QuietRacesHaveAFactualFallbackAndCandidateMemoryIsBounded" result="Passed" />
@@ -183,10 +198,10 @@
   <test-case name="TubeSteeringAssistTests.StrongHandleInputRetainsDriverControlAndCorrectionIsBounded" result="Passed" />
   <test-case name="TubeSteeringAssistTests.YawIsDampedAndInvalidInputDoesNotSteer" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.SingleOverviewFinishesAfterEightSecondsWithoutInput" result="Passed" />
-  <test-case name="TutorialGimmickBriefingTests.HoldingPedalOrTappingTooEarlyCannotSkipTheReadingTime" result="Passed" />
-  <test-case name="TutorialGimmickBriefingTests.APressBeforeReadTimeNeedsAnotherReleaseAndPress" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.HoldingPedalAdvancesOnlyAfterMinimumReadingTime" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.EarlyTapDoesNotSkipReadingOrAdvanceAfterRelease" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.InvalidFramesAreIgnoredAndLargeFramesRespectTheRealDeadline" result="Passed" />
-  <test-case name="TutorialGimmickBriefingTests.ReconnectionWhileHoldingPedalNeedsAFreshRelease" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.OnlyValidConnectedPedalCanAdvanceBeforeAutomaticDeadline" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.PlayersReadIndependently" result="Passed" />
   <test-case name="TwoPlayerRaceSessionTests.FirstFinish_StartsFortySecondWindow" result="Passed" />
   <test-case name="TwoPlayerRaceSessionTests.SecondFinish_CompletesRaceInArrivalOrder" result="Passed" />

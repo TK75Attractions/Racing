@@ -80,4 +80,20 @@ public sealed class DailyRankingTests
         Assert.AreEqual(10,view.rows.Count);
         Assert.IsNull(view.FindPlayer(2));
     }
+    [Test] public void DailyBestAndTopFifthUseTheMatchingBoardAndIncludeTiedRanks()
+    {
+        var book = new DailyRankingBook { day = "2026-10-31" };
+        for (int i = 0; i < 10; i++) book.entries.Add(new DailyRankingEntry {
+            raceId = "race" + i, boardKey = "course", playNumber = i + 1,
+            playerNumber = 1, milliseconds = i < 3 ? 60000 : 60000 + i * 1000 });
+        book.entries.Add(new DailyRankingEntry { raceId = "other", boardKey = "other-course", playNumber = 11, playerNumber = 1, milliseconds = 10000 });
+        var view = DailyRankingView.Build(book, "course", "race0");
+        Assert.AreEqual(60000, view.BestMilliseconds);
+        Assert.IsTrue(view.IsTopTwentyPercent(view.rows[2]), "Equal best times share the celebration.");
+        Assert.IsFalse(view.IsTopTwentyPercent(view.rows[3]));
+        Assert.IsFalse(view.IsTopTwentyPercent(null));
+        var empty = DailyRankingView.Build(book, "missing", "race0");
+        Assert.AreEqual(0, empty.BestMilliseconds);
+        Assert.IsFalse(empty.IsTopTwentyPercent(view.rows[0]));
+    }
 }

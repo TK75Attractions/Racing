@@ -787,3 +787,263 @@ test('USB HTTP origins generate secure v4 command IDs without randomUUID',()=>{
   const ids=new Set(Array.from({length:200},()=>ui.context.newRequestId()));
   assert.equal(ids.size,200);for(const id of ids)assert.match(id,/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
 });
+
+test('Home has independent recovery controls without takeover and disables them on disconnect',()=>{
+  const ui=fixture();
+  ui.render({...base,inputControl:{available:true,players:[{number:1,canRecover:true},{number:2,canRecover:false}]}});
+  const buttons=ui.inputButtons.filter(button=>button.dataset.inputPulse==='reset');
+  assert.equal(buttons.length,4);
+  assert.equal(buttons[0].disabled,false);
+  assert.equal(buttons[1].disabled,true);
+  ui.context.setConnection(false);
+  assert.ok(buttons.every(button=>button.disabled));
+  assert.match(ui.elements.get('home-inputs').textContent,/待っています/);
+});
+test('Home mirrors verified physical wheel and both independent pedal values, marking stale input',()=>{
+  const ui=fixture();
+  const body='TEL,1,1,12,0.75,0.2,-24,0,0.6';
+  const line='@'+body+'*'+ui.context.rgpCrc(body);
+  const snapshot={...base,telemetry:{line,status:'OK'},serial:{portOpen:true,lines:[]},hardware:{sessionOpen:true,recent:true,inputFresh:true,telemetryEnabled:true}};
+  ui.render(snapshot);
+  const home=ui.elements.get('home-inputs').textContent;
+  assert.match(home,/右 12°/);assert.match(home,/左 24°/);
+  assert.match(home,/75.0%/);assert.match(home,/20.0%/);assert.match(home,/60.0%/);
+  ui.render({...snapshot,hardware:{...snapshot.hardware,inputFresh:false}});
+  assert.match(ui.elements.get('home-inputs').textContent,/現在の入力は未確認/);
+});
+
+test('Home and race progress reflect independent results and waiting without changing the active race',()=>{
+  const ui=fixture();
+  ui.render({...base,playerProgress:[{number:1,state:'Result',step:'Results',remaining:12},{number:2,state:'Game',step:'Driving'}]});
+  assert.match(ui.elements.get('home-player-detail-1').textContent,/結果を表示中/);
+  assert.equal(ui.elements.get('home-player-status-2').textContent,'レース中');
+  ui.render({...base,playerProgress:[{number:1,state:'Game',step:'Spectating'},{number:2,state:'Game',step:'Driving'}]});
+  assert.match(ui.elements.get('home-player-detail-1').textContent,/相手のゴールを待っています/);
+});
+
+test('Build progress survives Unity disconnect and generic settings rendering without becoming a version error',()=>{
+  const ui=fixture();
+  vm.runInContext("operatorStatus={available:false,busy:true,canControl:true,canCancel:true,phase:'building',requestId:'job-1',message:'Unityでビルドしています。'};renderOperatorUpdate();",ui.context);
+  ui.context.setConnection(false);
+  assert.equal(ui.elements.get('operator-update-status').textContent,'Unityでビルドしています。');
+  assert.equal(ui.elements.get('settings-status').textContent,'Unityでビルドしています。');
+  assert.doesNotMatch(ui.elements.get('settings-feature-count').textContent,/取得できません/);
+  assert.equal(ui.elements.get('operator-cancel').hidden,false);
+  assert.equal(ui.elements.get('operator-cancel').disabled,false);
+});
+test('Cancellation requires an operator, an active cancellable build, and the exact request anchor',async()=>{
+  const ui=fixture(),sent=[];ui.context.AbortSignal=AbortSignal;ui.context.crypto={randomUUID:()=> 'cancel-command'};
+  ui.context.captureCancel=(route,options)=>sent.push([route,options]);
+  vm.runInContext("operatorStatus={available:false,busy:true,canControl:true,canCancel:true,phase:'building',requestId:'job-1'};operatorPolling=true;renderOperatorUpdate();apiFetch=async(route,options)=>{captureCancel(route,options);return {json:async()=>({ok:true,message:'キャンセルを受け付けました。'})};};",ui.context);
+  await ui.context.cancelOperatorUpdate();
+  assert.equal(sent[0][0],'/api/operator-update');
+  assert.deepEqual(JSON.parse(sent[0][1].body),{id:'cancel-command',command:'cancel',requestId:'job-1'});
+  assert.equal(ui.elements.get('operator-cancel').disabled,true);
+  assert.match(ui.elements.get('operator-cancel').textContent,/キャンセル処理中/);
+  await ui.context.cancelOperatorUpdate();assert.equal(sent.length,1);
+  for(const field of ['canControl','canCancel']) {
+    vm.runInContext("operatorStatus={busy:true,canControl:true,canCancel:true,requestId:'job-2'};operatorStatus['"+field+"']=false;renderOperatorUpdate();",ui.context);
+    assert.equal(ui.elements.get('operator-cancel').disabled,true);
+    await ui.context.cancelOperatorUpdate();assert.equal(sent.length,1);
+  }
+});
+test('Cancellation completion and real build failure remain visible after disconnected snapshots',()=>{
+  const ui=fixture();
+  for(const [phase,message] of [['cancelled','更新をキャンセルしました。'],['failed','Unityビルドに失敗しました。build.logを確認してください。']]) {
+    vm.runInContext('operatorStatus='+JSON.stringify({available:true,busy:false,canControl:true,canCancel:false,phase,message})+';',ui.context);
+    ui.context.setConnection(false);
+    assert.equal(ui.elements.get('settings-status').textContent,message);
+    assert.equal(ui.elements.get('operator-cancel').hidden,true);
+    assert.equal(ui.elements.get('operator-update').disabled,false);
+  }
+});
+
+
+test('Window reposition requires supported Unity and operator permissions',()=>{
+  const ui=fixture();
+  for(const settings of [undefined,{}, {windowRepositionAvailable:false}]) {
+    ui.render({...base,settings},{canControl:true});
+    assert.equal(ui.elements.get('settings-reposition').disabled,true);
+    assert.match(ui.elements.get('settings-reposition-note').textContent,/Mac版Race/);
+  }
+  ui.render({...base,settings:{windowRepositionAvailable:true}},{canControl:true});
+  assert.equal(ui.elements.get('settings-reposition').disabled,false);
+  assert.match(ui.elements.get('settings-reposition-note').textContent,/再接続/);
+  ui.render({...base,settings:{windowRepositionAvailable:true}},{canControl:false});
+  assert.equal(ui.elements.get('settings-reposition').disabled,true);
+  ui.context.setConnection(false);
+  assert.equal(ui.elements.get('settings-reposition').disabled,true);
+});
+
+test('Window reposition submits a versioned command without arguments and reports failure',async()=>{
+  const ui=fixture(),sent=[];
+  ui.context.recordReposition=(action,payload)=>sent.push({action,...JSON.parse(JSON.stringify(payload))});
+  vm.runInContext("liveController={command:async(action,payload)=>{recordReposition(action,payload);return {ok:false,reason:'window_layout_unavailable'};}}",ui.context);
+  ui.render({...base,sessionId:'s',settingsRevision:3,settings:{windowRepositionAvailable:true}});
+  const control=ui.elements.get('settings-reposition');control.blur=()=>{};
+  await ui.context.submitSetting(control);
+  assert.deepEqual(sent,[{action:'settings',command:'repositionWindows',args:[],settingsRevision:3}]);
+  assert.match(ui.elements.get('settings-status').textContent,/外部ディスプレイ2台/);
+});
+
+
+test('Race mode selection reports queued rules without changing the current race',()=>{
+  const ui=fixture();
+  ui.render({...base,goalLap:2,settings:{featuresAvailable:true,raceModeAvailable:true,activePreset:'Standard',selectedPreset:'Quick',hasQueuedPreset:true}},{canControl:true});
+  assert.equal(ui.elements.get('settings-raceMode').value,'Quick');
+  assert.equal(ui.elements.get('settings-raceMode').disabled,false);
+  assert.match(ui.elements.get('settings-race-mode-status').textContent,/次の試合.*クイック/);
+  assert.match(ui.elements.get('settings-rules').textContent,/通常レース.*2周/);
+  ui.render({...base,goalLap:1,settings:{featuresAvailable:true,raceModeAvailable:true,activePreset:'Quick',selectedPreset:'Quick'}},{canControl:true});
+  assert.match(ui.elements.get('settings-rules').textContent,/クイック.*1周/);
+  assert.match(ui.elements.get('settings-rule-help').textContent,/練習とコース紹介を省略/);
+  ui.render({...base,settings:{}},{canControl:true});assert.equal(ui.elements.get('settings-raceMode').disabled,true);
+  ui.render({...base,settings:{raceModeAvailable:true}},{canControl:false});assert.equal(ui.elements.get('settings-raceMode').disabled,true);
+});
+
+test('Race mode submits a versioned selection',async()=>{
+  const ui=fixture(),sent=[];
+  ui.context.captureMode=(action,payload)=>sent.push({action,...JSON.parse(JSON.stringify(payload))});
+  vm.runInContext("liveController={command:async(action,payload)=>{captureMode(action,payload);return {ok:true};}}",ui.context);
+  ui.render({...base,sessionId:'s',settingsRevision:7,settings:{raceModeAvailable:true}});
+  const control=ui.elements.get('settings-raceMode');control.value='Quick';control.blur=()=>{};
+  await ui.context.submitSetting(control);
+  assert.deepEqual(sent,[{action:'settings',command:'raceMode',args:['Quick'],settingsRevision:7}]);
+});
+
+test('A built update waiting for the match remains cancellable',()=>{
+  const ui=fixture();
+  vm.runInContext("operatorStatus={available:false,busy:true,canControl:true,canCancel:true,phase:'waiting-race',message:'現在の試合終了を待っています。'};renderOperatorUpdate();",ui.context);
+  assert.equal(ui.elements.get('operator-cancel').disabled,false);
+  assert.equal(ui.elements.get('operator-cancel').hidden,false);
+  assert.equal(ui.elements.get('operator-cancel').textContent,'更新をキャンセル');
+  assert.match(ui.elements.get('operator-update-status').textContent,/試合終了/);
+});
+
+
+test('Quick mode offers a race start and shows a ready player waiting for the other',()=>{
+  const ui=fixture();
+  ui.render({...base,state:'Title',settings:{activePreset:'Quick'},playerProgress:[{number:1,state:'Title',step:'Ready'}]});
+  assert.match(ui.buttons.find(button=>button.dataset.action==='start').textContent,/レースを始める.*練習なし/);
+  assert.match(ui.elements.get('player-progress').textContent,/開始準備完了・相手の開始操作を待機/);
+  ui.render({...base,state:'Title',settings:{activePreset:'Standard'}});
+  assert.match(ui.buttons.find(button=>button.dataset.action==='start').textContent,/練習を始める/);
+});
+
+
+test('Build progress shows completed stages, current imports and safe live log text',()=>{
+  const ui=fixture();
+  ui.context.buildProgress={completedSteps:3,totalSteps:6,stage:'アセットを読み込み',task:'Assets/Track.fbx',cache:'cold',elapsedSeconds:185,quietSeconds:2,logQuiet:false,logLines:['<img src=x onerror=alert(1)>','Start importing Assets/Track.fbx']};
+  vm.runInContext("operatorStatus={busy:true,phase:'building',canControl:true,canCancel:true,progress:buildProgress};renderOperatorUpdate();",ui.context);
+  assert.equal(ui.elements.get('operator-build-progress').hidden,false);
+  assert.equal(ui.elements.get('operator-progress-bar').value,3);
+  assert.match(ui.elements.get('operator-progress-label').textContent,/3 \/ 6.*アセット/);
+  assert.match(ui.elements.get('operator-build-task').textContent,/Track.fbx.*初回/);
+  assert.match(ui.elements.get('operator-build-timing').textContent,/3分5秒.*2秒前/);
+  assert.equal(ui.elements.get('operator-build-log').textContent,'<img src=x onerror=alert(1)>\nStart importing Assets/Track.fbx');
+  assert.equal(ui.elements.get('operator-build-activity').hidden,false);
+  vm.runInContext("operatorStatus.progress.logQuiet=true;operatorStatus.progress.quietSeconds=130;renderOperatorUpdate();",ui.context);
+  assert.equal(ui.elements.get('operator-build-quiet').hidden,false);
+  assert.match(ui.elements.get('operator-build-quiet').textContent,/長時間のコンパイル中の可能性/);
+  vm.runInContext("operatorStatus.busy=false;operatorStatus.phase='cancelled';renderOperatorUpdate();",ui.context);
+  assert.equal(ui.elements.get('operator-build-activity').hidden,true);
+  assert.equal(ui.elements.get('operator-progress-bar').value,3);
+});
+
+test('An old helper without build telemetry has no misleading progress or stale logs',()=>{
+  const ui=fixture();
+  vm.runInContext("operatorStatus={busy:true,phase:'building'};renderOperatorUpdate();",ui.context);
+  assert.equal(ui.elements.get('operator-build-progress').hidden,true);
+});
+
+test('Statistics is a separate dashboard route and renders counts without a live race',()=>{
+  const ui=fixture();assert.equal(ui.context.dashboardRoute('#statistics'),'statistics');
+  const data={day:'2026-11-01',todayPlays:4,todayRanked:3,warnings:[],boards:[{id:'course',label:'通常・2周・正走',rows:[{rank:1,playNumber:1,playerNumber:1,milliseconds:82001,finishedAt:'10:00'},{rank:1,playNumber:1,playerNumber:2,milliseconds:82001,finishedAt:'10:00'}]}],days:[{day:'2026-11-01',plays:4,starts:4,legacyFinishes:0},{day:'2026-10-31',plays:2,starts:0,legacyFinishes:2}]};
+  ui.context.renderStatistics(data);
+  assert.equal(ui.elements.get('statistics-today-plays').textContent,'4');
+  assert.equal(ui.elements.get('statistics-today-ranked').textContent,'3');
+  assert.match(ui.elements.get('statistics-rankings').textContent,/1位.*第1レース P1.*1:22.001.*1位.*第1レース P2/);
+  assert.equal(ui.elements.get('statistics-days').children.length,2);
+  assert.match(ui.elements.get('statistics-days').textContent,/過去の完走 2人/);
+  const meter=ui.elements.get('statistics-days').children[0].children[2].children[0];
+  assert.equal(meter.value,4);assert.equal(meter.max,4);
+  ui.context.setConnection(false);
+  assert.equal(ui.elements.get('statistics-today-plays').textContent,'4','Unity disconnect cannot erase persisted statistics');
+});
+
+test('Statistics handles empty days, warnings and the selected history period',()=>{
+  const ui=fixture();
+  const data={day:'2026-11-01',todayPlays:0,todayRanked:0,boards:[],warnings:['過去の記録を読み込めません'],days:[{day:'2026-11-01',plays:0,starts:0,legacyFinishes:0},{day:'2026-01-01',plays:9,starts:0,legacyFinishes:9}]};
+  ui.context.renderStatistics(data);
+  assert.match(ui.elements.get('statistics-rankings').textContent,/本日のランキング記録はまだありません/);
+  assert.equal(ui.elements.get('statistics-warnings').hidden,false);
+  assert.equal(ui.elements.get('statistics-days').children.length,1);
+  ui.elements.get('statistics-period').value='all';ui.context.renderStatistics(data);
+  assert.equal(ui.elements.get('statistics-days').children.length,2);
+  ui.context.renderStatistics(null);assert.equal(ui.elements.get('statistics-today-plays').textContent,'—');
+});
+
+test('Statistics ranking pagination preserves safe text and reveals additional records',()=>{
+  const ui=fixture();
+  const rows=Array.from({length:25},(_,i)=>({rank:i+1,playNumber:i+1,playerNumber:1,milliseconds:80000+i,finishedAt:'12:00'}));
+  const data={day:'2026-11-01',todayPlays:25,todayRanked:25,days:[],warnings:[],boards:[{id:'c',label:'<img src=x onerror=alert(1)>',rows}]};
+  ui.context.renderStatistics(data);
+  assert.match(ui.elements.get('statistics-rankings').textContent,/さらに20件表示/);
+  assert.ok(!ui.elements.get('statistics-rankings').textContent.includes('第25レース'));
+  ui.context.showMoreStatistics('c');
+  assert.match(ui.elements.get('statistics-rankings').textContent,/第25レース/);
+  assert.equal(ui.elements.get('statistics-rankings').children[0].children[0].textContent,'<img src=x onerror=alert(1)>');
+});
+
+test('A failed statistics refresh retains previous figures and labels them as stale',async()=>{
+  const ui=fixture();ui.context.AbortSignal=AbortSignal;
+  ui.context.renderStatistics({day:'2026-11-01',todayPlays:8,todayRanked:6,days:[],boards:[],warnings:[]});
+  vm.runInContext("apiFetch=async()=>{throw new Error('offline')}",ui.context);
+  await ui.context.pollStatistics();
+  assert.equal(ui.elements.get('statistics-today-plays').textContent,'8');
+  assert.match(ui.elements.get('statistics-status').textContent,/最後に取得できた記録/);
+  assert.equal(ui.elements.get('statistics-refresh').disabled,false);
+});
+
+
+test('No-tutorial mode preserves two laps and disables itself for an older Race',async()=>{
+  const ui=fixture(),mode=ui.elements.get('settings-raceMode'),sent=[];
+  mode.options=['Standard','Quick','NoTutorial'].map(value=>({value}));
+  ui.render({...base,state:'Title',settings:{...f8Settings,raceModeAvailable:true,raceModes:['Standard','Quick','NoTutorial'],activePreset:'NoTutorial',selectedPreset:'NoTutorial'}});
+  assert.equal(mode.options[2].disabled,false);
+  assert.match(ui.elements.get('settings-rules').textContent,/練習なし.*2周/);
+  assert.match(ui.elements.get('settings-rule-help').textContent,/コース紹介は通常どおり/);
+  assert.match(ui.buttons.find(button=>button.dataset.action==='start').textContent,/レースを始める/);
+  ui.context.captureMode=(action,payload)=>sent.push({action,...JSON.parse(JSON.stringify(payload))});
+  vm.runInContext("liveController={command:async(action,payload)=>{captureMode(action,payload);return {ok:true};}}",ui.context);
+  mode.blur=()=>{};await ui.context.submitSetting(mode);
+  assert.equal(sent[0].args[0],'NoTutorial');
+  ui.render({...base,settings:{...f8Settings,raceModeAvailable:true}});
+  assert.equal(mode.options[2].disabled,true);
+  assert.equal(mode.options[0].disabled,false);
+});
+
+test('High-speed checkbox submits independently of the selected race mode and respects control permissions',async()=>{
+  const ui=fixture(),sent=[];
+  const snapshot={...base,settingsRevision:8,settings:{...f8Settings,activePreset:'NoTutorial',selectedPreset:'NoTutorial',features:[{id:'HighSpeedDrive',label:'高速化（ペダル加速UP・最高約300km/h）',enabled:false}]}};
+  ui.render(snapshot);
+  const checkbox=ui.elements.get('settings-features').children[0].children[0];
+  assert.equal(checkbox.type,'checkbox');assert.equal(checkbox.checked,false);assert.equal(checkbox.disabled,false);
+  assert.equal(ui.elements.get('settings-high-speed-unavailable').hidden,true);
+  ui.context.captureSpeed=(action,payload)=>sent.push({action,...JSON.parse(JSON.stringify(payload))});
+  vm.runInContext("liveController={command:async(action,payload)=>{captureSpeed(action,payload);return {ok:true};}}",ui.context);
+  checkbox.checked=true;checkbox.blur=()=>{};await ui.context.submitSetting(checkbox);
+  assert.deepEqual(sent,[{action:'settings',command:'feature',args:['HighSpeedDrive','true'],settingsRevision:8}]);
+  assert.equal(ui.elements.get('settings-raceMode').value,'NoTutorial');
+  ui.render({...snapshot,settings:{...snapshot.settings,features:[{...snapshot.settings.features[0],enabled:true}]}},{canControl:false});
+  assert.equal(checkbox.checked,true);assert.equal(checkbox.disabled,true);
+  ui.render({...base,settings:f8Settings});assert.equal(ui.elements.get('settings-high-speed-unavailable').hidden,false);
+});
+
+
+test('Build progress distinguishes a main-project cache copy from a dedicated warm cache',()=>{
+  const ui=fixture();
+  vm.runInContext("operatorStatus={busy:true,phase:'building',progress:{completedSteps:3,totalSteps:6,cache:'seeded',task:'Assets/Track.fbx',logLines:[]}};renderOperatorUpdate();",ui.context);
+  assert.match(ui.elements.get('operator-build-task').textContent,/メインプロジェクトのキャッシュを再利用/);
+  assert.doesNotMatch(ui.elements.get('operator-build-task').textContent,/初回読み込み/);
+});

@@ -58,13 +58,10 @@ public static class CarSelectionValidation
             Require(ui.SelectedVehicle == 1 && ui.SelectedPaint == 2 && !ui.IsOpen, "Confirm commits and closes");
             Require(PlayerPrefs.GetString(keys[0]) == "street-rs", "Confirm persists the selected vehicle");
             ui.Open();
-            ui.TickInput(new DriveInputState { pedal = 1f }, true, 1f);
-            Require(ui.IsOpen, "Held pedal on entry cannot confirm");
-            ui.TickInput(DriveInputState.Neutral, true, .1f);
             ui.TickInput(new DriveInputState { pedal = 1f }, true, .64f);
             Require(ui.IsOpen, "Pedal requires the full confirmation hold");
             ui.TickInput(new DriveInputState { pedal = 1f }, true, .02f);
-            Require(!ui.IsOpen, "Released then held pedal confirms once");
+            Require(!ui.IsOpen, "A pedal held on entry confirms once without release");
             Require(!ui.Showroom.Model.activeInHierarchy, "Closed showroom does not remain active");
             RectTransform playerTwoRoot = RacingUITheme.Rect(root.transform, "P2Container", Vector2.zero, Vector2.one);
             RectTransform titleTwo = RacingUITheme.Rect(playerTwoRoot, "Title P2", Vector2.zero, Vector2.one);

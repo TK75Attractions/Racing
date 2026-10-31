@@ -67,6 +67,7 @@ app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSecond
 using var client = new HttpClient(new SocketsHttpHandler { UseProxy = false, MaxConnectionsPerServer = 32 })
 { BaseAddress = new Uri("http://127.0.0.1:8765"), Timeout = Timeout.InfiniteTimeSpan };
 using var operatorUpdate = new OperatorUpdateHost(client);
+var statistics = new PlayStatistics(PlayStatistics.DefaultDirectory());
 string? allowedOrigin = Environment.GetEnvironmentVariable("RACING_DASHBOARD_ORIGIN")?.TrimEnd('/');
 var operators = (Environment.GetEnvironmentVariable("RACING_DASHBOARD_OPERATORS") ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
 int activeSockets = 0;
@@ -133,6 +134,13 @@ app.Run(async context =>
         { if (!context.Response.HasStarted) context.Response.StatusCode=400; }
         return;
     }
+    if (path == "/api/statistics")
+    {
+        context.Response.Headers.CacheControl = "no-store";
+        if (context.Request.Method != "GET") { context.Response.StatusCode=405; return; }
+        await context.Response.WriteAsJsonAsync(statistics.Read());
+        return;
+    }
     if (path == "/api/operator-update")
     {
         context.Response.Headers.CacheControl = "no-store";
@@ -145,7 +153,13 @@ app.Run(async context =>
                 using var body = await JsonDocument.ParseAsync(context.Request.Body,cancellationToken:context.RequestAborted);
                 string id = HardwareAlertMonitor.Text(body.RootElement,"id");
                 if (id.Length == 0 || id.Length > 80) { context.Response.StatusCode=400; return; }
-                await context.Response.WriteAsJsonAsync(await operatorUpdate.Start(id));
+                string updateCommand=HardwareAlertMonitor.Text(body.RootElement,"command");
+                string requestId=HardwareAlertMonitor.Text(body.RootElement,"requestId");
+                if(updateCommand=="cancel" && requestId.Length>0 && requestId.Length<=80)
+                    await context.Response.WriteAsJsonAsync(await operatorUpdate.Cancel(requestId));
+                else if(updateCommand.Length==0 || updateCommand=="start")
+                    await context.Response.WriteAsJsonAsync(await operatorUpdate.Start(id));
+                else context.Response.StatusCode=400;
             }
             catch (Exception error) when (error is JsonException or BadHttpRequestException)
             { context.Response.StatusCode=400; }

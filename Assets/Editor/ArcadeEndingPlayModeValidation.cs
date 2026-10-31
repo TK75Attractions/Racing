@@ -35,7 +35,7 @@ public static class ArcadeEndingPlayModeValidation
             else if(stage==2&&Time.frameCount-changedFrame>2)
             {
                 var p2=Root(1).GetComponent<ArcadeEndingUI>();Require(p2.IsVisible&&!Root(1).Find("Result").gameObject.activeSelf,"P2 ending replaces its result.");
-                Require(Root(0).Find("Result").gameObject.activeSelf,"P1 result remains visible.");Capture(manager,1);p2.TickInput(1,2);Require(p2.IsVisible,"A held finish pedal must not skip ending.");p2.TickInput(0,.1f);p2.TickInput(1,1);Next();
+                Require(Root(0).Find("Result").gameObject.activeSelf,"P1 result remains visible.");Capture(manager,1);p2.TickInput(1,.3f);Require(p2.IsVisible,"Ending requires the full hold duration.");p2.TickInput(1,.4f);Require(!p2.IsVisible,"A held pedal returns without a release.");Next();
             }
             else if(stage==3&&Root(1).Find("Title").gameObject.activeSelf){manager.SelectResultOption(0,0);Next();}
             else if(stage==4&&Time.frameCount-changedFrame>2)
@@ -45,7 +45,7 @@ public static class ArcadeEndingPlayModeValidation
                 remaining=ArcadeEndingUI.AutoReturnSeconds-(float)typeof(ArcadeEndingUI).GetField("visibleSeconds",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(p1);
                 Next();
             }
-            else if(stage==5&&manager.state==Gmanager.State.Title){Require(Time.unscaledTime-automaticReturnBegan>=remaining-.1f,"Automatic return must wait for five seconds of actual display time.");Debug.Log("ARCADE_ENDING_PLAYMODE_PASS: real rendered P1/P2 endings, held-pedal safety, independent title returns.");Finish(0);}
+            else if(stage==5&&manager.state==Gmanager.State.Title){Require(Time.unscaledTime-automaticReturnBegan>=remaining-.1f,"Automatic return must wait for five seconds of actual display time.");Debug.Log("ARCADE_ENDING_PLAYMODE_PASS: real rendered P1/P2 endings, held-pedal confirmation, independent title returns.");Finish(0);}
         }
         catch(Exception error){Debug.LogException(error);Finish(1);}
     }

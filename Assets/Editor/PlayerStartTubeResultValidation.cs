@@ -221,7 +221,7 @@ public static class PlayerStartTubeResultValidation
                     var runtimes=(Array)Get(manager,"players");var runtime=Activator.CreateInstance(runtimes.GetType().GetElementType(),true);
                     var cameraRoot=Child(managerRoot.transform,"Camera");var raceCamera=Child(cameraRoot.transform,"Race").AddComponent<CinemachineCamera>();
                     var rig=new PlayerDisplayRig(player,cameraRoot,host,null,raceCamera,false);
-                    Set(runtime,"displayRig",rig);Set(runtime,"titleCamera",Child(cameraRoot.transform,"Title").AddComponent<CinemachineCamera>());runtimes.SetValue(runtime,player);
+                    Set(runtime,"resultPresented",true);Set(runtime,"displayRig",rig);Set(runtime,"titleCamera",Child(cameraRoot.transform,"Title").AddComponent<CinemachineCamera>());runtimes.SetValue(runtime,player);
                     ((ResultUIManager[])Get(manager,"resultUIManagers"))[player]=ui;
                     Call(manager,"UpdateResultDisplay",14f);Require(ui.CountdownText=="00:01"&&resultRoot.gameObject.activeSelf,"Actual result clock must show one second before expiry.");
                     Call(manager,"UpdateResultDisplay",1f);Require(ui.CountdownText=="00:00"&&!resultRoot.gameObject.activeSelf&&host.GetComponent<ArcadeEndingUI>().IsVisible,"At 15 seconds, the actual clock and exit transition must agree.");

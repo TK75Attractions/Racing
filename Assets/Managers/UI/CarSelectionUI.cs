@@ -25,7 +25,7 @@ public sealed class CarSelectionUI : MonoBehaviour
     private readonly Dictionary<Selectable, bool> titleControls = new Dictionary<Selectable, bool>();
     private enum Focus { Vehicle, Actions }
     private Focus focus;
-    private bool backSelected, steeringLatched, confirmArmed, pedalPressed, selectionLocked;
+    private bool backSelected, steeringLatched, pedalPressed, selectionLocked;
     private float confirmHold;
     private PedalButtonFeedback confirmFeedback, backFeedback;
     private TMP_Text controls, focusHint;
@@ -103,7 +103,7 @@ public sealed class CarSelectionUI : MonoBehaviour
         confirm.ConfigureHold(ConfirmSeconds, false);
         confirm.PlayConfirmationSound = false;
         confirmFeedback = confirm.GetComponent<PedalButtonFeedback>();
-        pedalHint = Text(sheet, "PedalHint", "ペダルを離してから踏み込む", new Vector2(.724f, .132f), new Vector2(.976f, .154f),
+        pedalHint = Text(sheet, "PedalHint", "踏み込んでゲージを満たす", new Vector2(.724f, .132f), new Vector2(.976f, .154f),
             13f, TextAlignmentOptions.Center, tint: NeonUI.Cyan);
         controls = Text(sheet, "Controls", "ハンドルで車種切替 / ペダル長押しで決定",
             new Vector2(.238f, .043f), new Vector2(.70f, .109f), 17f, TextAlignmentOptions.Center, tint: new Color(.63f, .73f, .89f));
@@ -237,7 +237,7 @@ public sealed class CarSelectionUI : MonoBehaviour
         timer.Update(TimeRemaining, timeLimitSeconds);
         draftVehicle = committedVehicle; draftPaint = committedPaint;
         focus = Focus.Vehicle; backSelected = selectionLocked = pedalPressed = false;
-        confirmArmed = false; confirmHold = 0f; steeringLatched = true;
+        confirmHold = 0f; steeringLatched = true;
         confirmFeedback.SetConfirmed(false); backFeedback.SetConfirmed(false);
         foreach (Selectable control in titleRoot.GetComponentsInChildren<Selectable>(true))
         {
@@ -245,7 +245,7 @@ public sealed class CarSelectionUI : MonoBehaviour
         }
         EventSystem.current?.SetSelectedGameObject(null);
         sheet.gameObject.SetActive(true); showroom.SetVisible(true); sheet.SetAsLastSibling();
-        pedalHint.text = "ペダルを離してから踏み込む";
+        pedalHint.text = "踏み込んでゲージを満たす";
         for(int i=0;i<thumbnails.Count;i++)showroom.RenderThumbnail(catalog.vehicles[i],PlayerPaint,thumbnails[i]);
         if(Application.isPlaying)for(int i=0;i<bars.Length;i++)bars[i].anchorMax=new Vector2(0,1);
         Refresh(true); UpdateFeedback();
@@ -288,7 +288,7 @@ public sealed class CarSelectionUI : MonoBehaviour
         titleControls.Clear();
         if (sheet != null && EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null &&
             EventSystem.current.currentSelectedGameObject.transform.IsChildOf(sheet)) EventSystem.current.SetSelectedGameObject(null);
-        selectionLocked = pedalPressed = confirmArmed = false; confirmHold = 0f;
+        selectionLocked = pedalPressed = false; confirmHold = 0f;
     }
     public void ApplyToCar(GameObject car) => catalog.Apply(car, committedVehicle, PlayerPaint);
 
@@ -319,9 +319,9 @@ public sealed class CarSelectionUI : MonoBehaviour
                 focus = (Focus)(((int)focus + 1) % 2); backSelected = false;
                 UpdateFocus(); RaceSoundEffects.PlayForPlayer(RaceSoundCue.Select, player);
             }
-            confirmArmed = true; pedalPressed = false; confirmHold = 0f;
+            pedalPressed = false; confirmHold = 0f;
         }
-        else if (confirmArmed && input.pedal >= .8f)
+        else if (!float.IsInfinity(input.pedal) && input.pedal >= .8f)
         {
             pedalPressed = true; confirmHold += Mathf.Max(0f, dt);
             UpdateFeedback();
@@ -332,12 +332,12 @@ public sealed class CarSelectionUI : MonoBehaviour
             }
         }
         else confirmHold = 0f;
-        pedalHint.text = confirmArmed ? "踏み込んでゲージを満たす" : "ペダルを離してから踏み込む";
+        pedalHint.text = "踏み込んでゲージを満たす";
         UpdateFeedback();
     }
     private void ResetHold()
     {
-        confirmHold = 0f; pedalPressed = confirmArmed = false;
+        confirmHold = 0f; pedalPressed = false;
         if (confirmFeedback != null) UpdateFeedback();
     }
     private void UpdateFeedback()

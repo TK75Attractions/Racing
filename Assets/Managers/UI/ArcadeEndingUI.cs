@@ -10,7 +10,6 @@ public sealed class ArcadeEndingUI : MonoBehaviour
     private float visibleSeconds;
     private Action completed;
     private GameObject root;
-    private bool armed;
     private float held;
     private PedalButtonFeedback feedback;
     public bool IsVisible=>root!=null&&root.activeSelf;
@@ -31,12 +30,11 @@ public sealed class ArcadeEndingUI : MonoBehaviour
         }
         return ui;
     }
-    public void Show(Action done){completed=done;armed=false;held=0;visibleSeconds=0;ArcadeUI.Hide(transform,"Result","Title","OnPlay");root.SetActive(true);root.transform.SetAsLastSibling();}
+    public void Show(Action done){completed=done;held=0;visibleSeconds=0;ArcadeUI.Hide(transform,"Result","Title","OnPlay");root.SetActive(true);root.transform.SetAsLastSibling();}
     public void TickInput(float pedal,float dt)
     {
         if(!IsVisible)return;
-        if(Mathf.Abs(pedal)<=.05f)armed=true;
-        held=armed&&pedal>=.8f?held+Mathf.Max(0,dt):0;feedback.SetState(true,Mathf.Clamp01(held/.65f),ArcadeUI.For(transform).Primary);
+        held=!float.IsInfinity(pedal)&&pedal>=.8f?held+Mathf.Max(0,dt):0;feedback.SetState(true,Mathf.Clamp01(held/.65f),ArcadeUI.For(transform).Primary);
         if(held>=.65f)Finish();
     }
     public void TickTime(float dt)
@@ -44,6 +42,12 @@ public sealed class ArcadeEndingUI : MonoBehaviour
         if(!IsVisible)return;
         visibleSeconds+=Mathf.Max(0f,dt);
         if(visibleSeconds>=AutoReturnSeconds)Finish();
+    }
+    public void HideImmediate()
+    {
+        completed = null;
+        held = visibleSeconds = 0f;
+        if (root != null) root.SetActive(false);
     }
     private void Finish(){if(!IsVisible)return;root.SetActive(false);var done=completed;completed=null;done?.Invoke();}
 }

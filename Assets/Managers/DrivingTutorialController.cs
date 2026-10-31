@@ -83,7 +83,6 @@ public sealed class DrivingTutorialController : MonoBehaviour
         player.tires = player.car.GetComponentsInChildren<TireForce>();
         player.input = input.GetPlayerInputSource(i);
         player.driveGate = new PlayerDriveInputGate(player.input);
-        player.driveGate.SetBlocked(true);
         player.mover.SetInputSource(player.driveGate);
         // Lesson recovery provides a safe spawn for the current step instead of the race start.
         foreach (CarResetter resetter in player.car.GetComponentsInChildren<CarResetter>()) resetter.enabled = false;
@@ -111,9 +110,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
             DriveInputState input = player.input.CurrentState;
             bool resetPressed = player.input.IsConnected && input.resetPressed && !player.resetHeld;
             player.resetHeld = player.input.IsConnected && input.resetPressed;
-            // The pedal held to confirm a car must be released before it can accelerate the practice car.
-            if (player.driveGate.IsBlocked && player.input.IsConnected && Mathf.Abs(input.pedal) <= .05f)
-                player.driveGate.SetBlocked(false);
+            bool connected = player.input.IsConnected;
             Vector3 local = player.body.position - player.world.transform.position;
             float speed = Vector3.ProjectOnPlane(player.body.linearVelocity, Vector3.up).magnitude;
             float progress = DrivingTutorialRoad.NearestProgress(local);
@@ -125,7 +122,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
                 Recover(player);
                 speed = 0f;
             }
-            player.lesson.Tick(dt, player.input.IsConnected, input.pedal, input.steering, speed,
+            player.lesson.Tick(dt, connected, input.pedal, input.steering, speed,
                 Mathf.DeltaAngle(player.startYaw, player.car.transform.eulerAngles.y));
             // Pickup contact can complete a lesson between ticks. Remember the last announced
             // stage so that the final success cue is emitted once, just like the driving steps.

@@ -1,0 +1,7 @@
+HIGH_SPEED_DRIVE_PHYSICS_PASS: normal=180.0km/h; fast=300.0km/h; 2s=126.2/229.7km/h; live OFF=199.6km/h.
+QUICK_RACE_PLAYMODE_PASS: quick one-lap race; queued normal practice; independent no-tutorial two-lap start.
+Gauge range/reading and sticky speed-toggle ranking exclusion assertions passed.
+Core: 211 passed, 0 failed.
+UI/diagnostics/push: 86 passed, 0 failed, 1 optional browser test skipped.
+Statistics: 11 scenarios passed.
+Updater integration: 23 scenarios + 5 bridge API cases passed.

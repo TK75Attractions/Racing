@@ -34,7 +34,7 @@ public sealed class PlayerDriveInputGate : IDriveInputSource, IDriveSteeringCali
             if (IsBlocked) return DriveInputState.Neutral;
 
             DriveInputState state = source.CurrentState;
-            bool released = System.Math.Abs(state.pedal) <= .05f;
+            bool released = PedalRelease.IsReleased(state.pedal);
             if (released) (source as IDrivePedalReleaseObserver)?.PedalReleaseObserved();
             if (NeedsPedalRelease)
             {

@@ -24,7 +24,7 @@ namespace UnityEngine
         public static void Save() { }
     }
     public static class AudioListener { public static float volume; }
-    public static class Application { public static bool runInBackground; public static string streamingAssetsPath; }
+    public static class Application { public static bool runInBackground, isEditor; public static string streamingAssetsPath; }
     public static class Time { private static readonly Stopwatch Clock = Stopwatch.StartNew(); public static double realtimeSinceStartupAsDouble => Clock.Elapsed.TotalSeconds; public static float realtimeSinceStartup => (float)realtimeSinceStartupAsDouble; public static float time => realtimeSinceStartup; public static float unscaledTime => realtimeSinceStartup; }
     public static class Debug { public static void Log(object value) => Console.WriteLine(value); public static void LogWarning(object value) => Console.Error.WriteLine(value); public static void LogError(object value) => Console.Error.WriteLine(value); }
     public static class JsonUtility { public static string ToJson(object value) => new JavaScriptSerializer().Serialize(value); public static T FromJson<T>(string value) => new JavaScriptSerializer().Deserialize<T>(value); }
@@ -74,6 +74,7 @@ public class InputManager
     public void Bind() { if(SharedSerialInputSource!=null) SharedSerialInputSource.LineProcessed+=(status,line)=>SerialLineProcessed?.Invoke(status,line); }
 }
 public sealed class RaceOperatorUpdate {
+    public bool PrepareForLaunch(string requestId) => requestId == "verified-job";
     public bool Available => true;
     public bool Busy => false;
     public string Status => "Update ready";
@@ -88,6 +89,8 @@ public class Gmanager
     public RaceFeatureController Features = new RaceFeatureController();
     public bool IsMaintenanceActive { get; private set; }
     public bool MaintenanceAvailable=>true;
+    public bool WindowRepositionAvailable=>true;
+    public bool RepositionWindows(){Harness.MenuActions++;return true;}
     public bool SetMaintenance(bool active){IsMaintenanceActive=active;((InputManager)Harness.Components[typeof(InputManager)]).ClearDashboardInputs();return true;}
     public bool CanUseDashboardControls=>!IsMaintenanceActive;
     private readonly bool[] menus={false,false};

@@ -399,6 +399,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
 
     private void SetScreenVisibility(Gmanager.State state)
     {
+        // Screen changes also cancel the thank-you callback from the previous session.
+        GetComponent<ArcadeEndingUI>()?.HideImmediate();
         if (titleRoot != null)
         {
             titleRoot.SetActive(state == Gmanager.State.Title);
@@ -574,6 +576,10 @@ public sealed class ScreenTransitionController : MonoBehaviour
             return;
         }
 
+        bool quick = Gmanager.Control?.Features?.Settings.ActivePreset == RacePreset.Quick || Gmanager.Control?.Features?.Settings.ActivePreset == RacePreset.NoTutorial;
+        Transform button = titleButtonFeedback[playerIndex].transform;
+        button.Find("Label").GetComponent<TMP_Text>().text = quick ? "レースへ進む" : "練習へ進む";
+        button.Find("Caption").GetComponent<TMP_Text>().text = quick ? "RACE" : "PRACTICE";
         float amount = Mathf.Clamp01(value);
         Color accent = ArcadeUI.For(displayPlayerIndex).Primary;
         Color readyColor = ArcadeUI.For(displayPlayerIndex).Primary;
@@ -584,8 +590,8 @@ public sealed class ScreenTransitionController : MonoBehaviour
             var input = Gmanager.Control != null ? Gmanager.Control.IManager : null;
             string connection = input != null ? DriverInputNotice.Connection(input.GetPlayerInputSource(playerIndex)) : "";
             string prompt = connection.Length > 0 ? connection + "\n係員に知らせてね" : !armed
-                ? "ペダルを離して準備してください"
-                : ready ? "準備完了  /  相手の準備を待っています" : "長押しで練習へ進む / ペダルを踏み込む";
+                ? "コントローラーの接続を確認しています"
+                : ready ? "準備完了  /  相手の準備を待っています" : quick ? "長押しでレースへ進む / ペダルを踏み込む" : "長押しで練習へ進む / ペダルを踏み込む";
             if (titlePrompt.text != prompt) titlePrompt.text = prompt;
         }
     }

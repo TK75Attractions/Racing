@@ -26,6 +26,7 @@ public static class RacePlayerWindows
     private const string Library = "RaceWindows";
     [DllImport(Library)] private static extern int RaceWindows_Open(int screen, int width, int height);
     [DllImport(Library)] private static extern void RaceWindows_UpdateLayout();
+    [DllImport(Library)] private static extern int RaceWindows_Reposition();
     [DllImport(Library)] private static extern int RaceWindows_ExternalFullscreen();
     [DllImport(Library)] private static extern void RaceWindows_Size(out int width, out int height);
     [DllImport(Library)] private static extern int RaceWindows_CloseRequested();
@@ -71,6 +72,16 @@ public static class RacePlayerWindows
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
         if (UsesNativeWindow) RaceWindows_UpdateLayout();
 #endif
+    }
+    public static bool Reposition()
+    {
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+        if (UsesNativeWindow)
+            try { return RaceWindows_Reposition() != 0; }
+            catch (Exception error) when (error is DllNotFoundException || error is EntryPointNotFoundException)
+            { Debug.LogError("Window reposition plugin could not be loaded: " + error.Message); }
+#endif
+        return false;
     }
     public static bool ExternalFullscreenActive
     {

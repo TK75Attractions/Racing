@@ -84,6 +84,10 @@ public sealed class RaceFeatureController : MonoBehaviour
             if (GUILayout.Button("Start test race - P1 manual / P2 AUTO")) manager.StartAutodriveTestRace();
             if (GUILayout.Button("Start AUTO race - P1 AUTO vs P2 AUTO")) manager.StartAutodriveTestRace(true);
         }
+        GUILayout.Label("Race mode (queued for next match while playing)");
+        int raceModeIndex = Settings.SelectedPreset == RacePreset.Quick ? 1 : Settings.SelectedPreset == RacePreset.NoTutorial ? 2 : 0;
+        int selectedRaceModeIndex = GUILayout.SelectionGrid(raceModeIndex, new[]{"Standard / practice + 2 laps", "Quick / no practice + 1 lap", "No tutorial / 2 laps"}, 1);
+        if (selectedRaceModeIndex != raceModeIndex) SelectPreset(selectedRaceModeIndex == 1 ? RacePreset.Quick : selectedRaceModeIndex == 2 ? RacePreset.NoTutorial : RacePreset.Standard);
         if (manager?.BothPlayersAutodrive == true) GUILayout.Label("P1 AUTO vs P2 AUTO / excluded from daily ranking");
         GUILayout.Space(6);
         GUILayout.Label("Feature switches apply immediately (both players).");

@@ -45,7 +45,8 @@ let frameGeneration = 0;
 const frameUrls = [null, null];
 
 const dashboardPages = {
-  home: ['ホーム', 'レースと機器の状況を、ひと目で。', 'HOME'],
+  home: ['ホーム', '機器の接続・要確認事項・プレイヤーの復帰と入力を、ひと目で。', 'HOME'],
+  statistics: ['プレイ集計', '本日のプレイ人数とランキング、日別の人数を確認。', 'PLAY STATISTICS'],
   race: ['レース運営', '進行の操作、プレイヤー映像、順位をまとめて確認。', 'RACE OPERATIONS'],
   devices: ['機器・入力', '接続状態と、ハンドル・ペダルの反応を確認。', 'DEVICES & INPUT'],
   settings: ['ゲーム設定', '音量・出力先・レースルールを調整。', 'GAME SETTINGS'],
@@ -85,6 +86,7 @@ function showDashboardPage(page, focus = false) {
   if (changed) frameGeneration++;
   if (focus) $('page-title').focus({preventScroll:true});
   if (changed && page === 'race' && localMode) void refreshFrames();
+  if (page === 'statistics') void pollStatistics();
 }
 
 function renderHome(snapshot) {
@@ -96,7 +98,7 @@ function renderHome(snapshot) {
     const status = $('home-player-status-' + n);
     status.textContent = !snapshot ? '待機中' : progress ? labels[progress.state] || '状態確認中' : labels[snapshot.state] || '状態確認中';
     status.classList.toggle('active', !!snapshot && !!player?.connected);
-    const detail = progress?.step === 'Withdrawn' ? '途中棄権・相手の走行を待機' :
+    const detail = progress?.step === 'Results' ? '結果を表示中' : progress?.step === 'Spectating' ? '相手のゴールを待っています' : progress?.step === 'Withdrawn' ? '途中棄権・相手の走行を待機' :
       participant?.status === 'Finished' ? '完走' : participant?.status === 'DNF' ? '未完走' :
       progress?.step === 'Menu' ? '中断メニューを表示中' : snapshot ? details[progress?.state || snapshot.state] || '状態を確認中' : 'プレイヤーの状態を待っています';
     $('home-player-detail-' + n).textContent = [progress?.carName, detail].filter(Boolean).join(' · ');
@@ -240,6 +242,7 @@ function updateFlow(state) {
 function updateActions(snapshot, canControl) {
   let available = 0;
   for (const button of document.querySelectorAll('[data-action]')) {
+    if (button.dataset.action === 'start') button.textContent = ['Quick', 'NoTutorial'].includes(snapshot?.settings?.activePreset) ? '▶ レースを始める（練習なし）' : '▶ 練習を始める';
     const applicable = actionAvailable(button.dataset.action, snapshot);
     button.hidden = !applicable;
     button.disabled = !canControl || !applicable;
@@ -331,7 +334,7 @@ function renderParticipants(snapshot) {
       row.append(td); return td;
     };
     cell(`${entry.position} / ${count}`);
-    const auto=snapshot.settings?.bothPlayersAutodrive || entry.number===2&&snapshot.settings?.features?.some(feature=>feature.id==='PlayerTwoAutodrive'&&feature.enabled);
+    const auto=snapshot.settings?.features?.some(feature=>feature.id===(entry.number===1?'PlayerOneAutodrive':'PlayerTwoAutodrive')&&feature.enabled);
     cell(driverLabel(entry.number), entry.isCpu ? 'CPU' : auto ? '自動運転' : '人間');
     const status = cell(drivingLabels[entry.status] || '状態不明', entry.contactGrace ? '接触保護中' : null);
     if (entry.status === 'Finished') status.className = 'participant-finished';
@@ -571,7 +574,9 @@ function isTelemetryEntry(entry) {
     /\*[0-9A-F]{4}$/.test(entry.line) && rgpCrc(entry.line.slice(1, -5)) === entry.line.slice(-4);
 }
 function renderTelemetry(entry) {
-  const target = $('latest-tel');
+  for (const id of ['latest-tel', 'home-inputs']) renderTelemetryTarget(entry, $(id));
+}
+function renderTelemetryTarget(entry, target) {
   if (!entry || !isTelemetryEntry(entry)) { target.textContent = 'ペダル・ハンドル入力を待っています。'; return; }
   const values = entry.line.slice(1, -5).split(',').slice(3, 9);
   if (values.length !== 6 || values.some((v, i) => v.trim() === '' || !Number.isFinite(Number(v)) || (i % 3 === 0 ? Math.abs(Number(v)) > 3600 : Number(v) < 0 || Number(v) > 1))) { target.textContent = '⚠ 受信した入力値が不正です。機器と接続を確認してください。'; return; }
@@ -649,8 +654,8 @@ function renderLog(lines) {
 function renderPlayerProgress(snapshot) {
   const steps = { Vehicle: '車種を選択中', Paint: 'カラーを選択中', Confirm: '決定操作を待機中', Confirmed: '選択確定・画面切替中',
     Accelerate: 'アクセルを踏んで加速', Steer: 'ハンドルを切って旋回', Stop: 'ペダルを離して停止',
-    Driving: 'レースを走行中', Menu: '中断メニューを表示中', Withdrawn: '途中棄権・相手の走行を待機', Spectating: '相手の走行を観戦中', Finished: '完走・ゴール演出中', DNF: '未完走', Returned: 'タイトルへ復帰済み・相手の復帰を待機',
-    Complete: '練習完了・相手の完了を待機', TimedOut: '制限時間終了・相手の完了を待機', Waiting: '練習の開始を待機' };
+    Results: '結果を表示中', Driving: 'レースを走行中', Menu: '中断メニューを表示中', Withdrawn: '途中棄権・相手の走行を待機', Spectating: '相手の走行を観戦中', Finished: '完走・ゴール演出中', DNF: '未完走', Returned: 'タイトルへ復帰済み・相手の復帰を待機',
+    Ready: '開始準備完了・相手の開始操作を待機', Complete: '練習完了・相手の完了を待機', TimedOut: '制限時間終了・相手の完了を待機', Waiting: '練習の開始を待機' };
   const players = snapshot?.playerProgress || [1, 2].map(number => ({number}));
   $('player-progress').replaceChildren(...players.map(player => {
     const card = document.createElement('article'); card.className = 'progress-card';
@@ -1073,13 +1078,24 @@ function renderFeatureSettings(settings) {
     $('settings-features').replaceChildren(...rows);
   }
   for (const feature of features) featureElements.get(feature.id).checked = !!feature.enabled;
+  $('settings-high-speed-unavailable').hidden = !settings?.featuresAvailable || features.some(feature => feature.id === 'HighSpeedDrive');
   $('settings-feature-count').textContent = features.length ?
     `${features.filter(feature => feature.enabled).length} / ${features.length} 項目がON` :
-    'F8設定を取得できません。Unity の接続・バージョンを確認してください。';
+    operatorStatus?.busy ? 'ゲーム設定は更新後に再取得します。ビルドは継続中です。' : 'F8設定を取得できません。Unity の接続・バージョンを確認してください。';
   $('settings-rules').textContent = settings?.featuresAvailable ?
-    `通常レース / ${latestSnapshot?.goalLap ?? '—'}周 / 制限時間180秒` : '';
+    `${settings.activePreset === 'Quick' ? 'クイックレース（練習なし）' : settings.activePreset === 'NoTutorial' ? '通常2周（練習なし）' : '通常レース（練習あり）'} / ${latestSnapshot?.goalLap ?? '—'}周 / 制限時間180秒` : '';
   $('settings-rule-help').textContent = settings?.featuresAvailable ?
+    settings.activePreset === 'Quick' ? '両プレイヤーの開始操作後、練習とコース紹介を省略してレースを開始します。結果は15秒で退出案内へ進みます。' :
+    settings.activePreset === 'NoTutorial' ? '両プレイヤーの開始操作後、練習を省略して2周レースへ進みます。コース紹介は通常どおりです。' :
     '練習開始からレース開始まで最大60秒。結果は15秒後に退出案内へ切り替わります。' : '';
+  const modes = { Standard: '通常（練習あり・2周）', Quick: 'クイック（練習なし・1周）', NoTutorial: 'チュートリアルなし（2周）' };
+  const mode = $('settings-raceMode');
+  const supportedModes = Array.isArray(settings?.raceModes) ? settings.raceModes : ['Standard', 'Quick'];
+  for (const option of Array.from(mode.options || [])) option.disabled = !supportedModes.includes(option.value);
+  if (document.activeElement !== mode) mode.value = settings?.selectedPreset ?? 'Standard';
+  $('settings-race-mode-status').textContent = !settings?.raceModeAvailable ? 'ゲームの種類の選択には対応したRaceアプリへ更新してください。' :
+    settings.hasQueuedPreset ? `現在: ${modes[settings.activePreset]}。次の試合から ${modes[settings.selectedPreset]} に切り替わります。` :
+    `選択中: ${modes[settings.selectedPreset]}。選択はアプリ終了まで保持します。`;
 
 }
 
@@ -1099,11 +1115,107 @@ function renderMaintenance(settings) {
   $('maintenance-stop').hidden = !active;
 }
 
+let statisticsData = null, statisticsPolling = false, statisticsSequence = 0;
+const statisticsLimits = new Map();
+function statisticsCount(value) { return Number.isFinite(value) && value >= 0 ? Math.floor(value).toLocaleString('ja-JP') : '—'; }
+function statisticsTime(value) {
+  if (!Number.isFinite(value) || value <= 0) return '—';
+  const ms = Math.floor(value);
+  return `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}.${String(ms % 1000).padStart(3, '0')}`;
+}
+function statisticsCell(value, tag = 'td') { const cell = document.createElement(tag); cell.textContent = value; return cell; }
+function renderStatistics(data, message = '') {
+  statisticsData = data;
+  $('statistics-today-plays').textContent = statisticsCount(data?.todayPlays);
+  $('statistics-today-ranked').textContent = statisticsCount(data?.todayRanked);
+  $('statistics-day').textContent = data?.day ? data.day + ' · 端末の現地日付' : '日付を確認できません';
+  $('statistics-status').textContent = message || (data ? '保存済みのプレイ記録を表示しています。10秒ごとに更新します。' : '集計データを取得できません。常駐Dashboardへの接続を確認してください。');
+  const warnings = Array.isArray(data?.warnings) ? data.warnings : [];
+  $('statistics-warnings').hidden = !warnings.length;
+  $('statistics-warnings').replaceChildren(...warnings.map(value => statisticsCell(value, 'li')));
+  const boards = Array.isArray(data?.boards) ? data.boards : [];
+  const sections = boards.map(board => {
+    const section = document.createElement('section'); section.className = 'statistics-board';
+    const heading = document.createElement('h3'); heading.textContent = board.label || '保存済みコース'; section.append(heading);
+    if (!board.goalLaps) section.append(statisticsCell('過去の記録のため、周回数などの条件名は保存されていません。', 'p'));
+    const rows = Array.isArray(board.rows) ? board.rows : [];
+    if (!rows.length) { section.append(statisticsCell('この条件の完走記録はまだありません。', 'p')); return section; }
+    section.append(statisticsCell('本日のベスト ' + statisticsTime(rows[0].milliseconds), 'p'));
+    const wrap = document.createElement('div'); wrap.className = 'table-wrap';
+    const table = document.createElement('table'); const head = document.createElement('thead');
+    const header = document.createElement('tr'); ['順位', 'プレイヤー', '総タイム', '完走時刻'].forEach(label => header.append(statisticsCell(label, 'th')));
+    head.append(header); const body = document.createElement('tbody');
+    const limit = statisticsLimits.get(board.id) || 20;
+    rows.slice(0, limit).forEach(entry => {
+      const row = document.createElement('tr');
+      row.append(statisticsCell(statisticsCount(entry.rank) + '位'), statisticsCell(`第${statisticsCount(entry.playNumber)}レース P${entry.playerNumber}`), statisticsCell(statisticsTime(entry.milliseconds)), statisticsCell(entry.finishedAt || '—'));
+      body.append(row);
+    });
+    table.append(head, body); wrap.append(table); section.append(wrap);
+    if (rows.length > limit) { const more = document.createElement('button'); more.type = 'button'; more.dataset.statisticsMore = board.id; more.textContent = `さらに20件表示（全${rows.length}件）`; section.append(more); }
+    return section;
+  });
+  $('statistics-rankings').replaceChildren(...(sections.length ? sections : [statisticsCell(data ? '本日のランキング記録はまだありません。' : 'ランキングを取得できません。', 'p')]));
+  const period = $('statistics-period').value || '30';
+  const cutoff = data?.day && period !== 'all' ? Date.parse(data.day + 'T00:00:00Z') - (Number(period) - 1) * 86400000 : -Infinity;
+  const days = (Array.isArray(data?.days) ? data.days : []).filter(day => Date.parse(day.day + 'T00:00:00Z') >= cutoff);
+  const maximum = Math.max(1, ...days.map(day => Number.isFinite(day.plays) ? day.plays : 0));
+  $('statistics-days').replaceChildren(...days.map(day => {
+    const row = document.createElement('tr');
+    const barCell = document.createElement('td'); const meter = document.createElement('meter'); meter.min = 0; meter.max = maximum; meter.value = day.plays; meter.setAttribute('aria-label', day.day + ': ' + statisticsCount(day.plays) + '人'); barCell.append(meter);
+    row.append(statisticsCell(day.day), statisticsCell(statisticsCount(day.plays) + '人'), barCell, statisticsCell(day.legacyFinishes > 0 ? `開始記録 ${statisticsCount(day.starts)}人 ＋ 過去の完走 ${statisticsCount(day.legacyFinishes)}人` : day.starts > 0 ? 'プレイ開始の記録' : '記録なし')); return row;
+  }));
+  $('statistics-history-note').textContent = data ? `${days.length}日分の保存済み履歴を表示しています。履歴のない日は人数を推定していません。` : '履歴を取得できません。';
+}
+function showMoreStatistics(board) { statisticsLimits.set(board, (statisticsLimits.get(board) || 20) + 20); renderStatistics(statisticsData); }
+async function pollStatistics() {
+  if (statisticsPolling) return;
+  if (!localMode) { renderStatistics(null, 'プレイ集計は運営用の常駐Dashboardから確認してください。'); return; }
+  const sequence = ++statisticsSequence; statisticsPolling = true; $('statistics-refresh').disabled = true;
+  try {
+    const response = await apiFetch('/api/statistics', { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) throw new Error('statistics');
+    const data = await response.json();
+    if (sequence === statisticsSequence) renderStatistics(data);
+  } catch {
+    renderStatistics(statisticsData, statisticsData ? '集計の更新に失敗しました。最後に取得できた記録を表示しています。' : '集計を取得できません。常駐Dashboardを更新して接続を確認してください。');
+  } finally { statisticsPolling = false; $('statistics-refresh').disabled = false; }
+}
+
 function renderOperatorUpdate() {
   if (!operatorStatus || !localMode) return;
   $('operator-update-status').textContent = operatorStatus.message || '更新状況を確認しています。';
   $('operator-update-log').textContent = operatorStatus.logFolder ? 'ログ: ' + operatorStatus.logFolder : '';
+  const progress = operatorStatus.progress;
+  $('operator-build-progress').hidden = !progress;
+  if (progress) {
+    const total = Number.isFinite(progress.totalSteps) && progress.totalSteps > 0 ? progress.totalSteps : 6;
+    const done = Number.isFinite(progress.completedSteps) ? Math.max(0, Math.min(total, progress.completedSteps)) : 0;
+    $('operator-progress-bar').max = total; $('operator-progress-bar').value = done;
+    $('operator-progress-label').textContent = `工程 ${done} / ${total} 完了 · ${progress.stage || '確認中'}`;
+    const cache = progress.cache === 'reused' ? '前回のキャッシュを再利用' : progress.cache === 'seeded' ? 'メインプロジェクトのキャッシュを再利用' : progress.cache === 'cold' ? '初回読み込み（次回からキャッシュを再利用）' : '';
+    $('operator-build-task').textContent = [progress.task, cache].filter(Boolean).join(' · ');
+    $('operator-build-activity').hidden = !operatorStatus.busy || operatorStatus.phase !== 'building';
+    const seconds = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+    const elapsed = seconds(progress.elapsedSeconds);
+    $('operator-build-timing').textContent = `経過 ${Math.floor(elapsed / 60)}分${elapsed % 60}秒 · ログ更新 ${seconds(progress.quietSeconds)}秒前`;
+    $('operator-build-quiet').hidden = progress.logQuiet !== true;
+    $('operator-build-quiet').textContent = progress.logQuiet ? 'しばらくログ更新がありません。長時間のコンパイル中の可能性があります。必要なら更新をキャンセルできます。' : '';
+    const log = $('operator-build-log');
+    const previousTop = log.scrollTop;
+    const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 35;
+    const lines = Array.isArray(progress.logLines) ? progress.logLines.filter(line => typeof line === 'string') : [];
+    const text = lines.length ? lines.join('\n') : 'ログの出力を待っています。';
+    if (log.textContent !== text) { log.textContent = text; log.scrollTop = atBottom ? log.scrollHeight : previousTop; }
+  }
   $('operator-update').disabled = operatorBusy || !operatorStatus.canControl || !operatorStatus.available || operatorStatus.busy;
+  const cancel = $('operator-cancel');
+  cancel.hidden = !operatorStatus.busy;
+  cancel.disabled = operatorBusy || !operatorStatus.canControl || !operatorStatus.canCancel;
+  cancel.textContent = operatorStatus.phase === 'cancelling' ? 'キャンセル処理中…' : operatorStatus.canCancel ? (operatorStatus.phase === 'waiting-race' ? '更新をキャンセル' : 'ビルドをキャンセル') : !operatorStatus.phase ? '更新サービスの更新が必要です' : '切り替え中はキャンセルできません';
+  if (!settingsBusy && (operatorStatus.busy || ['failed', 'cancelled'].includes(operatorStatus.phase)))
+    $('settings-status').textContent = operatorStatus.message;
+
 }
 async function pollOperatorUpdate() {
   if (!localMode || operatorPolling) return;
@@ -1124,12 +1236,34 @@ async function submitOperatorUpdate(control) {
     const response = await apiFetch('/api/operator-update', { method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({id}), signal:AbortSignal.timeout(12000) });
     const result = await response.json();
-    operatorStatus = {...operatorStatus, message:result.message, logFolder:result.logFolder, available:false};
+    operatorStatus = {...operatorStatus, message:result.message, logFolder:result.logFolder, requestId:result.requestId, progress:null, available:false, busy:!!result.ok, phase:result.ok?'fetching':'failed'};
     renderOperatorUpdate();
     $('settings-status').textContent = result.message;
   } catch {
     $('settings-status').textContent = '更新開始を確認できません。進行状況とログを確認してください。';
   } finally { operatorBusy = false; control.blur(); await pollOperatorUpdate(); }
+}
+
+async function cancelOperatorUpdate() {
+  if (operatorBusy || !operatorStatus?.canControl || !operatorStatus.canCancel || !operatorStatus.requestId) return;
+  const requestId = operatorStatus.requestId;
+  operatorBusy = true; renderOperatorUpdate();
+  try {
+    const response = await apiFetch('/api/operator-update', { method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:newRequestId(),command:'cancel',requestId}), signal:AbortSignal.timeout(12000) });
+    const result = await response.json();
+    if (operatorStatus?.requestId !== requestId) return;
+    operatorStatus = {...operatorStatus,message:result.message,canCancel:false,phase:result.ok?'cancelling':operatorStatus.phase};
+    renderOperatorUpdate();
+    $('settings-status').textContent = result.message;
+  } catch {
+    $('settings-status').textContent = 'キャンセルの結果を確認できません。最新の進行状況を確認してください。';
+  } finally { operatorBusy = false; await pollOperatorUpdate(); }
+}
+function unavailableSettingsMessage() {
+  if (operatorStatus?.busy || ['failed','cancelled'].includes(operatorStatus?.phase)) return operatorStatus.message;
+  if (operatorStatus?.phase === 'completed') return '新しいRaceの接続を待っています。更新結果とログは「ゲームの更新」で確認できます。';
+  return '設定を取得できません。Unity の接続・バージョンを確認してください。';
 }
 
 function renderSettings(settings, canControl) {
@@ -1146,13 +1280,18 @@ function renderSettings(settings, canControl) {
     if (['feature', 'allFeaturesOff'].includes(command)) available = !!settings?.featuresAvailable;
     if (command === 'updateAndRun') available = settings?.updateAvailable === true && settings?.updateBusy !== true;
     if (command === 'maintenance') available = settings?.maintenanceAvailable === true;
+    if (command === 'repositionWindows') available = settings?.windowRepositionAvailable === true;
     if (command === 'testRace') available = !!settings?.canStartTestRace;
+    if (command === 'raceMode') available = settings?.raceModeAvailable === true;
     if (command === 'outputDelay') available = Array.isArray(settings?.outputDelayMs);
     if (command === 'device') available = !!settings?.outputAvailable?.[Number(control.dataset.settingArg)];
     if (command === 'refreshDevices') available = !!settings?.audioRefreshAvailable;
     control.disabled = !enabled || !available;
   });
   renderOperatorUpdate();
+  $('settings-reposition-note').textContent = settings?.windowRepositionAvailable === true ?
+    'P1・P2を割り当て済みの外部ディスプレイ、観戦画面を起動時のディスプレイへ戻し、全画面で表示します。未接続の画面は再接続時に復帰します。' :
+    '再配置には対応したMac版Raceアプリ（Metal）を起動してください。初回配置には独立した外部ディスプレイ2台が必要です。';
   if (settingsBusy) return;
   for (const name of ['master', 'bgm', 'engine', 'effects', 'constantPedal']) {
     const control = $('settings-' + name);
@@ -1186,7 +1325,7 @@ function renderSettings(settings, canControl) {
     $('settings-output-' + player + '-status').textContent = settings?.outputStatus?.[player] ?? '未接続';
   }
   if (!settingsBusy && (!settings || !canControl || !localMode))
-    $('settings-status').textContent = !settings ? '設定を取得できません。Unity の接続・バージョンを確認してください。' :
+    $('settings-status').textContent = !settings ? unavailableSettingsMessage() :
       !localMode ? 'この設定はローカルまたはTailscaleの管理画面で操作できます。' : '状態更新待ち、または閲覧専用のため変更できません。';
   else if (!settingsBusy && /取得できません|閲覧専用|接続を待|管理画面で操作/.test($('settings-status').textContent))
     $('settings-status').textContent = '変更はゲームへ即時反映されます。';
@@ -1202,7 +1341,7 @@ async function submitSetting(control) {
   else if (command === 'outputDelay') args = [control.dataset.settingArg, String(Number(control.value))];
   else if (command === 'device') args = [control.dataset.settingArg, control.value];
   else if (command === 'testRace') args = control.dataset.settingArg === 'both' ? ['both'] : [];
-  else if (['refreshDevices', 'allFeaturesOff', 'updateAndRun'].includes(command)) args = [];
+  else if (['refreshDevices', 'allFeaturesOff', 'updateAndRun', 'repositionWindows'].includes(command)) args = [];
   else if (command === 'constantPedal') args = [String(Number(control.value) / 100)];
   else args = [control.type === 'checkbox' ? String(control.checked) : control.value];
   const requestedSession = latestSnapshot.sessionId;
@@ -1236,7 +1375,8 @@ async function submitSetting(control) {
     // Release focused controls so the acknowledged Unity values can replace drafts.
     control.blur();
     renderSettings(connected ? latestSnapshot?.settings : null, connected && latestCanControl);
-    $('settings-status').textContent = result?.ok ? (command === 'maintenance' ? (args[0] === 'true' ? '全ゲーム画面をメンテナンス表示にしました。' : 'メンテナンスを解除しました。') : command === 'testRace' ? 'テストレースを開始しました。' : '設定を反映しました。') : result ?
+    $('settings-status').textContent = result?.ok ? (command === 'maintenance' ? (args[0] === 'true' ? '全ゲーム画面をメンテナンス表示にしました。' : 'メンテナンスを解除しました。') : command === 'testRace' ? 'テストレースを開始しました。' : command === 'repositionWindows' ? 'ウィンドウを既定のディスプレイへ全画面で再配置しました。未接続の画面は再接続時に復帰します。' : '設定を反映しました。') : result ?
+      result.reason === 'window_layout_unavailable' ? '再配置できませんでした。外部ディスプレイ2台の接続とRaceアプリのバージョンを確認してください。' :
       result.reason === 'audio_unavailable' ? '出力機器を開けませんでした。接続を確認して再検出してください。' :
       command === 'updateAndRun' && result.reason && !['state_changed','settings_changed'].includes(result.reason) ? result.reason :
       command === 'updateAndRun' ? result.settings?.updateStatus ?? 'ゲーム状態が変わりました。タイトル・結果・メンテナンス画面で実行してください。' :
@@ -1379,8 +1519,10 @@ async function sendKeyboardMenu(command, player) {
     try { const response = await apiFetch('/api/command/' + request.id, {signal:AbortSignal.timeout(2000)});
       if (response.ok) result = await response.json(); } catch { }
   }
-  $('keyboard-menu-status').textContent = result?.ok ? (command === 'recover' ? '車両をコースへ復帰しました。' : 'メニュー操作を実行しました。') : result ?
+  const message = result?.ok ? (command === 'recover' ? '車両をコースへ復帰しました。' : 'メニュー操作を実行しました。') : result ?
     '現在の状態では操作できません。ゲーム画面を確認してください。' : '結果を確認できません。操作は再送していません。';
+  $('keyboard-menu-status').textContent = message;
+  if (command === 'recover') $('home-recovery-status').textContent = `P${player + 1}：${message}`;
 }
 
 document.querySelectorAll('[data-action]').forEach((button) => {
@@ -1465,6 +1607,13 @@ if (localMode) {
   import('./remote.js').then(({ startRemote }) => startRemote({ render, setConnection }))
     .catch(() => { $('remote-status').textContent = '遠隔監視の読み込みに失敗しました。ページを再読み込みしてください。'; });
 }
+
+$('statistics-refresh').addEventListener('click', () => void pollStatistics());
+$('statistics-period').addEventListener('change', () => renderStatistics(statisticsData));
+$('statistics-rankings').addEventListener('click', event => { if (event.target.dataset.statisticsMore) showMoreStatistics(event.target.dataset.statisticsMore); });
+setInterval(() => { if (activePage === 'statistics') void pollStatistics(); }, 10000);
+
+$('operator-cancel').addEventListener('click', () => void cancelOperatorUpdate());
 
 document.querySelectorAll('[data-setting]').forEach(control => {
   control.addEventListener(control.tagName === 'BUTTON' ? 'click' : 'change', () => void submitSetting(control));
