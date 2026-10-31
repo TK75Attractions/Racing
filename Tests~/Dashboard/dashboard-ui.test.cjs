@@ -1039,3 +1039,11 @@ test('High-speed checkbox submits independently of the selected race mode and re
   assert.equal(checkbox.checked,true);assert.equal(checkbox.disabled,true);
   ui.render({...base,settings:f8Settings});assert.equal(ui.elements.get('settings-high-speed-unavailable').hidden,false);
 });
+
+
+test('Build progress distinguishes a main-project cache copy from a dedicated warm cache',()=>{
+  const ui=fixture();
+  vm.runInContext("operatorStatus={busy:true,phase:'building',progress:{completedSteps:3,totalSteps:6,cache:'seeded',task:'Assets/Track.fbx',logLines:[]}};renderOperatorUpdate();",ui.context);
+  assert.match(ui.elements.get('operator-build-task').textContent,/メインプロジェクトのキャッシュを再利用/);
+  assert.doesNotMatch(ui.elements.get('operator-build-task').textContent,/初回読み込み/);
+});

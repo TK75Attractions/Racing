@@ -1193,7 +1193,7 @@ function renderOperatorUpdate() {
     const done = Number.isFinite(progress.completedSteps) ? Math.max(0, Math.min(total, progress.completedSteps)) : 0;
     $('operator-progress-bar').max = total; $('operator-progress-bar').value = done;
     $('operator-progress-label').textContent = `工程 ${done} / ${total} 完了 · ${progress.stage || '確認中'}`;
-    const cache = progress.cache === 'reused' ? '前回のキャッシュを再利用' : progress.cache === 'cold' ? '初回読み込み（次回からキャッシュを再利用）' : '';
+    const cache = progress.cache === 'reused' ? '前回のキャッシュを再利用' : progress.cache === 'seeded' ? 'メインプロジェクトのキャッシュを再利用' : progress.cache === 'cold' ? '初回読み込み（次回からキャッシュを再利用）' : '';
     $('operator-build-task').textContent = [progress.task, cache].filter(Boolean).join(' · ');
     $('operator-build-activity').hidden = !operatorStatus.busy || operatorStatus.phase !== 'building';
     const seconds = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
