@@ -885,3 +885,47 @@ test('Window reposition submits a versioned command without arguments and report
   assert.deepEqual(sent,[{action:'settings',command:'repositionWindows',args:[],settingsRevision:3}]);
   assert.match(ui.elements.get('settings-status').textContent,/外部ディスプレイ2台/);
 });
+
+
+test('Race mode selection reports queued rules without changing the current race',()=>{
+  const ui=fixture();
+  ui.render({...base,goalLap:2,settings:{featuresAvailable:true,raceModeAvailable:true,activePreset:'Standard',selectedPreset:'Quick',hasQueuedPreset:true}},{canControl:true});
+  assert.equal(ui.elements.get('settings-raceMode').value,'Quick');
+  assert.equal(ui.elements.get('settings-raceMode').disabled,false);
+  assert.match(ui.elements.get('settings-race-mode-status').textContent,/次の試合.*クイック/);
+  assert.match(ui.elements.get('settings-rules').textContent,/通常レース.*2周/);
+  ui.render({...base,goalLap:1,settings:{featuresAvailable:true,raceModeAvailable:true,activePreset:'Quick',selectedPreset:'Quick'}},{canControl:true});
+  assert.match(ui.elements.get('settings-rules').textContent,/クイック.*1周/);
+  assert.match(ui.elements.get('settings-rule-help').textContent,/練習とコース紹介を省略/);
+  ui.render({...base,settings:{}},{canControl:true});assert.equal(ui.elements.get('settings-raceMode').disabled,true);
+  ui.render({...base,settings:{raceModeAvailable:true}},{canControl:false});assert.equal(ui.elements.get('settings-raceMode').disabled,true);
+});
+
+test('Race mode submits a versioned selection',async()=>{
+  const ui=fixture(),sent=[];
+  ui.context.captureMode=(action,payload)=>sent.push({action,...JSON.parse(JSON.stringify(payload))});
+  vm.runInContext("liveController={command:async(action,payload)=>{captureMode(action,payload);return {ok:true};}}",ui.context);
+  ui.render({...base,sessionId:'s',settingsRevision:7,settings:{raceModeAvailable:true}});
+  const control=ui.elements.get('settings-raceMode');control.value='Quick';control.blur=()=>{};
+  await ui.context.submitSetting(control);
+  assert.deepEqual(sent,[{action:'settings',command:'raceMode',args:['Quick'],settingsRevision:7}]);
+});
+
+test('A built update waiting for the match remains cancellable',()=>{
+  const ui=fixture();
+  vm.runInContext("operatorStatus={available:false,busy:true,canControl:true,canCancel:true,phase:'waiting-race',message:'現在の試合終了を待っています。'};renderOperatorUpdate();",ui.context);
+  assert.equal(ui.elements.get('operator-cancel').disabled,false);
+  assert.equal(ui.elements.get('operator-cancel').hidden,false);
+  assert.equal(ui.elements.get('operator-cancel').textContent,'更新をキャンセル');
+  assert.match(ui.elements.get('operator-update-status').textContent,/試合終了/);
+});
+
+
+test('Quick mode offers a race start and shows a ready player waiting for the other',()=>{
+  const ui=fixture();
+  ui.render({...base,state:'Title',settings:{activePreset:'Quick'},playerProgress:[{number:1,state:'Title',step:'Ready'}]});
+  assert.match(ui.buttons.find(button=>button.dataset.action==='start').textContent,/レースを始める.*練習なし/);
+  assert.match(ui.elements.get('player-progress').textContent,/開始準備完了・相手の開始操作を待機/);
+  ui.render({...base,state:'Title',settings:{activePreset:'Standard'}});
+  assert.match(ui.buttons.find(button=>button.dataset.action==='start').textContent,/練習を始める/);
+});

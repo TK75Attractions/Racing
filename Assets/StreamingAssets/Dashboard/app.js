@@ -240,6 +240,7 @@ function updateFlow(state) {
 function updateActions(snapshot, canControl) {
   let available = 0;
   for (const button of document.querySelectorAll('[data-action]')) {
+    if (button.dataset.action === 'start') button.textContent = snapshot?.settings?.activePreset === 'Quick' ? '▶ レースを始める（練習なし）' : '▶ 練習を始める';
     const applicable = actionAvailable(button.dataset.action, snapshot);
     button.hidden = !applicable;
     button.disabled = !canControl || !applicable;
@@ -652,7 +653,7 @@ function renderPlayerProgress(snapshot) {
   const steps = { Vehicle: '車種を選択中', Paint: 'カラーを選択中', Confirm: '決定操作を待機中', Confirmed: '選択確定・画面切替中',
     Accelerate: 'アクセルを踏んで加速', Steer: 'ハンドルを切って旋回', Stop: 'ペダルを離して停止',
     Results: '結果を表示中', Driving: 'レースを走行中', Menu: '中断メニューを表示中', Withdrawn: '途中棄権・相手の走行を待機', Spectating: '相手の走行を観戦中', Finished: '完走・ゴール演出中', DNF: '未完走', Returned: 'タイトルへ復帰済み・相手の復帰を待機',
-    Complete: '練習完了・相手の完了を待機', TimedOut: '制限時間終了・相手の完了を待機', Waiting: '練習の開始を待機' };
+    Ready: '開始準備完了・相手の開始操作を待機', Complete: '練習完了・相手の完了を待機', TimedOut: '制限時間終了・相手の完了を待機', Waiting: '練習の開始を待機' };
   const players = snapshot?.playerProgress || [1, 2].map(number => ({number}));
   $('player-progress').replaceChildren(...players.map(player => {
     const card = document.createElement('article'); card.className = 'progress-card';
@@ -1079,9 +1080,16 @@ function renderFeatureSettings(settings) {
     `${features.filter(feature => feature.enabled).length} / ${features.length} 項目がON` :
     operatorStatus?.busy ? 'ゲーム設定は更新後に再取得します。ビルドは継続中です。' : 'F8設定を取得できません。Unity の接続・バージョンを確認してください。';
   $('settings-rules').textContent = settings?.featuresAvailable ?
-    `通常レース / ${latestSnapshot?.goalLap ?? '—'}周 / 制限時間180秒` : '';
+    `${settings.activePreset === 'Quick' ? 'クイックレース（練習なし）' : '通常レース（練習あり）'} / ${latestSnapshot?.goalLap ?? '—'}周 / 制限時間180秒` : '';
   $('settings-rule-help').textContent = settings?.featuresAvailable ?
+    settings.activePreset === 'Quick' ? '両プレイヤーの開始操作後、練習とコース紹介を省略してレースを開始します。結果は15秒で退出案内へ進みます。' :
     '練習開始からレース開始まで最大60秒。結果は15秒後に退出案内へ切り替わります。' : '';
+  const modes = { Standard: '通常（練習あり・2周）', Quick: 'クイック（練習なし・1周）' };
+  const mode = $('settings-raceMode');
+  if (document.activeElement !== mode) mode.value = settings?.selectedPreset ?? 'Standard';
+  $('settings-race-mode-status').textContent = !settings?.raceModeAvailable ? 'ゲームの種類の選択には対応したRaceアプリへ更新してください。' :
+    settings.hasQueuedPreset ? `現在: ${modes[settings.activePreset]}。次の試合から ${modes[settings.selectedPreset]} に切り替わります。` :
+    `選択中: ${modes[settings.selectedPreset]}。選択はアプリ終了まで保持します。`;
 
 }
 
@@ -1109,7 +1117,7 @@ function renderOperatorUpdate() {
   const cancel = $('operator-cancel');
   cancel.hidden = !operatorStatus.busy;
   cancel.disabled = operatorBusy || !operatorStatus.canControl || !operatorStatus.canCancel;
-  cancel.textContent = operatorStatus.phase === 'cancelling' ? 'キャンセル処理中…' : operatorStatus.canCancel ? 'ビルドをキャンセル' : !operatorStatus.phase ? '更新サービスの更新が必要です' : '切り替え中はキャンセルできません';
+  cancel.textContent = operatorStatus.phase === 'cancelling' ? 'キャンセル処理中…' : operatorStatus.canCancel ? (operatorStatus.phase === 'waiting-race' ? '更新をキャンセル' : 'ビルドをキャンセル') : !operatorStatus.phase ? '更新サービスの更新が必要です' : '切り替え中はキャンセルできません';
   if (!settingsBusy && (operatorStatus.busy || ['failed', 'cancelled'].includes(operatorStatus.phase)))
     $('settings-status').textContent = operatorStatus.message;
 
@@ -1179,6 +1187,7 @@ function renderSettings(settings, canControl) {
     if (command === 'maintenance') available = settings?.maintenanceAvailable === true;
     if (command === 'repositionWindows') available = settings?.windowRepositionAvailable === true;
     if (command === 'testRace') available = !!settings?.canStartTestRace;
+    if (command === 'raceMode') available = settings?.raceModeAvailable === true;
     if (command === 'outputDelay') available = Array.isArray(settings?.outputDelayMs);
     if (command === 'device') available = !!settings?.outputAvailable?.[Number(control.dataset.settingArg)];
     if (command === 'refreshDevices') available = !!settings?.audioRefreshAvailable;

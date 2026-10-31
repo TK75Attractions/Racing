@@ -114,6 +114,7 @@
             </fieldset>
 
 
+            <fieldset><legend>ゲームの種類</legend><label for="settings-raceMode">次に遊ぶゲーム</label><select id="settings-raceMode" data-setting="raceMode" disabled><option value="Standard">通常（チュートリアルあり・2周）</option><option value="Quick">クイック（チュートリアルなし・1周）</option></select><p id="settings-race-mode-status" class="control-note">ゲーム設定の接続を待っています。</p></fieldset>
             <fieldset class="f8-settings"><legend>ゲーム機能</legend>
               <p id="settings-feature-count" class="control-note">ゲーム機能の設定を待っています。</p>
               <div class="feature-toolbar">
@@ -136,7 +137,7 @@
             </fieldset></div></details>
           </div>
           <div class="settings-group"><h3>画面の配置</h3><button id="settings-reposition" type="button" data-setting="repositionWindows" disabled>ウィンドウを再配置</button><p id="settings-reposition-note" class="control-note">P1・P2を割り当て済みの外部ディスプレイ、観戦画面を起動時のディスプレイへ戻し、全画面で表示します。未接続の画面は再接続時に復帰します。</p></div>
-          <div class="settings-group"><h3>ゲームの更新</h3><p id="operator-update-status" role="status">Unity の接続を待っています。</p><p class="control-note">Unity停止中も実行できます。別フォルダーでmainをビルドし、成功後の起動直前に既存のRaceを終了します。ビルド中はキャンセルできます。作業中のEditorとシーンは保持します。Ctrl/Cmd + Alt + Uでも開始できます。</p><button id="operator-update" data-setting="updateAndRun" disabled>最新mainでビルド・起動</button><button id="operator-cancel" type="button" hidden disabled>ビルドをキャンセル</button><p id="operator-update-log" class="control-note"></p></div>
+          <div class="settings-group"><h3>ゲームの更新</h3><p id="operator-update-status" role="status">Unity の接続を待っています。</p><p class="control-note">Unity停止中も実行できます。別フォルダーでmainをビルドし、成功後、プレイ中の試合が終了してから既存のRaceを終了します。試合終了待ちもキャンセルできます。作業中のEditorとシーンは保持します。Ctrl/Cmd + Alt + Uでも開始できます。</p><button id="operator-update" data-setting="updateAndRun" disabled>最新mainでビルド・起動</button><button id="operator-cancel" type="button" hidden disabled>ビルドをキャンセル</button><p id="operator-update-log" class="control-note"></p></div>
           <p id="settings-status" class="control-note" role="status" aria-live="polite">Unity の接続を待っています。</p>
         </section><section class="panel" aria-labelledby="push-title"><div class="panel-heading"><div><span class="section-kicker">ALERT NOTIFICATIONS</span><h2 id="push-title">iPhoneへの異常通知</h2></div></div>
           <p id="push-status" role="status" aria-live="polite">通知機能の接続を確認しています。</p>
