@@ -38,13 +38,13 @@
   <test-case name="DriverNoticeQueueTests.DuplicateEventsAreConsumedOnceAndClearResetsTheRace" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.TimeoutEndsPracticeEvenWhenDisconnectedWithoutCompletingLessons" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.EarlyCompletionStopsTimerAndRecoveryDoesNotResetDeadline" result="Passed" />
-  <test-case name="DrivingTutorialProgressTests.TitlePedalHoldCannotFinishAcceleration" result="Passed" />
+  <test-case name="DrivingTutorialProgressTests.HeldPedalStartsPracticeButStationaryCarCannotFinishAcceleration" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.SteeringRequiresRealHeadingChangeWhileMoving" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.ItemRequiresContactAfterSteeringAndWhileConnected" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.TimedOutPracticeCannotCollectAnItem" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.PlayersProgressIndependentlyAndCompletionIsStable" result="Passed" />
   <test-case name="DrivingTutorialProgressTests.RecoveryKeepsCompletedLessonsButClearsPartialHold" result="Passed" />
-  <test-case name="DrivingTutorialProgressTests.SmallRestingOffsetsReleasePracticeButAHeldOrInvalidPedalCannot" result="Passed" />
+  <test-case name="DrivingTutorialProgressTests.HeldPedalCanAccelerateImmediatelyButInvalidOrDisconnectedInputCannot" result="Passed" />
   <test-case name="EdgeSteeringAssistTests.CentreAndInwardMotionReceiveNoCorrection" result="Passed" />
   <test-case name="EdgeSteeringAssistTests.PredictedDepartureIsSymmetricAndBounded" result="Passed" />
   <test-case name="EdgeSteeringAssistTests.AnUnintendedDepartureFacesTheRoad" result="Passed" />
@@ -187,10 +187,10 @@
   <test-case name="TubeSteeringAssistTests.StrongHandleInputRetainsDriverControlAndCorrectionIsBounded" result="Passed" />
   <test-case name="TubeSteeringAssistTests.YawIsDampedAndInvalidInputDoesNotSteer" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.SingleOverviewFinishesAfterEightSecondsWithoutInput" result="Passed" />
-  <test-case name="TutorialGimmickBriefingTests.HoldingPedalOrTappingTooEarlyCannotSkipTheReadingTime" result="Passed" />
-  <test-case name="TutorialGimmickBriefingTests.APressBeforeReadTimeNeedsAnotherReleaseAndPress" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.HoldingPedalAdvancesOnlyAfterMinimumReadingTime" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.EarlyTapDoesNotSkipReadingOrAdvanceAfterRelease" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.InvalidFramesAreIgnoredAndLargeFramesRespectTheRealDeadline" result="Passed" />
-  <test-case name="TutorialGimmickBriefingTests.ReconnectionWhileHoldingPedalNeedsAFreshRelease" result="Passed" />
+  <test-case name="TutorialGimmickBriefingTests.OnlyValidConnectedPedalCanAdvanceBeforeAutomaticDeadline" result="Passed" />
   <test-case name="TutorialGimmickBriefingTests.PlayersReadIndependently" result="Passed" />
   <test-case name="TwoPlayerRaceSessionTests.FirstFinish_StartsFortySecondWindow" result="Passed" />
   <test-case name="TwoPlayerRaceSessionTests.SecondFinish_CompletesRaceInArrivalOrder" result="Passed" />

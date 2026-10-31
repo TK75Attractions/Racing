@@ -83,7 +83,6 @@ public sealed class DrivingTutorialController : MonoBehaviour
         player.tires = player.car.GetComponentsInChildren<TireForce>();
         player.input = input.GetPlayerInputSource(i);
         player.driveGate = new PlayerDriveInputGate(player.input);
-        player.driveGate.SetBlocked(true);
         player.mover.SetInputSource(player.driveGate);
         // Lesson recovery provides a safe spawn for the current step instead of the race start.
         foreach (CarResetter resetter in player.car.GetComponentsInChildren<CarResetter>()) resetter.enabled = false;
@@ -111,15 +110,7 @@ public sealed class DrivingTutorialController : MonoBehaviour
             DriveInputState input = player.input.CurrentState;
             bool resetPressed = player.input.IsConnected && input.resetPressed && !player.resetHeld;
             player.resetHeld = player.input.IsConnected && input.resetPressed;
-            // The pedal held to confirm a car must be released before it can accelerate the practice car.
             bool connected = player.input.IsConnected;
-            if (player.driveGate.IsBlocked && connected && PedalRelease.IsReleased(input.pedal))
-            {
-                player.driveGate.SetBlocked(false);
-                // Practice must acknowledge the same release as the car gate, including
-                // a pending constant-pedal resume. Raw status polling cannot do this.
-                (player.input as IDrivePedalReleaseObserver)?.PedalReleaseObserved();
-            }
             Vector3 local = player.body.position - player.world.transform.position;
             float speed = Vector3.ProjectOnPlane(player.body.linearVelocity, Vector3.up).magnitude;
             float progress = DrivingTutorialRoad.NearestProgress(local);

@@ -54,9 +54,8 @@ public static class PlayerOperationFlowValidation
                 var live = (LiveDriveInputSource[])Get(race.IManager, "liveInputs");
                 for (int i = 0; i < 2; i++)
                 {
-                    inputs[i].CurrentState = new DriveInputState { pedal = .15f };
+                    inputs[i].CurrentState = new DriveInputState { pedal = 1f };
                     live[i].SwitchSource(inputs[i], false);
-                    race.ConfirmTitleStart(i);
                 }
                 Next();
             }
@@ -66,9 +65,8 @@ public static class PlayerOperationFlowValidation
                 var tutorial = race.GetComponent<DrivingTutorialController>();
                 for (int i = 0; i < 2; i++)
                 {
-                    Require(tutorial.GetPlayerProgress(i).PedalReleased, "Resting analog offsets must release practice.");
                     var gate = tutorial.GetPlayerCar(i).GetComponent<DebugMover>().InputSource as PlayerDriveInputGate;
-                    Require(!gate.IsBlocked, "The practice car and lesson must agree about release.");
+                    Require(!gate.IsBlocked, "A pedal held through title must start practice without release.");
                 }
                 Call(race, "ResetGameWhenScreenCovered");
                 race.Features.SetValidationFeature(RaceFeature.CourseIntro, false);
@@ -100,6 +98,7 @@ public static class PlayerOperationFlowValidation
                     Require(gate.CurrentState.pedal == 0, "Reconnect with held pedal remains latched.");
                     inputs[i].CurrentState = DriveInputState.Neutral; _ = gate.CurrentState;
                 }
+                inputs[0].CurrentState = new DriveInputState { pedal = 1f };
                 FinishPlayer(race, 0);
                 Next();
             }
@@ -113,7 +112,11 @@ public static class PlayerOperationFlowValidation
                 }
                 if (Time.frameCount - changedFrame < 3) return;
                 Capture(race, 0, "p1-first-result.png");
-                Call(race, "UpdateResultDisplay", Gmanager.ResultDisplaySeconds);
+                race.GetType().GetField("resultReturnInputDelayTimer", Private).SetValue(race, 100f);
+                Call(race, "UpdateResultReturnInput", .35f);
+                Require(ui[0].IsVisible, "Result confirmation keeps the hold duration.");
+                Call(race, "UpdateResultReturnInput", .7f);
+                inputs[0].CurrentState = DriveInputState.Neutral;
                 Require(!ui[0].IsVisible && Root(0).Find("SpectatorOverlay").gameObject.activeSelf,
                     "Only an unfinished opponent permits spectator view after results.");
                 Require(Root(0).Find("SpectatorOverlay/WaitingForOpponent/Message").GetComponent<TMP_Text>().text == "相手のゴールを待っています",
@@ -175,7 +178,7 @@ public static class PlayerOperationFlowValidation
             {
                 Require(ui[0].IsVisible && Root(1).GetComponent<ArcadeEndingUI>().IsVisible,
                     "Timeout gives the unfinished player a DNF result without replaying the other's result.");
-                Debug.Log("PLAYER_OPERATION_FLOW_PASS: practice offsets; independent auto OFF, original source handover and reconnect; P1/P2 first finish; timed and Next-driven waiting; close finish clocks; DNF; retry overlay cancellation; rendered result and spectator views.");
+                Debug.Log("PLAYER_OPERATION_FLOW_PASS: held pedal through title/practice/results; independent auto OFF, original source handover and reconnect; P1/P2 first finish; timed and Next-driven waiting; close finish clocks; DNF; retry overlay cancellation; rendered result and spectator views.");
                 Finish(0);
             }
         }

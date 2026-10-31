@@ -12,19 +12,20 @@ public sealed class TutorialGimmickBriefingTests
         Wait(guide,.2f,false);
         Assert.That(guide.IsComplete,Is.True);
     }
-    [Test] public void HoldingPedalOrTappingTooEarlyCannotSkipTheReadingTime()
+    [Test] public void HoldingPedalAdvancesOnlyAfterMinimumReadingTime()
     {
         var guide=new TutorialGimmickBriefing();
-        Wait(guide,TutorialGimmickBriefing.MinimumReadSeconds+.1f,true,1f); Assert.That(guide.Page,Is.Zero);
-        guide.Tick(.05f,true,0f); guide.Tick(.05f,true,1f);
-        Assert.That(guide.Page,Is.EqualTo(1));
+        Wait(guide,TutorialGimmickBriefing.MinimumReadSeconds-.1f,true,1f);
+        Assert.That(guide.IsComplete,Is.False);
+        Wait(guide,.2f,true,1f);
         Assert.That(guide.IsComplete,Is.True);
     }
-    [Test] public void APressBeforeReadTimeNeedsAnotherReleaseAndPress()
+    [Test] public void EarlyTapDoesNotSkipReadingOrAdvanceAfterRelease()
     {
-        var guide=new TutorialGimmickBriefing(); guide.Tick(.05f,true,0f);
-        Wait(guide,TutorialGimmickBriefing.MinimumReadSeconds+.1f,true,1f);Assert.That(guide.Page,Is.Zero);
-        guide.Tick(.05f,true,0f);guide.Tick(.05f,true,1f);Assert.That(guide.Page,Is.EqualTo(1));
+        var guide=new TutorialGimmickBriefing();guide.Tick(.05f,true,1f);
+        Wait(guide,TutorialGimmickBriefing.MinimumReadSeconds+.1f,true,0f);
+        Assert.That(guide.IsComplete,Is.False);
+        guide.Tick(.05f,true,1f);Assert.That(guide.IsComplete,Is.True);
     }
     [Test] public void InvalidFramesAreIgnoredAndLargeFramesRespectTheRealDeadline()
     {
@@ -33,12 +34,12 @@ public sealed class TutorialGimmickBriefingTests
         Assert.That(guide.Elapsed,Is.Zero);
         guide.Tick(100f,false,1f);Assert.That(guide.IsComplete,Is.True);
     }
-    [Test] public void ReconnectionWhileHoldingPedalNeedsAFreshRelease()
+    [Test] public void OnlyValidConnectedPedalCanAdvanceBeforeAutomaticDeadline()
     {
         var guide=new TutorialGimmickBriefing();Wait(guide,TutorialGimmickBriefing.MinimumReadSeconds+.1f);
-        guide.Tick(.05f,false,0f);guide.Tick(.05f,true,1f);
-        Assert.That(guide.Page,Is.Zero);
-        guide.Tick(.05f,true,0f);guide.Tick(.05f,true,1f);Assert.That(guide.Page,Is.EqualTo(1));
+        guide.Tick(.05f,false,1f);guide.Tick(.05f,true,float.PositiveInfinity);
+        guide.Tick(.05f,true,float.NaN);Assert.That(guide.IsComplete,Is.False);
+        guide.Tick(.05f,true,1f);Assert.That(guide.IsComplete,Is.True);
     }
     [Test] public void PlayersReadIndependently()
     {

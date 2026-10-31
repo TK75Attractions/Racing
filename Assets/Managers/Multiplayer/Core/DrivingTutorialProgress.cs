@@ -5,7 +5,6 @@ public sealed class DrivingTutorialProgress
 {
     public enum Stage { Accelerate, Steer, CollectItem, Complete }
     public Stage CurrentStage { get; private set; }
-    public bool PedalReleased { get; private set; }
     public bool IsComplete => CurrentStage == Stage.Complete;
     public const float DefaultTimeLimitSeconds = 35f;
     public bool HasTimedOut => countdown.HasExpired;
@@ -32,12 +31,11 @@ public sealed class DrivingTutorialProgress
             return;
         }
         float dt = Math.Max(0f, deltaTime);
-        if (PedalRelease.IsReleased(pedal)) PedalReleased = true;
         bool satisfied;
         switch (CurrentStage)
         {
             case Stage.Accelerate:
-                satisfied = PedalReleased && pedal >= 0.25f && speed >= 3f;
+                satisfied = !float.IsNaN(pedal) && !float.IsInfinity(pedal) && pedal >= 0.25f && speed >= 3f;
                 break;
             case Stage.Steer:
                 satisfied = Math.Abs(steering) >= 2f && speed >= 2f && Math.Abs(headingChange) >= 25f;
@@ -55,7 +53,6 @@ public sealed class DrivingTutorialProgress
     {
         // Recovery preserves completed lessons but never carries a partial hold through a teleport.
         holdSeconds = 0f;
-        // Recovery preserves the initial observed release.
     }
 
     public bool CollectItem(bool connected)

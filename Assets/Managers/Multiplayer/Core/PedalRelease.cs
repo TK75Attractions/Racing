@@ -1,6 +1,6 @@
 using System;
 
-/// <summary>Shared release band for analog pedals, matching the title screen and tolerating resting sensor offsets.</summary>
+/// <summary>Shared release band for analog pedals, tolerating resting sensor offsets when resuming driving.</summary>
 public static class PedalRelease
 {
     public const float Threshold = .20f;

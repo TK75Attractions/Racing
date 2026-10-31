@@ -34,12 +34,11 @@ public class DrivingTutorialProgressTests
     }
 
     [Test]
-    public void TitlePedalHoldCannotFinishAcceleration()
+    public void HeldPedalStartsPracticeButStationaryCarCannotFinishAcceleration()
     {
         var lesson = new DrivingTutorialProgress();
-        lesson.Tick(5f, true, 1f, 0f, 8f, 0f);
+        lesson.Tick(5f, true, 1f, 0f, 0f, 0f);
         Assert.That(lesson.CurrentStage, Is.EqualTo(DrivingTutorialProgress.Stage.Accelerate));
-        lesson.Tick(.1f, true, 0f, 0f, 0f, 0f);
         lesson.Tick(1f, true, 1f, 0f, 0f, 0f);
         Assert.That(lesson.CurrentStage, Is.EqualTo(DrivingTutorialProgress.Stage.Accelerate), "A stationary car cannot pass.");
         lesson.Tick(.7f, true, 1f, 0f, 4f, 0f);
@@ -105,31 +104,25 @@ public class DrivingTutorialProgressTests
     }
 
     [Test]
-    public void SmallRestingOffsetsReleasePracticeButAHeldOrInvalidPedalCannot()
+    public void HeldPedalCanAccelerateImmediatelyButInvalidOrDisconnectedInputCannot()
     {
-        foreach (float rest in new[] { .06f, -.08f, .15f, .20f })
+        var held = new DrivingTutorialProgress();
+        held.Tick(.7f, true, 1f, 0f, 4f, 0f);
+        Assert.AreEqual(DrivingTutorialProgress.Stage.Steer, held.CurrentStage);
+        foreach (float invalid in new[] { float.NaN, float.PositiveInfinity, float.NegativeInfinity })
         {
             var lesson = new DrivingTutorialProgress();
-            lesson.Tick(.1f, true, rest, 0f, 0f, 0f);
-            Assert.IsTrue(lesson.PedalReleased);
-            lesson.Tick(.7f, true, .6f, 0f, 4f, 0f);
-            Assert.AreEqual(DrivingTutorialProgress.Stage.Steer, lesson.CurrentStage);
-        }
-        foreach (float held in new[] { .21f, -.21f, .7f, float.NaN, float.PositiveInfinity })
-        {
-            var lesson = new DrivingTutorialProgress();
-            lesson.Tick(.1f, true, held, 0f, 0f, 0f);
-            Assert.IsFalse(lesson.PedalReleased);
+            lesson.Tick(1f, true, invalid, 0f, 4f, 0f);
+            Assert.AreEqual(DrivingTutorialProgress.Stage.Accelerate, lesson.CurrentStage);
         }
         var disconnected = new DrivingTutorialProgress();
-        disconnected.Tick(.1f, false, 0f, 0f, 0f, 0f);
-        Assert.IsFalse(disconnected.PedalReleased);
+        disconnected.Tick(1f, false, 1f, 0f, 4f, 0f);
+        Assert.AreEqual(DrivingTutorialProgress.Stage.Accelerate, disconnected.CurrentStage);
     }
 
     private static DrivingTutorialProgress Accelerated()
     {
         var lesson = new DrivingTutorialProgress();
-        lesson.Tick(.1f, true, 0f, 0f, 0f, 0f);
         lesson.Tick(.7f, true, 1f, 0f, 4f, 0f);
         return lesson;
     }

@@ -70,7 +70,7 @@ public sealed class DrivingTutorialUI
         itemGuide.SetActive(connected && lesson.IsFinished && briefing == null);
         gimmickGuide.Update(lesson.IsFinished ? briefing : null, connected);
         int stage=lesson.HasTimedOut?4:(int)lesson.CurrentStage;
-        string prompt=explaining?"しかけを{見|み}よう":lesson.IsFinished?"もうひとりを\nまとう":!connected?"{係員|かかりいん}を\nよんでね":!lesson.PedalReleased?"ペダルから\n{足|あし}をはなそう":stage==0?"ペダルを\nふもう":stage==1?"{道|みち}にそって\n{曲|ま}がろう":"{光|ひか}る{箱|はこ}に\nふれよう";
+        string prompt=explaining?"しかけを{見|み}よう":lesson.IsFinished?"もうひとりを\nまとう":!connected?"{係員|かかりいん}を\nよんでね":stage==0?"ペダルを\nふもう":stage==1?"{道|みち}にそって\n{曲|ま}がろう":"{光|ひか}る{箱|はこ}に\nふれよう";
         if(shownMessage!=prompt){TutorialText.Set(message,prompt);shownMessage=prompt;}
         string heading=explaining?"とまって{読|よ}もう":lesson.HasTimedOut?"{練習|れんしゅう}おわり":lesson.IsComplete?"できた！":!connected?"{接続|せつぞく}まち":"{練習|れんしゅう}しよう";
         if(status.text!=heading)TutorialText.Set(status,heading);
