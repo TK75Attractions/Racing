@@ -1,6 +1,6 @@
 using System;
 
-public enum RacePreset { Standard }
+public enum RacePreset { Standard, Quick }
 
 [Flags]
 public enum RaceFeature
@@ -64,10 +64,10 @@ public sealed class RaceFeatureSettings
     }
     public void SelectPreset(RacePreset preset)
     {
-        if (preset != RacePreset.Standard) return;
-        SelectedPreset = RacePreset.Standard;
+        if (preset != RacePreset.Standard && preset != RacePreset.Quick) return;
+        SelectedPreset = preset;
         if (!RulesLocked) ApplyPreset();
-        else HasQueuedPreset = true;
+        else HasQueuedPreset = SelectedPreset != ActivePreset;
     }
     public void BeginPreparation()
     {
@@ -84,14 +84,13 @@ public sealed class RaceFeatureSettings
     {
         // A completed demo must not leave the next visitors' controls in automatic mode.
         SetFeature(RaceFeature.PlayerOneAutodrive | RaceFeature.PlayerTwoAutodrive, false);
-        if (!HasQueuedPreset) SelectedPreset = RacePreset.Standard;
         UnlockAtTitle();
     }
     private void ApplyPreset()
     {
         ActivePreset = SelectedPreset;
         HasQueuedPreset = false;
-        // The sole race mode does not override independent item assistance settings.
+        // Race modes do not override independent item assistance settings.
     }
 }
 
@@ -99,11 +98,12 @@ public sealed class RaceRuleSet
 {
     public readonly RacePreset Preset;
     public readonly int GoalLaps;
+    public bool SkipTutorial => Preset == RacePreset.Quick;
     public readonly float MaximumSeconds, GraceSeconds, MaximumGraceSeconds;
     public RaceRuleSet(RacePreset preset, int standardLaps, float standardMaximum, float grace, float maximumGrace)
     {
-        Preset = RacePreset.Standard;
-        GoalLaps = Math.Max(1, standardLaps);
+        Preset = preset == RacePreset.Quick ? RacePreset.Quick : RacePreset.Standard;
+        GoalLaps = Preset == RacePreset.Quick ? 1 : Math.Max(1, standardLaps);
         MaximumSeconds = Math.Min(180f, Math.Max(1f, standardMaximum));
         GraceSeconds = Math.Max(0f, grace);
         MaximumGraceSeconds = Math.Max(GraceSeconds, maximumGrace);

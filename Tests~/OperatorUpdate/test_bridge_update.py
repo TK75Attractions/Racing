@@ -69,4 +69,19 @@ class BridgeUpdateTest(unittest.TestCase):
   self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'repositionWindows'))['ok'])
   wrong=self.command(snapshot,'repositionWindows');wrong['targetSession']='other-session'
   self.assertFalse(self.request('/api/action/settings',wrong)['ok'])
+ def test_quick_mode_selection_is_validated_and_queued_while_rules_are_locked(self):
+  snapshot=self.request('/api/status')
+  self.assertTrue(snapshot['settings']['raceModeAvailable'])
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'raceMode',['Quick']))['ok'])
+  snapshot=self.request('/api/status')
+  self.assertEqual(snapshot['settings']['activePreset'],'Quick')
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'testRace'))['ok'])
+  snapshot=self.request('/api/status')
+  self.assertTrue(self.request('/api/action/settings',self.command(snapshot,'raceMode',['Standard']))['ok'])
+  snapshot=self.request('/api/status')
+  self.assertEqual(snapshot['settings']['activePreset'],'Quick')
+  self.assertEqual(snapshot['settings']['selectedPreset'],'Standard')
+  self.assertTrue(snapshot['settings']['hasQueuedPreset'])
+  for args in [['Unknown'],['1'],[],['Quick','extra']]:
+   self.assertFalse(self.request('/api/action/settings',self.command(snapshot,'raceMode',args))['ok'])
 if __name__=='__main__':unittest.main(verbosity=2)

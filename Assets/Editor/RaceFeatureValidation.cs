@@ -9,7 +9,7 @@ public static class RaceFeatureValidation
     public static void Run()
     {
         var settings = new RaceFeatureSettings();
-        settings.SelectPreset((RacePreset)1);
+        settings.SelectPreset((RacePreset)999);
         settings.BeginPreparation();
         settings.SelectPreset(RacePreset.Standard);
         Require(settings.ActivePreset == RacePreset.Standard, "Live presets must not change lap rules.");

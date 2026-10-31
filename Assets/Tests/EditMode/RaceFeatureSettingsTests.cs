@@ -67,7 +67,7 @@ public sealed class RaceFeatureSettingsTests
     {
         var settings = new RaceFeatureSettings();
         settings.BeginPreparation();
-        settings.SelectPreset((RacePreset)1);
+        settings.SelectPreset((RacePreset)999);
         Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
         Assert.AreEqual(RacePreset.Standard, settings.SelectedPreset);
         Assert.IsFalse(settings.HasQueuedPreset);
@@ -90,6 +90,37 @@ public sealed class RaceFeatureSettingsTests
         settings.BeginPreparation();
         Assert.IsTrue(settings.IsEnabled(RaceFeature.ExperienceItems));
         Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
+    }
+    [Test] public void QuickModeSkipsPracticeAndFinishesAfterOneLap()
+    {
+        var rules = new RaceRuleSet(RacePreset.Quick, 2, 360, 40, 180);
+        Assert.AreEqual(1, rules.GoalLaps);
+        Assert.IsTrue(rules.SkipTutorial);
+        Assert.IsFalse(new RaceRuleSet(RacePreset.Standard, 2, 360, 40, 180).SkipTutorial);
+        Assert.AreEqual(180, rules.MaximumSeconds);
+    }
+    [Test] public void RaceModeChangesAreQueuedUntilTheNextGroupAndStaySelected()
+    {
+        var settings = new RaceFeatureSettings();
+        settings.BeginPreparation();
+        settings.SelectPreset(RacePreset.Quick);
+        Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
+        Assert.AreEqual(RacePreset.Quick, settings.SelectedPreset);
+        Assert.IsTrue(settings.HasQueuedPreset);
+        settings.ResetForNextGroup();
+        Assert.AreEqual(RacePreset.Quick, settings.ActivePreset);
+        Assert.IsFalse(settings.HasQueuedPreset);
+        settings.BeginPreparation();settings.ResetForNextGroup();
+        Assert.AreEqual(RacePreset.Quick, settings.ActivePreset);
+        settings.SelectPreset(RacePreset.Standard);
+        Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
+    }
+    [Test] public void SelectingCurrentModeCancelsAQueuedChange()
+    {
+        var settings = new RaceFeatureSettings();settings.BeginPreparation();
+        settings.SelectPreset(RacePreset.Quick);Assert.IsTrue(settings.HasQueuedPreset);
+        settings.SelectPreset(RacePreset.Standard);Assert.IsFalse(settings.HasQueuedPreset);
+        settings.ResetForNextGroup();Assert.AreEqual(RacePreset.Standard, settings.ActivePreset);
     }
     private static void settingsStandardCannotBeDisabled()
     {

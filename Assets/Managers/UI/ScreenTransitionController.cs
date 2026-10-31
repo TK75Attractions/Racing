@@ -576,6 +576,10 @@ public sealed class ScreenTransitionController : MonoBehaviour
             return;
         }
 
+        bool quick = Gmanager.Control?.Features?.Settings.ActivePreset == RacePreset.Quick;
+        Transform button = titleButtonFeedback[playerIndex].transform;
+        button.Find("Label").GetComponent<TMP_Text>().text = quick ? "レースへ進む" : "練習へ進む";
+        button.Find("Caption").GetComponent<TMP_Text>().text = quick ? "RACE" : "PRACTICE";
         float amount = Mathf.Clamp01(value);
         Color accent = ArcadeUI.For(displayPlayerIndex).Primary;
         Color readyColor = ArcadeUI.For(displayPlayerIndex).Primary;
@@ -587,7 +591,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
             string connection = input != null ? DriverInputNotice.Connection(input.GetPlayerInputSource(playerIndex)) : "";
             string prompt = connection.Length > 0 ? connection + "\n係員に知らせてね" : !armed
                 ? "コントローラーの接続を確認しています"
-                : ready ? "準備完了  /  相手の準備を待っています" : "長押しで練習へ進む / ペダルを踏み込む";
+                : ready ? "準備完了  /  相手の準備を待っています" : quick ? "長押しでレースへ進む / ペダルを踏み込む" : "長押しで練習へ進む / ペダルを踏み込む";
             if (titlePrompt.text != prompt) titlePrompt.text = prompt;
         }
     }

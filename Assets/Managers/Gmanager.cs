@@ -205,7 +205,7 @@ public class Gmanager : MonoBehaviour
         PlayerRuntime player = index >= 0 && index < PlayerCount ? players[index] : null;
         State phase = IsPreparing ? GetPlayerPreparationState(index) : state;
         playerState = phase.ToString(); carName = carPrefab != null ? carPrefab.name : "";
-        step = ""; remaining = progress = 0f;
+        step = phase == State.Title && player?.isReady == true ? "Ready" : ""; remaining = progress = 0f;
         if (!IsPreparing && player != null)
         {
             if (state == State.Game) step = player.withdrewFromRace ? "Withdrawn" : player.isSpectating ? "Spectating" :
@@ -634,9 +634,22 @@ public class Gmanager : MonoBehaviour
     {
         if (IsMaintenanceActive || !IsPreparing || playerIndex < 0 || playerIndex >= PlayerCount) return;
         PlayerRuntime player = players[playerIndex];
-        if (player.preparationState != State.Title || screenTransitions[playerIndex]?.IsTransitioning == true) return;
+        if (player.isReady || player.preparationState != State.Title || screenTransitions[playerIndex]?.IsTransitioning == true) return;
         if (Features != null && !Features.Settings.RulesLocked)
         { Features.Settings.BeginPreparation(); ApplyFeatureRules(); }
+        if (activeRules?.SkipTutorial == true)
+        {
+            player.isReady = true;
+            soundEffects?.Play(RaceSoundCue.Ready, playerIndex);
+            UpdateTitlePedalUI();
+            if (!finishingPreparation && players[0].isReady && players[1].isReady)
+            {
+                preparationClock.Start();
+                finishingPreparation = true;
+                TransitionTo(State.Countdown, StartGameWhenScreenCovered, CompleteGameStart);
+            }
+            return;
+        }
         preparationClock.Start();
         soundEffects?.Play(RaceSoundCue.Ready, playerIndex);
         TransitionPlayer(playerIndex, State.Tutorial, () => BeginPlayerTutorial(playerIndex));
@@ -1011,7 +1024,7 @@ public class Gmanager : MonoBehaviour
         UpdateOnPlayUI();
         courseIntro = GetComponent<CourseIntroDirector>();
         if (courseIntro == null) courseIntro = gameObject.AddComponent<CourseIntroDirector>();
-        courseIntro.Begin(this, displayRigs);
+        if (activeRules?.SkipTutorial != true) courseIntro.Begin(this, displayRigs);
         Debug.Log("Two-player game start");
     }
 
@@ -1995,7 +2008,7 @@ public class Gmanager : MonoBehaviour
         for (int index = 0; index < PlayerCount; index++)
         {
             PlayerRuntime player = players[index];
-            if (player.preparationState != State.Title || screenTransitions[index]?.IsTransitioning == true) continue;
+            if (player.isReady || player.preparationState != State.Title || screenTransitions[index]?.IsTransitioning == true) continue;
             DriveInputState input = GetMenuInput(index);
             if (!IManager.IsPlayerConnected(index))
             { player.titleInputArmed = false; player.readyHoldTimer = 0f; continue; }
@@ -2013,11 +2026,11 @@ public class Gmanager : MonoBehaviour
     private void UpdateTitlePedalUI()
     {
         float duration = Mathf.Max(.01f, titleStartHoldSeconds);
-        float first = Mathf.Clamp01(players[0].readyHoldTimer / duration);
-        float second = Mathf.Clamp01(players[1].readyHoldTimer / duration);
+        float first = players[0].isReady ? 1f : Mathf.Clamp01(players[0].readyHoldTimer / duration);
+        float second = players[1].isReady ? 1f : Mathf.Clamp01(players[1].readyHoldTimer / duration);
         for (int index = 0; index < PlayerCount; index++)
             if (players[index].preparationState == State.Title)
-                screenTransitions[index]?.UpdateTitlePedals(first, second, false, false, players[index].titleInputArmed);
+                screenTransitions[index]?.UpdateTitlePedals(first, second, players[0].isReady, players[1].isReady, players[index].titleInputArmed);
     }
 
     private void ClearRaceStatus()
