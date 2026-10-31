@@ -6084,9 +6084,7 @@ MonoBehaviour:
   screenTransitionController: {fileID: 456823244}
   titleText: RACING
   titlePromptText: 'BOTH PLAYERS: PRESS THE PEDAL'
-  titleReleasePromptText: 'BOTH PLAYERS: RELEASE THE PEDAL'
   titleStartPedalThreshold: 0.8
-  titlePedalReleaseSeconds: 0.25
   titleStartHoldSeconds: 0.25
   resultReturnPedalThreshold: 0.8
   resultReturnHoldSeconds: 1

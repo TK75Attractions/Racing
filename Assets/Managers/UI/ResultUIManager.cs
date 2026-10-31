@@ -73,7 +73,7 @@ public class ResultUIManager
     public void ShowResults(RaceSessionResult session)
     {
         currentSessionResult=session;currentResult=session?.GetResultAtPosition(1);
-        RefreshStandings();SetMenuState(0,0);SetPedalConfirmationReady(false);SetCountdown(Gmanager.ResultDisplaySeconds);
+        RefreshStandings();SetMenuState(0,0);menuHint.text="";SetCountdown(Gmanager.ResultDisplaySeconds);
     }
     public void RefreshStandings()
     {
@@ -97,7 +97,6 @@ public class ResultUIManager
     public void RefreshHighlight() { }
     public void RefreshDailyRanking()=>dailyRankingPanel?.Refresh(currentSessionResult?.dailyRanking,currentSessionResult?.GetPlayerResult(localPlayerNumber-1),localPlayerNumber);
     public void SetMenuState(int index,float amount)=>menuAnimator?.SetState(index,amount);
-    public void SetPedalConfirmationReady(bool ready){menuHint.text=ready?"":"まずペダルから足を離してください";}
     public void PlayConfirm(int index)=>menuAnimator?.PlayConfirm(index);
     public void HideResults(){currentResult=null;currentSessionResult=null;SetMenuState(0,0);}
     private static string FormatTime(float seconds){int ms=DailyRankingBook.Milliseconds(seconds);return $"{ms/60000}:{ms/1000%60:00}.{ms%1000:000}";}

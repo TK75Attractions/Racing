@@ -27,7 +27,6 @@ public class Gmanager : MonoBehaviour
         public float readyHoldTimer;
         public int resultSelection;
         public float resultConfirmTimer;
-        public bool resultConfirmArmed;
         public float resultDisplayElapsed;
         public bool resultPresented, resultPresentationComplete;
         public bool returnedToTitle;
@@ -39,7 +38,6 @@ public class Gmanager : MonoBehaviour
         public PlayerItemHUD itemHud;
         public State preparationState = State.Title;
         public bool titleInputArmed;
-        public float titleReleaseTimer;
     }
 
     public static Gmanager Control = null;
@@ -94,9 +92,7 @@ public class Gmanager : MonoBehaviour
     [SerializeField] private ScreenTransitionController screenTransitionController;
     [SerializeField] private string titleText = "RACING";
     [SerializeField] private string titlePromptText = "BOTH PLAYERS: PRESS THE PEDAL";
-    [SerializeField] private string titleReleasePromptText = "BOTH PLAYERS: RELEASE THE PEDAL";
     [SerializeField] private float titleStartPedalThreshold = 0.8f;
-    [SerializeField] private float titlePedalReleaseSeconds = 0.25f;
     [SerializeField] private float titleStartHoldSeconds = 0.25f;
     [SerializeField] private float resultReturnPedalThreshold = 0.8f;
     [SerializeField] private float resultReturnHoldSeconds = 1f;
@@ -151,7 +147,6 @@ public class Gmanager : MonoBehaviour
     public RaceMaintenanceController Maintenance { get; private set; }
     public bool IsMaintenanceActive => Maintenance != null && Maintenance.IsActive;
     public bool MaintenanceAvailable => Maintenance != null;
-    private readonly bool[] maintenanceMenuRelease = new bool[PlayerCount];
     private readonly Dictionary<PlayerDriveInputGate, bool> maintenanceGateBlocks = new Dictionary<PlayerDriveInputGate, bool>();
     public bool SetMaintenance(bool enabled)
     {
@@ -181,19 +176,15 @@ public class Gmanager : MonoBehaviour
             maintenanceGateBlocks.Clear();
             for (int i=0;i<PlayerCount;i++)
             {
-                maintenanceMenuRelease[i] = true;
                 var player = players[i];
                 if (player?.preparationState != State.Title) continue;
-                player.titleInputArmed = false; player.readyHoldTimer = player.titleReleaseTimer = 0;
+                player.titleInputArmed = false; player.readyHoldTimer = 0;
             }
         }
     }
     private DriveInputState GetMenuInput(int index)
     {
-        DriveInputState input = IManager.GetInputState(index);
-        if (!maintenanceMenuRelease[index]) return input;
-        if (PedalRelease.IsReleased(input.pedal)) maintenanceMenuRelease[index] = false;
-        return DriveInputState.Neutral;
+        return IManager.GetInputState(index);
     }
 
     private CourseIntroDirector courseIntro;
@@ -1425,7 +1416,6 @@ public class Gmanager : MonoBehaviour
         player.resultPresented = true;
         player.isSpectating = false;
         player.resultDisplayElapsed = player.resultConfirmTimer = 0f;
-        player.resultConfirmArmed = false;
         player.displayRig.RaceCamera.Follow = player.cameraController.CameraTarget;
         player.displayRig.RaceCamera.LookAt = player.cameraController.LookTarget;
         if (latestSessionResult != null) latestSessionResult.dailyRanking = dailyRanking?.Snapshot();
@@ -1930,15 +1920,6 @@ public class Gmanager : MonoBehaviour
             var ending=player.displayRig.CanvasRoot.GetComponent<ArcadeEndingUI>();
             if(ending!=null&&ending.IsVisible){ending.TickInput(input.pedal,dt);continue;}
             player.resultSelection = 0;
-            // Finishing with the pedal down must never advance the results automatically.
-            if (!player.resultConfirmArmed)
-            {
-                player.resultConfirmArmed = PedalRelease.IsReleased(input.pedal);
-                player.resultConfirmTimer = 0f;
-                resultUIManagers[index]?.SetMenuState(player.resultSelection, 0f);
-                resultUIManagers[index]?.SetPedalConfirmationReady(player.resultConfirmArmed);
-                continue;
-            }
             player.resultConfirmTimer = input.pedal > resultReturnPedalThreshold ? player.resultConfirmTimer + dt : 0f;
             resultUIManagers[index]?.SetMenuState(player.resultSelection, Mathf.Clamp01(player.resultConfirmTimer / Mathf.Max(.01f,resultReturnHoldSeconds)));
             if (player.resultConfirmTimer < Mathf.Max(0.01f, resultReturnHoldSeconds)) continue;
@@ -1954,7 +1935,6 @@ public class Gmanager : MonoBehaviour
             if (player == null) continue;
             player.resultSelection = 0;
             player.resultConfirmTimer = 0f;
-            player.resultConfirmArmed = false;
             player.resultDisplayElapsed = 0f;
             player.resultPresented = player.resultPresentationComplete = false;
             player.returnedToTitle = false;
@@ -1996,10 +1976,10 @@ public class Gmanager : MonoBehaviour
             if (player == null) continue;
             player.preparationState = State.Title;
             player.isReady = false;
-            player.readyHoldTimer = player.titleReleaseTimer = 0f;
+            player.readyHoldTimer = 0f;
             player.titleInputArmed = false;
         }
-        SetTitlePrompt(titleReleasePromptText);
+        SetTitlePrompt("ペダルを踏み込んで練習へ進む");
     }
 
     private void UpdateTitleStartInput(float dt)
@@ -2010,13 +1990,8 @@ public class Gmanager : MonoBehaviour
             if (player.preparationState != State.Title || screenTransitions[index]?.IsTransitioning == true) continue;
             DriveInputState input = GetMenuInput(index);
             if (!IManager.IsPlayerConnected(index))
-            { player.titleInputArmed = false; player.titleReleaseTimer = player.readyHoldTimer = 0f; continue; }
-            if (!player.titleInputArmed)
-            {
-                player.titleReleaseTimer = PedalRelease.IsReleased(input.pedal) ? player.titleReleaseTimer + dt : 0f;
-                if (player.titleReleaseTimer >= titlePedalReleaseSeconds) player.titleInputArmed = true;
-                continue;
-            }
+            { player.titleInputArmed = false; player.readyHoldTimer = 0f; continue; }
+            player.titleInputArmed = true;
             player.readyHoldTimer = input.pedal >= titleStartPedalThreshold ? player.readyHoldTimer + dt : 0f;
             if (input.readyPressed || player.readyHoldTimer >= Mathf.Max(.01f, titleStartHoldSeconds)) ConfirmTitleStart(index);
         }

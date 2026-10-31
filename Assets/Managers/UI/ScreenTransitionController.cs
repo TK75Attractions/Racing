@@ -586,7 +586,7 @@ public sealed class ScreenTransitionController : MonoBehaviour
             var input = Gmanager.Control != null ? Gmanager.Control.IManager : null;
             string connection = input != null ? DriverInputNotice.Connection(input.GetPlayerInputSource(playerIndex)) : "";
             string prompt = connection.Length > 0 ? connection + "\n係員に知らせてね" : !armed
-                ? "ペダルを離して準備してください"
+                ? "コントローラーの接続を確認しています"
                 : ready ? "準備完了  /  相手の準備を待っています" : "長押しで練習へ進む / ペダルを踏み込む";
             if (titlePrompt.text != prompt) titlePrompt.text = prompt;
         }
