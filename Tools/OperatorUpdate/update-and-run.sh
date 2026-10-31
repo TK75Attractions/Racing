@@ -14,6 +14,8 @@ source_dir=''
 checkout_created=false
 locked=false
 child_pid=''
+cache_dir=''
+cache_attached=false
 cancelled=false
 message='更新に失敗しました。update.log と build.log を確認してください。'
 status() { message=$1; if [ -n "${2:-}" ]; then printf '%s\n' "$2" > "$request/phase.tmp"; mv "$request/phase.tmp" "$request/phase.txt"; fi; printf '%s\n' "$message" > "$request/status.tmp"; mv "$request/status.tmp" "$request/status.txt"; echo "$message"; }
@@ -70,9 +72,47 @@ stop_existing_players() {
         if race_running "$process"; then kill -KILL "$process" 2>/dev/null || fail '既存のRaceを終了できません。'; fi
     done
 }
+prepare_cache() {
+    local version=unknown
+    if [ -f "$source_dir/ProjectSettings/ProjectVersion.txt" ]; then
+        version=$(sed -n 's/^m_EditorVersion: //p' "$source_dir/ProjectSettings/ProjectVersion.txt" | tr -d '\r')
+    fi
+    [[ "$version" =~ ^[A-Za-z0-9._-]+$ ]] || fail 'Unityのバージョンを判別できません。'
+    cache_dir="$repo/Builds/OperatorCache/macOS-$version"
+    if [ -L "$repo/Builds/OperatorCache" ] || [ -L "$cache_dir" ] || [ -L "$cache_dir/Library" ]; then
+        fail 'ビルドキャッシュにリンク先は使用できません。専用の保存先を確認してください。'
+    fi
+    if [ -e "$cache_dir" ]; then
+        [ -f "$cache_dir/owner.txt" ] && [ "$(cat "$cache_dir/owner.txt")" = "$repo" ] || fail 'ビルドキャッシュの所有元を確認できません。Builds/OperatorCacheを確認してください。'
+    else
+        mkdir -p "$cache_dir"
+        printf '%s\n' "$repo" > "$cache_dir/owner.txt"
+    fi
+    test ! -e "$source_dir/Library" || fail '更新用フォルダーに予期しないLibraryがあります。'
+    if [ -d "$cache_dir/Library" ]; then
+        status '前回のUnityビルドキャッシュを再利用しています。' cache
+        mv "$cache_dir/Library" "$source_dir/Library"
+        printf 'reused\n' > "$request/cache.txt"
+    else
+        status '初回のUnityビルドを準備しています。アセットの読み込みには時間がかかります。' cache
+        printf 'cold\n' > "$request/cache.txt"
+    fi
+    cache_attached=true
+}
+save_cache() {
+    if [ "$cache_attached" != true ] || [ ! -d "$source_dir/Library" ]; then return; fi
+    if [ -e "$cache_dir/Library" ]; then
+        echo 'キャッシュの保存先が使用中のため、今回のキャッシュは保存しません。'
+    elif mv "$source_dir/Library" "$cache_dir/Library"; then
+        echo 'Unityビルドキャッシュを保存しました。次回は読み込み済みのデータを再利用します。'
+    else
+        echo 'Unityビルドキャッシュを保存できませんでした。次回は再作成します。'
+    fi
+}
 cleanup() {
     code=$?
     stop_child
+    save_cache
     if [ "$checkout_created" = true ]; then
         cd "$repo"
         if ! git -C "$repo" worktree remove --force "$source_dir"; then
@@ -137,6 +177,7 @@ status '音声プラグインをビルドしています。' native
 run sh Native~/RaceAudio/build-macos.sh || fail '音声プラグインのビルドに失敗しました。update.logを確認してください。'
 export RACING_PROJECT_PATH="$repo"
 export RACING_OPERATOR_BUILD="$repo/Builds/Operator/$(basename "$request")/Race.app"
+prepare_cache
 status 'Unityでビルドしています。完了まで既存のRaceは終了しません。' building
 run "$unity" -batchmode -quit -projectPath "$source_dir" -executeMethod OperatorPlayerBuild.Build -logFile "$request/build.log" || fail 'Unityビルドに失敗しました。build.logを確認してください。'
 test -x "$RACING_OPERATOR_BUILD/Contents/MacOS/Race" || fail 'ビルドの出力がありません。build.logを確認してください。'

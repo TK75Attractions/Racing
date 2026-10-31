@@ -7,6 +7,7 @@ New-Item -ItemType Directory -Force -Path $Request | Out-Null
 Start-Transcript -Path (Join-Path $Request 'update.log') -Append | Out-Null
 $lock = Join-Path $Repo 'Logs\OperatorUpdate.lock'
 $locked = $false; $checkoutCreated = $false; $sourceDir = $null; $child = $null; $cancelled = $false
+$cacheDir = $null; $cacheAttached = $false
 $message = '更新に失敗しました。update.logとbuild.logを確認してください。'
 function Set-UpdateStatus([string]$Text, [string]$Phase = '') {
     $script:message = $Text
@@ -40,6 +41,41 @@ function Run-Command([string]$Executable, [string[]]$Arguments) {
         if ($child -and !$child.HasExited) { Stop-OwnedProcess $child.Id; $child.WaitForExit() }
         if ($child) { $child.Dispose(); $script:child = $null }
     }
+}
+function Prepare-BuildCache {
+    $versionFile = Join-Path $sourceDir 'ProjectSettings\ProjectVersion.txt'
+    $version = if (Test-Path -LiteralPath $versionFile) { ((Get-Content -LiteralPath $versionFile | Where-Object { $_ -match '^m_EditorVersion: ' }) -replace '^m_EditorVersion: ', '').Trim() } else { 'unknown' }
+    if ($version -notmatch '^[A-Za-z0-9._-]+$') { throw 'Unityのバージョンを判別できません。' }
+    $script:cacheDir = Join-Path $Repo ('Builds\OperatorCache\Windows-' + $version)
+    foreach ($candidate in @((Join-Path $Repo 'Builds\OperatorCache'), $cacheDir, (Join-Path $cacheDir 'Library'))) {
+        if ((Test-Path -LiteralPath $candidate) -and ((Get-Item -LiteralPath $candidate -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'ビルドキャッシュにリンク先は使用できません。専用の保存先を確認してください。' }
+    }
+    $owner = Join-Path $cacheDir 'owner.txt'
+    if (Test-Path -LiteralPath $cacheDir) {
+        if (!(Test-Path -LiteralPath $owner) -or ([string](Get-Content -LiteralPath $owner -Raw)).Trim() -ne $Repo) { throw 'ビルドキャッシュの所有元を確認できません。Builds/OperatorCacheを確認してください。' }
+    } else {
+        New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
+        Set-Content -LiteralPath $owner -Value $Repo -Encoding UTF8
+    }
+    $library = Join-Path $sourceDir 'Library'
+    if (Test-Path -LiteralPath $library) { throw '更新用フォルダーに予期しないLibraryがあります。' }
+    if (Test-Path -LiteralPath (Join-Path $cacheDir 'Library')) {
+        Set-UpdateStatus '前回のUnityビルドキャッシュを再利用しています。' 'cache'
+        Move-Item -LiteralPath (Join-Path $cacheDir 'Library') -Destination $library
+        Set-Content -LiteralPath (Join-Path $Request 'cache.txt') -Value 'reused' -Encoding UTF8
+    } else {
+        Set-UpdateStatus '初回のUnityビルドを準備しています。アセットの読み込みには時間がかかります。' 'cache'
+        Set-Content -LiteralPath (Join-Path $Request 'cache.txt') -Value 'cold' -Encoding UTF8
+    }
+    $script:cacheAttached = $true
+}
+function Save-BuildCache {
+    if (!$cacheAttached -or !(Test-Path -LiteralPath (Join-Path $sourceDir 'Library'))) { return }
+    try {
+        if (Test-Path -LiteralPath (Join-Path $cacheDir 'Library')) { Write-Warning 'キャッシュ保存先は使用中です。'; return }
+        Move-Item -LiteralPath (Join-Path $sourceDir 'Library') -Destination (Join-Path $cacheDir 'Library')
+        Write-Output 'Unityビルドキャッシュを保存しました。次回は読み込み済みのデータを再利用します。'
+    } catch { Write-Warning 'Unityビルドキャッシュを保存できませんでした。次回は再作成します。' }
 }
 function Invoke-Git {
     & git @args
@@ -80,6 +116,7 @@ try {
     Run-Command 'cmd.exe' @('/c','Native~\RaceAudio\build-windows.cmd')
     $env:RACING_PROJECT_PATH = $Repo
     $env:RACING_OPERATOR_BUILD = Join-Path $Repo ('Builds\Operator\' + (Split-Path $Request -Leaf) + '\Race.exe')
+    Prepare-BuildCache
     Set-UpdateStatus 'Unityでビルドしています。完了まで既存のRaceは終了しません。' 'building'
     Run-Command $Unity @('-batchmode','-quit','-projectPath',$sourceDir,'-executeMethod','OperatorPlayerBuild.Build','-logFile',(Join-Path $Request 'build.log'))
     if (!(Test-Path -LiteralPath $env:RACING_OPERATOR_BUILD -PathType Leaf)) { throw 'Unityビルドの出力がありません。build.logを確認してください。' }
@@ -143,6 +180,7 @@ try {
 } finally {
     if ($child -and !$child.HasExited) { Stop-OwnedProcess $child.Id }
     Set-Location -LiteralPath $Repo
+    Save-BuildCache
     if ($checkoutCreated) {
         try { & git worktree remove --force $sourceDir } catch { Write-Warning $_.Exception.Message }
         # Only this request's newly created checkout can be removed here.

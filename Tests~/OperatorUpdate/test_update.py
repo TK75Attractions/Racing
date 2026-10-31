@@ -141,6 +141,39 @@ class UpdateTest(unittest.TestCase):
   self.assertEqual(update.wait(timeout=12),130,(self.logs/'update.log').read_text())
   self.assertIsNone(player.poll());self.assertFalse((self.logs/'ready').exists())
   self.assertTrue((self.logs/'cancelled').exists());self.assertFalse((self.root/'launched').exists())
+ def test_unity_library_cache_survives_cleanup_and_is_reused_by_a_new_checkout(self):
+  self.unity.write_text('#!/bin/sh\nmkdir -p Library\nif [ -f Library/probe ]; then echo warm > "'+str(self.root/'cache-mode')+'"; else echo cold > "'+str(self.root/'cache-mode')+'"; fi\necho imported > Library/probe\n'+self.build_output)
+  self.assertEqual(self.run_update(),0)
+  self.assertEqual((self.root/'cache-mode').read_text().strip(),'cold')
+  cache=self.repo/'Builds/OperatorCache/macOS-unknown/Library/probe'
+  self.assertTrue(cache.exists());self.assertEqual(list((self.repo/'Builds/OperatorSource').iterdir()),[])
+  original_library=self.repo/'Library';original_library.mkdir();(original_library/'user-editor').write_text('untouched')
+  self.logs=self.root/'second request'
+  self.assertEqual(self.run_update(),0)
+  self.assertEqual((self.root/'cache-mode').read_text().strip(),'warm')
+  self.assertEqual((self.logs/'cache.txt').read_text().strip(),'reused')
+  self.assertEqual((original_library/'user-editor').read_text(),'untouched')
+  self.assertTrue(cache.exists())
+ def test_cancelled_import_keeps_cache_for_the_next_build(self):
+  self.unity.write_text('#!/bin/bash\nmkdir -p Library;echo partial > Library/probe\necho importing > "'+str(self.root/'cache-started')+'"\nwhile true; do sleep .1; done\n')
+  update=self.start_update();self.wait_file(self.root/'cache-started')
+  (self.logs/'decision').write_text('cancel\n')
+  self.assertEqual(update.wait(timeout=12),130)
+  self.assertEqual((self.repo/'Builds/OperatorCache/macOS-unknown/Library/probe').read_text().strip(),'partial')
+  self.assertFalse((self.repo/'Logs/OperatorUpdate.lock').exists())
+ def test_cache_owned_by_another_project_is_not_reused_or_deleted(self):
+  cache=self.repo/'Builds/OperatorCache/macOS-unknown';cache.mkdir(parents=True)
+  (cache/'owner.txt').write_text('/another/project');(cache/'keep').write_text('safe')
+  self.assertNotEqual(self.run_update(),0)
+  self.assertEqual((cache/'keep').read_text(),'safe')
+  self.assertFalse((self.logs/'build.log').exists())
+ def test_linked_cache_cannot_reuse_the_working_editors_library(self):
+  library=self.repo/'Library';library.mkdir();(library/'editor').write_text('unchanged')
+  cache=self.repo/'Builds/OperatorCache/macOS-unknown';cache.mkdir(parents=True)
+  (cache/'owner.txt').write_text(str(self.repo));(cache/'Library').symlink_to(library,target_is_directory=True)
+  self.assertNotEqual(self.run_update(),0)
+  self.assertEqual((library/'editor').read_text(),'unchanged')
+  self.assertTrue((cache/'Library').is_symlink())
  def test_cancel_during_build_stops_owned_children_keeps_race_and_cleans_lock(self):
   player=self.existing_race()
   self.unity.write_text('#!/bin/bash\necho $$ > "'+str(self.root/'build-pid')+'"\nsleep 120 &\necho $! > "'+str(self.root/'compiler-pid')+'"\nwait\n'+self.build_output)
