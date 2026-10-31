@@ -67,6 +67,7 @@ app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSecond
 using var client = new HttpClient(new SocketsHttpHandler { UseProxy = false, MaxConnectionsPerServer = 32 })
 { BaseAddress = new Uri("http://127.0.0.1:8765"), Timeout = Timeout.InfiniteTimeSpan };
 using var operatorUpdate = new OperatorUpdateHost(client);
+var statistics = new PlayStatistics(PlayStatistics.DefaultDirectory());
 string? allowedOrigin = Environment.GetEnvironmentVariable("RACING_DASHBOARD_ORIGIN")?.TrimEnd('/');
 var operators = (Environment.GetEnvironmentVariable("RACING_DASHBOARD_OPERATORS") ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
 int activeSockets = 0;
@@ -131,6 +132,13 @@ app.Run(async context =>
         }
         catch (Exception error) when (error is JsonException or BadHttpRequestException or IOException or UnauthorizedAccessException)
         { if (!context.Response.HasStarted) context.Response.StatusCode=400; }
+        return;
+    }
+    if (path == "/api/statistics")
+    {
+        context.Response.Headers.CacheControl = "no-store";
+        if (context.Request.Method != "GET") { context.Response.StatusCode=405; return; }
+        await context.Response.WriteAsJsonAsync(statistics.Read());
         return;
     }
     if (path == "/api/operator-update")
