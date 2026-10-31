@@ -68,6 +68,11 @@ internal sealed class OperatorUpdateHost : IDisposable
             string allowed=Path.Combine(project,"Logs","OperatorUpdate")+Path.DirectorySeparatorChar;
             if (Path.GetFullPath(folder).StartsWith(allowed,StringComparison.Ordinal)) requestFolder=folder;
         }
+        // Keep the last build's logs accessible after a helper restart, too.
+        if (requestFolder == null && Directory.Exists(Path.Combine(project,"Logs","OperatorUpdate")))
+            requestFolder=Directory.EnumerateDirectories(Path.Combine(project,"Logs","OperatorUpdate"))
+                .Where(folder=>File.Exists(Path.Combine(folder,"status.txt")))
+                .OrderByDescending(folder=>Directory.GetCreationTimeUtc(folder)).FirstOrDefault();
         if(requestFolder != null && File.Exists(Path.Combine(requestFolder,"handoff.wait"))) EnsureHandoff(requestFolder);
     }
     private bool IsBusy(string? project) => Busy || project != null && Directory.Exists(Path.Combine(project,"Logs","OperatorUpdate.lock"));
@@ -180,7 +185,7 @@ internal sealed class OperatorUpdateHost : IDisposable
             bool hasProgress=requestFolder != null && File.Exists(Path.Combine(requestFolder,"status.txt"));
             return new { available=canControl && project != null && !busy,busy,canControl,canCancel,
                 requestId=requestFolder != null ? Path.GetFileName(requestFolder) : null,phase,
-                logFolder=requestFolder,message=decision=="cancel" && busy ? "更新をキャンセルしています。既存のRaceは終了しません。" : hasProgress ? Progress :
+                logFolder=requestFolder,progress=canControl ? OperatorBuildProgress.Read(requestFolder,phase,busy) : null,message=decision=="cancel" && busy ? "更新をキャンセルしています。既存のRaceは終了しません。" : hasProgress ? Progress :
                     project != null ? "最新mainを別フォルダーでビルドし、成功後、試合終了を待って既存のRaceを入れ替えます。" : "更新元プロジェクトが見つかりません。RACING_PROJECT_PATHを設定してください。" };
         }
         finally { gate.Release(); }

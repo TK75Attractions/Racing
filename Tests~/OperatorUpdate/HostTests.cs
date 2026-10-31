@@ -57,6 +57,7 @@ try
     using var host=new OperatorUpdateHost(client,()=>playerExists);
     var status=Node(await host.Status(true));Check(status["available"]!.GetValue<bool>(),"Unity closed: updater remains available");
     Check(!Node(await host.Status(false))["available"]!.GetValue<bool>(),"Viewer cannot enable update");
+    Check(Node(await host.Status(false))["progress"]==null,"Build logs are restricted to operators");
     var result=Node(await host.Start("offline-1"));Check(result["ok"]!.GetValue<bool>(),"Starts without Unity");
     string folder=result["logFolder"]!.GetValue<string>();
     await Until(()=>File.Exists(Path.Combine(folder,"succeeded")) && !Directory.Exists(Path.Combine(root,"Logs","OperatorUpdate.lock")));
@@ -180,6 +181,25 @@ try
     await Until(()=>File.Exists(Path.Combine(folder,"released")));
     Check(handler.Posts==beforeRuntime,"Relay can adopt a runtime-owned job after that game has exited");
     await File.WriteAllTextAsync(Path.Combine(folder,"succeeded"),"");Directory.Delete(runtimeLock,true);
+
+    var restartedAfterCompletion=new OperatorUpdateHost(client,()=>false);
+    var last=Node(await restartedAfterCompletion.Status(true));
+    Check(last["logFolder"]!=null,"A restarted helper retains the last completed build logs");restartedAfterCompletion.Dispose();
+
+    string telemetry=Path.Combine(root,"telemetry");Directory.CreateDirectory(telemetry);
+    var now=DateTime.UtcNow;
+    string buildLog=Path.Combine(telemetry,"build.log"),updateLog=Path.Combine(telemetry,"update.log");
+    await File.WriteAllTextAsync(updateLog,"Unityでビルドしています。\n");
+    await File.WriteAllTextAsync(buildLog,new string('x',80000)+"\nDisplayProgressbar: Compiling Scripts\nStart importing Assets/Track.fbx using Guid(abc)\nStarting -accessToken secret-test-value\n");
+    await File.WriteAllTextAsync(Path.Combine(telemetry,"cache.txt"),"cold");
+    File.SetLastWriteTimeUtc(buildLog,now.AddSeconds(-180));File.SetLastWriteTimeUtc(updateLog,now.AddSeconds(-180));
+    var progress=OperatorBuildProgress.Read(telemetry,"building",true,now);
+    Check(progress.completedSteps==3 && progress.totalSteps==6 && progress.stage=="アセットを読み込み" && progress.task=="Assets/Track.fbx","Log telemetry identifies the active asset and real completed stages");
+    Check(progress.logQuiet && progress.quietSeconds>=180,"A quiet log is reported without claiming the process has failed");
+    Check(progress.logBytes>80000 && progress.logLines.Length<=86 && !string.Join("",progress.logLines).Contains("secret-test-value"),"Large logs have bounded tails and command-line credentials are redacted");
+    Check(OperatorBuildProgress.Read(telemetry,"cancelled",false,now).completedSteps==3,"Cancellation never presents a completed build bar");
+    Check(OperatorBuildProgress.Read(telemetry,"completed",false,now).completedSteps==6,"Only successful completion fills the progress bar");
+    Check(OperatorBuildProgress.Read(null,"idle",false,now).logLines.Length==0,"Missing logs are handled before the first request");
 
 }
 finally { Environment.SetEnvironmentVariable("RACING_FAKE_WAIT",null);Environment.SetEnvironmentVariable("RACING_FAKE_HOLD_ALLOWED",null);Directory.Delete(root,true); }
