@@ -23,6 +23,8 @@ public sealed class RaceBarrierPath : MonoBehaviour
         [Min(0f)]
         [Tooltip("下部円弧の終点の最小外側距離です。60度の円弧を保つため、指定が大きい場合は高さも増えます。")]
         public float outwardFlare = 2.5f;
+        [Range(0f, 1f)] public float uprightWeight;
+        public Vector3 localOutward;
     }
 
     [Header("手動配置")]
@@ -77,18 +79,23 @@ public sealed class RaceBarrierPath : MonoBehaviour
         public Vector3 position;
         public float height;
         public float outwardFlare;
+        public float uprightWeight;
+        public Vector3 outward;
     }
 
     public int ControlPointCount => controlPoints != null ? controlPoints.Count : 0;
     public bool ClosedLoop => closedLoop;
 
-    /// <summary>道路境界など、既にサンプリングされた経路を補間せずに壁へ変換します。</summary>
+    /// <summary>道路境界を壁へ変換。任意の各行の垂直化率と道路基準の外向き方向も保持します。</summary>
     public void SetWorldPath(IReadOnlyList<Vector3> points, int outside, bool loop,
-        Material material, PhysicsMaterial physicsMaterial, bool createCollider)
+        Material material, PhysicsMaterial physicsMaterial, bool createCollider,
+        IReadOnlyList<float> uprightWeights = null, IReadOnlyList<Vector3> worldOutwards = null)
     {
         controlPoints.Clear();
         for (int i = 0; i < points.Count; i++)
-            controlPoints.Add(new ControlPoint { localPosition = transform.InverseTransformPoint(points[i]) });
+            controlPoints.Add(new ControlPoint { localPosition = transform.InverseTransformPoint(points[i]),
+                uprightWeight = uprightWeights == null ? 0f : Mathf.Clamp01(uprightWeights[i]),
+                localOutward = worldOutwards == null ? Vector3.zero : transform.InverseTransformDirection(worldOutwards[i]).normalized });
         closedLoop = loop;
         useCurves = false;
         outwardSign = outside < 0 ? -1 : 1;
@@ -201,7 +208,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
             // かえしの途中が最も外へ張り出すため、断面全体から外縁を求めます。
             for (int i = 0; i < samples.Count; i++)
             {
-                Vector3 outward = GetOutward(GetTangent(i));
+                Vector3 outward = GetSampleOutward(i);
                 Vector3 outer = samples[i].position;
                 float maximum = 0f;
                 for (int section = 1; section <= wallSectionSegments * 2; section++)
@@ -290,7 +297,9 @@ public sealed class RaceBarrierPath : MonoBehaviour
                     position = position,
                     height = Mathf.Max(minimumWallHeight,
                         Mathf.Lerp(controlPoints[segment].wallHeight, controlPoints[next].wallHeight, t)),
-                    outwardFlare = Mathf.Lerp(controlPoints[segment].outwardFlare, controlPoints[next].outwardFlare, t)
+                    outwardFlare = Mathf.Lerp(controlPoints[segment].outwardFlare, controlPoints[next].outwardFlare, t),
+                    uprightWeight = Mathf.Clamp01(Mathf.Lerp(controlPoints[segment].uprightWeight, controlPoints[next].uprightWeight, t)),
+                    outward = Vector3.Lerp(controlPoints[segment].localOutward, controlPoints[next].localOutward, t).normalized
                 });
             }
         }
@@ -321,6 +330,8 @@ public sealed class RaceBarrierPath : MonoBehaviour
         List<Vector2> uvs = new List<Vector2>();
         List<Vector2> edgeDistances = new List<Vector2>();
         List<int> triangles = new List<int>();
+        var offsets = new Vector2[sectionCount + 1];
+        var sectionDistances = new float[sectionCount + 1];
 
         float distance = 0f;
         for (int i = 0; i < samples.Count; i++)
@@ -330,15 +341,20 @@ public sealed class RaceBarrierPath : MonoBehaviour
                 distance += Vector3.Distance(samples[i - 1].position, samples[i].position);
             }
 
-            Vector3 tangent = GetTangent(i);
-            Vector3 outward = GetOutward(tangent);
+            Vector3 outward = GetSampleOutward(i);
             int rowStart = vertices.Count;
-            float totalArcDistance = GetSectionArcDistance(samples[i], sectionCount);
+            for (int section = 0; section <= sectionCount; section++)
+            {
+                offsets[section] = GetSectionOffset(samples[i], section);
+                sectionDistances[section] = section == 0 ? 0f : sectionDistances[section - 1] +
+                    Vector2.Distance(offsets[section - 1], offsets[section]);
+            }
+            float totalArcDistance = sectionDistances[sectionCount];
 
             for (int section = 0; section <= sectionCount; section++)
             {
-                float sectionArcDistance = GetSectionArcDistance(samples[i], section);
-                vertices.Add(GetSectionPoint(samples[i], outward, section));
+                float sectionArcDistance = sectionDistances[section];
+                vertices.Add(samples[i].position + outward * offsets[section].x + Vector3.up * offsets[section].y);
                 uvs.Add(new Vector2(distance / uvMetersPerRepeat, sectionArcDistance / uvMetersPerRepeat));
                 edgeDistances.Add(new Vector2(sectionArcDistance, totalArcDistance - sectionArcDistance));
             }
@@ -405,28 +421,30 @@ public sealed class RaceBarrierPath : MonoBehaviour
         int top = wallSectionSegments * 2;
         for (int i = 0; i < samples.Count; i++)
         {
-            Vector3 tangent = GetTangent(i).normalized, outward = GetOutward(tangent);
+            Vector3 tangent = GetTangent(i).normalized, outward = GetSampleOutward(i);
             if (i > 0) distance += Vector3.Distance(samples[i-1].position, samples[i].position);
             if (distance >= nextPost || (!closedLoop && i == samples.Count-1))
             {
                 // A solid curved support also reads as the panel joint. It lies behind the drive surface.
                 for (int s = 0; s < top; s++)
                 {
-                    Vector3 normal = GetSectionBackNormal(outward, s);
-                    Vector3 a = GetSectionPoint(samples[i], outward, s) + normal * .18f;
-                    Vector3 b = GetSectionPoint(samples[i], outward, s+1) + GetSectionBackNormal(outward, s+1) * .18f;
-                    geometry.Box((a+b)*.5f, tangent * .20f, b-a, normal * .36f, metal);
+                    float frameScale = Mathf.Lerp(1f, .25f, samples[i].uprightWeight);
+                    Vector3 normal = GetSectionBackNormal(samples[i], outward, s);
+                    Vector3 a = GetSectionPoint(samples[i], outward, s) + normal * (.18f * frameScale);
+                    Vector3 b = GetSectionPoint(samples[i], outward, s+1) + GetSectionBackNormal(samples[i], outward, s+1) * (.18f * frameScale);
+                    geometry.Box((a+b)*.5f, tangent * (.20f * frameScale), b-a, normal * (.36f * frameScale), metal);
                 }
                 nextPost = distance + 12f;
             }
             if (i == 0) continue;
             foreach (int section in new[] { 0, top })
             {
-                Vector3 previousOutward = GetOutward(GetTangent(i-1));
-                Vector3 a = GetSectionPoint(samples[i-1], previousOutward, section) + GetSectionBackNormal(previousOutward, section) * .15f;
-                Vector3 b = GetSectionPoint(samples[i], outward, section) + GetSectionBackNormal(outward, section) * .15f;
-                Vector3 normal = GetSectionBackNormal(outward, section);
-                geometry.Box((a+b)*.5f, b-a, Vector3.Cross(normal, (b-a).normalized) * .22f, normal * .30f, metal);
+                float railScale = Mathf.Lerp(1f, .25f, Mathf.Max(samples[i-1].uprightWeight, samples[i].uprightWeight));
+                Vector3 previousOutward = GetSampleOutward(i-1);
+                Vector3 a = GetSectionPoint(samples[i-1], previousOutward, section) + GetSectionBackNormal(samples[i-1], previousOutward, section) * (.15f * railScale);
+                Vector3 b = GetSectionPoint(samples[i], outward, section) + GetSectionBackNormal(samples[i], outward, section) * (.15f * railScale);
+                Vector3 normal = GetSectionBackNormal(samples[i], outward, section);
+                geometry.Box((a+b)*.5f, b-a, Vector3.Cross(normal, (b-a).normalized) * (.22f * railScale), normal * (.30f * railScale), metal);
             }
         }
         Mesh mesh = geometry.ToMesh("RaceBarrierSolidFrame");
@@ -451,7 +469,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
 
         for (int i = 0; i < samples.Count; i++)
         {
-            Vector3 outward = GetOutward(GetTangent(i));
+            Vector3 outward = GetSampleOutward(i);
             for (int section = 0; section <= sectionCount; section++)
             {
                 vertices.Add(GetSectionPoint(samples[i], outward, section));
@@ -460,7 +478,7 @@ public sealed class RaceBarrierPath : MonoBehaviour
             for (int section = 0; section <= sectionCount; section++)
             {
                 vertices.Add(GetSectionPoint(samples[i], outward, section) +
-                    GetSectionBackNormal(outward, section) * colliderThickness);
+                    GetSectionBackNormal(samples[i], outward, section) * Mathf.Lerp(colliderThickness, .1f, samples[i].uprightWeight));
             }
 
             if (i == 0)
@@ -517,22 +535,31 @@ public sealed class RaceBarrierPath : MonoBehaviour
 
     private Vector3 GetSectionPoint(Sample sample, Vector3 outward, int section)
     {
-        float radius = GetArcRadius(sample);
-        float angle = GetSectionAngle(section);
-        if (section <= wallSectionSegments)
-        {
-            // 下部は路面に水平接続する60度の円弧。
-            return sample.position + outward * (radius * Mathf.Sin(angle)) +
-                Vector3.up * (radius * (1f - Mathf.Cos(angle)));
-        }
+        Vector2 offset = GetSectionOffset(sample, section);
+        return sample.position + outward * offset.x + Vector3.up * offset.y;
+    }
 
-        // 上部は小さい半径で同じ接線から続け、90度を超えて道路側へ戻す。
-        float returnRadius = radius * ReturnArcRadiusRatio;
-        return sample.position +
-            outward * (radius * Mathf.Sin(WallArcAngle) +
-                returnRadius * (Mathf.Sin(angle) - Mathf.Sin(WallArcAngle))) +
-            Vector3.up * (radius * (1f - Mathf.Cos(WallArcAngle)) +
-                returnRadius * (Mathf.Cos(WallArcAngle) - Mathf.Cos(angle)));
+    private Vector2 GetSectionOffset(Sample sample, int section)
+    {
+        float radius = GetArcRadius(sample), angle = GetSectionAngle(section);
+        Vector2 arc = section <= wallSectionSegments
+            ? new Vector2(radius * Mathf.Sin(angle), radius * (1f - Mathf.Cos(angle)))
+            : new Vector2(radius * Mathf.Sin(WallArcAngle) + radius * ReturnArcRadiusRatio * (Mathf.Sin(angle) - Mathf.Sin(WallArcAngle)),
+                radius * (1f - Mathf.Cos(WallArcAngle)) + radius * ReturnArcRadiusRatio * (Mathf.Cos(WallArcAngle) - Mathf.Cos(angle)));
+        float u = section / (float)wallSectionSegments;
+        Vector2 upright;
+        if (u <= .25f)
+        {
+            float theta = u * 2f * Mathf.PI;
+            upright = new Vector2(.1f * Mathf.Sin(theta), .1f * (1f - Mathf.Cos(theta)));
+        }
+        else if (u <= 1f) upright = new Vector2(.1f, Mathf.Lerp(.1f, sample.height, (u - .25f) / .75f));
+        else
+        {
+            float phi = (u - 1f) * Mathf.PI * .5f;
+            upright = new Vector2(.1f * Mathf.Cos(phi), sample.height + .1f * Mathf.Sin(phi));
+        }
+        return Vector2.Lerp(arc, upright, sample.uprightWeight);
     }
 
     private float GetSectionAngle(int section)
@@ -546,21 +573,31 @@ public sealed class RaceBarrierPath : MonoBehaviour
             (section - wallSectionSegments) / wallSectionSegments;
     }
 
-    private float GetSectionArcDistance(Sample sample, int section)
+    private Vector3 GetSectionBackNormal(Sample sample, Vector3 outward, int section)
     {
-        float radius = GetArcRadius(sample);
         float angle = GetSectionAngle(section);
-        return section <= wallSectionSegments
-            ? radius * angle
-            : radius * WallArcAngle + radius * ReturnArcRadiusRatio * (angle - WallArcAngle);
+        float rate = section <= wallSectionSegments ? WallArcAngle : ReturnArcEndAngle - WallArcAngle;
+        float radius = GetArcRadius(sample) * (section <= wallSectionSegments ? 1f : ReturnArcRadiusRatio);
+        Vector2 derivative = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * (radius * rate);
+        float u = section / (float)wallSectionSegments;
+        Vector2 verticalDerivative;
+        if (u <= .25f)
+        {
+            float theta = u * 2f * Mathf.PI;
+            verticalDerivative = new Vector2(Mathf.Cos(theta), Mathf.Sin(theta)) * (.2f * Mathf.PI);
+        }
+        else if (u <= 1f) verticalDerivative = new Vector2(0f, (sample.height - .1f) / .75f);
+        else
+        {
+            float phi = (u - 1f) * Mathf.PI * .5f;
+            verticalDerivative = new Vector2(-Mathf.Sin(phi), Mathf.Cos(phi)) * (.05f * Mathf.PI);
+        }
+        derivative = Vector2.Lerp(derivative, verticalDerivative, sample.uprightWeight).normalized;
+        return outward * derivative.y - Vector3.up * derivative.x;
     }
 
-    private Vector3 GetSectionBackNormal(Vector3 outward, int section)
-    {
-        float angle = GetSectionAngle(section);
-        // 一定の厚みを面法線方向に付ける。根元側は路面下へ入り、段差を作らない。
-        return outward * Mathf.Sin(angle) - Vector3.up * Mathf.Cos(angle);
-    }
+    private Vector3 GetSampleOutward(int index) => samples[index].outward.sqrMagnitude > .5f
+        ? samples[index].outward : GetOutward(GetTangent(index));
 
     private static float GetArcRadius(Sample sample)
     {

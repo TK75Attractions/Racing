@@ -1,0 +1,951 @@
+{
+  "metrics": {
+    "length": 1908.3345605108188,
+    "min_width": 12.0,
+    "max_width_rate": 0.19116030947173226,
+    "heading_40m_degrees": 5.684249879965932,
+    "min_radius": 32.12004113986806,
+    "worst_curve": [
+      0.031133210435362095,
+      [
+        531.5474857748166,
+        10.973326498132081,
+        602.7801221193876
+      ]
+    ],
+    "takeoff": [
+      584.0,
+      18.0,
+      598.0
+    ],
+    "road_to_gap_heading_degrees": 1.5426962426970642e-09
+  },
+  "fine_0_25m_metrics": {
+    "length": 1908.3537279112381,
+    "min_width": 12.0,
+    "max_width_rate": 0.19860089962318692,
+    "heading_40m_degrees": 5.875822989230986,
+    "min_radius": 30.409689901545253,
+    "worst_curve": [
+      0.03288425509229496,
+      [
+        530.3649176734023,
+        10.481426786412047,
+        603.3025166824424
+      ]
+    ],
+    "takeoff": [
+      584.0,
+      18.0,
+      598.0
+    ],
+    "road_to_gap_heading_degrees": 2.598775252461446e-08
+  },
+  "audit_5m_min_horizontal_radius_including_gap_edge_m": 30.34052808013877,
+  "road_mesh": {
+    "before_fix": {
+      "triangle_count": 2606,
+      "folded_triangles": 1,
+      "takeoff_folded_triangles": 1,
+      "landing_folded_triangles": 0,
+      "min_normal_y": -0.8326619820315836,
+      "min_cross_y": -0.9082179695631956,
+      "worst_triangle": {
+        "sample": 1129,
+        "side": 1,
+        "vertices": [
+          [
+            584.3183847836544,
+            18.0,
+            606.9943666330397
+          ],
+          [
+            582.5844547539232,
+            17.966261466464704,
+            589.1452460294626
+          ],
+          [
+            584.3659019806055,
+            17.966261466464704,
+            606.959718296942
+          ]
+        ],
+        "normal": [
+          -0.5510332541756303,
+          -0.8326619820315836,
+          0.05510332541553259
+        ]
+      }
+    },
+    "normal": {
+      "triangle_count": 2612,
+      "folded_triangles": 0,
+      "takeoff_folded_triangles": 0,
+      "landing_folded_triangles": 0,
+      "min_normal_y": 0.8993249334665453,
+      "min_cross_y": 9.717049391313168,
+      "worst_triangle": {
+        "sample": 1167,
+        "side": 1,
+        "vertices": [
+          [
+            534.4245685340851,
+            10.973326498132081,
+            609.6720883865223
+          ],
+          [
+            527.392833430349,
+            10.54467998733664,
+            596.3959388314639
+          ],
+          [
+            533.6371176527094,
+            10.54467998733664,
+            610.0699492918096
+          ]
+        ],
+        "normal": [
+          -0.39776947406296626,
+          0.8993249334665452,
+          0.18164280758969004
+        ]
+      }
+    },
+    "fine_0_25m": {
+      "triangle_count": 15658,
+      "folded_triangles": 0,
+      "takeoff_folded_triangles": 0,
+      "landing_folded_triangles": 0,
+      "min_normal_y": 0.2329503443701255,
+      "min_cross_y": 0.22692375867037465,
+      "worst_triangle": {
+        "sample": 6644,
+        "side": 0,
+        "vertices": [
+          [
+            613.3999274744324,
+            10.487618923824034,
+            589.7862292328521
+          ],
+          [
+            613.3876987605148,
+            10.543149033969577,
+            589.7651095754791
+          ],
+          [
+            612.5200534128401,
+            10.487618923824034,
+            606.8232718329457
+          ]
+        ],
+        "normal": [
+          0.97119431739809,
+          0.23295034437012552,
+          0.05015710230364396
+        ]
+      }
+    },
+    "float_vertices": {
+      "triangle_count": 2612,
+      "folded_triangles": 0,
+      "takeoff_folded_triangles": 0,
+      "landing_folded_triangles": 0,
+      "min_normal_y": 0.8993205004094299,
+      "min_cross_y": 9.717594059184194,
+      "worst_triangle": {
+        "sample": 1167,
+        "side": 1,
+        "vertices": [
+          [
+            534.424560546875,
+            10.973326683044434,
+            609.6720581054688
+          ],
+          [
+            527.392822265625,
+            10.544679641723633,
+            596.3959350585938
+          ],
+          [
+            533.6371459960938,
+            10.544679641723633,
+            610.0699462890625
+          ]
+        ],
+        "normal": [
+          -0.39777733690586736,
+          0.8993205004094298,
+          0.1816475372456472
+        ]
+      }
+    },
+    "fine_float_vertices": {
+      "triangle_count": 15658,
+      "folded_triangles": 0,
+      "takeoff_folded_triangles": 0,
+      "landing_folded_triangles": 0,
+      "min_normal_y": 0.23259144284080474,
+      "min_cross_y": 0.22655125707387924,
+      "worst_triangle": {
+        "sample": 6644,
+        "side": 0,
+        "vertices": [
+          [
+            613.39990234375,
+            10.487619400024414,
+            589.7862548828125
+          ],
+          [
+            613.3876953125,
+            10.5431489944458,
+            589.76513671875
+          ],
+          [
+            612.5200805664062,
+            10.487619400024414,
+            606.8232421875
+          ]
+        ],
+        "normal": [
+          0.9712802496147513,
+          0.2325914428408047,
+          0.050158722327615556
+        ]
+      }
+    }
+  },
+  "jump_axis_alignment_within_0_5_degrees": {
+    "normal": {
+      "takeoff_m": 6.719023155028795,
+      "landing_m": 11.907887995784074
+    },
+    "fine_0_25m": {
+      "takeoff_m": 6.68458467288151,
+      "landing_m": 11.707751159073169
+    }
+  },
+  "straight_1e_5_degrees_m": 5.221320819302036,
+  "heading_within_2_degrees_m": 9.71860723159898,
+  "baseline_error_max_m": 0.0016935796426844744,
+  "baseline_error_rms_m": 0.000489189996238158,
+  "baseline_edge_width_error_max_m": 0.0017285574864267517,
+  "walls_conservative_clearance": {
+    "1016こうしゃ/高校棟昇降口/平面.011": {
+      "clearance": 2.7092758098352587,
+      "at": [
+        548.119,
+        15.88,
+        608.721
+      ]
+    },
+    "1016こうしゃ/Cube.047/Plane.019": {
+      "clearance": 0.61085874797152,
+      "at": [
+        484.557,
+        2.997,
+        753.814
+      ]
+    },
+    "1016こうしゃ/高校棟昇降口/平面.001": {
+      "clearance": 2.785542713607824,
+      "at": [
+        548.551,
+        16.01,
+        608.75
+      ]
+    }
+  },
+  "other_nonfloor_failures": {},
+  "fine_0_25m_nonfloor_clearance": {
+    "1016こうしゃ/高校棟昇降口/柱.008": {
+      "clearance": 2.45416635373875,
+      "at": [
+        511.76,
+        5.666850350854871,
+        636.498
+      ]
+    },
+    "1016こうしゃ/高校棟昇降口": {
+      "clearance": 3.5656617384507614,
+      "at": [
+        512.621,
+        4.062,
+        637.358
+      ]
+    },
+    "1016こうしゃ/Cube.047/Plane.031": {
+      "clearance": 2.342891347192401,
+      "at": [
+        507.057,
+        5.503,
+        694.846
+      ]
+    },
+    "1016こうしゃ/Cube.026/Cube.019": {
+      "clearance": 0.9126484452301421,
+      "at": [
+        441.478,
+        4.05,
+        777.274
+      ]
+    },
+    "1016こうしゃ/BézierCurve.001": {
+      "clearance": 4.063133008701047,
+      "at": [
+        271.4536237385238,
+        4.311290677827571,
+        556.4436265850601
+      ]
+    },
+    "1016こうしゃ/Cube.008": {
+      "clearance": 1.328771329769421,
+      "at": [
+        311.9,
+        2.997,
+        805.55
+      ]
+    },
+    "1016こうしゃ/高校棟昇降口/平面.011": {
+      "clearance": 3.108801631960282,
+      "at": [
+        548.119,
+        15.876784799622714,
+        609.111
+      ]
+    },
+    "1016こうしゃ/Cube.047/Plane.019": {
+      "clearance": 0.7142675015833782,
+      "at": [
+        484.557,
+        2.997,
+        753.814
+      ]
+    },
+    "1016こうしゃ/高校棟昇降口/平面.001": {
+      "clearance": 2.8095461190763227,
+      "at": [
+        548.551,
+        16.01,
+        608.75
+      ]
+    },
+    "1016こうしゃ/Cube.026/高校棟昇降口.013": {
+      "clearance": 0.9925047561387907,
+      "at": [
+        451.978,
+        4.02,
+        776.707
+      ]
+    },
+    "1016こうしゃ/立方体.003": {
+      "clearance": 11.553514874966236,
+      "at": [
+        535.458,
+        9.21673028959088,
+        622.1563610868263
+      ]
+    },
+    "1016こうしゃ/Cube.047/Plane.029": {
+      "clearance": 2.332416163828493,
+      "at": [
+        507.057,
+        3.45,
+        676.11
+      ]
+    },
+    "1016こうしゃ/Cube.047/Plane.030": {
+      "clearance": 2.273680373376779,
+      "at": [
+        507.057,
+        3.45,
+        668.453
+      ]
+    },
+    "1016こうしゃ/Cylinder.002/Cylinder.003": {
+      "clearance": 1.5754461963678588,
+      "at": [
+        503.973,
+        2.997,
+        771.152
+      ]
+    },
+    "1016こうしゃ/高校棟昇降口/高校棟昇降口.006": {
+      "clearance": 7.466729017953531,
+      "at": [
+        516.7364536038775,
+        3.808,
+        637.518
+      ]
+    },
+    "1016こうしゃ/Cylinder.002/Cylinder.004": {
+      "clearance": 6.063557799114084,
+      "at": [
+        509.0549221082693,
+        2.997,
+        769.9828046004868
+      ]
+    },
+    "1016こうしゃ/Cube.026/Plane.004": {
+      "clearance": 1.0257555695682041,
+      "at": [
+        451.979001,
+        2.997,
+        776.673667
+      ]
+    }
+  },
+  "fine_0_25m_nonfloor_failures": {},
+  "floors_require_terrain_rebake": {
+    "1016こうしゃ/Cube.001": {
+      "clearance": -7.553224943104213,
+      "at": [
+        532.6914195850861,
+        11.425486381891433,
+        602.3259878786187
+      ]
+    }
+  },
+  "height_profile": [
+    {
+      "world_x": 508,
+      "old": [
+        508.0,
+        4.140278289257021,
+        622.7145851505186
+      ],
+      "previous": [
+        508.0,
+        3.8136621443904017,
+        615.7749858030761
+      ],
+      "new": [
+        508.0,
+        3.4707369845279037,
+        615.9785779668147
+      ]
+    },
+    {
+      "world_x": 514,
+      "old": [
+        514.0,
+        5.722464579132725,
+        616.5217787702577
+      ],
+      "previous": [
+        514.0,
+        5.2875278293672645,
+        611.1767323624422
+      ],
+      "new": [
+        514.0,
+        4.635586015874241,
+        610.837548779724
+      ]
+    },
+    {
+      "world_x": 520,
+      "old": [
+        520.0,
+        7.591636836646019,
+        612.290138188732
+      ],
+      "previous": [
+        520.0,
+        7.07450670765163,
+        608.5950216147694
+      ],
+      "new": [
+        520.0,
+        6.455029349832094,
+        607.982068403681
+      ]
+    },
+    {
+      "world_x": 526,
+      "old": [
+        526.0,
+        9.357234232773507,
+        609.62534919438
+      ],
+      "previous": [
+        526.0,
+        8.887353738594546,
+        606.5171884787043
+      ],
+      "new": [
+        526.0,
+        8.674980957197999,
+        605.3495762020812
+      ]
+    },
+    {
+      "world_x": 530,
+      "old": [
+        530.0,
+        10.479765836410166,
+        608.1453896364102
+      ],
+      "previous": [
+        530.0,
+        10.178254986802424,
+        605.0790521901013
+      ],
+      "new": [
+        530.0,
+        10.326139388483407,
+        603.4776838440047
+      ]
+    },
+    {
+      "world_x": 536,
+      "old": [
+        536.0,
+        12.12277029242257,
+        605.8578707385791
+      ],
+      "previous": [
+        536.0,
+        12.13780267386416,
+        603.2242571813437
+      ],
+      "new": [
+        536.0,
+        12.709377712450838,
+        601.269510023919
+      ]
+    },
+    {
+      "world_x": 540,
+      "old": [
+        540.0,
+        13.091919769551247,
+        604.2875571531847
+      ],
+      "previous": [
+        540.0,
+        13.195268701276568,
+        602.4715810576488
+      ],
+      "new": [
+        540.0,
+        14.070166138719811,
+        600.3999691073392
+      ]
+    },
+    {
+      "world_x": 548,
+      "old": [
+        548.0,
+        14.681624976599261,
+        601.482817099677
+      ],
+      "previous": [
+        548.0,
+        14.7734782962401,
+        601.5999999999974
+      ],
+      "new": [
+        548.0,
+        15.95607380202822,
+        599.6314394521605
+      ]
+    },
+    {
+      "world_x": 554,
+      "old": [
+        554.0,
+        15.615282126084427,
+        599.2100552383948
+      ],
+      "previous": [
+        554.0,
+        15.644048846643328,
+        600.9999999999981
+      ],
+      "new": [
+        554.0,
+        16.87504573804742,
+        599.2593413187666
+      ]
+    },
+    {
+      "world_x": 560,
+      "old": [
+        560.0,
+        16.24984772884663,
+        598.0004460481247
+      ],
+      "previous": [
+        560.0,
+        16.249018088646924,
+        600.3999999999982
+      ],
+      "new": [
+        560.0,
+        17.439290955480615,
+        598.8796738573924
+      ]
+    }
+  ],
+  "tube_waypoints_unchanged": true,
+  "tube_resampling_max_delta_m": 0.02088757403251942,
+  "gap_endpoints_unchanged": true,
+  "input_sha256": {
+    "Artifacts/CoursePlayabilityAudit/near-road-colliders.obj": "fec5e9e93dcd49daec6eeabd3dbf51d2d223dd49993305b88bf527c9fd1888d6",
+    "Artifacts/CoursePlayabilityAudit/geometry.csv": "19b0ba9e44e626f00d663491a7cda4af5cee778186ceae02d1d0ca6c2302f374",
+    "Artifacts/CoursePlayabilityAudit/design/source-waypoints.json": "e4f4369eb3b085aa771b4c9b0832bcfae3a6a941441edf960e016ba5be1d32d6",
+    "Artifacts/CoursePlayabilityAudit/design/previous-waypoints.json": "66c64bca6db53f320fe054e855c15b81e085007d3aa83d1188445ca4a8950cc0",
+    "Artifacts/CoursePlayabilityAudit/design/fold-regression-waypoints.json": "496ebae3db3c6143e91cd24fb7a27878ce8fa7d4461cdc17b112f34798fdf89f",
+    "Assets/Editor/SchoolMapCourseSetup.cs": "5cbd6d7985dd620dc0f169c7ba76ab5217afbf2f5a0c893fdac719d8ccdf51e0",
+    "Assets/Managers/RaceCourse.cs": "52b5472407940bfeae1707e5edf080bec618ef859d48af324395e61960b18340",
+    "Assets/Managers/RaceCourseLineSmoothing.cs": "c9f2c453056cc1252babcc2b9d23f96418f4e8614ff9fde54f9e276e253c47b8",
+    "Assets/Managers/RaceCourseRoad.cs": "78e343df8ec149b801d5359787645a1fed7a9bd5eccf2ba03fdee428a2fb3e08",
+    "Artifacts/CoursePlayabilityAudit/design/predict.py": "afd10fa9010a0bee6a8927481066849b8ec31a2b6450665ae57cc8edaa3ced18",
+    "Artifacts/CoursePlayabilityAudit/design/verify_design.py": "f30e4011df17649f12b7d826a4a470d27ea260e1ddd83817c2df8c5a5c4bb82f"
+  },
+  "scope": "Road curvature excludes the roadless jump chord. Approach X=530..584, Z=590..615. Heading change over the last 40m uses generated 3D progress; jump-axis alignment length uses generated horizontal distance. All surface collider triangles around the entire lap, including the tube, takeoff and landing, must have cross-product Y>0 after production degeneracy filtering. Clearance covers ALL non-tube road segments with any endpoint Y>2.9, including north/west connections and landing, vertically 0..2.5 m; 3 mm numerical guard and conservative miter enclosure. Both 1.5 m and 0.25 m tessellations checked; old floor cuts are reported separately.",
+  "limits": [
+    "OBJ contains exported collider triangles, not independent renderer triangles. Shared FBX wall geometry is the visual-clearance proxy; confirm in Unity.",
+    "Floors must be recut from source FBX by TubeCoursePreparation. The OBJ contains the old floor cuts; it cannot prove the newly rebaked visual floor.",
+    "The mesh port uses double arithmetic with an additional float32 vertex check; it is not a bit-exact Unity float simulation. Apply and run TubeCourseValidation in Unity to confirm generated meshes, barriers and jumps.",
+    "Unchanged tube control points/settings preserve its alignment function, but global uniform tessellation shifts samples; interpolation differences are reported separately."
+  ],
+  "result": {
+    "control_points_original_previous_current": [
+      {
+        "location": "北東角",
+        "original": {
+          "xyz_m": [
+            496.0,
+            3.0,
+            785.6693
+          ],
+          "width_m": 20.0
+        },
+        "previous": {
+          "xyz_m": [
+            496.0,
+            3.0,
+            785.6693
+          ],
+          "width_m": 16
+        },
+        "current": {
+          "xyz_m": [
+            496.0,
+            3.0,
+            785.6693
+          ],
+          "width_m": 20.0
+        }
+      },
+      {
+        "location": "西側接続",
+        "original": {
+          "xyz_m": [
+            258.2,
+            3.0,
+            796.7
+          ],
+          "width_m": 20.0
+        },
+        "previous": {
+          "xyz_m": [
+            258.2,
+            3.0,
+            796.7
+          ],
+          "width_m": 16
+        },
+        "current": {
+          "xyz_m": [
+            258.2,
+            3.0,
+            796.7
+          ],
+          "width_m": 20.0
+        }
+      },
+      {
+        "location": "着地後接続",
+        "original": {
+          "xyz_m": [
+            619.0,
+            8.0,
+            598.0
+          ],
+          "width_m": 20.0
+        },
+        "previous": {
+          "xyz_m": [
+            619.0,
+            8.0,
+            598.0
+          ],
+          "width_m": 14
+        },
+        "current": {
+          "xyz_m": [
+            619.0,
+            8.0,
+            598.0
+          ],
+          "width_m": 15.95
+        }
+      },
+      {
+        "location": "着地",
+        "original": {
+          "xyz_m": [
+            596.0,
+            16.0,
+            598.0
+          ],
+          "width_m": 20.0
+        },
+        "previous": {
+          "xyz_m": [
+            596.0,
+            16.0,
+            598.0
+          ],
+          "width_m": 13
+        },
+        "current": {
+          "xyz_m": [
+            596.0,
+            16.0,
+            598.0
+          ],
+          "width_m": 20.0
+        }
+      },
+      {
+        "location": "踏切",
+        "original": {
+          "xyz_m": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "width_m": 16.0
+        },
+        "previous": {
+          "xyz_m": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "width_m": 12
+        },
+        "current": {
+          "xyz_m": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "width_m": 18.0
+        }
+      },
+      {
+        "location": "坂上",
+        "original": {
+          "xyz_m": [
+            536.0,
+            14.5,
+            598.0
+          ],
+          "width_m": 16.0
+        },
+        "previous": {
+          "xyz_m": [
+            536.0,
+            14.5,
+            602.8
+          ],
+          "width_m": 12
+        },
+        "current": {
+          "xyz_m": [
+            536.0,
+            15.5,
+            600.379
+          ],
+          "width_m": 14.4
+        }
+      },
+      {
+        "location": "坂の接続",
+        "original": {
+          "xyz_m": [
+            528.0,
+            9.5,
+            611.0
+          ],
+          "width_m": 16.0
+        },
+        "previous": {
+          "xyz_m": [
+            510.0,
+            3.0,
+            605.4
+          ],
+          "width_m": 12
+        },
+        "current": {
+          "xyz_m": [
+            513.5,
+            3.0,
+            601.886
+          ],
+          "width_m": 16.1
+        }
+      },
+      {
+        "location": "入口手前",
+        "original": {
+          "xyz_m": [
+            514.0,
+            4.0,
+            621.0
+          ],
+          "width_m": 18.0
+        },
+        "previous": {
+          "xyz_m": [
+            512.0,
+            4.0,
+            619.0
+          ],
+          "width_m": 12
+        },
+        "current": {
+          "xyz_m": [
+            513.9,
+            4.0,
+            621.2
+          ],
+          "width_m": 18.3
+        }
+      },
+      {
+        "location": "ホーム南端",
+        "original": {
+          "xyz_m": [
+            496.0,
+            3.0,
+            619.0
+          ],
+          "width_m": 20.0
+        },
+        "previous": {
+          "xyz_m": [
+            496.0,
+            3.0,
+            619.0
+          ],
+          "width_m": 12
+        },
+        "current": {
+          "xyz_m": [
+            496.0,
+            3.0,
+            619.0
+          ],
+          "width_m": 20.0
+        }
+      },
+      {
+        "location": "踏切前の整列点",
+        "original": null,
+        "previous": null,
+        "current": {
+          "xyz_m": [
+            571.5,
+            17.7,
+            598.0
+          ],
+          "width_m": 15.9
+        }
+      },
+      {
+        "location": "開口の幅制御点",
+        "original": null,
+        "previous": null,
+        "current": {
+          "xyz_m": [
+            549.0,
+            17.7,
+            599.508
+          ],
+          "width_m": 12.4
+        }
+      },
+      {
+        "location": "ホーム補助点・南",
+        "original": null,
+        "previous": null,
+        "current": {
+          "xyz_m": [
+            494.7,
+            3.0,
+            650.0
+          ],
+          "width_m": 20.0
+        }
+      },
+      {
+        "location": "ホーム補助点・北",
+        "original": null,
+        "previous": null,
+        "current": {
+          "xyz_m": [
+            494.7,
+            3.0,
+            720.0
+          ],
+          "width_m": 20.0
+        }
+      },
+      {
+        "location": "チューブ全121点",
+        "original": {
+          "width_m": 12
+        },
+        "previous": {
+          "width_m": 12
+        },
+        "current": {
+          "width_m": 12,
+          "xyz_and_settings_unchanged": true
+        }
+      }
+    ],
+    "acceptance_predictions": {
+      "wall_clearance_min_m": 0.61085874797152,
+      "fine_wall_clearance_min_m": 0.7142675015833782,
+      "home_and_corner_authored_width_m": 20.0,
+      "home_straight_generated_min_width_m": 20.0,
+      "entrance_authored_width_m": 12.4,
+      "takeoff_authored_width_m": 18.0,
+      "landing_width_m": 20.0,
+      "after_landing_authored_width_m": 15.95,
+      "tube_width_m": 12,
+      "heading_40m_degrees": 5.684249879965932,
+      "fine_heading_40m_degrees": 5.875822989230986,
+      "straight_m": 5.221320819302036,
+      "axis_aligned_before_takeoff_min_m": 6.68458467288151,
+      "axis_aligned_after_landing_min_m": 11.707751159073169,
+      "folded_road_triangles": 0,
+      "min_horizontal_radius_m": 32.12004113986806,
+      "fine_min_horizontal_radius_m": 30.409689901545253,
+      "audit_5m_radius_including_gap_edge_m": 30.34052808013877,
+      "max_width_rate_m_per_m": 0.19116030947173226,
+      "fine_max_width_rate_m_per_m": 0.19860089962318692,
+      "min_width_m": 12.0,
+      "gap_endpoints_unchanged": true,
+      "tube_waypoints_unchanged": true
+    },
+    "status": "pass"
+  }
+}

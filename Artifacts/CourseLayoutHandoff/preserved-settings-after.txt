@@ -1,0 +1,8 @@
+  boostMotionBlur: 0
+  maxPetals: 1800
+  petalRate: 100
+  speedCompensation: 0.35
+  speedMotionBlurHigh: 0
+  speedMotionBlurLow: 0
+  timeOfDay: 1
+  weather: 0

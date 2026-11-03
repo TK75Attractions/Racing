@@ -1,0 +1,175 @@
+{
+  "status": "accepted_offline",
+  "people": [
+    {
+      "name": "1016こうしゃ/人間",
+      "north_translation_m": 20,
+      "moved_bounds_m": [
+        [
+          483.39718258857727,
+          -2.1159736940390417e-07,
+          834.059060517546
+        ],
+        [
+          484.29718264579776,
+          5.400000211597369,
+          835.5590620410478
+        ]
+      ],
+      "footprint_on_original_filled_ground": true,
+      "closest_other_model_aabb_lower_bound_m": 22.44698500897273,
+      "closest_other_model": "1016こうしゃ/人間.001",
+      "y_rotation_scale_modified": false,
+      "renderer_visibility_modified": false
+    },
+    {
+      "name": "1016こうしゃ/人間.001",
+      "north_translation_m": 20,
+      "moved_bounds_m": [
+        [
+          460.06878415107724,
+          -2.1159736940390417e-07,
+          831.6457780468428
+        ],
+        [
+          460.96878420829773,
+          5.400000211597369,
+          833.1457795703446
+        ]
+      ],
+      "footprint_on_original_filled_ground": true,
+      "closest_other_model_aabb_lower_bound_m": 2.7199218177794933,
+      "closest_other_model": "1016こうしゃ/人間.002",
+      "y_rotation_scale_modified": false,
+      "renderer_visibility_modified": false
+    },
+    {
+      "name": "1016こうしゃ/人間.002",
+      "north_translation_m": 20,
+      "moved_bounds_m": [
+        [
+          456.44886227607725,
+          -2.1159736940390417e-07,
+          831.8468901073898
+        ],
+        [
+          457.34886233329775,
+          5.400000211597369,
+          833.3468916308916
+        ]
+      ],
+      "footprint_on_original_filled_ground": true,
+      "closest_other_model_aabb_lower_bound_m": 2.139172356494218,
+      "closest_other_model": "1016こうしゃ/人間.003",
+      "y_rotation_scale_modified": false,
+      "renderer_visibility_modified": false
+    },
+    {
+      "name": "1016こうしゃ/人間.003",
+      "north_translation_m": 20,
+      "moved_bounds_m": [
+        [
+          453.4322655963897,
+          -2.1159736940390417e-07,
+          830.0369255077803
+        ],
+        [
+          454.3322656536102,
+          5.400000211597369,
+          831.5369270312822
+        ]
+      ],
+      "footprint_on_original_filled_ground": true,
+      "closest_other_model_aabb_lower_bound_m": 2.139172356494218,
+      "closest_other_model": "1016こうしゃ/人間.002",
+      "y_rotation_scale_modified": false,
+      "renderer_visibility_modified": false
+    },
+    {
+      "name": "1016こうしゃ/人間.004",
+      "north_translation_m": 20,
+      "moved_bounds_m": [
+        [
+          431.71273434638977,
+          -2.1159736940390417e-07,
+          835.4668083202803
+        ],
+        [
+          432.61273440361026,
+          5.400000211597369,
+          836.9668098437821
+        ]
+      ],
+      "footprint_on_original_filled_ground": true,
+      "closest_other_model_aabb_lower_bound_m": 5.334316349029564,
+      "closest_other_model": "1016こうしゃ/人間.005",
+      "y_rotation_scale_modified": false,
+      "renderer_visibility_modified": false
+    },
+    {
+      "name": "1016こうしゃ/人間.005",
+      "north_translation_m": 20,
+      "moved_bounds_m": [
+        [
+          425.4784179401397,
+          -2.1159736940390417e-07,
+          834.2601689159834
+        ],
+        [
+          426.3784179973602,
+          5.400000211597369,
+          835.7601704394853
+        ]
+      ],
+      "footprint_on_original_filled_ground": true,
+      "closest_other_model_aabb_lower_bound_m": 5.334316349029564,
+      "closest_other_model": "1016こうしゃ/人間.004",
+      "y_rotation_scale_modified": false,
+      "renderer_visibility_modified": false
+    },
+    {
+      "name": "1016こうしゃ/人間.006",
+      "north_translation_m": 20,
+      "moved_bounds_m": [
+        [
+          412.4064745807647,
+          -2.1159736940390417e-07,
+          838.8856217968428
+        ],
+        [
+          413.3064746379852,
+          5.400000211597369,
+          840.3856233203446
+        ]
+      ],
+      "footprint_on_original_filled_ground": true,
+      "closest_other_model_aabb_lower_bound_m": 3.387960184064491,
+      "closest_other_model": "1016こうしゃ/人間.007",
+      "y_rotation_scale_modified": false,
+      "renderer_visibility_modified": false
+    },
+    {
+      "name": "1016こうしゃ/人間.007",
+      "north_translation_m": 20,
+      "moved_bounds_m": [
+        [
+          408.38433590888974,
+          -2.1159736940390417e-07,
+          836.0701261913741
+        ],
+        [
+          409.28433596611023,
+          5.400000211597369,
+          837.570127714876
+        ]
+      ],
+      "footprint_on_original_filled_ground": true,
+      "closest_other_model_aabb_lower_bound_m": 3.387960184064491,
+      "closest_other_model": "1016こうしゃ/人間.006",
+      "y_rotation_scale_modified": false,
+      "renderer_visibility_modified": false
+    }
+  ],
+  "scope": "All full-source school renderer bounds, including all other relocated people and the north wing at +23m. Excludes only the supporting Plane. AABB separation is a conservative lower bound. Filled source polygon support checks the entire XZ rectangle, not only corners.",
+  "limits": "Source transforms and renderer enabled/active flags must also be checked in Unity. Course A/B exclusion must be rerun against the final adopted northeast connection; this check does not assume a pending geometry revision."
+}

@@ -1,0 +1,4 @@
+﻿lane_fraction,car,status,requested_laps,measured_laps,travel_m,max_speed_mps,obstacle_enters,barrier_enters,excursions,decelerations,stops,max_stop_s,max_lane_error_m,on_target_forward_m
+"-0.75","Player1_Car","完了","1","1","1908.889","49.943","0","72","0","2","0","0.06","12.865","1559.844"
+"0","Player2_Car","完了","1","1","1908.917","49.946","0","0","0","0","0","0","2.207","1610.274"
+"0.75","Player2_Car","完了","1","1","1908.592","55.693","0","9","0","0","0","0","4.224","1569.827"

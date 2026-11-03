@@ -224,7 +224,7 @@ public static class RaceItemLayoutBuilder
     private static Vector3 SnapToGround(Vector3 point)
     {
         Vector3 origin = point + Vector3.up * 6f;
-        RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, 40f, Physics.DefaultRaycastLayers,
+        RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, 40f, CoursePhysicsLayers.GroundMask,
             QueryTriggerInteraction.Ignore);
         float nearest = float.PositiveInfinity;
         Vector3 result = point;

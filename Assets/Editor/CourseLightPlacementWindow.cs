@@ -262,7 +262,7 @@ public sealed class CourseLightPlacementWindow : EditorWindow
 
     private bool TryGetPlacementPoint(Ray ray, out Vector3 point, out Vector3 normal)
     {
-        if (Physics.Raycast(ray, out RaycastHit hit, 10000f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(ray, out RaycastHit hit, 10000f, CoursePhysicsLayers.GroundMask, QueryTriggerInteraction.Ignore))
         {
             point = hit.point;
             normal = hit.normal;

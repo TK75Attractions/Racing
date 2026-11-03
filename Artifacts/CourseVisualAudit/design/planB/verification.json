@@ -1,0 +1,396 @@
+{
+  "status": "offline_geometry_verified_pending_physics_and_external_scene_clearance",
+  "zero_intrusion_target_met_for_school": true,
+  "counts_objects": {
+    "A": 0,
+    "B_full": 0,
+    "C": 5,
+    "WallEnvelope": 0
+  },
+  "intrusions": {
+    "1016こうしゃ/Cube.047": {
+      "C": {
+        "intervals_m": [
+          [
+            1897.0,
+            1900.5
+          ]
+        ],
+        "segment_count": 9
+      }
+    },
+    "1016こうしゃ/Cube.047/Cube.090": {
+      "C": {
+        "intervals_m": [
+          [
+            1898.2907,
+            1899.0
+          ]
+        ],
+        "segment_count": 2
+      }
+    },
+    "1016こうしゃ/Cube.047/Plane.010": {
+      "C": {
+        "intervals_m": [
+          [
+            1898.5,
+            1899.0
+          ]
+        ],
+        "segment_count": 1
+      }
+    },
+    "1016こうしゃ/Cube.047/Plane.019": {
+      "C": {
+        "intervals_m": [
+          [
+            1752.0,
+            1786.0
+          ],
+          [
+            1799.0,
+            1902.0
+          ]
+        ],
+        "segment_count": 375
+      }
+    },
+    "1016こうしゃ/Cube.047/Plane.051": {
+      "C": {
+        "intervals_m": [
+          [
+            1898.5,
+            1899.0
+          ]
+        ],
+        "segment_count": 1
+      }
+    }
+  },
+  "course_metrics": {
+    "normal_1_5m": {
+      "length": 1939.674146601063,
+      "min_width": 12.0,
+      "max_width_rate": 0.18783206512541914,
+      "heading_40m_degrees": 5.550411851359792,
+      "min_radius": 32.26481937221339,
+      "worst_curve": [
+        0.03099350994232451,
+        [
+          531.5833037099159,
+          10.987804643166893,
+          602.8070637248406
+        ]
+      ],
+      "takeoff": [
+        584.0,
+        18.0,
+        598.0
+      ],
+      "road_to_gap_heading_degrees": 6.106766766159759e-09
+    },
+    "fine_0_25m": {
+      "length": 1939.6939094540335,
+      "min_width": 12.0,
+      "max_width_rate": 0.19960776123014418,
+      "heading_40m_degrees": 5.8947180196671445,
+      "min_radius": 30.360554862132357,
+      "worst_curve": [
+        0.03293747444804655,
+        [
+          530.2722092800491,
+          10.44201816710811,
+          603.3868969371276
+        ]
+      ],
+      "takeoff": [
+        584.0,
+        18.0,
+        598.0
+      ],
+      "road_to_gap_heading_degrees": 2.1098797245993374e-07
+    }
+  },
+  "course_acceptance": {
+    "normal_1_5m": {
+      "length_change_percent": 1.642247996695878,
+      "aligned_before_takeoff_m": 6.683584331289436,
+      "aligned_after_landing_m": 11.934431978510569,
+      "road_mesh": {
+        "triangle_count": 2658,
+        "folded_triangles": 0,
+        "takeoff_folded_triangles": 0,
+        "landing_folded_triangles": 0,
+        "min_normal_y": 0.8990166865554359,
+        "min_cross_y": 10.778435198108056,
+        "worst_triangle": {
+          "sample": 1179,
+          "side": 1,
+          "vertices": [
+            [
+              534.4476543674486,
+              10.987804643166893,
+              609.7025727207092
+            ],
+            [
+              527.4389314395586,
+              10.559184323129447,
+              596.4176947032656
+            ],
+            [
+              533.660965183158,
+              10.559184323129447,
+              610.0983009131769
+            ]
+          ],
+          "normal": [
+            -0.39862329862501966,
+            0.8990166865554359,
+            0.18129661631755173
+          ]
+        }
+      }
+    },
+    "fine_0_25m": {
+      "length_change_percent": 1.643283604045842,
+      "aligned_before_takeoff_m": 6.5758653166031245,
+      "aligned_after_landing_m": 11.810991785578462,
+      "road_mesh": {
+        "triangle_count": 15932,
+        "folded_triangles": 0,
+        "takeoff_folded_triangles": 0,
+        "landing_folded_triangles": 0,
+        "min_normal_y": 0.17297988576869408,
+        "min_cross_y": 0.10444082107464213,
+        "worst_triangle": {
+          "sample": 6714,
+          "side": 0,
+          "vertices": [
+            [
+              613.4017236917041,
+              10.463565300274638,
+              589.820093013037
+            ],
+            [
+              613.3926923608062,
+              10.51880943171275,
+              589.8030386263026
+            ],
+            [
+              612.7260598344337,
+              10.463565300274638,
+              606.7973533067429
+            ]
+          ],
+          "normal": [
+            0.9841462737297224,
+            0.17297988576869408,
+            0.03916721873393203
+          ]
+        }
+      }
+    }
+  },
+  "course_hard_conditions_pass": true,
+  "home_minimum_width_m": 18,
+  "north_start_authored_widths_m": [
+    20,
+    20
+  ],
+  "tube_authored_points_widths_flags_unchanged": true,
+  "jump_endpoints_widths_flags_unchanged": true,
+  "tube_centerline_resampling_max_delta_m": 0.0043290708576122945,
+  "preserved_tube_lead_in_m": 38.186609257689646,
+  "moves": {
+    "1016こうしゃ/Cube.008": [
+      0,
+      5
+    ]
+  },
+  "moved_group_count": 1,
+  "moved_renderer_count": 6,
+  "trees_moved": 0,
+  "maximum_displacement_m": 5,
+  "object_separation_lower_bound_m": 6.484382221470014,
+  "closest_objects": [
+    "1016こうしゃ/Cube.008/Cube.009",
+    "1016こうしゃ/人間.007"
+  ],
+  "separation_scope": "all 550 school FBX objects, excluding filled support ground and rigid within-group contacts; external scene objects not certified",
+  "ground": {
+    "objects_y_displacement_m": 0,
+    "maximum_support_height_delta_m": 3.7748949774459755e-07,
+    "tolerance_m": 0.001,
+    "renderers": [
+      {
+        "renderer": "1016こうしゃ/Cube.008",
+        "old": {
+          "height_range_m": [
+            2.08034480624483e-05,
+            2.0871399636197253e-05
+          ],
+          "filled_polygon_contains_footprint": true
+        },
+        "new": {
+          "height_range_m": [
+            2.118093756019289e-05,
+            2.1248889133941837e-05
+          ],
+          "filled_polygon_contains_footprint": true
+        },
+        "height_delta_m": 3.7748949774459077e-07
+      },
+      {
+        "renderer": "1016こうしゃ/Cube.008/Cube.009",
+        "old": {
+          "height_range_m": [
+            2.0837422768409145e-05,
+            2.3668597143527298e-05
+          ],
+          "filled_polygon_contains_footprint": true
+        },
+        "new": {
+          "height_range_m": [
+            2.1214912266153736e-05,
+            2.4046086641271895e-05
+          ],
+          "filled_polygon_contains_footprint": true
+        },
+        "height_delta_m": 3.7748949774459755e-07
+      },
+      {
+        "renderer": "1016こうしゃ/Cube.008/Cube.010",
+        "old": {
+          "height_range_m": [
+            2.1063918014975125e-05,
+            2.1290411897799073e-05
+          ],
+          "filled_polygon_contains_footprint": true
+        },
+        "new": {
+          "height_range_m": [
+            2.1441407512719716e-05,
+            2.1667901395543657e-05
+          ],
+          "filled_polygon_contains_footprint": true
+        },
+        "height_delta_m": 3.7748949774459077e-07
+      },
+      {
+        "renderer": "1016こうしゃ/Cube.008/Plane.001",
+        "old": {
+          "height_range_m": [
+            2.079212398195746e-05,
+            2.0814775416473423e-05
+          ],
+          "filled_polygon_contains_footprint": true
+        },
+        "new": {
+          "height_range_m": [
+            2.116961347970205e-05,
+            2.1192264914218014e-05
+          ],
+          "filled_polygon_contains_footprint": true
+        },
+        "height_delta_m": 3.7748949774459077e-07
+      },
+      {
+        "renderer": "1016こうしゃ/Cube.008/Plane.002",
+        "old": {
+          "height_range_m": [
+            2.0814772921754717e-05,
+            2.2853218335697456e-05
+          ],
+          "filled_polygon_contains_footprint": true
+        },
+        "new": {
+          "height_range_m": [
+            2.1192262419499308e-05,
+            2.3230707833442053e-05
+          ],
+          "filled_polygon_contains_footprint": true
+        },
+        "height_delta_m": 3.7748949774459755e-07
+      },
+      {
+        "renderer": "1016こうしゃ/Cube.008/Plane.003",
+        "old": {
+          "height_range_m": [
+            2.0950670535674438e-05,
+            2.2083140080544093e-05
+          ],
+          "filled_polygon_contains_footprint": true
+        },
+        "new": {
+          "height_range_m": [
+            2.132816003341903e-05,
+            2.2460629578288684e-05
+          ],
+          "filled_polygon_contains_footprint": true
+        },
+        "height_delta_m": 3.7748949774459077e-07
+      }
+    ]
+  },
+  "gate": [
+    {
+      "world_z_m": 751.9,
+      "center_xyz_m": [
+        495.0568,
+        4.211394362763878,
+        751.9
+      ],
+      "raw_progress_m": 1899.1359572960291,
+      "road_width_m": 18.815964581923986,
+      "required_opening_with_solid_m": 19.215964581923984,
+      "west_solid_gap_m": 0.8920177090379866,
+      "east_solid_gap_m": 0.8920177090380079,
+      "opening_m": 21
+    }
+  ],
+  "barrier_geometry": {
+    "slim_minimum_vertical_height_m": 6,
+    "slim_top_height_m": 6.1,
+    "slim_solid_top_height_m": 6.2,
+    "slim_inner_reach_m": 0.1,
+    "slim_complete_solid_reach_m": 0.2,
+    "transition_length_each_m": 30,
+    "minimum_transition_top_height_m": 6.1,
+    "blended_volume_conservative_reach_m": 11.01
+  },
+  "method": {
+    "school_source_objects": 550,
+    "face_segment_candidates": 1876255,
+    "segment_subdivision_m": 0.5,
+    "native_joins_included": true,
+    "guard": "5 mm plus road miter enclosure, scaled by 1+reach/halfWidth for profile normal sweep; faces clipped as polygons, not vertices only",
+    "floor_source": "existing actual cut OBJ for Cube.001/Plane.009/Plane.012; other objects full FBX; trees full source hull exclusion then conservative 0.5m world-height slabs",
+    "excluded": [
+      "support ground Plane",
+      "tube mesh and fitted road/jump gaps as in the source audit"
+    ],
+    "profile_verification": "new B explicitly clipped; blend rectangular reach 11.01*(1-a)+.1*a at minimum Slim weight a on whole segment; WallEnvelope encloses complete changed solid profile, height 13.2*(1-a)+6.2*a and reach 11.61*(1-a)+.2*a; unchanged default upper geometry not re-certified"
+  },
+  "source_sha256": {
+    "Assets/Editor/SchoolMapCourseSetup.cs": "5cbd6d7985dd620dc0f169c7ba76ab5217afbf2f5a0c893fdac719d8ccdf51e0",
+    "Assets/Scenes/SampleScene.unity": "2be8c3529355547ec0fefffffb212467e1d79779fcc169af18917b1a18651736",
+    "Assets/Scenes/1016こうしゃ.fbx": "6a4f42346c0c85aba03d3b2d41277c68bccad6c738ebefaf05ba118315259106",
+    "Assets/Managers/Barrier/RaceBarrierPath.cs": "5047015c2178be1cad2c374b4e9fcc8badb261581b438d5f9ce4e14d7fb87a01",
+    "Assets/Managers/Barrier/RaceCourseBarriers.cs": "7c25daf274d4804a2da5aefa9a2cf1708c976b6bd06ddde9661e3e8c31f934ce",
+    "Artifacts/CoursePlayabilityAudit/geometry.csv": "6307b0aabe046fb7bc441b5b7e71c76eed12c01c4cfde88683faf3668cef0378",
+    "Artifacts/CourseVisualAudit/design/full-meshes.json": "9aa9de542a87a38788d0c7ee7e0c2f7c4ffc49373c0e918800d079b19f515877",
+    "Artifacts/CourseVisualAudit/design/outlines.json": "d569f689880d25b296d69f5eb9f077bd158f1a8a6cf9694f0553ffc11499a0ee",
+    "Artifacts/CourseVisualAudit/design/near-faces.json": "bd13819f298e5b83f12bf45e661a86e0802a3e0439a9331d9d6d2f7d1f773373",
+    "Assets/Editor/CourseBarrierValidation.cs": "76a24c63c9539f4f4a8c48ed12c8cab800e7d7fdd9e3be2b2fb88f2534b4af2a",
+    "Assets/Editor/RaceCourseValidation.cs": "a0290dd4b1a2617b688b0f674233f6217e2da632f8319c365d209c93696f76bb",
+    "Assets/Editor/RaceBarrierPathValidation.cs": "0831e72c64f6f9c411f8053646181855784a4ceab6dd08ffffb6a0904cad0f5e"
+  },
+  "predecessor_source_hashes_match": true,
+  "unresolved": [
+    "Non-school scene props and runtime procedural scenery are not in the FBX/OBJ inventory; 0.3m clearance to these is not certified.",
+    "No Unity/physics/driving run: 6m wall height does not by itself prove containment; existing impact and wall-driving checks require profile-specific additions.",
+    "0.25m centreline comparison is an offline resampling check; continuous tube construction remains unchanged via the preserved straight lead-in."
+  ],
+  "input_files_unchanged_during_verification": true
+}

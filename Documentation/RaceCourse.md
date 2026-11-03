@@ -66,23 +66,56 @@ SampleSceneでは `Road > Generate Barriers` を有効にし、チューブ内�
 
 下部は登れる円弧、上部は道路側へ反り返る形で、表示面と同じ形状の厚み付きMeshColliderを持ちます。ジャンプの空中区間にも両脇のバリアをつなぎます。ジャンプの路面の空白はそのままです。
 
+`RaceBarrierProfiles` は進行方向の左右とランドマークの始終点を指定し、円弧を高さ6m（丸い上端6.1m）の垂直壁へ連続補間します。Collider・支柱・レールと走行範囲も同じ断面へ追従し、垂直部の内面張り出しは0.1m、Collider背面まで0.2mです。
+SampleScene は `CourseBarrierProfileSetup.Run`（`TubeCoursePreparation.Run` から呼出し）で、`Cube.047/Plane.019` の壁面端をコースへ投影し、入口コーナーを5m窓の方向変化から検出します。レース方向が配列の逆向きであることを考慮し、ホームストレート左側（東側）だけを垂直化、壁の終端から20mで円弧へ戻します。西側は従来の円弧です。再生成時にもランドマークを投影し直すため、固定progress値に依存しません。
+適用とシーン保存はUnityで地形準備を実行してください。`CourseBarrierValidation`・`RaceCourseValidation`・`RaceBarrierPathValidation` は垂直／補間断面の衝突、走行範囲、詰まり復帰も検証します。引き継ぎ後にUnity 6000.3.9f1のコピー環境で検証を実施し、バリア欠落0と16件の衝突試験の合格を確認しています。結果と実走の状態は `Artifacts/CourseLayoutHandoff/README.md` に記録します。
+
 チューブ区間は、設定されている `Tube Interior` の実際の内壁・天井への判定から除外します。入口・出口では判定の切り替わる位置までバリアをつなぎ、チューブ内の走路を青い壁で狭めません。生成物は `Generated Race Course Road / Course Edge Barriers` 以下にまとめ、道路の再生成・無効化時に表示メッシュと衝突メッシュを解放します。
 
 `Racing > Validate Course Edge Barriers And Two Laps`（バッチは `-batchmode -executeMethod CourseBarrierValidation.Run -quit`）で、全線の両側の衝突面、チューブ内除外、再生成時の解放、左右それぞれの地上・空中からの横衝突、2周目の最終周BGMを確認します。記録と確認画像の保存先は `Artifacts/CourseSafety/` です。モデルを読み込めるよう、実行前にGit LFSの実データが展開されている必要があります。
 
 ### チューブの地形と経路
 
-校舎モデルは `Assets/Scenes/1016こうしゃ.fbx` に変更しています。地上のスタート・小さな坂・12mのジャンプを経由して東側の入口から地下のチューブへ入り、西側から地上へ戻る約1,904mの周回コースです。幅は地上18〜20m、坂と踏切16m、チューブ内12mです。
+スタート直線の北移設は、承認された地面の北への延長を含めて実装しています。`CourseSceneryLayout.Run` は北側棟 `Cube.008` と子をPrefab元位置から北へ23m移動し、`TubeCoursePreparation.Run` は主地面の北端だけ8m延長します。元FBX・並木14本・棟の高さと回転・縮尺は維持し、再適用で移動量が累積しません。`Racing > Restore Original Course Scenery` は配置対象と地面を元へ戻します（コース制御点は別設定です）。
+承認された追加配置として、人型 `人間`〜`人間.007` は北へ20m、ホーム入口の円形花壇 `Cylinder.002` は木を含む親全体を東へ3m移します。並木14本は固定し、各親の子を重複して移動させません。これらもPrefab元位置基準で適用・復元します。
+幅20m・World Y=3mの直線は (485.2,3,807) → (267.5,3,807) とし、西端の旧接続点 (258.2,3,796.7) を残し、東端には (494.7,3,797.5) を追加してホームへ接続します。北側直線の両側は従来の円弧バリアです。通常1.5m／細分化0.25mのオフライン評価で対象の走路・バリア内側への侵入0、角半径25m以上、幅変化率0.2m/m以下、延長地面上の棟の余裕約1.5mを確認しています。
+採用配置と過去の不成立候補は `Artifacts/CourseVisualAudit/design/start-straight/README.md` / `adopted-verification.json` に区別して記録しています。Unityでの適用・再生成・実走の結果は `Artifacts/CourseLayoutHandoff/` に記録します。
+
+校舎モデルは `Assets/Scenes/1016こうしゃ.fbx` に変更しています。地上のスタート・小さな坂・12mのジャンプを経由して東側の入口から地下のチューブへ入り、西側から地上へ戻る約1,908mの周回コースです。ホームストレート・北東角・西側接続は20mに戻し、ホームの補助点 (494.7,3,650) / (494.7,3,720) で中心線を西へ1.3m寄せて壁を避けます。進入側の幅はホーム南端20m→入口手前18.3m→坂の接続16.1m→坂上14.4m→開口の制御点12.4mと局所的に絞り、踏切前の整列点15.9m→踏切18mへ戻します。着地は20m、着地後の接続点は15.95m、チューブ内は既存の12mで、全周の幅変化率を0.2m/m以下に保ちます。
 
 チューブの断面中心に沿って道路を配置し、World Yは断面中心から10m下げています。入口付近は約5m、最深部は約-25mです。モデルの西側には約21m折り返す区間がありますが、走行線だけでその往復を省いて滑らかにつなぎ、チューブの外形・壁・天井は変更していません。新モデルの133断面をUVから読み取り、東側へ約45m広がった管壁と、東向きに移動した入口に沿わせています。内側からも壁が見える両面Materialと、両側から衝突するMeshColliderを用意しています。
 
 「次の区間の線形に沿う (トンネルなど)」を有効にした区間は、角の丸め距離を最大16mに制限して管の中に収め、勾配を少なくとも前後35mでつなぎます。境界では通常の丸め距離へ徐々に戻し、入口・出口に急な接続を作りません。一般区間は角35m・勾配25m、最大サンプル間隔1.5mです。道路の積分は倍精度で計算しています。
 
-スタート後の右折は校舎の通れる入口を経由し、次の左折から既存の小さな坂に沿って上ります。坂の上端から約48mの直線で踏切へつなぎ、World X約584〜596mを12mのジャンプ区間にしています。踏切の高さは18m、着地側は16mで、着地後も約23mは直線のまま下り、その先でWorld (641.9, 5, 602)付近のチューブ入口へ滑らかにつなぎます。着地端で急に向きを変えず、両脇のバリアも走路の外側に保ちます。進行方向は点の配列順の逆なので、Inspectorでは着地側の点から踏切側への区間をジャンプとして指定しています。
+スタート後の右折は校舎の通れる入口を経由し、坂から踏切へ上ります。接近路の制御点は進行方向に (513.9,4,621.2) → (513.5,3,601.886) → (536,15.5,600.379) → (549,17.7,599.508) → 整列点 (571.5,17.7,598) → 踏切 (584,18,598) です。手前の斜線は概ね `z=598+0.067*(571.5-x)` とし、最後の12.5mをXZで空中弦と同じX方向へ揃えます。35mの丸めとジャンプ端の縮む平均化窓を経ても、踏切直前は6m以上がジャンプ方向から0.5°以内になります。旧案の開口中心Z≈601.5から通過位置を約2m南へ寄せるため、開口付近の高さを上げて低い南側壁を越え、坂下の位置と幅の戻し方も調整しました。World X=584〜596mの12mジャンプ、踏切高さ18m、着地 (596,16,598)、接続点 (619,8,598)、チューブの制御点・preserveAlignmentは維持しています。着地後は約23mの直線を下り、World (641.9,5,602) 付近のチューブ入口につなぎます。進行方向は点の配列順の逆なので、Inspectorでは着地側の点から踏切側への区間をジャンプとして指定しています。
+
+オフライン予測（`Artifacts/CoursePlayabilityAudit/design/verify_design.py`、詳細は同フォルダーの `README.md` / `report.json`）では、北・西側接続と着地後を含む地上道路全体を対象に、路面から0〜2.5mの帯で校舎壁から道路端まで0.5m以上を確保します。通常の1.5m刻みで壁離隔は最小0.611m、0.25m刻みでは0.714mです。踏切前40mの水平方位変化は5.684°／5.876°で合計6°以下、踏切直前の0.5°以内の整列区間は水平長6.719m／6.685m、着地後も11.908m／11.708mあります。接近路X=530〜584の路面同士の最小水平半径は32.12m／30.41mで30m以上、全周の最大幅変化率は0.19116／0.19860m/m、最小幅12mです。40mは生成後の3D進捗距離、方位と整列長は水平投影で評価します。
+
+予測ツールは `RaceCourse.BuildOffsetPaths` と `RaceCourseRoad.Build` / `AddTriangle` の断面・頂点順・退化除外を移植し、チューブを含む全道路の三角形の外積Yが正であることも検証します。着手時案の踏切の反転1枚を再現し、変更後は通常2,612枚／細分化15,658枚で踏切・着地を含め反転0枚です。頂点をfloat32へ丸めた確認でも0枚ですが、Unityの全演算をビット一致で再現するものではありません。既存Unity出力との中心線再現誤差は最大約1.7mmです。X=536の今回の路面高さは12.709m、X=548は15.956mへ変わるため、地形再生成後に床との見た目・支持、バリア、空中軌道をUnityで確認してください。チューブの制御点と線形関数は維持し、全長によるサンプル位置のずれは生成ポリラインで最大約0.021mとして別途記録します。
 
 `Racing > Align Course To 1016 School Map` で新モデルの断面から走行線・ジャンプ接続・関連配置を設定し、地形と当たり判定を再生成できます。`Racing > Prepare Tube Course Terrain` では既存の走行線を保って地形の共存用メッシュだけを再生成できます。元FBXを毎回読み出し、主地面はチューブと地表が交差する断面部分だけ切り抜き、周囲の地面を残します。入口の `Plane.012`、坂上の `Plane.009` と `Cube.001` は道路の足元だけ切り抜いて肩の部分を残します。入口の40cmの段差や坂上の床への接触を防ぐため、見た目とColliderの両方に同じ切り抜きを適用します。保存先は `Assets/Scenes/TubeCourseData/` です。
 
 新モデルの追加メッシュにもMeshColliderを付けています。道路へ張り出す枝・葉の一体型MeshColliderは無効にし、木の表示は残しています。チェックポイント・ゴール・アイテム・充電クリスタルの高さも道路に合わせています。スタートは路面の2m上に置き、車が埋まらず着地できるようにしています。`RaceSpeedSceneryController` は生成道路の中央線がある場合に古い黄色の破線を重ねず、近景マーカーを道幅から2.5m外側へ配置します。
+
+校舎のその他のMeshColliderは、丸め後の道路端から青いバリア断面の最大張り出しまで、路面の−0.3〜+3.0mを衝突用メッシュだけ切り抜きます。MeshFilterと見た目は変更しません。
+ジャンプの空中中心線も対象にし、チューブ内は内壁判定で除外します。主地面・チューブ・上記3つの床は既存処理に任せます。`tree*` は対象外とし、以前の切り抜きを復元して枝の既存処理に任せます。
+`CourseBuildingClearance` は初回に各Colliderの入力Mesh（独自overrideを含む）とenabledを `CourseClearanceSource` に保存し、その入力から毎回再生成します。`TubeCourseData/<記号を除いた物体名>CourseClearance.asset` へ保存し（同名は識別子を付加）、残存三角形が0なら無効化、切り抜きが不要になれば保存したMeshとenabledを復元します。元から無効のColliderは有効化しません。旧ベイクには保存情報がないため、初回移行ではPrefabのCollider（なければFBXのMeshFilter）から復元して警告します。旧処理ですでに失われたoverrideとenabledはリード側で確認してください。
+ベイク時のチューブ入口判定は、同じPhysics用TRSで変換した元の三角形に対する倍精度の両面レイ判定を使います。PhysXの再cookによる入口の約0.24mmの揺れで、同じ入力から異なる切り抜きメッシュが保存される問題を防ぎます。実行時のチューブ・バリアの衝突判定は従来どおりです。
+切り抜いた物体の子に、保存した元Meshの遮蔽用MeshColliderを1つ作成します。`CourseOcclusion`（Layer 14）はPhysics衝突表で全Layerとの衝突を無効化し、ColliderのexcludeLayersも全Layerに設定します（[UnityのLayer override仕様](https://docs.unity3d.com/6000.3/Documentation/ScriptReference/Collider-layerOverridePriority.html)）。カメラの実効遮蔽Maskはシーンの既存値にこのLayerを加え、スリップストリームの見通しも含めます。接地・段差・復帰・アイテム配置・道路支持面・配置ツールのクエリは `CoursePhysicsLayers` でこのLayerを除外します。シーンYAMLの直接編集は不要です。
+元が `StaticWallColliderVolume` の箱型化対象となる薄い長方形の壁は、同じ15cm厚の箱メッシュにしてから走行範囲を切り抜きます。残存壁の表裏に衝突面を残し、走行範囲を元の箱で塞ぎません。実行時の箱型化は遮蔽Layerを対象外にします。出力頂点を共有し、同じ元三角形の隣接断片は凸形状のまま統合できる場合にまとめます。
+準備メニューの `COURSE_BUILDING_CLEARANCE_PASS` に対象物体と切り抜き数を記録します（厚み付き壁では箱メッシュの三角形数）。Unityで再ベイクを2回行い、遮蔽Colliderの重複がないこと、元Mesh/enabledの復元、壁表裏の衝突、壁越しのカメラとスリップストリーム、接地・復帰・アイテム配置、cook時間・Physics負荷を確認してください。車体・カメラが元の壁内部に入る場合の描画と遮蔽挙動、および路面+3mを超える走行は実機確認が必要です。`CoursePlayabilityAudit` / `CoursePlayabilityProbe` の `~0` クエリは別担当側で遮蔽Layerを除外してから走行用Colliderを監査してください。
+再ベイク・保存後の全 `CourseClearanceSource` は `Unity.exe -batchmode -nographics -projectPath <project> -executeMethod CourseClearanceValidation.Run -quit -logFile <log>` で検証できます。
+物理と同じTRSで各三角形の頂点・辺の中点・重心を調べ、走行可能域の境界から5cm以上内側の点が0件なら `COURSE_CLEARANCE_VALIDATION_PASS`、残存時は物体別件数・代表点を出して例外にします。
+
+制御点変更後の適用順序は次のとおりです（Unity未起動のオフライン検証では実行していません）。
+
+1. `Racing > Align Course To 1016 School Map`：末尾から `TubeCoursePreparation.Run`（床の見た目・Colliderの再切り抜き、道路・バリア再生成、スタートを含むCheckpointSensor・GoalSensor・アイテム・クリスタルの再配置）、`TubeSpeedPatternSetup.Run`、`TubeCourseValidation.Run` を呼びます。スタートはGmanagerが参照するチェックポイントなのでここで更新されます。
+2. `Racing > Place Finish Gate at Goal`（`NeonRaceMarkersBuilder.PlaceFinishGate`）でゲートの位置・向き・幅を更新し、シーンを保存します。`Create Neon Start Line and Goal Gate` はPrefab作成だけなので再配置には使いません。独立して置いたスタートラインがあれば、更新済みStartの路面位置・向き・幅へ配置ツールで合わせます。
+3. 保存後に `Racing > Visual > Refresh Course Decoration Placement`（`NightEnnichiVisualBuilder.RefreshCoursePlacement`）：全長・道路端・バリアを参照する行灯、4つのランドマーク、チューブ環境遷移の距離を再生成します。既存の材質・天候・時刻・カメラ・桜の設定は保持し、校舎FBXを再インポートしません。
+4. `CourseDirectionPropsBuilder.Build` は矢印・ポールのPrefab作成だけです。配置済みの方向Prop・手置きライトは自動追従しないため、`Racing > Placement > Open Course Placement Tool` で変更区間の道路端・向きに合わせて移動し、保存します。全周の再生成メニューはありません。
+5. ベイク済み反射を使用する場合は `CourseReflectionProbeBuilder.Run`（`Place Baked Reflection Probes`）→ `Bake`（`Bake Night Reflection Probes`）で配置・画像を更新します。実行時の道路・バリア・近景マーカーは道路再生成に追従します。
+
+最後にリード側で `CoursePlayabilityProbe.Run` / `CoursePlayabilityAudit.Run` と実走を行い、床・校舎の見た目、踏切と着地、更新した配置を確認してください。既存監査と同じ5m窓で水平曲率を評価した最小半径相当は、踏切と空中弦の接続を含め30.34mです。OBJはCollider三角形の記録なので、別のRenderer三角形の確認はUnity側に残ります。
 
 ### チューブの発光模様
 

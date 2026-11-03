@@ -25,7 +25,8 @@ public static class RaceCourseValidation
             ValidateEditorOperations(course);
             ValidateOffCourseState(course);
             ValidateBarrierDrivingArea(course);
-            ValidateWallStuckRecovery(course);
+            foreach (int profile in new[] { 0, 1, 2, 3 })
+                foreach (int side in new[] { -1, 1 }) ValidateWallStuckRecovery(course, profile, side);
             ValidateGoalOnlyLaps();
             Debug.Log("RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.");
         }
@@ -311,13 +312,14 @@ public static class RaceCourseValidation
             body.isKinematic = true;
             var data = new LapManager.CarTimeData { rb = body, carName = car.name };
             MethodInfo update = typeof(LapManager).GetMethod("UpdateCourseState", BindingFlags.Instance | BindingFlags.NonPublic);
+            foreach (float weight in new[] { 0f, .5f, 1f })
             foreach (int side in new[] { -1, 1 })
             {
                 GameObject wall = new GameObject("Driving wall");
                 wall.transform.SetParent(root.transform);
                 RaceBarrierPath path = wall.AddComponent<RaceBarrierPath>();
                 path.SetWorldPath(new[] { origin + Vector3.right * (side * 5f),
-                    origin + Vector3.right * (side * 5f) + Vector3.forward * 100f }, side, false, null, null, true);
+                    origin + Vector3.right * (side * 5f) + Vector3.forward * 100f }, side, false, null, null, true, new[] { weight, weight });
                 MeshFilter visual = wall.GetComponentInChildren<MeshFilter>();
                 Vector3[] vertices = visual.sharedMesh.vertices;
                 // Test every section, including the point furthest out and the inward return.
@@ -334,7 +336,7 @@ public static class RaceCourseValidation
                     Require(!data.isOffCourse && data.offCourseTimer == 0f, "Wall driving clears the off-course timer.");
                     Near(body.position, position, "Wall driving must not respawn after the timeout");
                 }
-                Vector3 onWall = origin + new Vector3(side * 12f, 5f, 50f);
+                Vector3 onWall = origin + new Vector3(side * Mathf.Lerp(5f, maximumX, .5f), 5f, 50f);
                 Require(!course.IsPointInsideCourse(onWall) && course.IsPointInsideDrivingArea(onWall),
                     "The wall extends the driving area without changing the road band.");
                 Vector3 beyond = origin + new Vector3(side * (maximumX + .2f), 5f, 50f);
@@ -361,7 +363,40 @@ public static class RaceCourseValidation
                 Require(!course.IsPointInsideDrivingArea(onWall), "Visual-only barriers are not drivable.");
                 UnityEngine.Object.DestroyImmediate(wall);
             }
-            Debug.Log("WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.");
+            // Sweep actual longitudinal transitions, including every cross-section vertex.
+            foreach (int side in new[] { -1, 1 })
+            {
+                GameObject wall = new GameObject("Transition driving wall"); wall.transform.SetParent(root.transform);
+                var points = new System.Collections.Generic.List<Vector3>();
+                var weights = new System.Collections.Generic.List<float>();
+                for (int row = 0; row <= 200; row++)
+                {
+                    float z = row * .5f;
+                    float t = z < 50f ? Mathf.InverseLerp(10f, 30f, z) : 1f - Mathf.InverseLerp(70f, 90f, z);
+                    points.Add(origin + new Vector3(side * 5f, 0f, z)); weights.Add(t * t * (3f - 2f * t));
+                }
+                wall.AddComponent<RaceBarrierPath>().SetWorldPath(points, side, false, null, null, true, weights);
+                MeshFilter visual = wall.GetComponentInChildren<MeshFilter>();
+                Vector3[] vertices = visual.sharedMesh.vertices;
+                for (int row = 0; row <= 200; row++)
+                {
+                    float maximum = 0f;
+                    for (int section = 0; section <= 32; section++)
+                    {
+                        Vector3 position = visual.transform.TransformPoint(vertices[row * 33 + section]);
+                        maximum = Mathf.Max(maximum, Mathf.Abs(position.x - origin.x));
+                        Require(course.IsPointInsideDrivingArea(position), "Every section in both transitions must be drivable.");
+                        body.position = position; data.isOffCourse = true; data.offCourseTimer = 1f;
+                        update.Invoke(manager, new object[] { data, 3f });
+                        Require(!data.isOffCourse && data.offCourseTimer == 0f, "Transition contact must clear off-course detection.");
+                        Near(body.position, position, "Transition contact must not respawn the car");
+                    }
+                    Require(!course.IsPointInsideDrivingArea(origin + new Vector3(side * (maximum + .2f), 5f, row * .5f)),
+                        "The transition footprint must contract with the actual wall.");
+                }
+                UnityEngine.Object.DestroyImmediate(wall);
+            }
+            Debug.Log("WALL_DRIVING_CONTAINMENT_PASS: both sides, all arc/blended/upright sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }
@@ -376,7 +411,7 @@ public static class RaceCourseValidation
         public void Dispose() { }
     }
 
-    private static void ValidateWallStuckRecovery(RaceCourse course)
+    private static void ValidateWallStuckRecovery(RaceCourse course, int profile, int side)
     {
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
         Vector3 origin = new Vector3(10000f, 20f, 10000f);
@@ -394,7 +429,16 @@ public static class RaceCourseValidation
             typeof(LapManager).GetField("raceCourse", flags).SetValue(laps, course);
             GameObject wall = new GameObject("Recovery wall"); wall.transform.SetParent(root.transform);
             RaceBarrierPath path = wall.AddComponent<RaceBarrierPath>();
-            path.SetWorldPath(new[] { origin + Vector3.right * 5f, origin + new Vector3(5f, 0f, 100f) }, 1, false, null, null, true);
+            var points = new System.Collections.Generic.List<Vector3>();
+            var weights = new System.Collections.Generic.List<float>();
+            for (int row = 0; row <= 200; row++)
+            {
+                float z = row * .5f;
+                float t = Mathf.InverseLerp(20f, 40f, z); t = t * t * (3f - 2f * t);
+                points.Add(origin + new Vector3(side * 5f, 0f, z));
+                weights.Add(profile == 0 ? 0f : profile == 1 ? 1f : profile == 2 ? t : 1f - t);
+            }
+            path.SetWorldPath(points, side, false, null, null, true, weights);
             Collider wallCollider = wall.GetComponentInChildren<MeshCollider>();
             GameObject car = new GameObject("Wall recovery car", typeof(DebugMover), typeof(BoxCollider), typeof(CarResetter));
             car.transform.SetParent(root.transform);
@@ -411,7 +455,10 @@ public static class RaceCourseValidation
             MethodInfo tick = typeof(CarResetter).GetMethod("FixedUpdate", flags);
             MethodInfo contact = typeof(CarResetter).GetMethod("RememberWallContact", flags, null,
                 new[] { typeof(Collider), typeof(Vector3) }, null);
-            Vector3 pinned = origin + new Vector3(12f, 5f, 30f);
+            Physics.SyncTransforms();
+            Require(wallCollider.Raycast(new Ray(origin + new Vector3(0f, 4f, 30f), Vector3.right * side), out RaycastHit wallHit, 25f),
+                "Recovery fixture must contact the actual generated wall surface.");
+            Vector3 pinned = wallHit.point + wallHit.normal * .4f;
             int frames = Mathf.CeilToInt(4.2f / Time.fixedDeltaTime);
             void Prepare()
             {
@@ -423,12 +470,22 @@ public static class RaceCourseValidation
             }
             void Step(bool touching = true)
             {
-                if (touching) contact.Invoke(resetter, new object[] { wallCollider, Vector3.left });
+                if (touching) contact.Invoke(resetter, new object[] { wallCollider, wallHit.normal });
                 tick.Invoke(resetter, null);
             }
             Prepare();
             for (int i = 0; i < frames * 2; i++)
-            { body.position = pinned + Vector3.forward * (i * Time.fixedDeltaTime * 2f); Step(); }
+            {
+                // Follow the actual surface as the transition narrows/widens.
+                // Translating the initial hit along Z leaves a tapered wall and
+                // correctly triggers off-course recovery instead of wall driving.
+                Vector3 rayOrigin = origin + new Vector3(0f, 4f, 30f + i * Time.fixedDeltaTime * 2f);
+                Require(wallCollider.Raycast(new Ray(rayOrigin, Vector3.right * side), out RaycastHit movingHit, 25f),
+                    "Smooth wall driving must retain contact with the generated transition.");
+                body.position = movingHit.point + movingHit.normal * .4f;
+                contact.Invoke(resetter, new object[] { wallCollider, movingHit.normal });
+                Step(false);
+            }
             Require(resetter.AutomaticRecoveryCount == 0, "Smooth wall driving must not trigger stuck recovery.");
             Prepare(); input.CurrentState = DriveInputState.Neutral;
             for (int i = 0; i < frames; i++) Step();
@@ -437,7 +494,7 @@ public static class RaceCourseValidation
             for (int i = 0; i < frames; i++) Step();
             Require(resetter.AutomaticRecoveryCount == 0, "Disconnected input must not cause wall recovery.");
             Prepare();
-            contact.Invoke(resetter, new object[] { wallCollider, Vector3.left });
+            contact.Invoke(resetter, new object[] { wallCollider, wallHit.normal });
             typeof(CarResetter).GetField("lastWallContactTime", flags).SetValue(resetter, Time.fixedTime - .2f);
             for (int i = 0; i < frames; i++) Step(false);
             Require(resetter.AutomaticRecoveryCount == 0, "An old wall contact must not recover an airborne car.");
@@ -465,7 +522,7 @@ public static class RaceCourseValidation
             Require(laps.GetCarData(body).lapCount == 1 && body.linearVelocity == Vector3.zero,
                 "Recovery must preserve the lap and stop the trapped car's velocity.");
             Prepare();
-            contact.Invoke(resetter, new object[] { wallCollider, Vector3.left });
+            contact.Invoke(resetter, new object[] { wallCollider, wallHit.normal });
             typeof(CarResetter).GetField("lastWallContactTime", flags).SetValue(resetter, Time.fixedTime - .2f);
             body.Sleep();
             Require(body.IsSleeping(), "The stationary wall case must exercise a sleeping rigidbody.");

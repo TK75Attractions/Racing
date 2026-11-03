@@ -1,0 +1,28 @@
+
+Aborting batchmode due to failure:
+executeMethod method TubeCoursePreparation.Run threw exception.
+
+== TubeCoursePreparation.Run (bake1) exit=1
+      1       Exception occured while accepting client connection: System.IO.IOException: パイプを閉じています。
+      1 Course clearance removed from excluded object: 1016縺薙≧縺励ｃ/Cube.026/tree.002
+      1 MissingReferenceException: The object of type 'UnityEngine.MeshCollider' has been destroyed but you are still trying to access it.
+
+Aborting batchmode due to failure:
+executeMethod method TubeCoursePreparation.Run threw exception.
+
+== TubeCoursePreparation.Run (bake2) exit=1
+      1 Course clearance removed from excluded object: 1016縺薙≧縺励ｃ/Cube.026/tree.002
+      1 MissingReferenceException: The object of type 'UnityEngine.MeshCollider' has been destroyed but you are still trying to access it.
+rebake diff lines: 1
+128M	Assets/Scenes/TubeCourseData
+== CoursePlayabilityProbe.FindFolds (folds) exit=0
+      1 COURSE_FOLD_DONE
+== CoursePlayabilityProbe.Run (probe) exit=0
+      1 COURSE_PROBE_DONE 8
+== CoursePlayabilityProbe.DumpTriangles (triangles) exit=0
+      1 COURSE_PROBE_TRIANGLES_DONE Plane.017
+== TubeCourseValidation.Run (tube-validation) exit=0
+      1 TUBE_COURSE_VALIDATION_PASS: length=1908.3m, heading/5m=14.25ﾂｰ, grade=0.446, grade change/5m=0.105, retained ground=100.00%, road folds/intersections=0.
+== CoursePlayabilityAudit.Run (audit) exit=0
+   1151 ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+### done

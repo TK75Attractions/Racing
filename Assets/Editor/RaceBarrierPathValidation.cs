@@ -132,6 +132,8 @@ public static class RaceBarrierPathValidation
             Require(root.GetComponentsInChildren<MeshCollider>(true).Length == 0,
                 "Disabling the path left an invisible collider behind.");
 
+            ValidateProfiles();
+            ValidateAnchoredIntervals();
             Debug.Log("RACE_BARRIER_PATH_VALIDATION_PASS");
         }
         catch (Exception exception)
@@ -143,6 +145,123 @@ public static class RaceBarrierPathValidation
         {
             UnityEngine.Object.DestroyImmediate(root);
         }
+    }
+
+    private static void ValidateProfiles()
+    {
+        var root = new GameObject("Profile geometry validation");
+        try
+        {
+            RaceBarrierPath path = root.AddComponent<RaceBarrierPath>();
+            foreach (int side in new[] { -1, 1 })
+            foreach (float weight in new[] { 0f, .25f, .5f, .75f, 1f })
+            {
+                // Both directions of transition share vertices with the constant-profile portions.
+                var points = new List<Vector3>(); var weights = new List<float>();
+                for (int row = 0; row <= 120; row++)
+                {
+                    points.Add(Vector3.forward * (row * .5f));
+                    float t = Mathf.Clamp01((row * .5f - 10f) / 20f);
+                    if (row > 60) t = Mathf.Clamp01((60f - row * .5f) / 20f);
+                    weights.Add(weight * t * t * (3f - 2f * t));
+                }
+                path.SetWorldPath(points, side, false, null, null, true, weights);
+                Mesh visual = root.GetComponentInChildren<MeshFilter>().sharedMesh;
+                Mesh collider = root.GetComponentInChildren<MeshCollider>().sharedMesh;
+                Vector3[] front = visual.vertices, shell = collider.vertices;
+                for (int row = 0; row < points.Count; row++)
+                for (int section = 0; section <= 32; section++)
+                {
+                    int index = row * 33 + section;
+                    Require(Vector3.Distance(front[index], shell[row * 66 + section]) < .0001f,
+                        "Profile visual/collider surfaces must coincide.");
+                    Require(front[index].y >= -.0001f, "A profile folded below its ground contact.");
+                    if (section > 0)
+                    {
+                        Require(front[index].y > front[index - 1].y,
+                            "Corresponding profile vertices must remain ordered upwards.");
+                        Require(shell[row * 66 + 33 + section].y > shell[row * 66 + 32 + section].y,
+                            "The collider back surface must not fold over at a blended section.");
+                    }
+                    if (weights[row] < .99999f) continue;
+                    Require(side * front[index].x <= .1001f && front[index].y <= 6.101f,
+                        "Upright profile must be narrow and at least six metres tall.");
+                    Require(side * shell[row * 66 + 33 + section].x <= .201f,
+                        "Upright collider must stay within the 0.2 m outer envelope.");
+                }
+                ValidateMeshFaces(visual, side, false);
+                ValidateMeshFaces(collider, side, true);
+                Require(visual.bounds.max.y >= 6.1f, "Blended walls cannot lower the containment height.");
+                Physics.SyncTransforms();
+                MeshCollider collision = root.GetComponentInChildren<MeshCollider>();
+                Require(collision.Raycast(new Ray(new Vector3(-side * 3f, 4f, 30f), Vector3.right * side), out var hit, 20f),
+                    "A vehicle-height ray must hit every profile from the road side.");
+                if (weight == 1f) Require(Mathf.Abs(hit.point.x - side * .1f) < .002f,
+                    "Upright collision must be on the vertical face.");
+            }
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+
+    private static void ValidateMeshFaces(Mesh mesh, int side, bool closedShell)
+    {
+        Vector3[] vertices = mesh.vertices;
+        int[] indices = mesh.triangles;
+        var edges = new Dictionary<ulong, int>();
+        for (int i = 0; i < indices.Length; i += 3)
+        {
+            Vector3 normal = Vector3.Cross(vertices[indices[i + 1]] - vertices[indices[i]], vertices[indices[i + 2]] - vertices[indices[i]]);
+            Require(normal.sqrMagnitude > 1e-14f, "Profile transitions contain a degenerate triangle.");
+            // Front faces are the first 32 quads of each row, and must face the road.
+            if (!closedShell) Require(normal.x * side < 0f, "A profile transition triangle faces away from the road.");
+            for (int j = 0; j < 3; j++)
+            {
+                uint a = (uint)indices[i + j], b = (uint)indices[i + (j + 1) % 3];
+                ulong key = ((ulong)Math.Min(a, b) << 32) | Math.Max(a, b);
+                edges.TryGetValue(key, out int count); edges[key] = count + 1;
+            }
+        }
+        if (closedShell) foreach (int count in edges.Values) Require(count == 2, "A collider shell has an open or non-manifold edge.");
+    }
+
+    private static void ValidateAnchoredIntervals()
+    {
+        var root = new GameObject("Profile anchor validation");
+        try
+        {
+            RaceBarrierProfiles profiles = root.AddComponent<RaceBarrierProfiles>();
+            profiles.reverseRaceDirection = true;
+            profiles.sections.Add(new RaceBarrierProfiles.Section { landmark = root.transform,
+                localStart = new Vector3(10, 0, 80), localEnd = new Vector3(10, 0, 30), entryMeters = 10, exitMeters = 20 });
+            foreach (float shift in new[] { 0f, 25f })
+            {
+                var centers = new[] { new Vector3(0, 0, -shift), new Vector3(0, 0, 100) };
+                var resolved = profiles.Resolve(centers, false);
+                Require(resolved.Count == 1, "Landmark interval must survive changes to course length.");
+                var section = resolved[0];
+                Require(section.Weight(60 + shift, 1) == 1f && section.Weight(60 + shift, -1) == 0f,
+                    "Race-left must select the east edge when course samples run backwards.");
+                Require(Mathf.Abs(section.Weight(85 + shift, 1) - .5f) < .001f &&
+                    Mathf.Abs(section.Weight(20 + shift, 1) - .5f) < .001f,
+                    "Anchored entry/exit must follow geometry rather than a fixed progress.");
+            }
+            profiles.sections[0].followEntryCorner = true;
+            foreach (float north in new[] { 100f, 160f })
+            {
+                var corner = new[] { Vector3.zero, new Vector3(0, 0, north), new Vector3(-100, 0, north) };
+                var resolved = profiles.Resolve(corner, false);
+                Require(resolved.Count == 1 && resolved[0].Weight(north - 10f, 1) == 1f &&
+                    resolved[0].Weight(north + 10f, 1) == 0f && resolved[0].Weight(north, 1) > 0f &&
+                    resolved[0].Weight(north, 1) < 1f,
+                    "The transition must move with the entry corner when the start straight moves north.");
+            }
+            // An interval crossing the raw seam has the same weight at 0 and total.
+            var seam = new RaceBarrierProfiles.ResolvedSection { side = RaceBarrierProfiles.Side.Left,
+                start = -10, length = 20, entry = 5, exit = 5, total = 100, loop = true };
+            Require(seam.Weight(0, -1) == 1 && seam.Weight(100, -1) == 1,
+                "Closed-course seam must not reset the profile.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
     }
 
     private static void Require(bool condition, string message)

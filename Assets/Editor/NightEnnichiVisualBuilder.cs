@@ -21,6 +21,24 @@ public static class NightEnnichiVisualBuilder
     private static readonly string[] GlassNames =
         { "ガラス", "ガラス.001", "ガラス.002", "ガラス.003", "Material.018", "Material.030" };
 
+    [MenuItem("Racing/Visual/Refresh Course Decoration Placement")]
+    public static void RefreshCoursePlacement()
+    {
+        Require(!EditorApplication.isPlayingOrWillChangePlaymode, "Run in edit mode.");
+        Scene scene = SceneManager.GetActiveScene();
+        Require(scene.path == ScenePath, "Open SampleScene first.");
+        RaceCourse course = UniqueComponent<RaceCourse>(scene);
+        RaceEnvironmentController environment = UniqueComponent<RaceEnvironmentController>(scene);
+        course.RebuildCache();
+        course.RebuildRoad();
+        BuildLanterns(scene, course);
+        BuildEnvironmentFinish(scene, course, environment, false);
+        EditorSceneManager.MarkSceneDirty(scene);
+        Require(EditorSceneManager.SaveScene(scene), "Failed to save SampleScene.");
+        AssetDatabase.SaveAssets();
+        Debug.Log("COURSE_DECORATION_PLACEMENT_PASS: preserved materials, weather, time, camera and petal settings.");
+    }
+
     [MenuItem("Racing/Visual/Apply Night Ennichi Look")]
     public static void Run()
     {
@@ -251,7 +269,7 @@ public static class NightEnnichiVisualBuilder
             $"{(count > 0 ? minOffset : 0f):F1}..{maxOffset:F1} m; excluded stations {skipped}; realtime lights disabled.");
     }
 
-    private static void BuildEnvironmentFinish(Scene scene, RaceCourse course, RaceEnvironmentController environment)
+    private static void BuildEnvironmentFinish(Scene scene, RaceCourse course, RaceEnvironmentController environment, bool configurePetals = true)
     {
         Require(course.ClosedLoop, "Environment interval bake expects the closed school course.");
         var transition = environment.GetComponent<RaceTubeEnvironmentTransition>();
@@ -259,6 +277,7 @@ public static class NightEnnichiVisualBuilder
         transition.Bake(course);
         Require(transition.Intervals.Count > 0, "No tube intervals found. Prepare tube terrain before this builder.");
         RecordPrefabChanges(transition);
+        if (configurePetals)
         foreach (GameObject root in scene.GetRootGameObjects())
         foreach (SakuraPetalController petals in root.GetComponentsInChildren<SakuraPetalController>(true))
         {
@@ -346,7 +365,9 @@ public static class NightEnnichiVisualBuilder
             for (int z = -2; z <= 2; z++)
                 Require(!course.IsPointInsideCourse(marker.transform.TransformPoint(new Vector3(x,0,z))), "Landmark overlaps another road leg: " + names[i]);
         }
-        Debug.Log("[NightEnnichi] Built 4 section landmarks, baked camera-local 24 m tube transitions; petals 100/s, cap 1800, speed compensation 0.35. No new realtime lights.");
+        Debug.Log(configurePetals
+            ? "[NightEnnichi] Built 4 section landmarks, baked camera-local 24 m tube transitions; petals 100/s, cap 1800, speed compensation 0.35. No new realtime lights."
+            : "[NightEnnichi] Refreshed 4 section landmarks and tube transitions; existing petal settings retained.");
     }
 
     private static RaceEnvironmentMeshBuilder LandmarkGeometry(int kind)

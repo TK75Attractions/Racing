@@ -1,0 +1,327 @@
+{
+  "scope": "Necessary corridor bounds for a horizontal east-west 20 m straight at world Y=3, with the original radius-12 barrier. Not a proof about elevated or arbitrary reroutes.",
+  "obj_sha256": "0d8715fee0e3e0ceaeca4b10412bb5d32b7d1e64fd75a7e7161c013e870846a9",
+  "expected_obj_sha256": "0d8715fee0e3e0ceaeca4b10412bb5d32b7d1e64fd75a7e7161c013e870846a9",
+  "tree_triangles_streamed": 3994580,
+  "ground_north_edge_m": 860.000040768861,
+  "north_wing_original_back_m": 843.5000115214466,
+  "maximum_north_shift_on_ground_m": 16.50002924741443,
+  "barrier_outward_reach_at_6m_m": 10.392304845413264,
+  "north_wall_implied_max_center_z_m": 801.6577172388394,
+  "tree_implied_min_center_z_m": 805.8445297656821,
+  "incompatible_center_interval_deficit_m": 4.186812526842687,
+  "minimum_shift_implied_by_witness_m": 20.68684177425712,
+  "witness_object": "1016こうしゃ/Cube.026/tree.017",
+  "tree_witnesses": {
+    "1016こうしゃ/Cube.026/tree.002": {
+      "required_center_z_m": 804.0702578151422,
+      "world_xyz_m": [
+        388.3407,
+        8.974733,
+        783.693665
+      ],
+      "arc_height_m": 5.9747330000000005,
+      "source_triangle_ordinal_in_group": 11561,
+      "source_triangle_world_m": [
+        [
+          388.3407,
+          8.974733,
+          783.693665
+        ],
+        [
+          388.754364,
+          7.30625,
+          783.3901
+        ],
+        [
+          388.746552,
+          7.30488729,
+          783.3922
+        ]
+      ]
+    },
+    "1016こうしゃ/Cube.026/tree.003": {
+      "required_center_z_m": 804.0702578151422,
+      "world_xyz_m": [
+        393.950562,
+        8.974733,
+        783.693665
+      ],
+      "arc_height_m": 5.9747330000000005,
+      "source_triangle_ordinal_in_group": 11561,
+      "source_triangle_world_m": [
+        [
+          393.950562,
+          8.974733,
+          783.693665
+        ],
+        [
+          394.364227,
+          7.30625,
+          783.3901
+        ],
+        [
+          394.3564,
+          7.30488729,
+          783.3922
+        ]
+      ]
+    },
+    "1016こうしゃ/Cube.026/tree.010": {
+      "required_center_z_m": 801.6769396507071,
+      "world_xyz_m": [
+        401.7308,
+        7.09381962,
+        782.649963
+      ],
+      "arc_height_m": 4.09381962,
+      "source_triangle_ordinal_in_group": 288946,
+      "source_triangle_world_m": [
+        [
+          401.7308,
+          7.09381962,
+          782.649963
+        ],
+        [
+          401.8499,
+          7.15780067,
+          782.550659
+        ],
+        [
+          401.682373,
+          7.048377,
+          782.679932
+        ]
+      ]
+    },
+    "1016こうしゃ/Cube.026/tree.013": {
+      "required_center_z_m": 799.1993549210691,
+      "world_xyz_m": [
+        312.3577,
+        8.750177,
+        778.9624
+      ],
+      "arc_height_m": 5.750177000000001,
+      "source_triangle_ordinal_in_group": 7283,
+      "source_triangle_world_m": [
+        [
+          312.3577,
+          8.750177,
+          778.9624
+        ],
+        [
+          312.2062,
+          8.716794,
+          778.792
+        ],
+        [
+          312.925,
+          8.440339,
+          778.6191
+        ]
+      ]
+    },
+    "1016こうしゃ/Cube.026/tree.014": {
+      "required_center_z_m": 804.0702578151422,
+      "world_xyz_m": [
+        370.372162,
+        8.974733,
+        783.693665
+      ],
+      "arc_height_m": 5.9747330000000005,
+      "source_triangle_ordinal_in_group": 11561,
+      "source_triangle_world_m": [
+        [
+          370.372162,
+          8.974733,
+          783.693665
+        ],
+        [
+          370.785828,
+          7.30625,
+          783.3901
+        ],
+        [
+          370.778,
+          7.30488729,
+          783.3922
+        ]
+      ]
+    },
+    "1016こうしゃ/Cube.026/tree.015": {
+      "required_center_z_m": 804.0702578151422,
+      "world_xyz_m": [
+        366.219879,
+        8.974733,
+        783.693665
+      ],
+      "arc_height_m": 5.9747330000000005,
+      "source_triangle_ordinal_in_group": 11561,
+      "source_triangle_world_m": [
+        [
+          366.219879,
+          8.974733,
+          783.693665
+        ],
+        [
+          366.633545,
+          7.30625,
+          783.3901
+        ],
+        [
+          366.625732,
+          7.30488729,
+          783.3922
+        ]
+      ]
+    },
+    "1016こうしゃ/Cube.026/tree.017": {
+      "required_center_z_m": 805.8445297656821,
+      "world_xyz_m": [
+        392.566071,
+        8.466369,
+        785.784058
+      ],
+      "arc_height_m": 5.466369,
+      "source_triangle_ordinal_in_group": 29342,
+      "source_triangle_world_m": [
+        [
+          392.727173,
+          8.101467,
+          785.604858
+        ],
+        [
+          392.7252,
+          8.101093,
+          785.6055
+        ],
+        [
+          392.566071,
+          8.466369,
+          785.784058
+        ]
+      ]
+    },
+    "1016こうしゃ/Cube.026/tree.019": {
+      "required_center_z_m": 805.8445297656821,
+      "world_xyz_m": [
+        344.293,
+        8.466369,
+        785.784058
+      ],
+      "arc_height_m": 5.466369,
+      "source_triangle_ordinal_in_group": 29342,
+      "source_triangle_world_m": [
+        [
+          344.4541,
+          8.101467,
+          785.604858
+        ],
+        [
+          344.452118,
+          8.101093,
+          785.6055
+        ],
+        [
+          344.293,
+          8.466369,
+          785.784058
+        ]
+      ]
+    }
+  },
+  "north_front_wall_source_polygon_m": [
+    [
+      398.9838621938212,
+      6.000000144839873,
+      805.5500062126293
+    ],
+    [
+      398.98386219382115,
+      -3.397404402250004e-08,
+      805.5500066656167
+    ],
+    [
+      401.90000006794753,
+      -3.397404402250004e-08,
+      805.5500071059413
+    ],
+    [
+      401.90000006794764,
+      8.999999966025928,
+      805.5500064264602
+    ],
+    [
+      311.90000006794867,
+      8.999999966025928,
+      805.5499928368382
+    ],
+    [
+      311.90000006794855,
+      -3.397404402250004e-08,
+      805.5499935163193
+    ],
+    [
+      327.84148136019616,
+      -3.397404402250004e-08,
+      805.5499959234161
+    ],
+    [
+      328.64508995652113,
+      6.544872130752195,
+      805.5499955506335
+    ],
+    [
+      343.533285202979,
+      4.716831888557071,
+      805.5499979367016
+    ],
+    [
+      342.9541305625428,
+      -3.397404402250004e-08,
+      805.5499982053626
+    ],
+    [
+      392.3694274747355,
+      -3.397404402250004e-08,
+      805.5500056668649
+    ],
+    [
+      393.42911461233933,
+      6.009776796699157,
+      805.5500053731477
+    ],
+    [
+      394.31544253468354,
+      5.8534933286911155,
+      805.5500055187784
+    ],
+    [
+      393.28331241249873,
+      -3.397404402250004e-08,
+      805.5500058048576
+    ],
+    [
+      398.08386305212804,
+      -3.397404402250004e-08,
+      805.5500065297206
+    ],
+    [
+      398.0838630521281,
+      6.000000144839873,
+      805.5500060767332
+    ]
+  ],
+  "formula": "At world Y=3, tree requires center_z >= tree_z + 10 + arc_x(tree_y-3); wall requires center_z <= wall_south_z + shift - 10 - arc_x(6). The source wall is filled above its door cutouts up to Y=9.",
+  "tolerance_note": "Source FBX/world coordinates have sub-millimetre numeric noise. The >4m conflict greatly exceeds it. Boundary contact is not counted as positive-area intrusion.",
+  "obj_hash_matches_summary": true,
+  "original_heading_preserved": {
+    "north_unit_normal_xz": [
+      0.046336634645199,
+      0.9989258812793657
+    ],
+    "minimum_north_shift_m": 24.47215298959873,
+    "perpendicular_corridor_deficit_m": 7.963560734829571,
+    "method": "Original straight heading preserved. Project the tree witness and filled top of the north wall onto the same north-facing unit normal; north translation changes wall projection by nz*d."
+  }
+}

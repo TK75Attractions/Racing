@@ -1,0 +1,121 @@
+{
+  "hits": {
+    "1016こうしゃ/Cylinder.002/Cube.011": {
+      "B": {
+        "min_progress_m": 1893.655,
+        "max_progress_m": 1893.655,
+        "sample_segments": 1
+      }
+    },
+    "1016こうしゃ/Cylinder.002/Cylinder.003": {
+      "B": {
+        "min_progress_m": 1895.146,
+        "max_progress_m": 1910.713,
+        "sample_segments": 43
+      },
+      "A": {
+        "min_progress_m": 1897.75,
+        "max_progress_m": 1908.369,
+        "sample_segments": 30
+      }
+    },
+    "1016こうしゃ/Cylinder.002/Cylinder.004": {
+      "B": {
+        "min_progress_m": 1896.883,
+        "max_progress_m": 1908.75,
+        "sample_segments": 33
+      }
+    },
+    "1016こうしゃ/Cylinder.002/tree": {
+      "B": {
+        "min_progress_m": 1899.25,
+        "max_progress_m": 1906.679,
+        "sample_segments": 21
+      }
+    },
+    "1016こうしゃ/人間": {
+      "B": {
+        "min_progress_m": 3.25,
+        "max_progress_m": 4.615,
+        "sample_segments": 5
+      }
+    },
+    "1016こうしゃ/人間.001": {
+      "A": {
+        "min_progress_m": 21.25,
+        "max_progress_m": 22.284,
+        "sample_segments": 4
+      }
+    },
+    "1016こうしゃ/人間.002": {
+      "A": {
+        "min_progress_m": 24.738,
+        "max_progress_m": 25.75,
+        "sample_segments": 4
+      }
+    },
+    "1016こうしゃ/人間.003": {
+      "A": {
+        "min_progress_m": 27.25,
+        "max_progress_m": 28.25,
+        "sample_segments": 4
+      }
+    },
+    "1016こうしゃ/人間.004": {
+      "A": {
+        "min_progress_m": 48.939,
+        "max_progress_m": 49.75,
+        "sample_segments": 3
+      }
+    },
+    "1016こうしゃ/人間.005": {
+      "A": {
+        "min_progress_m": 55.25,
+        "max_progress_m": 56.187,
+        "sample_segments": 3
+      }
+    },
+    "1016こうしゃ/人間.006": {
+      "B": {
+        "min_progress_m": 68.183,
+        "max_progress_m": 69.25,
+        "sample_segments": 4
+      }
+    },
+    "1016こうしゃ/人間.007": {
+      "A": {
+        "min_progress_m": 72.25,
+        "max_progress_m": 73.25,
+        "sample_segments": 4
+      },
+      "B": {
+        "min_progress_m": 72.25,
+        "max_progress_m": 73.25,
+        "sample_segments": 4
+      }
+    }
+  },
+  "objects": 550,
+  "face_segment_candidates": 16154,
+  "course_metrics": {
+    "length": 1933.572092694533,
+    "min_width": 12.0,
+    "max_width_rate": 0.19191760510385233,
+    "heading_40m_degrees": 5.559613825487505,
+    "min_radius": 32.28148646306895,
+    "worst_curve": [
+      0.030977507840106184,
+      [
+        531.6541255733957,
+        11.016968519069996,
+        602.7358294404777
+      ]
+    ],
+    "takeoff": [
+      584.0,
+      18.0,
+      598.0
+    ],
+    "road_to_gap_heading_degrees": 2.2523924921001074e-09
+  }
+}

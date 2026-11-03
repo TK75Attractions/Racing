@@ -99,7 +99,7 @@ public sealed class SlipstreamController : MonoBehaviour
     {
         Vector3 start = own.Body.worldCenterOfMass, delta = target.Body.worldCenterOfMass - start;
         int count = Physics.RaycastNonAlloc(start, delta.normalized, obstructions, delta.magnitude,
-            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+            CoursePhysicsLayers.SightMask, QueryTriggerInteraction.Ignore);
         if (count == obstructions.Length) return false;
         for (int i = 0; i < count; i++)
         {

@@ -1,0 +1,329 @@
+{
+  "move_world_m": [
+    3,
+    0,
+    0
+  ],
+  "group": "1016こうしゃ/Cylinder.002 (all descendants, including tree)",
+  "renderer_count": 8,
+  "minimum_other_model_aabb_distance_lower_bound_m": 7.19105057949389,
+  "nearest_pairs": [
+    {
+      "aabb_gap_lower_bound_m": 7.19105057949389,
+      "moved_renderer": "1016こうしゃ/Cylinder.002",
+      "other_renderer": "1016こうしゃ/Cube.047/Plane.019"
+    },
+    {
+      "aabb_gap_lower_bound_m": 7.941052038617499,
+      "moved_renderer": "1016こうしゃ/Cylinder.002/Cylinder.003",
+      "other_renderer": "1016こうしゃ/Cube.047/Plane.019"
+    },
+    {
+      "aabb_gap_lower_bound_m": 9.450350166193289,
+      "moved_renderer": "1016こうしゃ/Cylinder.002/Sphere",
+      "other_renderer": "1016こうしゃ/Cube.047/Plane.019"
+    },
+    {
+      "aabb_gap_lower_bound_m": 10.050350264519693,
+      "moved_renderer": "1016こうしゃ/Cylinder.002/Cube.011",
+      "other_renderer": "1016こうしゃ/Cube.047/Plane.019"
+    },
+    {
+      "aabb_gap_lower_bound_m": 10.191058938051242,
+      "moved_renderer": "1016こうしゃ/Cylinder.002",
+      "other_renderer": "1016こうしゃ/Cube.047/Plane.027"
+    },
+    {
+      "aabb_gap_lower_bound_m": 10.447246462444355,
+      "moved_renderer": "1016こうしゃ/Cylinder.002",
+      "other_renderer": "1016こうしゃ/Cube.047/Cylinder"
+    },
+    {
+      "aabb_gap_lower_bound_m": 10.941060397174851,
+      "moved_renderer": "1016こうしゃ/Cylinder.002/Cylinder.003",
+      "other_renderer": "1016こうしゃ/Cube.047/Plane.027"
+    },
+    {
+      "aabb_gap_lower_bound_m": 11.197247921567964,
+      "moved_renderer": "1016こうしゃ/Cylinder.002/Cylinder.003",
+      "other_renderer": "1016こうしゃ/Cube.047/Cylinder"
+    }
+  ],
+  "all_renderer_aabb_footprints_inside_ground_plane_polygon": true,
+  "max_ground_height_change_m": 7.941825636795935e-14,
+  "support": [
+    {
+      "renderer": "1016こうしゃ/Cylinder.002/Cube.011",
+      "bounds_after_dx3_m": [
+        [
+          513.5771033409237,
+          -3.425254539557443e-06,
+          764.4643605085852
+        ],
+        [
+          513.8771032783388,
+          11.999996659383957,
+          764.7643638316025
+        ]
+      ],
+      "support_before": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.7701566243044185e-05,
+          1.7724215863789688e-05,
+          1.7701566235102364e-05,
+          1.7724215855847867e-05
+        ]
+      },
+      "support_after": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.770156616362593e-05,
+          1.772421578437144e-05,
+          1.7701566155684107e-05,
+          1.7724215776429617e-05
+        ]
+      },
+      "max_ground_height_change_m": 7.941825636795935e-14
+    },
+    {
+      "renderer": "1016こうしゃ/Cylinder.002/Cube.012",
+      "bounds_after_dx3_m": [
+        [
+          526.475095475018,
+          2.617466240195654e-06,
+          787.1501767965788
+        ],
+        [
+          526.7750954124331,
+          12.000002702104737,
+          787.4501801195961
+        ]
+      ],
+      "support_before": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.9414297380895002e-05,
+          1.9436947001640512e-05,
+          1.941429737295318e-05,
+          1.9436946993698683e-05
+        ]
+      },
+      "support_after": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.9414297301476753e-05,
+          1.9436946922222255e-05,
+          1.9414297293534924e-05,
+          1.9436946914280434e-05
+        ]
+      },
+      "max_ground_height_change_m": 7.941825636795935e-14
+    },
+    {
+      "renderer": "1016こうしゃ/Cylinder.002",
+      "bounds_after_dx3_m": [
+        [
+          505.1379833984374,
+          -4.231949506716681e-06,
+          761.6050608235594
+        ],
+        [
+          535.1379833984374,
+          1.5000042319495068,
+          791.6050612467532
+        ]
+      ],
+      "support_before": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.7485695346050575e-05,
+          1.9750632364468358e-05,
+          1.7485694551868045e-05,
+          1.9750631570285828e-05
+        ]
+      },
+      "support_after": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.7485695266632325e-05,
+          1.975063228505011e-05,
+          1.7485694472449795e-05,
+          1.975063149086758e-05
+        ]
+      },
+      "max_ground_height_change_m": 7.941824959169577e-14
+    },
+    {
+      "renderer": "1016こうしゃ/Cylinder.002/Cylinder.003",
+      "bounds_after_dx3_m": [
+        [
+          505.8879853653907,
+          -0.30000400246998415,
+          762.355062282683
+        ],
+        [
+          534.3879814314841,
+          3.300004181283859,
+          790.8550593644346
+        ]
+      ],
+      "support_before": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.7542318861018416e-05,
+          1.969400877784096e-05,
+          1.7542318106545122e-05,
+          1.969400802336766e-05
+        ]
+      },
+      "support_after": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.7542318781600166e-05,
+          1.9694008698422704e-05,
+          1.7542318027126866e-05,
+          1.969400794394941e-05
+        ]
+      },
+      "max_ground_height_change_m": 7.941825636795935e-14
+    },
+    {
+      "renderer": "1016こうしゃ/Cylinder.002/Cylinder.004",
+      "bounds_after_dx3_m": [
+        [
+          509.6379853653907,
+          -2.962364175740362e-06,
+          766.1050619441153
+        ],
+        [
+          530.6379814314841,
+          4.500002962364057,
+          787.1050592798074
+        ]
+      ],
+      "support_before": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.7825435859492893e-05,
+          1.9410891548870522e-05,
+          1.7825435303565227e-05,
+          1.9410890992942856e-05
+        ]
+      },
+      "support_after": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.7825435780074637e-05,
+          1.9410891469452273e-05,
+          1.782543522414697e-05,
+          1.9410890913524607e-05
+        ]
+      },
+      "max_ground_height_change_m": 7.941825636795935e-14
+    },
+    {
+      "renderer": "1016こうしゃ/Cylinder.002/Sphere",
+      "bounds_after_dx3_m": [
+        [
+          512.9771032984554,
+          11.2499966170645,
+          763.8643604102588
+        ],
+        [
+          514.4771028290686,
+          12.74999661706444,
+          765.3643600526308
+        ]
+      ],
+      "support_before": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.765626751177505e-05,
+          1.7769514334098266e-05,
+          1.7656267472065934e-05,
+          1.7769514294389152e-05
+        ]
+      },
+      "support_after": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.76562674323568e-05,
+          1.7769514254680017e-05,
+          1.7656267392647685e-05,
+          1.7769514214970902e-05
+        ]
+      },
+      "max_ground_height_change_m": 7.941824959169577e-14
+    },
+    {
+      "renderer": "1016こうしゃ/Cylinder.002/Sphere.001",
+      "bounds_after_dx3_m": [
+        [
+          525.8750954325498,
+          11.250003017413148,
+          786.5501766982522
+        ],
+        [
+          527.3750949631628,
+          12.750003017413087,
+          788.0501763406243
+        ]
+      ],
+      "support_before": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.936899864962586e-05,
+          1.9482245471949077e-05,
+          1.9368998609916745e-05,
+          1.9482245432239962e-05
+        ]
+      },
+      "support_after": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.9368998570207603e-05,
+          1.948224539253082e-05,
+          1.9368998530498495e-05,
+          1.9482245352821706e-05
+        ]
+      },
+      "max_ground_height_change_m": 7.941825636795935e-14
+    },
+    {
+      "renderer": "1016こうしゃ/Cylinder.002/tree",
+      "bounds_after_dx3_m": [
+        [
+          513.041220394389,
+          3.96751605322464,
+          770.5696617627992
+        ],
+        [
+          526.0457221546732,
+          17.55952093938108,
+          782.9790740236202
+        ]
+      ],
+      "support_before": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.8162503678037016e-05,
+          1.909938823836559e-05,
+          1.8162503333772082e-05,
+          1.9099387894100657e-05
+        ]
+      },
+      "support_after": {
+        "inside": true,
+        "ground_corner_y_m": [
+          1.816250359861876e-05,
+          1.909938815894734e-05,
+          1.8162503254353825e-05,
+          1.9099387814682408e-05
+        ]
+      },
+      "max_ground_height_change_m": 7.941825636795935e-14
+    }
+  ],
+  "method": "Each bound comes from full-mesh vertex polygons. Every moved renderer AABB remains inside one existing filled Plane polygon; ground plane corner heights compared before/after. For separation, AABB distance is a conservative lower bound on distance between full mesh polygons; minimum exceeds 0.3m. No Unity or scene writes."
+}

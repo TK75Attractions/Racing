@@ -200,7 +200,7 @@ public class CarResetter : MonoBehaviour
             float offset = side * lane;
             Vector3 position = sample.position + sample.right * offset + sample.up * clearance;
             int count = Physics.OverlapBoxNonAlloc(position + sample.up*.4f, new Vector3(1.45f,.65f,2.85f),
-                occupants, rotation, ~0, QueryTriggerInteraction.Ignore);
+                occupants, rotation, CoursePhysicsLayers.PhysicalMask, QueryTriggerInteraction.Ignore);
             bool occupied = count == occupants.Length;
             for (int i=0;i<count;i++)
                 if (occupants[i].attachedRigidbody != null && occupants[i].attachedRigidbody != rb) occupied=true;

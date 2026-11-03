@@ -284,7 +284,7 @@ public static class RaceCourseRoad
                     float sign = sideIndex == 0 ? -1f : 1f;
                     Vector3 probe = center[i] + side * (sign * (halfWidth + 0.6f)) + Vector3.up * 0.2f;
                     groundBySide[sideIndex] = Physics.Raycast(probe, Vector3.down, out RaycastHit ground, 1.2f,
-                        Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)
+                        CoursePhysicsLayers.GroundMask, QueryTriggerInteraction.Ignore)
                         && Mathf.Abs(ground.point.y - center[i].y) < 0.35f;
                 }
             }

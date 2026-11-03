@@ -49,7 +49,7 @@ public class GroundCheck : MonoBehaviour
             travel.normalized * Mathf.Max(radius, 1.3f);
         float rise = 0f;
         foreach (RaycastHit hit in Physics.RaycastAll(futureCenter + normal * maximumHeight, -normal,
-                     checkDistance + maximumHeight, groundLayers, QueryTriggerInteraction.Ignore))
+                     checkDistance + maximumHeight, groundLayers & CoursePhysicsLayers.PhysicalMask, QueryTriggerInteraction.Ignore))
         {
             if (hit.collider.attachedRigidbody == ownerRigidbody ||
                 (hit.collider.attachedRigidbody != null && !hit.collider.attachedRigidbody.isKinematic) ||
@@ -67,7 +67,7 @@ public class GroundCheck : MonoBehaviour
         Vector3 wheelUp = ownerRigidbody != null ? ownerRigidbody.rotation * Vector3.up : Vector3.up;
         Vector3 origin = transform.position + rayOriginOffset;
         if (wheelCollider != null) origin = transform.TransformPoint(wheelCollider.center) + rayOriginOffset;
-        RaycastHit[] hits = Physics.RaycastAll(origin, -wheelUp, checkDistance, groundLayers, QueryTriggerInteraction.Ignore);
+        RaycastHit[] hits = Physics.RaycastAll(origin, -wheelUp, checkDistance, groundLayers & CoursePhysicsLayers.PhysicalMask, QueryTriggerInteraction.Ignore);
 
         bool foundGround = false;
         float nearestDistance = float.MaxValue;

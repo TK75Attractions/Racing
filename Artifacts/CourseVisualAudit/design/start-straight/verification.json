@@ -1,0 +1,3545 @@
+{
+  "status": "blocked_no_accepted_layout",
+  "production_control_points_changed": false,
+  "baseline_length_m": 1908.3345605108188,
+  "baseline_northeast_corner": {
+    "minimum_pointwise_horizontal_radius_m": 25.759536337050477,
+    "at_world_xyz_m": [
+      487.0862160655332,
+      3.0,
+      777.3264595592534
+    ],
+    "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+  },
+  "candidates": [
+    {
+      "straight_endpoints_m": [
+        [
+          494.7,
+          3,
+          801
+        ],
+        [
+          258.2,
+          3,
+          801
+        ]
+      ],
+      "width_m": 20,
+      "building_north_shift_m": 16.4,
+      "intrusions": {
+        "1016こうしゃ/Cube.026/tree.002": {
+          "B": {
+            "min_progress_m": 88.75,
+            "max_progress_m": 104.193,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.003": {
+          "B": {
+            "min_progress_m": 82.75,
+            "max_progress_m": 98.75,
+            "sample_segments": 44
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.004": {
+          "B": {
+            "min_progress_m": 27.7,
+            "max_progress_m": 43.75,
+            "sample_segments": 44
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.005": {
+          "B": {
+            "min_progress_m": 37.25,
+            "max_progress_m": 52.75,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.007": {
+          "B": {
+            "min_progress_m": 52.25,
+            "max_progress_m": 67.75,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.009": {
+          "B": {
+            "min_progress_m": 58.25,
+            "max_progress_m": 73.75,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.010": {
+          "B": {
+            "min_progress_m": 70.75,
+            "max_progress_m": 86.75,
+            "sample_segments": 44
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.013": {
+          "B": {
+            "min_progress_m": 179.186,
+            "max_progress_m": 180.686,
+            "sample_segments": 5
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.014": {
+          "B": {
+            "min_progress_m": 106.75,
+            "max_progress_m": 122.191,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.015": {
+          "B": {
+            "min_progress_m": 110.75,
+            "max_progress_m": 126.25,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.016": {
+          "B": {
+            "min_progress_m": 11.75,
+            "max_progress_m": 1923.774,
+            "sample_segments": 103
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.017": {
+          "B": {
+            "min_progress_m": 76.75,
+            "max_progress_m": 100.25,
+            "sample_segments": 64
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.018": {
+          "B": {
+            "min_progress_m": 46.25,
+            "max_progress_m": 69.696,
+            "sample_segments": 63
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.019": {
+          "B": {
+            "min_progress_m": 125.191,
+            "max_progress_m": 148.25,
+            "sample_segments": 63
+          }
+        }
+      },
+      "zero_intrusion_target_met": false,
+      "metrics": {
+        "normal_1_5m": {
+          "length": 1926.7381403238255,
+          "min_width": 12.0,
+          "max_width_rate": 0.19219784178902036,
+          "heading_40m_degrees": 5.9538539087904025,
+          "min_radius": 31.791138236047736,
+          "worst_curve": [
+            0.03145530658811415,
+            [
+              531.3275795117373,
+              10.882967542550833,
+              602.8728873958778
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 8.801230914545844e-11,
+          "length_change_percent": 0.9643791080365061,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.758203910278723,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              792.2500000000017
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 21.364175378546935,
+            "at_world_xyz_m": [
+              267.5907204842937,
+              3.052872875116614,
+              792.0619202011969
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 2636,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.898569321590864,
+            "min_cross_y": 5.568964248892115,
+            "worst_triangle": {
+              "sample": 1168,
+              "side": 1,
+              "vertices": [
+                [
+                  535.0582056999649,
+                  11.313460077060371,
+                  609.3769631295576
+                ],
+                [
+                  528.3951387169516,
+                  10.882967542550833,
+                  595.9933347533284
+                ],
+                [
+                  534.2600203065231,
+                  10.882967542550833,
+                  609.7524400384272
+                ]
+              ],
+              "normal": [
+                -0.40368774906717336,
+                0.8985693215908641,
+                0.17207375031890648
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 2636,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8985760941163085,
+            "min_cross_y": 5.568866617977619,
+            "worst_triangle": {
+              "sample": 1168,
+              "side": 1,
+              "vertices": [
+                [
+                  535.0582275390625,
+                  11.313460350036621,
+                  609.376953125
+                ],
+                [
+                  528.3951416015625,
+                  10.882967948913574,
+                  595.9933471679688
+                ],
+                [
+                  534.260009765625,
+                  10.882967948913574,
+                  609.75244140625
+                ]
+              ],
+              "normal": [
+                -0.4036750839648025,
+                0.8985760941163086,
+                0.17206809602215276
+              ]
+            }
+          }
+        },
+        "fine_0_25m": {
+          "length": 1926.7574927589192,
+          "min_width": 12.0,
+          "max_width_rate": 0.1996653556364668,
+          "heading_40m_degrees": 5.948256539836753,
+          "min_radius": 23.745397055869756,
+          "worst_curve": [
+            0.042113425083907134,
+            [
+              549.5546299731355,
+              16.227586075932706,
+              599.545407403474
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 3.1315995838064304e-09,
+          "length_change_percent": 0.9653932087866579,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.74900037193429,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              792.2500000000017
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 6.017893815288615,
+            "at_world_xyz_m": [
+              612.9010222795843,
+              10.501326493808875,
+              598.3025245329418
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 15802,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.27387111026577154,
+            "min_cross_y": 0.27072854220233644,
+            "worst_triangle": {
+              "sample": 6655,
+              "side": 0,
+              "vertices": [
+                [
+                  613.397816900027,
+                  10.501326493808875,
+                  589.7820552981722
+                ],
+                [
+                  613.3832702932172,
+                  10.55702287216857,
+                  589.7590672165031
+                ],
+                [
+                  612.4042276591415,
+                  10.501326493808875,
+                  606.8229937677114
+                ]
+              ],
+              "normal": [
+                0.9601357535351469,
+                0.2738711102657716,
+                0.05598169116139178
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 15802,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.27351171275192926,
+            "min_cross_y": 0.2703453078866005,
+            "worst_triangle": {
+              "sample": 6655,
+              "side": 0,
+              "vertices": [
+                [
+                  613.3978271484375,
+                  10.501326560974121,
+                  589.7820434570312
+                ],
+                [
+                  613.38330078125,
+                  10.557023048400879,
+                  589.7590942382812
+                ],
+                [
+                  612.4042358398438,
+                  10.501326560974121,
+                  606.822998046875
+                ]
+              ],
+              "normal": [
+                0.960237845338994,
+                0.2735117127519293,
+                0.05598770727786806
+              ]
+            }
+          }
+        }
+      },
+      "building": {
+        "shift_north_m": 16.4,
+        "moved_renderer_count": 6,
+        "trees_moved": 0,
+        "minimum_separation_aabb_lower_bound_m": 7.8249491873562524,
+        "closest_objects": [
+          "1016こうしゃ/Cube.008",
+          "1016こうしゃ/人間.007"
+        ],
+        "separation_pass": true,
+        "object_y_rotation_scale_changes": false,
+        "all_footprints_on_ground": true,
+        "ground_support": [
+          {
+            "renderer": "1016こうしゃ/Cube.008",
+            "moved_bounds_m": [
+              [
+                311.8999999320523,
+                -3.397404402250004e-08,
+                821.9499928368382
+              ],
+              [
+                401.90000006794764,
+                9.000000033974043,
+                822.8500071631618
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.080345044499589e-05,
+              2.0871399636197253e-05,
+              2.08034480624483e-05,
+              2.0871397253649664e-05
+            ],
+            "new_ground_heights_m": [
+              2.204161599759814e-05,
+              2.2109565188799504e-05,
+              2.204161361505055e-05,
+              2.2109562806251914e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022504e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.009",
+            "moved_bounds_m": [
+              [
+                311.8999514221425,
+                -3.338124914264995e-07,
+                822.4000014617484
+              ],
+              [
+                401.8999536874197,
+                9.00000249734813,
+                859.9000115214466
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.083742515095679e-05,
+              2.3668597143527298e-05,
+              2.0837422768409145e-05,
+              2.366859476097966e-05
+            ],
+            "new_ground_heights_m": [
+              2.2075590703559046e-05,
+              2.4906762696129555e-05,
+              2.2075588321011402e-05,
+              2.490676031358191e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.010",
+            "moved_bounds_m": [
+              [
+                319.3999904326936,
+                2.2649408037977992e-07,
+                825.399994088517
+              ],
+              [
+                322.39999104220726,
+                10.800000882140496,
+                828.399995476091
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.1063918094393395e-05,
+              2.1290411897799073e-05,
+              2.1063918014975125e-05,
+              2.1290411818380803e-05
+            ],
+            "new_ground_heights_m": [
+              2.2302083646995652e-05,
+              2.2528577450401323e-05,
+              2.2302083567577382e-05,
+              2.2528577370983053e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.001",
+            "moved_bounds_m": [
+              [
+                339.861337015611,
+                8.632470421192492,
+                821.7999980242147
+              ],
+              [
+                393.8613392067418,
+                11.632470510605463,
+                822.1000064366697
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0792125411486067e-05,
+              2.0814775416473423e-05,
+              2.079212398195746e-05,
+              2.081477398694482e-05
+            ],
+            "new_ground_heights_m": [
+              2.2030290964088324e-05,
+              2.205294096907568e-05,
+              2.2030289534559716e-05,
+              2.2052939539547072e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.002",
+            "moved_bounds_m": [
+              [
+                339.86133293584305,
+                11.632469571828869,
+                822.099992327799
+              ],
+              [
+                393.8613391615661,
+                11.93247160480895,
+                849.1000015544562
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0814774351283433e-05,
+              2.2853218335697456e-05,
+              2.0814772921754717e-05,
+              2.2853216906168746e-05
+            ],
+            "new_ground_heights_m": [
+              2.2052939903885684e-05,
+              2.4091383888299713e-05,
+              2.2052938474356967e-05,
+              2.4091382458770996e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.003",
+            "moved_bounds_m": [
+              [
+                319.39834355331175,
+                10.50000082850256,
+                823.8999937511218
+              ],
+              [
+                345.2349687585507,
+                11.100001960971083,
+                838.8999986210498
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.095067121964098e-05,
+              2.2083140080544093e-05,
+              2.0950670535674438e-05,
+              2.2083139396577545e-05
+            ],
+            "new_ground_heights_m": [
+              2.2188836772243237e-05,
+              2.332130563314635e-05,
+              2.2188836088276695e-05,
+              2.332130494917981e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.238165552602264e-06
+          }
+        ],
+        "scope": "Other school source renderers; excludes the supporting Plane and contacts internal to the rigid moved wing. AABB distance is a conservative lower bound."
+      },
+      "tube_control_points_width_flags_unchanged": true,
+      "jump_and_landing_connections_unchanged": true
+    },
+    {
+      "straight_endpoints_m": [
+        [
+          494.7,
+          3,
+          801.5
+        ],
+        [
+          258.2,
+          3,
+          801.5
+        ]
+      ],
+      "width_m": 20,
+      "building_north_shift_m": 16.4,
+      "intrusions": {
+        "1016こうしゃ/Cube.008/Plane.001": {
+          "B": {
+            "min_progress_m": 94.25,
+            "max_progress_m": 148.25,
+            "sample_segments": 145
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.002": {
+          "B": {
+            "min_progress_m": 88.75,
+            "max_progress_m": 104.179,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.003": {
+          "B": {
+            "min_progress_m": 82.75,
+            "max_progress_m": 98.75,
+            "sample_segments": 44
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.004": {
+          "B": {
+            "min_progress_m": 27.696,
+            "max_progress_m": 43.75,
+            "sample_segments": 44
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.005": {
+          "B": {
+            "min_progress_m": 37.25,
+            "max_progress_m": 52.75,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.007": {
+          "B": {
+            "min_progress_m": 52.25,
+            "max_progress_m": 67.75,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.009": {
+          "B": {
+            "min_progress_m": 58.25,
+            "max_progress_m": 73.75,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.010": {
+          "B": {
+            "min_progress_m": 70.75,
+            "max_progress_m": 86.75,
+            "sample_segments": 44
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.014": {
+          "B": {
+            "min_progress_m": 106.75,
+            "max_progress_m": 122.175,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.015": {
+          "B": {
+            "min_progress_m": 110.75,
+            "max_progress_m": 126.25,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.016": {
+          "B": {
+            "min_progress_m": 15.25,
+            "max_progress_m": 44.442,
+            "sample_segments": 80
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.017": {
+          "B": {
+            "min_progress_m": 77.184,
+            "max_progress_m": 100.25,
+            "sample_segments": 63
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.018": {
+          "B": {
+            "min_progress_m": 46.75,
+            "max_progress_m": 69.686,
+            "sample_segments": 62
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.019": {
+          "B": {
+            "min_progress_m": 125.75,
+            "max_progress_m": 148.25,
+            "sample_segments": 61
+          }
+        }
+      },
+      "zero_intrusion_target_met": false,
+      "metrics": {
+        "normal_1_5m": {
+          "length": 1927.7388101305737,
+          "min_width": 12.0,
+          "max_width_rate": 0.19549929992886722,
+          "heading_40m_degrees": 6.442500637341449,
+          "min_radius": 31.521537009205137,
+          "worst_curve": [
+            0.03172434135137424,
+            [
+              530.940893103845,
+              10.722867650187181,
+              603.0407714985694
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 1.0010823848787616e-07,
+          "length_change_percent": 1.0168159200848237,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.758199130957955,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              792.7500000000017
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 21.36908579449761,
+            "at_world_xyz_m": [
+              267.61558793394227,
+              3.0525180560869876,
+              792.5918850507331
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 2638,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8970018885833704,
+            "min_cross_y": 1.9933411906239908,
+            "worst_triangle": {
+              "sample": 1169,
+              "side": 1,
+              "vertices": [
+                [
+                  534.7553428340053,
+                  11.15238335840586,
+                  609.5153094215653
+                ],
+                [
+                  527.9105518889268,
+                  10.722867650187181,
+                  596.1842175607944
+                ],
+                [
+                  533.9712343187633,
+                  10.722867650187181,
+                  609.8973254363443
+                ]
+              ],
+              "normal": [
+                -0.4043006252670673,
+                0.8970018885833704,
+                0.17868580325959052
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 2638,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8970039600675961,
+            "min_cross_y": 1.9938061088323593,
+            "worst_triangle": {
+              "sample": 1169,
+              "side": 1,
+              "vertices": [
+                [
+                  534.75537109375,
+                  11.152383804321289,
+                  609.5153198242188
+                ],
+                [
+                  527.9105224609375,
+                  10.722867965698242,
+                  596.1842041015625
+                ],
+                [
+                  533.9712524414062,
+                  10.722867965698242,
+                  609.8973388671875
+                ]
+              ],
+              "normal": [
+                -0.40429639157474623,
+                0.8970039600675961,
+                0.17868498365192867
+              ]
+            }
+          }
+        },
+        "fine_0_25m": {
+          "length": 1927.7583659278716,
+          "min_width": 12.0,
+          "max_width_rate": 0.19967356224075555,
+          "heading_40m_degrees": 5.950005276242706,
+          "min_radius": 23.715718170827852,
+          "worst_curve": [
+            0.04216612766254224,
+            [
+              549.5543272670562,
+              16.22753429039978,
+              599.5454269866726
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 3.877498178815764e-08,
+          "length_change_percent": 1.0178406773628579,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.7490003703891,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              792.7500000000017
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 6.004478438602954,
+            "at_world_xyz_m": [
+              612.9006407438568,
+              10.501415318199975,
+              598.3025101972542
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 15810,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.27412937364100937,
+            "min_cross_y": 0.27101052481508886,
+            "worst_triangle": {
+              "sample": 6657,
+              "side": 0,
+              "vertices": [
+                [
+                  613.3978018924972,
+                  10.501415318199975,
+                  589.7820295060092
+                ],
+                [
+                  613.3832404533277,
+                  10.557112705366269,
+                  589.7590293155106
+                ],
+                [
+                  612.4034795952164,
+                  10.501415318199975,
+                  606.8229908884991
+                ]
+              ],
+              "normal": [
+                0.9600599017808196,
+                0.2741293736410093,
+                0.05601849248052559
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 15810,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.27455234543957147,
+            "min_cross_y": 0.27146290242671967,
+            "worst_triangle": {
+              "sample": 6657,
+              "side": 0,
+              "vertices": [
+                [
+                  613.3978271484375,
+                  10.501415252685547,
+                  589.7820434570312
+                ],
+                [
+                  613.3832397460938,
+                  10.557112693786621,
+                  589.759033203125
+                ],
+                [
+                  612.4035034179688,
+                  10.501415252685547,
+                  606.822998046875
+                ]
+              ],
+              "normal": [
+                0.9599394324935886,
+                0.27455234543957147,
+                0.05601156628337871
+              ]
+            }
+          }
+        }
+      },
+      "building": {
+        "shift_north_m": 16.4,
+        "moved_renderer_count": 6,
+        "trees_moved": 0,
+        "minimum_separation_aabb_lower_bound_m": 7.8249491873562524,
+        "closest_objects": [
+          "1016こうしゃ/Cube.008",
+          "1016こうしゃ/人間.007"
+        ],
+        "separation_pass": true,
+        "object_y_rotation_scale_changes": false,
+        "all_footprints_on_ground": true,
+        "ground_support": [
+          {
+            "renderer": "1016こうしゃ/Cube.008",
+            "moved_bounds_m": [
+              [
+                311.8999999320523,
+                -3.397404402250004e-08,
+                821.9499928368382
+              ],
+              [
+                401.90000006794764,
+                9.000000033974043,
+                822.8500071631618
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.080345044499589e-05,
+              2.0871399636197253e-05,
+              2.08034480624483e-05,
+              2.0871397253649664e-05
+            ],
+            "new_ground_heights_m": [
+              2.204161599759814e-05,
+              2.2109565188799504e-05,
+              2.204161361505055e-05,
+              2.2109562806251914e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022504e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.009",
+            "moved_bounds_m": [
+              [
+                311.8999514221425,
+                -3.338124914264995e-07,
+                822.4000014617484
+              ],
+              [
+                401.8999536874197,
+                9.00000249734813,
+                859.9000115214466
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.083742515095679e-05,
+              2.3668597143527298e-05,
+              2.0837422768409145e-05,
+              2.366859476097966e-05
+            ],
+            "new_ground_heights_m": [
+              2.2075590703559046e-05,
+              2.4906762696129555e-05,
+              2.2075588321011402e-05,
+              2.490676031358191e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.010",
+            "moved_bounds_m": [
+              [
+                319.3999904326936,
+                2.2649408037977992e-07,
+                825.399994088517
+              ],
+              [
+                322.39999104220726,
+                10.800000882140496,
+                828.399995476091
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.1063918094393395e-05,
+              2.1290411897799073e-05,
+              2.1063918014975125e-05,
+              2.1290411818380803e-05
+            ],
+            "new_ground_heights_m": [
+              2.2302083646995652e-05,
+              2.2528577450401323e-05,
+              2.2302083567577382e-05,
+              2.2528577370983053e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.001",
+            "moved_bounds_m": [
+              [
+                339.861337015611,
+                8.632470421192492,
+                821.7999980242147
+              ],
+              [
+                393.8613392067418,
+                11.632470510605463,
+                822.1000064366697
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0792125411486067e-05,
+              2.0814775416473423e-05,
+              2.079212398195746e-05,
+              2.081477398694482e-05
+            ],
+            "new_ground_heights_m": [
+              2.2030290964088324e-05,
+              2.205294096907568e-05,
+              2.2030289534559716e-05,
+              2.2052939539547072e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.002",
+            "moved_bounds_m": [
+              [
+                339.86133293584305,
+                11.632469571828869,
+                822.099992327799
+              ],
+              [
+                393.8613391615661,
+                11.93247160480895,
+                849.1000015544562
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0814774351283433e-05,
+              2.2853218335697456e-05,
+              2.0814772921754717e-05,
+              2.2853216906168746e-05
+            ],
+            "new_ground_heights_m": [
+              2.2052939903885684e-05,
+              2.4091383888299713e-05,
+              2.2052938474356967e-05,
+              2.4091382458770996e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.003",
+            "moved_bounds_m": [
+              [
+                319.39834355331175,
+                10.50000082850256,
+                823.8999937511218
+              ],
+              [
+                345.2349687585507,
+                11.100001960971083,
+                838.8999986210498
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.095067121964098e-05,
+              2.2083140080544093e-05,
+              2.0950670535674438e-05,
+              2.2083139396577545e-05
+            ],
+            "new_ground_heights_m": [
+              2.2188836772243237e-05,
+              2.332130563314635e-05,
+              2.2188836088276695e-05,
+              2.332130494917981e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.238165552602264e-06
+          }
+        ],
+        "scope": "Other school source renderers; excludes the supporting Plane and contacts internal to the rigid moved wing. AABB distance is a conservative lower bound."
+      },
+      "tube_control_points_width_flags_unchanged": true,
+      "jump_and_landing_connections_unchanged": true
+    },
+    {
+      "straight_endpoints_m": [
+        [
+          494.7,
+          3,
+          802
+        ],
+        [
+          258.2,
+          3,
+          802
+        ]
+      ],
+      "width_m": 20,
+      "building_north_shift_m": 16.4,
+      "intrusions": {
+        "1016こうしゃ/Cube.008": {
+          "B": {
+            "min_progress_m": 86.171,
+            "max_progress_m": 176.14,
+            "sample_segments": 241
+          }
+        },
+        "1016こうしゃ/Cube.008/Plane.001": {
+          "B": {
+            "min_progress_m": 94.25,
+            "max_progress_m": 148.25,
+            "sample_segments": 145
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.002": {
+          "B": {
+            "min_progress_m": 88.75,
+            "max_progress_m": 104.165,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.003": {
+          "B": {
+            "min_progress_m": 83.172,
+            "max_progress_m": 98.75,
+            "sample_segments": 43
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.004": {
+          "B": {
+            "min_progress_m": 27.692,
+            "max_progress_m": 43.75,
+            "sample_segments": 43
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.005": {
+          "B": {
+            "min_progress_m": 37.25,
+            "max_progress_m": 52.75,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.007": {
+          "B": {
+            "min_progress_m": 52.25,
+            "max_progress_m": 67.75,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.009": {
+          "B": {
+            "min_progress_m": 58.25,
+            "max_progress_m": 73.75,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.010": {
+          "B": {
+            "min_progress_m": 71.176,
+            "max_progress_m": 86.421,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.014": {
+          "B": {
+            "min_progress_m": 106.75,
+            "max_progress_m": 122.159,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.015": {
+          "B": {
+            "min_progress_m": 110.75,
+            "max_progress_m": 126.25,
+            "sample_segments": 42
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.016": {
+          "B": {
+            "min_progress_m": 16.716,
+            "max_progress_m": 44.435,
+            "sample_segments": 75
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.017": {
+          "B": {
+            "min_progress_m": 78.25,
+            "max_progress_m": 100.25,
+            "sample_segments": 60
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.018": {
+          "B": {
+            "min_progress_m": 47.75,
+            "max_progress_m": 69.676,
+            "sample_segments": 59
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.019": {
+          "B": {
+            "min_progress_m": 126.25,
+            "max_progress_m": 148.25,
+            "sample_segments": 60
+          }
+        }
+      },
+      "zero_intrusion_target_met": false,
+      "metrics": {
+        "normal_1_5m": {
+          "length": 1928.7400494753313,
+          "min_width": 12.0,
+          "max_width_rate": 0.1912848711077068,
+          "heading_40m_degrees": 5.636109290791615,
+          "min_radius": 32.18764263226533,
+          "worst_curve": [
+            0.031067823494398638,
+            [
+              531.5922437372934,
+              10.991657451086576,
+              602.7614773399513
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 6.220706957068508e-09,
+          "length_change_percent": 1.0692825769004655,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.758194360519628,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              793.25
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 21.374200518221606,
+            "at_world_xyz_m": [
+              267.64048955508053,
+              3.0521656272857247,
+              793.1217553239826
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 2640,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8988316244701021,
+            "min_cross_y": 10.726884060715125,
+            "worst_triangle": {
+              "sample": 1170,
+              "side": 1,
+              "vertices": [
+                [
+                  534.458144220405,
+                  10.991657451086576,
+                  609.6558882925318
+                ],
+                [
+                  527.4450756505432,
+                  10.563117823521097,
+                  596.3742173983767
+                ],
+                [
+                  533.6725812057043,
+                  10.563117823521097,
+                  610.0513787538262
+                ]
+              ],
+              "normal": [
+                -0.39889155236285845,
+                0.8988316244701021,
+                0.18162389794844208
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 2640,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8988259363534121,
+            "min_cross_y": 10.726158134639263,
+            "worst_triangle": {
+              "sample": 1170,
+              "side": 1,
+              "vertices": [
+                [
+                  534.4581298828125,
+                  10.991657257080078,
+                  609.6558837890625
+                ],
+                [
+                  527.445068359375,
+                  10.563117980957031,
+                  596.3742065429688
+                ],
+                [
+                  533.672607421875,
+                  10.563117980957031,
+                  610.0513916015625
+                ]
+              ],
+              "normal": [
+                -0.3989019185734581,
+                0.8988259363534121,
+                0.1816292803950567
+              ]
+            }
+          }
+        },
+        "fine_0_25m": {
+          "length": 1928.7592351960943,
+          "min_width": 12.0,
+          "max_width_rate": 0.19968175260189605,
+          "heading_40m_degrees": 5.951751908164224,
+          "min_radius": 23.686152692464294,
+          "worst_curve": [
+            0.04221876017535546,
+            [
+              549.5540249225477,
+              16.22748256568768,
+              599.5454465465106
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 0.0,
+          "length_change_percent": 1.0702879415341204,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.74900037872056,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              793.25
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 5.991149832598838,
+            "at_world_xyz_m": [
+              612.9002599466858,
+              10.501503972369582,
+              598.3024958901976
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 15820,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.2743871321933744,
+            "min_cross_y": 0.007531569562822074,
+            "worst_triangle": {
+              "sample": 6659,
+              "side": 0,
+              "vertices": [
+                [
+                  613.397786898875,
+                  10.501503972369582,
+                  589.7820037793666
+                ],
+                [
+                  613.3832106529399,
+                  10.557202366668808,
+                  589.7589915023846
+                ],
+                [
+                  612.4027329944965,
+                  10.501503972369582,
+                  606.8229880010286
+                ]
+              ],
+              "normal": [
+                0.9599841223265836,
+                0.2743871321933744,
+                0.05605520999474343
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 15820,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.2735900170955031,
+            "min_cross_y": 0.0076903775334358215,
+            "worst_triangle": {
+              "sample": 6659,
+              "side": 0,
+              "vertices": [
+                [
+                  613.3977661132812,
+                  10.501503944396973,
+                  589.781982421875
+                ],
+                [
+                  613.3832397460938,
+                  10.557202339172363,
+                  589.7589721679688
+                ],
+                [
+                  612.4027099609375,
+                  10.501503944396973,
+                  606.822998046875
+                ]
+              ],
+              "normal": [
+                0.9602108253464258,
+                0.2735900170955031,
+                0.05606847093704434
+              ]
+            }
+          }
+        }
+      },
+      "building": {
+        "shift_north_m": 16.4,
+        "moved_renderer_count": 6,
+        "trees_moved": 0,
+        "minimum_separation_aabb_lower_bound_m": 7.8249491873562524,
+        "closest_objects": [
+          "1016こうしゃ/Cube.008",
+          "1016こうしゃ/人間.007"
+        ],
+        "separation_pass": true,
+        "object_y_rotation_scale_changes": false,
+        "all_footprints_on_ground": true,
+        "ground_support": [
+          {
+            "renderer": "1016こうしゃ/Cube.008",
+            "moved_bounds_m": [
+              [
+                311.8999999320523,
+                -3.397404402250004e-08,
+                821.9499928368382
+              ],
+              [
+                401.90000006794764,
+                9.000000033974043,
+                822.8500071631618
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.080345044499589e-05,
+              2.0871399636197253e-05,
+              2.08034480624483e-05,
+              2.0871397253649664e-05
+            ],
+            "new_ground_heights_m": [
+              2.204161599759814e-05,
+              2.2109565188799504e-05,
+              2.204161361505055e-05,
+              2.2109562806251914e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022504e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.009",
+            "moved_bounds_m": [
+              [
+                311.8999514221425,
+                -3.338124914264995e-07,
+                822.4000014617484
+              ],
+              [
+                401.8999536874197,
+                9.00000249734813,
+                859.9000115214466
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.083742515095679e-05,
+              2.3668597143527298e-05,
+              2.0837422768409145e-05,
+              2.366859476097966e-05
+            ],
+            "new_ground_heights_m": [
+              2.2075590703559046e-05,
+              2.4906762696129555e-05,
+              2.2075588321011402e-05,
+              2.490676031358191e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.010",
+            "moved_bounds_m": [
+              [
+                319.3999904326936,
+                2.2649408037977992e-07,
+                825.399994088517
+              ],
+              [
+                322.39999104220726,
+                10.800000882140496,
+                828.399995476091
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.1063918094393395e-05,
+              2.1290411897799073e-05,
+              2.1063918014975125e-05,
+              2.1290411818380803e-05
+            ],
+            "new_ground_heights_m": [
+              2.2302083646995652e-05,
+              2.2528577450401323e-05,
+              2.2302083567577382e-05,
+              2.2528577370983053e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.001",
+            "moved_bounds_m": [
+              [
+                339.861337015611,
+                8.632470421192492,
+                821.7999980242147
+              ],
+              [
+                393.8613392067418,
+                11.632470510605463,
+                822.1000064366697
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0792125411486067e-05,
+              2.0814775416473423e-05,
+              2.079212398195746e-05,
+              2.081477398694482e-05
+            ],
+            "new_ground_heights_m": [
+              2.2030290964088324e-05,
+              2.205294096907568e-05,
+              2.2030289534559716e-05,
+              2.2052939539547072e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.002",
+            "moved_bounds_m": [
+              [
+                339.86133293584305,
+                11.632469571828869,
+                822.099992327799
+              ],
+              [
+                393.8613391615661,
+                11.93247160480895,
+                849.1000015544562
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0814774351283433e-05,
+              2.2853218335697456e-05,
+              2.0814772921754717e-05,
+              2.2853216906168746e-05
+            ],
+            "new_ground_heights_m": [
+              2.2052939903885684e-05,
+              2.4091383888299713e-05,
+              2.2052938474356967e-05,
+              2.4091382458770996e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.003",
+            "moved_bounds_m": [
+              [
+                319.39834355331175,
+                10.50000082850256,
+                823.8999937511218
+              ],
+              [
+                345.2349687585507,
+                11.100001960971083,
+                838.8999986210498
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.095067121964098e-05,
+              2.2083140080544093e-05,
+              2.0950670535674438e-05,
+              2.2083139396577545e-05
+            ],
+            "new_ground_heights_m": [
+              2.2188836772243237e-05,
+              2.332130563314635e-05,
+              2.2188836088276695e-05,
+              2.332130494917981e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.238165552602264e-06
+          }
+        ],
+        "scope": "Other school source renderers; excludes the supporting Plane and contacts internal to the rigid moved wing. AABB distance is a conservative lower bound."
+      },
+      "tube_control_points_width_flags_unchanged": true,
+      "jump_and_landing_connections_unchanged": true
+    },
+    {
+      "straight_endpoints_m": [
+        [
+          494.7,
+          3,
+          804
+        ],
+        [
+          258.2,
+          3,
+          804
+        ]
+      ],
+      "width_m": 20,
+      "building_north_shift_m": 16.4,
+      "intrusions": {
+        "1016こうしゃ/Cube.008": {
+          "B": {
+            "min_progress_m": 86.194,
+            "max_progress_m": 176.186,
+            "sample_segments": 241
+          }
+        },
+        "1016こうしゃ/Cube.008/Cube.009": {
+          "B": {
+            "min_progress_m": 97.25,
+            "max_progress_m": 142.25,
+            "sample_segments": 121
+          }
+        },
+        "1016こうしゃ/Cube.008/Plane.001": {
+          "B": {
+            "min_progress_m": 94.25,
+            "max_progress_m": 148.25,
+            "sample_segments": 145
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.002": {
+          "B": {
+            "min_progress_m": 94.75,
+            "max_progress_m": 101.75,
+            "sample_segments": 20
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.003": {
+          "B": {
+            "min_progress_m": 88.75,
+            "max_progress_m": 95.75,
+            "sample_segments": 20
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.004": {
+          "B": {
+            "min_progress_m": 34.25,
+            "max_progress_m": 41.198,
+            "sample_segments": 19
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.005": {
+          "B": {
+            "min_progress_m": 42.948,
+            "max_progress_m": 50.197,
+            "sample_segments": 20
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.007": {
+          "B": {
+            "min_progress_m": 58.25,
+            "max_progress_m": 65.196,
+            "sample_segments": 19
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.009": {
+          "B": {
+            "min_progress_m": 64.25,
+            "max_progress_m": 71.195,
+            "sample_segments": 19
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.010": {
+          "B": {
+            "min_progress_m": 76.75,
+            "max_progress_m": 83.75,
+            "sample_segments": 20
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.014": {
+          "B": {
+            "min_progress_m": 112.25,
+            "max_progress_m": 119.75,
+            "sample_segments": 21
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.015": {
+          "B": {
+            "min_progress_m": 116.75,
+            "max_progress_m": 123.691,
+            "sample_segments": 19
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.016": {
+          "B": {
+            "min_progress_m": 24.743,
+            "max_progress_m": 44.198,
+            "sample_segments": 52
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.017": {
+          "B": {
+            "min_progress_m": 82.25,
+            "max_progress_m": 99.943,
+            "sample_segments": 48
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.018": {
+          "B": {
+            "min_progress_m": 51.697,
+            "max_progress_m": 69.25,
+            "sample_segments": 48
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.019": {
+          "B": {
+            "min_progress_m": 130.25,
+            "max_progress_m": 148.25,
+            "sample_segments": 49
+          }
+        }
+      },
+      "zero_intrusion_target_met": false,
+      "metrics": {
+        "normal_1_5m": {
+          "length": 1932.7433150653599,
+          "min_width": 12.0,
+          "max_width_rate": 0.19223054973167356,
+          "heading_40m_degrees": 5.955733948174401,
+          "min_radius": 31.78898660808627,
+          "worst_curve": [
+            0.0314574356310442,
+            [
+              531.3261288835461,
+              10.88236984385585,
+              602.8735057753079
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 5.519152927650011e-10,
+          "length_change_percent": 1.2790605515212938,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.758203787740328,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              795.2500000000017
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 21.402973017191552,
+            "at_world_xyz_m": [
+              267.58095679741,
+              3.052230329340883,
+              795.0616785971633
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 2644,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8985625496451464,
+            "min_cross_y": 5.521348276906284,
+            "worst_triangle": {
+              "sample": 1170,
+              "side": 1,
+              "vertices": [
+                [
+                  535.0570612346272,
+                  11.312856343920794,
+                  609.3774771065947
+                ],
+                [
+                  528.3933206068494,
+                  10.88236984385585,
+                  595.9940372682704
+                ],
+                [
+                  534.2589371602427,
+                  10.88236984385585,
+                  609.7529742823453
+                ]
+              ],
+              "normal": [
+                -0.40369196671922336,
+                0.8985625496451465,
+                0.1720992166791564
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 2644,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8985676796331956,
+            "min_cross_y": 5.521495699882507,
+            "worst_triangle": {
+              "sample": 1170,
+              "side": 1,
+              "vertices": [
+                [
+                  535.0570678710938,
+                  11.312856674194336,
+                  609.3775024414062
+                ],
+                [
+                  528.393310546875,
+                  10.882369995117188,
+                  595.9940185546875
+                ],
+                [
+                  534.2589111328125,
+                  10.882369995117188,
+                  609.7529907226562
+                ]
+              ],
+              "normal": [
+                -0.40368263165497886,
+                0.8985676796331955,
+                0.17209432883952133
+              ]
+            }
+          }
+        },
+        "fine_0_25m": {
+          "length": 1932.7626731716198,
+          "min_width": 12.0,
+          "max_width_rate": 0.1997143530596294,
+          "heading_40m_degrees": 5.959047010041554,
+          "min_radius": 23.569012443916392,
+          "worst_curve": [
+            0.042428591455817184,
+            [
+              549.5528191428078,
+              16.22727627214168,
+              599.5455245531483
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 0.00032598992162777523,
+          "length_change_percent": 1.2800749494502828,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.74900038354103,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              795.2500000000017
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 5.938685783061187,
+            "at_world_xyz_m": [
+              612.8987440790276,
+              10.501856901660007,
+              598.3024389454918
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 15852,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.27541316277376127,
+            "min_cross_y": 0.0337427218506377,
+            "worst_triangle": {
+              "sample": 6667,
+              "side": 0,
+              "vertices": [
+                [
+                  613.3977270616753,
+                  10.501856901660007,
+                  589.7819015214803
+                ],
+                [
+                  613.3830918423427,
+                  10.557559307884999,
+                  589.758841120111
+                ],
+                [
+                  612.3997610963798,
+                  10.501856901660007,
+                  606.8229763695032
+                ]
+              ],
+              "normal": [
+                0.9596817229376583,
+                0.2754131627737613,
+                0.056201249366553775
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 15852,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.27466176853324403,
+            "min_cross_y": 0.034056924283504486,
+            "worst_triangle": {
+              "sample": 6667,
+              "side": 0,
+              "vertices": [
+                [
+                  613.397705078125,
+                  10.501856803894043,
+                  589.7819213867188
+                ],
+                [
+                  613.3831176757812,
+                  10.5575590133667,
+                  589.7588500976562
+                ],
+                [
+                  612.3997802734375,
+                  10.501856803894043,
+                  606.822998046875
+                ]
+              ],
+              "normal": [
+                0.9598964424589407,
+                0.27466176853324403,
+                0.0562114993649868
+              ]
+            }
+          }
+        }
+      },
+      "building": {
+        "shift_north_m": 16.4,
+        "moved_renderer_count": 6,
+        "trees_moved": 0,
+        "minimum_separation_aabb_lower_bound_m": 7.8249491873562524,
+        "closest_objects": [
+          "1016こうしゃ/Cube.008",
+          "1016こうしゃ/人間.007"
+        ],
+        "separation_pass": true,
+        "object_y_rotation_scale_changes": false,
+        "all_footprints_on_ground": true,
+        "ground_support": [
+          {
+            "renderer": "1016こうしゃ/Cube.008",
+            "moved_bounds_m": [
+              [
+                311.8999999320523,
+                -3.397404402250004e-08,
+                821.9499928368382
+              ],
+              [
+                401.90000006794764,
+                9.000000033974043,
+                822.8500071631618
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.080345044499589e-05,
+              2.0871399636197253e-05,
+              2.08034480624483e-05,
+              2.0871397253649664e-05
+            ],
+            "new_ground_heights_m": [
+              2.204161599759814e-05,
+              2.2109565188799504e-05,
+              2.204161361505055e-05,
+              2.2109562806251914e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022504e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.009",
+            "moved_bounds_m": [
+              [
+                311.8999514221425,
+                -3.338124914264995e-07,
+                822.4000014617484
+              ],
+              [
+                401.8999536874197,
+                9.00000249734813,
+                859.9000115214466
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.083742515095679e-05,
+              2.3668597143527298e-05,
+              2.0837422768409145e-05,
+              2.366859476097966e-05
+            ],
+            "new_ground_heights_m": [
+              2.2075590703559046e-05,
+              2.4906762696129555e-05,
+              2.2075588321011402e-05,
+              2.490676031358191e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.010",
+            "moved_bounds_m": [
+              [
+                319.3999904326936,
+                2.2649408037977992e-07,
+                825.399994088517
+              ],
+              [
+                322.39999104220726,
+                10.800000882140496,
+                828.399995476091
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.1063918094393395e-05,
+              2.1290411897799073e-05,
+              2.1063918014975125e-05,
+              2.1290411818380803e-05
+            ],
+            "new_ground_heights_m": [
+              2.2302083646995652e-05,
+              2.2528577450401323e-05,
+              2.2302083567577382e-05,
+              2.2528577370983053e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.001",
+            "moved_bounds_m": [
+              [
+                339.861337015611,
+                8.632470421192492,
+                821.7999980242147
+              ],
+              [
+                393.8613392067418,
+                11.632470510605463,
+                822.1000064366697
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0792125411486067e-05,
+              2.0814775416473423e-05,
+              2.079212398195746e-05,
+              2.081477398694482e-05
+            ],
+            "new_ground_heights_m": [
+              2.2030290964088324e-05,
+              2.205294096907568e-05,
+              2.2030289534559716e-05,
+              2.2052939539547072e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.002",
+            "moved_bounds_m": [
+              [
+                339.86133293584305,
+                11.632469571828869,
+                822.099992327799
+              ],
+              [
+                393.8613391615661,
+                11.93247160480895,
+                849.1000015544562
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0814774351283433e-05,
+              2.2853218335697456e-05,
+              2.0814772921754717e-05,
+              2.2853216906168746e-05
+            ],
+            "new_ground_heights_m": [
+              2.2052939903885684e-05,
+              2.4091383888299713e-05,
+              2.2052938474356967e-05,
+              2.4091382458770996e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.003",
+            "moved_bounds_m": [
+              [
+                319.39834355331175,
+                10.50000082850256,
+                823.8999937511218
+              ],
+              [
+                345.2349687585507,
+                11.100001960971083,
+                838.8999986210498
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.095067121964098e-05,
+              2.2083140080544093e-05,
+              2.0950670535674438e-05,
+              2.2083139396577545e-05
+            ],
+            "new_ground_heights_m": [
+              2.2188836772243237e-05,
+              2.332130563314635e-05,
+              2.2188836088276695e-05,
+              2.332130494917981e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.238165552602264e-06
+          }
+        ],
+        "scope": "Other school source renderers; excludes the supporting Plane and contacts internal to the rigid moved wing. AABB distance is a conservative lower bound."
+      },
+      "tube_control_points_width_flags_unchanged": true,
+      "jump_and_landing_connections_unchanged": true
+    },
+    {
+      "straight_endpoints_m": [
+        [
+          494.7,
+          3,
+          805.5
+        ],
+        [
+          258.2,
+          3,
+          805.5
+        ]
+      ],
+      "width_m": 20,
+      "building_north_shift_m": 16.4,
+      "intrusions": {
+        "1016こうしゃ/Cube.008": {
+          "B": {
+            "min_progress_m": 86.194,
+            "max_progress_m": 176.185,
+            "sample_segments": 241
+          }
+        },
+        "1016こうしゃ/Cube.008/Cube.009": {
+          "B": {
+            "min_progress_m": 97.25,
+            "max_progress_m": 142.25,
+            "sample_segments": 121
+          }
+        },
+        "1016こうしゃ/Cube.008/Cube.010": {
+          "B": {
+            "min_progress_m": 165.686,
+            "max_progress_m": 168.686,
+            "sample_segments": 9
+          }
+        },
+        "1016こうしゃ/Cube.008/Plane.001": {
+          "B": {
+            "min_progress_m": 94.25,
+            "max_progress_m": 148.25,
+            "sample_segments": 145
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.016": {
+          "B": {
+            "min_progress_m": 37.75,
+            "max_progress_m": 40.75,
+            "sample_segments": 9
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.017": {
+          "B": {
+            "min_progress_m": 93.693,
+            "max_progress_m": 96.693,
+            "sample_segments": 9
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.018": {
+          "B": {
+            "min_progress_m": 63.25,
+            "max_progress_m": 66.25,
+            "sample_segments": 9
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.019": {
+          "B": {
+            "min_progress_m": 141.689,
+            "max_progress_m": 144.938,
+            "sample_segments": 10
+          }
+        }
+      },
+      "zero_intrusion_target_met": false,
+      "metrics": {
+        "normal_1_5m": {
+          "length": 1935.7458510725205,
+          "min_width": 12.0,
+          "max_width_rate": 0.19224699193556052,
+          "heading_40m_degrees": 5.956669421518067,
+          "min_radius": 31.787915204742088,
+          "worst_curve": [
+            0.031458495895661034,
+            [
+              531.3254064812995,
+              10.882072186203732,
+              602.8738137554726
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 1.2153026660059357e-09,
+          "length_change_percent": 1.4363985817227087,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.75820372774673,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              796.75
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 21.42204282406591,
+            "at_world_xyz_m": [
+              267.5761607385191,
+              3.0519148698041483,
+              796.5615621917739
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 2648,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8985591772541681,
+            "min_cross_y": 5.497718041881319,
+            "worst_triangle": {
+              "sample": 1171,
+              "side": 1,
+              "vertices": [
+                [
+                  535.0564913633355,
+                  11.312555708998115,
+                  609.3777330606574
+                ],
+                [
+                  528.3924151899685,
+                  10.882072186203732,
+                  595.9943871584163
+                ],
+                [
+                  534.2583977726306,
+                  10.882072186203732,
+                  609.7532403525289
+                ]
+              ],
+              "normal": [
+                -0.4036940660594023,
+                0.898559177254168,
+                0.1721118996488604
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 2648,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8985583778491407,
+            "min_cross_y": 5.497217774391174,
+            "worst_triangle": {
+              "sample": 1171,
+              "side": 1,
+              "vertices": [
+                [
+                  535.0565185546875,
+                  11.312555313110352,
+                  609.3777465820312
+                ],
+                [
+                  528.3923950195312,
+                  10.882072448730469,
+                  595.994384765625
+                ],
+                [
+                  534.2584228515625,
+                  10.882072448730469,
+                  609.7532348632812
+                ]
+              ],
+              "normal": [
+                -0.40369507877548316,
+                0.8985583778491407,
+                0.17211369779763963
+              ]
+            }
+          }
+        },
+        "fine_0_25m": {
+          "length": 1935.7652108177417,
+          "min_width": 12.0,
+          "max_width_rate": 0.19973863635606565,
+          "heading_40m_degrees": 5.9568876494897145,
+          "min_radius": 23.633016003307592,
+          "worst_curve": [
+            0.04231368522155799,
+            [
+              549.5518968263386,
+              16.2271221835247,
+              599.5455765287309
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 0.00010618904419272619,
+          "length_change_percent": 1.437413065536064,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.749000350134033,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              796.75
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 5.900207077109021,
+            "at_world_xyz_m": [
+              612.8976147764643,
+              10.502119847297053,
+              598.3023965312077
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 15876,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.27617748913164253,
+            "min_cross_y": 0.05329825352475863,
+            "worst_triangle": {
+              "sample": 6673,
+              "side": 0,
+              "vertices": [
+                [
+                  613.3976823267308,
+                  10.502119847297053,
+                  589.7818255006722
+                ],
+                [
+                  613.3830031408328,
+                  10.557825245211674,
+                  589.7587292359951
+                ],
+                [
+                  612.3975472261977,
+                  10.502119847297053,
+                  606.8229675617432
+                ]
+              ],
+              "normal": [
+                0.9594556726293854,
+                0.2761774891316425,
+                0.05630991703274848
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 15876,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.27663836119089785,
+            "min_cross_y": 0.053831182420253754,
+            "worst_triangle": {
+              "sample": 6673,
+              "side": 0,
+              "vertices": [
+                [
+                  613.397705078125,
+                  10.502120018005371,
+                  589.7817993164062
+                ],
+                [
+                  613.3829956054688,
+                  10.557825088500977,
+                  589.7587280273438
+                ],
+                [
+                  612.3975219726562,
+                  10.502120018005371,
+                  606.822998046875
+                ]
+              ],
+              "normal": [
+                0.959323200315305,
+                0.27663836119089785,
+                0.05630465748422081
+              ]
+            }
+          }
+        }
+      },
+      "building": {
+        "shift_north_m": 16.4,
+        "moved_renderer_count": 6,
+        "trees_moved": 0,
+        "minimum_separation_aabb_lower_bound_m": 7.8249491873562524,
+        "closest_objects": [
+          "1016こうしゃ/Cube.008",
+          "1016こうしゃ/人間.007"
+        ],
+        "separation_pass": true,
+        "object_y_rotation_scale_changes": false,
+        "all_footprints_on_ground": true,
+        "ground_support": [
+          {
+            "renderer": "1016こうしゃ/Cube.008",
+            "moved_bounds_m": [
+              [
+                311.8999999320523,
+                -3.397404402250004e-08,
+                821.9499928368382
+              ],
+              [
+                401.90000006794764,
+                9.000000033974043,
+                822.8500071631618
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.080345044499589e-05,
+              2.0871399636197253e-05,
+              2.08034480624483e-05,
+              2.0871397253649664e-05
+            ],
+            "new_ground_heights_m": [
+              2.204161599759814e-05,
+              2.2109565188799504e-05,
+              2.204161361505055e-05,
+              2.2109562806251914e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022504e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.009",
+            "moved_bounds_m": [
+              [
+                311.8999514221425,
+                -3.338124914264995e-07,
+                822.4000014617484
+              ],
+              [
+                401.8999536874197,
+                9.00000249734813,
+                859.9000115214466
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.083742515095679e-05,
+              2.3668597143527298e-05,
+              2.0837422768409145e-05,
+              2.366859476097966e-05
+            ],
+            "new_ground_heights_m": [
+              2.2075590703559046e-05,
+              2.4906762696129555e-05,
+              2.2075588321011402e-05,
+              2.490676031358191e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.010",
+            "moved_bounds_m": [
+              [
+                319.3999904326936,
+                2.2649408037977992e-07,
+                825.399994088517
+              ],
+              [
+                322.39999104220726,
+                10.800000882140496,
+                828.399995476091
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.1063918094393395e-05,
+              2.1290411897799073e-05,
+              2.1063918014975125e-05,
+              2.1290411818380803e-05
+            ],
+            "new_ground_heights_m": [
+              2.2302083646995652e-05,
+              2.2528577450401323e-05,
+              2.2302083567577382e-05,
+              2.2528577370983053e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.001",
+            "moved_bounds_m": [
+              [
+                339.861337015611,
+                8.632470421192492,
+                821.7999980242147
+              ],
+              [
+                393.8613392067418,
+                11.632470510605463,
+                822.1000064366697
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0792125411486067e-05,
+              2.0814775416473423e-05,
+              2.079212398195746e-05,
+              2.081477398694482e-05
+            ],
+            "new_ground_heights_m": [
+              2.2030290964088324e-05,
+              2.205294096907568e-05,
+              2.2030289534559716e-05,
+              2.2052939539547072e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.002",
+            "moved_bounds_m": [
+              [
+                339.86133293584305,
+                11.632469571828869,
+                822.099992327799
+              ],
+              [
+                393.8613391615661,
+                11.93247160480895,
+                849.1000015544562
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0814774351283433e-05,
+              2.2853218335697456e-05,
+              2.0814772921754717e-05,
+              2.2853216906168746e-05
+            ],
+            "new_ground_heights_m": [
+              2.2052939903885684e-05,
+              2.4091383888299713e-05,
+              2.2052938474356967e-05,
+              2.4091382458770996e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.2381655526022572e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.003",
+            "moved_bounds_m": [
+              [
+                319.39834355331175,
+                10.50000082850256,
+                823.8999937511218
+              ],
+              [
+                345.2349687585507,
+                11.100001960971083,
+                838.8999986210498
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.095067121964098e-05,
+              2.2083140080544093e-05,
+              2.0950670535674438e-05,
+              2.2083139396577545e-05
+            ],
+            "new_ground_heights_m": [
+              2.2188836772243237e-05,
+              2.332130563314635e-05,
+              2.2188836088276695e-05,
+              2.332130494917981e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.238165552602264e-06
+          }
+        ],
+        "scope": "Other school source renderers; excludes the supporting Plane and contacts internal to the rigid moved wing. AABB distance is a conservative lower bound."
+      },
+      "tube_control_points_width_flags_unchanged": true,
+      "jump_and_landing_connections_unchanged": true
+    },
+    {
+      "straight_endpoints_m": [
+        [
+          494.7,
+          3,
+          805.5
+        ],
+        [
+          258.2,
+          3,
+          805.5
+        ]
+      ],
+      "width_m": 20,
+      "building_north_shift_m": 21,
+      "intrusions": {
+        "1016こうしゃ/Cube.026/tree.016": {
+          "B": {
+            "min_progress_m": 37.75,
+            "max_progress_m": 40.75,
+            "sample_segments": 9
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.017": {
+          "B": {
+            "min_progress_m": 93.693,
+            "max_progress_m": 96.693,
+            "sample_segments": 9
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.018": {
+          "B": {
+            "min_progress_m": 63.25,
+            "max_progress_m": 66.25,
+            "sample_segments": 9
+          }
+        },
+        "1016こうしゃ/Cube.026/tree.019": {
+          "B": {
+            "min_progress_m": 141.689,
+            "max_progress_m": 144.938,
+            "sample_segments": 10
+          }
+        }
+      },
+      "zero_intrusion_target_met": false,
+      "metrics": {
+        "normal_1_5m": {
+          "length": 1935.7458510725205,
+          "min_width": 12.0,
+          "max_width_rate": 0.19224699193556052,
+          "heading_40m_degrees": 5.956669421518067,
+          "min_radius": 31.787915204742088,
+          "worst_curve": [
+            0.031458495895661034,
+            [
+              531.3254064812995,
+              10.882072186203732,
+              602.8738137554726
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 1.2153026660059357e-09,
+          "length_change_percent": 1.4363985817227087,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.75820372774673,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              796.75
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 21.42204282406591,
+            "at_world_xyz_m": [
+              267.5761607385191,
+              3.0519148698041483,
+              796.5615621917739
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 2648,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8985591772541681,
+            "min_cross_y": 5.497718041881319,
+            "worst_triangle": {
+              "sample": 1171,
+              "side": 1,
+              "vertices": [
+                [
+                  535.0564913633355,
+                  11.312555708998115,
+                  609.3777330606574
+                ],
+                [
+                  528.3924151899685,
+                  10.882072186203732,
+                  595.9943871584163
+                ],
+                [
+                  534.2583977726306,
+                  10.882072186203732,
+                  609.7532403525289
+                ]
+              ],
+              "normal": [
+                -0.4036940660594023,
+                0.898559177254168,
+                0.1721118996488604
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 2648,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8985583778491407,
+            "min_cross_y": 5.497217774391174,
+            "worst_triangle": {
+              "sample": 1171,
+              "side": 1,
+              "vertices": [
+                [
+                  535.0565185546875,
+                  11.312555313110352,
+                  609.3777465820312
+                ],
+                [
+                  528.3923950195312,
+                  10.882072448730469,
+                  595.994384765625
+                ],
+                [
+                  534.2584228515625,
+                  10.882072448730469,
+                  609.7532348632812
+                ]
+              ],
+              "normal": [
+                -0.40369507877548316,
+                0.8985583778491407,
+                0.17211369779763963
+              ]
+            }
+          }
+        },
+        "fine_0_25m": {
+          "length": 1935.7652108177417,
+          "min_width": 12.0,
+          "max_width_rate": 0.19973863635606565,
+          "heading_40m_degrees": 5.9568876494897145,
+          "min_radius": 23.633016003307592,
+          "worst_curve": [
+            0.04231368522155799,
+            [
+              549.5518968263386,
+              16.2271221835247,
+              599.5455765287309
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 0.00010618904419272619,
+          "length_change_percent": 1.437413065536064,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.749000350134033,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              796.75
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 5.900207077109021,
+            "at_world_xyz_m": [
+              612.8976147764643,
+              10.502119847297053,
+              598.3023965312077
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 15876,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.27617748913164253,
+            "min_cross_y": 0.05329825352475863,
+            "worst_triangle": {
+              "sample": 6673,
+              "side": 0,
+              "vertices": [
+                [
+                  613.3976823267308,
+                  10.502119847297053,
+                  589.7818255006722
+                ],
+                [
+                  613.3830031408328,
+                  10.557825245211674,
+                  589.7587292359951
+                ],
+                [
+                  612.3975472261977,
+                  10.502119847297053,
+                  606.8229675617432
+                ]
+              ],
+              "normal": [
+                0.9594556726293854,
+                0.2761774891316425,
+                0.05630991703274848
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 15876,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.27663836119089785,
+            "min_cross_y": 0.053831182420253754,
+            "worst_triangle": {
+              "sample": 6673,
+              "side": 0,
+              "vertices": [
+                [
+                  613.397705078125,
+                  10.502120018005371,
+                  589.7817993164062
+                ],
+                [
+                  613.3829956054688,
+                  10.557825088500977,
+                  589.7587280273438
+                ],
+                [
+                  612.3975219726562,
+                  10.502120018005371,
+                  606.822998046875
+                ]
+              ],
+              "normal": [
+                0.959323200315305,
+                0.27663836119089785,
+                0.05630465748422081
+              ]
+            }
+          }
+        }
+      },
+      "building": {
+        "shift_north_m": 21,
+        "moved_renderer_count": 6,
+        "trees_moved": 0,
+        "minimum_separation_aabb_lower_bound_m": 11.076307548400777,
+        "closest_objects": [
+          "1016こうしゃ/Cube.008",
+          "1016こうしゃ/人間.007"
+        ],
+        "separation_pass": true,
+        "object_y_rotation_scale_changes": false,
+        "all_footprints_on_ground": false,
+        "ground_support": [
+          {
+            "renderer": "1016こうしゃ/Cube.008",
+            "moved_bounds_m": [
+              [
+                311.8999999320523,
+                -3.397404402250004e-08,
+                826.5499928368382
+              ],
+              [
+                401.90000006794764,
+                9.000000033974043,
+                827.4500071631618
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.080345044499589e-05,
+              2.0871399636197253e-05,
+              2.08034480624483e-05,
+              2.0871397253649664e-05
+            ],
+            "new_ground_heights_m": [
+              2.2388906335523162e-05,
+              2.2456855526724526e-05,
+              2.238890395297558e-05,
+              2.2456853144176944e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.5854558905272799e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.009",
+            "moved_bounds_m": [
+              [
+                311.8999514221425,
+                -3.338124914264995e-07,
+                827.0000014617484
+              ],
+              [
+                401.8999536874197,
+                9.00000249734813,
+                864.5000115214466
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.083742515095679e-05,
+              2.3668597143527298e-05,
+              2.0837422768409145e-05,
+              2.366859476097966e-05
+            ],
+            "new_ground_heights_m": null,
+            "footprint_inside_ground_filled_polygon": false,
+            "ground_height_change_max_m": null
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.010",
+            "moved_bounds_m": [
+              [
+                319.3999904326936,
+                2.2649408037977992e-07,
+                829.999994088517
+              ],
+              [
+                322.39999104220726,
+                10.800000882140496,
+                832.999995476091
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.1063918094393395e-05,
+              2.1290411897799073e-05,
+              2.1063918014975125e-05,
+              2.1290411818380803e-05
+            ],
+            "new_ground_heights_m": [
+              2.2649373984920675e-05,
+              2.2875867788326353e-05,
+              2.2649373905502405e-05,
+              2.2875867708908083e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.5854558905272799e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.001",
+            "moved_bounds_m": [
+              [
+                339.861337015611,
+                8.632470421192492,
+                826.3999980242147
+              ],
+              [
+                393.8613392067418,
+                11.632470510605463,
+                826.7000064366697
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0792125411486067e-05,
+              2.0814775416473423e-05,
+              2.079212398195746e-05,
+              2.081477398694482e-05
+            ],
+            "new_ground_heights_m": [
+              2.2377581302013347e-05,
+              2.2400231307000703e-05,
+              2.237757987248474e-05,
+              2.2400229877472095e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.5854558905272799e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.002",
+            "moved_bounds_m": [
+              [
+                339.86133293584305,
+                11.632469571828869,
+                826.699992327799
+              ],
+              [
+                393.8613391615661,
+                11.93247160480895,
+                853.7000015544562
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0814774351283433e-05,
+              2.2853218335697456e-05,
+              2.0814772921754717e-05,
+              2.2853216906168746e-05
+            ],
+            "new_ground_heights_m": [
+              2.2400230241810706e-05,
+              2.4438674226224742e-05,
+              2.2400228812281997e-05,
+              2.4438672796696026e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.5854558905272867e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.003",
+            "moved_bounds_m": [
+              [
+                319.39834355331175,
+                10.50000082850256,
+                828.4999937511218
+              ],
+              [
+                345.2349687585507,
+                11.100001960971083,
+                843.4999986210498
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.095067121964098e-05,
+              2.2083140080544093e-05,
+              2.0950670535674438e-05,
+              2.2083139396577545e-05
+            ],
+            "new_ground_heights_m": [
+              2.253612711016826e-05,
+              2.3668595971071373e-05,
+              2.2536126426201718e-05,
+              2.366859528710483e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.5854558905272867e-06
+          }
+        ],
+        "scope": "Other school source renderers; excludes the supporting Plane and contacts internal to the rigid moved wing. AABB distance is a conservative lower bound."
+      },
+      "tube_control_points_width_flags_unchanged": true,
+      "jump_and_landing_connections_unchanged": true
+    },
+    {
+      "straight_endpoints_m": [
+        [
+          494.7,
+          3,
+          807
+        ],
+        [
+          258.2,
+          3,
+          807
+        ]
+      ],
+      "width_m": 20,
+      "building_north_shift_m": 23,
+      "intrusions": {},
+      "zero_intrusion_target_met": true,
+      "metrics": {
+        "normal_1_5m": {
+          "length": 1938.7483537230737,
+          "min_width": 12.0,
+          "max_width_rate": 0.19226349384097924,
+          "heading_40m_degrees": 5.9576018841449825,
+          "min_radius": 31.786846729978826,
+          "worst_curve": [
+            0.03145955333332512,
+            [
+              531.3246860149945,
+              10.881775320892267,
+              602.8741209312974
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 7.446060175867868e-10,
+          "length_change_percent": 1.5937348639807558,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.758203669021647,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              798.2499999999983
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 21.440898201972075,
+            "at_world_xyz_m": [
+              267.5714205167251,
+              3.0516031932343597,
+              798.0614485851884
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 2652,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8985558138911782,
+            "min_cross_y": 5.474204551157643,
+            "worst_triangle": {
+              "sample": 1172,
+              "side": 1,
+              "vertices": [
+                [
+                  535.0559230609819,
+                  11.312255892474132,
+                  609.3779883272789
+                ],
+                [
+                  528.3915121919878,
+                  10.881775320892267,
+                  595.9947361392657
+                ],
+                [
+                  534.2578598380013,
+                  10.881775320892267,
+                  609.7535057233291
+                ]
+              ],
+              "normal": [
+                -0.4036961591021198,
+                0.8985558138911783,
+                0.1721245492326946
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 2652,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.8985482602177555,
+            "min_cross_y": 5.47415654361248,
+            "worst_triangle": {
+              "sample": 1172,
+              "side": 1,
+              "vertices": [
+                [
+                  535.055908203125,
+                  11.312255859375,
+                  609.3779907226562
+                ],
+                [
+                  528.3915405273438,
+                  10.88177490234375,
+                  595.9947509765625
+                ],
+                [
+                  534.2578735351562,
+                  10.88177490234375,
+                  609.7534790039062
+                ]
+              ],
+              "normal": [
+                -0.40371035298604474,
+                0.8985482602177556,
+                0.17213069148623125
+              ]
+            }
+          }
+        },
+        "fine_0_25m": {
+          "length": 1938.7677151370465,
+          "min_width": 12.0,
+          "max_width_rate": 0.19976277855845165,
+          "heading_40m_degrees": 5.957618358479893,
+          "min_radius": 23.732019188244212,
+          "worst_curve": [
+            0.042137164649494116,
+            [
+              549.5509728092743,
+              16.22696863197438,
+              599.5456268838424
+            ]
+          ],
+          "takeoff": [
+            584.0,
+            18.0,
+            598.0
+          ],
+          "road_to_gap_heading_degrees": 3.108331704245441e-05,
+          "length_change_percent": 1.594749435239562,
+          "northeast_corner": {
+            "minimum_pointwise_horizontal_radius_m": 24.749000379965608,
+            "at_world_xyz_m": [
+              485.95,
+              3.0,
+              798.2499999999983
+            ],
+            "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+          },
+          "all_ground_corners": {
+            "minimum_pointwise_horizontal_radius_m": 5.862449185146616,
+            "at_world_xyz_m": [
+              612.8964918932492,
+              10.502381313250478,
+              598.3023543654554
+            ],
+            "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+          },
+          "road_mesh": {
+            "triangle_count": 15900,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.276937420118627,
+            "min_cross_y": 0.07276109965838645,
+            "worst_triangle": {
+              "sample": 6679,
+              "side": 0,
+              "vertices": [
+                [
+                  613.3976377127767,
+                  10.502381313250478,
+                  589.7817500473769
+                ],
+                [
+                  613.3829147832265,
+                  10.558089688255418,
+                  589.7586181137491
+                ],
+                [
+                  612.3953460737216,
+                  10.502381313250478,
+                  606.8229586835338
+                ]
+              ],
+              "normal": [
+                0.959230259514773,
+                0.276937420118627,
+                0.056417856829733326
+              ]
+            }
+          },
+          "road_mesh_float_vertices": {
+            "triangle_count": 15900,
+            "folded_triangles": 0,
+            "takeoff_folded_triangles": 0,
+            "landing_folded_triangles": 0,
+            "min_normal_y": 0.2767264443110788,
+            "min_cross_y": 0.07250632345676422,
+            "worst_triangle": {
+              "sample": 6679,
+              "side": 0,
+              "vertices": [
+                [
+                  613.3976440429688,
+                  10.502381324768066,
+                  589.78173828125
+                ],
+                [
+                  613.3829345703125,
+                  10.558089256286621,
+                  589.7586059570312
+                ],
+                [
+                  612.3953247070312,
+                  10.502381324768066,
+                  606.8229370117188
+                ]
+              ],
+              "normal": [
+                0.9592908415821887,
+                0.2767264443110788,
+                0.0564230119320448
+              ]
+            }
+          }
+        }
+      },
+      "building": {
+        "shift_north_m": 23,
+        "moved_renderer_count": 6,
+        "trees_moved": 0,
+        "minimum_separation_aabb_lower_bound_m": 12.75162928392325,
+        "closest_objects": [
+          "1016こうしゃ/Cube.008",
+          "1016こうしゃ/人間.007"
+        ],
+        "separation_pass": true,
+        "object_y_rotation_scale_changes": false,
+        "all_footprints_on_ground": false,
+        "ground_support": [
+          {
+            "renderer": "1016こうしゃ/Cube.008",
+            "moved_bounds_m": [
+              [
+                311.8999999320523,
+                -3.397404402250004e-08,
+                828.5499928368382
+              ],
+              [
+                401.90000006794764,
+                9.000000033974043,
+                829.4500071631618
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.080345044499589e-05,
+              2.0871399636197253e-05,
+              2.08034480624483e-05,
+              2.0871397253649664e-05
+            ],
+            "new_ground_heights_m": [
+              2.2539902134621003e-05,
+              2.2607851325822367e-05,
+              2.2539899752073413e-05,
+              2.2607848943274777e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.7364516896251135e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.009",
+            "moved_bounds_m": [
+              [
+                311.8999514221425,
+                -3.338124914264995e-07,
+                829.0000014617484
+              ],
+              [
+                401.8999536874197,
+                9.00000249734813,
+                866.5000115214466
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.083742515095679e-05,
+              2.3668597143527298e-05,
+              2.0837422768409145e-05,
+              2.366859476097966e-05
+            ],
+            "new_ground_heights_m": null,
+            "footprint_inside_ground_filled_polygon": false,
+            "ground_height_change_max_m": null
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Cube.010",
+            "moved_bounds_m": [
+              [
+                319.3999904326936,
+                2.2649408037977992e-07,
+                831.999994088517
+              ],
+              [
+                322.39999104220726,
+                10.800000882140496,
+                834.999995476091
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.1063918094393395e-05,
+              2.1290411897799073e-05,
+              2.1063918014975125e-05,
+              2.1290411818380803e-05
+            ],
+            "new_ground_heights_m": [
+              2.280036978401851e-05,
+              2.3026863587424186e-05,
+              2.280036970460024e-05,
+              2.3026863508005916e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.7364516896251135e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.001",
+            "moved_bounds_m": [
+              [
+                339.861337015611,
+                8.632470421192492,
+                828.3999980242147
+              ],
+              [
+                393.8613392067418,
+                11.632470510605463,
+                828.7000064366697
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0792125411486067e-05,
+              2.0814775416473423e-05,
+              2.079212398195746e-05,
+              2.081477398694482e-05
+            ],
+            "new_ground_heights_m": [
+              2.2528577101111187e-05,
+              2.2551227106098543e-05,
+              2.252857567158258e-05,
+              2.2551225676569935e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.7364516896251203e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.002",
+            "moved_bounds_m": [
+              [
+                339.86133293584305,
+                11.632469571828869,
+                828.699992327799
+              ],
+              [
+                393.8613391615661,
+                11.93247160480895,
+                855.7000015544562
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.0814774351283433e-05,
+              2.2853218335697456e-05,
+              2.0814772921754717e-05,
+              2.2853216906168746e-05
+            ],
+            "new_ground_heights_m": [
+              2.2551226040908547e-05,
+              2.4589670025322576e-05,
+              2.255122461137983e-05,
+              2.4589668595793866e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.7364516896251203e-06
+          },
+          {
+            "renderer": "1016こうしゃ/Cube.008/Plane.003",
+            "moved_bounds_m": [
+              [
+                319.39834355331175,
+                10.50000082850256,
+                830.4999937511218
+              ],
+              [
+                345.2349687585507,
+                11.100001960971083,
+                845.4999986210498
+              ]
+            ],
+            "old_ground_heights_m": [
+              2.095067121964098e-05,
+              2.2083140080544093e-05,
+              2.0950670535674438e-05,
+              2.2083139396577545e-05
+            ],
+            "new_ground_heights_m": [
+              2.26871229092661e-05,
+              2.3819591770169207e-05,
+              2.2687122225299558e-05,
+              2.3819591086202665e-05
+            ],
+            "footprint_inside_ground_filled_polygon": true,
+            "ground_height_change_max_m": 1.7364516896251203e-06
+          }
+        ],
+        "scope": "Other school source renderers; excludes the supporting Plane and contacts internal to the rigid moved wing. AABB distance is a conservative lower bound."
+      },
+      "tube_control_points_width_flags_unchanged": true,
+      "jump_and_landing_connections_unchanged": true
+    }
+  ],
+  "baseline_all_ground_corners": {
+    "normal_1_5m": {
+      "minimum_pointwise_horizontal_radius_m": 19.808907797364707,
+      "at_world_xyz_m": [
+        267.62421536013164,
+        3.0535530342254305,
+        787.3980432293072
+      ],
+      "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+    },
+    "fine_0_25m": {
+      "minimum_pointwise_horizontal_radius_m": 8.895410930693702,
+      "at_world_xyz_m": [
+        612.7209444465506,
+        10.543149033969577,
+        598.2893116138173
+      ],
+      "scope": "All non-tube road-road joins; includes the closed seam; excludes the roadless jump."
+    }
+  },
+  "source_sha256": {
+    "Assets/Editor/SchoolMapCourseSetup.cs": "5cbd6d7985dd620dc0f169c7ba76ab5217afbf2f5a0c893fdac719d8ccdf51e0",
+    "Assets/Scenes/SampleScene.unity": "2be8c3529355547ec0fefffffb212467e1d79779fcc169af18917b1a18651736",
+    "Assets/Scenes/1016こうしゃ.fbx": "6a4f42346c0c85aba03d3b2d41277c68bccad6c738ebefaf05ba118315259106",
+    "Assets/Managers/RaceCourse.cs": "52b5472407940bfeae1707e5edf080bec618ef859d48af324395e61960b18340",
+    "Assets/Managers/RaceCourseLineSmoothing.cs": "c9f2c453056cc1252babcc2b9d23f96418f4e8614ff9fde54f9e276e253c47b8",
+    "Assets/Managers/RaceCourseRoad.cs": "0d78a661a8eb9647cdfde4b20734cbdb096811e887f98840d3f031ed731c8b9c",
+    "Artifacts/CoursePlayabilityAudit/design/predict.py": "afd10fa9010a0bee6a8927481066849b8ec31a2b6450665ae57cc8edaa3ced18",
+    "Artifacts/CourseVisualAudit/design/full-meshes.json": "9aa9de542a87a38788d0c7ee7e0c2f7c4ffc49373c0e918800d079b19f515877",
+    "Artifacts/CourseVisualAudit/design/full-bounds.json": "7167faf5ae3b166c0e81a1b95a622840c9f94921678ffc6240e3205fac21d82d",
+    "Artifacts/CourseVisualAudit/design/outlines.json": "d569f689880d25b296d69f5eb9f077bd158f1a8a6cf9694f0553ffc11499a0ee"
+  },
+  "limits": [
+    "Candidate tree hits use conservative 0.5m height-band hulls. Zero proves exclusion; a positive hull hit is not by itself an exact mesh intersection.",
+    "corridor-conflict.json supplies an independent exact OBJ triangle witness, without relying on tree hull false positives.",
+    "The course retains world Y=3. Elevated or underground routes have not been authorized or adopted.",
+    "The unchanged tube and jump fields describe authored control points only. Generated tube/landing resampling and preservation of the original western lead-in have not been certified for these rejected candidates.",
+    "predict.metrics min_radius and heading fields describe the jump approach only; all_ground_corners and northeast_corner are separate full-ground/corner measurements.",
+    "Unity was not launched. No scene, terrain, barrier or runtime asset was modified."
+  ]
+}

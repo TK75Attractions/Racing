@@ -1,0 +1,14 @@
+{
+    "goalLaps": 2,
+    "wallPaths": 2,
+    "exteriorSamples": 1580,
+    "tubeSamples": 2288,
+    "missingSideHits": 0,
+    "interiorWallNodes": 0,
+    "courseLength": 1933.5709228515625,
+    "exteriorMeters": 790.0,
+    "tubeMeters": 1144.0,
+    "maximumPhysicsExcursion": 20.00380516052246,
+    "minimumPhysicsHeight": 0.4724232852458954,
+    "physicsTrials": 16
+}

@@ -1,0 +1,41 @@
+{
+  "hits": {
+    "1016こうしゃ/Cube.047/Plane.019": {
+      "B": {
+        "min_progress_m": 1744.766,
+        "max_progress_m": 1752.25,
+        "sample_segments": 22
+      }
+    },
+    "1016こうしゃ/Cube.047/Plane.027": {
+      "B": {
+        "min_progress_m": 1740.848,
+        "max_progress_m": 1742.25,
+        "sample_segments": 5
+      }
+    }
+  },
+  "objects": 550,
+  "face_segment_candidates": 5006,
+  "course_metrics": {
+    "length": 1958.219763331516,
+    "min_width": 12.0,
+    "max_width_rate": 0.21994657439042525,
+    "heading_40m_degrees": 6.168682885943865,
+    "min_radius": 31.540961005143753,
+    "worst_curve": [
+      0.031704804423584886,
+      [
+        531.1578150760939,
+        10.812872355498403,
+        602.9458356345622
+      ]
+    ],
+    "takeoff": [
+      584.0,
+      18.0,
+      598.0
+    ],
+    "road_to_gap_heading_degrees": 1.5083462521372583e-10
+  }
+}

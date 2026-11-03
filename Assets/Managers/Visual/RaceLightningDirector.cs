@@ -221,7 +221,7 @@ public sealed class RaceLightningDirector : MonoBehaviour
     private static Vector3 FindGround(Vector3 point, float fallbackHeight)
     {
         Vector3 origin = new Vector3(point.x, fallbackHeight + 150f, point.z);
-        if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 400f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 400f, CoursePhysicsLayers.GroundMask, QueryTriggerInteraction.Ignore))
         {
             return hit.point;
         }

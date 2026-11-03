@@ -1,0 +1,55 @@
+{
+  "status": "conditional_alternative_not_accepted",
+  "progress_unit": "metres, raw generated-course progress, opposite race direction",
+  "default": {
+    "outwardFlare": 2.5,
+    "wallHeight": 6,
+    "minimumWallHeight": 6
+  },
+  "required_generator_change": "SetWorldPath recreates default control points. Supply per-progress profile during generation; lower minimumWallHeight to 0.1 only on these paths and rebuild. No code is changed by this design.",
+  "intervals": [
+    {
+      "progress_m": [
+        22.5,
+        188.0
+      ],
+      "outwardFlare": 0,
+      "wallHeight": 1.1,
+      "transition_padding_m": 12
+    },
+    {
+      "progress_m": [
+        1738.887,
+        1914.0
+      ],
+      "outwardFlare": 0,
+      "wallHeight": 1.1,
+      "transition_padding_m": 12
+    }
+  ],
+  "critical_original_B_0_3_intervals_m": [
+    [
+      1750.887,
+      1754.0663
+    ],
+    [
+      1786.0,
+      1793.0
+    ],
+    [
+      1832.5,
+      1836.0
+    ],
+    [
+      1853.0,
+      1856.4346
+    ],
+    [
+      1897.5,
+      1902.0
+    ]
+  ],
+  "strict_low_band_preserved": false,
+  "reason": "Height 1.1 gives a full return profile approximately 2.31 m high. This shrinks B below 3 m, so it is not an upper-only remedy. Do not apply without a revised requirement.",
+  "conditional_inner_volume_verification": "Not used for acceptance; original B(0..3) remains the acceptance volume."
+}

@@ -454,7 +454,7 @@ public sealed class CarItemEffects : MonoBehaviour
         Vector3 origin = transform.position + back * oilDropDistance + Vector3.up * 3f;
         Vector3 position = transform.position + back * oilDropDistance;
         Vector3 normal = Vector3.up;
-        RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, 12f, Physics.DefaultRaycastLayers,
+        RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, 12f, CoursePhysicsLayers.GroundMask,
             QueryTriggerInteraction.Ignore);
         float nearest = float.PositiveInfinity;
         foreach (RaycastHit hit in hits)

@@ -1,0 +1,1686 @@
+{
+  "status": "offline_geometry_verified_pending_physics_and_external_scene_clearance",
+  "source": "Assets/Editor/SchoolMapCourseSetup.cs",
+  "coordinate_space": "world XYZ metres; full road width",
+  "all_points_included": true,
+  "tube_span_original_indices": [
+    2,
+    122
+  ],
+  "tube_span_new_indices": [
+    4,
+    124
+  ],
+  "waypoints": [
+    {
+      "index": 0,
+      "xyz": [
+        495.0568,
+        6,
+        799
+      ],
+      "width": 20,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 1,
+      "xyz": [
+        245,
+        1,
+        799
+      ],
+      "width": 20,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 2,
+      "xyz": [
+        260,
+        3,
+        640
+      ],
+      "width": 12,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 3,
+      "xyz": [
+        278.1428539924906,
+        4.682942642428035,
+        595
+      ],
+      "width": 12,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 4,
+      "xyz": [
+        281.90005999999994,
+        5.0000067,
+        557.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 5,
+      "xyz": [
+        281.90005999999994,
+        5.0000067,
+        556.819518
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 6,
+      "xyz": [
+        281.90005999999994,
+        5.0000076,
+        556.30548
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 7,
+      "xyz": [
+        281.90005999999994,
+        5.0000067,
+        555.5
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 8,
+      "xyz": [
+        281.90005999999994,
+        5.0000067,
+        554.444518
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 9,
+      "xyz": [
+        281.90005999999994,
+        5.0000029,
+        553.18048
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 10,
+      "xyz": [
+        281.90005999999994,
+        5.000001,
+        551.75
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 11,
+      "xyz": [
+        281.90005999999994,
+        5.0000038,
+        550.194518
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 12,
+      "xyz": [
+        281.90005999999994,
+        5.000002,
+        548.55548
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 13,
+      "xyz": [
+        281.90005999999994,
+        5.000001,
+        546.875
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 14,
+      "xyz": [
+        281.90005999999994,
+        5.0000029,
+        545.194457
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 15,
+      "xyz": [
+        281.90005999999994,
+        5.0000029,
+        543.5555400000001
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 16,
+      "xyz": [
+        281.90005999999994,
+        5.0,
+        542.0000600000001
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 17,
+      "xyz": [
+        281.90005999999994,
+        4.4097185,
+        537.364562
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 18,
+      "xyz": [
+        281.90005999999994,
+        2.77777576,
+        531.166686
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 19,
+      "xyz": [
+        281.90005999999994,
+        0.31249709999999986,
+        523.718688
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 20,
+      "xyz": [
+        281.90005999999994,
+        -2.7777814999999997,
+        515.333373
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 21,
+      "xyz": [
+        281.90005999999994,
+        -6.284727,
+        506.3229665
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 22,
+      "xyz": [
+        281.90005999999994,
+        -10.000005,
+        496.99993800000004
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 23,
+      "xyz": [
+        281.90005999999994,
+        -13.715281999999998,
+        487.677031
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 24,
+      "xyz": [
+        281.90005999999994,
+        -17.222227,
+        478.666686
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 25,
+      "xyz": [
+        281.90005999999994,
+        -20.312504,
+        470.281218
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 26,
+      "xyz": [
+        281.90005999999994,
+        -22.777782,
+        462.83328
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 27,
+      "xyz": [
+        281.90005999999994,
+        -24.409727,
+        456.635405
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 28,
+      "xyz": [
+        281.90005999999994,
+        -25.000006,
+        452.00006
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 29,
+      "xyz": [
+        282.44471,
+        -25.000008,
+        431.02783
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 30,
+      "xyz": [
+        284.07009999999997,
+        -25.000008,
+        412.97226
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 31,
+      "xyz": [
+        286.76328,
+        -25.000013,
+        397.625
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 32,
+      "xyz": [
+        290.51115,
+        -25.000015,
+        384.77774
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 33,
+      "xyz": [
+        295.3006,
+        -25.000015,
+        374.22220000000004
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 34,
+      "xyz": [
+        301.11871999999994,
+        -25.000015,
+        365.75
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 35,
+      "xyz": [
+        307.95255,
+        -25.000015,
+        359.15283
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 36,
+      "xyz": [
+        315.78891999999996,
+        -25.000015,
+        354.22226
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 37,
+      "xyz": [
+        324.61493999999993,
+        -25.000015,
+        350.75003000000004
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 38,
+      "xyz": [
+        334.41733999999997,
+        -25.00002,
+        348.52783
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 39,
+      "xyz": [
+        345.18348,
+        -25.00002,
+        347.34726
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 40,
+      "xyz": [
+        356.90003,
+        -25.000015,
+        346.99997
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 41,
+      "xyz": [
+        369.50202,
+        -25.00002,
+        346.75052000000005
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 42,
+      "xyz": [
+        382.71601,
+        -25.000015,
+        345.94095000000004
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 43,
+      "xyz": [
+        396.21641,
+        -25.00002,
+        344.4805
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 44,
+      "xyz": [
+        409.67783399999996,
+        -25.00002,
+        342.27786000000003
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 45,
+      "xyz": [
+        422.77451399999995,
+        -25.00002,
+        339.24173
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 46,
+      "xyz": [
+        435.18130999999994,
+        -25.00002,
+        335.28128000000004
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 47,
+      "xyz": [
+        446.572305,
+        -25.000021,
+        330.30517000000003
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 48,
+      "xyz": [
+        456.62226,
+        -25.000023,
+        324.22220000000004
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 49,
+      "xyz": [
+        465.0055,
+        -25.000023,
+        316.94141
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 50,
+      "xyz": [
+        471.39649299999996,
+        -25.000023,
+        308.37155
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 51,
+      "xyz": [
+        475.46997999999996,
+        -25.000023,
+        298.42148000000003
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 52,
+      "xyz": [
+        476.90003299999995,
+        -25.000023,
+        287.00003000000004
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 53,
+      "xyz": [
+        481.62219999999996,
+        -25.000027,
+        252.62497000000002
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 54,
+      "xyz": [
+        494.677865,
+        -25.000027,
+        224.5
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 55,
+      "xyz": [
+        514.400033,
+        -25.00003,
+        202.625
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 56,
+      "xyz": [
+        539.12226,
+        -25.000042,
+        187.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 57,
+      "xyz": [
+        567.17774,
+        -25.00005,
+        177.625
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 58,
+      "xyz": [
+        596.900216,
+        -25.000046,
+        174.50003000000004
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 59,
+      "xyz": [
+        626.62226,
+        -25.00005,
+        177.625
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 60,
+      "xyz": [
+        654.6777999999999,
+        -25.000042,
+        187.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 61,
+      "xyz": [
+        679.40003,
+        -25.000029,
+        202.625
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 62,
+      "xyz": [
+        699.12226,
+        -25.000025,
+        224.5
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 63,
+      "xyz": [
+        712.17774,
+        -25.000023,
+        252.62497000000002
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 64,
+      "xyz": [
+        716.89991,
+        -25.000025,
+        287.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 65,
+      "xyz": [
+        716.9001,
+        -25.000023,
+        318.89249
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 66,
+      "xyz": [
+        716.9001,
+        -25.000011,
+        340.88876000000005
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 67,
+      "xyz": [
+        716.9001,
+        -25.000011,
+        354.96875
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 68,
+      "xyz": [
+        716.9001,
+        -25.000015,
+        363.11124
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 69,
+      "xyz": [
+        716.9001,
+        -25.000015,
+        367.29501000000005
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 70,
+      "xyz": [
+        716.9001,
+        -25.000015,
+        369.5
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 71,
+      "xyz": [
+        716.9001,
+        -25.000015,
+        371.70499
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 72,
+      "xyz": [
+        716.9001,
+        -25.000011,
+        375.88876000000005
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 73,
+      "xyz": [
+        716.9001,
+        -25.000015,
+        384.03125
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 74,
+      "xyz": [
+        716.9001,
+        -25.000015,
+        398.111236
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 75,
+      "xyz": [
+        716.9001,
+        -25.000008,
+        420.10751000000005
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 76,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        452.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 77,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        452.323974
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 78,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        452.59008700000004
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 79,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        452.867186
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 80,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        453.22241
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 81,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        453.72290000000004
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 82,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        454.4375
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 83,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        455.43335
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 84,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        456.77758700000004
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 85,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        458.53906
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 86,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        460.78491
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 87,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        463.58227400000004
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 88,
+      "xyz": [
+        716.9001,
+        -25.000004,
+        467.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 89,
+      "xyz": [
+        716.9001,
+        -24.409721,
+        471.3403
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 90,
+      "xyz": [
+        716.9001,
+        -22.777775,
+        476.722258
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 91,
+      "xyz": [
+        716.9001,
+        -20.3125,
+        482.93756
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 92,
+      "xyz": [
+        716.9001,
+        -17.222221,
+        489.7778005
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 93,
+      "xyz": [
+        716.9001,
+        -13.715277,
+        497.0347585
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 94,
+      "xyz": [
+        716.9001,
+        -9.999999,
+        504.499999
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 95,
+      "xyz": [
+        716.9001,
+        -6.284722,
+        511.9653005
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 96,
+      "xyz": [
+        716.9001,
+        -2.777775,
+        519.222228
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 97,
+      "xyz": [
+        716.9001,
+        0.3125,
+        526.062499
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 98,
+      "xyz": [
+        716.9001,
+        2.77777863,
+        532.27783
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 99,
+      "xyz": [
+        716.9001,
+        4.4097204,
+        537.659667
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 100,
+      "xyz": [
+        716.8999699999999,
+        4.9999981,
+        541.999938
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 101,
+      "xyz": [
+        716.8741,
+        5.000002,
+        544.440978
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 102,
+      "xyz": [
+        716.69172,
+        5.0000029,
+        548.5277100000001
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 103,
+      "xyz": [
+        716.19691,
+        5.0000057,
+        553.906188
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 104,
+      "xyz": [
+        715.2334,
+        5.0000076,
+        560.22229
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 105,
+      "xyz": [
+        713.6448399999999,
+        5.0000076,
+        567.12152
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 106,
+      "xyz": [
+        711.2749699999999,
+        5.0000067,
+        574.24994
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 107,
+      "xyz": [
+        707.96772,
+        5.0000076,
+        581.2534800000001
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 108,
+      "xyz": [
+        703.56684,
+        5.0000076,
+        587.77783
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 109,
+      "xyz": [
+        697.91572,
+        5.0000076,
+        593.46875
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 110,
+      "xyz": [
+        690.85847,
+        5.0000076,
+        597.97217
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 111,
+      "xyz": [
+        682.2385999999999,
+        5.0000057,
+        600.93402
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 112,
+      "xyz": [
+        671.8999699999999,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 113,
+      "xyz": [
+        670.9662,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 114,
+      "xyz": [
+        669.6777999999999,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 115,
+      "xyz": [
+        668.05647,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 116,
+      "xyz": [
+        666.12244,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 117,
+      "xyz": [
+        663.8965499999999,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 118,
+      "xyz": [
+        661.40022,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 119,
+      "xyz": [
+        658.6537,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 120,
+      "xyz": [
+        655.6777999999999,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 121,
+      "xyz": [
+        652.49397,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 122,
+      "xyz": [
+        649.12238,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 123,
+      "xyz": [
+        645.5840499999999,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 124,
+      "xyz": [
+        641.90022,
+        5.0000057,
+        602.0
+      ],
+      "width": 12.0,
+      "jumpToNext": false,
+      "preserveAlignment": true
+    },
+    {
+      "index": 125,
+      "xyz": [
+        619.0,
+        8.0,
+        598.0
+      ],
+      "width": 15.95,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 126,
+      "xyz": [
+        607.5,
+        12,
+        598
+      ],
+      "width": 17.95,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 127,
+      "xyz": [
+        596.0,
+        16.0,
+        598.0
+      ],
+      "width": 20.0,
+      "jumpToNext": true,
+      "preserveAlignment": false
+    },
+    {
+      "index": 128,
+      "xyz": [
+        584.0,
+        18.0,
+        598.0
+      ],
+      "width": 18.0,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 129,
+      "xyz": [
+        571.5,
+        17.7,
+        598.0
+      ],
+      "width": 15.9,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 130,
+      "xyz": [
+        549,
+        17.7,
+        599.6
+      ],
+      "width": 12.4,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 131,
+      "xyz": [
+        536,
+        15.5,
+        600.45
+      ],
+      "width": 14.4,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 132,
+      "xyz": [
+        513.5,
+        3.0,
+        601.886
+      ],
+      "width": 16.1,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 133,
+      "xyz": [
+        513.9,
+        4.0,
+        621.2
+      ],
+      "width": 18.3,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 134,
+      "xyz": [
+        493,
+        3,
+        619
+      ],
+      "width": 18,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 135,
+      "xyz": [
+        495.0568,
+        3,
+        650
+      ],
+      "width": 18,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    },
+    {
+      "index": 136,
+      "xyz": [
+        495.0568,
+        3,
+        720
+      ],
+      "width": 18,
+      "jumpToNext": false,
+      "preserveAlignment": false
+    }
+  ],
+  "authored_table": [
+    {
+      "index": 0,
+      "xyz": [
+        495.0568,
+        6,
+        799
+      ],
+      "width": 20,
+      "jumpToNext": false
+    },
+    {
+      "index": 1,
+      "xyz": [
+        245,
+        1,
+        799
+      ],
+      "width": 20,
+      "jumpToNext": false
+    },
+    {
+      "index": 2,
+      "xyz": [
+        260,
+        3,
+        640
+      ],
+      "width": 12,
+      "jumpToNext": false
+    },
+    {
+      "index": 3,
+      "xyz": [
+        278.1428539924906,
+        4.682942642428035,
+        595
+      ],
+      "width": 12,
+      "jumpToNext": false
+    },
+    {
+      "index": 125,
+      "xyz": [
+        619.0,
+        8.0,
+        598.0
+      ],
+      "width": 15.95,
+      "jumpToNext": false
+    },
+    {
+      "index": 126,
+      "xyz": [
+        607.5,
+        12,
+        598
+      ],
+      "width": 17.95,
+      "jumpToNext": false
+    },
+    {
+      "index": 127,
+      "xyz": [
+        596.0,
+        16.0,
+        598.0
+      ],
+      "width": 20.0,
+      "jumpToNext": true
+    },
+    {
+      "index": 128,
+      "xyz": [
+        584.0,
+        18.0,
+        598.0
+      ],
+      "width": 18.0,
+      "jumpToNext": false
+    },
+    {
+      "index": 129,
+      "xyz": [
+        571.5,
+        17.7,
+        598.0
+      ],
+      "width": 15.9,
+      "jumpToNext": false
+    },
+    {
+      "index": 130,
+      "xyz": [
+        549,
+        17.7,
+        599.6
+      ],
+      "width": 12.4,
+      "jumpToNext": false
+    },
+    {
+      "index": 131,
+      "xyz": [
+        536,
+        15.5,
+        600.45
+      ],
+      "width": 14.4,
+      "jumpToNext": false
+    },
+    {
+      "index": 132,
+      "xyz": [
+        513.5,
+        3.0,
+        601.886
+      ],
+      "width": 16.1,
+      "jumpToNext": false
+    },
+    {
+      "index": 133,
+      "xyz": [
+        513.9,
+        4.0,
+        621.2
+      ],
+      "width": 18.3,
+      "jumpToNext": false
+    },
+    {
+      "index": 134,
+      "xyz": [
+        493,
+        3,
+        619
+      ],
+      "width": 18,
+      "jumpToNext": false
+    },
+    {
+      "index": 135,
+      "xyz": [
+        495.0568,
+        3,
+        650
+      ],
+      "width": 18,
+      "jumpToNext": false
+    },
+    {
+      "index": 136,
+      "xyz": [
+        495.0568,
+        3,
+        720
+      ],
+      "width": 18,
+      "jumpToNext": false
+    }
+  ],
+  "home_width_policy": "18m minimum; 20m at north/start; retain original widths elsewhere except original bounded west lead-in and post-landing taper control"
+}

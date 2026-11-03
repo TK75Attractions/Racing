@@ -1,0 +1,2 @@
+﻿severity,kind,path,component,lane_fraction,progress_m,start_distance_m,x,y,z,value,min_height_m,car_band,sample_hits,first_progress_m,last_progress_m,evidence,impact
+"2","実走大減速","Player1_Car[20]","Rigidbody","-0.75","1785.097","75.758","497.086","3.348","656.088","14.78","0","True","2","1758.518","1785.097","1固定stepで速度が35%以上減少; 26.785→12.006m/s","衝突・急制動などによる速度損失"

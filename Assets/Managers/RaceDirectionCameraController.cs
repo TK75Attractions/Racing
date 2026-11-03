@@ -279,11 +279,11 @@ public sealed class RaceDirectionCameraController : MonoBehaviour
         float distance = offset.magnitude;
         if (distance < .001f) return desiredPosition;
         int count = Physics.SphereCastNonAlloc(origin, Mathf.Max(.01f, occlusionRadius), offset / distance,
-            occlusionHits, distance, occlusionLayers, QueryTriggerInteraction.Ignore);
+            occlusionHits, distance, occlusionLayers | CoursePhysicsLayers.OcclusionMask, QueryTriggerInteraction.Ignore);
         // NonAlloc results are unordered; a full buffer may omit the nearest wall.
         RaycastHit[] hits = count == occlusionHits.Length
             ? Physics.SphereCastAll(origin, Mathf.Max(.01f, occlusionRadius), offset / distance,
-                distance, occlusionLayers, QueryTriggerInteraction.Ignore) : occlusionHits;
+                distance, occlusionLayers | CoursePhysicsLayers.OcclusionMask, QueryTriggerInteraction.Ignore) : occlusionHits;
         if (hits != occlusionHits) count = hits.Length;
         float safeDistance = distance;
         for (int i = 0; i < count; i++)

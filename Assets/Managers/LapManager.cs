@@ -669,7 +669,7 @@ public class LapManager : MonoBehaviour
             origin,
             Vector3.down,
             distance,
-            ~0,
+            CoursePhysicsLayers.PhysicalMask,
             QueryTriggerInteraction.Ignore);
 
         groundHit = default;

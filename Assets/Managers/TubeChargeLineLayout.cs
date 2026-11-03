@@ -45,7 +45,7 @@ public sealed class TubeChargeLineLayout : MonoBehaviour
         Vector3 position = sample.position + sample.right * offset;
         return course.IsPointInsideTube(position + sample.up) &&
             Physics.Raycast(position + sample.up * 2f, -sample.up, out RaycastHit hit, 3.5f,
-                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) && hit.rigidbody == null &&
+                CoursePhysicsLayers.GroundMask, QueryTriggerInteraction.Ignore) && hit.rigidbody == null &&
             Vector3.Dot(hit.normal, sample.up) > .95f && Mathf.Abs(Vector3.Dot(hit.point - position, sample.up)) < 1f;
     }
     public float DistanceFromEntry(float raw)

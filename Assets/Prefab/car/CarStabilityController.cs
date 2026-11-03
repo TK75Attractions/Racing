@@ -142,7 +142,7 @@ public class CarStabilityController : MonoBehaviour
         Vector3 ahead = supportPoint + direction.normalized * lookAhead;
         float probeHeight = maximumSeamHeight + .1f;
         foreach (RaycastHit hit in Physics.RaycastAll(ahead + normal * probeHeight, -normal,
-                     probeHeight * 2f, ~0, QueryTriggerInteraction.Ignore))
+                     probeHeight * 2f, CoursePhysicsLayers.PhysicalMask, QueryTriggerInteraction.Ignore))
         {
             if (hit.collider.attachedRigidbody != null && !hit.collider.attachedRigidbody.isKinematic) continue;
             if (hit.collider.attachedRigidbody == rb || Vector3.Dot(hit.normal, normal) < .95f) continue;
@@ -172,7 +172,7 @@ public class CarStabilityController : MonoBehaviour
         if (lowest == float.MaxValue) return false;
         Vector3 origin = rb.worldCenterOfMass + Vector3.up * 0.02f;
         float distance = Mathf.Max(0f, origin.y - lowest) + 0.08f;
-        foreach (RaycastHit hit in Physics.RaycastAll(origin, Vector3.down, distance, ~0, QueryTriggerInteraction.Ignore))
+        foreach (RaycastHit hit in Physics.RaycastAll(origin, Vector3.down, distance, CoursePhysicsLayers.PhysicalMask, QueryTriggerInteraction.Ignore))
             if (hit.collider != null && hit.collider.attachedRigidbody != rb && hit.normal.y >= 0.2f &&
                 (hit.collider.attachedRigidbody == null || hit.collider.attachedRigidbody.isKinematic)) return true;
         return false;

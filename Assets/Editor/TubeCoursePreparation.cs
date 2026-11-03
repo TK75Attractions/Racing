@@ -49,9 +49,13 @@ public static class TubeCoursePreparation
         Mesh source = PrefabUtility.GetCorrespondingObjectFromSource(tube).sharedMesh;
         List<List<Vector3>> rings = ReadRings(source, tube.transform);
         Mesh originalGround = PrefabUtility.GetCorrespondingObjectFromSource(ground).sharedMesh;
+        Mesh extendedGround = CourseSceneryLayout.IsApplied()
+            ? CourseSceneryLayout.ExtendNorthGround(originalGround, ground.transform) : null;
         float groundHeight = ground.transform.TransformPoint(originalGround.bounds.center).y;
         List<Vector2[]> cuts = BuildGroundApertures(rings, groundHeight);
-        Mesh clearedGround = ClipGround(originalGround, ground.transform, cuts);
+        Mesh clearedGround;
+        try { clearedGround = ClipGround(extendedGround != null ? extendedGround : originalGround, ground.transform, cuts); }
+        finally { if (extendedGround != null) UnityEngine.Object.DestroyImmediate(extendedGround); }
         Mesh groundAsset = SaveMesh(clearedGround, DataFolder + "/GroundWithTubeApertures.asset");
         ground.sharedMesh = groundAsset;
         ground.GetComponent<MeshCollider>().sharedMesh = groundAsset;
@@ -73,6 +77,8 @@ public static class TubeCoursePreparation
             PrefabUtility.RecordPrefabInstancePropertyModifications(floor);
             PrefabUtility.RecordPrefabInstancePropertyModifications(floor.GetComponent<MeshCollider>());
         }
+
+        CourseBuildingClearance.Run(scene, course, tube.GetComponent<MeshCollider>());
 
         // FBX tube normals point outward. Keep the visual geometry intact and make its
         // collision surface usable from inside as well as outside.
@@ -112,6 +118,7 @@ public static class TubeCoursePreparation
         for (int i = 0; i < materials.Length; i++) materials[i] = material;
         renderer.sharedMaterials = materials;
         PrefabUtility.RecordPrefabInstancePropertyModifications(renderer);
+        CourseBarrierProfileSetup.Run();
         AlignRaceMarkers(scene);
         // Refresh visual endpoint sections after preparation, retaining all existing scene references.
         TubeSpeedPatternController patterns = course.GetComponent<TubeSpeedPatternController>();

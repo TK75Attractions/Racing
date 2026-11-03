@@ -125,7 +125,7 @@ public sealed class AccelerationPad : MonoBehaviour
     {
         Vector3 origin = transform.position + Vector3.up * Mathf.Max(10f, rayDistance * 0.5f);
         if (!Physics.Raycast(origin, Vector3.down, out RaycastHit hit, rayDistance + 10f,
-                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+                CoursePhysicsLayers.GroundMask, QueryTriggerInteraction.Ignore))
         {
             return false;
         }

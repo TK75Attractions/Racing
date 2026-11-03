@@ -31,6 +31,7 @@ public static class SchoolMapCourseSetup
             throw new InvalidOperationException("The school map, tube and course must be present.");
         map.name = "1016こうしゃ";
         PrefabUtility.RecordPrefabInstancePropertyModifications(map);
+        CourseSceneryLayout.Run();
 
         var centers = new List<Vector3>();
         foreach (var ring in TubeCoursePreparation.ReadRings(
@@ -47,7 +48,10 @@ public static class SchoolMapCourseSetup
         }
         var points = new List<Vector3>
         {
-            new Vector3(496f, 3f, 785.6693f),
+            // Bevel both ends of the north-shifted straight. Retain the old west
+            // endpoint so the complete original tube lead-in remains authored unchanged.
+            new Vector3(485.2f, 3f, 807f),
+            new Vector3(267.5f, 3f, 807f),
             new Vector3(258.2f, 3f, 796.7f)
         };
         for (int i = centers.Count - 1; i >= 0; i--) points.Add(centers[i]);
@@ -60,11 +64,31 @@ public static class SchoolMapCourseSetup
             new Vector3(619f, 8f, 598f),
             new Vector3(596f, 16f, 598f),
             new Vector3(584f, 18f, 598f),
-            new Vector3(536f, 14.5f, 598f),
-            new Vector3(528f, 9.5f, 611f),
-            new Vector3(514f, 4f, 621f),
-            new Vector3(496f, 3f, 619f)
+            // The shrinking smoothing window roughly halves this 12.5 m raw
+            // alignment. Leave >6 m aligned with the airborne X-axis chord so
+            // the neighbouring-sample edge tangent cannot fold the takeoff quad.
+            new Vector3(571.5f, 17.7f, 598f),
+            // Ease in along z = 598 + .067 * (571.5 - x). The gentler diagonal
+            // keeps total heading change over the last 40 m below 6 degrees.
+            // Raise the entrance locally to clear its low southern wall while
+            // retaining the 12.4 m opening width and gradual width recovery.
+            new Vector3(549f, 17.7f, 599.508f),
+            new Vector3(536f, 15.5f, 600.379f),
+            // Move the lower connection east to clear Plane.019; extend the
+            // entrance taper north to keep the full-width rate below .2 m/m.
+            new Vector3(513.5f, 3f, 601.886f),
+            new Vector3(513.9f, 4f, 621.2f),
+            new Vector3(496f, 3f, 619f),
+            // Shift only the long home straight west. Keep the original corner
+            // east of Plane.019's northern return wall instead of narrowing it.
+            new Vector3(494.7f, 3f, 650f),
+            new Vector3(494.7f, 3f, 720f),
+            new Vector3(494.7f, 3f, 797.5f)
         });
+        // Full widths, in the same order as the ground points above. The 12 m
+        // jump needs an 18 m takeoff to reach the 20 m landing within 0.2 m/m.
+        // Narrow locally at the entrance; recover 20 m along the entire home.
+        var groundWidths = new[] { 15.95f, 20f, 18f, 15.9f, 12.4f, 14.4f, 16.1f, 18.3f, 20f, 20f, 20f, 20f };
         var serialized = new SerializedObject(course);
         var waypoints = serialized.FindProperty("waypoints");
         waypoints.arraySize = points.Count;
@@ -75,10 +99,10 @@ public static class SchoolMapCourseSetup
             point.FindPropertyRelative("position").vector2Value = new Vector2(local.x, local.z);
             point.FindPropertyRelative("height").floatValue = local.y;
             point.FindPropertyRelative("curve").floatValue = 0f;
-            point.FindPropertyRelative("width").floatValue = i >= 2 && i < tubeEnd ? 12f :
-                i >= tubeEnd + 2 && i <= tubeEnd + 4 ? 16f : i == tubeEnd + 5 ? 18f : 20f;
+            point.FindPropertyRelative("width").floatValue = i < 3 ? 20f :
+                i < tubeEnd ? 12f : groundWidths[i - tubeEnd];
             point.FindPropertyRelative("jumpToNext").boolValue = i == tubeEnd + 1;
-            point.FindPropertyRelative("preserveAlignment").boolValue = i >= 2 && i < tubeEnd;
+            point.FindPropertyRelative("preserveAlignment").boolValue = i >= 3 && i < tubeEnd;
         }
         serialized.FindProperty("road").FindPropertyRelative("tubeInterior").objectReferenceValue = tube.GetComponent<MeshCollider>();
         serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -88,6 +112,9 @@ public static class SchoolMapCourseSetup
         TubeCoursePreparation.Run();
         TubeSpeedPatternSetup.Run();
         TubeCourseValidation.Run();
+        // Terrain preparation already aligns start/checkpoints, goal and items.
+        // Persistent lanterns/landmarks, finish gate and hand-placed props need
+        // the follow-up steps documented in RaceCourse.md after this operation.
         Debug.Log($"SCHOOL_MAP_COURSE_SETUP_PASS: {points.Count} waypoints, {centers.Count} tube centers.");
     }
 }

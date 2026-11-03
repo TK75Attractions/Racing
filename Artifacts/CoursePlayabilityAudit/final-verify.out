@@ -1,0 +1,41 @@
+== TubeCoursePreparation.Run (bake1) exit=0
+      1 COURSE_BUILDING_CLEARANCE_PASS: 34 objects, 1960 triangles
+      1 TUBE_TERRAIN_PREPARATION_PASS: 133 rings, 20 terrain apertures, original tube vertices retained.
+== TubeCoursePreparation.Run (bake2) exit=0
+      1 COURSE_BUILDING_CLEARANCE_PASS: 34 objects, 1960 triangles
+      1 TUBE_TERRAIN_PREPARATION_PASS: 133 rings, 20 terrain apertures, original tube vertices retained.
+rebake data diff lines: 0
+rebake scene diff lines: 0
+4.7M	Assets/Scenes/TubeCourseData
+== CourseClearanceValidation.Run (clearance-validation) exit=0
+      1 COURSE_CLEARANCE_VALIDATION_PASS: 530 objects, 1360233 sampled points, 0 interior points (margin=0.05m).
+== CoursePlayabilityProbe.FindFolds (folds) exit=0
+      1       Exception occured while accepting client connection: System.IO.IOException: パイプを閉じています。
+      1 COURSE_FOLD_DONE
+== CoursePlayabilityProbe.Run (probe) exit=0
+      1 COURSE_PROBE_DONE 9
+== CoursePlayabilityProbe.CaptureSpots (shots) exit=0
+      1 COURSE_PROBE_SHOTS_DONE C:/Users/tsuka/Documents/GitHub/Racing/Artifacts/CoursePlayabilityAudit/shots/after
+== TubeCourseValidation.Run (tube-validation) exit=0
+      1 TUBE_COURSE_VALIDATION_PASS: length=1908.3m, heading/5m=14.25ﾂｰ, grade=0.446, grade change/5m=0.105, retained ground=100.00%, road folds/intersections=0.
+== CourseBarrierValidation.Run (barrier-validation) exit=0
+      1 COURSE_EDGE_BARRIERS_PASS: {"goalLaps":2,"wallPaths":2,"exteriorSamples":1530,"tubeSamples":2287,"missingSideHits":0,"interiorWallNodes":0,"courseLength":1908.3345947265625,"exteriorMeters":765.0,"tubeMeters":1143.5,"maximumPhysicsExcursion
+      1 RACE_BARRIER_PATH_VALIDATION_PASS
+      1 RACE_COURSE_ROAD_VALIDATION_PASS: exact band mesh, upward collision, dash gaps, both red/white curbs, materials, slope, closed seam, transforms, undo, cleanup, narrow/empty paths, Rigidbody support and existing course regression checks.
+      1 RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+      1 TUBE_COURSE_VALIDATION_PASS: length=1908.3m, heading/5m=14.25ﾂｰ, grade=0.446, grade change/5m=0.105, retained ground=100.00%, road folds/intersections=0.
+      1 WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.
+      1 WALL_STUCK_RECOVERY_PASS: smooth driving, neutral/disconnected input, stale contacts, ungrounded jitter, sleeping contacts, safe road/lap preservation, reverse input, occupied-road retry.
+== RaceCourseValidation.Run (course-validation) exit=0
+      1 RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+      1 WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.
+      1 WALL_STUCK_RECOVERY_PASS: smooth driving, neutral/disconnected input, stale contacts, ungrounded jitter, sleeping contacts, safe road/lap preservation, reverse input, occupied-road retry.
+== RaceCourseRoadValidation.Run (road-validation) exit=0
+      1 RACE_COURSE_ROAD_VALIDATION_PASS: exact band mesh, upward collision, dash gaps, both red/white curbs, materials, slope, closed seam, transforms, undo, cleanup, narrow/empty paths, Rigidbody support and existing course regression checks.
+      1 RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+      1 WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.
+      1 WALL_STUCK_RECOVERY_PASS: smooth driving, neutral/disconnected input, stale contacts, ungrounded jitter, sleeping contacts, safe road/lap preservation, reverse input, occupied-road retry.
+== CourseJumpPlaythroughValidation.RunBatch (jump-playthrough) exit=0
+      1 COURSE_JUMP_PLAYTHROUGH_PASS: both actual cars complete a lap, jump/land, no wall contacts, no off-course respawn after 4 seconds.
+== CoursePlayabilityAudit.Run (audit) exit=0
+### done

@@ -1,0 +1,11 @@
+{
+    "courseLength": 1908.3345947265625,
+    "maximumWidthRate": 0.18492984771728517,
+    "maximumCurvature": 0.04929047077894211,
+    "maximumAdjacentSurfaceStep": 0.011037826538085938,
+    "samples": 3817,
+    "colliders": 541,
+    "excluded": 5,
+    "renderers": 675,
+    "missingBarrierSideSamples": 0
+}

@@ -42,7 +42,7 @@ public sealed class CarWallCollisionResponse : MonoBehaviour
         }
         Bounds bounds = chassis.bounds;
         int count = Physics.OverlapBoxNonAlloc(bounds.center, bounds.extents, overlapBuffer,
-            Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+            Quaternion.identity, CoursePhysicsLayers.PhysicalMask, QueryTriggerInteraction.Ignore);
         Vector3 escape = Vector3.zero;
         float escapeDistance = 0f;
         bool severeDownwardPenetration = false;

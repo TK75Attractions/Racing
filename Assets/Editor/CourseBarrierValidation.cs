@@ -27,6 +27,7 @@ public static class CourseBarrierValidation
         EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
         RaceCourse course = UnityEngine.Object.FindFirstObjectByType<RaceCourse>();
         LapManager laps = UnityEngine.Object.FindFirstObjectByType<LapManager>();
+        CourseBarrierProfileSetup.Run();
         course.RebuildCache(); course.RebuildRoad(); Physics.SyncTransforms();
         var report = new Report { goalLaps = laps.GoalLap, courseLength = course.TotalLength };
         Require(report.goalLaps == 2, "SampleScene must finish after two laps.");
@@ -58,6 +59,7 @@ public static class CourseBarrierValidation
                     report.interiorWallNodes++;
             }
         }
+        ValidateSceneProfiles(course, paths);
         for (float progress = 0; progress < course.TotalLength; progress += .5f)
         {
             course.TryGetSampleAtProgress(progress, out var sample);
@@ -106,6 +108,8 @@ public static class CourseBarrierValidation
     {
         Capture(new Vector3(585, 58, 665), new Vector3(620, 17, 598), Path.Combine(output, "jump-barriers.png"));
         Capture(new Vector3(441, 32, 803), new Vector3(495, 4, 737), Path.Combine(output, "start-barriers.png"));
+        Capture(new Vector3(370, 180, 760), new Vector3(370, 0, 825), Path.Combine(output, "north-corridor.png"));
+        Capture(new Vector3(490, 9, 763), new Vector3(502, 6, 720), Path.Combine(output, "home-left-profile.png"));
         float portal = 0, east = float.NegativeInfinity;
         bool previous = TubeCeiling(tube, At(course, 0));
         for (float raw = .5f; raw < course.TotalLength; raw += .5f)
@@ -149,35 +153,121 @@ public static class CourseBarrierValidation
         var scene = EditorSceneManager.NewPreviewScene();
         try
         {
-            for (int side = -1; side <= 1; side += 2)
+            foreach (int profile in new[] { 0, 1, 2, 3 })
             {
-                GameObject wall = new GameObject("Physical edge"); SceneManager.MoveGameObjectToScene(wall, scene);
-                wall.AddComponent<RaceBarrierPath>().SetWorldPath(new[] { new Vector3(side * 10, 0, -100), new Vector3(side * 10, 0, 100) }, side, false, null, null, true);
-            }
-            GameObject floor = new GameObject("Road", typeof(BoxCollider)); SceneManager.MoveGameObjectToScene(floor, scene);
-            floor.GetComponent<BoxCollider>().size = new Vector3(20, 1, 200); floor.transform.position = Vector3.down * .5f;
-            foreach (int side in new[] { -1, 1 }) foreach (float height in new[] { 1f, 4f })
-            {
-                GameObject car = new GameObject("Impact body", typeof(BoxCollider), typeof(Rigidbody)); SceneManager.MoveGameObjectToScene(car, scene);
-                car.GetComponent<BoxCollider>().size = new Vector3(2, 1, 4);
-                Rigidbody body = car.GetComponent<Rigidbody>(); body.position = new Vector3(side * 7, height, -40);
-                body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-                body.linearVelocity = new Vector3(side * 25, 0, 10);
-                Physics.SyncTransforms();
-                PhysicsScene physics = scene.GetPhysicsScene();
-                Require(physics.IsValid() && physics != Physics.defaultPhysicsScene, "Containment trials require isolated physics.");
-                for (int frame = 0; frame < 300; frame++)
+                var fixtures = new List<GameObject>();
+                var extents = new float[401];
+                for (int side = -1; side <= 1; side += 2)
                 {
-                    physics.Simulate(.02f);
-                    report.maximumPhysicsExcursion = Mathf.Max(report.maximumPhysicsExcursion, Mathf.Abs(body.position.x));
-                    report.minimumPhysicsHeight = Mathf.Min(report.minimumPhysicsHeight, body.position.y);
-                    Require(Mathf.Abs(body.position.x) < 24 && body.position.y > -1, "A vehicle-sized impact body escaped the side barrier.");
+                    GameObject wall = new GameObject("Physical edge"); SceneManager.MoveGameObjectToScene(wall, scene);
+                    fixtures.Add(wall);
+                    var points = new List<Vector3>(); var weights = new List<float>();
+                    for (int row = 0; row <= 400; row++)
+                    {
+                        float z = -100f + row * .5f;
+                        points.Add(new Vector3(side * 10, 0, z));
+                        float t = Mathf.InverseLerp(-45f, -25f, z); t = t * t * (3f - 2f * t);
+                        weights.Add(profile == 0 ? 0f : profile == 1 ? 1f : profile == 2 ? t : 1f - t);
+                    }
+                    wall.AddComponent<RaceBarrierPath>().SetWorldPath(points, side, false, null, null, true, weights);
+                    Vector3[] vertices = wall.GetComponentInChildren<MeshFilter>().sharedMesh.vertices;
+                    for (int row = 0; row <= 400; row++)
+                    for (int section = 0; section <= 32; section++)
+                        extents[row] = Mathf.Max(extents[row], side * vertices[row * 33 + section].x - 10f);
                 }
-                report.physicsTrials++;
-                UnityEngine.Object.DestroyImmediate(car);
-            }
+                GameObject floor = new GameObject("Road", typeof(BoxCollider)); SceneManager.MoveGameObjectToScene(floor, scene);
+                fixtures.Add(floor);
+                floor.GetComponent<BoxCollider>().size = new Vector3(20, 1, 200); floor.transform.position = Vector3.down * .5f;
+                foreach (int side in new[] { -1, 1 }) foreach (float height in new[] { 1f, 4f })
+                {
+                    GameObject car = new GameObject("Impact body", typeof(BoxCollider), typeof(Rigidbody)); SceneManager.MoveGameObjectToScene(car, scene);
+                    car.GetComponent<BoxCollider>().size = new Vector3(2, 1, 4);
+                    Rigidbody body = car.GetComponent<Rigidbody>(); body.position = new Vector3(side * 7, height, -40);
+                    body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                    body.linearVelocity = new Vector3(side * 25, 0, 10);
+                    Physics.SyncTransforms();
+                    PhysicsScene physics = scene.GetPhysicsScene();
+                    Require(physics.IsValid() && physics != Physics.defaultPhysicsScene, "Containment trials require isolated physics.");
+                    for (int frame = 0; frame < 300; frame++)
+                    {
+                        physics.Simulate(.02f);
+                        report.maximumPhysicsExcursion = Mathf.Max(report.maximumPhysicsExcursion, Mathf.Abs(body.position.x));
+                        report.minimumPhysicsHeight = Mathf.Min(report.minimumPhysicsHeight, body.position.y);
+                        Require(Mathf.Abs(body.position.x) < 24 && body.position.y > -1, "A vehicle-sized impact body escaped the side barrier.");
+                        float row = Mathf.Clamp((body.position.z + 100f) * 2f, 0f, 400f);
+                        float extent = Mathf.Lerp(extents[Mathf.FloorToInt(row)], extents[Mathf.CeilToInt(row)], row - Mathf.Floor(row));
+                        Require(Mathf.Abs(body.position.x) <= 10f + extent + .25f,
+                            "Impact body escaped the actual arc/upright/transition envelope (profile " + profile + ").");
+                    }
+                    report.physicsTrials++;
+                    UnityEngine.Object.DestroyImmediate(car);
+                }
+                foreach (GameObject fixture in fixtures) UnityEngine.Object.DestroyImmediate(fixture);
+                }
         }
         finally { EditorSceneManager.ClosePreviewScene(scene); }
+    }
+
+    private static void ValidateSceneProfiles(RaceCourse course, RaceBarrierPath[] paths)
+    {
+        var centers = new List<Vector3>(); course.CopyCenterPathWorld(centers);
+        var profiles = course.GetComponent<RaceBarrierProfiles>();
+        Require(profiles != null && profiles.reverseRaceDirection, "SampleScene needs race-relative barrier profiles.");
+        var resolved = profiles.Resolve(centers, course.ClosedLoop);
+        Require(resolved.Count == 1 && resolved[0].side == RaceBarrierProfiles.Side.Left,
+            "Only the race-left home barrier may be upright.");
+        int upright = 0, blended = 0;
+        foreach (RaceBarrierPath path in paths)
+        {
+            var serialized = new SerializedObject(path);
+            int side = serialized.FindProperty("outwardSign").intValue;
+            var points = serialized.FindProperty("controlPoints");
+            for (int i = 0; i < points.arraySize; i++)
+            {
+                float weight = points.GetArrayElementAtIndex(i).FindPropertyRelative("uprightWeight").floatValue;
+                if (side < 0) Require(weight == 0f, "The west/race-right barrier must keep its circular profile.");
+                if (weight > .999f) upright++;
+                if (weight > .001f && weight < .999f) blended++;
+            }
+            Mesh mesh = path.GetComponentInChildren<MeshFilter>().sharedMesh;
+            Vector3[] vertices = mesh.vertices;
+            int[] indices = mesh.triangles;
+            int rows = vertices.Length / 33;
+            for (int row = 1; row < rows; row++)
+            {
+                var previous = points.GetArrayElementAtIndex((row - 1) % points.arraySize);
+                var next = points.GetArrayElementAtIndex(row % points.arraySize);
+                if (Mathf.Max(previous.FindPropertyRelative("uprightWeight").floatValue,
+                    next.FindPropertyRelative("uprightWeight").floatValue) <= 0f) continue;
+                Vector3 outward = (previous.FindPropertyRelative("localOutward").vector3Value +
+                    next.FindPropertyRelative("localOutward").vector3Value).normalized;
+                for (int triangle = (row - 1) * 32 * 6; triangle < row * 32 * 6; triangle += 3)
+                {
+                    Vector3 normal = Vector3.Cross(vertices[indices[triangle + 1]] - vertices[indices[triangle]],
+                        vertices[indices[triangle + 2]] - vertices[indices[triangle]]);
+                    Require(normal.sqrMagnitude > 1e-14f && Vector3.Dot(normal, outward) < 0f,
+                        "The actual course profile has a degenerate or reversed transition triangle.");
+                }
+            }
+        }
+        Require(upright > 20 && blended > 10, "Home barriers must include a vertical core and continuous transitions.");
+        // Include the exact profile boundaries, not just the regular 0.5 m coverage grid.
+        var boundaries = new List<float>(); resolved[0].AddBoundaries(boundaries);
+        MeshCollider tube = new SerializedObject(course).FindProperty("road.tubeInterior").objectReferenceValue as MeshCollider;
+        foreach (float boundary in boundaries)
+        foreach (float offset in new[] { -.05f, 0f, .05f })
+        {
+            course.TryGetSampleAtProgress(boundary + offset, out var sample);
+            if (RaceCourseBarriers.IsInsideTube(sample.position, sample.right, tube)) continue;
+            foreach (int side in new[] { -1, 1 })
+            {
+                bool hit = false;
+                foreach (RaceBarrierPath path in paths)
+                    if (path.GetComponentInChildren<MeshCollider>().Raycast(new Ray(sample.position + Vector3.up,
+                        sample.right * side), out _, sample.width * .5f + 16f)) { hit = true; break; }
+                Require(hit, "A profile boundary leaves an unprotected road edge.");
+            }
+        }
     }
     private static void Capture(Vector3 eye, Vector3 target, string path)
     {

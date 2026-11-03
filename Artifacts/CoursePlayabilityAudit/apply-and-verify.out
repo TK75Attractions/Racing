@@ -1,0 +1,68 @@
+### before
+== CoursePlayabilityProbe.CaptureSpots (shots-before) exit=0
+COURSE_PROBE_SHOTS_DONE C:/Users/tsuka/Documents/GitHub/Racing/Artifacts/CoursePlayabilityAudit/shots/before
+== CoursePlayabilityProbe.Run (probe-before) exit=0
+COURSE_PROBE_DONE 32
+### apply
+== SchoolMapCourseSetup.Run (apply-setup) exit=0
+COURSE_BUILDING_CLEARANCE_PASS: 49 objects, 1417272 triangles
+TUBE_TERRAIN_PREPARATION_PASS: 133 rings, 20 terrain apertures, original tube vertices retained.
+TUBE_SPEED_PATTERNS_SETUP_PASS: inner-wall overlay, 1193.4m tube, original mesh/collision retained.
+TUBE_COURSE_VALIDATION_PASS: length=1908.3m, heading/5m=14.25°, grade=0.446, grade change/5m=0.105, retained ground=100.00%, road folds/intersections=0.
+SCHOOL_MAP_COURSE_SETUP_PASS: 134 waypoints, 121 tube centers.
+== NeonRaceMarkersBuilder.PlaceFinishGateBatch (apply-gate) exit=0
+FINISH_GATE_PLACEMENT_PASS
+== NightEnnichiVisualBuilder.Run (apply-ennichi) exit=0
+== TubeCoursePreparation.Run (apply-rebake) exit=0
+COURSE_BUILDING_CLEARANCE_PASS: 49 objects, 1417272 triangles
+TUBE_TERRAIN_PREPARATION_PASS: 133 rings, 20 terrain apertures, original tube vertices retained.
+rebake diff lines: 16
+occlusion refs in scene: 49
+### verify
+== CoursePlayabilityProbe.FindFolds (folds) exit=0
+COURSE_FOLD_DONE
+== CoursePlayabilityProbe.Run (probe-after) exit=0
+COURSE_PROBE_DONE 8
+== CoursePlayabilityProbe.CaptureSpots (shots-after) exit=0
+COURSE_PROBE_SHOTS_DONE C:/Users/tsuka/Documents/GitHub/Racing/Artifacts/CoursePlayabilityAudit/shots/after
+== TubeCourseValidation.Run (tube-validation) exit=0
+TUBE_COURSE_VALIDATION_PASS: length=1908.3m, heading/5m=14.25°, grade=0.446, grade change/5m=0.105, retained ground=100.00%, road folds/intersections=0.
+== CourseBarrierValidation.Run (barrier-validation) exit=0
+RACE_BARRIER_PATH_VALIDATION_PASS
+WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.
+WALL_STUCK_RECOVERY_PASS: smooth driving, neutral/disconnected input, stale contacts, ungrounded jitter, sleeping contacts, safe road/lap preservation, reverse input, occupied-road retry.
+RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+RACE_COURSE_ROAD_VALIDATION_PASS: exact band mesh, upward collision, dash gaps, both red/white curbs, materials, slope, closed seam, transforms, undo, cleanup, narrow/empty paths, Rigidbody support and existing course re
+TUBE_COURSE_VALIDATION_PASS: length=1908.3m, heading/5m=14.25°, grade=0.446, grade change/5m=0.105, retained ground=100.00%, road folds/intersections=0.
+COURSE_EDGE_BARRIERS_PASS: {"goalLaps":2,"wallPaths":2,"exteriorSamples":1530,"tubeSamples":2287,"missingSideHits":0,"interiorWallNodes":0,"courseLength":1908.3345947265625,"exteriorMeters":765.0,"tubeMeters":1143.5,"max
+== RaceCourseValidation.Run (course-validation) exit=0
+WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.
+WALL_STUCK_RECOVERY_PASS: smooth driving, neutral/disconnected input, stale contacts, ungrounded jitter, sleeping contacts, safe road/lap preservation, reverse input, occupied-road retry.
+RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+== RaceCourseRoadValidation.Run (road-validation) exit=0
+WALL_DRIVING_CONTAINMENT_PASS: both sides, all 66 arc sections, timer/respawn, outer bounds, open ends, rebuild, disable/re-enable, visual-only walls.
+WALL_STUCK_RECOVERY_PASS: smooth driving, neutral/disconnected input, stale contacts, ungrounded jitter, sleeping contacts, safe road/lap preservation, reverse input, occupied-road retry.
+RACE_COURSE_VALIDATION_PASS: legacy, XZ band/airborne containment, slopes, 3D progress, crossings, samples, transforms, undo, empty path, editor insertion/strokes, LapManager detection/respawn.
+RACE_COURSE_ROAD_VALIDATION_PASS: exact band mesh, upward collision, dash gaps, both red/white curbs, materials, slope, closed seam, transforms, undo, cleanup, narrow/empty paths, Rigidbody support and existing course re
+== CourseJumpPlaythroughValidation.RunBatch (jump-playthrough) exit=0
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+COURSE_JUMP_PLAYTHROUGH_PASS: both actual cars complete a lap, jump/land, no wall contacts, no off-course respawn after 4 seconds.
+== CoursePlayabilityAudit.Run (audit) exit=0
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+ArgumentException: GetComponent requires that the requested component 'RaceParticipant' derives from MonoBehaviour or Component or is an interface.
+### done

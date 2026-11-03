@@ -229,7 +229,7 @@ public sealed class NpcRaceDriver : MonoBehaviour, IDriveInputSource
         if (!laps.CanRestoreNpcRecovery(body,recoveryState)) { RecoveryBlockedReason="forward-progress"; return; }
         bool roadSupported=false;
         foreach (RaycastHit hit in Physics.RaycastAll(sample.position+sample.up*2f,-sample.up,3f,
-                     Physics.DefaultRaycastLayers,QueryTriggerInteraction.Ignore))
+                     CoursePhysicsLayers.GroundMask,QueryTriggerInteraction.Ignore))
             if (hit.collider.attachedRigidbody==null && Vector3.Dot(hit.normal,sample.up)>.5f && Vector3.Distance(hit.point,sample.position)<.5f)
                 roadSupported=true;
         if (!roadSupported) { RecoveryBlockedReason="unsupported-road"; return; }

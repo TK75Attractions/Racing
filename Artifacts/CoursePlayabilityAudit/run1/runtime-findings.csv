@@ -1,0 +1,2 @@
+﻿severity,kind,path,component,lane_fraction,progress_m,start_distance_m,x,y,z,value,min_height_m,car_band,sample_hits,first_progress_m,last_progress_m,evidence,impact
+"1","実走衝突","1016こうしゃ[12]/Plane.012[18]/Plane.017[1]","MeshCollider","-0.75","1618.547","242.309","625.883","10.151","588.07","32.117","1.696","True","1","1618.547","1618.547","Player1_Car; t=59.961s; 接触点=(625.883, 10.151, 588.07); 法線=(0.009, 1, 0.001); 相対速度は前step車体接触点速度との差","道路・バリア・車以外との実接触。衝突成立を確認"

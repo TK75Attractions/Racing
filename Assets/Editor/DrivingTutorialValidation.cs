@@ -177,7 +177,7 @@ public static class DrivingTutorialValidation
                 // Check the nearest static surface so a car cannot hide a road seam or gap.
                 RaycastHit hit = default;
                 float nearest = float.PositiveInfinity;
-                foreach (RaycastHit candidate in Physics.RaycastAll(origin, Vector3.down, 8f, ~0, QueryTriggerInteraction.Ignore))
+                foreach (RaycastHit candidate in Physics.RaycastAll(origin, Vector3.down, 8f, CoursePhysicsLayers.PhysicalMask, QueryTriggerInteraction.Ignore))
                 {
                     if (candidate.collider.attachedRigidbody != null || candidate.distance >= nearest) continue;
                     hit = candidate;

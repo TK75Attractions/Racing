@@ -1,0 +1,26 @@
+{
+  "hits": {},
+  "objects": 550,
+  "face_segment_candidates": 376,
+  "course_metrics": {
+    "length": 1978.2363932192723,
+    "min_width": 12.0,
+    "max_width_rate": 0.22522663841672497,
+    "heading_40m_degrees": 5.689709328703148,
+    "min_radius": 32.113499776523305,
+    "worst_curve": [
+      0.03113955211854716,
+      [
+        531.5431474313418,
+        10.971548625958604,
+        602.7819335535851
+      ]
+    ],
+    "takeoff": [
+      584.0,
+      18.0,
+      598.0
+    ],
+    "road_to_gap_heading_degrees": 5.048634390293024e-09
+  }
+}

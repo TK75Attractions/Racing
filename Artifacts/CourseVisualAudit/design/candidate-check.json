@@ -1,0 +1,121 @@
+{
+  "hits": {
+    "1016こうしゃ/Cube.008": {
+      "B": {
+        "min_progress_m": 135.75,
+        "max_progress_m": 165.75,
+        "sample_segments": 71
+      }
+    },
+    "1016こうしゃ/Cube.026/tree.016": {
+      "B": {
+        "min_progress_m": 1920.054,
+        "max_progress_m": 1932.81,
+        "sample_segments": 36
+      },
+      "A": {
+        "min_progress_m": 1922.25,
+        "max_progress_m": 1925.721,
+        "sample_segments": 10
+      }
+    },
+    "1016こうしゃ/Cube.047/Plane.019": {
+      "B": {
+        "min_progress_m": 1745.691,
+        "max_progress_m": 1853.25,
+        "sample_segments": 72
+      },
+      "A": {
+        "min_progress_m": 1829.25,
+        "max_progress_m": 1899.304,
+        "sample_segments": 27
+      }
+    },
+    "1016こうしゃ/人間.001": {
+      "A": {
+        "min_progress_m": 15.749,
+        "max_progress_m": 17.13,
+        "sample_segments": 5
+      }
+    },
+    "1016こうしゃ/人間.002": {
+      "A": {
+        "min_progress_m": 19.25,
+        "max_progress_m": 20.25,
+        "sample_segments": 4
+      }
+    },
+    "1016こうしゃ/人間.003": {
+      "A": {
+        "min_progress_m": 21.75,
+        "max_progress_m": 23.25,
+        "sample_segments": 5
+      }
+    },
+    "1016こうしゃ/高校棟昇降口": {
+      "B": {
+        "min_progress_m": 1769.771,
+        "max_progress_m": 1770.25,
+        "sample_segments": 2
+      }
+    },
+    "1016こうしゃ/高校棟昇降口.045": {
+      "B": {
+        "min_progress_m": 364.75,
+        "max_progress_m": 365.205,
+        "sample_segments": 2
+      }
+    },
+    "1016こうしゃ/高校棟昇降口.045/Plane.048": {
+      "B": {
+        "min_progress_m": 364.75,
+        "max_progress_m": 388.75,
+        "sample_segments": 65
+      }
+    },
+    "1016こうしゃ/高校棟昇降口.045/柱.020": {
+      "B": {
+        "min_progress_m": 387.705,
+        "max_progress_m": 389.75,
+        "sample_segments": 7
+      }
+    },
+    "1016こうしゃ/高校棟昇降口.045/高校棟昇降口.051": {
+      "B": {
+        "min_progress_m": 388.25,
+        "max_progress_m": 388.75,
+        "sample_segments": 2
+      }
+    },
+    "1016こうしゃ/高校棟昇降口/柱.008": {
+      "B": {
+        "min_progress_m": 1768.75,
+        "max_progress_m": 1771.25,
+        "sample_segments": 8
+      }
+    }
+  },
+  "objects": 89,
+  "face_segment_candidates": 577252,
+  "course_metrics": {
+    "length": 1949.8809806566783,
+    "min_width": 12.0,
+    "max_width_rate": 0.19362014798683336,
+    "heading_40m_degrees": 6.249954997960164,
+    "min_radius": 31.440432003199774,
+    "worst_curve": [
+      0.03180617874138076,
+      [
+        531.0889610004189,
+        10.78435726319738,
+        602.9757585544386
+      ]
+    ],
+    "takeoff": [
+      584.0,
+      18.0,
+      598.0
+    ],
+    "road_to_gap_heading_degrees": 5.832882841429573e-10
+  }
+}

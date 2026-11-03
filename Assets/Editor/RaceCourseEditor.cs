@@ -258,7 +258,7 @@ public sealed class RaceCourseEditor : Editor
     private bool TryDrawPosition(Vector2 mouse, out Vector3 position)
     {
         Ray ray = HandleUtility.GUIPointToWorldRay(mouse);
-        if (snapToSurface && Physics.Raycast(ray, out RaycastHit hit, 100000f, ~0, QueryTriggerInteraction.Ignore))
+        if (snapToSurface && Physics.Raycast(ray, out RaycastHit hit, 100000f, CoursePhysicsLayers.PhysicalMask, QueryTriggerInteraction.Ignore))
         {
             position = hit.point;
             return true;

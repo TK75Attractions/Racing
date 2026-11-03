@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "units": "world metres; widths are full widths",
+  "progress_convention": "raw cumulative 3D centreline distance from generated sample 0; opposite race direction; NOT edge arclength or authored source_distance",
+  "course_length_m": 1939.674146601063,
+  "side": "both",
+  "default_profile": "DefaultArc",
+  "profiles": {
+    "DefaultArc": {
+      "wallHeight": 6,
+      "minimumWallHeight": 6,
+      "outwardFlare": 2.5,
+      "radius_m": 12,
+      "colliderThickness_m": 0.6,
+      "top_height_m": 12.596666218300808
+    },
+    "SlimUpright": {
+      "vertical_height_m": 6,
+      "base_round_radius_m": 0.1,
+      "top_round_radius_m": 0.1,
+      "top_height_m": 6.1,
+      "solid_top_height_m": 6.2,
+      "maximum_inner_outward_m": 0.1,
+      "colliderThickness_m": 0.1,
+      "maximum_outer_rail_and_collider_envelope_m": 0.2,
+      "lower_sections": 16,
+      "upper_sections": 16,
+      "base": "j=0..4: theta=j*pi/8; x=.1*sin(theta), h=.1*(1-cos(theta))",
+      "vertical": "j=5..16: x=.1, h=.1+5.9*(j-4)/12",
+      "cap": "j=17..32: phi=(j-16)*pi/32; x=.1*cos(phi), h=6+.1*sin(phi)"
+    }
+  },
+  "intervals": [
+    {
+      "progress_m": [
+        0,
+        210
+      ],
+      "profile": "SlimUpright",
+      "continuation": "same core as [1720,L] across closed seam"
+    },
+    {
+      "progress_m": [
+        210,
+        240
+      ],
+      "profile": "Blend",
+      "from": "SlimUpright",
+      "to": "DefaultArc",
+      "blend": "3t^2-2t^3; corresponding 33 profile vertices; thickness .1->.6"
+    },
+    {
+      "progress_m": [
+        240,
+        1690
+      ],
+      "profile": "DefaultArc"
+    },
+    {
+      "progress_m": [
+        1690,
+        1720
+      ],
+      "profile": "Blend",
+      "from": "DefaultArc",
+      "to": "SlimUpright",
+      "blend": "3t^2-2t^3; corresponding 33 profile vertices; thickness .6->.1"
+    },
+    {
+      "progress_m": [
+        1720,
+        1939.674146601063
+      ],
+      "profile": "SlimUpright"
+    }
+  ],
+  "generation_sampling": "Insert every boundary and intermediate rows at <=.5 m centreline progress, retain the exact road edge interpolation and rawProgress at portal splits and seam merges. No transition inside a skipped tube/jump run.",
+  "validation_envelope": "Slim B: rectangular 0..6 high x 0..0.1 wide; blend B: 0..6 x 0..(11.01*(1-a)+.1*a), where a is minimum Slim weight over the whole segment, enclosing every blended 33-vertex cross-section at every height. Native segment joins plus <=.5 m subdivisions.",
+  "readme": "barrier-code-plan.md"
+}

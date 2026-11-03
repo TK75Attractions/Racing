@@ -1,0 +1,172 @@
+{
+  "control_point_only": {
+    "baseline_course_controls": "adopted() / current production",
+    "changed": {
+      "control": "last control / northeast closure waypoint",
+      "from_world_xyz_m": [
+        494.7,
+        3,
+        797.5
+      ],
+      "to_world_xyz_m": [
+        492.0,
+        3,
+        797.5
+      ]
+    },
+    "north_straight_endpoints_m": [
+      {
+        "p": [
+          485.2,
+          3,
+          807
+        ],
+        "w": 20.0,
+        "jump": false,
+        "fit": false
+      },
+      {
+        "p": [
+          267.5,
+          3,
+          807
+        ],
+        "w": 20.0,
+        "jump": false,
+        "fit": false
+      }
+    ],
+    "north_wing_move_m": [
+      0,
+      23
+    ],
+    "ground_extension_m": 8,
+    "other_homewall_control_at_z720_m": [
+      494.7,
+      3.0,
+      720.0
+    ]
+  },
+  "checks": {
+    "flowerbed": {
+      "1016こうしゃ/Cylinder.002/Cube.011": {
+        "B": {
+          "min_progress_m": 1892.25,
+          "max_progress_m": 1892.75,
+          "sample_segments": 2
+        }
+      },
+      "1016こうしゃ/Cylinder.002/Cylinder.003": {
+        "B": {
+          "min_progress_m": 1895.988,
+          "max_progress_m": 1907.79,
+          "sample_segments": 33
+        }
+      },
+      "1016こうしゃ/Cylinder.002/Cylinder.004": {
+        "B": {
+          "min_progress_m": 1897.75,
+          "max_progress_m": 1906.346,
+          "sample_segments": 24
+        }
+      },
+      "1016こうしゃ/Cylinder.002/tree": {
+        "B": {
+          "min_progress_m": 1898.967,
+          "max_progress_m": 1905.75,
+          "sample_segments": 19
+        }
+      }
+    },
+    "start_building_and_trees": {
+      "1016こうしゃ/Cube.026/tree.016": {
+        "B": {
+          "min_progress_m": 1910.141,
+          "max_progress_m": 1917.944,
+          "sample_segments": 20
+        }
+      }
+    }
+  },
+  "metrics": {
+    "normal_1_5m": {
+      "length": 1931.8409542126735,
+      "min_width": 12.0,
+      "max_width_rate": 0.19301450327350356,
+      "heading_40m_degrees": 5.350212970255759,
+      "min_radius": 32.475192713738714,
+      "worst_curve": [
+        0.03079273489813495,
+        [
+          531.7809803466652,
+          11.068735744266379,
+          602.6837214541738
+        ]
+      ],
+      "takeoff": [
+        584.0,
+        18.0,
+        598.0
+      ],
+      "road_to_gap_heading_degrees": 8.375799920353284e-09,
+      "length_change_percent": 1.2317752970717244,
+      "northeast_corner": {
+        "minimum_pointwise_horizontal_radius_m": 29.373096800222914,
+        "at_world_xyz_m": [
+          482.01584435350543,
+          3.0,
+          796.9099219331451
+        ],
+        "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+      },
+      "west_corner": {
+        "minimum_pointwise_horizontal_radius_m": 25.63366931332843,
+        "at_world_xyz_m": [
+          268.9238686121555,
+          3.0277229249533746,
+          796.1372170367677
+        ]
+      }
+    },
+    "fine_0_25m": {
+      "length": 1931.8601507205815,
+      "min_width": 12.0,
+      "max_width_rate": 0.19911536939390811,
+      "heading_40m_degrees": 5.910106074409561,
+      "min_radius": 26.10113751152038,
+      "worst_curve": [
+        0.038312506478256944,
+        [
+          549.5763687722842,
+          16.231302336527442,
+          599.5440010696461
+        ]
+      ],
+      "takeoff": [
+        584.0,
+        18.0,
+        598.0
+      ],
+      "road_to_gap_heading_degrees": 7.41629018404937e-09,
+      "length_change_percent": 1.2327812269702587,
+      "northeast_corner": {
+        "minimum_pointwise_horizontal_radius_m": 29.3633234888956,
+        "at_world_xyz_m": [
+          481.88029203819434,
+          3.0,
+          797.0411773232577
+        ],
+        "scope": "Home-straight northeast corner, X>450 and Z>750; includes the closed seam; excludes the roadless jump."
+      },
+      "west_corner": {
+        "minimum_pointwise_horizontal_radius_m": 25.622849249660845,
+        "at_world_xyz_m": [
+          268.97722510919857,
+          3.027394714917159,
+          796.1966994026692
+        ]
+      }
+    }
+  },
+  "limit_note": "A uses the same 0.5m road-edge margin as the audit. B hits from the original circular arc are retained in raw output but are not treated as a valid home-wall collision test."
+}

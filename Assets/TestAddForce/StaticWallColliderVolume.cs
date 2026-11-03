@@ -17,7 +17,8 @@ public static class StaticWallColliderVolume
         foreach (GameObject root in scene.GetRootGameObjects())
         foreach (MeshCollider surface in root.GetComponentsInChildren<MeshCollider>(true))
         {
-            if (!surface.enabled || surface.isTrigger || !surface.gameObject.activeInHierarchy ||
+            if (surface.gameObject.layer == CoursePhysicsLayers.OcclusionLayer ||
+                !surface.enabled || surface.isTrigger || !surface.gameObject.activeInHierarchy ||
                 TubeDriveSurface.Contains(surface) ||
                 surface.attachedRigidbody != null || surface.GetComponentInParent<RaceBarrierPath>() != null ||
                 !TryGetWallBox(surface, out Bounds bounds)) continue;
@@ -34,7 +35,7 @@ public static class StaticWallColliderVolume
         }
     }
 
-    private static bool TryGetWallBox(MeshCollider surface, out Bounds bounds)
+    public static bool TryGetWallBox(MeshCollider surface, out Bounds bounds)
     {
         bounds = default;
         Mesh mesh = surface.sharedMesh;
