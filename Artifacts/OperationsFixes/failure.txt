@@ -1,0 +1,2 @@
+System.InvalidOperationException: Preview validation timed out at 2 P1 pending=7 readback=False P2 pending=0 readback=False
+  at OperationsFixValidation.Tick () [0x00171] in /Users/kenichirowada/.codex/worktrees/merge-race-polish-main/Racing/Assets/Editor/OperationsFixValidation.cs:140 

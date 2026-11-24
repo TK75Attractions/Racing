@@ -1,0 +1,1 @@
+PASS: real maintenance toggle; both outputs loop TachibanaMoroe; only service audio bypasses pause/mute; normal tracks preserved; pause state restored; repeated entry reuses sources. No physical audio output opened.
